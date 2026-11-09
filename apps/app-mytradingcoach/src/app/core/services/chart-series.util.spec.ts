@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import {
   START_LABEL,
+  stepLabel,
+  tooltipDate,
   chartAriaLabel,
   compactMoney,
   drawdownSeries,
@@ -350,5 +352,32 @@ describe('« ? » de la carte drawdown selon la règle du plan relié', () => {
   });
   it('suiveur intraday : note sur les gains latents', () => {
     expect(drawdownHelp(plan({ kind: 'trailing_intraday' }), 'USD')).toContain('Calcul sur les trades clôturés ; ta prop firm peut tenir compte des gains latents.');
+  });
+});
+
+describe('courbe par trade (tableau de bord)', () => {
+  // Points de /equity-curve/trades : P&L de la clôture porté par le point (la courbe est réduite,
+  // l'écart au point gardé précédent n'est donc pas le P&L du trade).
+  const points = [
+    { date: '2026-11-06T08:22:00.000Z', cumulativePnl: -268, pnl: -268, trades: 1 },
+    { date: '2026-11-06T08:45:00.000Z', cumulativePnl: -535.5, pnl: -267.5, trades: 1 },
+    { date: '2026-11-06T22:45:00.000Z', cumulativePnl: -88.5, pnl: 447, trades: 2 },
+  ];
+
+  it('le creux de −535,50 est un point de la courbe de solde (50 000 → 49 464,50)', () => {
+    const s = equitySeries(points, 50_000);
+    expect(s.values).toEqual([50_000, 49_732, 49_464.5, 49_911.5]);
+    expect(Math.min(...s.values)).toBe(49_464.5);
+    expect(s.dayPnl).toEqual([null, -268, -267.5, 447]);
+    expect(s.perTrade).toBe(true);
+  });
+
+  it('infobulle : « Trade » ou « 2 trades », heure de clôture ; courbe par jour inchangée (« Jour »)', () => {
+    const s = equitySeries(points, 50_000);
+    expect(stepLabel(s, 1)).toBe('Trade');
+    expect(stepLabel(s, 3)).toBe('2 trades');
+    expect(stepLabel(equitySeries([{ date: '2026-11-06T00:00:00.000Z', cumulativePnl: -88.5 }], 0), 1)).toBe('Jour');
+    expect(tooltipDate('2026-11-06T08:45:00.000Z', true)).toMatch(/^6 nov\. 2026 · \d{2}:45$/);
+    expect(tooltipDate('2026-11-06T08:45:00.000Z')).toBe('6 nov. 2026');
   });
 });

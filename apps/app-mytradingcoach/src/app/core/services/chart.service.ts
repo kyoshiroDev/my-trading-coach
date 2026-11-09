@@ -28,6 +28,7 @@ import {
   spanDays,
   shortDate,
   spanRange,
+  stepLabel,
   tickDate,
   tooltipDate,
 } from './chart-series.util';
@@ -325,7 +326,7 @@ export class ChartService {
             footerMarginTop: 4,
             filter: (item) => item.datasetIndex === 0,
             callbacks: {
-              title: (items) => tooltipDate(series.dates[items[0]?.dataIndex ?? 0]),
+              title: (items) => tooltipDate(series.dates[items[0]?.dataIndex ?? 0], series.perTrade && !series.payout?.[items[0]?.dataIndex ?? 0]),
               // Plan relié : la valeur tracée n'est PAS un solde, on n'affiche que la marge restante.
               label: (item) =>
                 floor ? `Marge ${this.money(floor.margin[item.dataIndex])}` : this.money(item.parsed.y ?? 0),
@@ -335,9 +336,10 @@ export class ChartService {
                 const d = series.dayPnl[i];
                 const payout = series.payout?.[i];
                 if (floor || d === null || d === undefined) return [];
+                const step = stepLabel(series, i);
                 // Jour de payout sans trade : le retrait seul, pas un « Jour +$0 ».
-                if (payout) return [...(d ? [`Jour ${this.money(d, true)}`] : []), `Payout ${this.money(-payout, true)}`];
-                return [`Jour ${this.money(d, true)}`];
+                if (payout) return [...(d ? [`${step} ${this.money(d, true)}`] : []), `Payout ${this.money(-payout, true)}`];
+                return [`${step} ${this.money(d, true)}`];
               },
             },
           },

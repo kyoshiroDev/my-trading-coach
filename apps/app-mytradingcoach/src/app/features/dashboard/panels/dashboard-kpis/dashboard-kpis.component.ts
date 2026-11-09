@@ -5,7 +5,6 @@ import { AnalyticsSummary } from '@app/core/api/analytics.api';
 import { InfoTooltipComponent } from '@app/shared/components/info-tooltip/info-tooltip.component';
 import { PnlFormatPipe } from '@app/shared/pipes';
 import { sparkPath } from '../../dashboard-charts.util';
-import { maxDrawdownOf } from '@app/core/services/equity-period.util';
 
 /** Rangée des 6 KPIs du dashboard (capital, P&L, win rate, profit factor, trades, drawdown). */
 @Component({
@@ -23,7 +22,9 @@ export class DashboardKpisComponent {
   readonly periodStartCapital = input(0);
   /** Solde actuel du compte (le même que le sélecteur et Mes comptes). */
   readonly currentCapital = input(0);
-  /** Drawdown jour par jour depuis le plus haut du compte (règle EOD), point de départ compris. */
+  /** Drawdown max de la période (≤ 0), après chaque trade clôturé (`maxDrawdownOfTrades`). */
+  readonly maxDrawdown = input(0);
+  /** Drawdown après chaque clôture de la période (≤ 0), point de départ compris. */
   readonly drawdownSeries = input<number[]>([]);
   /** P&L cumulé jour par jour sur la période (source des sparklines). */
   readonly equitySeries = input<number[]>([]);
@@ -42,8 +43,8 @@ export class DashboardKpisComponent {
     return pf.toFixed(2);
   });
 
-  /** Plus fort drawdown de la période : même série que la courbe de drawdown des Statistiques. */
-  protected readonly drawdownDisplay = computed(() => maxDrawdownOf(this.drawdownSeries()));
+  /** Plus fort drawdown de la période, trade par trade (≤ 0). */
+  protected readonly drawdownDisplay = computed(() => Math.min(0, this.maxDrawdown()));
   protected readonly pnlColor = computed(() => {
     const pnl = this.summary()?.totalPnl ?? 0;
     return pnl === 0 ? 'var(--text-2)' : pnl > 0 ? 'var(--green)' : 'var(--red)';

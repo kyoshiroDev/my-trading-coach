@@ -101,11 +101,11 @@
       <div class="mtc-kpi-l">
         <div class="mtc-kpi-lab">Drawdown max
           <mtc-info-tooltip class="align-end" label="Comment le drawdown max est calculé"
-            text="Plus forte baisse de ton solde en clôture de journée sous son plus haut depuis l'ouverture du compte (règle EOD des prop firms), sur la période affichée." />
+            text="Plus forte baisse de ton solde entre un sommet et le creux qui suit, sur la période affichée. Calculé sur les trades clôturés (frais inclus), hors variations en cours de trade." />
         </div>
         <div class="mtc-kpi-val" [style.color]="drawdownColor()">{{ drawdownDisplay() | pnlFormat }}</div>
         <div class="mtc-kpi-sub">
-          @if ((summary()?.totalTrades ?? 0) > 0) { {{ periodShort() }} } @else { Aucune donnée }
+          @if ((summary()?.totalTrades ?? 0) > 0) { trades clôturés · {{ periodShort() }} } @else { Aucune donnée }
         </div>
       </div>
       @let dd = sparkPath(ddSeries());

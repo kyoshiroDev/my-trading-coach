@@ -61,6 +61,37 @@ export function withPayouts(points: EquityPoint[], payouts: EquityPayout[] | nul
   });
 }
 
+/**
+ * Payouts insérés dans une courbe PAR TRADE : un payout devient un point à sa date (minuit UTC de
+ * sa journée, donc avant les trades du jour), au P&L cumulé du moment. Le P&L ne change pas (le
+ * drawdown non plus) ; seules les courbes de solde déduisent le retrait.
+ */
+export function withPayoutsByTrade(points: EquityPoint[], payouts: EquityPayout[] | null | undefined): EquityPoint[] {
+  if (!payouts?.length) return points;
+  const sorted = [...payouts].sort((a, b) => a.date.localeCompare(b.date));
+  const out: EquityPoint[] = [];
+  let k = 0;
+  let cumulativePnl = 0;
+  // Payouts d'avant `until` (exclu) : un point chacun (même date → cumulés sur un seul point).
+  const insertBefore = (until: string | null) => {
+    while (k < sorted.length && (until === null || sorted[k].date < until)) {
+      const p = sorted[k++];
+      const last = out[out.length - 1];
+      if (last && last.date === p.date && last.pnl === undefined) last.payout = (last.payout ?? 0) + p.amount;
+      else out.push({ date: p.date, cumulativePnl, payout: p.amount });
+    }
+  };
+  for (const point of points) {
+    insertBefore(point.date);
+    let payout = 0;
+    while (k < sorted.length && sorted[k].date === point.date) payout += sorted[k++].amount;
+    out.push(payout ? { ...point, payout } : point);
+    cumulativePnl = point.cumulativePnl;
+  }
+  insertBefore(null);
+  return out;
+}
+
 /** Payouts cumulés à chaque point (0 sans payout). */
 export function cumulativePayouts(points: EquityPoint[]): number[] {
   let paid = 0;

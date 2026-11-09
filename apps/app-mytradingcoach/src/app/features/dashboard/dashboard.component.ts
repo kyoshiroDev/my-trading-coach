@@ -23,7 +23,8 @@ import {
 import { httpResource } from '@angular/common/http';
 import { UserStore } from '../../core/stores/user.store';
 import { MoneyService } from '../../core/services/money.service';
-import { anchoredDrawdown, cumulativePayouts, periodStartBalance, viewBalance, withPayouts } from '../../core/services/equity-period.util';
+import { cumulativePayouts, periodStartBalance, viewBalance, withPayoutsByTrade } from '../../core/services/equity-period.util';
+import { maxDrawdownOfCumulative } from '@mtc/shared';
 import { planObjectiveLine } from '../../core/services/chart-series.util';
 import { MixedCurrencyNoticeComponent } from '../../shared/components/mixed-currency-notice/mixed-currency-notice.component';
 import { TradesStore } from '../../core/stores/trades.store';
@@ -37,7 +38,7 @@ import { InfoTooltipComponent } from '../../shared/components/info-tooltip/info-
 import { CreateTradeDto, TradesApi } from '../../core/api/trades.api';
 import {
   AnalyticsSummary,
-  DailyEquityCurve,
+  TradesEquityCurve,
   SetupStat,
   EmotionStat,
   TopAsset,
@@ -213,10 +214,11 @@ export class DashboardComponent {
     () => `${environment.apiUrl}/analytics/summary${this.rangeQuery()}`,
   );
   // Courbe d'équité simple = vue de base FREE (on ne verrouille pas la vue de ses données).
-  // Scopée à la même période que les KPIs.
+  // Scopée à la même période que les KPIs. UN POINT PAR CLÔTURE DE TRADE (un creux intrajournalier
+  // entre deux trades se voit) + drawdown max de la période calculé sur toutes les clôtures.
   private readonly equityCurveResource = httpResource<{
-    data: DailyEquityCurve;
-  }>(() => `${environment.apiUrl}/analytics/equity-curve/daily${this.rangeQuery()}`);
+    data: TradesEquityCurve;
+  }>(() => `${environment.apiUrl}/analytics/equity-curve/trades${this.rangeQuery()}`);
   // Activité journalière (P&L par jour) sur la même période : agrégée jour/semaine/mois côté front.
   private readonly activityResource = httpResource<{
     data: { days: { date: string; pnl: number; tradesCount: number }[] };
@@ -314,11 +316,15 @@ export class DashboardComponent {
     ),
   );
   /**
-   * Drawdown jour par jour sur la période, depuis le plus haut atteint depuis l'ouverture du
-   * compte (règle EOD) : même calcul que la courbe de drawdown des Statistiques.
+   * Drawdown après chaque clôture de trade de la période (≤ 0, départ compris), règle unique
+   * `@mtc/shared` : sommet = solde du début de période puis plus haut atteint. Source de la
+   * sparkline ; la valeur du KPI est celle de l'API (toutes les clôtures, avant réduction).
    */
   protected readonly drawdownSeries = computed(() =>
-    anchoredDrawdown(this.equityCurve(), this.equityCurveResource.value()?.data?.before),
+    maxDrawdownOfCumulative(this.equityCurve().map((p) => p.cumulativePnl)).series,
+  );
+  protected readonly maxDrawdown = computed(
+    () => this.equityCurveResource.value()?.data?.maxDrawdown ?? Math.min(0, ...this.drawdownSeries()),
   );
   /**
    * Message quand la courbe ne se trace pas : ne JAMAIS dire « aucun trade » si les KPIs en
@@ -333,7 +339,7 @@ export class DashboardComponent {
   /** Points de la période, payouts reçus insérés (déduits des courbes de solde, pas du P&L). */
   protected readonly equityCurve = computed(() => {
     const data = this.equityCurveResource.value()?.data;
-    return withPayouts(data?.points ?? [], data?.payouts);
+    return withPayoutsByTrade(data?.points ?? [], data?.payouts);
   });
   /** Objectif de gain du compte sélectionné, tracé sur la courbe d'équité. */
   protected readonly equityObjective = computed(() =>

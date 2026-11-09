@@ -45,6 +45,10 @@ export interface EquityPoint {
   cumulativePnl: number;
   /** Payout reçu ce jour-là (ajouté par `withPayouts`, jamais renvoyé par l'API dans les points). */
   payout?: number;
+  /** Courbe par trade (`/equity-curve/trades`) : P&L net de la clôture (trades du même instant sommés). */
+  pnl?: number;
+  /** Courbe par trade : nombre de trades clôturés à cet instant. */
+  trades?: number;
 }
 
 /** Payout reçu (retrait détecté chez le broker, non écarté). */
@@ -74,6 +78,17 @@ export interface DailyEquityCurve {
   before?: PeriodBefore;
   /** Payouts reçus pendant la période (le solde du compte les a déjà perdus). */
   payouts?: EquityPayout[];
+}
+
+/**
+ * Réponse de `/equity-curve/trades` : un point par clôture de trade (réduit à ~500 en gardant pics
+ * et creux) et le drawdown max de la période (≤ 0), calculé sur TOUTES les clôtures par
+ * `maxDrawdownOfTrades` (`@mtc/shared`).
+ */
+export interface TradesEquityCurve extends DailyEquityCurve {
+  maxDrawdown: number;
+  /** Trades clôturés de la période. */
+  trades: number;
 }
 
 export interface EquityCurveResponse {

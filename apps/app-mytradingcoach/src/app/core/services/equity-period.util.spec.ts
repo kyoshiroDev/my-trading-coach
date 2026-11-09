@@ -7,6 +7,7 @@ import {
   periodStartCapital,
   viewBalance,
   withPayouts,
+  withPayoutsByTrade,
   cumulativePayouts,
 } from './equity-period.util';
 
@@ -87,5 +88,41 @@ describe('payouts reçus', () => {
     ]);
     expect(cumulativePayouts(pts)).toEqual([500, 750]);
     expect(periodPnl(pts)).toBe(100); // le P&L de la période ne change pas
+  });
+});
+
+describe('withPayoutsByTrade (courbe par trade du tableau de bord)', () => {
+  const pt = (date: string, cumulativePnl: number, pnl: number) => ({ date, cumulativePnl, pnl, trades: 1 });
+  const points = [
+    pt('2026-11-06T08:22:00.000Z', -268, -268),
+    pt('2026-11-06T08:45:00.000Z', -535.5, -267.5),
+    pt('2026-11-09T09:00:00.000Z', 871, 1406.5),
+  ];
+
+  it('sans payout : points inchangés', () => {
+    expect(withPayoutsByTrade(points, [])).toBe(points);
+  });
+
+  it('payout du lundi (minuit UTC) : point avant les trades du jour, au P&L cumulé du vendredi', () => {
+    const out = withPayoutsByTrade(points, [{ date: '2026-11-09T00:00:00.000Z', amount: 500 }]);
+    expect(out.map((p) => [p.date.slice(0, 16), p.cumulativePnl, p.payout ?? null])).toEqual([
+      ['2026-11-06T08:22', -268, null],
+      ['2026-11-06T08:45', -535.5, null],
+      ['2026-11-09T00:00', -535.5, 500],
+      ['2026-11-09T09:00', 871, null],
+    ]);
+    // Le P&L (donc le drawdown) ne bouge pas ; la courbe de solde déduit 500 à partir du payout.
+    expect(cumulativePayouts(out)).toEqual([0, 0, 500, 500]);
+  });
+
+  it('payout au même instant qu’une clôture : porté par ce point ; payouts après le dernier trade ajoutés en fin', () => {
+    const out = withPayoutsByTrade(points, [
+      { date: '2026-11-06T08:45:00.000Z', amount: 100 },
+      { date: '2026-11-10T00:00:00.000Z', amount: 50 },
+      { date: '2026-11-10T00:00:00.000Z', amount: 25 },
+    ]);
+    expect(out[1]).toMatchObject({ cumulativePnl: -535.5, pnl: -267.5, payout: 100 });
+    expect(out.at(-1)).toEqual({ date: '2026-11-10T00:00:00.000Z', cumulativePnl: 871, payout: 75 });
+    expect(out).toHaveLength(4);
   });
 });

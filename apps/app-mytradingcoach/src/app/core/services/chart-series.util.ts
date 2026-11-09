@@ -21,9 +21,18 @@ export interface ChartSeries {
   dayPnl: (number | null)[];
   /** Payout reçu ce jour-là ; `null` sans payout (et pour « Départ »). */
   payout?: (number | null)[];
+  /** Courbe par trade : `dayPnl` est le P&L de la clôture, `trades` le nombre de trades du point. */
+  perTrade?: boolean;
+  trades?: (number | null)[];
 }
 
+/** Courbe par trade : points venus de `/equity-curve/trades` (ils portent le P&L de leur clôture). */
+export const isPerTrade = (points: EquityPoint[]): boolean => points.some((p) => p.pnl !== undefined);
+
 function dayPnlOf(points: EquityPoint[]): (number | null)[] {
+  // Courbe par trade (réduite) : P&L de la clôture elle-même, pas l'écart au point gardé précédent.
+  // Point de payout seul : 0 (l'infobulle affiche le retrait).
+  if (isPerTrade(points)) return [null, ...points.map((p) => p.pnl ?? (p.payout ? 0 : null))];
   return [null, ...points.map((p, i) => p.cumulativePnl - (i ? points[i - 1].cumulativePnl : 0))];
 }
 
@@ -40,6 +49,7 @@ export function equitySeries(points: EquityPoint[], startingCapital: number | nu
     values: [base, ...points.map((p, i) => base + p.cumulativePnl - paid[i])],
     dayPnl: dayPnlOf(points),
     payout: payoutOf(points),
+    ...(isPerTrade(points) ? { perTrade: true, trades: [null, ...points.map((p) => p.trades ?? null)] } : {}),
   };
 }
 
@@ -126,10 +136,19 @@ export function shortDate(iso: string | null): string {
   return new Date(iso).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
 }
 
-/** Date complète d'une infobulle : `6 janv. 2025`. */
-export function tooltipDate(iso: string | null): string {
+/** Date complète d'une infobulle : `6 janv. 2025`, avec l'heure pour une clôture de trade (`6 janv. 2025 · 08:45`). */
+export function tooltipDate(iso: string | null, withTime = false): string {
   if (!iso) return START_LABEL;
-  return new Date(iso).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
+  const d = new Date(iso);
+  const day = d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
+  return withTime ? `${day} · ${d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}` : day;
+}
+
+/** Pied d'infobulle d'un point : P&L du jour, ou de la clôture (« Trade » / « 2 trades ») sur une courbe par trade. */
+export function stepLabel(series: ChartSeries, i: number): string {
+  if (!series.perTrade) return 'Jour';
+  const n = series.trades?.[i] ?? 1;
+  return n > 1 ? `${n} trades` : 'Trade';
 }
 
 /** Résumé lu par les lecteurs d'écran : valeur de départ, valeur actuelle, période. */
