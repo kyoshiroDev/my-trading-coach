@@ -207,7 +207,7 @@ describe('changement de statut : visible tout de suite (cache invalidé)', () =>
   });
 });
 
-describe('journal : chiffres du haut filtrés, liste complète', () => {
+describe('journal : chiffres du haut filtrés, comme la liste', () => {
   it('par défaut : échoué et archivé hors des chiffres, nombre de comptes exclus exposé', async () => {
     const st = await trades.computeJournalStats(fx.userId, {} as never);
     expect(st).toMatchObject({ totalTrades: 3, pnlNet: 160, excludedAccounts: { failed: 1, archived: 1 } });
@@ -229,12 +229,23 @@ describe('journal : chiffres du haut filtrés, liste complète', () => {
   });
 });
 
-describe('journal : garde tous les trades, avec le statut du compte', () => {
-  it('trades des comptes échoués et archivés présents, statut exposé pour le badge', async () => {
+describe('journal : la liste suit la même règle que les chiffres, statut exposé pour le badge', () => {
+  const statuses = (data: unknown[]) =>
+    data.map((t) => (t as { account?: { status: string } | null }).account?.status ?? null).sort();
+
+  it('par défaut : comptes échoués et archivés hors de la liste (validé et sans compte gardés)', async () => {
     const page = await trades.findAll(fx.userId, { limit: 50 } as never);
-    expect(page.data).toHaveLength(5);
-    const statuses = page.data.map((t) => (t as { account?: { status: string } | null }).account?.status ?? null).sort();
-    expect(statuses).toEqual(['ACTIVE', 'ARCHIVED', 'FAILED', 'PASSED', null].sort());
+    expect(statuses(page.data)).toEqual(['ACTIVE', 'PASSED', null].sort());
+  });
+
+  it('includeInactive : tous les trades, statut « Échoué » / « Archivé » exposé', async () => {
+    const page = await trades.findAll(fx.userId, { limit: 50, includeInactive: true } as never);
+    expect(statuses(page.data)).toEqual(['ACTIVE', 'ARCHIVED', 'FAILED', 'PASSED', null].sort());
+  });
+
+  it('compte échoué choisi : ses trades, sans includeInactive', async () => {
+    const page = await trades.findAll(fx.userId, { limit: 50, accountId: fx.ids.failed } as never);
+    expect(statuses(page.data)).toEqual(['FAILED']);
   });
 });
 

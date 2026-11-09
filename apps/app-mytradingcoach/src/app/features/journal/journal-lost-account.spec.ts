@@ -1,9 +1,9 @@
 /**
- * Journal — compte perdu : la liste garde tous les trades, avec un badge « Échoué » ou « Archivé »
- * sur ceux d'un compte hors statistiques ; les chiffres du haut suivent l'interrupteur des
- * statistiques (`includeInactive`), sans recharger la liste.
+ * Journal — compte perdu : la liste, les en-têtes de jour / semaine et la barre de chiffres lisent
+ * le MÊME jeu de trades. Comptes échoués et archivés exclus par défaut (l'API filtre la liste ET
+ * les chiffres) ; l'interrupteur (`includeInactive`) les réinclut partout, badge à l'appui.
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { signal, NO_ERRORS_SCHEMA } from '@angular/core';
 import { DatePipe, DecimalPipe, TitleCasePipe } from '@angular/common';
@@ -85,10 +85,38 @@ async function render(trades: Trade[]) {
   return { fixture, el: fixture.nativeElement as HTMLElement, tradesStore, accountStore };
 }
 
-describe('Journal — compte perdu', () => {
-  beforeEach(() => TestBed.resetTestingModule());
+/**
+ * Cas réel (09/11) : 1 compte actif, 3 trades le vendredi 6/11 (−88,50) ; 3 comptes archivés
+ * (6/11 : −300 et −232,56 ; 4/11 : +16 158,86). Tout compris : 6/11 = 5 trades −621,06, semaine
+ * +15 537,80, les chiffres de la capture.
+ */
+const NOV = (day: number, h: number) => `2026-11-0${day}T${String(h).padStart(2, '0')}:00:00.000Z`;
+const at = (id: string, h: number, pnl: number, account: Trade['account'], day = 6): Trade => ({
+  ...trade('t1', account), id, pnl, tradedAt: NOV(day, h), createdAt: NOV(day, h),
+} as Trade);
+const ACTIVE = { id: 'a', label: 'Apex 50K #2', status: 'ACTIVE' } as const;
+const ARCHIVED = [
+  { id: 'x1', label: 'Lucid 25K', status: 'ARCHIVED' },
+  { id: 'x2', label: 'Topstep 50K', status: 'ARCHIVED' },
+  { id: 'x3', label: 'Apex 50K #1', status: 'ARCHIVED' },
+] as const;
+const ACTIVE_TRADES = [at('a1', 16, 447, ACTIVE), at('a2', 15, -267.5, ACTIVE), at('a3', 14, -268, ACTIVE)];
+const ARCHIVED_TRADES = [at('x1', 13, -300, ARCHIVED[0]), at('x2', 12, -232.56, ARCHIVED[1]), at('x3', 14, 16_158.86, ARCHIVED[2], 4)];
 
-  it('la liste garde tous les trades ; badge sur ceux d\'un compte échoué ou archivé', async () => {
+type Groups = {
+  tradesByDay: () => { count: number; totalPnlNet: number; partial: boolean }[];
+  tradesByWeek: () => { count: number; totalPnlNet: number; partial: boolean }[];
+};
+
+describe('Journal — compte perdu', () => {
+  beforeEach(() => {
+    TestBed.resetTestingModule();
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-11-09T10:00:00.000Z'));
+  });
+  afterEach(() => vi.useRealTimers());
+
+  it('badge « Échoué » / « Archivé » sur les trades d\'un compte perdu renvoyés par l\'API (interrupteur allumé)', async () => {
     const { el } = await render([
       trade('t1', { id: 'a', label: 'Apex 50K #2', status: 'ACTIVE' }),
       trade('t2', { id: 'f', label: 'Apex 50K #1', status: 'FAILED' }),
@@ -101,36 +129,67 @@ describe('Journal — compte perdu', () => {
     expect(badges[0].getAttribute('title')).toBe('Apex 50K #1 : hors statistiques');
   });
 
-  it('KPIs : sans includeInactive par défaut, avec après l\'interrupteur, sans recharger la liste', async () => {
+  it('liste et chiffres : MÊMES filtres, sans includeInactive par défaut, avec après l\'interrupteur (les deux rechargés)', async () => {
     const { fixture, tradesStore, accountStore } = await render([trade('t1', null)]);
+    const lastList = () => tradesStore.loadTrades.mock.calls.at(-1)![0] as Record<string, string>;
     const lastStats = () => tradesStore.loadStats.mock.calls.at(-1)![0] as Record<string, string>;
-    expect(lastStats()['includeInactive']).toBeUndefined();
-    const listLoads = tradesStore.loadTrades.mock.calls.length;
+    expect(lastList()['includeInactive']).toBeUndefined();
+    expect(lastStats()).toEqual(lastList());
 
     accountStore.includeInactive.set(true);
     fixture.detectChanges();
-    expect(lastStats()['includeInactive']).toBe('true');
-    expect(tradesStore.loadTrades.mock.calls.length).toBe(listLoads);
-    expect(tradesStore.loadTrades.mock.calls.every((c) => !('includeInactive' in (c[0] ?? {})))).toBe(true);
+    expect(lastList()['includeInactive']).toBe('true');
+    expect(lastStats()).toEqual(lastList());
+
+    accountStore.includeInactive.set(false);
+    fixture.detectChanges();
+    expect(lastList()['includeInactive']).toBeUndefined();
+    expect(lastStats()).toEqual(lastList());
   });
 
-  it('compte marqué échoué entre-temps : les KPIs se rechargent', async () => {
+  it('compte marqué échoué entre-temps : liste ET chiffres se rechargent', async () => {
     const { fixture, tradesStore, accountStore } = await render([trade('t1', null)]);
-    const before = tradesStore.loadStats.mock.calls.length;
+    const lists = tradesStore.loadTrades.mock.calls.length;
+    const stats = tradesStore.loadStats.mock.calls.length;
     accountStore.accounts.set([{ status: 'FAILED' }, { status: 'FAILED' }]);
     fixture.detectChanges();
-    expect(tradesStore.loadStats.mock.calls.length).toBe(before + 1);
+    expect(tradesStore.loadTrades.mock.calls.length).toBe(lists + 1);
+    expect(tradesStore.loadStats.mock.calls.length).toBe(stats + 1);
   });
 
-  it('compteur des filtres : « dans les chiffres » quand des comptes sont exclus', async () => {
-    const { fixture, el, tradesStore, accountStore } = await render([trade('t1', null)]);
-    (tradesStore.stats as unknown as { set: (v: unknown) => void }).set({ totalTrades: 8, winRate: 75, totalPnl: 1, excludedAccounts: { failed: 1, archived: 0 } });
+  it('interrupteur éteint (cas du 6/11) : 3 trades, en-tête du jour « 3 trades » -88,50, semaine identique, aucun badge', async () => {
+    const { fixture, el } = await render(ACTIVE_TRADES);
+    expect(el.querySelectorAll('[data-testid="trade-row"]').length).toBe(3);
+    expect(el.querySelectorAll('[data-testid="trade-account-badge"]').length).toBe(0);
+    expect(el.querySelector('[data-testid="day-count"]')!.textContent!.trim()).toBe('3 trades');
+    const c = fixture.componentInstance as unknown as Groups;
+    expect(c.tradesByDay()).toHaveLength(1);
+    expect(c.tradesByDay()[0].totalPnlNet).toBeCloseTo(-88.5, 2);
+    expect(c.tradesByDay()[0].partial).toBe(false);
+    // Semaine = le même jeu (barre de chiffres côté API : même filtre, vérifié par l'int-spec).
+    expect(c.tradesByWeek()[0].count).toBe(3);
+    expect(c.tradesByWeek()[0].totalPnlNet).toBeCloseTo(-88.5, 2);
+    expect(el.querySelector('[data-testid="week-count"]')!.textContent!.trim()).toBe('3 trades');
+  });
+
+  it('interrupteur allumé : tous les trades avec le badge « Archivé » ; 6/11 « 5 trades » −621,06, semaine +15 537,80', async () => {
+    const { fixture, el } = await render([...ACTIVE_TRADES, ...ARCHIVED_TRADES]);
+    expect(el.querySelectorAll('[data-testid="trade-row"]').length).toBe(6);
+    const badges = [...el.querySelectorAll('[data-testid="trade-account-badge"]')].map((b) => b.textContent!.trim());
+    expect(badges).toEqual(['Archivé', 'Archivé', 'Archivé']);
+    expect(el.querySelector('[data-testid="day-count"]')!.textContent!.trim()).toBe('5 trades');
+    const c = fixture.componentInstance as unknown as Groups;
+    expect(c.tradesByDay().map((d) => d.count)).toEqual([5, 1]);
+    expect(c.tradesByDay()[0].totalPnlNet).toBeCloseTo(-621.06, 2);
+    expect(c.tradesByWeek()[0].count).toBe(6);
+    expect(c.tradesByWeek()[0].totalPnlNet).toBeCloseTo(15_537.8, 2);
+    expect(c.tradesByWeek()[0].partial).toBe(false);
+  });
+
+  it('compteur des filtres : le nombre de trades des chiffres, sans « dans les chiffres » (liste = chiffres)', async () => {
+    const { fixture, el, tradesStore } = await render(ACTIVE_TRADES);
+    (tradesStore.stats as unknown as { set: (v: unknown) => void }).set({ totalTrades: 3, winRate: 33, totalPnl: -88.5, excludedAccounts: { failed: 0, archived: 3 } });
     fixture.detectChanges();
-    const count = () => el.querySelector('[data-testid="journal-filter-count"]')!.textContent!.trim();
-    expect(count()).toBe('8 trades dans les chiffres');
-    accountStore.includeInactive.set(true);
-    fixture.detectChanges();
-    expect(count()).toBe('8 trades');
+    expect(el.querySelector('[data-testid="journal-filter-count"]')!.textContent!.trim()).toBe('3 trades');
   });
 });
-

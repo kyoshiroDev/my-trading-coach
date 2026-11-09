@@ -375,6 +375,12 @@ await page.route('**/api/debrief/generate', route => route.fulfill({
   `accounts/account-status-scope.int-spec.ts`. Suppression définitive : `accounts/account-purge.int-spec.ts`
   (aucun orphelin, autre utilisateur intact, rollback, statistiques exactes juste après, 400 sans
   confirmation, 404, démo 403). Toute nouvelle agrégation ajoute son cas à ces tests.
+- **Journal, liste ≡ chiffres (2026-11-09)** : `trades/journal-lost-accounts.int-spec.ts` rejoue le
+  cas réel (1 compte actif, 3 trades du 6/11 = −88,50 ; 3 archivés) : interrupteur éteint / allumé,
+  semaine = barre, pagination (« partiel », « 20+ ») sur le jeu filtré, compte archivé choisi, plus
+  Statistiques, historique des sessions et premier récap de semaine. Horloge figée (`freezeClock`).
+  `journal-stats-sql.int-spec.ts` tire aussi `includeInactive` et des comptes ARCHIVED / FAILED.
+  Front : `journal-lost-account.spec.ts` (mêmes filtres pour liste et KPIs, en-têtes, badges).
 - **Seed démo** (`demo-seed-idempotence.spec.ts`) : les tests de réalisme (fenêtre de 42 jours, win
   rate, journées rouges) portent sur `activeTrades(created)`, le jeu de données principal ; les comptes
   perdus (échoué + sa tentative active, archivé ; volontairement aucun validé) ont leurs propres tests

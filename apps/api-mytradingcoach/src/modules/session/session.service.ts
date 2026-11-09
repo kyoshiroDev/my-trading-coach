@@ -6,6 +6,7 @@ import { BrokerProvider, MoodState, Prisma, SessionStatus } from '@prisma/client
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../infra/redis.service';
 import { AccountsService } from '../accounts/accounts.service';
+import { inactiveAccountsSessionWhere } from '../accounts/account-status-scope';
 import { AnalyticsService } from '../analytics/analytics.service';
 import { computeTradeStats, toParisDateStr } from '@mtc/shared';
 import type { LiveBrokerState, SessionHistoryItem } from '@mtc/shared';
@@ -193,12 +194,18 @@ export class SessionService {
     userId: string,
     limit = 50,
     offset = 0,
-    filter?: { year?: number; month?: number; accountId?: string },
+    filter?: { year?: number; month?: number; accountId?: string; includeInactive?: boolean },
   ): Promise<SessionHistoryItem[]> {
     const where: Prisma.TradeSessionWhereInput = {
       userId,
       status: SessionStatus.CLOSED,
       totalTrades: { gt: 0 },
+      // Compte perdu : séances des comptes échoués et archivés hors de « tous les comptes »
+      // (visibles en choisissant le compte, ou avec includeInactive), comme le journal.
+      ...inactiveAccountsSessionWhere({
+        accountId: filter?.accountId && filter.accountId !== 'all' ? filter.accountId : undefined,
+        includeInactive: filter?.includeInactive === true,
+      }),
     };
 
     if (filter?.accountId && filter.accountId !== 'all') {

@@ -383,17 +383,24 @@ export class DashboardComponent {
   /** Comptes exclus au dernier passage (`échoués:archivés`), null avant le premier chargement. */
   private knownExcluded: string | null = null;
 
+  /**
+   * Derniers trades : même périmètre que les chiffres (`statsParams` : compte précis, sinon comptes
+   * échoués et archivés exclus sauf interrupteur), comme la liste du journal.
+   */
+  private recentTradesFilters(): Record<string, string> {
+    return { limit: '6', ...this.selectedAccount.statsParams() };
+  }
+
   constructor() {
     // Trades Tradovate poussés en direct : mêmes rechargements qu'après un import.
     inject(TradovateLiveSocketService)
       .imported$.pipe(takeUntilDestroyed())
       .subscribe(() => this.reloadAfterImport());
 
-    // Trades récents + activité du compte sélectionné. L'effect relit `accountParam()` →
-    // refetch automatique au changement de compte ('all' = agrégé, sans param).
+    // Trades récents + activité du compte sélectionné. L'effect relit `statsParams()` →
+    // refetch automatique au changement de compte ou de l'interrupteur des comptes perdus.
     effect(() => {
-      const accountId = this.selectedAccount.accountParam();
-      this.tradesStore.loadTrades(accountId ? { limit: '6', accountId } : { limit: '6' });
+      this.tradesStore.loadTrades(this.recentTradesFilters());
       // L'activité (P&L par jour) est un httpResource keyé sur rangeQuery() → refetch auto.
     });
 
@@ -428,7 +435,10 @@ export class DashboardComponent {
       const e = this.selectedAccount.excludedAccounts();
       const key = `${e.failed}:${e.archived}`;
       const known = this.knownExcluded;
-      if (known !== null && key !== known) this.reloadAnalytics();
+      if (known !== null && key !== known) {
+        this.reloadAnalytics();
+        untracked(() => this.tradesStore.loadTrades(this.recentTradesFilters()));
+      }
       this.knownExcluded = key;
     });
 
@@ -536,10 +546,9 @@ export class DashboardComponent {
     // le sélecteur et le capital restaient sur « aucun compte ».
     this.selectedAccount.load();
     this.tradesStore.reset();
-    // Même filtre de compte que le chargement nominal : un `limit` seul ramenait les
-    // trades de TOUS les comptes alors qu'un compte précis pouvait être sélectionné.
-    const accountId = this.selectedAccount.accountParam();
-    this.tradesStore.loadTrades(accountId ? { limit: '6', accountId } : { limit: '6' });
+    // Même filtre que le chargement nominal : un `limit` seul ramenait les trades de TOUS les
+    // comptes alors qu'un compte précis pouvait être sélectionné.
+    this.tradesStore.loadTrades(untracked(() => this.recentTradesFilters()));
     this.reloadAnalytics();
   }
 

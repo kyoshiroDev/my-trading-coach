@@ -46,7 +46,11 @@ beforeAll(async () => {
   const r = rng(20261002 + 2);
   const pick = <T,>(xs: readonly T[]) => xs[Math.floor(r() * xs.length)];
   userId = (await prisma.user.create({ data: { email: `int-b2-journal-${RUN}@test.local`, password: 'x' } })).id;
-  accounts = await Promise.all(['A', 'B'].map(async (label) => (await prisma.tradingAccount.create({ data: { userId, label } })).id));
+  // Compte perdu : B archivé, C échoué (filtre partagé des comptes inactifs, liste ≡ chiffres).
+  accounts = await Promise.all(
+    ([['A', 'ACTIVE'], ['B', 'ARCHIVED'], ['C', 'FAILED']] as const).map(async ([label, status]) =>
+      (await prisma.tradingAccount.create({ data: { userId, label, status } })).id),
+  );
   setups = await Promise.all(['S1', 'S2'].map(async (title) => (await prisma.setup.create({ data: { userId, title, color: '#000' } })).id));
   const sessions = await Promise.all(
     (['TIRED', 'FOCUSED', 'CONFIDENT', null] as const).map(async (moodStart) =>
@@ -85,7 +89,8 @@ afterAll(async () => {
 /** Chaque filtre seul, puis des combinaisons aléatoires. */
 function filterCases(): F[] {
   const dims: Record<keyof F, unknown[]> = {
-    accountId: ['all', ...[0, 1].map((i) => () => accounts[i])],
+    accountId: ['all', ...[0, 1, 2].map((i) => () => accounts[i])],
+    includeInactive: [true, false],
     side: ['LONG', 'SHORT'],
     setupId: [() => setups[0], () => setups[1]],
     emotion: EMOTIONS,
