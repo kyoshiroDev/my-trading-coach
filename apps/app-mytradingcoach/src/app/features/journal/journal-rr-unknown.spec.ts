@@ -114,4 +114,16 @@ describe('Journal — R/R inconnu', () => {
     expect(text(rrCell(el))).toBe('2.50');
     expect(el.querySelector('[data-testid="trade-add-stop"]')).toBeNull();
   });
+
+  it('R/R inconnu : le bouton « Ajouter le stop initial » ouvre la saisie pour CE trade', async () => {
+    const fixture = await render([trade({ id: 'sync-1', riskReward: null })]);
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('mtc-trade-stop-dialog')).toBeNull();
+    const btn = el.querySelector('[data-testid="trade-add-stop"]') as HTMLButtonElement;
+    expect(btn.getAttribute('aria-label')).toBe('Ajouter le stop initial');
+    btn.click();
+    fixture.detectChanges();
+    expect(el.querySelector('mtc-trade-stop-dialog')).not.toBeNull();
+    expect((fixture.componentInstance as unknown as { stopTrade: () => Trade | null }).stopTrade()?.id).toBe('sync-1');
+  });
 });
