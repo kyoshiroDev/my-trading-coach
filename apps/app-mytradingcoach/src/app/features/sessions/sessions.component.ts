@@ -6,6 +6,7 @@ import {
   effect,
   inject,
   signal,
+  untracked,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe, DecimalPipe } from '@angular/common';
@@ -14,6 +15,7 @@ import { SessionApi, SessionHistoryItem } from '../../core/api/session.api';
 import { PnlFormatPipe } from '../../shared/pipes/pnl-format.pipe';
 import { EmotionEmojiPipe } from '../../shared/pipes/emotion-emoji.pipe';
 import { AccountSelectorComponent } from '../../shared/components/account-selector/account-selector.component';
+import { InactiveAccountsToggleComponent } from '../../shared/components/inactive-accounts-toggle/inactive-accounts-toggle.component';
 import { SelectedAccountStore } from '../../core/stores/selected-account.store';
 import { UserStore } from '../../core/stores/user.store';
 import { ErrorStateComponent } from '@mtc/front-ui';
@@ -40,7 +42,7 @@ interface WeekGroup {
   selector: 'mtc-sessions',
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './sessions.component.css',
-  imports: [LucideDynamicIcon, ErrorStateComponent, DatePipe, DecimalPipe, PnlFormatPipe, EmotionEmojiPipe, RouterLink, AccountSelectorComponent],
+  imports: [LucideDynamicIcon, ErrorStateComponent, DatePipe, DecimalPipe, PnlFormatPipe, EmotionEmojiPipe, RouterLink, AccountSelectorComponent, InactiveAccountsToggleComponent],
   templateUrl: './sessions.component.html',
 })
 export class SessionsComponent {
@@ -123,13 +125,25 @@ export class SessionsComponent {
   });
 
   constructor() {
-    // Recharge à chaque changement de mois OU de compte sélectionné (contexte global).
+    // Recharge à chaque changement de mois, de compte sélectionné (contexte global) ou de
+    // l'interrupteur « Inclure les comptes échoués et archivés ».
     effect(() => {
       const [year, month] = this.selectedMonth().split('-').map(Number);
       const accountId = this.selectedAccount.accountParam(); // lit selectedAccountId (réactif)
-      this.loadSessions(year, month, accountId);
+      this.loadSessions(year, month, accountId, this.selectedAccount.inactiveIncluded());
+    });
+
+    // Compte marqué échoué / archivé / supprimé : la liste change. Pas au premier passage.
+    effect(() => {
+      const e = this.selectedAccount.excludedAccounts();
+      const key = `${e.failed}:${e.archived}`;
+      if (this.knownExcluded !== null && key !== this.knownExcluded) untracked(() => this.reload());
+      this.knownExcluded = key;
     });
   }
+
+  /** Comptes exclus au dernier passage, null avant le premier. */
+  private knownExcluded: string | null = null;
 
   protected onMonthChange(value: string): void {
     this.selectedMonth.set(value); // l'effect ci-dessus déclenche le rechargement
@@ -137,13 +151,13 @@ export class SessionsComponent {
 
   protected reload(): void {
     const [year, month] = this.selectedMonth().split('-').map(Number);
-    this.loadSessions(year, month, this.selectedAccount.accountParam());
+    this.loadSessions(year, month, this.selectedAccount.accountParam(), this.selectedAccount.inactiveIncluded());
   }
 
-  private loadSessions(year: number, month: number, accountId?: string): void {
+  private loadSessions(year: number, month: number, accountId?: string, includeInactive = false): void {
     this.isLoading.set(true);
     this.loadError.set(false);
-    this.sessionApi.getSessionsByMonth(year, month, accountId)
+    this.sessionApi.getSessionsByMonth(year, month, accountId, 50, includeInactive)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (res) => {
