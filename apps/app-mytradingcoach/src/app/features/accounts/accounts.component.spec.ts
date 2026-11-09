@@ -107,6 +107,17 @@ describe('AccountsComponent — logique', () => {
     expect((c['totalTrades'] as () => number)()).toBe(59);
   });
 
+  it('montants fractionnaires : arrondi au plus proche, centimes sous 1 $ (jamais « -$1 » pour -0,80 $)', () => {
+    const c = setup({ premium: true, accounts: [] });
+    const money = c['money'] as (v: number, cur: string | null, sign?: boolean) => string;
+    expect(money.call(c, -0.8, 'USD', true)).toBe('-$0.80');
+    expect(money.call(c, -0.5, 'USD', true)).toBe('-$0.50');
+    expect(money.call(c, 49911.5, 'USD')).toBe('$49,912');
+    expect(money.call(c, 49999.2, 'USD')).toBe('$49,999');
+    expect(money.call(c, 0.49, 'USD', true)).toBe('+$0.49');
+    expect(money.call(c, -0.01, 'USD', true)).toBe('-$0.01');
+  });
+
   it('compte « à surveiller » les comptes dont la marge drawdown est dépassée ou ≤ 25 %', () => {
     const dd = (pct: number, breached: boolean) => ({ type: 'TRAILING' as const, floor: 0, margin: 0, maxDrawdown: 2500, pct, breached, source: 'manual' as const, rule: null });
     const c = setup({

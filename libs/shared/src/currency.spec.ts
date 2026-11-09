@@ -46,12 +46,33 @@ describe('formatMoney : montant tel quel, jamais converti', () => {
     expect(formatMoney(24, null, { decimals: 0 })).toBe('+24');
   });
 
-  it('un montant arrondi à zéro ne porte jamais de « - » (« -$0 » sur un P&L de -0,40 $)', () => {
-    expect(formatMoney(-0.4, 'USD', { decimals: 0 })).toBe('+$0');
-    expect(formatMoney(-0.4, 'USD', { decimals: 0, sign: false })).toBe('$0');
+  it('un montant affiché à zéro ne porte jamais de « - »', () => {
     expect(formatMoney(-0.004, 'USD')).toBe('+$0.00');
-    // Au-delà du demi, l'arrondi est un vrai montant : le signe reste.
-    expect(formatMoney(-0.6, 'USD', { decimals: 0 })).toBe('-$1');
+    expect(formatMoney(-0.004, 'USD', { decimals: 0, sign: false })).toBe('$0.00');
+    expect(formatMoney(0, 'USD', { decimals: 0 })).toBe('+$0');
+  });
+
+  // Valeurs fractionnaires du compte Lucid (solde réel 49 911,50, -0,80 $ de frais le 9/11).
+  it.each([
+    // [valeur, 0 décimale avec signe, 0 décimale sans signe, 2 décimales]
+    [-0.8, '-$0.80', '-$0.80', '-$0.80'],
+    [-0.5, '-$0.50', '-$0.50', '-$0.50'],
+    [49911.5, '+$49,912', '$49,912', '+$49,911.50'],
+    [49999.2, '+$49,999', '$49,999', '+$49,999.20'],
+    [0.49, '+$0.49', '$0.49', '+$0.49'],
+    [-0.01, '-$0.01', '-$0.01', '-$0.01'],
+  ])('%d : jamais un arrondi qui grossit une perte, centimes sous 1 $', (v, zeroSigned, zeroPlain, two) => {
+    expect(formatMoney(v, 'USD', { decimals: 0 })).toBe(zeroSigned);
+    expect(formatMoney(v, 'USD', { decimals: 0, sign: false })).toBe(zeroPlain);
+    expect(formatMoney(v, 'USD')).toBe(two);
+  });
+
+  it('au-delà de 1 $ : arrondi au plus proche, demi vers l\'extérieur (symétrique)', () => {
+    expect(formatMoney(-1.5, 'USD', { decimals: 0 })).toBe('-$2');
+    expect(formatMoney(1.5, 'USD', { decimals: 0 })).toBe('+$2');
+    expect(formatMoney(-1.4, 'USD', { decimals: 0 })).toBe('-$1');
+    expect(formatMoney(-0.8, 'USDT', { decimals: 0 })).toBe('-0.80 USDT');
+    expect(formatMoney(-0.8, 'USD', { decimals: 0, compact: true, symbol: false })).toBe('-0.80');
   });
 
   it('options : sans signe, sans symbole', () => {

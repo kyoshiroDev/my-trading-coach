@@ -378,7 +378,11 @@ reçu — un compte prop firm en USD s'affiche en USD pour tout le monde. Source
 `@mtc/shared` (`libs/shared/src/currency.ts`) — `ACCOUNT_CURRENCIES` (USD, USDT, EUR : sélecteurs
 de l'onboarding et de la page Comptes, validation API), `formatMoney(value, currency)` (`$1.00`,
 `€1.00`, `1.00 USDT` : code APRÈS le montant pour les devises sans symbole ; signe de la valeur
-AFFICHÉE : -0,40 $ à 0 décimale → `+$0`, jamais `-$0`), `commonCurrency`.
+AFFICHÉE : jamais `-$0`), `commonCurrency`. **Arrondi** : au plus proche, demi vers l'extérieur
+(49 911,50 → `$49,912`, -1,50 → `-$2`) ; un montant non nul sous 1 en valeur absolue garde ses
+centimes même à `decimals: 0` (-0,80 → `-$0.80`, jamais `-$1`). C'est le SEUL formateur d'argent :
+pas de `Math.floor/round`, `toFixed` ni `Intl` à côté (`compactMoney` des axes passe par lui sous 1000).
+Tests de référence : `libs/shared/src/currency.spec.ts`, `core/services/money-rounding.spec.ts`.
 - **Totaux de l'écran** : `MoneyService.format()` / pipes → `SelectedAccountStore.displayCurrency`
   (compte sélectionné, sinon devise commune de « Tous les comptes »).
 - **Ligne de trade** : devise de SON compte → passer l'`accountId` (`pnlFormat : entry : accountId`,
