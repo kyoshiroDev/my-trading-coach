@@ -1,6 +1,6 @@
-import { DrawdownFloorRule, drawdownFloor, formatMoney } from '@mtc/shared';
+import { DrawdownFloorRule, drawdownFloor, formatMoney, maxDrawdownOfCumulative } from '@mtc/shared';
 import { EquityPoint, PeriodBefore } from '../api/analytics.api';
-import { anchoredDrawdown, cumulativePayouts, NO_HISTORY } from './equity-period.util';
+import { cumulativePayouts, NO_HISTORY } from './equity-period.util';
 import { TradingAccount } from '../api/accounts.api';
 import { requirementLabel } from '../../features/accounts/account-progress.util';
 
@@ -54,14 +54,17 @@ export function equitySeries(points: EquityPoint[], startingCapital: number | nu
 }
 
 /**
- * Drawdown jour par jour (≤ 0) : clôture sous le plus haut depuis l'ouverture du compte
- * (`anchoredDrawdown`, sommet d'avant la période compris). La période peut partir en drawdown.
+ * Drawdown « sous l'eau » (≤ 0) après chaque point de la courbe, règle unique `@mtc/shared`
+ * (`maxDrawdownOfCumulative`) : sommet = solde du début de période puis plus haut atteint. Avec les
+ * points de `/equity-curve/trades`, c'est le drawdown après chaque trade clôturé (Statistiques,
+ * comme le KPI du tableau de bord). Le mode plan prop firm passe par `floorSeries`, pas par ici.
  */
-export function drawdownSeries(points: EquityPoint[], before: PeriodBefore = NO_HISTORY): ChartSeries {
+export function drawdownSeries(points: EquityPoint[]): ChartSeries {
   return {
     dates: [null, ...points.map((p) => p.date)],
-    values: anchoredDrawdown(points, before),
+    values: maxDrawdownOfCumulative(points.map((p) => p.cumulativePnl)).series,
     dayPnl: dayPnlOf(points),
+    ...(isPerTrade(points) ? { perTrade: true, trades: [null, ...points.map((p) => p.trades ?? null)] } : {}),
   };
 }
 
@@ -276,7 +279,7 @@ export function planFloorOf(account: TradingAccount | null): PlanFloor | null {
  */
 export function drawdownHelp(plan: PlanFloor | null, currency: string | null): string {
   if (!plan) {
-    return "Écart entre ton solde en clôture de journée et son plus haut depuis l'ouverture du compte. Mesure la baisse depuis un pic, pas une perte définitive.";
+    return "Écart entre ton solde et son plus haut de la période, après chaque trade clôturé (frais inclus), hors variations en cours de trade. Mesure la baisse depuis un pic, pas une perte définitive.";
   }
   const fmt = (v: number) => formatMoney(v, currency, { decimals: 0, sign: false });
   const { rule } = plan;

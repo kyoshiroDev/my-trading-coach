@@ -43,7 +43,7 @@ export interface PerfChartOptions {
    * compte) au lieu du drawdown « sous l'eau ». `periodStart` = solde au début de la période.
    */
   floor?: { plan: PlanFloor; periodStart: number } | null;
-  /** Drawdown : historique avant la période (`before` de l'API) → part du sommet déjà atteint. */
+  /** Drawdown en mode plan prop firm : historique avant la période (`before` de l'API) → plancher. */
   before?: PeriodBefore | null;
   /** Équité : objectif de gain (repère de la période) → ligne pointillée verte, sinon rien. */
   objective?: ObjectiveLine | null;
@@ -136,7 +136,7 @@ export class ChartService {
       const low = Math.min(f.limit, ...f.values) - opts.floor.plan.rule.amount * 0.15;
       return this.build(canvas, series, opts, (p) => p.red, { max: f.top, suggestedMin: low }, { mode: 'floor', floor: f });
     }
-    const series = drawdownSeries(points, opts.before ?? undefined);
+    const series = drawdownSeries(points);
     const deepest = Math.min(...series.values);
     return this.build(
       canvas,

@@ -98,30 +98,6 @@ export function cumulativePayouts(points: EquityPoint[]): number[] {
   return points.map((p) => (paid += p.payout ?? 0));
 }
 
-/**
- * Drawdown jour par jour (≤ 0), point de départ compris : clôture de journée moins le plus haut
- * des clôtures DEPUIS L'OUVERTURE DU COMPTE (sommet d'avant la période inclus, solde de départ
- * compris), comme la règle EOD des prop firms et la marge de Mes comptes. La période peut donc
- * commencer déjà en drawdown.
- */
-export function anchoredDrawdown(points: EquityPoint[], before: PeriodBefore = NO_HISTORY): number[] {
-  let peak = Math.max(0, before.peak, before.pnl);
-  const start = before.pnl - peak;
-  return [
-    start,
-    ...points.map((p) => {
-      const profit = before.pnl + p.cumulativePnl;
-      if (profit > peak) peak = profit;
-      return profit - peak;
-    }),
-  ];
-}
-
-/** Plus fort drawdown d'une série (≤ 0), 0 si vide. */
-export function maxDrawdownOf(series: number[]): number {
-  return series.length ? Math.min(0, ...series) : 0;
-}
-
 /** Comptes d'une vue : de quoi lire un solde sans dépendre du store (specs, calcul pur). */
 interface BalanceAccount {
   status: string;

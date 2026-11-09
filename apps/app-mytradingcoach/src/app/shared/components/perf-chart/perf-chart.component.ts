@@ -54,7 +54,7 @@ export class PerfChartComponent {
    * montants du compte ; null → drawdown « sous l'eau » depuis 0.
    */
   readonly planFloor = input<PlanFloor | null>(null);
-  /** Drawdown : historique avant la période (sommet déjà atteint, règle EOD). */
+  /** Drawdown en mode plan prop firm : historique avant la période (plancher du plan). */
   readonly before = input<PeriodBefore | null>(null);
   /** Équité : objectif de gain du plan / du compte (`planObjectiveLine`) ; null → pas de ligne. */
   readonly objective = input<ObjectiveLine | null>(null);
@@ -79,7 +79,7 @@ export class PerfChartComponent {
   private readonly series = computed(() =>
     this.kind() === 'equity'
       ? equitySeries(this.points(), this.startingCapital())
-      : drawdownSeries(this.points(), this.before() ?? undefined),
+      : drawdownSeries(this.points()),
   );
 
   /** Plancher du plan affiché (carte drawdown seulement). */

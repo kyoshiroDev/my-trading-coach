@@ -22,6 +22,7 @@ function setup() {
   const selected = signal<Sel>(null);
   const analyticsApi = {
     getDailyEquityCurve: vi.fn(() => of({ data: { points: [], startingCapital: null } })),
+    getTradesEquityCurve: vi.fn(() => of({ data: { points: [], startingCapital: null, maxDrawdown: 0, trades: 0 } })),
     getMonthActivity: vi.fn(() => of({ data: null })),
   };
   const tradesApi = { getAll: vi.fn(() => of({ data: { data: [{ tradedAt: '2026-08-14T15:30:00.000Z' }], nextCursor: null, hasNextPage: false } })) };

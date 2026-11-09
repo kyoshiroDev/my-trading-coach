@@ -162,6 +162,18 @@ export class AnalyticsApi {
     );
   }
 
+  /** Courbe par trade clôturé + drawdown max de la période (même requête que le tableau de bord). */
+  getTradesEquityCurve(query: { from?: string | null; to?: string | null; accountId?: string | null; includeInactive?: boolean }): Observable<{
+    data: TradesEquityCurve;
+  }> {
+    const params: Record<string, string> = {};
+    if (query.from) params['from'] = query.from;
+    if (query.to) params['to'] = query.to;
+    if (query.accountId) params['accountId'] = query.accountId;
+    else if (query.includeInactive) params['includeInactive'] = 'true';
+    return this.http.get<{ data: TradesEquityCurve }>(`${this.base}/equity-curve/trades`, { params });
+  }
+
   getTopAssets(): Observable<{ data: TopAsset[] }> {
     return this.http.get<{ data: TopAsset[] }>(`${this.base}/top-assets`);
   }
