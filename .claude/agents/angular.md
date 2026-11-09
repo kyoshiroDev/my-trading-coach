@@ -425,7 +425,9 @@ envoyées à l'API sont des horodatages ISO complets.
   `/analytics/equity-curve/trades` (toutes les clôtures, avant réduction). Libellé : « trades
   clôturés », jamais de précision intra-trade. La courbe d'équité du dashboard est PAR TRADE
   (`/equity-curve/trades`, ≤ 500 points, pics et creux gardés ; payouts par `withPayoutsByTrade`,
-  infobulle « Trade » / « N trades » avec l'heure).
+  infobulle « Trade » / « N trades » avec l'heure). Axe X : repères posés par `dateTickIndices` (premier
+  point de chaque date, 7 au plus, 4 en étroit, premier et dernier gardés) dans `afterBuildTicks`,
+  `autoSkip: false` ; ne pas revenir à des libellés vides + auto-saut (le 06/11 disparaissait).
 - **Carte drawdown des Statistiques** : sans plan relié, même règle (`drawdownSeries` =
   `maxDrawdownOfCumulative` sur les points de `/equity-curve/trades`, `drawdownPoints`) → même
   chiffre que le KPI du dashboard. Plan prop firm relié : courbe journalière + `floorSeries`

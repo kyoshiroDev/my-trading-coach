@@ -290,6 +290,7 @@ drawdown). Ne jamais recréer un graphique d'équité à part (l'ancien SVG « g
   y a eu des trades). Carte étroite (< 560 px) : onglets de période sous le titre.
 - **Survol / toucher** : crosshair vertical fin + pastille + infobulle `--bg-3` (date, valeur,
   « Jour ±$x ») dessinée dans le canvas → ne sort jamais de l'écran ; `touch-action: pan-y`.
+  Courbe par trade : infobulle au centime (valeur, « Trade ±$x,xx », « Payout ») ; courbes journalières au dollar.
 - **Animation** : découverte gauche → droite 380 ms quand les données changent, aucune si
   `prefers-reduced-motion` ou simple redimensionnement.
 - **Accessibilité** : canvas `role="img"` + `aria-label` (départ, actuel, max pour le drawdown, période).
