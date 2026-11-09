@@ -5,3 +5,11 @@
 Réponse de Greg (texte exact) :
 
 Option 1, remplace par « Marge avant le plancher »
+
+---
+
+## Complément (09/11, après la relecture)
+
+Greg (texte exact) : « OK push, et fais aussi le fix DayTimeline aplique le correctif du relecteur »
+
+Correctif du relecteur appliqué à `DayTimeline.astro` (ligne 83) : le faux message de l'app entre guillemets devient « Deuxième perte en 3 minutes, taille doublée : ta marge avant la perte du jour max tombe à 240 $. Tu le savais, mais l'adrénaline masquait ça. Lui, il le voit au trade près. »
