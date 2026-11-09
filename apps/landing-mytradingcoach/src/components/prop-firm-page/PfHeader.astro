@@ -33,8 +33,10 @@ import FounderBanner from '../FounderBanner.astro';
     right: 0;
     z-index: 50;
     height: 60px;
-    background: rgba(6, 9, 15, 0.92);
-    backdrop-filter: blur(12px);
+    /* Même fond que la barre de l'app et la Nav de l'accueil (--bg2 à 97 % + flou). */
+    background: color-mix(in srgb, var(--bg2) 97%, transparent);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
     border-bottom: 1px solid var(--b);
   }
   /* Bandeau de l'offre affiché : l'en-tête descend de 32 px par transform, comme la Nav de l'accueil

@@ -28,6 +28,7 @@
   --b2: rgba(99, 155, 255, 0.22);
   --blue: #3b82f6;
   --blue2: #60a5fa;
+  --on-blue: #fff; /* texte des boutons pleins bleus : 5,2:1 (--txt n'y fait que 4,3:1) */
   --pulse: #22d3ee;
   --green: #10b981;
   --red: #ef4444;
