@@ -7,6 +7,7 @@ import {
   effect,
   inject,
   signal,
+  untracked,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize } from 'rxjs';
@@ -23,6 +24,9 @@ import {
   LucideStar as Star,
   LucidePin as Pin,
 } from '@lucide/angular';
+
+/** Nom d'annonce sans suffixe de période (« … (Oct) »), comme la clé des analyses côté API. */
+const stripPeriod = (name: string): string => name.replace(/\s*\([^)]*\)\s*$/, '').trim();
 
 type EcoSession = 'asia' | 'europe' | 'us';
 interface SessionGroup { asia: EcoEvent[]; europe: EcoEvent[]; us: EcoEvent[]; }
@@ -78,6 +82,12 @@ export class EcoCalendarComponent implements OnInit {
   };
 
   constructor() {
+    // Jour passé affiché : ses analyses IA déjà produites (une lecture par jour, sans appel IA),
+    // pour que la colonne IA montre le sentiment sans attendre un clic.
+    effect(() => {
+      const date = this.selectedDayGroup()?.date;
+      if (date && date < todayParis()) untracked(() => this.loadPastAnalyses(date));
+    });
     effect(() => {
       if (this.tabInitialized) return;
       const user = this.userStore.user();
@@ -331,13 +341,52 @@ export class EcoCalendarComponent implements OnInit {
   protected readonly loadingAnalysis = signal<string | null>(null);
   private readonly analysisCache = new Map<string, EcoResultAnalysis>();
 
+  /** Analyses lues (jour passé) : le Map n'est pas un signal, ce compteur rafraîchit la vue. */
+  private readonly analysisTick = signal(0);
+  private readonly pastDatesLoaded = new Set<string>();
+
+  /** Annonce d'un jour passé : son analyse vient de la base (release-analyses), jamais de l'IA. */
+  private isPast(event: EcoEvent): boolean {
+    const date = this.dateOf(event);
+    return !!date && date < todayParis();
+  }
+
+  /** Date de l'annonce : la vue semaine (`range`) ne la porte pas, c'est celle du jour affiché. */
+  private dateOf(event: EcoEvent): string | undefined {
+    return event.date ?? this.selectedDayGroup()?.date;
+  }
+
+  private analysisKey(event: EcoEvent): string {
+    return this.isPast(event) ? `${this.dateOf(event)}|${stripPeriod(event.name)}` : event.name;
+  }
+
+  private loadPastAnalyses(date: string, done?: () => void): void {
+    if (this.pastDatesLoaded.has(date)) { done?.(); return; }
+    this.pastDatesLoaded.add(date);
+    this.api.getReleaseAnalyses(date)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: res => {
+          for (const [name, analysis] of Object.entries(res?.data ?? {})) this.analysisCache.set(`${date}|${name}`, analysis);
+          this.analysisTick.update(n => n + 1);
+          done?.();
+        },
+        error: () => { this.pastDatesLoaded.delete(date); done?.(); },
+      });
+  }
+
   /** Replie/déplie l'analyse d'un event. 1 seul appel réseau au 1er dépliage (puis cache). */
   protected toggleAnalysis(event: EcoEvent): void {
     const name = event.name;
     if (this.expandedEvent() === name) { this.expandedEvent.set(null); return; }
     this.expandedEvent.set(name);
-    if (this.analysisCache.has(name)) return; // déjà chargé → aucun appel
+    if (this.analysisCache.has(this.analysisKey(event))) return; // déjà chargé → aucun appel
     this.loadingAnalysis.set(name);
+    if (this.isPast(event)) {
+      // Jour passé : analyse enregistrée ou rien (« indisponible »), aucun appel IA.
+      this.loadPastAnalyses(this.dateOf(event)!, () => this.loadingAnalysis.set(null));
+      return;
+    }
     this.api.analyzeResult(name)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
@@ -353,7 +402,8 @@ export class EcoCalendarComponent implements OnInit {
   }
 
   protected analysisFor(event: EcoEvent): EcoResultAnalysis | undefined {
-    return this.analysisCache.get(event.name);
+    this.analysisTick();
+    return this.analysisCache.get(this.analysisKey(event));
   }
 
   protected sentArrow(s: string): string { return s === 'bull' ? '▲' : s === 'bear' ? '▼' : '→'; }
@@ -362,7 +412,7 @@ export class EcoCalendarComponent implements OnInit {
 
   /** Sentiment de la devise de l'event (sinon dominant des actifs analysés). Neutre tant que non chargé. */
   protected ccySent(event: EcoEvent): string {
-    const a = this.analysisCache.get(event.name);
+    const a = this.analysisFor(event);
     if (!a) return 'neutral';
     const match = a.assetSentiments.find(x => x.asset === event.currency);
     if (match) return match.sentiment;

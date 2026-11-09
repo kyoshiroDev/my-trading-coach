@@ -35,7 +35,7 @@ function fakePrisma() {
         : []),
   });
   const names = [
-    'user', 'trade', 'tradeSession', 'weeklyDebrief', 'dailyRecap', 'setup', 'ecoEvent', 'tradingAccount',
+    'user', 'trade', 'tradeSession', 'weeklyDebrief', 'dailyRecap', 'setup', 'ecoEvent', 'ecoReleaseAnalysis', 'tradingAccount',
     'brokerConnection', 'brokerDailyClose', 'accountRiskDay', 'propRiskEvent', 'behaviorAlert', 'accountIncident',
   ];
   const prisma = Object.fromEntries(names.map((n) => [n, model(n)])) as Record<string, unknown>;

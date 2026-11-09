@@ -505,6 +505,14 @@ du code** :
 >   `(date, step, source, medium, campaign, inApp, detail, path)`. Le nom d'index, tronqué à 63
 >   caractères par Prisma, ne change pas. `detail` porte le seuil (`25|50|75|100` ou `10|30|60`).
 
+## Analyses des annonces publiées (`EcoReleaseAnalysis`, 2026-11-09)
+
+Migration `20261109180000_eco_release_analysis` (additive, table seule) : l'analyse IA d'une annonce
+publiée (`analyze-result`) est gardée par `(date, eventName sans suffixe de période, assetsKey)`,
+écrite au premier calcul (upsert, `update: {}`), relue pour un jour passé par
+`GET /eco-calendar/release-analyses` sans appel IA. Pas d'`@@index([date])` : préfixe de l'unique.
+Le seed démo n'en écrit que sans FMP (faux vendredi NFP), jamais sur des annonces FMP.
+
 ## Index des requêtes chaudes (SCA-B2-05, 2026-10-03)
 
 Migration `20261003160000_b2_index_cleanup` :

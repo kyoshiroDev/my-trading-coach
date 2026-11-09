@@ -12,6 +12,7 @@ import type { EcoCalendarData, EcoResultAnalysis, FmpEcoEvent } from './eco-cale
 import * as dates from './eco-calendar.dates';
 import { classifyEcoEvent, type EcoImpact } from './eco-calendar.impact';
 import { readUserPins, saveUserPins, sortWithPins, userTopAssets } from './eco-calendar.pins';
+import { assetsSignature, pickReleaseAnalyses, stripPeriod, withDisplayNames } from './eco-release-analysis';
 import { fetchWithTimeout } from '../../common/utils/fetch-timeout';
 
 // Réexport : les appelants existants importent ces types depuis le service.
@@ -501,7 +502,6 @@ export class EcoCalendarService {
     if (!events) events = await this.getEventsFromDb(today);
 
     // Match tolérant : nom exact, sinon nom sans suffixe de période ("(Jun)"…).
-    const stripPeriod = (n: string) => n.replace(/\s*\([^)]*\)\s*$/, '').trim();
     let event = events.find((e) => e.name === eventName);
     if (!event) {
       const target = stripPeriod(eventName);
@@ -514,7 +514,7 @@ export class EcoCalendarService {
     // Cache serveur : l'analyse d'un event publié est stable sur la journée.
     // Clé = (date, event sans suffixe, signature actifs) → mutualise entre users
     // de mêmes actifs et évite tout rappel modèle à la 2ᵉ ouverture de session.
-    const assetsSig = [...userAssets].map((a) => a.trim().toUpperCase()).sort().join(',') || 'none';
+    const assetsSig = assetsSignature(userAssets);
     const analysisKey = `eco:analysis:${today}:${stripPeriod(event.name)}:${assetsSig}`;
     try {
       const cached = await this.redis.get(analysisKey);
@@ -535,8 +535,36 @@ export class EcoCalendarService {
       } catch {
         // cache best-effort
       }
+      // Gardée en base pour les jours suivants (calendrier d'un jour passé), sans nouvel appel IA.
+      await this.prisma.ecoReleaseAnalysis
+        .upsert({
+          where: { date_eventName_assetsKey: { date: today, eventName: stripPeriod(event.name), assetsKey: assetsSig } },
+          update: {},
+          create: { date: today, eventName: stripPeriod(event.name), assetsKey: assetsSig, analysisJson: JSON.stringify(analysis) },
+        })
+        .catch((err: Error) => this.logger.warn(`Eco result analysis not stored: ${err.message}`));
     }
     return analysis;
+  }
+
+  /**
+   * Analyses déjà produites pour les annonces publiées d'un jour PASSÉ, par nom d'annonce sans
+   * suffixe de période. Lecture seule, aucun appel IA (donc ouverte au compte démo). Aujourd'hui
+   * et après : vide, l'analyse du jour passe par `analyze-result`.
+   */
+  async getReleaseAnalyses(userId: string, date: string): Promise<Record<string, EcoResultAnalysis>> {
+    if (date >= todayParis()) return {};
+    const [rows, userAssets, events] = await Promise.all([
+      this.prisma.ecoReleaseAnalysis.findMany({
+        where: { date },
+        select: { eventName: true, assetsKey: true, analysisJson: true, createdAt: true },
+      }),
+      this.getUserTopAssets(userId),
+      this.prisma.ecoEvent.findMany({ where: { date }, select: { name: true, nameFr: true } }),
+    ]);
+    // Le calendrier affiche les annonces sous leur libellé français (`nameFr ?? name`) : l'analyse,
+    // rangée sous le nom FMP, est aussi rendue sous ce libellé (sans suffixe de période).
+    return withDisplayNames(pickReleaseAnalyses(rows, userAssets), events);
   }
 
 

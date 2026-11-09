@@ -712,6 +712,21 @@ model EcoAnalysisCache {
   @@unique([date, assetsKey])
 }
 
+/// Analyse IA d'une annonce PUBLIÉE (`analyze-result`), gardée après sa journée (2026-11-09) :
+/// le calendrier la relit pour un jour passé (GET /eco-calendar/release-analyses), sans appel IA.
+/// Avant, elle ne vivait que dans Redis pour la journée : un jour passé n'avait plus d'analyse.
+/// Écrite au premier calcul par (date, annonce sans suffixe de période, signature d'actifs).
+model EcoReleaseAnalysis {
+  id           String   @id @default(cuid())
+  date         String // YYYY-MM-DD Paris
+  eventName    String // nom FMP sans suffixe de période (« Nonfarm Payrolls »)
+  assetsKey    String // signature normalisée des actifs (comme EcoAnalysisCache)
+  analysisJson String   @db.Text
+  createdAt    DateTime @default(now())
+
+  @@unique([date, eventName, assetsKey]) // sert aussi la lecture par date (préfixe)
+}
+
 enum MoodState {
   CONFIDENT
   FOCUSED
