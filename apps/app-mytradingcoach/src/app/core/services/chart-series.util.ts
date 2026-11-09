@@ -73,7 +73,8 @@ export function maxDrawdownIndex(values: number[]): number | null {
 export function compactMoney(value: number, currency: string | null, sign = false, step?: number): string {
   const abs = Math.abs(value);
   const signed = (n: number) => (value < 0 ? -n : n);
-  if (abs < 1000) return formatMoney(signed(Math.round(abs)), currency, { decimals: 0, sign });
+  // Sous 1000 : règle commune de `formatMoney` (arrondi au plus proche, centimes sous 1).
+  if (abs < 1000) return formatMoney(value, currency, { decimals: 0, sign });
   const [div, unit] = abs >= 1_000_000 ? [1_000_000, 'M'] : [1000, 'k'];
   const scaled = abs / div;
   // Décimales de l'écart entre repères (0,25k → 2), plafonnées à 2.
