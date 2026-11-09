@@ -123,7 +123,7 @@ describe('getSummary — accessible FREE et PREMIUM', () => {
       // Dates fixes : horloge figée au lundi 09/11/2026 (règle du dépôt), seulement pour Date.
       vi.useFakeTimers({ toFake: ['Date'] });
       vi.setSystemTime(new Date('2026-11-09T18:00:00Z'));
-      onTestFinished(() => vi.useRealTimers());
+      onTestFinished(() => { vi.useRealTimers(); });
       await seed([
         { ...makeTrade(-268), tradedAt: new Date('2026-11-06T08:22:00Z') },
         { ...makeTrade(-267.5), tradedAt: new Date('2026-11-06T08:45:00Z') },
