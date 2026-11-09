@@ -400,7 +400,19 @@ export class TradesService {
       dto.pnl !== undefined;
 
     const newPnl = priceFieldsChanged ? calculatePnl(merged) : undefined;
-    const newRR = priceFieldsChanged ? calculateRiskReward(merged) : undefined;
+    // R/R recalculé dès qu'un de SES champs change : avant, ajouter ou retirer un stop sans toucher
+    // aux prix laissait le R/R d'avant (absent ou périmé). Un R/R fourni par le client prime, comme
+    // à la création ; sinon un R/R devenu incalculable s'efface (null), il ne reste pas figé.
+    const rrFieldsChanged =
+      priceFieldsChanged ||
+      dto.stopLoss !== undefined ||
+      dto.takeProfit !== undefined ||
+      dto.side !== undefined;
+    const computedRR = rrFieldsChanged ? calculateRiskReward(merged) : undefined;
+    const newRR: number | null | undefined =
+      computedRR !== undefined ? computedRR
+      : rrFieldsChanged && dto.riskReward === undefined ? null
+      : undefined;
 
     // Recalcul de la note d'exécution si un champ concerné change.
     const execRelevant =
@@ -430,7 +442,7 @@ export class TradesService {
           : null;
         const a = await this.computeExecution(existing.accountId ?? undefined, {
           ...merged,
-          riskReward: newRR ?? merged.riskReward,
+          riskReward: newRR === undefined ? merged.riskReward : newRR,
           tradeSession: { moodStart },
         });
         execData = {

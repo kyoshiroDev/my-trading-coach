@@ -525,6 +525,30 @@ describe('TradesService', () => {
     });
   });
 
+  describe('update — R/R recalculé quand le stop ou l’objectif change seul', () => {
+    it('stop ajouté sans toucher aux prix : R/R calculé (avant : laissé vide)', async () => {
+      const existing = { ...mockTrade, stopLoss: null, takeProfit: 53000, riskReward: null };
+      mockPrisma.trade.findUnique.mockResolvedValue(existing);
+      mockPrisma.trade.update.mockImplementation(({ data }) => Promise.resolve({ ...existing, ...data }));
+      await service.update('user-123', 'trade-123', { stopLoss: 49000 });
+      expect(mockPrisma.trade.update.mock.calls[0][0].data.riskReward).toBe(3);
+    });
+
+    it('stop retiré : R/R effacé (null), pas figé sur l’ancienne valeur', async () => {
+      mockPrisma.trade.findUnique.mockResolvedValue(mockTrade);
+      mockPrisma.trade.update.mockImplementation(({ data }) => Promise.resolve({ ...mockTrade, ...data }));
+      await service.update('user-123', 'trade-123', { stopLoss: null as unknown as number });
+      expect(mockPrisma.trade.update.mock.calls[0][0].data.riskReward).toBeNull();
+    });
+
+    it('seuls setup/émotion changent : R/R non touché', async () => {
+      mockPrisma.trade.findUnique.mockResolvedValue(mockTrade);
+      mockPrisma.trade.update.mockImplementation(({ data }) => Promise.resolve({ ...mockTrade, ...data }));
+      await service.update('user-123', 'trade-123', { setupId: 'setup-2' });
+      expect(mockPrisma.trade.update.mock.calls[0][0].data).not.toHaveProperty('riskReward');
+    });
+  });
+
   // un setup archivé ne doit plus geler les trades qui l'utilisent.
   // Le front renvoie le DTO complet à chaque édition : revalider un `setupId`
   // inchangé rendait tout trade historique non modifiable dès que son setup était
