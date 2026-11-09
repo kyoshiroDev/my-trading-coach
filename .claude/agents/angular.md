@@ -916,10 +916,17 @@ les chiffres (jamais au premier passage).
   « Reconnecter » ; l'import CSV ne cible déjà que `activeAccounts()`). Une connexion DÉJÀ établie sur
   un compte qui devient échoué, validé ou archivé n'est pas touchée : elle reste `CONNECTED` et la
   synchro continue côté API (décision en attente, issue #683).
-- Journal : la liste garde tout, badge sur les trades d'un compte échoué ou archivé (la cellule de
-  l'actif passe à la ligne au lieu de couper le badge). Les KPIs utilisent `statsFilters`
-  (`includeInactive` en plus) ; la liste garde `journalFilters` (l'interrupteur ne la recharge pas).
-  Compteur des filtres : « n trades dans les chiffres » quand des comptes sont exclus.
+- Journal (2026-11-09, remplace « la liste garde tout ») : UN SEUL jeu de filtres `journalFilters`
+  (avec `includeInactive` quand l'interrupteur est actif) pour la liste ET les KPIs. Par défaut, les
+  trades des comptes échoués et archivés ne sont ni dans la liste, ni dans les en-têtes de jour et de
+  semaine, ni dans la barre ; l'interrupteur recharge les deux et les fait entrer partout, avec le
+  badge (la cellule de l'actif passe à la ligne au lieu de couper le badge). Compte marqué échoué /
+  archivé : liste et KPIs rechargés. Compteur des filtres : « n trades » (plus de « dans les
+  chiffres » : liste = chiffres). Test : `journal-lost-account.spec.ts`.
+- Tableau de bord, « derniers trades » : `{ limit: '6', ...statsParams() }`, même périmètre que les chiffres.
+- Mes comptes : « Voir les trades » sur la sous-ligne « Hors statistiques » d'un compte échoué ou
+  archivé qui a des trades → `store.select(id)` puis `/journal` (un compte précis s'affiche toujours,
+  l'interrupteur n'est pas touché).
 
 ⚠️ `src/styles/global.css` n'est importé nulle part : un style global va dans `src/styles.css`
 (c'est là qu'est `.status-badge`).

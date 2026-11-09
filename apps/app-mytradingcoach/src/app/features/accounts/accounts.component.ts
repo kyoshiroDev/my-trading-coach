@@ -484,6 +484,16 @@ export class AccountsComponent implements OnInit {
     return a.status === 'ACTIVE';
   }
 
+  /**
+   * « Voir les trades » d'un compte échoué ou archivé : le journal sur CE compte. Un compte précis
+   * s'affiche toujours (l'API ne filtre les comptes perdus qu'en « Tous les comptes »), badge à
+   * l'appui ; l'interrupteur, qui ne joue qu'en « Tous les comptes », n'est pas touché.
+   */
+  protected openTrades(a: TradingAccount): void {
+    this.store.select(a.id);
+    void this.router.navigate(['/journal']);
+  }
+
   protected openTradovateConnect(a: TradingAccount): void {
     if (!this.canConnect(a)) return;
     this.connectTarget.set({ id: a.id, label: a.label });

@@ -41,6 +41,12 @@ export function inactiveAccountsTradeSql(scope: AccountScope = {}): Prisma.Sql {
   ))`;
 }
 
+/** Filtre Prisma des SÉANCES (historique des sessions) : même règle, séances sans compte comptées. */
+export function inactiveAccountsSessionWhere(scope: AccountScope = {}): Prisma.TradeSessionWhereInput {
+  if (!excludesInactiveAccounts(scope)) return {};
+  return { OR: [{ accountId: null }, { account: { status: { notIn: [...INACTIVE_ACCOUNT_STATUSES] } } }] };
+}
+
 /** Filtre Prisma des COMPTES (listes de comptes d'un contexte global : débrief, IA). */
 export function activeAccountsWhere(scope: AccountScope = {}): Prisma.TradingAccountWhereInput {
   return excludesInactiveAccounts(scope) ? { status: { notIn: [...INACTIVE_ACCOUNT_STATUSES] } } : {};

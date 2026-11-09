@@ -1903,6 +1903,7 @@ paramètre `includeInactive=true` réintègre tout.
 |---|---|
 | `inactiveAccountsTradeWhere(scope)` | filtre Prisma des trades (`where`) |
 | `inactiveAccountsTradeSql(scope)` | même filtre en SQL brut, table `"Trade"` aliasée `t` |
+| `inactiveAccountsSessionWhere(scope)` | même filtre sur les SÉANCES (historique des sessions) |
 | `activeAccountsWhere(scope)` | filtre des COMPTES d'un contexte global (débrief, IA) |
 | `excludesInactiveAccounts(scope)` | vrai = « tous les comptes » sans les inactifs |
 | `parseIncludeInactive(value)` | lit `includeInactive` d'une query (`true` / `1`) |
@@ -1914,9 +1915,19 @@ paramètre `includeInactive=true` réintègre tout.
 - Appliquée à : les 10 routes `/analytics/*` (+ `includeInactive`, clé de cache distincte
   `:inactive` dans `analytics.service`), débrief hebdo, récap quotidien (combinée par `AND` avec
   l'exclusion des comptes d'entraînement), chat du coach (`accountId` facultatif, propriété vérifiée),
-  insights IA et orchestrateur, KPIs du journal (`GET /trades/stats`, qui renvoie aussi
-  `excludedAccounts { failed, archived }` pour la ligne « n comptes exclus »).
-- **La liste des trades n'est PAS filtrée** : le journal garde tout (badge côté front).
+  insights IA et orchestrateur, journal (liste ET chiffres, voir ci-dessous), historique des
+  sessions (`GET /sessions/history`, + `includeInactive`), e-mail « premier récap de semaine »
+  (`loadFirstWeek`).
+- **Journal : liste et chiffres sur le MÊME jeu de trades (2026-11-09, remplace « la liste n'est pas
+  filtrée » de #681).** Le filtre est DANS `buildTradeWhere` / `buildTradeFilterSql`
+  (`trade-filters.util.ts`, `tradeFiltersScope`) : `GET /trades` (liste, donc les en-têtes de jour et
+  de semaine, « partiel » et « 20+ » calculés dessus côté front) et `GET /trades/stats`
+  (`journalStatsForFilters`, qui renvoie aussi `excludedAccounts { failed, archived }`) l'appliquent
+  à l'identique. Par défaut, comptes échoués et archivés hors de la liste ET des chiffres ;
+  `includeInactive=true` les réinclut dans les deux (badge côté front) ; un compte précis reste
+  lisible. Ne jamais rajouter le filtre à un seul des deux. Couvert par
+  `trades/journal-lost-accounts.int-spec.ts` (cas réel du 09/11) et `journal-stats-sql.int-spec.ts`
+  (équivalence Prisma ↔ SQL, `includeInactive` compris).
 - Changement de statut, archivage, suppression : `invalidateStats(userId)`, sinon le cache
   servirait les anciens chiffres.
 
