@@ -2,12 +2,14 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { DatePipe, DecimalPipe, UpperCasePipe } from '@angular/common';
 import { PnlFormatPipe } from '@app/shared/pipes';
 import { DashboardTradeRow, TradeRowOutcome } from '../../dashboard-charts.util';
+import { isInactiveStatus, statusBadgeClass, statusLabel } from '@app/core/utils/account-status.util';
 
 /**
  * « Historique des trades » du dashboard (derniers trades, P&L % sur le capital). Tableau sur tablette et
  * PC, cartes de 2 lignes sur téléphone : le tableau de 760 px défilait de côté et cachait le P&L (#633).
  * Un trade ouvert garde son badge « OUVERT » à toutes les tailles : colonne Résultat (large), à côté de
- * l'actif (moyenne, colonne masquée), dans la carte (téléphone).
+ * l'actif (moyenne, colonne masquée), dans la carte (téléphone). Un trade d'un compte échoué ou
+ * archivé (interrupteur « Inclure les comptes échoués et archivés » allumé) porte le badge du journal.
  */
 @Component({
   selector: 'mtc-recent-trades-table',
@@ -29,6 +31,12 @@ import { DashboardTradeRow, TradeRowOutcome } from '../../dashboard-charts.util'
                 {{ t.asset | uppercase }}
                 <!-- Taille moyenne : la colonne Résultat est masquée, un trade ouvert garde son badge ici. -->
                 @if (t.outcome === 'open') { <span class="mtc-res open mtc-res-inline">{{ LABEL.open }}</span> }
+                <!-- Compte échoué ou archivé (interrupteur allumé) : même badge que le journal. -->
+                @if (t.account && isInactiveStatus(t.account.status)) {
+                  <span class="status-badge {{ statusBadgeClass(t.account.status) }}"
+                        [attr.title]="t.account.label + ' : hors statistiques'"
+                        data-testid="trade-account-badge">{{ statusLabel(t.account.status) }}</span>
+                }
               </td>
               <td><span class="mtc-side" [class.long]="t.side === 'LONG'">{{ t.side }}</span></td>
               <td><span class="mtc-setup-cell"><span class="setup-dot-sm" [style.background]="t.setup.color"></span>{{ t.setup.title }}</span></td>
@@ -50,6 +58,11 @@ import { DashboardTradeRow, TradeRowOutcome } from '../../dashboard-charts.util'
             {{ t.asset | uppercase }} <span class="mtc-side" [class.long]="t.side === 'LONG'">{{ t.side }}</span>
             <!-- La colonne Résultat n'existe pas en carte : un trade ouvert garde son badge. -->
             @if (t.outcome === 'open') { <span class="mtc-res open">{{ LABEL.open }}</span> }
+            @if (t.account && isInactiveStatus(t.account.status)) {
+              <span class="status-badge {{ statusBadgeClass(t.account.status) }}"
+                    [attr.title]="t.account.label + ' : hors statistiques'"
+                    data-testid="trade-account-badge">{{ statusLabel(t.account.status) }}</span>
+            }
           </span>
           <span class="mtc-tc-pnl" [style.color]="TONE[t.outcome]">{{ t.pnl | pnlFormat : null : t.accountId }}</span>
           <span class="mtc-tc-sub">
@@ -64,6 +77,10 @@ import { DashboardTradeRow, TradeRowOutcome } from '../../dashboard-charts.util'
 })
 export class RecentTradesTableComponent {
   readonly rows = input<DashboardTradeRow[]>([]);
+
+  protected readonly isInactiveStatus = isInactiveStatus;
+  protected readonly statusLabel = statusLabel;
+  protected readonly statusBadgeClass = statusBadgeClass;
 
   /** Badge « Résultat » : un trade ouvert n'est ni gagnant ni perdant (#655). */
   protected readonly LABEL: Record<TradeRowOutcome, string> = { win: 'WIN', loss: 'LOSS', breakeven: 'BE', open: 'OUVERT' };

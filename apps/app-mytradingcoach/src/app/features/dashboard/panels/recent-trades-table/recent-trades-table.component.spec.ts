@@ -54,3 +54,26 @@ describe('RecentTradesTableComponent · badge OUVERT', () => {
     cards.forEach((c) => expect(c.querySelector('.mtc-res')).toBeNull());
   });
 });
+
+describe('RecentTradesTableComponent · compte échoué ou archivé', () => {
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [{ provide: MoneyService, useValue: { format: (v: number) => `$${v}`, formatFor: (_: string, v: number) => `$${v}` } }],
+    });
+    TestBed.overrideComponent(RecentTradesTableComponent, {
+      set: { styleUrls: [], styleUrl: undefined as unknown as string },
+    });
+  });
+
+  const withAccount = (id: string, status: string) =>
+    ({ ...row(id, 'loss', -300), account: { id: 'acc-' + id, label: 'Compte ' + id, status } }) as unknown as DashboardTradeRow;
+
+  it('badge « Archivé » / « Échoué » dans le tableau et la carte, aucun sur un compte actif', () => {
+    const el = render([withAccount('x', 'ARCHIVED'), withAccount('f', 'FAILED'), withAccount('a', 'ACTIVE'), row('n', 'win', 5)]);
+    const inTable = [...el.querySelectorAll('.mtc-table [data-testid="trade-account-badge"]')].map((b) => b.textContent!.trim());
+    const inCards = [...el.querySelectorAll('.mtc-trade-cards [data-testid="trade-account-badge"]')].map((b) => b.textContent!.trim());
+    expect(inTable).toEqual(['Archivé', 'Échoué']);
+    expect(inCards).toEqual(['Archivé', 'Échoué']);
+    expect(el.querySelector('[data-testid="trade-account-badge"]')!.getAttribute('title')).toBe('Compte x : hors statistiques');
+  });
+});
