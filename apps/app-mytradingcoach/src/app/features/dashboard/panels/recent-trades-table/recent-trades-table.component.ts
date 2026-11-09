@@ -42,7 +42,7 @@ import { isInactiveStatus, statusBadgeClass, statusLabel } from '@app/core/utils
               <td><span class="mtc-setup-cell"><span class="setup-dot-sm" [style.background]="t.setup.color"></span>{{ t.setup.title }}</span></td>
               <td class="mono dim r">{{ t.entry | number:'1.0-2' }}</td>
               <td class="mono dim r col-exit">{{ t.exit !== null ? (t.exit | number:'1.0-2') : '-' }}</td>
-              <td class="mono dim r">{{ t.riskReward !== null ? ((t.riskReward >= 0 ? '+' : '') + (t.riskReward | number:'1.1-1')) : '-' }}</td>
+              <td class="mono dim r">{{ t.riskReward !== null && t.riskReward !== undefined ? ((t.riskReward >= 0 ? '+' : '') + (t.riskReward | number:'1.1-1')) : '—' }}</td>
               <td class="mono strong r" [style.color]="TONE[t.outcome]">{{ t.pnl | pnlFormat : null : t.accountId }}</td>
               <td class="mono r" [style.color]="t.pct === null ? 'var(--text-3)' : TONE[t.outcome]">{{ t.pct === null ? '-' : ((t.pct >= 0 ? '+' : '') + (t.pct | number:'1.2-2') + '%') }}</td>
               <td class="c col-res"><span class="mtc-res" [class]="t.outcome">{{ LABEL[t.outcome] }}</span></td>
@@ -67,7 +67,7 @@ import { isInactiveStatus, statusBadgeClass, statusLabel } from '@app/core/utils
           <span class="mtc-tc-pnl" [style.color]="TONE[t.outcome]">{{ t.pnl | pnlFormat : null : t.accountId }}</span>
           <span class="mtc-tc-sub">
             {{ t.tradedAt | date:'d MMM' }} · <span class="setup-dot-sm" [style.background]="t.setup.color"></span>{{ t.setup.title }}
-            · R:R {{ t.riskReward !== null ? ((t.riskReward >= 0 ? '+' : '') + (t.riskReward | number:'1.1-1')) : '-' }}
+            · R:R {{ t.riskReward !== null && t.riskReward !== undefined ? ((t.riskReward >= 0 ? '+' : '') + (t.riskReward | number:'1.1-1')) : '—' }}
           </span>
           <span class="mtc-tc-pct" [style.color]="t.pct === null ? 'var(--text-3)' : TONE[t.outcome]">{{ t.pct === null ? '-' : ((t.pct >= 0 ? '+' : '') + (t.pct | number:'1.2-2') + '%') }}</span>
         </li>

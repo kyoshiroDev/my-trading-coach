@@ -1,7 +1,7 @@
 import { Injectable, ForbiddenException, NotFoundException, Logger, Optional } from '@nestjs/common';
 import { Plan, Prisma, Role, WeeklyDebrief } from '@prisma/client';
 import { effectiveEmotion } from '../../common/utils/effective-emotion.util';
-import { computeTradeStats, netPnl } from '@mtc/shared';
+import { averageKnownRiskReward, computeTradeStats, netPnl } from '@mtc/shared';
 import { userAmountsCurrency } from '../../common/utils/user-currency.util';
 import { DebriefPdfData } from '../pdf/pdf.service';
 import { OBJECTIVE_CHECK_TYPES, DebriefAccountInput } from '../ai/prompts/debrief.prompt';
@@ -454,9 +454,9 @@ export class DebriefService {
         totalTrades: trades.length,
         winRate: pdfStats.winRate,
         totalPnl: pnlValues.reduce((a, b) => a + b, 0),
-        avgRR:
-          trades.reduce((acc, t) => acc + (t.riskReward ?? 0), 0) /
-          (trades.length || 1),
+        // Moyenne des R/R CONNUS : un trade sans stop ni objectif (synchronisé) n'a pas de R/R,
+        // le compter pour 0 tirait la moyenne vers 0. Aucun R/R connu → null (« — » dans le PDF).
+        avgRR: averageKnownRiskReward(trades),
         bestTrade: pnlValues.length > 0 ? Math.max(...pnlValues) : 0,
         worstTrade: pnlValues.length > 0 ? Math.min(...pnlValues) : 0,
       },

@@ -310,9 +310,9 @@ describe('AnalyticsService', () => {
       expect(top[0].asset).toBe('A11');
     });
 
-    it('par émotion : R:R moyen à 0 (et non null) sans R:R, comme avant', async () => {
+    it('par émotion : R:R moyen null (jamais 0) quand aucun trade n’a de R:R', async () => {
       vi.mocked(groupTrades).mockResolvedValueOnce([agg('FOCUSED', { count: 1, wins: 1 })]);
-      expect(await svc()['computeByEmotion']({ userId: 'u1' })).toEqual([{ emotion: 'FOCUSED', winRate: 100, avgRR: 0, count: 1 }]);
+      expect(await svc()['computeByEmotion']({ userId: 'u1' })).toEqual([{ emotion: 'FOCUSED', winRate: 100, avgRR: null, count: 1 }]);
     });
 
     it('équité journalière et activité : jours triés, P&L cumulé, totaux du mois', async () => {
