@@ -29,8 +29,8 @@ import {
   shortDate,
   spanRange,
   stepLabel,
+  dateTickIndices,
   tickDate,
-  tickLabels,
   tooltipDate,
 } from './chart-series.util';
 
@@ -102,8 +102,8 @@ export class ChartService {
     };
   }
 
-  private money(v: number, sign = false): string {
-    return formatMoney(v, this.moneyService.currency(), { decimals: 0, sign });
+  private money(v: number, sign = false, cents = false): string {
+    return formatMoney(v, this.moneyService.currency(), { decimals: cents ? 2 : 0, sign });
   }
 
   buildEquityChart(
@@ -176,6 +176,11 @@ export class ChartService {
     const fontSize = opts.narrow ? 10 : 11;
     const currency = this.moneyService.currency();
     const maxIdx = isDrawdown ? maxDrawdownIndex(series.values) : null;
+    // Courbe par trade : l'infobulle montre le montant exact d'une clôture (−267,50, pas −268).
+    const cents = !!series.perTrade;
+    // Un repère par date (premier point du jour), réparti sur la largeur : posé à la main, car
+    // l'auto-saut de Chart.js retombait sur les points sans libellé d'une courbe par trade.
+    const xTicks = dateTickIndices(series.dates, span, opts.narrow ? 4 : 7);
 
     // Tracé progressif : la zone des séries est découverte de gauche à droite en < 400 ms.
     const revealStart = performance.now();
@@ -270,7 +275,7 @@ export class ChartService {
     const config: ChartConfiguration<'line'> = {
       type: 'line',
       data: {
-        labels: tickLabels(series.dates, span),
+        labels: series.dates.map((d) => tickDate(d, span)),
         datasets: [
           {
             data: series.values,
@@ -330,7 +335,7 @@ export class ChartService {
               title: (items) => tooltipDate(series.dates[items[0]?.dataIndex ?? 0], series.perTrade && !series.payout?.[items[0]?.dataIndex ?? 0]),
               // Plan relié : la valeur tracée n'est PAS un solde, on n'affiche que la marge restante.
               label: (item) =>
-                floor ? `Marge ${this.money(floor.margin[item.dataIndex])}` : this.money(item.parsed.y ?? 0),
+                floor ? `Marge ${this.money(floor.margin[item.dataIndex])}` : this.money(item.parsed.y ?? 0, false, cents),
               labelTextColor: () => color,
               footer: (items) => {
                 const i = items[0]?.dataIndex ?? 0;
@@ -339,8 +344,8 @@ export class ChartService {
                 if (floor || d === null || d === undefined) return [];
                 const step = stepLabel(series, i);
                 // Jour de payout sans trade : le retrait seul, pas un « Jour +$0 ».
-                if (payout) return [...(d ? [`${step} ${this.money(d, true)}`] : []), `Payout ${this.money(-payout, true)}`];
-                return [`${step} ${this.money(d, true)}`];
+                if (payout) return [...(d ? [`${step} ${this.money(d, true, cents)}`] : []), `Payout ${this.money(-payout, true, cents)}`];
+                return [`${step} ${this.money(d, true, cents)}`];
               },
             },
           },
@@ -349,12 +354,16 @@ export class ChartService {
           x: {
             grid: { color: p.grid, drawTicks: false },
             border: { display: false },
+            afterBuildTicks: (scale) => {
+              scale.ticks = xTicks.map((value) => ({ value }));
+            },
             ticks: {
               color: p.text3,
               font: { family: MONO, size: fontSize },
               padding: 8,
               maxTicksLimit: opts.narrow ? 4 : 7,
-              autoSkip: true,
+              // Repères choisis par `dateTickIndices` (afterBuildTicks) : pas d'auto-saut.
+              autoSkip: false,
               autoSkipPadding: 12,
               maxRotation: 0,
               minRotation: 0,
