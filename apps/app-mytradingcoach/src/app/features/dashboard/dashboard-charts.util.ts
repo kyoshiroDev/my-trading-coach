@@ -30,6 +30,8 @@ export interface DonutView {
   gradient: string;
   centerValue: string;
   centerLabel: string;
+  /** Ce que mesure la valeur centrale quand ce n'est pas une part de la légende (« Win rate »). */
+  centerKicker?: string;
   legend: { label: string; color: string; pct: number }[];
 }
 
@@ -46,13 +48,17 @@ function conicShares(parts: { label: string; color: string; count: number }[]) {
   return { gradient: `conic-gradient(${stops.join(', ')})`, legend, total };
 }
 
-/** Donut « répartition stratégies » Premium : centre = win rate du meilleur setup. */
+/**
+ * Donut « répartition stratégies » Premium : légende = % des trades par setup ; centre = WIN RATE
+ * du meilleur setup, annoncé comme tel (« 40 % · Sans setup » se lisait comme une part, face à une
+ * légende à 100 %).
+ */
 export function setupsDonutFromStats(bySetup: SetupStat[]): DonutView | null {
   const setups = bySetup.filter((s) => s.count > 0).slice(0, 6);
   if (!setups.length) return null;
   const { gradient, legend } = conicShares(setups.map((s) => ({ label: s.title, color: s.color, count: s.count })));
   const best = setups.reduce((a, b) => ((b.winRate ?? 0) > (a.winRate ?? 0) ? b : a), setups[0]);
-  return { gradient, legend, centerValue: `${Math.round(best.winRate ?? 0)}%`, centerLabel: best.title };
+  return { gradient, legend, centerKicker: 'Win rate', centerValue: `${Math.round(best.winRate ?? 0)}%`, centerLabel: best.title };
 }
 
 /**

@@ -6,6 +6,7 @@ import {
   buildTradeRows,
   emotionShares,
   plGranularityFor,
+  setupsDonutFromStats,
   setupsDonutFromTrades,
   sparkPath,
   topAssetBars,
@@ -56,7 +57,17 @@ describe('donuts', () => {
     const t = (setupId: string, title: string) => ({ setupId, setup: { title, color: '#fff' } });
     const d = setupsDonutFromTrades([t('a', 'Breakout'), t('a', 'Breakout'), t('a', 'Breakout'), t('b', 'Range')]);
     expect(d).toMatchObject({ centerValue: '75%', centerLabel: 'Breakout' });
+    // Centre = part du setup dominant, comme la légende : pas de libellé « Win rate ».
+    expect(d?.centerKicker).toBeUndefined();
     expect(d?.legend.map((l) => l.pct)).toEqual([75, 25]);
+  });
+
+  it('répartition Premium : centre annoncé « Win rate » (40 % de réussite, 100 % des trades en légende)', () => {
+    const d = setupsDonutFromStats([
+      { setupId: 's', title: 'Sans setup', color: '#888', winRate: 40, avgRR: null, count: 5, pnl: 1064.4 },
+    ]);
+    expect(d).toMatchObject({ centerKicker: 'Win rate', centerValue: '40%', centerLabel: 'Sans setup' });
+    expect(d?.legend).toEqual([{ label: 'Sans setup', color: '#888', pct: 100 }]);
   });
 
   it('émotion effective prioritaire, émotions absentes exclues, top 4', () => {
