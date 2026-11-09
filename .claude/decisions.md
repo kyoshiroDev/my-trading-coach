@@ -1,5 +1,6 @@
 # Décisions de Greg (lues par l'agent relecteur)
 
+- 2026-11-09 : la carte d'aperçu de `/prop-firm` reprend le libellé de l'app « Marge avant le plancher » (au lieu de « Il te reste avant la limite »), cohérent avec `contexte-com.md`.
 - 2026-11-08 : le relecteur tranche seul les décisions de contenu (textes, accroches, déroulés de vidéo, formulations, choix d'une vue réelle à la place d'une vue absente) dans le cadre de `.claude/contexte-com.md` ; il rend une version complète prête à l'emploi. Restent à Greg : décisions business (prix, offre, essai, gratuit/Premium, CGU et textes légaux, mention NinjaTrader nouvelle, suppression de données, messages à de vrais utilisateurs, publication, dépense pub, périmètre) et tout ce qui touche à la prod.
 - 2026-11-08 : tout prompt collé par Greg est enregistré tel quel dans `.claude/prompts/PROMPT-<nom>.md` et commité avec le travail (texte exact pour le relecteur).
 - 2026-11-08 : `beta` n'est plus utilisée pour les fonctionnalités : tout part de `dev` et revient sur `dev`, puis `dev` → `main`.
