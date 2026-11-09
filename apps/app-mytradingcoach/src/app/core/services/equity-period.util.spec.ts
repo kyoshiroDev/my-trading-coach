@@ -1,12 +1,11 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
-  anchoredDrawdown,
-  maxDrawdownOf,
   periodPnl,
   periodStartBalance,
   periodStartCapital,
   viewBalance,
   withPayouts,
+  withPayoutsByTrade,
   cumulativePayouts,
 } from './equity-period.util';
 
@@ -16,7 +15,6 @@ const pt = (date: string, cumulativePnl: number) => ({ date, cumulativePnl });
  * Compte de 50K : +500 puis -262 AVANT la période (cumul +238, plus haut +500), puis sur la
  * période +300, -400, +940 (P&L de la période +840). Solde actuel 51 078.
  */
-const before = { pnl: 238, peak: 500 };
 const period = [pt('2026-10-01', 300), pt('2026-10-02', -100), pt('2026-10-03', 840)];
 const account = (over: Record<string, unknown> = {}) => ({
   status: 'ACTIVE',
@@ -40,34 +38,6 @@ describe('solde et capital de la période (compte de 50K)', () => {
   });
 });
 
-describe('drawdown ancré sur le plus haut du compte (règle EOD)', () => {
-  it('la période commence déjà sous l’ancien sommet', () => {
-    // Départ : 238 − 500 = -262. Jour 1 : 538 → nouveau sommet. Jour 2 : 138 → -400. Jour 3 : 1078 → 0.
-    expect(anchoredDrawdown(period, before)).toEqual([-262, 0, -400, 0]);
-    expect(maxDrawdownOf(anchoredDrawdown(period, before))).toBe(-400);
-  });
-
-  it('un sommet d’avant la période plus haut que la période entière reste la référence', () => {
-    const dd = anchoredDrawdown(period, { pnl: 238, peak: 1_500 });
-    // Plus haut 1 500 jamais repassé : -1262, -962, -1362, -422.
-    expect(dd).toEqual([-1_262, -962, -1_362, -422]);
-    expect(maxDrawdownOf(dd)).toBe(-1_362);
-  });
-
-  it('sans historique (période « Tout ») : départ au solde de départ, comme avant', () => {
-    expect(anchoredDrawdown([pt('2026-10-01', 500), pt('2026-10-02', 100)])).toEqual([0, 0, -400]);
-  });
-
-  it('historique perdant : le solde de départ reste le sommet', () => {
-    expect(anchoredDrawdown([pt('2026-10-01', 100)], { pnl: -300, peak: 0 })).toEqual([-300, -200]);
-  });
-
-  it('aucun point : seul le départ', () => {
-    expect(anchoredDrawdown([], before)).toEqual([-262]);
-    expect(maxDrawdownOf([])).toBe(0);
-  });
-});
-
 describe('payouts reçus', () => {
   it('départ de la période : payouts d’avant déduits, aussi quand la période couvre le début du compte', () => {
     expect(periodStartBalance(50_000, 0, 0, { pnl: 3_000, peak: 3_000, count: 2, payouts: 2_000 })).toBe(51_000);
@@ -87,5 +57,44 @@ describe('payouts reçus', () => {
     ]);
     expect(cumulativePayouts(pts)).toEqual([500, 750]);
     expect(periodPnl(pts)).toBe(100); // le P&L de la période ne change pas
+  });
+});
+
+describe('withPayoutsByTrade (courbe par trade du tableau de bord)', () => {
+  // Dates fixes : horloge figée au lundi 09/11/2026 (règle du dépôt).
+  beforeEach(() => { vi.useFakeTimers({ toFake: ['Date'] }); vi.setSystemTime(new Date('2026-11-09T18:00:00Z')); });
+  afterEach(() => vi.useRealTimers());
+  const pt = (date: string, cumulativePnl: number, pnl: number) => ({ date, cumulativePnl, pnl, trades: 1 });
+  const points = [
+    pt('2026-11-06T08:22:00.000Z', -268, -268),
+    pt('2026-11-06T08:45:00.000Z', -535.5, -267.5),
+    pt('2026-11-09T09:00:00.000Z', 871, 1406.5),
+  ];
+
+  it('sans payout : points inchangés', () => {
+    expect(withPayoutsByTrade(points, [])).toBe(points);
+  });
+
+  it('payout du lundi (minuit UTC) : point avant les trades du jour, au P&L cumulé du vendredi', () => {
+    const out = withPayoutsByTrade(points, [{ date: '2026-11-09T00:00:00.000Z', amount: 500 }]);
+    expect(out.map((p) => [p.date.slice(0, 16), p.cumulativePnl, p.payout ?? null])).toEqual([
+      ['2026-11-06T08:22', -268, null],
+      ['2026-11-06T08:45', -535.5, null],
+      ['2026-11-09T00:00', -535.5, 500],
+      ['2026-11-09T09:00', 871, null],
+    ]);
+    // Le P&L (donc le drawdown) ne bouge pas ; la courbe de solde déduit 500 à partir du payout.
+    expect(cumulativePayouts(out)).toEqual([0, 0, 500, 500]);
+  });
+
+  it('payout au même instant qu’une clôture : porté par ce point ; payouts après le dernier trade ajoutés en fin', () => {
+    const out = withPayoutsByTrade(points, [
+      { date: '2026-11-06T08:45:00.000Z', amount: 100 },
+      { date: '2026-11-10T00:00:00.000Z', amount: 50 },
+      { date: '2026-11-10T00:00:00.000Z', amount: 25 },
+    ]);
+    expect(out[1]).toMatchObject({ cumulativePnl: -535.5, pnl: -267.5, payout: 100 });
+    expect(out.at(-1)).toEqual({ date: '2026-11-10T00:00:00.000Z', cumulativePnl: 871, payout: 75 });
+    expect(out).toHaveLength(4);
   });
 });

@@ -28,7 +28,9 @@ import {
   spanDays,
   shortDate,
   spanRange,
+  stepLabel,
   tickDate,
+  tickLabels,
   tooltipDate,
 } from './chart-series.util';
 
@@ -42,7 +44,7 @@ export interface PerfChartOptions {
    * compte) au lieu du drawdown « sous l'eau ». `periodStart` = solde au début de la période.
    */
   floor?: { plan: PlanFloor; periodStart: number } | null;
-  /** Drawdown : historique avant la période (`before` de l'API) → part du sommet déjà atteint. */
+  /** Drawdown en mode plan prop firm : historique avant la période (`before` de l'API) → plancher. */
   before?: PeriodBefore | null;
   /** Équité : objectif de gain (repère de la période) → ligne pointillée verte, sinon rien. */
   objective?: ObjectiveLine | null;
@@ -135,7 +137,7 @@ export class ChartService {
       const low = Math.min(f.limit, ...f.values) - opts.floor.plan.rule.amount * 0.15;
       return this.build(canvas, series, opts, (p) => p.red, { max: f.top, suggestedMin: low }, { mode: 'floor', floor: f });
     }
-    const series = drawdownSeries(points, opts.before ?? undefined);
+    const series = drawdownSeries(points);
     const deepest = Math.min(...series.values);
     return this.build(
       canvas,
@@ -268,7 +270,7 @@ export class ChartService {
     const config: ChartConfiguration<'line'> = {
       type: 'line',
       data: {
-        labels: series.dates.map((d) => tickDate(d, span)),
+        labels: tickLabels(series.dates, span),
         datasets: [
           {
             data: series.values,
@@ -325,7 +327,7 @@ export class ChartService {
             footerMarginTop: 4,
             filter: (item) => item.datasetIndex === 0,
             callbacks: {
-              title: (items) => tooltipDate(series.dates[items[0]?.dataIndex ?? 0]),
+              title: (items) => tooltipDate(series.dates[items[0]?.dataIndex ?? 0], series.perTrade && !series.payout?.[items[0]?.dataIndex ?? 0]),
               // Plan relié : la valeur tracée n'est PAS un solde, on n'affiche que la marge restante.
               label: (item) =>
                 floor ? `Marge ${this.money(floor.margin[item.dataIndex])}` : this.money(item.parsed.y ?? 0),
@@ -335,9 +337,10 @@ export class ChartService {
                 const d = series.dayPnl[i];
                 const payout = series.payout?.[i];
                 if (floor || d === null || d === undefined) return [];
+                const step = stepLabel(series, i);
                 // Jour de payout sans trade : le retrait seul, pas un « Jour +$0 ».
-                if (payout) return [...(d ? [`Jour ${this.money(d, true)}`] : []), `Payout ${this.money(-payout, true)}`];
-                return [`Jour ${this.money(d, true)}`];
+                if (payout) return [...(d ? [`${step} ${this.money(d, true)}`] : []), `Payout ${this.money(-payout, true)}`];
+                return [`${step} ${this.money(d, true)}`];
               },
             },
           },

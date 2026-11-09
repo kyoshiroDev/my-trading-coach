@@ -10,7 +10,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { httpResource } from '@angular/common/http';
-import { finalize } from 'rxjs';
+import { finalize, forkJoin } from 'rxjs';
 import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
 import { PnlFormatPipe, SessionLabelPipe } from '../../shared/pipes';
 import { UserStore } from '../../core/stores/user.store';
@@ -19,6 +19,7 @@ import {
   AnalyticsApi,
   AnalyticsSummary,
   DailyEquityCurve,
+  TradesEquityCurve,
   HeatmapCell,
   MonthlyActivitySummary,
   SetupStat,
@@ -28,7 +29,7 @@ import { PlanModalComponent } from '../../shared/components/plan-modal/plan-moda
 import { ActivityCalendarComponent } from '../../shared/components/activity-calendar/activity-calendar.component';
 import { InfoTooltipComponent } from '../../shared/components/info-tooltip/info-tooltip.component';
 import { PerfChartComponent } from '../../shared/components/perf-chart/perf-chart.component';
-import { periodPnl, periodStartBalance, viewBalance, withPayouts } from '../../core/services/equity-period.util';
+import { periodPnl, periodStartBalance, viewBalance, withPayouts, withPayoutsByTrade } from '../../core/services/equity-period.util';
 import { environment } from '@app/environments/environment';
 import { MoneyService } from '../../core/services/money.service';
 import { drawdownHelp, planFloorOf, planObjectiveLine } from '../../core/services/chart-series.util';
@@ -106,6 +107,8 @@ export class AnalyticsComponent {
     return { from: from.toISOString(), to: now.toISOString() };
   });
   protected readonly equityData = signal<DailyEquityCurve | null>(null);
+  /** Courbe par trade clôturé : carte drawdown « sous l'eau » (règle unique du drawdown max). */
+  protected readonly tradesData = signal<TradesEquityCurve | null>(null);
   protected readonly equityLoading = signal(false);
 
   // ── httpResource : pattern déclaratif, cancel auto, loading state natif ──
@@ -154,6 +157,15 @@ export class AnalyticsComponent {
     if (current === null) return start + (before?.pnl ?? 0) - (before?.payouts ?? 0);
     return periodStartBalance(start, current, periodPnl(this.equityCurve()), before);
   });
+  /**
+   * Points de la carte drawdown : plan prop firm relié → courbe journalière (plancher du plan, règle
+   * EOD/intraday inchangée) ; sinon après chaque trade clôturé (même règle que le tableau de bord).
+   */
+  protected readonly drawdownPoints = computed(() =>
+    this.planFloor()
+      ? this.equityCurve()
+      : withPayoutsByTrade(this.tradesData()?.points ?? [], this.tradesData()?.payouts),
+  );
   /** Repères du plan relié au compte sélectionné : plancher de drawdown, objectif de gain. */
   protected readonly planFloor = computed(() => planFloorOf(this.selectedAccount.selected()));
   /** « ? » de la carte drawdown : règle du plan relié (statique, suiveur, gel, intraday). */
@@ -269,14 +281,19 @@ export class AnalyticsComponent {
     const { from, to } = this.equityDateRange();
     const accountId = this.selectedAccount.accountParam();
     const includeInactive = this.selectedAccount.inactiveIncluded();
-    this.analyticsApi
-      .getDailyEquityCurve({ from, to, accountId, includeInactive })
+    forkJoin([
+      this.analyticsApi.getDailyEquityCurve({ from, to, accountId, includeInactive }),
+      this.analyticsApi.getTradesEquityCurve({ from, to, accountId, includeInactive }),
+    ])
       .pipe(
         finalize(() => this.equityLoading.set(false)),
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe({
-        next: (res) => this.equityData.set(res.data),
+        next: ([daily, trades]) => {
+          this.equityData.set(daily.data);
+          this.tradesData.set(trades.data);
+        },
         error: () => this.equityError.set(true),
       });
   }

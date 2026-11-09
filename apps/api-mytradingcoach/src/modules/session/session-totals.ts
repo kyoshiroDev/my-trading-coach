@@ -1,9 +1,9 @@
 import { SessionStatus } from '@prisma/client';
-import { computeTradeStats, netPnl } from '@mtc/shared';
+import { computeTradeStats, maxDrawdownOfCumulative, maxDrawdownOfTrades, netPnl, roundCents } from '@mtc/shared';
 import { tradingDayEnd } from './active-session';
 
-/** Trade d'une session, tel que lu pour ses totaux. */
-export type SessionTotalsTrade = { pnl: number | null; commission?: number | null; asset: string };
+/** Trade d'une session, tel que lu pour ses totaux. `tradedAt` = heure de clôture. */
+export type SessionTotalsTrade = { pnl: number | null; commission?: number | null; asset: string; tradedAt?: Date | null };
 
 /**
  * Totaux d'une session à partir de SES trades triés par date — fonction PURE, partagée par la
@@ -14,14 +14,12 @@ export function sessionTotalsFrom(trades: readonly SessionTotalsTrade[]) {
   const closed = trades.filter((t) => t.pnl !== null);
   const { totalPnl, winRate } = computeTradeStats(trades);
 
-  // Drawdown max
-  let peak = 0, maxDrawdown = 0, cumPnl = 0;
-  for (const t of closed) {
-    cumPnl += netPnl(t) ?? 0; // net des frais, comme le total
-    if (cumPnl > peak) peak = cumPnl;
-    const dd = cumPnl - peak;
-    if (dd < maxDrawdown) maxDrawdown = dd;
-  }
+  // Drawdown max : règle unique @mtc/shared (après chaque trade clôturé, net des frais, trades du
+  // même instant regroupés). Sans heure de clôture : dans l'ordre reçu (déjà trié par tradedAt).
+  let cum = 0;
+  const { maxDrawdown } = closed.every((t) => t.tradedAt)
+    ? maxDrawdownOfTrades(closed.map((t) => ({ ...t, closedAt: t.tradedAt as Date })))
+    : maxDrawdownOfCumulative(closed.map((t) => (cum = roundCents(cum + (netPnl(t) ?? 0)))));
 
   // Meilleur trade, en net comme le total
   const best = closed.reduce<{ pnl: number | null; asset: string } | null>((max, t) => {

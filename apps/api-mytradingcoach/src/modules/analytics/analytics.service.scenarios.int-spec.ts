@@ -6,7 +6,7 @@
  * (dans l'ordre donné : identifiants croissants, l'ordre chronologique est sans ambiguïté même à
  * date égale) puis interroge le service réel. Mêmes attentes qu'avant.
  */
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, beforeEach, vi, onTestFinished } from 'vitest';
 import type { INestApplication } from '@nestjs/common';
 import { EmotionState, TradingSession, TradeSide } from '@prisma/client';
 import { createIntegrationApp } from '../../test/integration-app.helper';
@@ -28,6 +28,8 @@ interface T {
 
 const today10h = () => new Date(new Date().setHours(10, 0, 0, 0));
 const makeTrade = (pnl: number): T => ({ pnl, riskReward: pnl > 0 ? 2 : null, emotion: EmotionState.CONFIDENT });
+/** Trades clôturés une minute après l'autre, dans l'ordre donné (le drawdown suit l'heure de clôture). */
+const inOrder = (trades: T[]): T[] => trades.map((t, i) => ({ ...t, tradedAt: new Date(today10h().getTime() + i * 60_000) }));
 
 let app: INestApplication;
 let prisma: PrismaService;
@@ -101,18 +103,40 @@ describe('getSummary — accessible FREE et PREMIUM', () => {
   describe('drawdown maximum', () => {
     it('mesure la plus forte baisse depuis le pic du P&L cumulé', async () => {
       // Cumulé : 100 → 300 → 250 → 60 → 160. Pic 300, creux 60 → drawdown 240.
-      await seed([makeTrade(100), makeTrade(200), makeTrade(-50), makeTrade(-190), makeTrade(100)]);
+      await seed(inOrder([makeTrade(100), makeTrade(200), makeTrade(-50), makeTrade(-190), makeTrade(100)]));
       expect((await service.getSummary(userId)).maxDrawdown).toBe(240);
     });
 
     it('retient la PLUS FORTE baisse, pas la dernière', async () => {
       // Cumulé : 500 → 200 (−300) → 600 → 500 (−100) : c'est 300 qui doit rester.
-      await seed([makeTrade(500), makeTrade(-300), makeTrade(400), makeTrade(-100)]);
+      await seed(inOrder([makeTrade(500), makeTrade(-300), makeTrade(400), makeTrade(-100)]));
       expect((await service.getSummary(userId)).maxDrawdown).toBe(300);
     });
 
     it('série uniquement gagnante → aucun drawdown', async () => {
       await seed([makeTrade(100), makeTrade(50), makeTrade(75)]);
+      expect((await service.getSummary(userId)).maxDrawdown).toBe(0);
+    });
+
+    it('cas réel du 06/11 : creux −535,50 après chaque clôture, pas la clôture du jour (−88,50)', async () => {
+      // −268 (08:22) ; −267,50 (08:45) ; +447 (22:45) → cumul −268 ; −535,5 ; −88,5.
+      // Dates fixes : horloge figée au lundi 09/11/2026 (règle du dépôt), seulement pour Date.
+      vi.useFakeTimers({ toFake: ['Date'] });
+      vi.setSystemTime(new Date('2026-11-09T18:00:00Z'));
+      onTestFinished(() => vi.useRealTimers());
+      await seed([
+        { ...makeTrade(-268), tradedAt: new Date('2026-11-06T08:22:00Z') },
+        { ...makeTrade(-267.5), tradedAt: new Date('2026-11-06T08:45:00Z') },
+        { ...makeTrade(447), tradedAt: new Date('2026-11-06T22:45:00Z') },
+      ]);
+      expect((await service.getSummary(userId)).maxDrawdown).toBe(535.5);
+      const curve = await service.getEquityCurveTrades(userId, new Date('2026-11-06T00:00:00Z'), new Date('2026-11-06T23:59:59Z'));
+      expect(curve.points.map((p) => p.cumulativePnl)).toEqual([-268, -535.5, -88.5]);
+      expect(curve.maxDrawdown).toBe(-535.5);
+    });
+
+    it('trades du même instant : une seule étape (ordre inconnu), aucun creux inventé', async () => {
+      await seed([makeTrade(-300), makeTrade(300)]); // même tradedAt
       expect((await service.getSummary(userId)).maxDrawdown).toBe(0);
     });
 
@@ -146,7 +170,7 @@ describe('getSummary — accessible FREE et PREMIUM', () => {
   });
 
   it('classe gagnant/perdant sur le NET : +1 brut avec 1,90 de frais est une perte', async () => {
-    await seed([{ ...makeTrade(1), commission: 1.9 }, { ...makeTrade(100), commission: 2 }]);
+    await seed(inOrder([{ ...makeTrade(1), commission: 1.9 }, { ...makeTrade(100), commission: 2 }]));
     const result = await service.getSummary(userId);
     expect(result.winRate).toBe(50);
     expect(result.totalPnl).toBe(97.1);

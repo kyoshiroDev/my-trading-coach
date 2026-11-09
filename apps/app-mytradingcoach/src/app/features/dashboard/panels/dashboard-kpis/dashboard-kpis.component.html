@@ -67,14 +67,6 @@
           @if ((summary()?.totalTrades ?? 0) > 0) { profits / pertes } @else { Aucune donnée }
         </div>
       </div>
-      @let pf = sparkPath(equitySeries());
-      @if (pf.line) {
-        <svg class="mtc-spark" viewBox="0 0 72 42" preserveAspectRatio="none">
-          <path [attr.d]="pf.area" fill="var(--purple)" fill-opacity="0.13" />
-          <path [attr.d]="pf.line" fill="none" stroke="var(--purple-bright)" stroke-width="1.6" stroke-linejoin="round" vector-effect="non-scaling-stroke" />
-          <path [attr.d]="'M' + pf.cx + ' ' + pf.cy + 'h0'" stroke="var(--purple-bright)" stroke-width="4" stroke-linecap="round" vector-effect="non-scaling-stroke" />
-        </svg>
-      }
     </div>
     <!-- Trades pris -->
     <div class="mtc-kpi" style="--glow:var(--green)">
@@ -90,25 +82,27 @@
           @else { ce mois }
         </div>
       </div>
-      <div class="mtc-minibars">
-        @for (b of [.45,.7,.4,.85,.55,.95,.6,.75,.5,.9,.65,.8]; track $index) {
-          <span [style.height.%]="b * 100" [style.opacity]="0.4 + b * 0.5"></span>
-        }
-      </div>
+      @if (tradeBars().length) {
+        <div class="mtc-minibars" role="img" [attr.aria-label]="tradeBarsLabel()">
+          @for (b of tradeBars(); track b.date) {
+            <span [style.height.%]="b.pct" [style.opacity]="0.4 + (b.pct / 100) * 0.5" [attr.title]="b.label"></span>
+          }
+        </div>
+      }
     </div>
     <!-- Drawdown max -->
     <div class="mtc-kpi" style="--glow:var(--red)">
       <div class="mtc-kpi-l">
         <div class="mtc-kpi-lab">Drawdown max
           <mtc-info-tooltip class="align-end" label="Comment le drawdown max est calculé"
-            text="Plus forte baisse de ton solde en clôture de journée sous son plus haut depuis l'ouverture du compte (règle EOD des prop firms), sur la période affichée." />
+            text="Plus forte baisse de ton solde entre un sommet et le creux qui suit, sur la période affichée. Calculé sur les trades clôturés (frais inclus), hors variations en cours de trade." />
         </div>
         <div class="mtc-kpi-val" [style.color]="drawdownColor()">{{ drawdownDisplay() | pnlFormat }}</div>
         <div class="mtc-kpi-sub">
-          @if ((summary()?.totalTrades ?? 0) > 0) { {{ periodShort() }} } @else { Aucune donnée }
+          @if ((summary()?.totalTrades ?? 0) > 0) { trades clôturés · {{ periodShort() }} } @else { Aucune donnée }
         </div>
       </div>
-      @let dd = sparkPath(ddSeries());
+      @let dd = sparkPath(ddSeries(), 72, 42, true);
       @if (dd.line) {
         <svg class="mtc-spark" viewBox="0 0 72 42" preserveAspectRatio="none">
           <path [attr.d]="dd.area" fill="var(--red)" fill-opacity="0.13" />

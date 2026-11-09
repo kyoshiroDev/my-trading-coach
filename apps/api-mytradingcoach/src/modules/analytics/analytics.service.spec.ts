@@ -1,14 +1,15 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
 // Les agrégats sont calculés en SQL (analytics.sql.ts) : leurs scénarios métier tournent sur un vrai
 // Postgres (analytics.service.scenarios.int-spec.ts, analytics-sql-equivalence.int-spec.ts). Ici,
 // seulement ce qui ne dépend pas de la base : clés de cache, bornes transmises, réduction de courbe.
 vi.mock('./analytics.sql', () => ({
   groupTrades: vi.fn().mockResolvedValue([]),
-  summaryTotals: vi.fn().mockResolvedValue({ count: 0, wins: 0, losses: 0, pnl: 0, grossProfit: 0, grossLoss: 0, maxDrawdown: 0, streak: 0 }),
+  summaryTotals: vi.fn().mockResolvedValue({ count: 0, wins: 0, losses: 0, pnl: 0, grossProfit: 0, grossLoss: 0, streak: 0 }),
   cumulativeByTrade: vi.fn().mockResolvedValue([]),
+  closedTradeNets: vi.fn().mockResolvedValue([]),
 }));
-import { groupTrades, cumulativeByTrade, summaryTotals } from './analytics.sql';
+import { groupTrades, cumulativeByTrade, summaryTotals, closedTradeNets } from './analytics.sql';
 import { Test, TestingModule } from '@nestjs/testing';
 import { AnalyticsService } from './analytics.service';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -141,6 +142,7 @@ describe('AnalyticsService', () => {
       ['getEquityCurve', (inc) => service.getEquityCurve('u1', undefined, inc)],
       ['getEquityCurveCurrentMonth', (inc) => service.getEquityCurveCurrentMonth('u1', undefined, inc)],
       ['getEquityCurveDaily', (inc) => service.getEquityCurveDaily('u1', from, to, undefined, inc)],
+      ['getEquityCurveTrades', (inc) => service.getEquityCurveTrades('u1', from, to, undefined, inc)],
       ['getTopAssets', (inc) => service.getTopAssets('u1', undefined, inc)],
       ['getMonthlyActivity', (inc) => service.getMonthlyActivity('u1', 2026, 9, undefined, inc)],
       ['getActivityRange', (inc) => service.getActivityRange('u1', from, to, undefined, inc)],
@@ -149,6 +151,7 @@ describe('AnalyticsService', () => {
       ...vi.mocked(groupTrades).mock.calls.map((c) => c[1]),
       ...vi.mocked(summaryTotals).mock.calls.map((c) => c[1]),
       ...vi.mocked(cumulativeByTrade).mock.calls.map((c) => c[1]),
+      ...vi.mocked(closedTradeNets).mock.calls.map((c) => c[1]),
     ];
     beforeEach(() => {
       mockRedisService.client.get.mockReset().mockResolvedValue(null);
@@ -156,6 +159,7 @@ describe('AnalyticsService', () => {
       vi.mocked(groupTrades).mockClear();
       vi.mocked(summaryTotals).mockClear();
       vi.mocked(cumulativeByTrade).mockClear();
+      vi.mocked(closedTradeNets).mockClear();
     });
 
     it.each(getters)('%s : par défaut, filtre sans includeInactive (inactifs exclus)', async (_n, run) => {
@@ -223,6 +227,38 @@ describe('AnalyticsService', () => {
     });
   });
 
+  describe('getEquityCurveTrades (courbe par trade clôturé, drawdown max)', () => {
+    // Dates fixes du cas réel : horloge figée au lundi 09/11/2026 (règle du dépôt).
+    beforeEach(() => { vi.useFakeTimers({ toFake: ['Date'] }); vi.setSystemTime(new Date('2026-11-09T18:00:00Z')); });
+    afterEach(() => vi.useRealTimers());
+    // Cas réel du prompt : vendredi 06/11 −268 (08:22), −267,50 (08:45), +447 (22:45) ;
+    // lundi 09/11 +1 406,50 puis −253,60. Nets déjà frais déduits (SQL).
+    const nets = [
+      { closedAt: new Date('2026-11-06T08:22:00Z'), pnl: -268 },
+      { closedAt: new Date('2026-11-06T08:45:00Z'), pnl: -267.5 },
+      { closedAt: new Date('2026-11-06T22:45:00Z'), pnl: 447 },
+      { closedAt: new Date('2026-11-09T09:00:00Z'), pnl: 1406.5 },
+      { closedAt: new Date('2026-11-09T10:00:00Z'), pnl: -253.6 },
+    ];
+
+    it('un point par clôture et le creux −535,50 (pas la clôture du jour −88,50)', async () => {
+      mockRedisService.client.get.mockResolvedValue(null);
+      vi.mocked(closedTradeNets).mockResolvedValueOnce(nets);
+      const r = await service.getEquityCurveTrades('u-dd', new Date('2026-10-10T00:00:00Z'), new Date('2026-11-09T23:59:59Z'));
+      expect(r.points.map((p) => p.cumulativePnl)).toEqual([-268, -535.5, -88.5, 1318, 1064.4]);
+      expect(r.maxDrawdown).toBe(-535.5);
+      expect(r.trades).toBe(5);
+    });
+
+    it('résumé : maxDrawdown (montant positif) par la même règle', async () => {
+      vi.mocked(closedTradeNets).mockResolvedValueOnce(nets);
+      vi.mocked(summaryTotals).mockResolvedValueOnce({ count: 5, wins: 2, losses: 3, pnl: 1064.4, grossProfit: 1853.5, grossLoss: 789.1, streak: -1 });
+      const r = await (service as unknown as { computeSummary: (f: object) => Promise<{ maxDrawdown: number; profitFactor: number }> }).computeSummary({ userId: 'u1' });
+      expect(r.maxDrawdown).toBe(535.5);
+      expect(r.profitFactor).toBe(2.35);
+    });
+  });
+
   describe('bestByWinRate (meilleure session / heure du résumé)', () => {
     const g = (key: string, wins: number, losses: number) => ({ key, wins, losses });
     it('égalité de win rate → le premier apparu gagne', () => {
@@ -245,7 +281,7 @@ describe('AnalyticsService', () => {
 
     it('résumé : profit factor null sans perte, heure au format HH:00, meilleure session', async () => {
       const { summaryTotals } = await import('./analytics.sql');
-      vi.mocked(summaryTotals).mockResolvedValueOnce({ count: 3, wins: 3, losses: 0, pnl: 300.004, grossProfit: 300, grossLoss: 0, maxDrawdown: 0, streak: 3 });
+      vi.mocked(summaryTotals).mockResolvedValueOnce({ count: 3, wins: 3, losses: 0, pnl: 300.004, grossProfit: 300, grossLoss: 0, streak: 3 });
       vi.mocked(groupTrades)
         .mockResolvedValueOnce([agg('LONDON', { wins: 1, losses: 1 }), agg('ASIAN', { wins: 2 })])
         .mockResolvedValueOnce([agg('9', { wins: 3 })]);

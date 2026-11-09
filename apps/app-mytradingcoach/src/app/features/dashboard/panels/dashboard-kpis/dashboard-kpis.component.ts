@@ -4,8 +4,7 @@ import { DecimalPipe } from '@angular/common';
 import { AnalyticsSummary } from '@app/core/api/analytics.api';
 import { InfoTooltipComponent } from '@app/shared/components/info-tooltip/info-tooltip.component';
 import { PnlFormatPipe } from '@app/shared/pipes';
-import { sparkPath } from '../../dashboard-charts.util';
-import { maxDrawdownOf } from '@app/core/services/equity-period.util';
+import { sparkPath, TradeCountBar } from '../../dashboard-charts.util';
 
 /** Rangée des 6 KPIs du dashboard (capital, P&L, win rate, profit factor, trades, drawdown). */
 @Component({
@@ -23,13 +22,17 @@ export class DashboardKpisComponent {
   readonly periodStartCapital = input(0);
   /** Solde actuel du compte (le même que le sélecteur et Mes comptes). */
   readonly currentCapital = input(0);
-  /** Drawdown jour par jour depuis le plus haut du compte (règle EOD), point de départ compris. */
+  /** Drawdown max de la période (≤ 0), après chaque trade clôturé (`maxDrawdownOfTrades`). */
+  readonly maxDrawdown = input(0);
+  /** Drawdown après chaque clôture de la période (≤ 0), point de départ compris. */
   readonly drawdownSeries = input<number[]>([]);
   /** P&L cumulé jour par jour sur la période (source des sparklines). */
   readonly equitySeries = input<number[]>([]);
   /** Payouts cumulés aux mêmes points : la sparkline du Capital les déduit (fin = Capital). */
   readonly payoutSeries = input<number[]>([]);
   readonly periodShort = input('');
+  /** Trades clôturés par jour tradé de la période (`tradeCountBars`) : barres de « Trades pris ». */
+  readonly tradeBars = input<TradeCountBar[]>([]);
   /** Trades chargés : repli du compteur tant que les KPIs n'en donnent pas. */
   readonly fallbackTradesCount = input(0);
 
@@ -42,8 +45,8 @@ export class DashboardKpisComponent {
     return pf.toFixed(2);
   });
 
-  /** Plus fort drawdown de la période : même série que la courbe de drawdown des Statistiques. */
-  protected readonly drawdownDisplay = computed(() => maxDrawdownOf(this.drawdownSeries()));
+  /** Plus fort drawdown de la période, trade par trade (≤ 0). */
+  protected readonly drawdownDisplay = computed(() => Math.min(0, this.maxDrawdown()));
   protected readonly pnlColor = computed(() => {
     const pnl = this.summary()?.totalPnl ?? 0;
     return pnl === 0 ? 'var(--text-2)' : pnl > 0 ? 'var(--green)' : 'var(--red)';
@@ -78,6 +81,10 @@ export class DashboardKpisComponent {
   });
   /** Série rouge du KPI drawdown (sans le point de départ, comme les autres sparklines). */
   protected readonly ddSeries = computed(() => this.drawdownSeries().slice(1));
+
+  protected readonly tradeBarsLabel = computed(() =>
+    `Trades par jour : ${this.tradeBars().map((b) => b.count).join(', ')}`,
+  );
 
   /** Barre win rate (KPI), pleine largeur de la carte comme les autres visuels (#642). */
   protected readonly winRatePct = computed(() => Math.max(0, Math.min(100, this.summary()?.winRate ?? 0)));

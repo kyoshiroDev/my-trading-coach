@@ -1,6 +1,9 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
   START_LABEL,
+  stepLabel,
+  tickLabels,
+  tooltipDate,
   chartAriaLabel,
   compactMoney,
   drawdownSeries,
@@ -112,12 +115,26 @@ describe('chartAriaLabel', () => {
   });
 });
 
-describe('drawdown d’un compte de 50K, gains avant et pendant la période', () => {
-  it('part du sommet d’avant la période', () => {
-    const points = [pt('2026-10-01', 300), pt('2026-10-02', -100), pt('2026-10-03', 840)];
-    const s = drawdownSeries(points, { pnl: 238, peak: 500 });
-    expect(s.values).toEqual([-262, 0, -400, 0]);
+describe('drawdown « sous l’eau » des Statistiques : règle unique par trade clôturé', () => {
+  it('sommet = début de période, le sommet d’avant la période n’est plus repris', () => {
+    // Cumul de la période : 300 ; −100 ; 840. Sommet de départ 0 → drawdown 0 ; −400 ; 0.
+    const s = drawdownSeries([pt('2026-10-01', 300), pt('2026-10-02', -100), pt('2026-10-03', 840)]);
+    expect(s.values).toEqual([0, 0, -400, 0]);
     expect(maxDrawdownIndex(s.values)).toBe(2);
+  });
+
+  it('cas réel du 06/11 avec les points par trade : max −535,50 (pas −88,50 en clôture de jour)', () => {
+    const trades = [
+      { date: '2026-11-06T08:22:00.000Z', cumulativePnl: -268, pnl: -268, trades: 1 },
+      { date: '2026-11-06T08:45:00.000Z', cumulativePnl: -535.5, pnl: -267.5, trades: 1 },
+      { date: '2026-11-06T22:45:00.000Z', cumulativePnl: -88.5, pnl: 447, trades: 1 },
+    ];
+    const s = drawdownSeries(trades);
+    expect(s.values).toEqual([0, -268, -535.5, -88.5]);
+    expect(s.values[maxDrawdownIndex(s.values)!]).toBe(-535.5);
+    expect(s.perTrade).toBe(true);
+    // Même jour en un point journalier : la clôture seule, le creux disparaît.
+    expect(Math.min(...drawdownSeries([pt('2026-11-06', -88.5)]).values)).toBe(-88.5);
   });
 });
 
@@ -338,7 +355,8 @@ describe('« ? » de la carte drawdown selon la règle du plan relié', () => {
   }) as Parameters<typeof drawdownHelp>[0];
 
   it('sans plan : drawdown classique', () => {
-    expect(drawdownHelp(null, 'USD')).toContain('plus haut depuis l');
+    expect(drawdownHelp(null, 'USD')).toContain('après chaque trade clôturé');
+    expect(drawdownHelp(null, 'USD')).toContain('hors variations en cours de trade');
   });
   it('statique : plancher fixe, valeurs du plan (aucune valeur en dur)', () => {
     expect(drawdownHelp(plan({ kind: 'static' }), 'USD')).toContain('plancher fixe du plan ($24,000)');
@@ -350,5 +368,45 @@ describe('« ? » de la carte drawdown selon la règle du plan relié', () => {
   });
   it('suiveur intraday : note sur les gains latents', () => {
     expect(drawdownHelp(plan({ kind: 'trailing_intraday' }), 'USD')).toContain('Calcul sur les trades clôturés ; ta prop firm peut tenir compte des gains latents.');
+  });
+});
+
+describe('axe des dates d’une courbe par trade', () => {
+  it('plusieurs clôtures le même jour : la date n’apparaît qu’une fois', () => {
+    const dates = [null, '2026-11-06T08:22:00.000Z', '2026-11-06T08:45:00.000Z', '2026-11-06T22:45:00.000Z', '2026-11-09T09:00:00.000Z'];
+    const labels = tickLabels(dates, 30);
+    expect(labels[0]).toBe(START_LABEL);
+    expect(labels.filter((l) => l !== '')).toEqual([START_LABEL, '06/11/26', '09/11/26']);
+    expect(labels[2]).toBe('');
+  });
+});
+
+describe('courbe par trade (tableau de bord)', () => {
+  // Dates fixes : horloge figée au lundi 09/11/2026 (règle du dépôt).
+  beforeEach(() => { vi.useFakeTimers({ toFake: ['Date'] }); vi.setSystemTime(new Date('2026-11-09T18:00:00Z')); });
+  afterEach(() => vi.useRealTimers());
+  // Points de /equity-curve/trades : P&L de la clôture porté par le point (la courbe est réduite,
+  // l'écart au point gardé précédent n'est donc pas le P&L du trade).
+  const points = [
+    { date: '2026-11-06T08:22:00.000Z', cumulativePnl: -268, pnl: -268, trades: 1 },
+    { date: '2026-11-06T08:45:00.000Z', cumulativePnl: -535.5, pnl: -267.5, trades: 1 },
+    { date: '2026-11-06T22:45:00.000Z', cumulativePnl: -88.5, pnl: 447, trades: 2 },
+  ];
+
+  it('le creux de −535,50 est un point de la courbe de solde (50 000 → 49 464,50)', () => {
+    const s = equitySeries(points, 50_000);
+    expect(s.values).toEqual([50_000, 49_732, 49_464.5, 49_911.5]);
+    expect(Math.min(...s.values)).toBe(49_464.5);
+    expect(s.dayPnl).toEqual([null, -268, -267.5, 447]);
+    expect(s.perTrade).toBe(true);
+  });
+
+  it('infobulle : « Trade » ou « 2 trades », heure de clôture ; courbe par jour inchangée (« Jour »)', () => {
+    const s = equitySeries(points, 50_000);
+    expect(stepLabel(s, 1)).toBe('Trade');
+    expect(stepLabel(s, 3)).toBe('2 trades');
+    expect(stepLabel(equitySeries([{ date: '2026-11-06T00:00:00.000Z', cumulativePnl: -88.5 }], 0), 1)).toBe('Jour');
+    expect(tooltipDate('2026-11-06T08:45:00.000Z', true)).toMatch(/^6 nov\. 2026 · \d{2}:45$/);
+    expect(tooltipDate('2026-11-06T08:45:00.000Z')).toBe('6 nov. 2026');
   });
 });

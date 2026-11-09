@@ -120,6 +120,24 @@ export class AnalyticsController {
     );
   }
 
+  // Courbe d'équité par trade clôturé + drawdown max de la période (dashboard) = vue de base FREE.
+  @Get('equity-curve/trades')
+  async getEquityTrades(
+    @CurrentUser() user: { id: string },
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+    @Query('accountId') accountId?: string,
+    @Query('includeInactive') includeInactive?: string,
+  ) {
+    return this.analyticsService.getEquityCurveTrades(
+      user.id,
+      from ? new Date(from) : undefined,
+      to ? this.endBound(to) : undefined,
+      await this.accountId(user.id, accountId),
+      parseIncludeInactive(includeInactive),
+    );
+  }
+
   // Top actifs (P&L par instrument) vue simple = vue de base FREE.
   @Get('top-assets')
   async getTopAssets(

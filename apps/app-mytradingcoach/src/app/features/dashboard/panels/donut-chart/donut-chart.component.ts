@@ -8,7 +8,7 @@ import { DonutView } from '../../dashboard-charts.util';
   styleUrl: './donut-chart.component.css',
   template: `
     <div class="mtc-donut-row">
-      <div class="mtc-donut" [style.background]="donut().gradient"><div class="mtc-donut-hole"><span class="mtc-donut-v">{{ donut().centerValue }}</span><span class="mtc-donut-l">{{ donut().centerLabel }}</span></div></div>
+      <div class="mtc-donut" [style.background]="donut().gradient"><div class="mtc-donut-hole">@if (donut().centerKicker; as k) {<span class="mtc-donut-k">{{ k }}</span>}<span class="mtc-donut-v">{{ donut().centerValue }}</span><span class="mtc-donut-l">{{ donut().centerLabel }}</span></div></div>
       <div class="mtc-legend">
         @for (l of donut().legend; track l.label) {
           <div class="mtc-legend-item"><span class="mtc-legend-dot" [style.background]="l.color"></span><span class="mtc-legend-lab">{{ l.label }}</span><span class="mtc-legend-pct">{{ l.pct }}%</span></div>
