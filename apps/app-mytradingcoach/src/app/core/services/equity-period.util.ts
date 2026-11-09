@@ -61,34 +61,41 @@ export function withPayouts(points: EquityPoint[], payouts: EquityPayout[] | nul
   });
 }
 
+/**
+ * Payouts insérés dans une courbe PAR TRADE : un payout devient un point à sa date (minuit UTC de
+ * sa journée, donc avant les trades du jour), au P&L cumulé du moment. Le P&L ne change pas (le
+ * drawdown non plus) ; seules les courbes de solde déduisent le retrait.
+ */
+export function withPayoutsByTrade(points: EquityPoint[], payouts: EquityPayout[] | null | undefined): EquityPoint[] {
+  if (!payouts?.length) return points;
+  const sorted = [...payouts].sort((a, b) => a.date.localeCompare(b.date));
+  const out: EquityPoint[] = [];
+  let k = 0;
+  let cumulativePnl = 0;
+  // Payouts d'avant `until` (exclu) : un point chacun (même date → cumulés sur un seul point).
+  const insertBefore = (until: string | null) => {
+    while (k < sorted.length && (until === null || sorted[k].date < until)) {
+      const p = sorted[k++];
+      const last = out[out.length - 1];
+      if (last && last.date === p.date && last.pnl === undefined) last.payout = (last.payout ?? 0) + p.amount;
+      else out.push({ date: p.date, cumulativePnl, payout: p.amount });
+    }
+  };
+  for (const point of points) {
+    insertBefore(point.date);
+    let payout = 0;
+    while (k < sorted.length && sorted[k].date === point.date) payout += sorted[k++].amount;
+    out.push(payout ? { ...point, payout } : point);
+    cumulativePnl = point.cumulativePnl;
+  }
+  insertBefore(null);
+  return out;
+}
+
 /** Payouts cumulés à chaque point (0 sans payout). */
 export function cumulativePayouts(points: EquityPoint[]): number[] {
   let paid = 0;
   return points.map((p) => (paid += p.payout ?? 0));
-}
-
-/**
- * Drawdown jour par jour (≤ 0), point de départ compris : clôture de journée moins le plus haut
- * des clôtures DEPUIS L'OUVERTURE DU COMPTE (sommet d'avant la période inclus, solde de départ
- * compris), comme la règle EOD des prop firms et la marge de Mes comptes. La période peut donc
- * commencer déjà en drawdown.
- */
-export function anchoredDrawdown(points: EquityPoint[], before: PeriodBefore = NO_HISTORY): number[] {
-  let peak = Math.max(0, before.peak, before.pnl);
-  const start = before.pnl - peak;
-  return [
-    start,
-    ...points.map((p) => {
-      const profit = before.pnl + p.cumulativePnl;
-      if (profit > peak) peak = profit;
-      return profit - peak;
-    }),
-  ];
-}
-
-/** Plus fort drawdown d'une série (≤ 0), 0 si vide. */
-export function maxDrawdownOf(series: number[]): number {
-  return series.length ? Math.min(0, ...series) : 0;
 }
 
 /** Comptes d'une vue : de quoi lire un solde sans dépendre du store (specs, calcul pur). */

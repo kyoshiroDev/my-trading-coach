@@ -118,14 +118,14 @@ export interface SummaryTotals {
   pnl: number;
   grossProfit: number;
   grossLoss: number;
-  maxDrawdown: number;
   /** Série en cours : > 0 gagnants consécutifs, < 0 non-gagnants consécutifs (0 sans trade). */
   streak: number;
 }
 
 /**
- * Totaux du résumé en une requête : sommes, drawdown maximal (pic courant partant de 0, comme
- * avant) et série en cours (gagnant = net > 0, sinon « non gagnant »), dans l'ordre chronologique.
+ * Totaux du résumé en une requête : sommes et série en cours (gagnant = net > 0, sinon « non
+ * gagnant »), dans l'ordre chronologique. Le drawdown max n'est PLUS calculé ici : source unique
+ * `maxDrawdownOfTrades` (`@mtc/shared`) sur `closedTradeNets`.
  */
 export async function summaryTotals(prisma: PrismaService, f: TradeFilter): Promise<SummaryTotals> {
   const [row] = await prisma.$queryRaw<SummaryTotals[]>`
@@ -134,13 +134,9 @@ export async function summaryTotals(prisma: PrismaService, f: TradeFilter): Prom
       FROM "Trade" t WHERE ${where(f)}
     ), c AS (
       SELECT net,
-             sum(net) OVER w AS cum,
              (net > 0) AS win,
              row_number() OVER (ORDER BY "tradedAt" DESC, "id" DESC) AS rn_desc
-      FROM o WINDOW w AS (ORDER BY "tradedAt", "id" ROWS UNBOUNDED PRECEDING)
-    ), d AS (
-      SELECT *, greatest(0, max(cum) OVER (ORDER BY rn_desc DESC ROWS UNBOUNDED PRECEDING)) - cum AS dd
-      FROM c
+      FROM o
     ), last AS (SELECT win FROM c WHERE rn_desc = 1)
     SELECT count(*)::int AS "count",
            count(*) FILTER (WHERE net > 0)::int AS "wins",
@@ -148,14 +144,28 @@ export async function summaryTotals(prisma: PrismaService, f: TradeFilter): Prom
            coalesce(sum(net), 0)::float8 AS "pnl",
            coalesce(sum(greatest(net, 0)), 0)::float8 AS "grossProfit",
            coalesce(sum(greatest(-net, 0)), 0)::float8 AS "grossLoss",
-           coalesce(max(dd), 0)::float8 AS "maxDrawdown",
            coalesce((
              SELECT (CASE WHEN l.win THEN 1 ELSE -1 END) *
                     (coalesce(min(c2.rn_desc) FILTER (WHERE c2.win <> l.win), count(*) + 1) - 1)
              FROM c c2, last l GROUP BY l.win
            ), 0)::int AS "streak"
-    FROM d`;
+    FROM c`;
   return row;
+}
+
+/**
+ * P&L NET de chaque trade clôturé avec son heure de clôture (`tradedAt`), dans l'ordre
+ * chronologique : matière de la courbe par trade et du drawdown max (`closedTradeSteps` de
+ * `@mtc/shared`, qui regroupe les trades du même instant). Deux colonnes par trade.
+ */
+export async function closedTradeNets(
+  prisma: PrismaService,
+  f: TradeFilter,
+): Promise<{ closedAt: Date; pnl: number }[]> {
+  return prisma.$queryRaw<{ closedAt: Date; pnl: number }[]>`
+    SELECT t."tradedAt" AS "closedAt", ${NET}::float8 AS "pnl"
+    FROM "Trade" t WHERE ${where(f)}
+    ORDER BY t."tradedAt", t."id"`;
 }
 
 /** P&L net cumulé trade par trade, dans l'ordre chronologique (courbe d'équité par trade). */

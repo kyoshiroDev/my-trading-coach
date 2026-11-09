@@ -1,6 +1,6 @@
-import { DrawdownFloorRule, drawdownFloor, formatMoney } from '@mtc/shared';
+import { DrawdownFloorRule, drawdownFloor, formatMoney, maxDrawdownOfCumulative } from '@mtc/shared';
 import { EquityPoint, PeriodBefore } from '../api/analytics.api';
-import { anchoredDrawdown, cumulativePayouts, NO_HISTORY } from './equity-period.util';
+import { cumulativePayouts, NO_HISTORY } from './equity-period.util';
 import { TradingAccount } from '../api/accounts.api';
 import { requirementLabel } from '../../features/accounts/account-progress.util';
 
@@ -21,9 +21,18 @@ export interface ChartSeries {
   dayPnl: (number | null)[];
   /** Payout reçu ce jour-là ; `null` sans payout (et pour « Départ »). */
   payout?: (number | null)[];
+  /** Courbe par trade : `dayPnl` est le P&L de la clôture, `trades` le nombre de trades du point. */
+  perTrade?: boolean;
+  trades?: (number | null)[];
 }
 
+/** Courbe par trade : points venus de `/equity-curve/trades` (ils portent le P&L de leur clôture). */
+export const isPerTrade = (points: EquityPoint[]): boolean => points.some((p) => p.pnl !== undefined);
+
 function dayPnlOf(points: EquityPoint[]): (number | null)[] {
+  // Courbe par trade (réduite) : P&L de la clôture elle-même, pas l'écart au point gardé précédent.
+  // Point de payout seul : 0 (l'infobulle affiche le retrait).
+  if (isPerTrade(points)) return [null, ...points.map((p) => p.pnl ?? (p.payout ? 0 : null))];
   return [null, ...points.map((p, i) => p.cumulativePnl - (i ? points[i - 1].cumulativePnl : 0))];
 }
 
@@ -40,18 +49,22 @@ export function equitySeries(points: EquityPoint[], startingCapital: number | nu
     values: [base, ...points.map((p, i) => base + p.cumulativePnl - paid[i])],
     dayPnl: dayPnlOf(points),
     payout: payoutOf(points),
+    ...(isPerTrade(points) ? { perTrade: true, trades: [null, ...points.map((p) => p.trades ?? null)] } : {}),
   };
 }
 
 /**
- * Drawdown jour par jour (≤ 0) : clôture sous le plus haut depuis l'ouverture du compte
- * (`anchoredDrawdown`, sommet d'avant la période compris). La période peut partir en drawdown.
+ * Drawdown « sous l'eau » (≤ 0) après chaque point de la courbe, règle unique `@mtc/shared`
+ * (`maxDrawdownOfCumulative`) : sommet = solde du début de période puis plus haut atteint. Avec les
+ * points de `/equity-curve/trades`, c'est le drawdown après chaque trade clôturé (Statistiques,
+ * comme le KPI du tableau de bord). Le mode plan prop firm passe par `floorSeries`, pas par ici.
  */
-export function drawdownSeries(points: EquityPoint[], before: PeriodBefore = NO_HISTORY): ChartSeries {
+export function drawdownSeries(points: EquityPoint[]): ChartSeries {
   return {
     dates: [null, ...points.map((p) => p.date)],
-    values: anchoredDrawdown(points, before),
+    values: maxDrawdownOfCumulative(points.map((p) => p.cumulativePnl)).series,
     dayPnl: dayPnlOf(points),
+    ...(isPerTrade(points) ? { perTrade: true, trades: [null, ...points.map((p) => p.trades ?? null)] } : {}),
   };
 }
 
@@ -120,16 +133,40 @@ export function tickDate(iso: string | null, span: number): string {
     : d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: '2-digit' });
 }
 
+/**
+ * Libellés de l'axe des dates : une courbe par trade a plusieurs points le même jour ; seul le
+ * premier point d'une date porte le libellé, les suivants restent vides (jamais deux fois la même
+ * date sur l'axe).
+ */
+export function tickLabels(dates: (string | null)[], span: number): string[] {
+  let previous: string | null = null;
+  return dates.map((d) => {
+    const label = tickDate(d, span);
+    if (label === previous) return '';
+    previous = label;
+    return label;
+  });
+}
+
 /** Date courte d'un repère : `14/10`. */
 export function shortDate(iso: string | null): string {
   if (!iso) return START_LABEL;
   return new Date(iso).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
 }
 
-/** Date complète d'une infobulle : `6 janv. 2025`. */
-export function tooltipDate(iso: string | null): string {
+/** Date complète d'une infobulle : `6 janv. 2025`, avec l'heure pour une clôture de trade (`6 janv. 2025 · 08:45`). */
+export function tooltipDate(iso: string | null, withTime = false): string {
   if (!iso) return START_LABEL;
-  return new Date(iso).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
+  const d = new Date(iso);
+  const day = d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
+  return withTime ? `${day} · ${d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}` : day;
+}
+
+/** Pied d'infobulle d'un point : P&L du jour, ou de la clôture (« Trade » / « 2 trades ») sur une courbe par trade. */
+export function stepLabel(series: ChartSeries, i: number): string {
+  if (!series.perTrade) return 'Jour';
+  const n = series.trades?.[i] ?? 1;
+  return n > 1 ? `${n} trades` : 'Trade';
 }
 
 /** Résumé lu par les lecteurs d'écran : valeur de départ, valeur actuelle, période. */
@@ -257,7 +294,7 @@ export function planFloorOf(account: TradingAccount | null): PlanFloor | null {
  */
 export function drawdownHelp(plan: PlanFloor | null, currency: string | null): string {
   if (!plan) {
-    return "Écart entre ton solde en clôture de journée et son plus haut depuis l'ouverture du compte. Mesure la baisse depuis un pic, pas une perte définitive.";
+    return "Écart entre ton solde et son plus haut de la période, après chaque trade clôturé (frais inclus), hors variations en cours de trade. Mesure la baisse depuis un pic, pas une perte définitive.";
   }
   const fmt = (v: number) => formatMoney(v, currency, { decimals: 0, sign: false });
   const { rule } = plan;

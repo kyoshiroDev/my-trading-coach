@@ -13,15 +13,42 @@ import { emotionLabel } from '../../shared/pipes/emotion-label.pipe';
 
 export interface SparkPath { line: string; area: string; cx: number; cy: number }
 
-/** Sparkline (line + area) sur un viewBox w×h. */
-export function sparkPath(series: number[], w = 72, h = 42): SparkPath {
+/**
+ * Sparkline (line + area) sur un viewBox w×h. `underwater` (drawdown, valeurs ≤ 0) : 0 tout en haut
+ * (même quand la série reste à 0), le creux en bas, aire remplie DEPUIS LE HAUT jusqu'à la ligne :
+ * une baisse se lit comme une descente, pas comme une montagne.
+ */
+export function sparkPath(series: number[], w = 72, h = 42, underwater = false): SparkPath {
   if (series.length < 2) return { line: '', area: '', cx: 0, cy: 0 };
-  const min = Math.min(...series), max = Math.max(...series), rng = max - min || 1;
+  const min = Math.min(...series), max = underwater ? 0 : Math.max(...series), rng = max - min || 1;
   const step = w / (series.length - 1);
-  const pts = series.map((v, i) => [i * step, h - 2 - ((v - min) / rng) * (h - 4)] as const);
+  const pts = series.map((v, i) => [i * step, h - 2 - ((v - min) / rng) * (h - 4)] as const)
+    .map(([x, y]) => [x, underwater && min === 0 ? 2 : y] as const);
   const line = pts.map((p, i) => `${i ? 'L' : 'M'}${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(' ');
   const last = pts[pts.length - 1];
-  return { line, area: `${line} L${w},${h} L0,${h} Z`, cx: last[0], cy: last[1] };
+  const area = underwater ? `${line} L${w},0 L0,0 Z` : `${line} L${w},${h} L0,${h} Z`;
+  return { line, area, cx: last[0], cy: last[1] };
+}
+
+export interface TradeCountBar { date: string; count: number; pct: number; /** Infobulle : « 6 nov. : 3 trades ». */ label: string }
+
+/**
+ * Barres « Trades pris » : nombre de trades clôturés par jour tradé de la période (les
+ * `maxBars` derniers), hauteur relative au jour le plus chargé. Plus de barres décoratives.
+ */
+export function tradeCountBars(days: readonly { date: string; tradesCount: number }[], maxBars = 14): TradeCountBar[] {
+  const traded = [...days].filter((d) => d.tradesCount > 0).sort((a, b) => a.date.localeCompare(b.date)).slice(-maxBars);
+  const top = Math.max(1, ...traded.map((d) => d.tradesCount));
+  return traded.map((d) => {
+    // Midi local : la date du jour (Paris) ne glisse pas à la veille selon le fuseau.
+    const day = new Date(`${d.date}T12:00:00`).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+    return {
+      date: d.date,
+      count: d.tradesCount,
+      pct: Math.max(8, Math.round((d.tradesCount / top) * 100)),
+      label: `${day} : ${d.tradesCount} trade${d.tradesCount > 1 ? 's' : ''}`,
+    };
+  });
 }
 
 // ── Donuts (conic-gradient + légende + valeur centrale) ──────────────────────
@@ -30,6 +57,8 @@ export interface DonutView {
   gradient: string;
   centerValue: string;
   centerLabel: string;
+  /** Ce que mesure la valeur centrale quand ce n'est pas une part de la légende (« Win rate »). */
+  centerKicker?: string;
   legend: { label: string; color: string; pct: number }[];
 }
 
@@ -46,13 +75,17 @@ function conicShares(parts: { label: string; color: string; count: number }[]) {
   return { gradient: `conic-gradient(${stops.join(', ')})`, legend, total };
 }
 
-/** Donut « répartition stratégies » Premium : centre = win rate du meilleur setup. */
+/**
+ * Donut « répartition stratégies » Premium : légende = % des trades par setup ; centre = WIN RATE
+ * du meilleur setup, annoncé comme tel (« 40 % · Sans setup » se lisait comme une part, face à une
+ * légende à 100 %).
+ */
 export function setupsDonutFromStats(bySetup: SetupStat[]): DonutView | null {
   const setups = bySetup.filter((s) => s.count > 0).slice(0, 6);
   if (!setups.length) return null;
   const { gradient, legend } = conicShares(setups.map((s) => ({ label: s.title, color: s.color, count: s.count })));
   const best = setups.reduce((a, b) => ((b.winRate ?? 0) > (a.winRate ?? 0) ? b : a), setups[0]);
-  return { gradient, legend, centerValue: `${Math.round(best.winRate ?? 0)}%`, centerLabel: best.title };
+  return { gradient, legend, centerKicker: 'Win rate', centerValue: `${Math.round(best.winRate ?? 0)}%`, centerLabel: best.title };
 }
 
 /**

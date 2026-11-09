@@ -144,7 +144,7 @@ export class SessionService {
   private sessionTrades(userId: string, sessionId: string, sameAccount: { accountId?: string }) {
     return this.prisma.trade.findMany({
       where: { userId, sessionId, ...sameAccount },
-      select: { pnl: true, commission: true, asset: true },
+      select: { pnl: true, commission: true, asset: true, tradedAt: true },
       orderBy: { tradedAt: 'asc' },
     });
   }
