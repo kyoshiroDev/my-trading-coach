@@ -48,7 +48,9 @@ describe('formatMoney : montant tel quel, jamais converti', () => {
 
   it('un montant affiché à zéro ne porte jamais de « - »', () => {
     expect(formatMoney(-0.004, 'USD')).toBe('+$0.00');
-    expect(formatMoney(-0.004, 'USD', { decimals: 0, sign: false })).toBe('$0.00');
+    expect(formatMoney(-0.004, 'USD', { decimals: 0, sign: false })).toBe('$0');
+    expect(formatMoney(-0.004, 'USD', { decimals: 0 })).toBe('+$0');
+    expect(formatMoney(0.1 + 0.2 - 0.3, 'USD', { decimals: 0 })).toBe('+$0');
     expect(formatMoney(0, 'USD', { decimals: 0 })).toBe('+$0');
   });
 
