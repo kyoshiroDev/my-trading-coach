@@ -101,10 +101,15 @@ export class SessionApi {
     );
   }
 
-  getSessionsByMonth(year: number, month: number, accountId?: string, limit = 50): Observable<{ data: SessionHistoryItem[] }> {
+  /**
+   * Séances clôturées d'un mois. `includeInactive` : réinclut celles des comptes échoués et archivés
+   * en « Tous les comptes » (interrupteur partagé) ; sans effet sur un compte précis.
+   */
+  getSessionsByMonth(year: number, month: number, accountId?: string, limit = 50, includeInactive = false): Observable<{ data: SessionHistoryItem[] }> {
     const acc = accountId ? `&accountId=${encodeURIComponent(accountId)}` : '';
+    const inactive = includeInactive ? '&includeInactive=true' : '';
     return this.http.get<{ data: SessionHistoryItem[] }>(
-      `${this.base}/history?year=${year}&month=${month}&limit=${limit}${acc}`,
+      `${this.base}/history?year=${year}&month=${month}&limit=${limit}${acc}${inactive}`,
     );
   }
 

@@ -898,7 +898,7 @@ les chiffres (jamais au premier passage).
   dans la coque (`sidebar.component.html`). Feuille en bas d'écran < 768 px, boîte centrée au-delà,
   `mtcDialog`, vrais boutons radio (« Archiver » coché à chaque ouverture).
 - `shared/components/inactive-accounts-toggle` (`mtc-inactive-accounts-toggle`) : ligne + interrupteur
-  (`role="switch"`), sur le dashboard, les statistiques et le journal ; visible seulement en « Tous les
+  (`role="switch"`), sur le dashboard, les statistiques, le journal et l'historique des sessions ; visible seulement en « Tous les
   comptes » s'il existe un compte échoué ou archivé.
 - Alerte live : `PropAlertsService` ajoute l'action « Marquer comme échoué » au toast
   `drawdown` / `breached` (et à lui seul). `ToastOptions.action` / `ToastService.runAction()` : le
@@ -929,6 +929,8 @@ les chiffres (jamais au premier passage).
   chiffres » : liste = chiffres). Test : `journal-lost-account.spec.ts`.
 - Tableau de bord, « derniers trades » : `{ limit: '6', ...statsParams() }`, même périmètre que les chiffres ;
   badge « Échoué » / « Archivé » du journal dans `mtc-recent-trades-table` (tableau et carte).
+- Historique des sessions : `mtc-inactive-accounts-toggle` sous le sélecteur ; `SessionApi.getSessionsByMonth(…, includeInactive)`
+  suit `inactiveIncluded()`, rechargé aussi quand un compte devient échoué / archivé. Test : `sessions-inactive.spec.ts`.
 - Mes comptes : « Voir les trades » sur la sous-ligne « Hors statistiques » d'un compte échoué ou
   archivé qui a des trades → `store.select(id)` puis `/journal` (un compte précis s'affiche toujours,
   l'interrupteur n'est pas touché).
