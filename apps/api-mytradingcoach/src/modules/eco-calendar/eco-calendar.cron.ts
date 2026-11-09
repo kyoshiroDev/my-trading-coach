@@ -7,13 +7,16 @@ import { toParisDateStr, todayParis } from '@mtc/shared';
 @Injectable()
 export class EcoCalendarCron {
   private readonly logger = new Logger(EcoCalendarCron.name);
+  /** Un relevé à la fois : un appel FMP lent (5 s max) ne doit pas empiler les ticks de 20 s. */
+  private polling = false;
 
   constructor(
     private readonly ecoCalendarService: EcoCalendarService,
     private readonly gateway: EcoCalendarGateway,
   ) {}
 
-  // 6h00 Paris : charger today + tomorrow (2 appels FMP)
+  // 6h00 Paris : charger today + tomorrow (2 appels FMP), puis rattraper les jours récents restés
+  // sans résultat (la veille ; le vendredi soir au fetch du lundi).
   @Cron('0 6 * * 1-5', { timeZone: 'Europe/Paris' })
   async prefetchDay() {
     const today = todayParis();
@@ -23,21 +26,49 @@ export class EcoCalendarCron {
       this.ecoCalendarService.fetchAndStoreEvents(today),
       this.ecoCalendarService.fetchAndStoreEvents(tomorrow),
     ]);
+    const caught = await this.ecoCalendarService.catchUpMissingResults([today, tomorrow]);
+    if (caught.length) this.logger.log(`🔁 Rattrapage des résultats manquants : ${caught.join(', ')}`);
   }
 
-  // Toutes les 60s, 8h-18h Paris, lun-ven : polling temps réel actual values
-  @Cron('*/1 8-17 * * 1-5', { timeZone: 'Europe/Paris' })
-  async pollLiveReleases() {
+  // Dimanche 17h00 Paris : les annonces du dimanche soir (Pacifique, Asie) et du lundi, à jour
+  // avant l'ouverture. Le fetch du vendredi les avait chargées, FMP a pu réviser les heures.
+  @Cron('0 17 * * 0', { timeZone: 'Europe/Paris' })
+  async prefetchSundayEvening() {
     const today = todayParis();
-    const { hasNew, newEvents } = await this.ecoCalendarService.checkNewReleases(today);
+    const monday = toParisDateStr(this.ecoCalendarService.getNextTradingDay());
+    await Promise.all([
+      this.ecoCalendarService.fetchAndStoreEvents(today),
+      this.ecoCalendarService.fetchAndStoreEvents(monday),
+    ]);
+  }
 
-    if (hasNew) {
-      this.logger.log(`🔔 ${newEvents.length} nouveaux résultats détectés : broadcast WebSocket`);
-      this.gateway.notifyNewReleases(newEvents);
+  /**
+   * Toutes les 20 s, mais FMP n'est interrogé que pendant la fenêtre d'une annonce attendue (de son
+   * heure prévue à +15 min, tant que son résultat manque), du dimanche 18 h au vendredi soir.
+   * Hors fenêtre : une lecture en base, aucune requête FMP.
+   */
+  @Cron('*/20 * * * * *')
+  async pollScheduledReleases() {
+    if (this.polling) return;
+    this.polling = true;
+    try {
+      const days = await this.ecoCalendarService.datesToPollNow();
+      for (const day of days) {
+        const { hasNew, newEvents } = await this.ecoCalendarService.checkNewReleases(day);
+        if (hasNew) {
+          this.logger.log(`🔔 ${newEvents.length} nouveaux résultats détectés (${day}) : broadcast WebSocket`);
+          this.gateway.notifyNewReleases(newEvents);
+        }
+      }
+    } catch (err) {
+      this.logger.warn(`Relevé des résultats éco en échec : ${(err as Error).message}`);
+    } finally {
+      this.polling = false;
     }
   }
 
-  // 18h30 Paris : refresh final + vider cache Redis
+  // 18h30 Paris : refresh de filet + vider le cache Redis des calendriers par user (reconstruits
+  // à la demande). Ne touche pas aux analyses (`eco:analysis:*`) ni aux verrous de traduction.
   @Cron('30 18 * * 1-5', { timeZone: 'Europe/Paris' })
   async finalRefresh() {
     const today = todayParis();

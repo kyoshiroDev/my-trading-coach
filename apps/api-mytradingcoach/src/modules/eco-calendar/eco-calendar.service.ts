@@ -13,6 +13,7 @@ import * as dates from './eco-calendar.dates';
 import { classifyEcoEvent, type EcoImpact } from './eco-calendar.impact';
 import { readUserPins, saveUserPins, sortWithPins, userTopAssets } from './eco-calendar.pins';
 import { fetchWithTimeout } from '../../common/utils/fetch-timeout';
+import { datesToCatchUp, datesToPoll, parisDate, shiftDate } from './eco-calendar.schedule';
 
 // Réexport : les appelants existants importent ces types depuis le service.
 export type { EcoCalendarData, EcoResultAnalysis } from './eco-calendar.types';
@@ -353,6 +354,41 @@ export class EcoCalendarService {
     );
 
     return { hasNew: brandNew.length > 0, newEvents: brandNew };
+  }
+
+  // ── Planification du relevé (cf. eco-calendar.schedule.ts) ────────────────
+
+  /**
+   * Jours de Paris à demander à FMP maintenant : ceux d'une annonce chiffrée sans résultat dont
+   * l'heure prévue est passée depuis moins de 15 min. Une lecture en base, aucune requête FMP.
+   */
+  async datesToPollNow(now: Date = new Date()): Promise<string[]> {
+    const today = parisDate(now);
+    // La veille aussi : une annonce de 23 h 50 reste dans sa fenêtre après minuit.
+    const rows = await this.prisma.ecoEvent.findMany({
+      where: { date: { in: [shiftDate(today, -1), today] }, actual: null },
+      select: { date: true, time: true, name: true, actual: true },
+    });
+    return datesToPoll(rows, now);
+  }
+
+  /**
+   * Rattrapage du matin : resynchronise les jours récents (4 derniers) où une annonce chiffrée
+   * passée est restée sans résultat, sauf `alreadyFetched`. Couvre la veille, et le vendredi soir
+   * au fetch du lundi. Renvoie les jours resynchronisés.
+   */
+  async catchUpMissingResults(alreadyFetched: string[], now: Date = new Date()): Promise<string[]> {
+    const today = parisDate(now);
+    const rows = await this.prisma.ecoEvent.findMany({
+      where: {
+        date: { gte: shiftDate(today, -4), lte: today },
+        actual: null,
+      },
+      select: { date: true, time: true, name: true, actual: true },
+    });
+    const days = datesToCatchUp(rows, now, alreadyFetched);
+    for (const day of days) await this.fetchAndStoreEvents(day);
+    return days;
   }
 
   // ── Analyse IA mutualisée par signature d'actifs (cache BDD) ──────────────

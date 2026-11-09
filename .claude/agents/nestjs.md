@@ -2377,6 +2377,24 @@ global à la file ; Resend = 10 req/s par équipe, clé partagée entre environn
   `20261005160000_purge_demo_fake_eco_events`. Le seed écrit aussi `pinnedEcoDate` (sinon
   `readUserPins` vidait la sélection démo).
 
+## Calendrier éco : relevé planifié autour de chaque annonce (2026-11-10, #920)
+
+- Plus de fenêtre fixe 8 h-18 h. `EcoCalendarCron.pollScheduledReleases` tourne **toutes les 20 s** mais
+  n'appelle FMP que si une annonce chiffrée sans résultat est dans sa fenêtre : de son heure prévue à
+  **+15 min** (`eco-calendar.schedule.ts`, pur, `datesToPoll`). Hors fenêtre : une lecture en base, zéro
+  requête FMP. Semaine de marché : dimanche 18 h → vendredi 23 h 59 Paris (`isInTradingWeek`).
+- `EcoEvent.date/time` sont l'heure murale de Paris : `parisWallTimeToUtc` la reconvertit (heure d'été
+  comprise). La veille est lue aussi (annonce de 23 h 50 encore en fenêtre après minuit).
+- `hasNumericResult(name)` : discours, auditions, conférences de presse, communiqués, minutes, rapports de
+  politique monétaire et gouverneurs nommés = **sans chiffre**, jamais relevés (prod 30 j : 0 `actual` sur
+  38). Une décision de taux reste chiffrée.
+- 6 h (lun-ven) : today + prochain jour ouvré, puis `catchUpMissingResults` resynchronise les 4 derniers
+  jours où une annonce chiffrée passée est restée sans résultat (la veille ; le vendredi soir le lundi).
+  Dimanche 17 h : today + lundi (annonces du dimanche soir). 18 h 30 : filet + purge `eco:calendar:<jour>:*`
+  (calendriers par user reconstruits à la demande ; ne touche ni `eco:analysis:*` ni les verrous).
+- Coût FMP : avant ~603 requêtes/jour ouvré ; après = 3 à 5 fixes + 1 par tick de 20 s pendant les
+  fenêtres (au plus 45 par créneau horaire si FMP ne publie jamais le chiffre).
+
 ## News live : traduction par lots et bandeau BREAKING (2026-10-06)
 - **Sources** (`market-news.sources.ts`, `NEWS_FEEDS`) : 4 flux FMP, chacun sa limite (aucun n'évince
   les autres) : `general-latest` (macro, rangée sous le symbole `MACRO`), `forex-latest`, ETF indices /
