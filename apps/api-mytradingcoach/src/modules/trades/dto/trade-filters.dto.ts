@@ -78,8 +78,8 @@ export class TradeFiltersDto implements TradeFilters {
   @IsOptional()
   accountId?: string;
 
-  // Compte perdu : chiffres du journal (GET /trades/stats) avec les comptes échoués et archivés.
-  // Sans effet sur la liste, qui garde toujours tous les trades.
+  // Compte perdu : réinclut les comptes échoués et archivés, dans la liste (GET /trades) ET dans les
+  // chiffres (GET /trades/stats), qui appliquent le même filtre (trade-filters.util).
   @IsOptional()
   @Transform(({ value }) => parseIncludeInactive(value))
   includeInactive?: boolean;

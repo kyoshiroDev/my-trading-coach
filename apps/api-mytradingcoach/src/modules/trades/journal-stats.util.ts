@@ -1,5 +1,6 @@
 import { AccountStatus, Prisma } from '@prisma/client';
-import { excludesInactiveAccounts, inactiveAccountsTradeSql } from '../accounts/account-status-scope';
+import { excludesInactiveAccounts, INACTIVE_ACCOUNT_STATUSES } from '../accounts/account-status-scope';
+import { buildTradeFilterSql, tradeFiltersScope, type TradeListFilters } from './trade-filters.util';
 import { computeTradeStats } from '@mtc/shared';
 import type { PrismaService } from '../../prisma/prisma.service';
 
@@ -94,28 +95,23 @@ export async function journalStatsSql(
 }
 
 /**
- * KPIs du journal pour l'en-tête (GET /trades/stats) : `journalStatsSql` sur le filtre de la
- * liste, PLUS le filtre des comptes perdus (échoués et archivés exclus de « tous les comptes »,
- * sauf `includeInactive` ou compte précis), et le nombre de comptes ainsi exclus pour la ligne
- * « n comptes exclus ». La liste des trades, elle, n'applique pas ce filtre.
+ * KPIs du journal pour l'en-tête (GET /trades/stats) : `journalStatsSql` sur EXACTEMENT le filtre
+ * de la liste (`buildTradeFilterSql`, qui porte déjà le filtre des comptes perdus : échoués et
+ * archivés exclus de « tous les comptes », sauf `includeInactive` ou compte précis), et le nombre
+ * de comptes ainsi exclus pour la ligne « n comptes exclus ».
  */
 export async function journalStatsForFilters(
   prisma: PrismaService,
   userId: string,
-  base: Prisma.Sql,
-  filters: { accountId?: string; includeInactive?: boolean },
+  filters: TradeListFilters,
 ): Promise<JournalStats & { excludedAccounts: { failed: number; archived: number } }> {
-  const scope = {
-    accountId: filters.accountId && filters.accountId !== 'all' ? filters.accountId : undefined,
-    includeInactive: filters.includeInactive === true,
-  };
-  const excluding = excludesInactiveAccounts(scope);
+  const excluding = excludesInactiveAccounts(tradeFiltersScope(filters));
   const [stats, inactive] = await Promise.all([
-    journalStatsSql(prisma, excluding ? Prisma.sql`${base} AND ${inactiveAccountsTradeSql(scope)}` : base),
+    journalStatsSql(prisma, buildTradeFilterSql(userId, filters)),
     excluding
       ? prisma.tradingAccount.groupBy({
         by: ['status'],
-        where: { userId, status: { in: [AccountStatus.FAILED, AccountStatus.ARCHIVED] } },
+        where: { userId, status: { in: [...INACTIVE_ACCOUNT_STATUSES] } },
         _count: { _all: true },
       })
       : Promise.resolve([]),

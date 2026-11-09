@@ -2,6 +2,7 @@ import { AccountStatus, AccountType, BrokerConnectionStatus, Plan, PlanLinkChoic
 import { noFreeAccessWhere, noSubscriptionWhere } from '../../../common/stats/subscription-state-where';
 import { formatMoney } from '@mtc/shared';
 import type { PrismaService } from '../../../prisma/prisma.service';
+import { inactiveAccountsTradeSql } from '../../accounts/account-status-scope';
 import {
   CampaignBuildCtx,
   CampaignContent,
@@ -139,6 +140,8 @@ export async function loadFirstWeek(deps: CampaignLoadDeps, userIds: string[]): 
        AND t."pnl" IS NOT NULL
        AND t."tradedAt" >= u."createdAt"
        AND t."tradedAt" < u."createdAt" + interval '7 days'
+       -- Compte perdu : comptes échoués et archivés hors du récap (filtre partagé).
+       AND ${inactiveAccountsTradeSql()}
      GROUP BY t."userId"`);
   return new Map(
     rows

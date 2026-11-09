@@ -43,7 +43,7 @@ function setup(accounts: TradingAccount[], selected: string | 'all' = 'all', con
   const store = {
     accounts: signal(accounts),
     selectedAccountId: signal<string | 'all'>(selected),
-    isLoading: signal(false), loaded: signal(true), load: vi.fn(),
+    isLoading: signal(false), loaded: signal(true), load: vi.fn(), select: vi.fn(),
   };
   const flow = {
     busy: signal(false), openRetry: vi.fn(), archive: vi.fn(), openChoice: vi.fn(), openAttempt: vi.fn(),
@@ -73,7 +73,7 @@ function setup(accounts: TradingAccount[], selected: string | 'all' = 'all', con
   fixture.detectChanges();
   const el = fixture.nativeElement as HTMLElement;
   const q = (id: string) => el.querySelector(`[data-testid="${id}"]`) as HTMLElement | null;
-  return { fixture, el, q, flow, cmp: fixture.componentInstance as unknown as Record<string, () => unknown> };
+  return { fixture, el, q, flow, store, router: TestBed.inject(Router), cmp: fixture.componentInstance as unknown as Record<string, () => unknown> };
 }
 
 const LIST = () => [
@@ -126,6 +126,20 @@ describe('Mes comptes · compte perdu', () => {
     expect(q('account-autopsy-a2')).toBeNull();
     const { q: q2 } = (TestBed.resetTestingModule(), setup(LIST()));
     expect(q2('account-autopsy-a1')).toBeNull();
+  });
+
+  it('« Voir les trades » : sur un compte échoué ou archivé avec des trades, ouvre le journal sur CE compte', () => {
+    const list = [...LIST(), acct('v', 'Vide 25K', { status: 'ARCHIVED' }, 0, 0)];
+    const { q, store, router } = setup(list);
+    expect(q('account-trades-l')!.textContent!.trim()).toBe('Voir les trades');
+    expect(q('account-trades-a1')).not.toBeNull();
+    expect(q('account-trades-a2')).toBeNull(); // compte actif : déjà dans le journal
+    expect(q('account-trades-v')).toBeNull(); // archivé sans trade : rien à voir
+    q('account-trades-l')!.click();
+    expect(store.select).toHaveBeenCalledWith('l');
+    expect(router.navigate).toHaveBeenCalledWith(['/journal']);
+    // La ligne « Hors statistiques · N trades » ne change pas.
+    expect(q('account-archived-l')!.textContent).toContain('Hors statistiques · 8 trades');
   });
 
   it('archivés : section repliée « 1 COMPTE ARCHIVÉ », hors de la liste principale', () => {

@@ -1,16 +1,20 @@
 import { EmotionState, ExecutionGrade, MoodState, Prisma } from '@prisma/client';
 import { BREAKEVEN_EPSILON } from '@mtc/shared';
 import type { TradeFiltersDto } from './dto/trade-filters.dto';
+import { excludesInactiveAccounts, inactiveAccountsTradeSql, inactiveAccountsTradeWhere, type AccountScope } from '../accounts/account-status-scope';
 
 /**
  * Construit le `where` Prisma de la liste paginée. Les stats du journal, calculées en SQL
  * (SCA-B2-02), utilisent `buildTradeFilterSql` juste en dessous : **toute modification d'un filtre
  * se fait dans les DEUX**. `trade-filters-sql.int-spec.ts` vérifie, pour chaque combinaison de
  * filtres, que les deux sélectionnent exactement les mêmes trades.
+ *
+ * Compte perdu : les deux appliquent le filtre partagé des comptes échoués et archivés
+ * (`account-status-scope`), exclus en « tous les comptes » sauf `includeInactive`. La liste, les
+ * en-têtes de jour / semaine (calculés sur la liste) et la barre de chiffres lisent donc le MÊME
+ * jeu de trades.
  */
-export function buildTradeWhere(
-  userId: string,
-  f: Pick<
+export type TradeListFilters = Pick<
     TradeFiltersDto,
     | 'accountId'
     | 'side'
@@ -20,9 +24,14 @@ export function buildTradeWhere(
     | 'executionGrade'
     | 'dateFrom'
     | 'dateTo'
-  >,
-): Prisma.TradeWhereInput {
+    | 'includeInactive'
+  >;
+
+export function buildTradeWhere(userId: string, f: TradeListFilters): Prisma.TradeWhereInput {
   const where: Prisma.TradeWhereInput = { userId };
+  // Clé `AND` : le filtre renvoie un `OR`, déjà utilisé ici par l'émotion.
+  const scope = tradeFiltersScope(f);
+  if (excludesInactiveAccounts(scope)) where.AND = [inactiveAccountsTradeWhere(scope)];
   if (f.accountId && f.accountId !== 'all') where.accountId = f.accountId;
   if (f.side) where.side = f.side;
   if (f.setupId) where.setupId = f.setupId;
@@ -73,9 +82,11 @@ export function buildTradeWhere(
  */
 export function buildTradeFilterSql(
   userId: string,
-  f: Parameters<typeof buildTradeWhere>[1],
+  f: TradeListFilters,
 ): Prisma.Sql {
   const parts: Prisma.Sql[] = [Prisma.sql`t."userId" = ${userId}`];
+  const scope = tradeFiltersScope(f);
+  if (excludesInactiveAccounts(scope)) parts.push(inactiveAccountsTradeSql(scope));
   if (f.accountId && f.accountId !== 'all') parts.push(Prisma.sql`t."accountId" = ${f.accountId}`);
   if (f.side) parts.push(Prisma.sql`t."side"::text = ${f.side}`);
   if (f.setupId) parts.push(Prisma.sql`t."setupId" = ${f.setupId}`);
@@ -102,4 +113,12 @@ export function buildTradeFilterSql(
   if (f.dateFrom) parts.push(Prisma.sql`t."tradedAt" >= ${new Date(f.dateFrom)}`);
   if (f.dateTo) parts.push(Prisma.sql`t."tradedAt" <= ${new Date(f.dateTo)}`);
   return Prisma.join(parts, ' AND ');
+}
+
+/** Périmètre « compte perdu » des filtres du journal : compte précis (≠ 'all') ou interrupteur. */
+export function tradeFiltersScope(f: Pick<TradeFiltersDto, 'accountId' | 'includeInactive'>): AccountScope {
+  return {
+    accountId: f.accountId && f.accountId !== 'all' ? f.accountId : undefined,
+    includeInactive: f.includeInactive === true,
+  };
 }

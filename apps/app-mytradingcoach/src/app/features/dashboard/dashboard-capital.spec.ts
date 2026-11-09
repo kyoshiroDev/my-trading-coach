@@ -124,5 +124,15 @@ describe('DashboardComponent — card capital scopée au compte', () => {
     expect(cmp.baseCapital()).toBe(175000);
     expect(cmp.currentCapital()).toBe(174000);
   });
-});
 
+  it('derniers trades : même périmètre que les chiffres (comptes perdus exclus, réinclus par l\'interrupteur)', () => {
+    setup({ selected: null, accounts: [acc(50000, 'ACTIVE'), acc(25000, 'ARCHIVED')] });
+    const trades = TestBed.inject(TradesStore) as unknown as { loadTrades: { mock: { calls: unknown[][] } } };
+    const last = () => trades.loadTrades.mock.calls.at(-1)![0];
+    expect(last()).toEqual({ limit: '6' });
+    const store = TestBed.inject(SelectedAccountStore) as unknown as { includeInactive: { set: (v: boolean) => void } };
+    store.includeInactive.set(true);
+    TestBed.tick();
+    expect(last()).toEqual({ limit: '6', includeInactive: 'true' });
+  });
+});

@@ -26,7 +26,7 @@ import { activeSessionWhere } from '../session/active-session';
 import { CreateTradeDto } from './dto/create-trade.dto';
 import { UpdateTradeDto } from './dto/update-trade.dto';
 import { TradeFiltersDto } from './dto/trade-filters.dto';
-import { buildTradeFilterSql, buildTradeWhere } from './trade-filters.util';
+import { buildTradeWhere } from './trade-filters.util';
 import { calculatePnl, calculateRiskReward } from './trade-metrics.util';
 import { dedupeKey, duplicateIdentity, occurrenceHash } from './trade-identity.util';
 import { journalStatsForFilters, type JournalStats } from './journal-stats.util';
@@ -335,8 +335,8 @@ export class TradesService {
   ): Promise<JournalStats & { excludedAccounts: { failed: number; archived: number } }> {
     // Ownership du compte validé au niveau contrôleur (accountWhere), comme findAll. Calcul en
     // base (SCA-B2-02) avec le même filtre que la liste (buildTradeFilterSql ≡ buildTradeWhere),
-    // plus le filtre des comptes perdus (la liste, elle, garde tous les trades).
-    return journalStatsForFilters(this.prisma, userId, buildTradeFilterSql(userId, filters), filters);
+    // filtre des comptes perdus compris : liste et chiffres lisent le même jeu de trades.
+    return journalStatsForFilters(this.prisma, userId, filters);
   }
 
   async findAll(userId: string, filters: TradeFiltersDto) {
@@ -353,7 +353,8 @@ export class TradesService {
         setup: { select: { id: true, title: true, color: true } },
         // Humeur de la journée → émotion effective côté front (affichage + «, » si null).
         tradeSession: { select: { moodStart: true } },
-        // Compte perdu : le journal garde tous les trades, badge « Échoué » / « Archivé » côté front.
+        // Compte perdu : badge « Échoué » / « Archivé » côté front (trades listés avec includeInactive
+        // ou sur un compte précis ; exclus par défaut en « tous les comptes », comme les chiffres).
         account: { select: { id: true, label: true, status: true } },
       },
     });

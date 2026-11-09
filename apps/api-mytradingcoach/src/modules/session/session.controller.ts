@@ -17,6 +17,7 @@ import { CreateSessionDto } from './dto/create-session.dto';
 import { UpdateSessionDto } from './dto/update-session.dto';
 import { CloseSessionDto } from './dto/close-session.dto';
 import { AccountsService } from '../accounts/accounts.service';
+import { parseIncludeInactive } from '../accounts/account-status-scope';
 
 // Le compagnon de session (pré-session, live, débrief de base) est le hook du plan FREE.
 // Accessible à tous les comptes connectés ; les limites FREE sont portées par les trades
@@ -76,13 +77,16 @@ export class SessionController {
     @Query('year') year?: string,
     @Query('month') month?: string,
     @Query('accountId') accountId?: string,
+    @Query('includeInactive') includeInactive?: string,
   ) {
-    // 'all'/absent = agrégé ; sinon valide l'appartenance du compte (404 sinon).
+    // 'all'/absent = agrégé (sans les comptes échoués et archivés, sauf includeInactive) ;
+    // sinon valide l'appartenance du compte (404 sinon).
     const acc = await this.accounts.accountWhere(user.id, accountId);
     return this.sessionService.getSessionHistory(user.id, limit, offset, {
       year: year ? parseInt(year, 10) : undefined,
       month: month ? parseInt(month, 10) : undefined,
       accountId: acc.accountId,
+      includeInactive: parseIncludeInactive(includeInactive),
     });
   }
 

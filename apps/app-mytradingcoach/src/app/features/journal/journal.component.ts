@@ -70,16 +70,16 @@ export class JournalComponent {
   constructor() {
     this.setupsStore.load();
     // Liste paginée ET KPIs rechargés côté serveur à tout changement de filtre
-    // (compte, preset/dates, side, setup). Les KPIs viennent de l'agrégat backend
-    // → stables, indépendants de « Charger plus ».
+    // (compte, preset/dates, side, setup, interrupteur des comptes échoués et archivés).
+    // Les KPIs viennent de l'agrégat backend → stables, indépendants de « Charger plus ».
     effect(() => this.refreshJournal());
 
-    // Interrupteur « inclure les comptes échoués et archivés », ou compte marqué échoué /
-    // archivé / supprimé : seuls les KPIs changent. Pas au premier passage (déjà chargés).
+    // Compte marqué échoué / archivé / supprimé : la liste et les chiffres changent (même jeu de
+    // trades). Pas au premier passage (déjà chargés). L'interrupteur, lui, passe par les filtres.
     effect(() => {
       const e = this.selectedAccount.excludedAccounts();
-      const key = `${this.selectedAccount.inactiveIncluded()}:${e.failed}:${e.archived}`;
-      if (this.knownInactiveScope !== null && key !== this.knownInactiveScope) untracked(() => this.refreshStats());
+      const key = `${e.failed}:${e.archived}`;
+      if (this.knownInactiveScope !== null && key !== this.knownInactiveScope) untracked(() => this.refreshJournal());
       this.knownInactiveScope = key;
     });
 
@@ -128,11 +128,16 @@ export class JournalComponent {
     if (changed) this.weekOverrides.set(next);
   }
 
-  /** Filtres serveur dérivés des signaux (n'inclut que les valeurs définies). */
+  /**
+   * Filtres serveur dérivés des signaux (n'inclut que les valeurs définies). UN SEUL jeu pour la
+   * liste (donc les en-têtes de jour et de semaine) et les KPIs : comptes échoués et archivés
+   * exclus par défaut des deux, réinclus dans les deux par l'interrupteur (`includeInactive`).
+   */
   private readonly journalFilters = computed<Record<string, string>>(() => {
     const f: Record<string, string> = {};
     const acc = this.selectedAccount.accountParam();
     if (acc) f['accountId'] = acc;
+    if (this.selectedAccount.inactiveIncluded()) f['includeInactive'] = 'true';
     const side = this.filterSide();
     if (side !== 'ALL') f['side'] = side;
     const setup = this.filterSetup();
@@ -154,38 +159,21 @@ export class JournalComponent {
     presetRange(this.datePreset(), this.dateFrom(), this.dateTo()),
   );
 
-  /**
-   * Filtres des KPIs : ceux de la liste, plus l'interrupteur des comptes perdus. Les chiffres du
-   * haut excluent les comptes échoués et archivés (comme les statistiques) ; la liste garde tout.
-   */
-  private readonly statsFilters = computed<Record<string, string>>(() =>
-    this.selectedAccount.inactiveIncluded()
-      ? { ...this.journalFilters(), includeInactive: 'true' }
-      : this.journalFilters(),
-  );
-
   /** Reset + recharge liste et KPIs avec les filtres courants. */
   private refreshJournal(): void {
     const filters = this.journalFilters();
     this.tradesStore.reset();
     this.tradesStore.loadTrades(filters);
-    // Lu hors suivi : l'interrupteur ne recharge que les KPIs (effet dédié), pas la liste.
-    this.tradesStore.loadStats(untracked(() => this.statsFilters()));
+    this.tradesStore.loadStats(filters);
   }
 
   /** Recharge seulement les KPIs (la liste est déjà mise à jour de façon optimiste). */
   private refreshStats(): void {
-    this.tradesStore.loadStats(this.statsFilters());
+    this.tradesStore.loadStats(this.journalFilters());
   }
 
-  /** Interrupteur et comptes exclus au dernier passage, null avant le premier. */
+  /** Comptes exclus au dernier passage, null avant le premier. */
   private knownInactiveScope: string | null = null;
-
-  /** Les chiffres du haut laissent de côté des comptes échoués ou archivés (la liste, elle, garde tout). */
-  protected readonly statsExcludeInactive = computed(() => {
-    const e = this.selectedAccount.excludedAccounts();
-    return this.selectedAccount.selectedAccountId() === 'all' && !this.selectedAccount.inactiveIncluded() && e.failed + e.archived > 0;
-  });
 
   /** Badge « Échoué » / « Archivé » d'un trade dont le compte est hors statistiques. */
   protected readonly isInactiveStatus = isInactiveStatus;
