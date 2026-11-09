@@ -201,7 +201,8 @@ POST   /api/test/upgrade-user          NODE_ENV=test uniquement
   (mesuré le 2026-09-20, cf. `docs/tradovate-api-capabilities.md` §2). Lecture best-effort : token
   inexploitable, endpoint indisponible ou devise hors `ACCOUNT_CURRENCIES` (ex. CAD) → repli
   `DEFAULT_ACCOUNT_CURRENCY` + `logger.warn`, jamais d'échec de la sélection de compte. Montants serveur visibles (emails débrief / recap, PDF,
-  prompts IA) : `formatMoney` avec la devise du compte, ou `userAmountsCurrency()`
+  prompts IA) : `formatMoney` avec la devise du compte (arrondi au plus proche, centimes gardés
+  sous 1 $ même à `decimals: 0` : -0,80 → `-$0.80`, cf. `angular.md`), ou `userAmountsCurrency()`
   (`common/utils/user-currency.util.ts` : devise commune des comptes non archivés, `null` si mêlées
   → sans symbole). **Plus aucun taux** : `User.currencyRate` n'est plus lu ni écrit (ni
   exchangerate-api, ni cache). Les champs `currency` des DTO onboarding / préférences sont encore

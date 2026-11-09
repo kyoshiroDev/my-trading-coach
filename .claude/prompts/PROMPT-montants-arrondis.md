@@ -1,0 +1,7 @@
+PISTE POUR LE "-$1" (à vérifier dans le code, ne rien corriger avant d'avoir la cause établie).
+Observations : sur mon compte Lucid, MTC affiche un solde de $49,911 alors que Lucid affiche $49,912 (le solde réel est 49 911,50). À la création du compte, MTC affichait "P&L cumulé -$1" avec 0 trade.
+1. Cherche tous les formateurs de montants et les calculs d'affichage (app, admin, e-mails, libs/shared) qui utilisent Math.floor, Math.ceil, Math.trunc, toFixed(0) ou maximumFractionDigits: 0. Liste-les. Hypothèse : un floor transforme -0,80 en -1 et 49 911,50 en 49 911.
+2. Règle attendue : jamais d'arrondi qui agrandisse une perte (-0,80 ne s'affiche pas -1), arrondi standard (demi vers l'extérieur) partout, un seul formateur partagé pour l'argent. Les montants inférieurs à 1 $ en valeur absolue s'affichent avec leurs centimes.
+3. Écris un test avec des valeurs fractionnaires (-0,80, -0,50, 49 911,50, 49 999,20, 0,49, -0,01) sur chaque écran concerné.
+4. Lecture seule : lis le code qui importe les trades Tradovate pour dire pourquoi Lucid affiche -0,80 $ le 9/11 sans trade correspondant dans MTC (frais seuls, aller-retour à zéro, position encore ouverte, pas encore synchronisé). Ne lance rien en prod. Si tu as besoin d'une donnée de prod, donne-moi la requête SELECT exacte à valider avant.
+Branche fix/montants-arrondis depuis origin/dev, mêmes règles que d'habitude, aucun push sans "OK push".

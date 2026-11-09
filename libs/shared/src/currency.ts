@@ -41,7 +41,7 @@ export function commonCurrency(codes: Iterable<string | null | undefined>): stri
 }
 
 export interface MoneyOptions {
-  /** Décimales (défaut 2). */
+  /** Décimales (défaut 2). Un montant non nul sous 1 en valeur absolue en garde toujours 2. */
   decimals?: number;
   /** `+` devant les montants positifs (défaut true). Le `-` est toujours affiché. */
   sign?: boolean;
@@ -55,6 +55,7 @@ export interface MoneyOptions {
 const PREFIX_SYMBOLS: Record<string, string> = { USD: '$', EUR: '€' };
 
 /**
+ * SEUL formateur d'argent (app, admin, API, e-mails) : ne pas réécrire un `toFixed` ou un `Intl` à côté.
  * `+$1,234.56`, `-€92.00`, `+10.00 USDT`, `-$1.2k`. Le montant est affiché TEL QUEL, jamais converti.
  * Devise `null` (inconnue, ou comptes de devises différentes) → aucun symbole, jamais un symbole deviné.
  */
@@ -63,9 +64,15 @@ export function formatMoney(
   currency: string | null | undefined,
   opts: MoneyOptions = {},
 ): string {
-  const { decimals = 2, sign = true, compact = false, symbol = true } = opts;
+  const { compact = false, sign = true, symbol = true } = opts;
   const abs = Math.abs(value);
-  // Signe de la valeur AFFICHÉE : -0,40 $ à 0 décimale s'affiche « +$0 », jamais « -$0 ».
+  // Sous 1 en valeur absolue, les centimes restent : -0,80 $ s'affiche « -$0.80 », jamais « -$1 »
+  // (un arrondi qui grossit une perte), 0,49 $ « +$0.49 », jamais « +$0 ». Au-delà, arrondi au plus
+  // proche, demi vers l'extérieur (`toLocaleString`) : 49 911,50 → « $49,912 », -1,50 → « -$2 ».
+  // Un résidu flottant (5,5e-17) ou un montant sous le demi-centime reste « $0 », pas « $0.00 ».
+  const keepCents = abs < 1 && Number(abs.toFixed(2)) !== 0;
+  const decimals = keepCents ? Math.max(opts.decimals ?? 2, 2) : opts.decimals ?? 2;
+  // Signe de la valeur AFFICHÉE : -0,004 $ s'affiche « +$0.00 », jamais « -$0.00 ».
   const shownAsZero = Number(abs.toFixed(decimals)) === 0;
   const prefix = value < 0 && !shownAsZero ? '-' : sign ? '+' : '';
   const body =
