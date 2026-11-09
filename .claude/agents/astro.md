@@ -206,7 +206,7 @@ l'admin : **seul le lien de la pub** y pointe (UTM dédiées), la home ne change
   règles change dans l'app : `/demo?internal=1`, fenêtre 390 px DPR 2, aucune donnée ni e-mail réel.
 - Textes de la page : espace insécable avant « ? », « ! » et « : » (pas de ponctuation seule en début
   de ligne). L'en-tête garde « Se connecter » sur une ligne (`white-space: nowrap`, 360 px compris).
-- Carte d'exemple « Il te reste 480 $ » : montant et barre en **jaune** (alerte), perte du jour en
+- Carte d'exemple « Marge avant le plancher · 480 $ » (libellé de l'app, 09/11) : montant et barre en **jaune** (alerte), perte du jour en
   rouge (design.md : rouge = pertes uniquement), mention « Exemple avec des données de démonstration ».
   Les 3 petites cartes (objectif, perte, trades) : libellé et valeur **centrés**, valeurs sans retour à
   la ligne, les trois visibles aussi en mobile (une ligne, libellés réservés sur 2 lignes) (08/11).
