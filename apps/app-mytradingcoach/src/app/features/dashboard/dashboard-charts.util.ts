@@ -30,7 +30,7 @@ export function sparkPath(series: number[], w = 72, h = 42, underwater = false):
   return { line, area, cx: last[0], cy: last[1] };
 }
 
-export interface TradeCountBar { date: string; count: number; pct: number }
+export interface TradeCountBar { date: string; count: number; pct: number; /** Infobulle : « 6 nov. : 3 trades ». */ label: string }
 
 /**
  * Barres « Trades pris » : nombre de trades clôturés par jour tradé de la période (les
@@ -39,7 +39,16 @@ export interface TradeCountBar { date: string; count: number; pct: number }
 export function tradeCountBars(days: readonly { date: string; tradesCount: number }[], maxBars = 14): TradeCountBar[] {
   const traded = [...days].filter((d) => d.tradesCount > 0).sort((a, b) => a.date.localeCompare(b.date)).slice(-maxBars);
   const top = Math.max(1, ...traded.map((d) => d.tradesCount));
-  return traded.map((d) => ({ date: d.date, count: d.tradesCount, pct: Math.max(8, Math.round((d.tradesCount / top) * 100)) }));
+  return traded.map((d) => {
+    // Midi local : la date du jour (Paris) ne glisse pas à la veille selon le fuseau.
+    const day = new Date(`${d.date}T12:00:00`).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+    return {
+      date: d.date,
+      count: d.tradesCount,
+      pct: Math.max(8, Math.round((d.tradesCount / top) * 100)),
+      label: `${day} : ${d.tradesCount} trade${d.tradesCount > 1 ? 's' : ''}`,
+    };
+  });
 }
 
 // ── Donuts (conic-gradient + légende + valeur centrale) ──────────────────────

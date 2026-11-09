@@ -106,7 +106,7 @@ describe('DashboardKpisComponent — drawdown max par trade', () => {
     expect(card(el, 'Profit factor').querySelector('svg')).toBeNull();
     const bars = [...card(el, 'Trades pris').querySelectorAll<HTMLElement>('.mtc-minibars span')];
     expect(bars.map((b) => b.style.height)).toEqual(['100%', '67%']);
-    expect(bars.map((b) => b.getAttribute('title'))).toEqual(['2026-11-06 : 3 trades', '2026-11-09 : 2 trades']);
+    expect(bars.map((b) => b.getAttribute('title'))).toEqual(['6 nov. : 3 trades', '9 nov. : 2 trades']);
     const area = card(el, 'Drawdown max').querySelector('svg path')!.getAttribute('d')!;
     expect(area.endsWith('L72,0 L0,0 Z')).toBe(true);
   });

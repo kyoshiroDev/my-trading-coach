@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
   START_LABEL,
   stepLabel,
+  tickLabels,
   tooltipDate,
   chartAriaLabel,
   compactMoney,
@@ -367,6 +368,16 @@ describe('« ? » de la carte drawdown selon la règle du plan relié', () => {
   });
   it('suiveur intraday : note sur les gains latents', () => {
     expect(drawdownHelp(plan({ kind: 'trailing_intraday' }), 'USD')).toContain('Calcul sur les trades clôturés ; ta prop firm peut tenir compte des gains latents.');
+  });
+});
+
+describe('axe des dates d’une courbe par trade', () => {
+  it('plusieurs clôtures le même jour : la date n’apparaît qu’une fois', () => {
+    const dates = [null, '2026-11-06T08:22:00.000Z', '2026-11-06T08:45:00.000Z', '2026-11-06T22:45:00.000Z', '2026-11-09T09:00:00.000Z'];
+    const labels = tickLabels(dates, 30);
+    expect(labels[0]).toBe(START_LABEL);
+    expect(labels.filter((l) => l !== '')).toEqual([START_LABEL, '06/11/26', '09/11/26']);
+    expect(labels[2]).toBe('');
   });
 });
 

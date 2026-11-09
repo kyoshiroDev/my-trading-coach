@@ -51,9 +51,9 @@ describe('tradeCountBars', () => {
       { date: '2026-11-04', tradesCount: 0 },
     ]);
     expect(bars).toEqual([
-      { date: '2026-11-03', count: 1, pct: 33 },
-      { date: '2026-11-06', count: 3, pct: 100 },
-      { date: '2026-11-09', count: 2, pct: 67 },
+      { date: '2026-11-03', count: 1, pct: 33, label: '3 nov. : 1 trade' },
+      { date: '2026-11-06', count: 3, pct: 100, label: '6 nov. : 3 trades' },
+      { date: '2026-11-09', count: 2, pct: 67, label: '9 nov. : 2 trades' },
     ]);
   });
 

@@ -133,6 +133,21 @@ export function tickDate(iso: string | null, span: number): string {
     : d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: '2-digit' });
 }
 
+/**
+ * Libellés de l'axe des dates : une courbe par trade a plusieurs points le même jour ; seul le
+ * premier point d'une date porte le libellé, les suivants restent vides (jamais deux fois la même
+ * date sur l'axe).
+ */
+export function tickLabels(dates: (string | null)[], span: number): string[] {
+  let previous: string | null = null;
+  return dates.map((d) => {
+    const label = tickDate(d, span);
+    if (label === previous) return '';
+    previous = label;
+    return label;
+  });
+}
+
 /** Date courte d'un repère : `14/10`. */
 export function shortDate(iso: string | null): string {
   if (!iso) return START_LABEL;

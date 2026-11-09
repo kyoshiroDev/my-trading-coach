@@ -30,6 +30,7 @@ import {
   spanRange,
   stepLabel,
   tickDate,
+  tickLabels,
   tooltipDate,
 } from './chart-series.util';
 
@@ -269,7 +270,7 @@ export class ChartService {
     const config: ChartConfiguration<'line'> = {
       type: 'line',
       data: {
-        labels: series.dates.map((d) => tickDate(d, span)),
+        labels: tickLabels(series.dates, span),
         datasets: [
           {
             data: series.values,

@@ -85,7 +85,7 @@
       @if (tradeBars().length) {
         <div class="mtc-minibars" role="img" [attr.aria-label]="tradeBarsLabel()">
           @for (b of tradeBars(); track b.date) {
-            <span [style.height.%]="b.pct" [style.opacity]="0.4 + (b.pct / 100) * 0.5" [attr.title]="b.date + ' : ' + b.count + ' trade' + (b.count > 1 ? 's' : '')"></span>
+            <span [style.height.%]="b.pct" [style.opacity]="0.4 + (b.pct / 100) * 0.5" [attr.title]="b.label"></span>
           }
         </div>
       }
