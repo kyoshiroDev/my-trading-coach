@@ -1,6 +1,6 @@
 import { hashPassword } from '../auth/password-hashing';
 import { PrismaClient, SessionStatus, AccountStatus, BrokerProvider, BrokerConnectionStatus } from '@prisma/client';
-import { computeTradeStats } from '@mtc/shared';
+import { computeTradeStats, maxDrawdownOfTrades } from '@mtc/shared';
 import { seedDefaultSetups } from '../setups/setups.defaults';
 import { type AccountKey, APEX_DAILY_LOSS_LIMIT, DEMO_ACCOUNTS, DEMO_EMAIL, round2 } from './demo-data/config';
 import { ONELINERS, PLANS, REFLECTIONS_GREEN, REFLECTIONS_RED, REFLECTION_REVENGE } from './demo-data/texts';
@@ -130,8 +130,8 @@ export async function seedTradingData(
     const first = d.trades[0]?.tradedAt ?? new Date(Math.max(tradingDayStart(now).getTime(), now.getTime() - 30 * 60_000) + 25 * 60_000);
     const last = d.trades[d.trades.length - 1]?.tradedAt ?? first;
     const dayStats = computeTradeStats(d.trades);
-    let cum = 0, peak = 0, maxDd = 0;
-    for (const t of d.trades) { cum += net(t); peak = Math.max(peak, cum); maxDd = Math.min(maxDd, cum - peak); }
+    // Drawdown max : règle unique @mtc/shared, comme les sessions réelles.
+    const maxDd = maxDrawdownOfTrades(d.trades.map((t) => ({ closedAt: t.tradedAt, pnl: net(t), commission: 0 }))).maxDrawdown;
     const best = d.trades.length ? d.trades.reduce((a, b) => (net(b) > net(a) ? b : a)) : null;
     const green = dayStats.totalPnl >= 0;
     const reflection =

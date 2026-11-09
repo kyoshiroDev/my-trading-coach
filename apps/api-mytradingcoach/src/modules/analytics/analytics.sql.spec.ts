@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Prisma } from '@prisma/client';
-import { groupTrades, summaryTotals, cumulativeByTrade, closedTradeStats, processTimeZone, type GroupKey } from './analytics.sql';
+import { groupTrades, summaryTotals, cumulativeByTrade, closedTradeNets, closedTradeStats, processTimeZone, type GroupKey } from './analytics.sql';
 import type { PrismaService } from '../../prisma/prisma.service';
 
 /**
@@ -75,12 +75,21 @@ describe('groupTrades', () => {
 });
 
 describe('summaryTotals / cumulativeByTrade', () => {
-  it('résumé : drawdown et série en fenêtres, ordre (tradedAt, id) déterministe', async () => {
+  it('résumé : série en fenêtre, ordre (tradedAt, id) déterministe, plus de drawdown en SQL', async () => {
     queryRaw.mockResolvedValueOnce([{ count: 0 }]);
     await summaryTotals(prisma, { userId: 'u1', from: new Date('2026-01-01') });
-    expect(text()).toContain('ORDER BY "tradedAt", "id" ROWS UNBOUNDED PRECEDING');
-    expect(text()).toContain('greatest(0, max(cum)');
+    expect(text()).toContain('ORDER BY "tradedAt" DESC, "id" DESC');
+    // Drawdown max : source unique @mtc/shared (maxDrawdownOfTrades), plus de copie SQL.
+    expect(text()).not.toContain('max(cum)');
     expect(lastSql().values).toContain('u1');
+  });
+
+  it('nets par trade : heure de clôture + net frais déduits, ordre chronologique', async () => {
+    await closedTradeNets(prisma, { userId: 'u1', accountId: 'a1', from: new Date('2026-10-10') });
+    expect(text()).toContain('t."tradedAt" AS "closedAt"');
+    expect(text()).toContain('abs(coalesce(t."commission", 0))');
+    expect(text()).toContain('ORDER BY t."tradedAt", t."id"');
+    expect(lastSql().values).toEqual(expect.arrayContaining(['u1', 'a1']));
   });
 
   it('courbe par trade : cumul ordonné', async () => {

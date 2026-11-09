@@ -2,8 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../infra/redis.service';
 import { CACHE_TTL } from '../../common/constants/cache-ttl.const';
-import { roundCents } from '@mtc/shared';
-import { cumulativeByTrade, groupTrades, summaryTotals, type TradeFilter } from './analytics.sql';
+import { closedTradeSteps, maxDrawdownOfCumulative, maxDrawdownOfTrades, roundCents } from '@mtc/shared';
+import { closedTradeNets, cumulativeByTrade, groupTrades, summaryTotals, type TradeFilter } from './analytics.sql';
 import { analyticsVersionKey, bumpAnalyticsVersion } from './analytics-cache';
 import { activeAccountsWhere } from '../accounts/account-status-scope';
 
@@ -202,19 +202,39 @@ export class AnalyticsService {
     // courbe « tous les comptes » (sauf includeInactive).
     const [curve, rows] = await Promise.all([
       this.withCache(userId, key, CACHE_TTL.ANALYTICS, () => this.computeEquityCurveDaily({ userId, accountId, includeInactive }, from, to)),
-      this.prisma.brokerPayout.findMany({
-        where: {
-          dismissedAt: null,
-          account: { userId, ...activeAccountsWhere({ accountId, includeInactive }) },
-          ...(accountId ? { accountId } : {}),
-          ...(to ? { tradeDate: { lte: to } } : {}),
-        },
-        orderBy: { tradeDate: 'asc' },
-        select: { tradeDate: true, amount: true },
-      }),
+      this.payoutRows(userId, accountId, includeInactive, to),
     ]);
     const { payouts, before } = splitPayouts(rows, from);
     return { ...curve, payouts, before: { ...curve.before, payouts: before } };
+  }
+
+  /**
+   * Courbe d'équité PAR TRADE CLÔTURÉ sur une période (dashboard) : un point par clôture (trades
+   * du même instant regroupés), réduite à ~500 points en gardant pics et creux, et le drawdown max
+   * calculé sur TOUTES les clôtures (`maxDrawdownOfCumulative`, source unique `@mtc/shared`).
+   * `before` et `payouts` : comme `/equity-curve/daily` (ancrage du solde de départ).
+   */
+  async getEquityCurveTrades(userId: string, from?: Date, to?: Date, accountId?: string, includeInactive = false) {
+    const key = `equity:trades${this.rangeKey(from, to)}${this.accKey(accountId, includeInactive)}`;
+    const [curve, rows] = await Promise.all([
+      this.withCache(userId, key, CACHE_TTL.ANALYTICS, () => this.computeEquityCurveTrades({ userId, accountId, includeInactive }, from, to)),
+      this.payoutRows(userId, accountId, includeInactive, to),
+    ]);
+    const { payouts, before } = splitPayouts(rows, from);
+    return { ...curve, payouts, before: { ...curve.before, payouts: before } };
+  }
+
+  private payoutRows(userId: string, accountId: string | undefined, includeInactive: boolean, to?: Date) {
+    return this.prisma.brokerPayout.findMany({
+      where: {
+        dismissedAt: null,
+        account: { userId, ...activeAccountsWhere({ accountId, includeInactive }) },
+        ...(accountId ? { accountId } : {}),
+        ...(to ? { tradeDate: { lte: to } } : {}),
+      },
+      orderBy: { tradeDate: 'asc' },
+      select: { tradeDate: true, amount: true },
+    });
   }
 
   /** Win rate en % : gains / (gains + pertes), break-even exclus ; `empty` si aucun décisif. */
@@ -223,8 +243,9 @@ export class AnalyticsService {
   }
 
   private async computeSummary(f: TradeFilter) {
-    const [totals, sessions, hours] = await Promise.all([
+    const [totals, nets, sessions, hours] = await Promise.all([
       summaryTotals(this.prisma, f),
+      closedTradeNets(this.prisma, f),
       groupTrades(this.prisma, f, 'session'),
       groupTrades(this.prisma, f, 'hour'),
     ]);
@@ -254,7 +275,8 @@ export class AnalyticsService {
       winRate: AnalyticsService.winRate(totals) as number,
       totalPnl: roundCents(totals.pnl),
       totalTrades: totals.count,
-      maxDrawdown: totals.maxDrawdown,
+      // Montant positif (contrat historique de l'API, lu par le débrief) ; règle unique @mtc/shared.
+      maxDrawdown: -maxDrawdownOfTrades(nets.map((n) => ({ closedAt: n.closedAt, pnl: n.pnl, commission: 0 }))).maxDrawdown || 0,
       profitFactor,
       streak: totals.streak,
       topSession: topSession?.key ?? '-',
@@ -357,6 +379,24 @@ export class AnalyticsService {
         return { date: new Date(d.key), cumulativePnl: cumPnl };
       });
     return { points, startingCapital, before: periodBefore(earlier) };
+  }
+
+  private async computeEquityCurveTrades(sc: TradeFilter, from?: Date, to?: Date) {
+    const [rows, startingCapital, earlier] = await Promise.all([
+      closedTradeNets(this.prisma, { ...sc, from, to }),
+      this.startingCapital(sc.userId),
+      from ? groupTrades(this.prisma, { ...sc, before: from }, 'parisDate') : Promise.resolve([]),
+    ]);
+    // Le net arrive déjà frais déduits (SQL) : commission 0 pour ne pas les retirer deux fois.
+    const steps = closedTradeSteps(rows.map((r) => ({ closedAt: r.closedAt, pnl: r.pnl, commission: 0 })));
+    const { maxDrawdown } = maxDrawdownOfCumulative(steps.map((s) => s.cumulativePnl));
+    return {
+      points: downsampleEquity(steps, EQUITY_MAX_POINTS),
+      trades: rows.length,
+      maxDrawdown,
+      startingCapital,
+      before: periodBefore(earlier),
+    };
   }
 
   private async computeEquityCurveCurrentMonth(sc: TradeFilter) {
