@@ -1,5 +1,5 @@
 /**
- * Stop initial saisi sur un trade synchronisé (base réelle) : le broker ne transmet jamais le stop,
+ * Stop initial saisi sur un trade synchronisé (base réelle) : la synchronisation ne récupère pas le stop,
  * le trader l'ajoute depuis le Journal. Vérifie la note d'exécution réellement écrite (barème « avec
  * stop » à la place du comportemental) et qu'une resynchronisation n'écrase pas la saisie.
  */

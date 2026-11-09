@@ -494,7 +494,7 @@ export class TradesService {
 
   /**
    * Saisie rapide du stop initial (et de l'objectif) depuis le Journal, typiquement sur un trade
-   * synchronisé : le broker ne transmet jamais le stop. Refuse un stop (ou un objectif) du mauvais
+   * synchronisé : la synchronisation ne récupère pas le stop. Refuse un stop (ou un objectif) du mauvais
    * côté de l'entrée, puis passe par `update` : R/R par la même règle que la saisie manuelle
    * (`calculateRiskReward`), note d'exécution « avec stop » et recalcul comportemental du compte.
    * Une resynchronisation n'écrase rien : l'import broker ne fait qu'insérer (dédoublonnage), il ne

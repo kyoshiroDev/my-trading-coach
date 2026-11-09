@@ -525,7 +525,7 @@ describe('TradesService', () => {
     });
   });
 
-  // Trades synchronisés : le broker ne transmet jamais le stop → R/R inconnu. Saisie rapide du stop
+  // Trades synchronisés : la synchronisation ne récupère pas le stop → R/R inconnu. Saisie rapide du stop
   // initial depuis le Journal (PATCH /trades/:id/stop), mêmes règles que la saisie manuelle.
   describe('setStop — stop initial d’un trade synchronisé', () => {
     // MNQ du 9/11 (compte Lucid de Greg) : entrée 27092.25, sortie au marché 27796.

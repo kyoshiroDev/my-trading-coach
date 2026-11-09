@@ -1,5 +1,5 @@
 /**
- * Journal — R/R inconnu (trade synchronisé : le broker ne transmet ni stop ni objectif).
+ * Journal — R/R inconnu (trade synchronisé : la synchronisation ne récupère ni stop ni objectif).
  *
  * La ligne affichait « 0 » avec l'info-bulle « Pourquoi le R:R vaut 0 » alors que la valeur est
  * null : un 0 se lit comme un R/R mesuré nul. Elle affiche « — », une info-bulle honnête, et un

@@ -185,7 +185,7 @@ POST   /api/test/upgrade-user          NODE_ENV=test uniquement
   quand aucun trade du setup n'a de R:R ; idem `EmotionStat.avgRR` et le « R/R moyen » du PDF de
   débrief (`averageKnownRiskReward` de `@mtc/shared` : moyenne des R/R CONNUS, `null` sinon).
 - **R/R inconnu ≠ 0 (#916)** : la synchro broker n'écrit jamais `stopLoss` / `takeProfit` /
-  `riskReward` (le broker ne les transmet pas, cf. `docs/tradovate-api-capabilities.md` §11). Un R/R
+  `riskReward` (elle ne les lit pas : le rapport Orders porte le Stop Price mais sans lien vers le trade, cf. `docs/tradovate-api-capabilities.md` §11). Un R/R
   absent reste `null` partout (API, PDF, IA). Le trader saisit son stop initial par
   **`PATCH /trades/:id/stop`** (`SetTradeStopDto` : `stopLoss`, `takeProfit` facultatif, `null` =
   retiré) : `TradesService.setStop` refuse un stop ou un objectif du mauvais côté de l'entrée (400,
