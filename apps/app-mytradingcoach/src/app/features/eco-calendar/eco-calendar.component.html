@@ -206,7 +206,7 @@
                                   <span class="ia-ccy">{{ event.currency }}</span>
                                   @if (analysisFor(event)) { <span class="ia-arrow">{{ sentArrow(ccySent(event)) }}</span> }
                                   <span class="ia-spark">✨</span>
-                                  <span class="ia-chev">{{ expandedEvent() === event.name ? '▴' : '▾' }}</span>
+                                  <span class="ia-chev">{{ isOpen(event) ? '▴' : '▾' }}</span>
                                 </button>
                               }
                               @case ('wait') { <span class="ia-wait">⏳ après chiffres</span> }
@@ -215,12 +215,12 @@
                           </td>
                         </tr>
 
-                        @if (iaState(event) === 'ready' && expandedEvent() === event.name) {
+                        @if (iaState(event) === 'ready' && isOpen(event)) {
                           <tr class="r-ai">
                             <td colspan="9">
                               <div class="ai-panel">
                                 <div class="ai-h">✨ Analyse IA</div>
-                                @if (loadingAnalysis() === event.name) {
+                                @if (isLoadingAnalysis(event)) {
                                   <div class="ai-interp ia-loading">Analyse en cours…</div>
                                 } @else if (analysisFor(event); as analysis) {
                                   <div class="ai-interp">{{ analysis.interpretation }}</div>

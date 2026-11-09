@@ -58,6 +58,12 @@ export class EcoCalendarCron {
         if (hasNew) {
           this.logger.log(`🔔 ${newEvents.length} nouveaux résultats détectés (${day}) : broadcast WebSocket`);
           this.gateway.notifyNewReleases(newEvents);
+          // Analyse des annonces fortes chiffrées, côté serveur, sans attendre un clic. Pas
+          // attendue ici : les appels modèle ne doivent pas retarder le relevé suivant.
+          void this.ecoCalendarService
+            .autoAnalyzeReleased(day, newEvents)
+            .then((n) => n && this.logger.log(`✨ ${n} analyse(s) de résultat prête(s) (${day})`))
+            .catch((err: Error) => this.logger.warn(`Analyse automatique en échec : ${err.message}`));
         }
       }
     } catch (err) {

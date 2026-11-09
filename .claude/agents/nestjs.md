@@ -2395,6 +2395,25 @@ global à la file ; Resend = 10 req/s par équipe, clé partagée entre environn
 - Coût FMP : avant ~603 requêtes/jour ouvré ; après = 3 à 5 fixes + 1 par tick de 20 s pendant les
   fenêtres (au plus 45 par créneau horaire si FMP ne publie jamais le chiffre).
 
+## Calendrier éco : analyse automatique des résultats forts (2026-11-10, #920)
+
+- `ensureReleasedAnalysis(day, event, assets, 'auto'|'clic')` : **un seul appel modèle par clé**
+  `eco:analysis:<jour>:<nom sans période>:<actifs triés ,>` (la clé du clic d'avant), même à 50 traders
+  simultanés : verrou `eco:analysis-lock:<clé>` (SET NX EX 90), les autres attendent le cache (15 s max).
+  Échec du modèle → `null` + `eco:analysis-fail:<clé>` 10 min (nouvel essai ensuite). Plafond quotidien
+  `ECO_RESULT_ANALYSIS_DAILY_MAX` (défaut 200, compteur `eco:analysis-count:<jour>`). Journal : « générée
+  (auto|clic, jour, n/plafond) », jamais le contenu. Redis indisponible : le clic appelle sans verrou
+  (comportement d'avant), l'auto s'abstient.
+- `autoAnalyzeReleased(day, newEvents)` : appelé par le relevé planifié après la diffusion (non attendu),
+  annonces **fortes + chiffrées** publiées seulement, pour les signatures vues aujourd'hui ou hier
+  (`eco:sigs:<jour>`, alimenté par `/today` et `/analyze-result`). Jamais hors `NODE_ENV=production`.
+- `analyzeEcoResult` : plus de `actual ?? 0` / `estimate ?? 0`. Sans résultat → rejet sans appel ; sans
+  prévision → « pas de consensus publié », aucune surprise calculée.
+- Analyses du matin et des résultats journalisées avec `userId: null` (job mutualisé) : `'shared'` violait
+  la clé étrangère d'`AiUsageLog`, ces appels n'étaient jamais comptés.
+- Front (`eco-calendar.component`) : les annonces fortes publiées du jour sont chargées et dépliées sans
+  clic (`openEvents`), le clic replie/déplie et réutilise le cache.
+
 ## News live : traduction par lots et bandeau BREAKING (2026-10-06)
 - **Sources** (`market-news.sources.ts`, `NEWS_FEEDS`) : 4 flux FMP, chacun sa limite (aucun n'évince
   les autres) : `general-latest` (macro, rangée sous le symbole `MACRO`), `forex-latest`, ETF indices /

@@ -556,10 +556,10 @@ describe('EcoCalendarService', () => {
         actual: 52.1, estimate: 51.0, previous: 50.5,
       };
       const cached = { events: [event], analysis: {}, userAssets: ['EUR/USD'] };
-      // cache calendrier = hit (events) ; cache d'analyse IA = miss → le modèle est appelé
+      // cache calendrier = hit (events) ; cache d'analyse IA, échec récent, verrou = miss → le modèle est appelé
       vi.spyOn(service['redis'], 'get').mockImplementation(
         ((key: string) =>
-          Promise.resolve(key.startsWith('eco:analysis:') ? null : JSON.stringify(cached))) as never,
+          Promise.resolve(key.startsWith('eco:calendar:') ? JSON.stringify(cached) : null)) as never,
       );
       mockPrisma.trade.findMany.mockResolvedValue([{ asset: 'EUR/USD' }]);
       mockAi.analyzeEcoResult.mockResolvedValue({
@@ -570,7 +570,8 @@ describe('EcoCalendarService', () => {
       const result = await service.analyzeReleasedEvent('user-1', 'PMI Zone Euro');
 
       expect(mockAi.analyzeEcoResult).toHaveBeenCalledWith(
-        expect.objectContaining({ userId: 'user-1', event }),
+        // Analyse mutualisée par signature : comptée comme job partagé (userId null).
+        expect.objectContaining({ userId: null, event }),
       );
       expect(result?.interpretation).toContain('PMI');
     });

@@ -17,7 +17,7 @@ function ev(partial: Partial<EcoEvent>): EcoEvent {
 
 interface SetupOpts {
   events?: EcoEvent[];
-  user?: { tradingSessions?: string[] } | null;
+  user?: { tradingSessions?: string[]; isDemo?: boolean } | null;
   analysis?: { interpretation: string; assetSentiments: { asset: string; sentiment: 'bull' | 'bear' | 'neutral'; shortReason: string }[] };
 }
 
@@ -129,15 +129,15 @@ describe('EcoCalendarComponent', () => {
 
       cmp.toggleAnalysis(target);                        // 1er dépliage → 1 appel
       expect(api.analyzeResult).toHaveBeenCalledTimes(1);
-      expect(cmp.expandedEvent()).toBe('IPP');
+      expect(cmp.isOpen(target)).toBe(true);
       expect(cmp.analysisFor(target)?.interpretation).toBe('IPP conforme');
 
       cmp.toggleAnalysis(target);                        // replie
-      expect(cmp.expandedEvent()).toBeNull();
+      expect(cmp.isOpen(target)).toBe(false);
 
       cmp.toggleAnalysis(target);                        // ré-ouverture → cache, pas de nouvel appel
       expect(api.analyzeResult).toHaveBeenCalledTimes(1);
-      expect(cmp.expandedEvent()).toBe('IPP');
+      expect(cmp.isOpen(target)).toBe(true);
     });
 
     it('ccySent prend le sentiment de la devise de l\'event', () => {
@@ -149,12 +149,46 @@ describe('EcoCalendarComponent', () => {
     });
   });
 
+  describe('analyse sans clic (#920)', () => {
+    it("annonce forte publiée aujourd'hui : analyse chargée et dépliée au chargement de la semaine", () => {
+      vi.useFakeTimers({ toFake: ['Date'] });
+      vi.setSystemTime(new Date('2026-06-11T16:00:00Z'));
+      try {
+        const nfp = ev({ name: 'NFP', impact: 'high', isReleased: true, actual: 210 });
+        const { cmp, api } = setup({ events: [nfp, ev({ name: 'ISM', impact: 'medium', isReleased: true }), ev({ name: 'CPI', impact: 'high' })] });
+        expect(api.analyzeResult).toHaveBeenCalledTimes(1);
+        expect(api.analyzeResult).toHaveBeenCalledWith('NFP');
+        expect(cmp.isOpen(nfp)).toBe(true);
+        expect(cmp.analysisFor(nfp)?.interpretation).toBe('interp');
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+  });
+
   describe('iaState', () => {
     it('fort publié → ready, fort non publié → wait, moyen → na', () => {
       const { cmp } = setup();
       expect(cmp.iaState(ev({ impact: 'high', isReleased: true }))).toBe('ready');
       expect(cmp.iaState(ev({ impact: 'high', isReleased: false }))).toBe('wait');
       expect(cmp.iaState(ev({ impact: 'medium', isReleased: true }))).toBe('na');
+    });
+  });
+
+  describe('analyse sans clic · compte démo (#920)', () => {
+    it("démo : aucun chargement ni dépliage d'office (POST refusé en lecture seule), le clic reste possible", () => {
+      vi.useFakeTimers({ toFake: ['Date'] });
+      vi.setSystemTime(new Date('2026-06-11T16:00:00Z'));
+      try {
+        const nfp = ev({ name: 'NFP', impact: 'high', isReleased: true, actual: 210 });
+        const { cmp, api } = setup({ events: [nfp], user: { isDemo: true } });
+        expect(api.analyzeResult).not.toHaveBeenCalled();
+        expect(cmp.isOpen(nfp)).toBe(false);
+        cmp.toggleAnalysis(nfp);
+        expect(api.analyzeResult).toHaveBeenCalledTimes(1);
+      } finally {
+        vi.useRealTimers();
+      }
     });
   });
 });

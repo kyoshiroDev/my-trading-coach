@@ -23,8 +23,8 @@ export class EcoCalendarController {
   constructor(private readonly service: EcoCalendarService) {}
 
   @Get('today')
-  getTodayEvents(@CurrentUser() user: { id: string }) {
-    return this.service.getTodayEvents(user.id);
+  getTodayEvents(@CurrentUser() user: { id: string; isDemo?: boolean }) {
+    return this.service.getTodayEvents(user.id, user.isDemo === true);
   }
 
   @Get('next-trading-day')
@@ -34,18 +34,18 @@ export class EcoCalendarController {
 
   @Post('analyze-result')
   analyzeResult(
-    @CurrentUser() user: { id: string },
+    @CurrentUser() user: { id: string; isDemo?: boolean },
     @Body('eventName') eventName: string,
   ) {
-    return this.service.analyzeReleasedEvent(user.id, eventName);
+    return this.service.analyzeReleasedEvent(user.id, eventName, user.isDemo === true);
   }
 
   // Vide le cache Redis user + retourne analyse fraîche (après nouveaux actual WebSocket)
   @Post('refresh-today')
-  async refreshToday(@CurrentUser() user: { id: string }) {
+  async refreshToday(@CurrentUser() user: { id: string; isDemo?: boolean }) {
     const today = todayParis();
     await this.service.redis.del(`eco:calendar:${today}:${user.id}`);
-    return this.service.getTodayEvents(user.id);
+    return this.service.getTodayEvents(user.id, user.isDemo === true);
   }
 
   // Events sur une plage de dates (vue semaine)

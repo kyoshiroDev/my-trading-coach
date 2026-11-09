@@ -326,34 +326,68 @@ export class EcoCalendarComponent implements OnInit {
     return event.isReleased ? 'ready' : 'wait';
   }
 
-  // ── Analyse IA à la demande (lazy) ────────────────────────────────────────
-  protected readonly expandedEvent = signal<string | null>(null);
-  protected readonly loadingAnalysis = signal<string | null>(null);
-  private readonly analysisCache = new Map<string, EcoResultAnalysis>();
+  // ── Analyse IA d'un résultat publié ───────────────────────────────────────
+  // Annonces fortes publiées du jour : chargées et dépliées sans clic (le serveur les génère dès la
+  // publication, une fois par signature d'actifs ; l'appel lit son cache). Le clic replie/déplie.
+  protected readonly openEvents = signal<ReadonlySet<string>>(new Set());
+  protected readonly loadingAnalyses = signal<ReadonlySet<string>>(new Set());
+  private readonly analyses = signal<ReadonlyMap<string, EcoResultAnalysis>>(new Map());
+
+  protected isOpen(event: EcoEvent): boolean {
+    return this.openEvents().has(event.name);
+  }
+
+  protected isLoadingAnalysis(event: EcoEvent): boolean {
+    return this.loadingAnalyses().has(event.name);
+  }
 
   /** Replie/déplie l'analyse d'un event. 1 seul appel réseau au 1er dépliage (puis cache). */
   protected toggleAnalysis(event: EcoEvent): void {
     const name = event.name;
-    if (this.expandedEvent() === name) { this.expandedEvent.set(null); return; }
-    this.expandedEvent.set(name);
-    if (this.analysisCache.has(name)) return; // déjà chargé → aucun appel
-    this.loadingAnalysis.set(name);
+    if (this.openEvents().has(name)) {
+      this.openEvents.update((s) => { const n = new Set(s); n.delete(name); return n; });
+      return;
+    }
+    this.openEvents.update((s) => new Set(s).add(name));
+    this.loadAnalysis(name, true);
+  }
+
+  private loadAnalysis(name: string, userAsked: boolean): void {
+    if (this.analyses().has(name) || this.loadingAnalyses().has(name)) return; // déjà chargé ou en cours
+    this.loadingAnalyses.update((s) => new Set(s).add(name));
+    const done = () => this.loadingAnalyses.update((s) => { const n = new Set(s); n.delete(name); return n; });
     this.api.analyzeResult(name)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: res => {
-          if (res?.data) this.analysisCache.set(name, res.data);
-          this.loadingAnalysis.set(null);
+          if (res?.data) this.analyses.update((m) => new Map(m).set(name, res.data));
+          done();
         },
         error: () => {
-          this.loadingAnalysis.set(null);
-          this.toast.error('Analyse indisponible pour le moment. Réessaie.');
+          done();
+          // Chargement automatique : le panneau dit déjà « indisponible », pas de toast.
+          if (userAsked) this.toast.error('Analyse indisponible pour le moment. Réessaie.');
         },
       });
   }
 
+  /** Annonces fortes déjà publiées aujourd'hui : analyse chargée et dépliée d'office. */
+  private openTodayAnalyses(groups: DayGroup[]): void {
+    // Démo : POST analyze-result refusé (lecture seule) → pas d'ouverture d'office sur « indisponible ».
+    if (this.userStore.user()?.isDemo === true) return;
+    const today = groups.find((g) => g.isToday);
+    const released = (today?.events ?? []).filter((e) => this.iaState(e) === 'ready');
+    if (!released.length) return;
+    this.openEvents.update((s) => {
+      const n = new Set(s);
+      for (const e of released) n.add(e.name);
+      return n;
+    });
+    for (const e of released) this.loadAnalysis(e.name, false);
+  }
+
   protected analysisFor(event: EcoEvent): EcoResultAnalysis | undefined {
-    return this.analysisCache.get(event.name);
+    return this.analyses().get(event.name);
   }
 
   protected sentArrow(s: string): string { return s === 'bull' ? '▲' : s === 'bear' ? '▼' : '→'; }
@@ -362,7 +396,7 @@ export class EcoCalendarComponent implements OnInit {
 
   /** Sentiment de la devise de l'event (sinon dominant des actifs analysés). Neutre tant que non chargé. */
   protected ccySent(event: EcoEvent): string {
-    const a = this.analysisCache.get(event.name);
+    const a = this.analyses().get(event.name);
     if (!a) return 'neutral';
     const match = a.assetSentiments.find(x => x.asset === event.currency);
     if (match) return match.sentiment;
@@ -400,19 +434,19 @@ export class EcoCalendarComponent implements OnInit {
       .subscribe({ error: () => this.loadError.set(true), next: (res) => {
         const today = todayParis();
 
-        this.dayGroups.set(
-          (res.data ?? []).map(d => {
-            const events = d.events ?? [];
-            return {
-              date: d.date,
-              label: this.formatDayLabel(d.date),
-              isToday: d.date === today,
-              events,
-              sessions: this.bucketBySession(events),
-            };
-          }),
-        );
+        const groups = (res.data ?? []).map(d => {
+          const events = d.events ?? [];
+          return {
+            date: d.date,
+            label: this.formatDayLabel(d.date),
+            isToday: d.date === today,
+            events,
+            sessions: this.bucketBySession(events),
+          };
+        });
+        this.dayGroups.set(groups);
         this.setDefaultSelectedDay();
+        this.openTodayAnalyses(groups);
       } });
   }
 

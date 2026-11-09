@@ -452,7 +452,7 @@ Réponds UNIQUEMENT avec la phrase coaching, sans guillemets, sans préambule.`,
    * valent l'analyse.
    */
   async analyzeEcoEvents(data: {
-    userId: string;
+    userId: string | null;
     events: Array<{ time: string; name: string; impact: string; currency: string }>;
     userAssets: string[];
   }) {
@@ -485,22 +485,30 @@ Génère un JSON strict (pas de markdown, pas de texte autour) :
   }
 
   async analyzeEcoResult(data: {
-    userId: string;
+    userId: string | null;
     event: { name: string; actual: number | null; estimate: number | null; previous: number | null };
     userAssets: string[];
   }) {
-    const actual = data.event.actual ?? 0;
-    const estimate = data.event.estimate ?? 0;
-    const surprise = actual - estimate;
+    // Jamais de valeur inventée : sans résultat, rien à analyser ; sans prévision, pas de
+    // consensus donc aucune « surprise » (avant : `?? 0`, une prévision absente valait 0).
+    const { actual, estimate } = data.event;
+    if (actual === null || actual === undefined) {
+      throw new Error('Résultat absent : aucune analyse');
+    }
 
     // Aucun appel modèle hors production (cf. principes coût IA du projet).
     if (process.env['NODE_ENV'] !== 'production') {
       return { interpretation: '(analyse IA disponible en production)', assetSentiments: [] };
     }
 
+    const consensus =
+      estimate === null || estimate === undefined
+        ? `Prévu : pas de consensus publié. Aucune surprise à calculer : ne parle pas d'écart à la prévision.`
+        : `Prévu : ${estimate} | Surprise : ${actual - estimate >= 0 ? '+' : ''}${(actual - estimate).toFixed(2)}.`;
+
     const prompt = `Résultat tombé : ${data.event.name}.
-Résultat : ${actual} | Prévu : ${estimate} | Précédent : ${data.event.previous ?? 'N/A'}.
-Surprise : ${surprise >= 0 ? '+' : ''}${surprise.toFixed(2)}.
+Résultat : ${actual} | Précédent : ${data.event.previous ?? 'N/A'}.
+${consensus}
 Actifs tradés : ${data.userAssets.join(', ')}.
 ${NO_EM_DASH_RULE}
 ${FRENCH_RULE}

@@ -1704,3 +1704,10 @@ masquée, sous-ligne `tradovate-paused-<id>` avec le texte validé (« échoué 
 Tradovate de ce compte ? », puis, s'il y a des trades importés, « La synchro s'arrête. Tes trades
 déjà importés restent, sauf si tu choisis de les supprimer. » Jamais le mot « révoqué » dans ces
 textes (la déconnexion supprime nos jetons, elle ne révoque rien chez Tradovate).
+
+## Calendrier éco : analyses ouvertes d'office (2026-11-10, #920)
+
+- `eco-calendar.component` : au chargement de la semaine, les annonces **fortes publiées du jour** voient
+  leur analyse chargée (`POST /eco-calendar/analyze-result`, cache serveur) et dépliée sans clic
+  (`openEvents`, plusieurs à la fois). Le clic replie/déplie. Erreur de chargement automatique : pas de
+  toast (le panneau dit « indisponible »). **Compte démo** : rien d'office (POST refusé en lecture seule).
