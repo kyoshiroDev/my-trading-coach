@@ -141,6 +141,26 @@ describe('buildCoachInsights', () => {
     expect(out.map((i) => i.tone)).toEqual(['warn', 'bad', 'bad', 'good', 'bad']);
     expect(out).toHaveLength(5);
   });
+
+  it('émotions sans R:R connu (avgRR null, trades synchronisés) : aucun conseil en « R »', () => {
+    const out = buildCoachInsights(
+      summary({ winRate: 55, profitFactor: 1.4, streak: 0 }),
+      [{ emotion: 'FOCUSED', winRate: 70, avgRR: null, count: 5 }, { emotion: 'REVENGE', winRate: 10, avgRR: null, count: 3 }],
+      [],
+    );
+    expect(out.some((i) => /R en moyenne/.test(i.text))).toBe(false);
+  });
+
+  it('une émotion avec R:R connu reste comparée, celles sans R:R sont écartées', () => {
+    const out = buildCoachInsights(
+      summary({ winRate: 55, profitFactor: 1.4, streak: 0 }),
+      [{ emotion: 'FOCUSED', winRate: 70, avgRR: 1.5, count: 5 }, { emotion: 'REVENGE', winRate: 10, avgRR: null, count: 3 }],
+      [],
+    );
+    expect(out.filter((i) => /R en moyenne/.test(i.text)).map((i) => i.text)).toEqual([
+      expect.stringContaining('+1.50R en moyenne'),
+    ]);
+  });
 });
 
 describe('buildTradeRows (historique des trades, #655)', () => {

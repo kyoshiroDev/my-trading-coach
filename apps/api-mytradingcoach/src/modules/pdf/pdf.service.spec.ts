@@ -94,6 +94,14 @@ describe('PdfService — texte IA et utilisateur échappé', () => {
     expect(html).toContain('a &amp; b');
   });
 
+  it('R/R moyen inconnu (aucun stop ni objectif dans la semaine) : « — », jamais 0.0', () => {
+    const build = (d: DebriefPdfData) => (new PdfService() as unknown as { buildHTML: (d: DebriefPdfData) => string }).buildHTML(d);
+    const base = data();
+    const html = build({ ...base, stats: { ...base.stats, avgRR: null } });
+    expect(html).toMatch(/R\/R moyen<\/div>\s*<div class="stat-box-value">—<\/div>/);
+    expect(build(base)).toMatch(/R\/R moyen<\/div>\s*<div class="stat-box-value">1\.5<\/div>/);
+  });
+
   it('escapeHtml couvre les cinq caractères sensibles', () => {
     expect(escapeHtml(`<>&"'`)).toBe('&lt;&gt;&amp;&quot;&#39;');
     expect(escapeHtml(null)).toBe('');

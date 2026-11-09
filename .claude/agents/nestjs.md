@@ -182,7 +182,20 @@ POST   /api/test/upgrade-user          NODE_ENV=test uniquement
   profit factor, série, par setup/émotion/heure, courbe, calendrier, top actifs ; session ; débrief ;
   récap et agents IA). Seule exception assumée : la note d'exécution (`execution-grade.util`).
   `AnalyticsService` passe par son helper local `net(t)`. `SetupStat.avgRR` vaut `null` (pas 0)
-  quand aucun trade du setup n'a de R:R.
+  quand aucun trade du setup n'a de R:R ; idem `EmotionStat.avgRR` et le « R/R moyen » du PDF de
+  débrief (`averageKnownRiskReward` de `@mtc/shared` : moyenne des R/R CONNUS, `null` sinon).
+- **R/R inconnu ≠ 0 (#916)** : la synchro broker n'écrit jamais `stopLoss` / `takeProfit` /
+  `riskReward` (elle ne les lit pas : le rapport Orders porte le Stop Price mais sans lien vers le trade, cf. `docs/tradovate-api-capabilities.md` §11). Un R/R
+  absent reste `null` partout (API, PDF, IA). Le trader saisit son stop initial par
+  **`PATCH /trades/:id/stop`** (`SetTradeStopDto` : `stopLoss`, `takeProfit` facultatif, `null` =
+  retiré) : `TradesService.setStop` refuse un stop ou un objectif du mauvais côté de l'entrée (400,
+  message de `stopPlacementError`, `@mtc/shared`) puis passe par `update` → R/R par
+  `calculateRiskReward` (= `plannedRiskReward` partagé avec l'aperçu du front), note « avec stop »
+  (STOP_BASED) et recalcul comportemental du compte. `update` recalcule le R/R dès que `stopLoss`,
+  `takeProfit`, `side` ou un prix change (avant : seulement sur un prix) et l'efface (`null`) s'il
+  devient incalculable, sauf R/R fourni par le client. Une resynchronisation n'écrase rien :
+  l'import broker n'insère que des trades nouveaux (dédoublonnage), il ne met jamais à jour un trade
+  existant (`trade-stop.int-spec.ts`).
 - **Borne haute des périodes analytics** : un `to` date seule (`2026-09-14`) couvre la journée
   entière (`AnalyticsController.endBound`) ; lu tel quel il valait minuit et excluait les trades du jour.
 - **Setup des trades importés = « Sans setup »** (PROMPT-213) : la synchro broker, l'import CSV sans

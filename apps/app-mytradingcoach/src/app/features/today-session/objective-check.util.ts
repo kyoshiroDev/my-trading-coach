@@ -1,5 +1,5 @@
 import { SessionTrade } from '../../core/api/session.api';
-import { netPnl } from '@mtc/shared';
+import { averageKnownRiskReward, netPnl } from '@mtc/shared';
 import { ObjectiveCheck } from '../../core/api/debrief.api';
 
 /** Heure Paris « HH:MM » d'un ISO (pour le check trade_window). */
@@ -10,6 +10,15 @@ export function toParisHHMM(iso: string): string {
     minute: '2-digit',
     hour12: false,
   });
+}
+
+/**
+ * Libellé d'échec de l'objectif « R:R minimum ». Aucun R:R connu (trades synchronisés sans stop ni
+ * objectif) : on le dit, jamais « R:R 0.0 », qui se lirait comme un R:R mesuré nul.
+ */
+export function minRrFailureLabel(trades: Pick<SessionTrade, 'riskReward'>[], min: number): string {
+  const avg = averageKnownRiskReward(trades);
+  return avg == null ? 'R:R inconnu (stop ou objectif non renseigné)' : `R:R ${avg.toFixed(1)} < ${min}`;
 }
 
 /**

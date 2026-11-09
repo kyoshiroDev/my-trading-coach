@@ -1,4 +1,5 @@
 import type { CreateTradeDto } from './dto/create-trade.dto';
+import { plannedRiskReward } from '@mtc/shared';
 import { getTickSize, getTickValue } from './instruments.const';
 
 /**
@@ -40,14 +41,7 @@ export function calculatePnl(dto: CreateTradeDto): number | undefined {
 }
 
 export function calculateRiskReward(dto: CreateTradeDto): number | undefined {
-  // R/R calculé depuis takeProfit (objectif prévu), pas exit (sortie réelle)
-  if (dto.entry != null && dto.takeProfit != null && dto.stopLoss != null) {
-    const reward =
-      dto.side === 'LONG'
-        ? dto.takeProfit - dto.entry
-        : dto.entry - dto.takeProfit;
-    const risk = Math.abs(dto.entry - dto.stopLoss);
-    return risk > 0 && reward > 0 ? +(reward / risk).toFixed(2) : undefined;
-  }
-  return undefined;
+  // R/R calculé depuis takeProfit (objectif prévu), pas exit (sortie réelle). Logique unique,
+  // partagée avec l'aperçu en direct de la saisie rapide du stop (@mtc/shared).
+  return plannedRiskReward(dto.side, dto.entry, dto.stopLoss, dto.takeProfit);
 }

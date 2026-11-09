@@ -33,7 +33,7 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
 import { TradingAccount } from '../../core/api/accounts.api';
 import { UserStore } from '../../core/stores/user.store';
 import { DebriefObjective } from '../../core/api/debrief.api';
-import { evaluateObjectiveCheck } from './objective-check.util';
+import { evaluateObjectiveCheck, minRrFailureLabel } from './objective-check.util';
 import { EmotionEmojiPipe, PnlColorPipe, PnlFormatPipe } from '../../shared/pipes';
 import { ToastService } from '../../core/services/toast.service';
 import { DialogDirective, ErrorStateComponent } from '@mtc/front-ui';
@@ -231,9 +231,7 @@ export class TodaySessionComponent implements OnInit, OnDestroy {
       case 'no_revenge':      return 'revenge trade détecté';
       case 'all_stops':       return 'stop loss manquant';
       case 'min_rr': {
-        const rr = trades.map((t) => t.riskReward).filter((v): v is number => v != null);
-        const avg = rr.length ? rr.reduce((a, b) => a + b, 0) / rr.length : 0;
-        return `R:R ${avg.toFixed(1)} < ${Number(p['value'])}`;
+        return minRrFailureLabel(trades, Number(p['value']));
       }
       case 'journal_filled':  return 'journal trop court';
       case 'trade_window':    return `aucun trade ${String(p['start'])}-${String(p['end'])}`;

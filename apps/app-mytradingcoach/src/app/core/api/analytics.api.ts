@@ -29,7 +29,8 @@ export interface SetupStat {
 export interface EmotionStat {
   emotion: string;
   winRate: number;
-  avgRR: number;
+  /** null = aucun trade de cette émotion n'a de R:R. */
+  avgRR: number | null;
   count: number;
 }
 

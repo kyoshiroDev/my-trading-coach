@@ -327,7 +327,8 @@ export class LegacyAnalyticsService {
     return Array.from(grouped.entries()).map(([emotion, g]) => ({
       emotion,
       winRate: (g.wins + g.losses) > 0 ? (g.wins / (g.wins + g.losses)) * 100 : 0,
-      avgRR: g.rr.length ? g.rr.reduce((a, b) => a + b, 0) / g.rr.length : 0,
+      // null sans R:R connu (2026-11-09, trades synchronisés sans stop) : l'implémentation SQL suit.
+      avgRR: g.rr.length ? g.rr.reduce((a, b) => a + b, 0) / g.rr.length : null,
       count: g.count,
     }));
   }
