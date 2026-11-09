@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { TestBed } from '@angular/core/testing';
@@ -49,7 +49,11 @@ const card = (el: HTMLElement, label: string) =>
   [...el.querySelectorAll<HTMLElement>('.mtc-kpi')].find((c) => c.querySelector('.mtc-kpi-lab')?.textContent?.includes(label))!;
 
 describe('DashboardKpisComponent — drawdown max par trade', () => {
+  afterEach(() => vi.useRealTimers());
   beforeEach(() => {
+    // Dates fixes du cas réel : horloge figée au lundi 09/11/2026 (règle du dépôt).
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-11-09T18:00:00Z'));
     TestBed.configureTestingModule({
       providers: [
         { provide: MoneyService, useValue: { currency: signal('USD'), format: (v: number, o?: object) => formatMoney(v, 'USD', o) } },

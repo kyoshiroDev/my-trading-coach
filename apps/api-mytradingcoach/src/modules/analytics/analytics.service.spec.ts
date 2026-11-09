@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
 // Les agrégats sont calculés en SQL (analytics.sql.ts) : leurs scénarios métier tournent sur un vrai
 // Postgres (analytics.service.scenarios.int-spec.ts, analytics-sql-equivalence.int-spec.ts). Ici,
@@ -228,6 +228,9 @@ describe('AnalyticsService', () => {
   });
 
   describe('getEquityCurveTrades (courbe par trade clôturé, drawdown max)', () => {
+    // Dates fixes du cas réel : horloge figée au lundi 09/11/2026 (règle du dépôt).
+    beforeEach(() => { vi.useFakeTimers({ toFake: ['Date'] }); vi.setSystemTime(new Date('2026-11-09T18:00:00Z')); });
+    afterEach(() => vi.useRealTimers());
     // Cas réel du prompt : vendredi 06/11 −268 (08:22), −267,50 (08:45), +447 (22:45) ;
     // lundi 09/11 +1 406,50 puis −253,60. Nets déjà frais déduits (SQL).
     const nets = [

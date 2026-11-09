@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
   anchoredDrawdown,
   maxDrawdownOf,
@@ -92,6 +92,9 @@ describe('payouts reçus', () => {
 });
 
 describe('withPayoutsByTrade (courbe par trade du tableau de bord)', () => {
+  // Dates fixes : horloge figée au lundi 09/11/2026 (règle du dépôt).
+  beforeEach(() => { vi.useFakeTimers({ toFake: ['Date'] }); vi.setSystemTime(new Date('2026-11-09T18:00:00Z')); });
+  afterEach(() => vi.useRealTimers());
   const pt = (date: string, cumulativePnl: number, pnl: number) => ({ date, cumulativePnl, pnl, trades: 1 });
   const points = [
     pt('2026-11-06T08:22:00.000Z', -268, -268),

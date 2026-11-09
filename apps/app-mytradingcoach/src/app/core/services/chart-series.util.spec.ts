@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
   START_LABEL,
   stepLabel,
@@ -356,6 +356,9 @@ describe('« ? » de la carte drawdown selon la règle du plan relié', () => {
 });
 
 describe('courbe par trade (tableau de bord)', () => {
+  // Dates fixes : horloge figée au lundi 09/11/2026 (règle du dépôt).
+  beforeEach(() => { vi.useFakeTimers({ toFake: ['Date'] }); vi.setSystemTime(new Date('2026-11-09T18:00:00Z')); });
+  afterEach(() => vi.useRealTimers());
   // Points de /equity-curve/trades : P&L de la clôture porté par le point (la courbe est réduite,
   // l'écart au point gardé précédent n'est donc pas le P&L du trade).
   const points = [

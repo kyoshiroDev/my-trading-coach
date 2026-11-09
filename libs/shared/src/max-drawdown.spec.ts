@@ -1,6 +1,10 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { closedTradeSteps, maxDrawdownOfCumulative, maxDrawdownOfTrades, type DrawdownTrade } from './max-drawdown';
 import { computeTradeStats } from './trade-stats';
+
+// Dates fixes du cas réel : horloge figée au lundi 09/11/2026 (règle du dépôt).
+beforeEach(() => { vi.useFakeTimers({ toFake: ['Date'] }); vi.setSystemTime(new Date('2026-11-09T18:00:00Z')); });
+afterEach(() => vi.useRealTimers());
 
 const t = (closedAt: string, pnl: number | null, commission = 0): DrawdownTrade => ({ closedAt, pnl, commission });
 
