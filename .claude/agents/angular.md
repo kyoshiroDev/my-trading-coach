@@ -426,9 +426,10 @@ envoyées à l'API sont des horodatages ISO complets.
   clôturés », jamais de précision intra-trade. La courbe d'équité du dashboard est PAR TRADE
   (`/equity-curve/trades`, ≤ 500 points, pics et creux gardés ; payouts par `withPayoutsByTrade`,
   infobulle « Trade » / « N trades » avec l'heure).
-- **Courbe et en-tête drawdown des Statistiques** (inchangés) = `anchoredDrawdown` sur la courbe
-  journalière : clôture de journée moins le plus haut des clôtures depuis l'ouverture du compte
-  (`before.peak`), comme la règle EOD des prop firms. Écart connu avec le KPI du dashboard.
+- **Carte drawdown des Statistiques** : sans plan relié, même règle (`drawdownSeries` =
+  `maxDrawdownOfCumulative` sur les points de `/equity-curve/trades`, `drawdownPoints`) → même
+  chiffre que le KPI du dashboard. Plan prop firm relié : courbe journalière + `floorSeries`
+  (plancher du plan, `before.peak`), inchangé. `anchoredDrawdown` n'existe plus.
 - **Payouts reçus** (détectés chez le broker, `payouts` + `before.payouts` de l'API) : `withPayouts`
   les insère dans les points (jour sans trade = point au même P&L, champ `payout`). Seules les
   courbes de SOLDE les déduisent : équité, marge de la carte drawdown (`floorSeries`), sparkline du
