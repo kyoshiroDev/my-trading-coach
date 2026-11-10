@@ -1711,3 +1711,6 @@ textes (la déconnexion supprime nos jetons, elle ne révoque rien chez Tradovat
   leur analyse chargée (`POST /eco-calendar/analyze-result`, cache serveur) et dépliée sans clic
   (`openEvents`, plusieurs à la fois). Le clic replie/déplie. Erreur de chargement automatique : pas de
   toast (le panneau dit « indisponible »). **Compte démo** : rien d'office (POST refusé en lecture seule).
+- Interventions sans chiffre (`event.hasResult === false`, discours, conférences, minutes) : colonne IA
+  `talk` (« 🎙 sans chiffre »), statut neutre sous le libellé (`talkStatus`), jamais analysées. Heure passée
+  sans chiffre : ligne en état `past`, distinct de `published` (`event.status`, contrat partagé).

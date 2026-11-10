@@ -309,6 +309,31 @@ describe('EcoCalendarService', () => {
     });
   });
 
+  describe('getEventsFromDb · interventions sans chiffre et état « passé » (#920)', () => {
+    afterEach(() => vi.useRealTimers());
+
+    it('discours passé : hasResult false, status past (plus « non publié » indéfiniment)', async () => {
+      vi.useFakeTimers({ toFake: ['Date'] });
+      vi.setSystemTime(new Date('2026-11-04T19:45:00Z')); // 20:45 Paris
+      mockPrisma.ecoEvent.findMany.mockResolvedValue([
+        { date: '2026-11-04', time: '20:00', name: 'Fed Interest Rate Decision', nameFr: null, country: 'US',
+          currency: 'USD', impact: 'high', actual: 3.75, estimate: 3.75, previous: 4, isReleased: true, unit: '%' },
+        { date: '2026-11-04', time: '20:30', name: 'Fed Chair Powell Press Conference', nameFr: null, country: 'US',
+          currency: 'USD', impact: 'high', actual: null, estimate: null, previous: null, isReleased: false, unit: null },
+        { date: '2026-11-04', time: '22:00', name: 'ECB President Lagarde Speech', nameFr: null, country: 'EU',
+          currency: 'EUR', impact: 'high', actual: null, estimate: null, previous: null, isReleased: false, unit: null },
+      ]);
+
+      const result = await service.getEventsFromDb('2026-11-04');
+
+      expect(result.map((e) => [e.name, e.hasResult, e.status, e.isReleased])).toEqual([
+        ['Fed Interest Rate Decision', true, 'released', true],
+        ['Fed Chair Powell Press Conference', false, 'past', false],
+        ['ECB President Lagarde Speech', false, 'upcoming', false],
+      ]);
+    });
+  });
+
   // ── checkNewReleases ──────────────────────────────────────────────────────
 
   describe('checkNewReleases', () => {

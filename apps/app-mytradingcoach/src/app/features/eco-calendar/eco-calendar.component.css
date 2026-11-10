@@ -182,8 +182,9 @@ table.cal { width: 100%; border-collapse: collapse; font-size: 13px; }
 .nowline .lbl { font-family: var(--font-mono); font-size: 11px; font-weight: 600; color: #fff; background: var(--primary); padding: 2px 9px; border-radius: 7px; }
 .nowline .ln { flex: 1; height: 2px; background: linear-gradient(90deg, var(--blue), transparent); }
 
-.r-ev.published td { color: var(--text-3); }
-.r-ev.published .evt { color: var(--text-2); }
+.r-ev.published td, .r-ev.past td { color: var(--text-3); }
+.r-ev.published .evt, .r-ev.past .evt { color: var(--text-2); }
+.evt-note { display: block; margin-top: 2px; font-size: var(--fs-2xs); color: var(--text-3); line-height: 1.35; }
 .r-ev.next td { background: #0f1d33; }
 .c-pin { width: 32px; text-align: center; }
 .pin { width: 22px; height: 22px; border-radius: 6px; font-size: 12px; color: var(--text-3); background: none; border: none; cursor: pointer; }
@@ -310,7 +311,7 @@ table.cal { width: 100%; border-collapse: collapse; font-size: 13px; }
   .cal tbody tr.r-ev { display: flex; flex-wrap: wrap; align-items: flex-start; padding: 10px 0 10px 58px; border-top: 1px solid var(--border); }
   .cal tbody tr.r-ev.high { box-shadow: inset 3px 0 0 var(--red); }
   .cal tbody tr.r-ev.medium { box-shadow: inset 3px 0 0 var(--yellow); }
-  .cal tbody tr.r-ev.published { opacity: .6; }
+  .cal tbody tr.r-ev.published, .cal tbody tr.r-ev.past { opacity: .6; }
   .cal tbody tr.r-ev.next { background: #0f1d33; }
   .cal tbody tr.r-ev td { display: block; padding: 0; border: none; background: none; order: 5; }
   .cal tbody tr.r-ev td.c-time { order: 1; flex: 0 0 46px; margin-left: -46px; padding-top: 1px; font-size: 12px; }

@@ -165,6 +165,7 @@
                       @if (row.event; as event) {
                         <tr class="r-ev"
                             [class.published]="row.state === 'published'"
+                            [class.past]="row.state === 'past'"
                             [class.next]="row.state === 'next'"
                             [class.high]="event.impact === 'high'"
                             [class.medium]="event.impact === 'medium'">
@@ -174,7 +175,12 @@
                           </td>
                           <td class="c-time" data-label="Heure">{{ event.time }}</td>
                           <td data-label="Devise"><span class="cur"><span class="flag">{{ getFlag(event) }}</span>{{ event.currency }}</span></td>
-                          <td class="cell-evt" data-label="Événement"><span class="evt">{{ translate(event.name) }}</span></td>
+                          <td class="cell-evt" data-label="Événement">
+                            <span class="evt">{{ translate(event.name) }}</span>
+                            @if (iaState(event) === 'talk') {
+                              <span class="evt-note">{{ talkStatus(event, row.state === 'past') }}</span>
+                            }
+                          </td>
                           <td data-label="Impact">
                             <span class="stars">
                               @for (i of STAR_SLOTS; track i) {
@@ -210,6 +216,7 @@
                                 </button>
                               }
                               @case ('wait') { <span class="ia-wait">⏳ après chiffres</span> }
+                              @case ('talk') { <span class="ia-wait" title="Pas de résultat chiffré, pas d'analyse automatique">🎙 sans chiffre</span> }
                               @default { <span class="ia-na">-</span> }
                             }
                           </td>

@@ -34,7 +34,7 @@ interface DayGroup {
   sessions: SessionGroup;
 }
 
-type EvState = 'published' | 'next' | 'upcoming';
+type EvState = 'published' | 'past' | 'next' | 'upcoming';
 interface TableRow {
   kind: 'sep' | 'now' | 'ev';
   key: string;
@@ -190,9 +190,12 @@ export class EcoCalendarComponent implements OnInit {
           rows.push({ kind: 'now', key: `now-${e.name}-${e.time}`, label: this.formatNow(nowM) });
           nowDone = true;
         }
-        const state: EvState = isToday
-          ? (m <= nowM ? 'published' : (m === nextM ? 'next' : 'upcoming'))
-          : (isPastDay ? 'published' : 'upcoming');
+        const passed = isToday ? m <= nowM : isPastDay;
+        // Heure passée sans chiffre (intervention, ou résultat jamais fourni) : « passée », pas
+        // « publiée ».
+        const state: EvState = passed
+          ? (e.isReleased ? 'published' : 'past')
+          : (isToday && m === nextM ? 'next' : 'upcoming');
         rows.push({ kind: 'ev', key: `${e.name}-${e.currency}-${e.time}`, event: e, state });
       }
     };
@@ -320,10 +323,21 @@ export class EcoCalendarComponent implements OnInit {
     return impact === 'high' ? 'var(--red)' : 'var(--yellow)';
   }
 
-  /** État de la colonne IA : 'ready' (fort publié), 'wait' (fort à venir), 'na' (moyen). */
-  protected iaState(event: EcoEvent): 'ready' | 'wait' | 'na' {
+  /**
+   * État de la colonne IA : 'ready' (fort publié), 'wait' (fort à venir), 'talk' (intervention forte
+   * sans chiffre : pas d'analyse), 'na' (moyen).
+   */
+  protected iaState(event: EcoEvent): 'ready' | 'wait' | 'talk' | 'na' {
     if (event.impact !== 'high') return 'na';
+    if (event.hasResult === false) return 'talk';
     return event.isReleased ? 'ready' : 'wait';
+  }
+
+  /** Statut neutre d'une intervention sans chiffre : on ne prétend pas analyser ce qui a été dit. */
+  protected talkStatus(event: EcoEvent, passed: boolean): string {
+    return passed
+      ? `Intervention passée (${event.time}). Pas de résultat chiffré, pas d'analyse automatique.`
+      : `Intervention prévue à ${event.time}, volatilité possible. Pas de résultat chiffré, pas d'analyse automatique.`;
   }
 
   // ── Analyse IA d'un résultat publié ───────────────────────────────────────

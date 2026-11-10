@@ -173,6 +173,37 @@ describe('EcoCalendarComponent', () => {
       expect(cmp.iaState(ev({ impact: 'high', isReleased: false }))).toBe('wait');
       expect(cmp.iaState(ev({ impact: 'medium', isReleased: true }))).toBe('na');
     });
+
+    it('intervention forte sans chiffre → talk, jamais analysée', () => {
+      const { cmp } = setup();
+      expect(cmp.iaState(ev({ impact: 'high', hasResult: false }))).toBe('talk');
+    });
+  });
+
+  describe('interventions sans chiffre (#920)', () => {
+    it('statut neutre avant et après, ligne « passée » distincte de « publiée », aucune analyse chargée', () => {
+      vi.useFakeTimers({ toFake: ['Date'] });
+      vi.setSystemTime(new Date('2026-06-11T19:45:00Z')); // 21:45 Paris
+      try {
+        const talk = ev({ name: 'Powell', impact: 'high', time: '20:30', hasResult: false, status: 'past' });
+        const fed = ev({ name: 'Fed', impact: 'high', time: '20:00', isReleased: true, actual: 3.75, status: 'released' });
+        const { cmp, api } = setup({ events: [talk, fed] });
+        const states = Object.fromEntries(
+          cmp.tableRows().filter((r: { kind: string }) => r.kind === 'ev').map((r: { event: EcoEvent; state: string }) => [r.event.name, r.state]),
+        );
+        expect(states).toEqual({ Powell: 'past', Fed: 'published' });
+        expect(api.analyzeResult).toHaveBeenCalledWith('Fed');
+        expect(api.analyzeResult).not.toHaveBeenCalledWith('Powell');
+        expect(cmp.talkStatus(talk, false)).toBe(
+          "Intervention prévue à 20:30, volatilité possible. Pas de résultat chiffré, pas d'analyse automatique.",
+        );
+        expect(cmp.talkStatus(talk, true)).toBe(
+          "Intervention passée (20:30). Pas de résultat chiffré, pas d'analyse automatique.",
+        );
+      } finally {
+        vi.useRealTimers();
+      }
+    });
   });
 
   describe('analyse sans clic · compte démo (#920)', () => {

@@ -7,7 +7,7 @@ import { AiService } from '../ai/ai.service';
 import { CACHE_TTL } from '../../common/constants/cache-ttl.const';
 import { AI_MODELS } from '../infra/ai-pricing.const';
 import { normalizeEventKey, toParisDateStr, todayParis } from '@mtc/shared';
-import type { EcoAnalysis, EcoEvent } from '@mtc/shared';
+import type { EcoAnalysis, EcoEvent, EcoEventStatus } from '@mtc/shared';
 import type { EcoCalendarData, EcoResultAnalysis, FmpEcoEvent } from './eco-calendar.types';
 import * as dates from './eco-calendar.dates';
 import { classifyEcoEvent, type EcoImpact } from './eco-calendar.impact';
@@ -28,6 +28,15 @@ const TRANSLATION_BATCH = 15;
  */
 const TRANSLATION_RETRY_TTL_S = 12 * 60 * 60;
 const translationLockKey = (name: string) => `eco:label-tr:${name}`;
+
+/**
+ * État affiché d'une annonce : « passée » se distingue de « publiée » (une intervention sans chiffre
+ * ne reste plus indéfiniment « à venir / non publiée »).
+ */
+function eventStatus(actual: number | null, timePassed: boolean): EcoEventStatus {
+  if (actual !== null) return 'released';
+  return timePassed ? 'past' : 'upcoming';
+}
 
 /** Nom FMP sans suffixe de période : « CPI YoY (Oct) » → « CPI YoY ». */
 const stripPeriod = (n: string) => n.replace(/\s*\([^)]*\)\s*$/, '').trim();
@@ -172,6 +181,8 @@ export class EcoCalendarService {
           previous: row.previous ?? null,
           isReleased: row.isReleased,
           unit: row.unit,
+          hasResult: hasNumericResult(row.name),
+          status: eventStatus(row.actual ?? null, isPast),
         });
       }
 
@@ -341,6 +352,9 @@ export class EcoCalendarService {
         previous: r.previous ?? null,
         isReleased: actual !== null,
         unit: r.unit,
+        // Sur le libellé anglais FMP : les règles de `hasNumericResult` sont écrites pour lui.
+        hasResult: hasNumericResult(r.name),
+        status: eventStatus(actual, eventDateTime <= parisNow),
       };
     });
   }

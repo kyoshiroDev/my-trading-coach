@@ -2414,6 +2414,17 @@ global à la file ; Resend = 10 req/s par équipe, clé partagée entre environn
 - Front (`eco-calendar.component`) : les annonces fortes publiées du jour sont chargées et dépliées sans
   clic (`openEvents`), le clic replie/déplie et réutilise le cache.
 
+## Calendrier éco : interventions sans chiffre, état « passé » (2026-11-10, #920)
+
+- `EcoEvent` (contrat `@mtc/shared`) gagne `hasResult` (false = discours, conférence de presse, minutes,
+  communiqué : `hasNumericResult` sur le libellé anglais FMP) et `status` : `released` (chiffre publié),
+  `past` (heure passée sans chiffre), `upcoming`. Les deux sont optionnels (données figées de démo).
+- Front calendrier : colonne IA `talk` (« 🎙 sans chiffre ») + statut neutre sous le libellé : « Intervention
+  prévue à HH:MM, volatilité possible. Pas de résultat chiffré, pas d'analyse automatique. » puis
+  « Intervention passée (HH:MM)… » ; ligne en état `past`, distinct de `published`. Aucune analyse IA.
+- Pas de source de texte branchée. Existantes, non ajoutées : flux RSS des discours de la Fed
+  (federalreserve.gov) et communiqués/discours BCE (ecb.europa.eu) ; FMP n'en fournit pas.
+
 ## News live : traduction par lots et bandeau BREAKING (2026-10-06)
 - **Sources** (`market-news.sources.ts`, `NEWS_FEEDS`) : 4 flux FMP, chacun sa limite (aucun n'évince
   les autres) : `general-latest` (macro, rangée sous le symbole `MACRO`), `forex-latest`, ETF indices /
