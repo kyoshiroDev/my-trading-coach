@@ -1,5 +1,6 @@
 # Décisions de Greg (lues par l'agent relecteur)
 
+- 2026-11-10 : R/R des trades synchronisés (#916) : capture EN DIRECT à l'entrée validée (stop et objectif liés à l'ordre d'entrée, figés à l'entrée, écrits à la création du trade). L'inférence après coup sur le rapport Orders n'est PAS validée.
 - 2026-11-09 : mini-graphiques des KPI du tableau de bord = vraies séries seulement : pas de sparkline sous Profit factor, barres réelles (trades par jour tradé) sous Trades pris, drawdown tracé « sous l'eau » (0 en haut, aire remplie depuis le haut). Aucun décor.
 - 2026-11-09 : drawdown max (PROMPT-drawdown-max-par-trade) = plus grand écart sommet → creux qui suit, sur le P&L net cumulé après chaque trade clôturé (ordre de clôture, frais inclus), sur la période choisie (solde du début de période = premier sommet), comptes archivés exclus par défaut. Calcul unique `libs/shared/src/max-drawdown.ts` pour tous les écrans (tableau de bord, Statistiques, résumé API, sessions, seed démo). Trades du même instant = une seule étape (ordre inconnu, aucun creux inventé). Marge prop firm (règles du plan, EOD/intraday) : calcul séparé, non modifié.
 - 2026-11-09 : la carte d'aperçu de `/prop-firm` reprend le libellé de l'app « Marge avant le plancher » (au lieu de « Il te reste avant la limite »), cohérent avec `contexte-com.md`.

@@ -17,6 +17,8 @@ import { toOpenPositions } from './tradovate-open-positions';
 import { isPenaltyFailure, TradovateApiError, TradovateException, TradovatePenaltyError } from './tradovate.errors';
 import { mapTradovatePairs } from './tradovate-trade.mapper';
 import { describeTradovateSnapshot } from './tradovate-sync-diagnostics';
+import { countOutcomes, entryProtection, firstVersions, type EntryProtection } from './tradovate-entry-protection';
+import type { TradovateOrderEntity, TradovateOrderVersionEntity } from './tradovate-orders';
 import type {
   TradovateAccount,
   TradovateContract,
@@ -292,10 +294,19 @@ export class TradovateSyncService {
     // Rapprochement avec un import CSV (même trade, autre fuseau) : fait par `importTrades`,
     // un-pour-un, pour la synchro comme pour l'import CSV (trades/import-dedupe.util.ts).
 
+    // Stop et objectif initiaux liés à l'ordre d'entrée (#916 phase 2), lus dans les ordres de la
+    // séance. Best-effort : une lecture refusée ne fait jamais échouer la synchro.
+    const protections = await this.entryProtections(get, mapped.trades, fills);
+
     // Mêmes valeurs de lot que l'import CSV : compte cible, « Sans setup », émotion non renseignée.
     const setupId = await this.setups.getImportSetupId(userId);
-    const dtos: Partial<CreateTradeDto>[] = mapped.trades.map((t) => {
+    const dtos: Partial<CreateTradeDto>[] = mapped.trades.map((t, i) => {
       const dto: typeof t = { ...t, accountId: conn.accountId, emotion: null };
+      // Posés à la CRÉATION seulement : `importTrades` ne met jamais à jour un trade existant, une
+      // saisie de l'utilisateur dans le Journal n'est donc jamais écrasée.
+      const p = protections?.[i];
+      if (p?.stopLoss !== undefined) dto.stopLoss = p.stopLoss;
+      if (p?.takeProfit !== undefined) dto.takeProfit = p.takeProfit;
       if (setupId) dto.setupId = setupId;
       delete dto._buyFillId; // métadonnées internes : jamais persistées
       delete dto._sellFillId;
@@ -318,6 +329,14 @@ export class TradovateSyncService {
           accounts, positions, pairs: allPairs, externalAccountId: externalId, fillsFetched: fills.size,
         }),
     );
+    if (protections) {
+      // Mesure (#916) : les brackets portent-ils le lien `parentId` ? Aucun montant, aucun compte.
+      const c = countOutcomes(protections.map((p) => p.outcome));
+      this.logger.log(
+        `Capture stop Tradovate ${conn.id} : ${c.linked} liés, ${c['no-leg']} sans jambe liée, ` +
+          `${c.ambiguous} ambigus, ${c['session-gone']} séance passée.`,
+      );
+    }
 
     return {
       created: imported.created,
@@ -329,6 +348,38 @@ export class TradovateSyncService {
       feesImported: mapped.fees,
       lastSyncAt: new Date(),
     };
+  }
+
+  /**
+   * Protections initiales de chaque trade converti (même ordre que `trades`), ou `null` si aucun
+   * trade ou si les ordres de la séance sont illisibles. Deux lectures (`/order/list`,
+   * `/orderVersion/list`), faites seulement quand il y a des trades à convertir.
+   */
+  private async entryProtections(
+    get: <R>(path: string, query?: Record<string, string>) => Promise<R>,
+    trades: readonly { side?: 'LONG' | 'SHORT'; entry?: number; _buyFillId?: string; _sellFillId?: string }[],
+    fills: Map<number, TradovateFill>,
+  ): Promise<EntryProtection[] | null> {
+    if (trades.length === 0) return null;
+    let orders: TradovateOrderEntity[];
+    let versions: TradovateOrderVersionEntity[];
+    try {
+      [orders, versions] = await Promise.all([
+        get<TradovateOrderEntity[]>('/order/list'),
+        get<TradovateOrderVersionEntity[]>('/orderVersion/list'),
+      ]);
+    } catch (err) {
+      this.logger.warn(`Capture stop Tradovate : ordres de la séance illisibles (${(err as Error).message})`);
+      return null;
+    }
+    const list = Array.isArray(orders) ? orders : [];
+    const first = firstVersions(Array.isArray(versions) ? versions : []);
+    return trades.map((t) => {
+      const entryFillId = t.side === 'LONG' ? t._buyFillId : t._sellFillId;
+      const fill = entryFillId ? fills.get(Number(entryFillId)) : undefined;
+      if (t.entry == null || t.side == null) return { outcome: 'session-gone' as const };
+      return entryProtection({ entryOrderId: fill?.orderId, side: t.side, entryPrice: t.entry, orders: list, first });
+    });
   }
 
   /** `/xxx/items?ids=1,2,3` par lots → Map id → entité. */
