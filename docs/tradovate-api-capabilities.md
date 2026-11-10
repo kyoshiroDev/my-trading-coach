@@ -653,6 +653,15 @@ de l'API**, pas un bug à corriger. Pour `BROKER_SYNC`, la reconstitution est po
 `Order.parentId` + `Order.ocoId` + `OrderVersion`, mais reste **non validée sur données réelles**
 faute de bracket existant — et ne servirait aucun utilisateur connu aujourd'hui.
 
+> **Mise à jour 2026-11-10 (#916, phase 2) : liaison UTILISÉE, à mesurer en prod.** La synchro lit
+> `/order/list` + `/orderVersion/list` (GET, séance en cours) quand elle a des trades à créer, et
+> pose sur chaque nouveau trade le stop et l'objectif de la **première version** des jambes liées à
+> l'ordre d'entrée (`orderId` du fill d'entrée → `parentId`, plus l'OCO), même compte, même contrat,
+> sens opposé, candidat unique, bon côté (`tradovate-entry-protection.ts`). Le log « Capture stop
+> Tradovate … : n liés, n sans jambe liée, n ambigus, n séance passée » dira, sur de vrais
+> brackets (TradingView), si `parentId` est renseigné et si la synchro tourne encore pendant la
+> séance. Un trade déjà en base n'est jamais modifié. `BROKER_HISTORY` reste sans stop.
+
 ### Mesure du 2026-11-09 : des brackets existent (compte Lucid du fondateur, #916)
 
 Rapport `Orders` exporté à la main depuis l'interface Tradovate (même rapport, mêmes 32 colonnes),

@@ -200,6 +200,14 @@ POST   /api/test/upgrade-user          NODE_ENV=test uniquement
   devient incalculable, sauf R/R fourni par le client. Une resynchronisation n'écrase rien :
   l'import broker n'insère que des trades nouveaux (dédoublonnage), il ne met jamais à jour un trade
   existant (`trade-stop.int-spec.ts`).
+- **Capture du stop à l'entrée (#916 phase 2, #925)** : `TradovateSyncService.run` lit, s'il y a des
+  trades à convertir, `/order/list` + `/orderVersion/list` (GET, best-effort : un échec ne casse pas
+  la synchro, sauf une pénalité, relancée pour que la pause soit notée) et pose `stopLoss` / `takeProfit` dans le DTO de CRÉATION via `entryProtection`
+  (`tradovate-entry-protection.ts`, pur) : ordre d'entrée = `orderId` du fill d'entrée, jambes =
+  `parentId` (+ OCO), même compte / contrat, sens opposé, PREMIÈRE version, candidat unique, bon
+  côté ; sinon rien. Un trade existant n'est jamais mis à jour (la saisie utilisateur prime). Log
+  de mesure « Capture stop Tradovate » (liés / sans jambe liée / ambigus / séance passée), sans
+  montant. `BROKER_HISTORY` (rapport après coup) : pas de stop, non validé par Greg.
 - **Borne haute des périodes analytics** : un `to` date seule (`2026-09-14`) couvre la journée
   entière (`AnalyticsController.endBound`) ; lu tel quel il valait minuit et excluait les trades du jour.
 - **Setup des trades importés = « Sans setup »** (PROMPT-213) : la synchro broker, l'import CSV sans

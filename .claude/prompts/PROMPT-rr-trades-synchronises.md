@@ -16,3 +16,7 @@ d. Captures avant / après à 1440 et 390 px.
 STOP APRÈS LA PHASE 1 : rapport avec la mesure de la phase 0 et tes recommandations. NE CODE PAS la capture en direct ni l'inférence après coup tant que je ne l'ai pas validée.
 
 RAPPORT : résultat de la mesure (trade par trade), ce qui est corrigé, tests, commandes et résultats, état de la branche, ce que je dois vérifier à la main sur dev, écarts avec ce prompt. Aucun push avant mon "OK push".
+
+---
+COMPLÉMENT (Greg, 2026-11-10, après la phase 1 mergée en #919) :
+valide la capture en direct à l'entrée
