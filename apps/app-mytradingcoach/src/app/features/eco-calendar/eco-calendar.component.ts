@@ -7,6 +7,7 @@ import {
   effect,
   inject,
   signal,
+  untracked,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize } from 'rxjs';
@@ -23,6 +24,9 @@ import {
   LucideStar as Star,
   LucidePin as Pin,
 } from '@lucide/angular';
+
+/** Nom d'annonce sans suffixe de période (« … (Oct) »), comme la clé des analyses côté API. */
+const stripPeriod = (name: string): string => name.replace(/\s*\([^)]*\)\s*$/, '').trim();
 
 type EcoSession = 'asia' | 'europe' | 'us';
 interface SessionGroup { asia: EcoEvent[]; europe: EcoEvent[]; us: EcoEvent[]; }
@@ -78,6 +82,12 @@ export class EcoCalendarComponent implements OnInit {
   };
 
   constructor() {
+    // Jour passé affiché : ses analyses IA déjà produites (une lecture par jour, sans appel IA),
+    // prêtes au dépliage sans nouvel appel.
+    effect(() => {
+      const date = this.selectedDayGroup()?.date;
+      if (date && date < todayParis()) untracked(() => this.loadPastAnalyses(date));
+    });
     effect(() => {
       if (this.tabInitialized) return;
       const user = this.userStore.user();
@@ -342,10 +352,54 @@ export class EcoCalendarComponent implements OnInit {
 
   // ── Analyse IA d'un résultat publié ───────────────────────────────────────
   // Annonces fortes publiées du jour : chargées et dépliées sans clic (le serveur les génère dès la
-  // publication, une fois par signature d'actifs ; l'appel lit son cache). Le clic replie/déplie.
+  // publication, une fois par signature d'actifs ; l'appel lit son cache). Jour passé : analyses
+  // enregistrées (release-analyses), jamais d'appel IA. Le clic replie/déplie.
   protected readonly openEvents = signal<ReadonlySet<string>>(new Set());
   protected readonly loadingAnalyses = signal<ReadonlySet<string>>(new Set());
+  /** Clé : nom affiché (aujourd'hui) ou « date|nom sans période » (jour passé, cf. analysisKey). */
   private readonly analyses = signal<ReadonlyMap<string, EcoResultAnalysis>>(new Map());
+  private readonly pastDatesLoaded = new Set<string>();
+
+  /** Annonce d'un jour passé : son analyse vient de la base (release-analyses), jamais de l'IA. */
+  private isPast(event: EcoEvent): boolean {
+    const date = this.dateOf(event);
+    return !!date && date < todayParis();
+  }
+
+  /** Date de l'annonce : la vue semaine (`range`) ne la porte pas, c'est celle du jour affiché. */
+  private dateOf(event: EcoEvent): string | undefined {
+    return event.date ?? this.selectedDayGroup()?.date;
+  }
+
+  private analysisKey(event: EcoEvent): string {
+    return this.isPast(event) ? `${this.dateOf(event)}|${stripPeriod(event.name)}` : event.name;
+  }
+
+  private setLoading(name: string, on: boolean): void {
+    this.loadingAnalyses.update((s) => {
+      const n = new Set(s);
+      if (on) n.add(name); else n.delete(name);
+      return n;
+    });
+  }
+
+  private loadPastAnalyses(date: string, done?: () => void): void {
+    if (this.pastDatesLoaded.has(date)) { done?.(); return; }
+    this.pastDatesLoaded.add(date);
+    this.api.getReleaseAnalyses(date)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: res => {
+          this.analyses.update((m) => {
+            const n = new Map(m);
+            for (const [name, analysis] of Object.entries(res?.data ?? {})) n.set(`${date}|${name}`, analysis);
+            return n;
+          });
+          done?.();
+        },
+        error: () => { this.pastDatesLoaded.delete(date); done?.(); },
+      });
+  }
 
   protected isOpen(event: EcoEvent): boolean {
     return this.openEvents().has(event.name);
@@ -363,22 +417,28 @@ export class EcoCalendarComponent implements OnInit {
       return;
     }
     this.openEvents.update((s) => new Set(s).add(name));
+    if (this.analyses().has(this.analysisKey(event))) return; // déjà chargé → aucun appel
+    if (this.isPast(event)) {
+      // Jour passé : analyse enregistrée ou rien (« indisponible »), aucun appel IA.
+      this.setLoading(name, true);
+      this.loadPastAnalyses(this.dateOf(event)!, () => this.setLoading(name, false));
+      return;
+    }
     this.loadAnalysis(name, true);
   }
 
   private loadAnalysis(name: string, userAsked: boolean): void {
     if (this.analyses().has(name) || this.loadingAnalyses().has(name)) return; // déjà chargé ou en cours
-    this.loadingAnalyses.update((s) => new Set(s).add(name));
-    const done = () => this.loadingAnalyses.update((s) => { const n = new Set(s); n.delete(name); return n; });
+    this.setLoading(name, true);
     this.api.analyzeResult(name)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: res => {
           if (res?.data) this.analyses.update((m) => new Map(m).set(name, res.data));
-          done();
+          this.setLoading(name, false);
         },
         error: () => {
-          done();
+          this.setLoading(name, false);
           // Chargement automatique : le panneau dit déjà « indisponible », pas de toast.
           if (userAsked) this.toast.error('Analyse indisponible pour le moment. Réessaie.');
         },
@@ -401,12 +461,12 @@ export class EcoCalendarComponent implements OnInit {
   }
 
   protected analysisFor(event: EcoEvent): EcoResultAnalysis | undefined {
-    return this.analyses().get(event.name);
+    return this.analyses().get(this.analysisKey(event));
   }
 
   /** Écart publié / prévu, calculé côté serveur : « Au-dessus de la prévision »… (aucune direction). */
   protected gapLabel(event: EcoEvent): string {
-    const gap = this.analyses().get(event.name)?.gap;
+    const gap = this.analysisFor(event)?.gap;
     return gap ? ECO_GAP_LABEL[gap] : '';
   }
 

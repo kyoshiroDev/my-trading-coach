@@ -12,6 +12,7 @@ import type { EcoCalendarData, EcoResultAnalysis, FmpEcoEvent } from './eco-cale
 import * as dates from './eco-calendar.dates';
 import { classifyEcoEvent, type EcoImpact } from './eco-calendar.impact';
 import { readUserPins, saveUserPins, sortWithPins, userTopAssets } from './eco-calendar.pins';
+import { assetsSignature, normalizeAssets, pickReleaseAnalyses, stripPeriod, withDisplayNames } from './eco-release-analysis';
 import { fetchWithTimeout } from '../../common/utils/fetch-timeout';
 import { buildBriefing } from './eco-calendar.briefing';
 import { morningFocus } from './eco-calendar.gap';
@@ -40,8 +41,6 @@ function eventStatus(actual: number | null, timePassed: boolean): EcoEventStatus
   return timePassed ? 'past' : 'upcoming';
 }
 
-/** Nom FMP sans suffixe de période : « CPI YoY (Oct) » → « CPI YoY ». */
-const stripPeriod = (n: string) => n.replace(/\s*\([^)]*\)\s*$/, '').trim();
 
 /** Verrou d'une génération d'analyse : couvre largement un appel modèle (délai max ~60 s). */
 const ECO_ANALYSIS_LOCK_S = 90;
@@ -626,9 +625,9 @@ export class EcoCalendarService {
 
   /** Clé de cache d'une analyse : partagée par tous les traders de la même signature. */
   private releasedAnalysisKey(day: string, eventName: string, userAssets: string[]): string {
-    // Même normalisation que `rememberSignature` (trim, majuscules, dédoublonnage, sans vide, tri) :
-    // le clic (actifs bruts) et l'auto (actifs normalisés) tombent sur la même clé.
-    const assetsSig = this.normalizedAssets(userAssets).join(',') || 'none';
+    // `assetsSignature` (trim, majuscules, dédoublonnage, sans vide, tri) : même clé pour le clic
+    // (actifs bruts), l'auto (actifs normalisés) et la ligne EcoReleaseAnalysis (`assetsKey`).
+    const assetsSig = assetsSignature(userAssets);
     // v2 (#920, conformité) : les analyses d'avant portaient un sentiment par actif, jamais relues.
     return `eco:analysis:v2:${day}:${stripPeriod(eventName)}:${assetsSig}`;
   }
@@ -682,6 +681,7 @@ export class EcoCalendarService {
       const analysis = await this.callResultModel(event, userAssets, source, day, count, cap);
       if (analysis) {
         await this.redis.setex(key, CACHE_TTL.ECO_ANALYSIS, JSON.stringify(analysis));
+        await this.storeReleaseAnalysis(day, event.name, userAssets, analysis);
       } else {
         await this.redis.setex(failKey, ECO_ANALYSIS_RETRY_S, '1');
       }
@@ -692,6 +692,27 @@ export class EcoCalendarService {
     } finally {
       await this.redis.del(lockKey).catch(() => undefined);
     }
+  }
+
+  /**
+   * Gardée en base pour les jours suivants (calendrier d'un jour passé, `getReleaseAnalyses`), sans
+   * nouvel appel IA. Clé (jour, nom sans période, signature d'actifs) ; une ligne existante n'est
+   * jamais réécrite.
+   */
+  private async storeReleaseAnalysis(
+    day: string,
+    eventName: string,
+    userAssets: string[],
+    analysis: EcoResultAnalysis,
+  ): Promise<void> {
+    const where = { date: day, eventName: stripPeriod(eventName), assetsKey: assetsSignature(userAssets) };
+    await this.prisma.ecoReleaseAnalysis
+      .upsert({
+        where: { date_eventName_assetsKey: where },
+        update: {},
+        create: { ...where, analysisJson: JSON.stringify(analysis) },
+      })
+      .catch((err: Error) => this.logger.warn(`Eco result analysis not stored: ${err.message}`));
   }
 
   private async callResultModel(
@@ -734,7 +755,7 @@ export class EcoCalendarService {
   private async rememberSignature(day: string, userAssets: string[]): Promise<void> {
     try {
       const k = `eco:sigs:${day}`;
-      await this.redis.sadd(k, JSON.stringify(this.normalizedAssets(userAssets)));
+      await this.redis.sadd(k, JSON.stringify(normalizeAssets(userAssets)));
       await this.redis.expire(k, 3 * 24 * 3600);
     } catch {
       // best-effort : la signature sera servie à sa première lecture
@@ -753,9 +774,27 @@ export class EcoCalendarService {
     }
   }
 
-  private normalizedAssets(userAssets: string[]): string[] {
-    return [...new Set(userAssets.map((a) => a.trim().toUpperCase()).filter(Boolean))].sort();
+
+  /**
+   * Analyses déjà produites pour les annonces publiées d'un jour PASSÉ, par nom d'annonce sans
+   * suffixe de période. Lecture seule, aucun appel IA (donc ouverte au compte démo). Aujourd'hui
+   * et après : vide, l'analyse du jour passe par `analyze-result`.
+   */
+  async getReleaseAnalyses(userId: string, date: string): Promise<Record<string, EcoResultAnalysis>> {
+    if (date >= todayParis()) return {};
+    const [rows, userAssets, events] = await Promise.all([
+      this.prisma.ecoReleaseAnalysis.findMany({
+        where: { date },
+        select: { eventName: true, assetsKey: true, analysisJson: true, createdAt: true },
+      }),
+      this.getUserTopAssets(userId),
+      this.prisma.ecoEvent.findMany({ where: { date }, select: { name: true, nameFr: true } }),
+    ]);
+    // Le calendrier affiche les annonces sous leur libellé français (`nameFr ?? name`) : l'analyse,
+    // rangée sous le nom FMP, est aussi rendue sous ce libellé (sans suffixe de période).
+    return withDisplayNames(pickReleaseAnalyses(rows, userAssets), events);
   }
+
 
   // ── Dates (cf. eco-calendar.dates.ts) ─────────────────────────────────────
 

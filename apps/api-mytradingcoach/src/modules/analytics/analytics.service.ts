@@ -331,7 +331,8 @@ export class AnalyticsService {
     return groups.map((g) => ({
       emotion: g.key,
       winRate: AnalyticsService.winRate(g) as number,
-      avgRR: g.rrCount ? g.rrSum / g.rrCount : 0,
+      // null quand aucun trade de l'émotion n'a de R:R : jamais 0 pour « inconnu ».
+      avgRR: g.rrCount ? g.rrSum / g.rrCount : null,
       count: g.count,
     }));
   }

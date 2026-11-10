@@ -74,6 +74,51 @@ src/
   `showcase/app-prop-firm-funded.webp` (Tradeify 50K funded), dépli « Mes comptes » du compte démo (prod),
   barre latérale repliée, complet jusqu'à « Sources officielles ». Mobile : tuiles sur 2 colonnes, capture
   à 820 px défilable. Nav : menu hamburger jusqu'à 1023 px (les liens ne tiennent pas en tablette).
+- **« L'app en vrai »** (`DemoVideo.astro`, 2026-11-09) : visite filmée de l'app (compte démo, données
+  fictives) sur l'accueil (`accueil.astro` tant que `/` redirige ; à garder dans `index.astro` au retrait)
+  après `<Compatible />`, et sur `/prop-firm` après « Compatible avec » (`<DemoVideo wide />` : 1200 px,
+  marge mobile 20 px), ancre `#visite`. Pas de fond propre à la section (une bande `--bg2` jurait avec la
+  page, retirée à la demande de Greg) et **lecteur nu** : la vidéo seule, bordure neutre 3 px `--b2` avec
+  retrait transparent de 6 px (`.dv-screen` > `.dv-media` qui porte l'aspect-ratio et ses coins),
+  ni cadre de navigateur, ni coque de téléphone, ni halo, ni ombre (Greg, 09/11). Deux vidéos dans `public/demo/` (rien d'autre dans ce dossier) :
+  `visite-app-desktop.mp4` (1920×1200, ~1 min) + `visite-app-desktop-poster.webp`, et `visite-app.mp4`
+  (592×1280 : export 720×1280 recadré `crop=592:1280:64:0` pour ôter les bandes de fond, ~1 min) + `visite-app-poster.webp` ; aperçus = 1re image (tableau de bord). Titre « en un
+  peu plus d'une minute » (63 s ordinateur, 71 s mobile) : à revoir si la durée change. Pause du
+  visiteur respectée : `userPaused` par vidéo (événement `pause` hors pauses du script, posées via
+  `halt()`), le défilement ne relance pas ; remis à zéro à la bascule et au clic lecture.
+  - **Mode** décidé en CSS (`data-mode` sur la section + media query 980 px) : ≥ 980 px, ORDINATEUR par
+    défaut (texte centré au-dessus, vidéo jusqu'à `min(1280px, 100vw - 48px)`, il déborde
+    le `.wrap` exprès : à 1100 px le texte de l'app tombe vers 7 px) et sélecteur « Ordinateur | Mobile »
+    (`<button aria-pressed>`, puces de PropFirmLive, `demo_video_toggle` + `data-ga-place`) ; < 980 px,
+    MOBILE seul (vidéo 360 px), sélecteur masqué. Choix non mémorisé. Hauteurs réservées par
+    `aspect-ratio` 1920/1200 et 592/1280.
+  - **Chargement** (LCP intact) : `<video preload="none">` sans `src`, source en `data-src`. Le script pose
+    la source de la SEULE vidéo affichée quand la section approche (IntersectionObserver 200 px) ; l'autre
+    seulement à la bascule. ≥ 980 px sans `prefers-reduced-motion` : lecture auto muette en boucle, pause
+    hors écran (seuil 25 %), à la bascule l'ancienne est mise en pause et remise à 0. < 980 px ou animations
+    réduites : aperçu + bouton lecture (`demo_video_play`), chargement au clic. `play()` refusé → bouton.
+    Dès la lecture, barre de lecture native (`controls`) : avancer, reculer, pause. Aperçus en
+    `<img loading="lazy">` (pas d'attribut `poster`, qui se télécharge dès le chargement).
+  - **Encodage** (exports « -landing » : AUCUNE incrustation, la légende de la section porte la mention) :
+    `ffmpeg -i <source> -an -c:v libx264 -preset veryslow -profile:v high -pix_fmt yuv420p -r 24 -crf 28
+    -movflags +faststart -vf scale=1920:1200 visite-app-desktop.mp4` (720:1280 pour `visite-app.mp4`) ;
+    aperçus `ffmpeg -ss 0.5 -i <source> -frames:v 1 -c:v libwebp -quality 78 <nom>-poster.webp`. Budget :
+    < 4 Mo ordinateur, < 3 Mo mobile.
+  - **Refaire les captures** (scripts hors dépôt : `~/Bureau/videos-instagram/_scripts-visite-13/`) :
+    1. Banc local (mémoire « captures banc local ») : base dédiée, API compilée sur 3001 et app sur 4200
+       depuis un worktree à jour, `pnpm run seed:demo` SANS `FMP_API_KEY` (faux vendredi NFP + analyse).
+       Enregistrer en semaine, marché ouvert (00:40–23:00 Paris) : la séance du jour est vivante.
+    2. `all.sh` : `take.sh desktop|mobile` (re-seed puis `tour13.mjs` : ordinateur 1440×900 DPR 2,
+       mobile 390×844 DPR 2), `build13.sh` (titres de `labels2.mjs`, `post3.py` : exports
+       `13-visite-complete-<format>-{landing,titre}.mp4`, ordinateur ramené à 1920×1200), encodage ci-dessus,
+       planches-contact une image / 2 s (`sheet.py`).
+    3. Parcours : tableau de bord, pré-session, séance en direct, débrief du jour, journal (semaine
+       précédente dépliée sur ordinateur), historique (mois précédent), Mes comptes, Statistiques sur le
+       compte Apex en évaluation, débrief hebdo, calendrier (filtre « Fort », vendredi précédent, analyse
+       NFP dépliée), profil. Masques de `lib-rec2.mjs` : uniquement le hors-sujet (badge interne, bandeau
+       démo, noms de comptes dans la barre, boutons flottants) ; jamais une carte du produit.
+    4. Contrôle sur la planche : aucune case vide, aucun grand vide en bas (sauf pré-session et séance en
+       direct, hauteur réelle de leur contenu), aucun « - » en colonne IA, aucun « marché fermé ».
 - **Structure de la home après l'audit du 2026-10-06** : Hero prop firm (+ ligne de confiance
   factuelle `.hero-trust`, ordonnée après les CTA en mobile), « Ta prop firm, en direct », timeline
   d'un prop trader (trade qui arrive seul, marge en direct, anti-tilt), **6 cartes** fonctionnalités

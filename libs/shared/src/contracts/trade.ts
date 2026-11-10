@@ -45,6 +45,16 @@ export interface Trade {
   createdAt: string;
 }
 
+/**
+ * Corps de PATCH /trades/:id/stop : saisie rapide du stop initial (et de l'objectif) depuis le
+ * Journal, typiquement sur un trade synchronisé : la synchronisation ne récupère pas le stop.
+ * `takeProfit` absent = inchangé ; `null` = retiré. Implémenté côté API par `SetTradeStopDto`.
+ */
+export interface SetTradeStopRequest {
+  stopLoss: number;
+  takeProfit?: number | null;
+}
+
 /** Corps de POST /trades. Implémenté côté API par `CreateTradeDto` (class-validator). */
 export interface CreateTradeRequest {
   asset: string;

@@ -12,6 +12,7 @@ export * from './pricing';
 export * from './plan-benefits';
 export * from './signup-pitch';
 export * from './trade-stats';
+export * from './trade-risk';
 export * from './max-drawdown';
 export * from './contracts';
 export * from './eco-event-key';

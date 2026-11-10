@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { evaluateObjectiveCheck, toParisHHMM } from './objective-check.util';
+import { evaluateObjectiveCheck, minRrFailureLabel, toParisHHMM } from './objective-check.util';
 import { SessionTrade } from '../../core/api/session.api';
 
 const trade = (over: Partial<SessionTrade> = {}): SessionTrade => ({
@@ -53,6 +53,11 @@ describe('evaluateObjectiveCheck', () => {
     ).toBe(true); // moyenne 1.5
     expect(evaluateObjectiveCheck({ type: 'min_rr', params: { value: 2 } }, [trade({ riskReward: 1 })], 0)).toBe(false);
     expect(evaluateObjectiveCheck({ type: 'min_rr', params: { value: 1 } }, [trade({ riskReward: null })], 0)).toBe(false);
+  });
+
+  it('min_rr, libellé d’échec : moyenne des R:R connus, « inconnu » sans aucun R:R (jamais 0.0)', () => {
+    expect(minRrFailureLabel([{ riskReward: 1 }, { riskReward: null }], 2)).toBe('R:R 1.0 < 2');
+    expect(minRrFailureLabel([{ riskReward: null }, { riskReward: null }], 1.5)).toBe('R:R inconnu (stop ou objectif non renseigné)');
   });
 
   it('journal_filled', () => {

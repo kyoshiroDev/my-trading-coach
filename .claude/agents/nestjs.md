@@ -105,6 +105,13 @@ POST   /api/session/trades/:id/close   JWT → clôturer un trade (exitPrice →
 
 GET    /api/eco-calendar/today         PREMIUM → events du jour + analyse IA (cache Redis 1h)
 POST   /api/eco-calendar/analyze-result PREMIUM → analyse d'un résultat tombé en temps réel
+GET    /api/eco-calendar/release-analyses?date=YYYY-MM-DD JWT → analyses déjà produites d'un jour PASSÉ
+       (EcoReleaseAnalysis, aucun appel IA, donc ouverte à la démo ; vide pour aujourd'hui et après) ;
+       renvoyées sous le nom FMP ET sous le libellé affiché (`nameFr`), sans suffixe de période.
+       Signature d'actifs de l'utilisateur d'abord, sinon la plus récente. Rendu = `{ interpretation, gap }`
+       (#920) ; une ligne à l'ancien format (sentiments par actif) est lue sans ses sentiments, jamais réécrite.
+       Écrites au clic ET par la génération automatique (`ensureReleasedAnalysis`, même `assetsSignature`
+       dédoublonnée que la clé Redis).
 
 POST   /api/ai/insights                PREMIUM → cooldown 4h par user
 POST   /api/ai/chat                    PREMIUM → 50 messages/jour par user
@@ -182,7 +189,20 @@ POST   /api/test/upgrade-user          NODE_ENV=test uniquement
   profit factor, série, par setup/émotion/heure, courbe, calendrier, top actifs ; session ; débrief ;
   récap et agents IA). Seule exception assumée : la note d'exécution (`execution-grade.util`).
   `AnalyticsService` passe par son helper local `net(t)`. `SetupStat.avgRR` vaut `null` (pas 0)
-  quand aucun trade du setup n'a de R:R.
+  quand aucun trade du setup n'a de R:R ; idem `EmotionStat.avgRR` et le « R/R moyen » du PDF de
+  débrief (`averageKnownRiskReward` de `@mtc/shared` : moyenne des R/R CONNUS, `null` sinon).
+- **R/R inconnu ≠ 0 (#916)** : la synchro broker n'écrit jamais `stopLoss` / `takeProfit` /
+  `riskReward` (elle ne les lit pas : le rapport Orders porte le Stop Price mais sans lien vers le trade, cf. `docs/tradovate-api-capabilities.md` §11). Un R/R
+  absent reste `null` partout (API, PDF, IA). Le trader saisit son stop initial par
+  **`PATCH /trades/:id/stop`** (`SetTradeStopDto` : `stopLoss`, `takeProfit` facultatif, `null` =
+  retiré) : `TradesService.setStop` refuse un stop ou un objectif du mauvais côté de l'entrée (400,
+  message de `stopPlacementError`, `@mtc/shared`) puis passe par `update` → R/R par
+  `calculateRiskReward` (= `plannedRiskReward` partagé avec l'aperçu du front), note « avec stop »
+  (STOP_BASED) et recalcul comportemental du compte. `update` recalcule le R/R dès que `stopLoss`,
+  `takeProfit`, `side` ou un prix change (avant : seulement sur un prix) et l'efface (`null`) s'il
+  devient incalculable, sauf R/R fourni par le client. Une resynchronisation n'écrase rien :
+  l'import broker n'insère que des trades nouveaux (dédoublonnage), il ne met jamais à jour un trade
+  existant (`trade-stop.int-spec.ts`).
 - **Borne haute des périodes analytics** : un `to` date seule (`2026-09-14`) couvre la journée
   entière (`AnalyticsController.endBound`) ; lu tel quel il valait minuit et excluait les trades du jour.
 - **Setup des trades importés = « Sans setup »** (PROMPT-213) : la synchro broker, l'import CSV sans
@@ -854,14 +874,19 @@ Filets posés par `DemoSeedCron` (`modules/admin/demo-seed.cron.ts`) :
 - **Session live TOUJOURS présente** (vitrine, 2026-10-18 : « si le visiteur ne voit pas le live,
   c'est pas bon ») : le seed crée à chaque run une session ACTIVE du jour sur Apex, avec une
   position saisie à la main **encore ouverte** (`DemoDay.openTrade`, MNQ, SL + TP, R/R 1 : 2, hors
-  stats) rattachée à la session. Trades du jour aux heures de marché (`demoTodaySlot`) : 09:45–16:15
-  Londres (09:22 / 09:38), après New York (15:38 / 15:57), position ouverte 4 min après. Week-end et
-  avant 09:45 : **aucun trade du jour** (garde-fou `assertDemoCalendar` inchangé, il couvre aussi
-  `openTrade`), session ouverte il y a 30 min et position datée de la dernière séance à 21:40 (le
-  front affiche « Marché fermé » le week-end CME). `isStale` re-seede si aucune session n'est active
-  pour la journée de trading en cours (`activeSessionWhere` : après la bascule de minuit, au
-  week-end) ou si un créneau s'est ouvert depuis le dernier seed ; le dernier trade CLÔTURÉ attendu
-  est celui de la séance précédente avant 09:45 (avant : re-seed à chaque connexion matinale).
+  stats) rattachée à la session. **Séance vivante à l'heure de la visite** (2026-11-09,
+  `demoTodaySlot`) : en semaine de 00:40 à 23:00 (Paris, heures CME), 3 ou 4 trades du jour AVANT
+  `now` (Breakout gagnant, Reversal perdant, Scalping gagnant, Pullback gagnant : meilleur trade ET
+  trade à revoir au débrief), espacés de 30 min (resserrés juste après minuit), puis la position
+  ouverte **6 min avant `now`**. `isStale` re-seede à la connexion démo quand cette position a plus
+  de **45 min** (`OPEN_TRADE_MAX_AGE_MS`) : au plus un re-seed toutes les 45 min, les autres
+  visiteurs gardent des données stables entre-temps. Hors créneau : coupure de 23:00 (la journée CME
+  suivante commence) → aucun trade du jour, position ouverte à 22:50 ; avant 00:40 → position de la
+  dernière séance à 21:40. Week-end (inchangé, décision de Greg en attente) : **aucun trade du jour**
+  (garde-fou `assertDemoCalendar`, il couvre aussi `openTrade`), session ouverte il y a 30 min et
+  position datée du vendredi 21:40 (le front affiche « Marché fermé » le week-end CME). `isStale`
+  re-seede aussi si aucune session n'est active pour la journée de trading en cours
+  (`activeSessionWhere`) ou si le dernier trade CLÔTURÉ est antérieur à la séance attendue.
 - **Trade encore ouvert gardé après minuit** : `getTodayTrades` = trades du jour **ou** trade sans
   P&L rattaché à la session active (`sessionId`, `pnl: null`). Vaut pour tous les comptes (position
   ouverte à 23:50) et sert la position de la vitrine.

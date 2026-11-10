@@ -338,7 +338,8 @@ export function buildCoachInsights(
   if (s.streak >= 3) out.push({ tone: 'good', text: `Série de ${s.streak} trades gagnants : garde ta taille, ne force pas le suivant.` });
   else if (s.streak <= -3) out.push({ tone: 'bad', text: `Série de ${Math.abs(s.streak)} pertes d'affilée. Coupe et fais une pause.` });
 
-  const emos = byEmotion.filter((e) => e.count > 0);
+  // Émotions sans R:R connu (avgRR null) écartées : un « 0R » n'est pas une mesure.
+  const emos = byEmotion.filter((e): e is EmotionStat & { avgRR: number } => e.count > 0 && e.avgRR != null);
   if (emos.length) {
     const best = emos.reduce((a, b) => ((b.avgRR ?? 0) > (a.avgRR ?? 0) ? b : a));
     const worst = emos.reduce((a, b) => ((b.avgRR ?? 0) < (a.avgRR ?? 0) ? b : a));

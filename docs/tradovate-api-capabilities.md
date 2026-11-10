@@ -653,6 +653,29 @@ de l'API**, pas un bug à corriger. Pour `BROKER_SYNC`, la reconstitution est po
 `Order.parentId` + `Order.ocoId` + `OrderVersion`, mais reste **non validée sur données réelles**
 faute de bracket existant — et ne servirait aucun utilisateur connu aujourd'hui.
 
+### Mesure du 2026-11-09 : des brackets existent (compte Lucid du fondateur, #916)
+
+Rapport `Orders` exporté à la main depuis l'interface Tradovate (même rapport, mêmes 32 colonnes),
+séance du 9/11 seulement. Deux trades, **deux brackets posés depuis TradingView** (`Text` =
+`Tradingview`) : entrée limite + stop + limite de sortie créés **à la même seconde**, numéros
+d'ordre consécutifs, même compte, même contrat, côté opposé, quantité 1. Un seul candidat par trade.
+
+| Trade | Entrée | Stop (version) | Objectif (version) | R/R sur l'objectif final |
+|---|---|---|---|---|
+| MGC long | 4134.6 | 4109.4, version = seconde de l'entrée, **exécuté** | 4212.8, **modifié 40 min après** | 3.10 |
+| MNQ long | 27092.25 | 26862.50, version = seconde de l'entrée, annulé | 28138.25, **modifié 6 h après** | 4.55 |
+
+- **`Timestamp` = heure de la DERNIÈRE VERSION de l'ordre** (`Version ID` = `lastCommandId`), pas son
+  exécution : le stop MGC exécuté à 08:16 affiche 06:19:57. Un stop dont la version tombe à la seconde
+  de l'entrée n'a pas bougé : c'est le **stop initial**.
+- **L'objectif initial, lui, est perdu** dès qu'il a été déplacé : le rapport ne garde que le dernier
+  prix. Un R/R calculé dessus est celui de l'objectif final, pas le R/R prévu.
+- Un bracket jamais déclenché (entrée annulée) reste dans le rapport : il ne correspond à aucun trade.
+- Heures du fichier exporté depuis l'interface = fuseau de l'interface (ici Paris), pas UTC.
+
+Le tableau « personne ne pose de bracket » ci-dessus reste vrai pour ces deux traders, pas en général.
+L'inférence a posteriori reste **non codée** tant que le fondateur ne l'a pas validée.
+
 ## 12. `account.userId` n'est pas le trader
 
 Piège coûteux, mesuré le 2026-09-27. L'entité compte porte un `userId` qu'il est tentant de prendre

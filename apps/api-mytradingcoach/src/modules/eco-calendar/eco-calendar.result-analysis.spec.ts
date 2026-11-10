@@ -59,6 +59,7 @@ describe('EcoCalendarService · analyse des résultats publiés', () => {
   let redis: ReturnType<typeof inMemoryRedis>;
   let ai: { analyzeEcoResult: ReturnType<typeof vi.fn> };
   let service: EcoCalendarService;
+  let releaseUpsert: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
     // Horloge figée (Date seule : les attentes de verrou gardent de vrais délais courts).
@@ -67,8 +68,9 @@ describe('EcoCalendarService · analyse des résultats publiés', () => {
     vi.stubEnv('NODE_ENV', 'production');
     redis = inMemoryRedis();
     ai = { analyzeEcoResult: vi.fn(async () => analysis) };
+    releaseUpsert = vi.fn(async () => ({}));
     service = new EcoCalendarService(
-      {} as PrismaService,
+      { ecoReleaseAnalysis: { upsert: releaseUpsert } } as unknown as PrismaService,
       ai as unknown as AiService,
       { client: redis } as unknown as RedisService,
       {} as AnthropicClientService,
@@ -116,6 +118,12 @@ describe('EcoCalendarService · analyse des résultats publiés', () => {
     expect(await service.autoAnalyzeReleased(DAY, [nfp])).toBe(1);
     await service.ensureReleasedAnalysis(DAY, nfp, ['NQ', 'ES'], 'clic');
     expect(ai.analyzeEcoResult).toHaveBeenCalledTimes(1);
+    // Gardée en base (EcoReleaseAnalysis, #921) pour le calendrier des jours passés, même clé d'actifs.
+    expect(releaseUpsert).toHaveBeenCalledTimes(1);
+    expect(releaseUpsert).toHaveBeenCalledWith(expect.objectContaining({
+      where: { date_eventName_assetsKey: { date: DAY, eventName: 'Non Farm Payrolls', assetsKey: 'ES,NQ' } },
+      update: {},
+    }));
   });
 
   it("échec du modèle : repli null, pas de relance pendant 10 min, nouvel essai ensuite", async () => {

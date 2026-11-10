@@ -2,12 +2,14 @@ import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../infra/redis.service';
 import { DEMO_EMAIL, seedDemo, DemoSeedResult } from './demo-seed';
-import { dayAt, demoTodaySlot } from './demo-data/generate';
+import { demoTodaySlot } from './demo-data/generate';
 import { activeSessionWhere } from '../session/active-session';
 
 /** Un seul re-seed à la fois dans tout le cluster (connexions démo simultanées, cron, boot). */
 export const DEMO_RESEED_LOCK = 'demo:reseed-lock';
 const LOCK_TTL_S = 120;
+/** Âge maximal de la position ouverte de la vitrine avant re-seed (marché ouvert, en semaine). */
+export const OPEN_TRADE_MAX_AGE_MS = 45 * 60_000;
 
 @Injectable()
 export class DemoSeedService {
@@ -43,13 +45,18 @@ export class DemoSeedService {
       select: { tradedAt: true },
     });
     if (!last) return true;
-    // Une séance du jour s'est ouverte depuis le dernier seed (ex. seed de 03:20, visite à 11:00) :
-    // re-seed pour la montrer, aux heures de marché.
+    // En semaine, marché ouvert : la position ouverte de la vitrine a « quelques minutes ». Plus de
+    // 45 min (ou aucune) → re-seed à la connexion démo, recalé sur l'heure de la visite. Au plus un
+    // re-seed toutes les 45 min : les autres visiteurs connectés gardent des données stables.
     const slot = demoTodaySlot(now);
     const weekday = now.getDay() !== 0 && now.getDay() !== 6;
     if (weekday && slot) {
-      const [h, m] = slot.trades[slot.trades.length - 1];
-      if (last.tradedAt < dayAt(now, 0, h, m)) return true;
+      const open = await this.prisma.trade.findFirst({
+        where: { userId: user.id, pnl: null },
+        orderBy: { tradedAt: 'desc' },
+        select: { tradedAt: true },
+      });
+      if (!open || now.getTime() - open.tradedAt.getTime() > OPEN_TRADE_MAX_AGE_MS) return true;
     }
     // Dernière séance attendue : aujourd'hui une fois ouverte, sinon la séance précédente (veille
     // avant 09:45, vendredi le week-end). Avant : avant 09:45 la démo était jugée périmée à

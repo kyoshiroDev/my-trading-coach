@@ -5,6 +5,7 @@ import { of } from 'rxjs';
 import { EcoCalendarComponent } from './eco-calendar.component';
 import { EcoCalendarApi } from '../../core/api/eco-calendar.api';
 import { UserStore } from '../../core/stores/user.store';
+import { todayParis } from '@mtc/shared';
 import type { EcoEvent } from '@mtc/shared';
 
 function ev(partial: Partial<EcoEvent>): EcoEvent {
@@ -19,6 +20,8 @@ interface SetupOpts {
   events?: EcoEvent[];
   user?: { tradingSessions?: string[]; isDemo?: boolean } | null;
   analysis?: { interpretation: string; gap: 'above' | 'inline' | 'below' | 'no_consensus' | null };
+  /** Analyses enregistrées d'un jour passé (release-analyses), par nom sans suffixe de période. */
+  past?: Record<string, { interpretation: string; gap?: 'above' | 'inline' | 'below' | 'no_consensus' | null; assetSentiments?: unknown[] }>;
 }
 
 function setup(opts: SetupOpts = {}) {
@@ -29,6 +32,7 @@ function setup(opts: SetupOpts = {}) {
     getEventsRange: vi.fn(() => of({ data: [day] })),
     savePins: vi.fn(() => of({ data: [] })),
     analyzeResult: vi.fn(() => of({ data: opts.analysis ?? { interpretation: 'interp', gap: 'inline' } })),
+    getReleaseAnalyses: vi.fn(() => of({ data: opts.past ?? {} })),
   };
   const userStore = {
     user: signal(opts.user ?? null),
@@ -125,7 +129,7 @@ describe('EcoCalendarComponent', () => {
   describe('toggleAnalysis — lazy + cache', () => {
     it('un seul appel réseau, déplie/replie, re-ouverture sans nouvel appel', () => {
       const { cmp, api } = setup({ analysis: { interpretation: 'IPP conforme', gap: 'inline' } });
-      const target = ev({ name: 'IPP', impact: 'high', isReleased: true, currency: 'USD' });
+      const target = ev({ name: 'IPP', impact: 'high', isReleased: true, currency: 'USD', date: todayParis() });
 
       cmp.toggleAnalysis(target);                        // 1er dépliage → 1 appel
       expect(api.analyzeResult).toHaveBeenCalledTimes(1);
@@ -142,7 +146,7 @@ describe('EcoCalendarComponent', () => {
 
     it("écart calculé côté serveur affiché en clair, sans direction (#920)", () => {
       const { cmp } = setup({ analysis: { interpretation: 'x', gap: 'above' } });
-      const target = ev({ name: 'BCE', impact: 'high', isReleased: true, currency: 'EUR' });
+      const target = ev({ name: 'BCE', impact: 'high', isReleased: true, currency: 'EUR', date: todayParis() });
       expect(cmp.gapLabel(target)).toBe('');              // avant chargement
       cmp.toggleAnalysis(target);
       expect(cmp.gapLabel(target)).toBe('Au-dessus de la prévision');
@@ -163,6 +167,41 @@ describe('EcoCalendarComponent', () => {
       } finally {
         vi.useRealTimers();
       }
+    });
+  });
+
+  describe('jour passé — analyse enregistrée, jamais d’appel IA', () => {
+    it('relit release-analyses une fois par jour, par nom sans suffixe de période', () => {
+      const { cmp, api } = setup({ past: { 'Nonfarm Payrolls': { interpretation: 'NFP au-dessus', assetSentiments: [{ asset: 'USD', sentiment: 'bull', shortReason: 'r' }] } } });
+      const nfp = ev({ name: 'Nonfarm Payrolls (Oct)', impact: 'high', isReleased: true, currency: 'USD', date: '2026-06-11' });
+      cmp.toggleAnalysis(nfp);
+      expect(api.analyzeResult).not.toHaveBeenCalled();
+      expect(api.getReleaseAnalyses).toHaveBeenCalledWith('2026-06-11');
+      expect(cmp.analysisFor(nfp)?.interpretation).toBe('NFP au-dessus');
+      // Ligne enregistrée à l'ancien format (sentiments, sans écart) : interprétation lue, sentiments
+      // ignorés, aucun écart affiché (#920, lecture tolérante).
+      expect(cmp.gapLabel(nfp)).toBe('');
+      const calls = api.getReleaseAnalyses.mock.calls.length;
+      cmp.toggleAnalysis(nfp); cmp.toggleAnalysis(nfp);
+      expect(api.getReleaseAnalyses).toHaveBeenCalledTimes(calls);
+    });
+
+    it('vue semaine (annonce sans date) : la date est celle du jour affiché', () => {
+      const nfp = ev({ name: 'Nonfarm Payrolls', impact: 'high', isReleased: true, date: undefined });
+      const { cmp, api } = setup({ events: [nfp], past: { 'Nonfarm Payrolls': { interpretation: 'NFP', assetSentiments: [] } } });
+      cmp.toggleAnalysis(nfp);
+      expect(api.analyzeResult).not.toHaveBeenCalled();
+      expect(api.getReleaseAnalyses).toHaveBeenCalledWith('2026-06-11');
+      expect(cmp.analysisFor(nfp)?.interpretation).toBe('NFP');
+    });
+
+    it('aucune analyse enregistrée → rien (pas d’appel IA, pas de chargement sans fin)', () => {
+      const { cmp, api } = setup();
+      const old = ev({ name: 'CPI', impact: 'high', isReleased: true, date: '2026-06-11' });
+      cmp.toggleAnalysis(old);
+      expect(api.analyzeResult).not.toHaveBeenCalled();
+      expect(cmp.analysisFor(old)).toBeUndefined();
+      expect(cmp.isLoadingAnalysis(old)).toBe(false);
     });
   });
 

@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -25,12 +26,14 @@ import { ACTIVE_SESSION_SELECT, createImportBatch, type ImportBatch } from './im
 import { activeSessionWhere } from '../session/active-session';
 import { CreateTradeDto } from './dto/create-trade.dto';
 import { UpdateTradeDto } from './dto/update-trade.dto';
+import type { SetTradeStopDto } from './dto/set-trade-stop.dto';
 import { TradeFiltersDto } from './dto/trade-filters.dto';
 import { buildTradeWhere } from './trade-filters.util';
 import { calculatePnl, calculateRiskReward } from './trade-metrics.util';
 import { dedupeKey, duplicateIdentity, occurrenceHash } from './trade-identity.util';
 import { journalStatsForFilters, type JournalStats } from './journal-stats.util';
 import { recomputeBehavioralGrades } from './behavioral-grades';
+import { stopPlacementError } from '@mtc/shared';
 import { AccountIncidentsService } from '../accounts/incidents/account-incidents.service';
 
 // Réexports : les appelants existants importent ces types depuis le service.
@@ -400,7 +403,19 @@ export class TradesService {
       dto.pnl !== undefined;
 
     const newPnl = priceFieldsChanged ? calculatePnl(merged) : undefined;
-    const newRR = priceFieldsChanged ? calculateRiskReward(merged) : undefined;
+    // R/R recalculé dès qu'un de SES champs change : avant, ajouter ou retirer un stop sans toucher
+    // aux prix laissait le R/R d'avant (absent ou périmé). Un R/R fourni par le client prime, comme
+    // à la création ; sinon un R/R devenu incalculable s'efface (null), il ne reste pas figé.
+    const rrFieldsChanged =
+      priceFieldsChanged ||
+      dto.stopLoss !== undefined ||
+      dto.takeProfit !== undefined ||
+      dto.side !== undefined;
+    const computedRR = rrFieldsChanged ? calculateRiskReward(merged) : undefined;
+    const newRR: number | null | undefined =
+      computedRR !== undefined ? computedRR
+      : rrFieldsChanged && dto.riskReward === undefined ? null
+      : undefined;
 
     // Recalcul de la note d'exécution si un champ concerné change.
     const execRelevant =
@@ -430,7 +445,7 @@ export class TradesService {
           : null;
         const a = await this.computeExecution(existing.accountId ?? undefined, {
           ...merged,
-          riskReward: newRR ?? merged.riskReward,
+          riskReward: newRR === undefined ? merged.riskReward : newRR,
           tradeSession: { moodStart },
         });
         execData = {
@@ -475,6 +490,25 @@ export class TradesService {
     // APRES le bloc d'execution : `result` y est reecrit, un calcul place avant
     // renverrait un objet construit sur des champs perimes.
     return { ...result, effectiveEmotion: effectiveEmotion(result) };
+  }
+
+  /**
+   * Saisie rapide du stop initial (et de l'objectif) depuis le Journal, typiquement sur un trade
+   * synchronisé : la synchronisation ne récupère pas le stop. Refuse un stop (ou un objectif) du mauvais
+   * côté de l'entrée, puis passe par `update` : R/R par la même règle que la saisie manuelle
+   * (`calculateRiskReward`), note d'exécution « avec stop » et recalcul comportemental du compte.
+   * Une resynchronisation n'écrase rien : l'import broker ne fait qu'insérer (dédoublonnage), il ne
+   * met jamais à jour un trade existant.
+   */
+  async setStop(userId: string, id: string, dto: SetTradeStopDto) {
+    const existing = await this.findOne(userId, id);
+    const takeProfit = dto.takeProfit === undefined ? existing.takeProfit : dto.takeProfit;
+    const error = stopPlacementError(existing.side, existing.entry, dto.stopLoss, takeProfit);
+    if (error) throw new BadRequestException(error);
+    // `takeProfit: null` doit atteindre Prisma pour RETIRER l'objectif (UpdateTradeDto ne type pas null).
+    const patch: Omit<UpdateTradeDto, 'takeProfit'> & { takeProfit?: number | null } = { stopLoss: dto.stopLoss };
+    if (dto.takeProfit !== undefined) patch.takeProfit = dto.takeProfit;
+    return this.update(userId, id, patch as UpdateTradeDto);
   }
 
   async remove(userId: string, id: string) {

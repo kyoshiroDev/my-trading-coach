@@ -179,6 +179,10 @@ la maquette design (« The Terminal »).
     place (la démo montre sa session live même le week-end). Sur `EcoSocketService.newReleases$`,
     la ligne passe à « publiée » : chiffre publié / prévu / précédent, 1re phrase de l'analyse IA
     (`analyze-result`), reste dépliable ; retour à la suivante sur « J'ai lu » ou après 15 min.
+- **Calendrier éco, jour passé (2026-11-09)** : `eco-calendar.component.ts` relit les analyses
+  enregistrées du jour affiché (`getReleaseAnalyses`, une lecture par jour, au choix du jour) et
+  n'appelle JAMAIS `analyze-result` pour un jour passé. Les annonces de la vue semaine (`range`)
+  n'ont pas de `date` : c'est celle du jour sélectionné. Clé du cache : `date|nom sans suffixe`.
     Mêmes appels que l'ancien calendrier live (`refreshAnalysis` → `ecoCalendarRefreshed`, puis une
     analyse par annonce) : **aucun appel IA de plus**.
   - **Trade en cours** (`live-position`) : une position (broker si rôle `LIVE_POSITION_ROLES` et
@@ -201,7 +205,8 @@ la maquette design (« The Terminal »).
   compte pour lancer la session » ne s'affiche que si AUCUNE séance n'est active, que l'utilisateur a
   des comptes et que l'en-tête est sur « Tous les comptes ». Séance active : la liste montre le compte
   de la séance (désactivée), quel que soit le choix de l'en-tête. La démo a toujours une séance
-  active après le seed (même le week-end ou avant 09:45 ; le `demo-login` reseede une démo périmée).
+  active après le seed (même le week-end ; en semaine elle est calée sur l'heure de la visite, le
+  `demo-login` reseede une démo périmée ou dont la position ouverte a plus de 45 min).
 - **Colonne suivi prop firm** : compte de la session **éval ou funded synchronisé Tradovate**
   (`isLivePropAccount`, `live-prop-firm.util.ts`). `SessionLiveComponent` charge lui-même
   `TradovateStore` s'il ne l'est pas (sinon bloc masqué en ouverture directe / après F5, #437).
@@ -481,6 +486,23 @@ envoyées à l'API sont des horodatages ISO complets.
 ```
 
 ---
+
+## R/R inconnu et saisie du stop initial (Journal, #916)
+
+- Un R/R `null` ou absent s'affiche **« — »**, jamais « 0 » (un 0 se lit comme un R/R mesuré nul) :
+  Journal (info-bulle « Stop loss ou take profit non renseigné. Ajoute ton stop initial pour calculer
+  le R/R. »), trades récents, Analytics par setup, conseils du tableau de bord (émotions sans R/R
+  écartées), objectif « R:R minimum » de la session (`minRrFailureLabel`). Moyennes : R/R connus
+  seulement (`averageKnownRiskReward`). Templates : `!== null && !== undefined` (lint eqeqeq).
+- Ligne du Journal sans R/R : bouton cible « Ajouter le stop initial » (`data-testid="trade-add-stop"`,
+  colonne actions passée à 88 px, Exécution 1.15fr / Setup 0.95fr pour garder l'en-tête sur une ligne à
+  1440 px) → `mtc-trade-stop-dialog` (stop obligatoire, objectif facultatif,
+  virgule acceptée). Aperçu en direct du risque (`stopRiskAmount` avec `tickValue`/`tickSize` de
+  `GET /instruments`, en points si l'instrument n'a pas de valeur du point) et du R/R
+  (`plannedRiskReward`), refus du mauvais côté (`stopPlacementError`) : mêmes fonctions que l'API
+  (`@mtc/shared`), qui revérifie. Proposé sur tout trade sans R/R (synchronisé, importé ou manuel).
+- Test d'un composant à `templateUrl` + `input()` sous vitest (JIT) : template lu par `readFileSync`
+  + `overrideComponent`, et signal posé directement sur l'instance (`trade-stop-dialog.component.spec.ts`).
 
 ## Tableau de lignes — pattern partagé (Journal · Mes comptes)
 
