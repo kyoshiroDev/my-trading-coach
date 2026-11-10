@@ -1,0 +1,417 @@
+---
+// « L'app en vrai » : visite filmée de l'app (compte de démonstration), en deux versions.
+// - Écran ≥ 980 px : version ORDINATEUR par défaut (vidéo ordinateur seule, jusqu'à 1280 px de large)
+//   et sélecteur « Ordinateur | Mobile ». Le choix n'est pas mémorisé.
+// - Écran < 980 px : version MOBILE seule (vidéo mobile seule), sélecteur masqué.
+// Le mode affiché est décidé en CSS (media query + data-mode) : aucun décalage au chargement du
+// script. Les vidéos n'ont pas de src dans le HTML (data-src, preload="none") : le script pose la
+// source de la SEULE vidéo affichée quand la section approche, l'autre seulement à la bascule.
+// Fichiers, encodage et procédure pour refaire les captures : astro.md, « L'app en vrai ».
+import { PREMIUM_SIGNUP_TRIAL_DAYS } from '@mtc/shared';
+import { APP_URL } from '../config';
+
+interface Props {
+  /** /prop-firm : contenu à 1200 px et marge mobile de 20 px, comme le reste de la page (accueil : 1100 / 16). */
+  wide?: boolean;
+}
+const { wide = false } = Astro.props;
+
+const points = [
+  { when: 'Avant', text: 'ta pré-session, ton plan et les annonces du jour.' },
+  { when: 'Pendant', text: 'ta séance en direct et le suivi de ton compte.' },
+  { when: 'Après', text: 'ton débrief, ton journal et tes statistiques.' },
+];
+---
+
+<section class:list={['dv', { 'dv-wide': wide }]} id="visite" data-dv data-mode="desktop" aria-labelledby="dv-title">
+  <div class="dv-in">
+    <div class="dv-text reveal">
+      <span class="sec-label">L'app en vrai</span>
+      <h2 id="dv-title">Fais le tour de l’app <em>en un peu plus d’une minute.</em></h2>
+      <p class="sec-sub">
+        Tableau de bord, séance du jour, journal, statistiques, débrief&nbsp;: la vraie app, filmée
+        sur le compte de démonstration.
+      </p>
+      <ul class="dv-points">
+        {points.map((p) => (
+          <li>
+            <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
+              <path d="M3.5 8.5l3 3 6-7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            <span><strong>{p.when}&nbsp;:</strong> {p.text}</span>
+          </li>
+        ))}
+      </ul>
+      <div class="dv-cta">
+        <a href={`${APP_URL}/register`} class="btn-p" data-ga-event="cta_signup" data-ga-place="visite">Commencer gratuitement</a>
+        <p>Gratuit, sans CB · {PREMIUM_SIGNUP_TRIAL_DAYS} jours de Premium offerts à l'inscription</p>
+      </div>
+      {/* Sélecteur : ≥ 980 px seulement (CSS). Mêmes puces que PropFirmLive. */}
+      <div class="dv-switch" role="group" aria-label="Version de la visite">
+        <button type="button" class="on" aria-pressed="true" data-dv-mode="desktop" data-ga-event="demo_video_toggle" data-ga-place="desktop">
+          <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
+            <rect x="1.5" y="2.5" width="13" height="8.5" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.4" />
+            <path d="M5.5 13.5h5M8 11v2.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />
+          </svg>
+          Ordinateur
+        </button>
+        <button type="button" aria-pressed="false" data-dv-mode="mobile" data-ga-event="demo_video_toggle" data-ga-place="mobile">
+          <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
+            <rect x="4.5" y="1.5" width="7" height="13" rx="1.6" fill="none" stroke="currentColor" stroke-width="1.4" />
+            <path d="M7 12.5h2" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />
+          </svg>
+          Mobile
+        </button>
+      </div>
+    </div>
+
+    {/* Version ordinateur : la vidéo seule, sans cadre ni fond (demande de Greg), 1920/1200 réservé par aspect-ratio. */}
+    <figure class="dv-fig dv-desk" data-dv-panel="desktop">
+      <div class="dv-screen dv-screen-desk">
+        <div class="dv-media">
+          <img class="dv-poster" src="/demo/visite-app-desktop-poster.webp" width="1920" height="1200" loading="lazy" decoding="async" alt="" />
+          <video class="dv-video" data-src="/demo/visite-app-desktop.mp4" preload="none" muted loop playsinline aria-label="Visite de l'app MyTradingCoach sur ordinateur : tableau de bord, pré-session, séance du jour, journal, historique, Mes comptes, statistiques, débrief, calendrier économique et profil, sur le compte de démonstration."></video>
+          <button type="button" class="dv-play" data-ga-event="demo_video_play" data-ga-place="desktop" aria-label="Lire la visite sur ordinateur">
+            <svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor" /></svg>
+          </button>
+        </div>
+      </div>
+      <figcaption>Capture réelle · compte de démonstration</figcaption>
+    </figure>
+
+    {/* Version mobile : la vidéo seule, 360 px, 592/1280 réservé par aspect-ratio. */}
+    <figure class="dv-fig dv-mob" data-dv-panel="mobile">
+      <div class="dv-screen dv-screen-mob">
+        <div class="dv-media">
+          <img class="dv-poster" src="/demo/visite-app-poster.webp" width="592" height="1280" loading="lazy" decoding="async" alt="" />
+          <video class="dv-video" data-src="/demo/visite-app.mp4" preload="none" muted loop playsinline aria-label="Visite de l'app MyTradingCoach sur mobile : tableau de bord, pré-session, séance du jour, journal, historique, Mes comptes, statistiques, débrief, calendrier économique et profil, sur le compte de démonstration."></video>
+          <button type="button" class="dv-play" data-ga-event="demo_video_play" data-ga-place="mobile" aria-label="Lire la visite sur mobile">
+            <svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor" /></svg>
+          </button>
+        </div>
+      </div>
+      <figcaption>Capture réelle · compte de démonstration</figcaption>
+    </figure>
+  </div>
+</section>
+
+<script>
+  type Mode = 'desktop' | 'mobile';
+
+  const root = document.querySelector<HTMLElement>('[data-dv]');
+  if (root) {
+    const wide = window.matchMedia('(min-width: 980px)');
+    const calm = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const buttons = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-dv-mode]'));
+    const panels = {} as Record<Mode, { fig: HTMLElement; video: HTMLVideoElement; play: HTMLButtonElement }>;
+    for (const fig of Array.from(root.querySelectorAll<HTMLElement>('[data-dv-panel]'))) {
+      panels[fig.dataset.dvPanel as Mode] = {
+        fig,
+        video: fig.querySelector('video') as HTMLVideoElement,
+        play: fig.querySelector('.dv-play') as HTMLButtonElement,
+      };
+    }
+
+    let near = false; // section à moins de 200 px de l'écran (une fois suffit)
+    let visible = false; // vidéo affichée réellement à l'écran
+    // Pause choisie par le visiteur (barre de lecture) : le défilement ne relance pas la vidéo.
+    const userPaused: Record<Mode, boolean> = { desktop: false, mobile: false };
+    let scripted = false; // vrai pendant une pause déclenchée par le script
+
+    const halt = (v: HTMLVideoElement) => {
+      scripted = true;
+      v.pause();
+      scripted = false;
+    };
+
+    // Sous 980 px, toujours la version mobile, quel que soit data-mode (même règle que le CSS).
+    const mode = (): Mode => (wide.matches ? (root.dataset.mode as Mode) : 'mobile');
+    const auto = () => wide.matches && !calm.matches;
+
+    const load = (v: HTMLVideoElement) => {
+      if (v.src) return;
+      v.src = v.dataset.src ?? '';
+      v.load();
+    };
+    const stop = (m: Mode) => {
+      const v = panels[m].video;
+      if (!v.src) return;
+      halt(v);
+      v.controls = false; // retour à l'aperçu, sans barre de lecture
+      v.currentTime = 0;
+    };
+    const play = (m: Mode) => {
+      const { fig, video, play: btn } = panels[m];
+      load(video);
+      video.muted = true;
+      // Barre de lecture native : le visiteur peut avancer, reculer, mettre en pause.
+      video.controls = true;
+      video.play().then(
+        () => fig.classList.add('is-playing'),
+        () => (btn.hidden = false), // lecture refusée : on rend la main au visiteur
+      );
+    };
+
+    // État des boutons lecture : masqués en lecture auto, visibles sinon (tant que rien ne joue).
+    const sync = () => {
+      const a = auto();
+      (Object.keys(panels) as Mode[]).forEach((m) => {
+        const { fig, video, play: btn } = panels[m];
+        btn.hidden = a || !video.paused;
+        if (m !== mode()) {
+          stop(m);
+          fig.classList.remove('is-playing');
+          btn.hidden = a;
+        }
+      });
+      const m = mode();
+      if (a && near) {
+        if (visible && !userPaused[m]) play(m);
+        else load(panels[m].video);
+      }
+    };
+
+    const setMode = (m: Mode) => {
+      if (root.dataset.mode === m) return;
+      root.dataset.mode = m;
+      userPaused.desktop = userPaused.mobile = false;
+      buttons.forEach((b) => {
+        const on = b.dataset.dvMode === m;
+        b.classList.toggle('on', on);
+        b.setAttribute('aria-pressed', String(on));
+      });
+      sync();
+    };
+    buttons.forEach((b) => b.addEventListener('click', () => setMode(b.dataset.dvMode as Mode)));
+
+    // Lecture à la demande (< 980 px ou animations réduites) : chargement au clic seulement.
+    (Object.keys(panels) as Mode[]).forEach((m) => {
+      const { fig, video, play: btn } = panels[m];
+      btn.addEventListener('click', () => {
+        userPaused[m] = false;
+        btn.hidden = true;
+        play(m);
+      });
+      video.addEventListener('playing', () => {
+        userPaused[m] = false;
+        fig.classList.add('is-playing');
+      });
+      video.addEventListener('pause', () => {
+        if (!scripted && visible && m === mode()) userPaused[m] = true;
+      });
+    });
+
+    // Approche (200 px) : pose la source de la vidéo affichée, rien d'autre.
+    const approach = new IntersectionObserver(
+      (entries) => {
+        if (!entries.some((e) => e.isIntersecting)) return;
+        near = true;
+        approach.disconnect();
+        sync();
+      },
+      { rootMargin: '200px 0px' },
+    );
+    approach.observe(root);
+
+    // Visibilité réelle : lecture auto à l'écran, pause dès qu'on en sort.
+    const seen = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          const m = (e.target as HTMLElement).dataset.dvPanel as Mode;
+          if (m !== mode()) continue;
+          visible = e.isIntersecting;
+          if (!auto()) {
+            if (!visible) halt(panels[m].video);
+            continue;
+          }
+          if (visible) {
+            if (!userPaused[m]) play(m);
+          } else halt(panels[m].video);
+        }
+      },
+      { threshold: 0.25 },
+    );
+    (Object.keys(panels) as Mode[]).forEach((m) => seen.observe(panels[m].fig));
+
+    // Passage sous / au-dessus de 980 px, ou changement de préférence d'animation.
+    const onChange = () => {
+      const m = mode();
+      const r = panels[m].fig.getBoundingClientRect();
+      visible = r.bottom > 0 && r.top < window.innerHeight;
+      (Object.keys(panels) as Mode[]).forEach((k) => {
+        if (k !== m || !auto()) halt(panels[k].video);
+      });
+      sync();
+    };
+    wide.addEventListener('change', onChange);
+    calm.addEventListener('change', onChange);
+    sync();
+  }
+</script>
+
+<style>
+  /* Pas de fond propre (avant : --bg2 + bordures, une bande qui jurait avec la page). */
+  .dv {
+    padding: 96px 5% 104px;
+    overflow-x: clip;
+  }
+  .dv-in {
+    max-width: 1100px;
+    margin: 0 auto;
+    display: grid;
+    gap: 40px;
+  }
+  .dv-text h2 { margin-bottom: 18px; }
+  .dv-points {
+    list-style: none;
+    margin: 24px 0 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .dv-points li {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 15.5px;
+    line-height: 1.5;
+    color: var(--txt2);
+  }
+  .dv-points svg { flex: none; margin-top: 3px; color: var(--blue2); }
+  .dv-points strong { color: var(--txt); font-weight: 600; }
+  .dv-cta { margin-top: 28px; display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
+  .dv-cta p { margin: 0; font-size: 13px; color: var(--txt3); }
+  /* Même bouton que les autres sections (.btn-p est défini par composant). */
+  .btn-p {
+    background: var(--blue);
+    color: var(--on-blue);
+    padding: 14px 28px;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 0 32px color-mix(in srgb, var(--blue) 40%, transparent);
+    transition: background 0.2s, transform 0.2s;
+    font-family: var(--disp);
+  }
+  .btn-p:hover { background: var(--blue2); transform: translateY(-2px); }
+  .btn-p:focus-visible { outline: 2px solid var(--blue2); outline-offset: 3px; }
+
+  /* Sélecteur : masqué sous 980 px (mode mobile imposé). Puces de PropFirmLive. */
+  .dv-switch { display: none; gap: 6px; margin-top: 28px; }
+  .dv-switch button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: transparent;
+    border: 1px solid var(--b2);
+    color: var(--txt2);
+    border-radius: 999px;
+    padding: 7px 18px;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: var(--body);
+  }
+  .dv-switch button:hover { border-color: var(--blue); color: var(--txt); }
+  .dv-switch button.on { background: color-mix(in srgb, var(--blue) 16%, transparent); border-color: var(--blue); color: var(--txt); }
+  .dv-switch button:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+
+  /* Figures : version ordinateur masquée par défaut (< 980 px). */
+  .dv-fig { margin: 0; position: relative; }
+  .dv-desk { display: none; }
+  .dv-fig figcaption {
+    margin-top: 12px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--txt3);
+    text-align: center;
+  }
+
+  /* La vidéo seule sur le fond de la page : ni fond, ni halo, ni ombre (demande de Greg). */
+  /* Bordure neutre 3 px + léger retrait transparent ; la vidéo garde ses propres coins. */
+  .dv-screen { border: 3px solid var(--b2); padding: 6px; }
+  .dv-screen-desk { border-radius: 16px; }
+  .dv-screen-mob { border-radius: 28px; }
+  .dv-media { position: relative; overflow: hidden; }
+  .dv-screen-desk .dv-media { aspect-ratio: 1920 / 1200; border-radius: 8px; }
+  .dv-screen-mob .dv-media { aspect-ratio: 592 / 1280; border-radius: 20px; }
+  .dv-poster,
+  .dv-video {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .dv-video { opacity: 0; transition: opacity 0.3s ease; }
+  .dv-fig.is-playing .dv-video { opacity: 1; }
+
+  .dv-play {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 68px;
+    height: 68px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    padding: 0 0 0 4px;
+    border: 1px solid var(--b2);
+    background: color-mix(in srgb, var(--bg) 78%, transparent);
+    color: var(--txt);
+    cursor: pointer;
+    box-shadow: 0 8px 30px color-mix(in srgb, var(--bg) 70%, transparent);
+    transition: background 0.2s ease, border-color 0.2s ease;
+  }
+  .dv-play:hover { background: var(--blue); border-color: var(--blue); }
+  .dv-play:focus-visible { outline: 2px solid var(--blue2); outline-offset: 3px; }
+  .dv-play[hidden] { display: none; }
+
+  .dv-mob { width: min(360px, 100%); justify-self: center; }
+
+  @media (min-width: 980px) {
+    .dv-switch { display: inline-flex; }
+
+    /* Mode mobile : texte à gauche, vidéo mobile à droite. */
+    .dv-in { grid-template-columns: minmax(0, 1fr) 360px; gap: 64px; align-items: center; }
+    .dv-mob { justify-self: end; }
+
+    /* Mode ordinateur : texte centré au-dessus, vidéo dessous (jusqu'à 1280 px, débordant le .wrap). */
+    .dv[data-mode='desktop'] .dv-in {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 48px;
+    }
+    .dv[data-mode='desktop'] .dv-text { text-align: center; max-width: 720px; }
+    .dv[data-mode='desktop'] .sec-sub { margin: 0 auto; max-width: 600px; }
+    /* Puces : bloc centré, lignes alignées à gauche entre elles. */
+    .dv[data-mode='desktop'] .dv-points { width: fit-content; margin-inline: auto; text-align: left; }
+    .dv[data-mode='desktop'] .dv-cta { align-items: center; }
+    .dv[data-mode='desktop'] .dv-mob { display: none; }
+    .dv[data-mode='desktop'] .dv-desk {
+      display: block;
+      flex: none;
+      width: min(1280px, calc(100vw - 48px));
+    }
+  }
+
+  .dv-wide .dv-in { max-width: 1200px; }
+
+  @media (max-width: 979px) {
+    .dv { padding: 72px 16px 80px; }
+    .dv-in { gap: 36px; }
+    .dv-wide { padding-inline: 20px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .dv-video { transition: none; }
+    .btn-p:hover { transform: none; }
+  }
+</style>

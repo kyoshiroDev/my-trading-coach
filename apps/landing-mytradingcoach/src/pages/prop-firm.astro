@@ -11,6 +11,7 @@ import Base from '../layouts/Base.astro';
 import Footer from '../components/Footer.astro';
 import NinjaTraderTrust from '../components/NinjaTraderTrust.astro';
 import Compatible from '../components/Compatible.astro';
+import DemoVideo from '../components/DemoVideo.astro';
 import PfHeader from '../components/prop-firm-page/PfHeader.astro';
 import PfRules from '../components/prop-firm-page/PfRules.astro';
 import PfPricing from '../components/prop-firm-page/PfPricing.astro';
@@ -125,6 +126,8 @@ const faq = [
 
     {/* 4 bis. Compatible avec : Tradovate et saisie manuelle, texte seul. */}
     <Compatible width={1200} gutter={20} />
+    {/* 4 ter. L'app en vrai : visite vidéo ordinateur / mobile (ancre #visite), comme sur l'accueil. */}
+    <DemoVideo wide />
 
     {/* 5. Sélecteur firm → plan → phase */}
     <PfRules />
