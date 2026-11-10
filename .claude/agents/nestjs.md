@@ -202,7 +202,7 @@ POST   /api/test/upgrade-user          NODE_ENV=test uniquement
   existant (`trade-stop.int-spec.ts`).
 - **Capture du stop à l'entrée (#916 phase 2, #925)** : `TradovateSyncService.run` lit, s'il y a des
   trades à convertir, `/order/list` + `/orderVersion/list` (GET, best-effort : un échec ne casse pas
-  la synchro) et pose `stopLoss` / `takeProfit` dans le DTO de CRÉATION via `entryProtection`
+  la synchro, sauf une pénalité, relancée pour que la pause soit notée) et pose `stopLoss` / `takeProfit` dans le DTO de CRÉATION via `entryProtection`
   (`tradovate-entry-protection.ts`, pur) : ordre d'entrée = `orderId` du fill d'entrée, jambes =
   `parentId` (+ OCO), même compte / contrat, sens opposé, PREMIÈRE version, candidat unique, bon
   côté ; sinon rien. Un trade existant n'est jamais mis à jour (la saisie utilisateur prime). Log

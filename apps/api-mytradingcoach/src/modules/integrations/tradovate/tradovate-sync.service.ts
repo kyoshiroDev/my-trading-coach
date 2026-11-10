@@ -369,6 +369,10 @@ export class TradovateSyncService {
         get<TradovateOrderVersionEntity[]>('/orderVersion/list'),
       ]);
     } catch (err) {
+      // Pénalité (limite de requêtes) : relancée comme toute lecture de la synchro, pour que la
+      // pause soit notée (`notePenalty`) ; les trades seront créés à la synchro d'après.
+      if (isPenaltyFailure(err)) throw err;
+      // Autres refus (401 sans Orders:Read, 5xx, corps illisible) : trades créés sans stop.
       this.logger.warn(`Capture stop Tradovate : ordres de la séance illisibles (${(err as Error).message})`);
       return null;
     }

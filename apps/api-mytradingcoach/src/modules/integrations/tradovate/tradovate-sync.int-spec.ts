@@ -70,6 +70,7 @@ let itemsNotFound = false;          // /fill/items répond 404 quoi qu'on demand
 let pairListNotFound = false;       // /fillPair/list répond 404
 let bracket = false;                // /order/list + /orderVersion/list : bracket posé sur le trade 30000 → 30010
 let forbidden: string[] = [];       // appels d'écriture ou routes d'ordre hors lecture (clause 2i) : doit rester vide
+let orderListMode: 'ok' | '500' | '401' | 'penalty' = 'ok'; // réponse de /order/list
 
 // Bracket du trade LONG 30000 → 30010 (fill d'achat 900000000001, donc ordre d'entrée 900000000002) :
 // stop posé à 29990 puis remonté à 29995 (deux versions), objectif 30020.
@@ -166,7 +167,12 @@ function tradovate(rawUrl: string, init?: RequestInit): Response {
     forbidden.push(`${method} ${path}`);
     throw new Error(`appel interdit vers Tradovate : ${method} ${path}`);
   }
-  if (path === '/order/list') return json(bracket ? bracketOrders() : []);
+  if (path === '/order/list') {
+    if (orderListMode === '500') return new Response('', { status: 500 });
+    if (orderListMode === '401') return new Response('', { status: 401 });
+    if (orderListMode === 'penalty') return json({ 'p-ticket': 'ticket-de-test', 'p-time': 600 });
+    return json(bracket ? bracketOrders() : []);
+  }
   if (path === '/orderVersion/list') return json(bracket ? bracketVersions() : []);
   if (path === '/auth/renewaccesstoken') return json({ errorText: 'Access is denied' });
   if (path === '/account/list') {
@@ -246,6 +252,7 @@ beforeEach(async () => {
   identicalPairs = 0;
   bracket = false;
   forbidden = [];
+  orderListMode = 'ok';
 });
 
 /**
@@ -521,6 +528,40 @@ describe('Tradovate — synchro', () => {
     expect(res.status, await res.clone().text()).toBe(201);
     const t = await prisma.trade.findFirstOrThrow({ where: { userId, entry: 30000 } });
     expect(t).toMatchObject({ stopLoss: null, takeProfit: null, riskReward: null });
+    expect(forbidden).toEqual([]);
+  });
+
+  it.each(['500', '401'] as const)('ordres illisibles (%s) : la synchro aboutit, trades créés sans stop', async (mode) => {
+    const { id: userId, token } = await registerUser();
+    const account = await createAccount(userId, 'Lucid');
+    await connect(token, account.id);
+    await prisma.trade.deleteMany({ where: { userId } });
+    bracket = true;
+    orderListMode = mode;
+    const res = await api(token, `/accounts/${account.id}/sync`, 'POST');
+    expect(res.status, await res.clone().text()).toBe(201);
+    expect(await prisma.trade.count({ where: { userId } })).toBe(3);
+    expect(await prisma.trade.count({ where: { userId, OR: [{ stopLoss: { not: null } }, { riskReward: { not: null } }] } })).toBe(0);
+    const conn = await prisma.brokerConnection.findFirstOrThrow({ where: { accountId: account.id } });
+    expect(conn.status).toBe(BrokerConnectionStatus.CONNECTED);
+    expect(forbidden).toEqual([]);
+  });
+
+  it('ordres pénalisés (p-ticket) : erreur relancée, pause notée, aucun trade créé', async () => {
+    const { id: userId, token } = await registerUser();
+    const account = await createAccount(userId, 'Lucid');
+    await connect(token, account.id);
+    await prisma.trade.deleteMany({ where: { userId } });
+    orderListMode = 'penalty';
+    const res = await api(token, `/accounts/${account.id}/sync`, 'POST');
+    expect(res.status).toBe(503);
+    expect(((await res.json()) as { code: string }).code).toBe('TRADOVATE_PENALIZED');
+    expect(await prisma.trade.count({ where: { userId } })).toBe(0);
+    // Pause en cours : la synchro suivante ne touche plus Tradovate.
+    calls = [];
+    const again = await api(token, `/accounts/${account.id}/sync`, 'POST');
+    expect(again.status).toBe(503);
+    expect(calls).toEqual([]);
     expect(forbidden).toEqual([]);
   });
 
