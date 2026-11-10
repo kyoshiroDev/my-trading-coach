@@ -48,6 +48,13 @@ export class EcoCalendarController {
     return this.service.getTodayEvents(user.id);
   }
 
+  // Analyses IA déjà produites pour les annonces publiées d'un jour passé (lecture, sans IA)
+  @Get('release-analyses')
+  getReleaseAnalyses(@CurrentUser() user: { id: string }, @Query('date') date: string) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date ?? '')) throw new BadRequestException('date YYYY-MM-DD requise');
+    return this.service.getReleaseAnalyses(user.id, date);
+  }
+
   // Events sur une plage de dates (vue semaine)
   @Get('range')
   async getRange(

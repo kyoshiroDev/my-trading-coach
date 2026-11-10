@@ -41,6 +41,11 @@ export class EcoCalendarApi {
     );
   }
 
+  /** Analyses déjà produites pour les annonces publiées d'un jour passé (lecture, sans IA). */
+  getReleaseAnalyses(date: string): Observable<{ data: Record<string, EcoResultAnalysis> }> {
+    return this.http.get<{ data: Record<string, EcoResultAnalysis> }>(`${this.base}/release-analyses`, { params: { date } });
+  }
+
   refreshAnalysis(): Observable<{ data: EcoCalendarData }> {
     return this.http.post<{ data: EcoCalendarData }>(`${this.base}/refresh-today`, {});
   }

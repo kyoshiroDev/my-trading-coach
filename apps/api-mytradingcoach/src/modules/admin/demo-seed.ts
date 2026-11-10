@@ -11,6 +11,7 @@ import { tradingDay } from '../accounts/account-rules';
 import { tradingDayStart } from '../session/active-session';
 import { buildDemoRiskJournal, dayRiskLine, weekRiskNote } from './demo-data/prop-risk';
 import { classifyEcoEvent } from '../eco-calendar/eco-calendar.impact';
+import { assetsSignature } from '../eco-calendar/eco-release-analysis';
 import { seedDemoPush } from './demo-data/push';
 import { DEMO_INCIDENT_ANALYSIS, LOST_DEMO_ACCOUNTS, buildLostDemoIncident, buildLostDemoTrades } from './demo-data/lost-accounts';
 
@@ -124,7 +125,7 @@ export async function seedTradingData(
   for (const d of days) {
     if (!d.trades.length && !d.openTrade) continue;
     const isToday = d.kind === 'today';
-    // Session du jour sans trade clôturé (week-end, avant 09:45) : ouverte il y a 30 min, jamais
+    // Session du jour sans trade clôturé (week-end, coupure de 23:00, juste après minuit) : ouverte il y a 30 min, jamais
     // avant le début de la journée de trading en cours (sinon elle ne serait pas « active »).
     // `now` = celui du seed (et non l'heure réelle) : un seed daté reste cohérent avec lui-même.
     const first = d.trades[0]?.tradedAt ?? new Date(Math.max(tradingDayStart(now).getTime(), now.getTime() - 30 * 60_000) + 25 * 60_000);
@@ -374,6 +375,9 @@ export async function seedTradingData(
   const pinnedEcoEvents = process.env['FMP_API_KEY']
     ? await pickRealEcoPins(prisma, today)
     : await seedFakeEcoEvents(prisma, today);
+  // Jour passé avec annonces publiées ET leur analyse IA (calendrier éco), sans FMP seulement :
+  // jamais de fausse analyse sur une vraie annonce FMP (tables partagées avec les vrais users).
+  if (!process.env['FMP_API_KEY']) await seedFakePastRelease(prisma, user.id, now);
   await prisma.user.update({
     where: { id: user.id },
     // Sans la date du jour, readUserPins jugeait la sélection expirée et la vidait aussitôt.
@@ -493,6 +497,59 @@ async function seedFakeEcoEvents(prisma: PrismaClient, today: string): Promise<s
     });
   }
   return ['Inflation CPI (US):USD', 'Discours de Lagarde (BCE):EUR'];
+}
+
+/**
+ * Sans FMP (local, tests) : le vendredi précédent, NFP et chômage US publiés à 14:30 avec leur
+ * analyse IA déjà produite (`EcoReleaseAnalysis`, signature d'actifs du compte démo) : le calendrier
+ * d'un jour passé montre l'analyse, sans appel IA.
+ */
+async function seedFakePastRelease(prisma: PrismaClient, userId: string, now: Date): Promise<void> {
+  const friday = new Date(now);
+  do friday.setDate(friday.getDate() - 1); while (friday.getDay() !== 5);
+  const date = friday.toLocaleDateString('fr-CA', { timeZone: 'Europe/Paris' });
+  const events = [
+    { time: '14:30', name: 'Nonfarm Payrolls', nameFr: 'Créations d’emplois non agricoles (NFP)', impact: 'high', actual: 254, estimate: 180, previous: 223, unit: 'K' },
+    { time: '14:30', name: 'Unemployment Rate', nameFr: 'Taux de chômage', impact: 'high', actual: 4.1, estimate: 4.2, previous: 4.2, unit: '%' },
+    { time: '16:00', name: 'ISM Services PMI', nameFr: 'ISM des services', impact: 'high', actual: 54.9, estimate: 53.6, previous: 51.5, unit: null },
+  ];
+  for (const e of events) {
+    const data = { time: e.time, nameFr: e.nameFr, country: 'US', impact: e.impact, actual: e.actual, estimate: e.estimate, previous: e.previous, isReleased: true, unit: e.unit };
+    await prisma.ecoEvent.upsert({
+      where: { date_name_currency: { date, name: e.name, currency: 'USD' } },
+      update: data,
+      create: { date, name: e.name, currency: 'USD', ...data },
+    });
+  }
+  // Même signature d'actifs que l'API (`userTopAssets` : 5 actifs les plus tradés sur 100 trades).
+  const recent = await prisma.trade.findMany({ where: { userId }, select: { asset: true }, take: 100, orderBy: { tradedAt: 'desc' } });
+  const count = new Map<string, number>();
+  recent.forEach((t) => count.set(t.asset, (count.get(t.asset) ?? 0) + 1));
+  const assets = [...count.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5).map(([a]) => a);
+  const assetsKey = assetsSignature(assets);
+  const sentiments = (sentiment: 'bull' | 'bear' | 'neutral', reason: string) =>
+    assets.map((asset) => ({ asset, sentiment, shortReason: reason }));
+  const analyses: Record<string, { interpretation: string; assetSentiments: ReturnType<typeof sentiments> }> = {
+    'Nonfarm Payrolls': {
+      interpretation: 'Emploi nettement au-dessus du consensus (254K contre 180K) : le marché repousse la baisse des taux de la Fed, les rendements montent et les indices actions reculent à l’ouverture.',
+      assetSentiments: sentiments('bear', 'taux plus hauts plus longtemps, pression sur les valorisations'),
+    },
+    'Unemployment Rate': {
+      interpretation: 'Chômage en baisse à 4,1 % : il confirme un marché du travail solide, dans le même sens que les NFP.',
+      assetSentiments: sentiments('bear', 'confirme le scénario d’une Fed patiente'),
+    },
+    'ISM Services PMI': {
+      interpretation: 'Activité des services en accélération : signal de croissance, mais la composante prix reste élevée. Réaction partagée après le choc des NFP.',
+      assetSentiments: sentiments('neutral', 'croissance solide, inflation des services à surveiller'),
+    },
+  };
+  for (const [eventName, analysis] of Object.entries(analyses)) {
+    await prisma.ecoReleaseAnalysis.upsert({
+      where: { date_eventName_assetsKey: { date, eventName, assetsKey } },
+      update: { analysisJson: JSON.stringify(analysis) },
+      create: { date, eventName, assetsKey, analysisJson: JSON.stringify(analysis) },
+    });
+  }
 }
 
 // Réexports : API publique historique de ce module (cron, service, spec, script).

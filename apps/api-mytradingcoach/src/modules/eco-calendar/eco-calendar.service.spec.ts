@@ -26,6 +26,10 @@ const mockPrisma = {
     findUnique: vi.fn().mockResolvedValue(null),
     upsert: vi.fn().mockResolvedValue({}),
   },
+  ecoReleaseAnalysis: {
+    upsert: vi.fn().mockResolvedValue({}),
+    findMany: vi.fn().mockResolvedValue([]),
+  },
 };
 
 const mockAi = {
@@ -410,6 +414,11 @@ describe('EcoCalendarService', () => {
       const r = await service.analyzeReleasedEvent('user-1', 'NFP');
       expect(r).toEqual(analysis);
       expect(mockAi.analyzeEcoResult).toHaveBeenCalledTimes(1);
+      // Gardée en base pour relire l'analyse les jours suivants (calendrier d'un jour passé).
+      expect(mockPrisma.ecoReleaseAnalysis.upsert).toHaveBeenCalledWith(expect.objectContaining({
+        where: { date_eventName_assetsKey: expect.objectContaining({ eventName: 'NFP' }) },
+        update: {},
+      }));
       expect(service['redis'].setex).toHaveBeenCalledWith(
         expect.stringMatching(/^eco:analysis:.*:NFP:/),
         expect.any(Number),
@@ -792,5 +801,23 @@ describe('EcoCalendarService', () => {
 
       expect(mockAnthropic.create).not.toHaveBeenCalled();
     });
+  });
+});
+
+describe('EcoCalendarService.getReleaseAnalyses (jour passé, sans IA)', () => {
+  it('aujourd’hui ou après → vide, sans lecture ; jour passé → analyses de la base, aucun appel IA', async () => {
+    const service = new EcoCalendarService(mockPrisma as never, mockAi as never, { client: {} } as never, {} as never);
+    mockPrisma.ecoReleaseAnalysis.findMany.mockClear();
+    mockPrisma.ecoEvent.findMany.mockResolvedValueOnce([{ name: 'Nonfarm Payrolls (Oct)', nameFr: 'Créations d’emplois non agricoles (NFP)' }]);
+    mockPrisma.trade.findMany.mockResolvedValue([]);
+    mockAi.analyzeEcoResult.mockClear();
+    expect(await service.getReleaseAnalyses('u', '2999-01-01')).toEqual({});
+    expect(mockPrisma.ecoReleaseAnalysis.findMany).not.toHaveBeenCalled();
+    mockPrisma.ecoReleaseAnalysis.findMany.mockResolvedValueOnce([
+      { eventName: 'Nonfarm Payrolls', assetsKey: 'none', analysisJson: JSON.stringify({ interpretation: 'i', assetSentiments: [] }), createdAt: new Date() },
+    ]);
+    const out = await service.getReleaseAnalyses('u', '2026-11-06');
+    expect(Object.keys(out).sort()).toEqual(['Créations d’emplois non agricoles', 'Nonfarm Payrolls']);
+    expect(mockAi.analyzeEcoResult).not.toHaveBeenCalled();
   });
 });

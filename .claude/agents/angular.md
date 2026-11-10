@@ -179,6 +179,10 @@ la maquette design (« The Terminal »).
     place (la démo montre sa session live même le week-end). Sur `EcoSocketService.newReleases$`,
     la ligne passe à « publiée » : chiffre publié / prévu / précédent, 1re phrase de l'analyse IA
     (`analyze-result`), reste dépliable ; retour à la suivante sur « J'ai lu » ou après 15 min.
+- **Calendrier éco, jour passé (2026-11-09)** : `eco-calendar.component.ts` relit les analyses
+  enregistrées du jour affiché (`getReleaseAnalyses`, une lecture par jour, au choix du jour) et
+  n'appelle JAMAIS `analyze-result` pour un jour passé. Les annonces de la vue semaine (`range`)
+  n'ont pas de `date` : c'est celle du jour sélectionné. Clé du cache : `date|nom sans suffixe`.
     Mêmes appels que l'ancien calendrier live (`refreshAnalysis` → `ecoCalendarRefreshed`, puis une
     analyse par annonce) : **aucun appel IA de plus**.
   - **Trade en cours** (`live-position`) : une position (broker si rôle `LIVE_POSITION_ROLES` et
@@ -201,7 +205,8 @@ la maquette design (« The Terminal »).
   compte pour lancer la session » ne s'affiche que si AUCUNE séance n'est active, que l'utilisateur a
   des comptes et que l'en-tête est sur « Tous les comptes ». Séance active : la liste montre le compte
   de la séance (désactivée), quel que soit le choix de l'en-tête. La démo a toujours une séance
-  active après le seed (même le week-end ou avant 09:45 ; le `demo-login` reseede une démo périmée).
+  active après le seed (même le week-end ; en semaine elle est calée sur l'heure de la visite, le
+  `demo-login` reseede une démo périmée ou dont la position ouverte a plus de 45 min).
 - **Colonne suivi prop firm** : compte de la session **éval ou funded synchronisé Tradovate**
   (`isLivePropAccount`, `live-prop-firm.util.ts`). `SessionLiveComponent` charge lui-même
   `TradovateStore` s'il ne l'est pas (sinon bloc masqué en ouverture directe / après F5, #437).
