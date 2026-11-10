@@ -53,7 +53,7 @@ const nfp: EcoEvent = {
   time: '14:30', name: 'Non Farm Payrolls', impact: 'high', country: 'US', currency: 'USD',
   actual: 210, estimate: 180, previous: 150, isReleased: true, unit: 'K',
 };
-const analysis = { interpretation: 'Contenu de test à ne jamais journaliser', assetSentiments: [] };
+const analysis = { interpretation: 'Contenu de test à ne jamais journaliser', gap: 'above' as const };
 
 describe('EcoCalendarService · analyse des résultats publiés', () => {
   let redis: ReturnType<typeof inMemoryRedis>;
@@ -89,7 +89,7 @@ describe('EcoCalendarService · analyse des résultats publiés', () => {
     expect(ai.analyzeEcoResult).toHaveBeenCalledTimes(1);
     expect(results.every((r) => r?.interpretation === analysis.interpretation)).toBe(true);
     // Même clé que l'analyse au clic d'avant : (jour, nom sans période, actifs triés).
-    expect(redis.store.has(`eco:analysis:${DAY}:Non Farm Payrolls:ES,NQ`)).toBe(true);
+    expect(redis.store.has(`eco:analysis:v2:${DAY}:Non Farm Payrolls:ES,NQ`)).toBe(true);
   });
 
   it('actifs bruts (clic) et normalisés (auto) : une seule clé, un seul appel', async () => {
@@ -182,7 +182,7 @@ describe('AiService.analyzeEcoResult · valeurs absentes', () => {
   beforeEach(() => {
     vi.stubEnv('NODE_ENV', 'production');
     create = vi.fn(async () => ({
-      content: [{ type: 'text', text: '{"interpretation":"Résultat publié.","assetSentiments":[]}' }],
+      content: [{ type: 'text', text: '{"interpretation":"Résultat publié."}' }],
     }));
     ai = new AiService(
       {} as PrismaService,
@@ -205,17 +205,18 @@ describe('AiService.analyzeEcoResult · valeurs absentes', () => {
     });
     const prompt = promptOf();
     expect(prompt).toContain('pas de consensus');
-    expect(prompt).not.toMatch(/Surprise :/);
-    expect(prompt).not.toMatch(/Prévu : 0\b/);
+    expect(prompt).not.toMatch(/Prévision : 0\b/);
+    expect(prompt).not.toMatch(/au-dessus|en dessous|en ligne/);
   });
 
-  it('prévision connue : surprise = résultat - prévision', async () => {
-    await ai.analyzeEcoResult({
+  it('prévision connue : écart calculé en code, transmis au modèle et renvoyé', async () => {
+    const r = await ai.analyzeEcoResult({
       userId: null,
       event: { name: 'CPI YoY', actual: 3.1, estimate: 2.9, previous: 3 },
       userAssets: ['NQ'],
     });
-    expect(promptOf()).toContain('Surprise : +0.20');
+    expect(promptOf()).toContain('Écart (calculé) : au-dessus de la prévision');
+    expect(r).toEqual({ interpretation: 'Résultat publié.', gap: 'above' });
   });
 
   it('résultat absent : rejet, aucun appel modèle', async () => {

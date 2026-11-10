@@ -22,6 +22,7 @@ import { computeTradeStats, formatMoney, netPnl, todayParis } from '@mtc/shared'
 import { userAmountsCurrency } from '../../common/utils/user-currency.util';
 // import type only (aucune dépendance runtime → pas de cycle avec eco-calendar.service)
 import type { EcoResultAnalysis } from '../eco-calendar/eco-calendar.service';
+import { GAP_LABEL, releaseGap } from '../eco-calendar/eco-calendar.gap';
 import { AnthropicClientService, responseText } from '../infra/anthropic-client.service';
 import { buildUserTradingContext, UserTradingProfile } from './user-context.builder';
 import { inactiveAccountsTradeWhere } from '../accounts/account-status-scope';
@@ -441,8 +442,8 @@ Réponds UNIQUEMENT avec la phrase coaching, sans guillemets, sans préambule.`,
   /**
    * Calendrier eco (cet appel et analyzeEcoResult) sur `AI_MODELS.fast` : seule IA qu'un compte
    * FREE peut declencher, donc la seule dont le cout suit l'audience. Les deux appels partaient
-   * sur `analysis`, trois fois le prix pour un JSON court (sentiment bull/bear par actif, une
-   * recommandation).
+   * sur `analysis`, trois fois le prix pour un JSON court (depuis #920 : un résumé factuel, ou une
+   * interprétation neutre d'un résultat, sans sentiment par actif ni recommandation).
    *
    * Le cout ne suit pas le nombre d'users mais le nombre de signatures d'actifs distinctes
    * (cache partage par (date, actifs)). Mesure 2026-09-28 : ~0,006 $ l'appel en analysis
@@ -456,19 +457,19 @@ Réponds UNIQUEMENT avec la phrase coaching, sans guillemets, sans préambule.`,
     events: Array<{ time: string; name: string; impact: string; currency: string }>;
     userAssets: string[];
   }) {
-    const prompt = `Tu es un coach de trading expert.
-Actifs du trader : ${data.userAssets.join(', ')}.
-Événements économiques du jour : ${JSON.stringify(data.events, null, 2)}.
+    // Conformité (#920) : plus de sentiment haussier/baissier par actif ni de recommandation rédigée
+    // par le modèle. Le point d'attention est calculé en code (`morningFocus`), le modèle ne
+    // décrit que le calendrier du jour.
+    const prompt = `Tu présentes le calendrier économique du jour à un trader, de façon factuelle.
+Actifs récents du trader : ${data.userAssets.join(', ')}.
+Annonces du jour : ${JSON.stringify(data.events, null, 2)}.
 ${NO_EM_DASH_RULE}
 ${FRENCH_RULE}
 ${COMPLIANCE_RULE}
-Le sentiment de chaque actif décrit la réaction que le marché a souvent eue à ce type d'événement, à titre indicatif : ce n'est ni une prévision ni une invitation à prendre position.
+Décris uniquement : combien d'annonces fortes, à quelles heures, quelles devises, et lesquelles touchent les actifs du trader. Tu peux dire qu'une volatilité est possible autour de ces horaires.
+N'indique aucune direction de marché ni d'actif (pas de hausse ou de baisse attendue), aucun conseil, aucune prévision de résultat.
 Génère un JSON strict (pas de markdown, pas de texte autour) :
-{
-  "summary": "1-2 phrases sur les risques du jour pour ce trader précis",
-  "recommendation": "1 point de vigilance concret (créneau plus volatil, actif concerné), sans dire quoi trader ni quand entrer",
-  "assetImpacts": [{ "asset": string, "sentiment": "bull"|"bear"|"neutral", "reason": string }]
-}`;
+{ "summary": "1 à 2 phrases factuelles" }`;
 
     const generate = async () => {
       const response = await this.anthropicClient.create(
@@ -479,7 +480,9 @@ Génère un JSON strict (pas de markdown, pas de texte autour) :
         },
         { feature: 'eco_calendar', userId: data.userId },
       );
-      return this.parseModelJson<EcoAnalysis>(responseText(response) || '{}');
+      const out = this.parseModelJson<{ summary?: string }>(responseText(response) || '{}');
+      // recommendation et assetImpacts : remplis en code par l'appelant (aucun sentiment).
+      return { summary: out.summary ?? '', recommendation: '', assetImpacts: [] } satisfies EcoAnalysis;
     };
     return guardAiText('eco_calendar', generate, this.logger);
   }
@@ -498,27 +501,21 @@ Génère un JSON strict (pas de markdown, pas de texte autour) :
 
     // Aucun appel modèle hors production (cf. principes coût IA du projet).
     if (process.env['NODE_ENV'] !== 'production') {
-      return { interpretation: '(analyse IA disponible en production)', assetSentiments: [] };
+      return { interpretation: '(analyse IA disponible en production)', gap: releaseGap(actual, estimate ?? null) };
     }
 
-    const consensus =
-      estimate === null || estimate === undefined
-        ? `Prévu : pas de consensus publié. Aucune surprise à calculer : ne parle pas d'écart à la prévision.`
-        : `Prévu : ${estimate} | Surprise : ${actual - estimate >= 0 ? '+' : ''}${(actual - estimate).toFixed(2)}.`;
-
-    const prompt = `Résultat tombé : ${data.event.name}.
-Résultat : ${actual} | Précédent : ${data.event.previous ?? 'N/A'}.
-${consensus}
-Actifs tradés : ${data.userAssets.join(', ')}.
+    // Écart calculé en code (#920) : le modèle ne le calcule pas et ne donne aucune direction.
+    const gap = releaseGap(actual, estimate ?? null);
+    const prompt = `Résultat publié : ${data.event.name}.
+Résultat : ${actual} | Prévision : ${estimate ?? 'aucune'} | Précédent : ${data.event.previous ?? 'N/A'}.
+Écart (calculé) : ${gap ? GAP_LABEL[gap] : 'inconnu'}.
 ${NO_EM_DASH_RULE}
 ${FRENCH_RULE}
 ${COMPLIANCE_RULE}
-Le sentiment de chaque actif décrit la réaction habituelle du marché à ce type de surprise, à titre indicatif : ce n'est ni une prévision ni une invitation à prendre position.
+Explique en 1 à 2 phrases simples ce que mesure cet indicateur et ce que dit ce résultat par rapport à la prévision et au précédent.${gap === 'no_consensus' ? " Il n'y a pas de consensus : ne parle pas d'écart à la prévision." : ''}
+N'indique aucune direction de marché ni d'actif (pas de hausse ou de baisse attendue), aucun conseil, aucune prévision.
 Génère un JSON strict (pas de markdown, pas de texte autour) :
-{
-  "interpretation": "phrase courte expliquant la surprise",
-  "assetSentiments": [{ "asset": string, "sentiment": "bull"|"bear"|"neutral", "shortReason": string }]
-}`;
+{ "interpretation": "1 à 2 phrases" }`;
 
     const generate = async () => {
       const response = await this.anthropicClient.create(
@@ -529,7 +526,8 @@ Génère un JSON strict (pas de markdown, pas de texte autour) :
         },
         { feature: 'eco_calendar', userId: data.userId },
       );
-      return this.parseModelJson<EcoResultAnalysis>(responseText(response) || '{}');
+      const out = this.parseModelJson<{ interpretation?: string }>(responseText(response) || '{}');
+      return { interpretation: out.interpretation ?? '', gap } satisfies EcoResultAnalysis;
     };
     return guardAiText('eco_result', generate, this.logger);
   }

@@ -1,9 +1,7 @@
 import type { EcoAnalysis, EcoBriefingLine, EcoEvent } from '@mtc/shared';
 
-export interface EcoResultAnalysis {
-  interpretation: string;
-  assetSentiments: { asset: string; sentiment: 'bull' | 'bear' | 'neutral'; shortReason: string }[];
-}
+// Forme partagée avec le front (#920, conformité) : plus de sentiment haussier/baissier par actif.
+export type { EcoResultAnalysis } from '@mtc/shared';
 
 export interface EcoCalendarData {
   events: EcoEvent[];

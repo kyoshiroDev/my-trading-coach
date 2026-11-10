@@ -2435,6 +2435,23 @@ global à la file ; Resend = 10 req/s par équipe, clé partagée entre environn
   XAUUSD), futures devises CME (6E…), indices (GER40, UK100…), crypto → USD ; inconnu (actions) → aucune.
 - Dashboard matin (`session-morning`) : lignes des annonces encore à venir (`status === 'upcoming'`).
 
+## Calendrier éco : sorties IA factuelles, conformité (2026-11-10, #920, commit séparé)
+
+- Avant : sentiment `bull/bear/neutral` par actif (matin et résultat), flèches ▲▼ par devise dans le
+  calendrier, « haussier/baissier » dans le widget live, recommandation rédigée par le modèle.
+- Maintenant : `EcoResultAnalysis` (contrat partagé) = `{ interpretation, gap }`. `gap` = `releaseGap`
+  (`eco-calendar.gap.ts`, pur) : `above` / `inline` (à la précision de la prévision) / `below` /
+  `no_consensus`. Le modèle rédige 1 à 2 phrases neutres (ce que mesure l'indicateur, ce que dit le
+  résultat vs prévision et précédent), sans direction ni conseil.
+- Matin : le modèle ne rédige que `summary` (factuel : annonces, heures, devises) ; `recommendation` =
+  `morningFocus` en code (« Prochaine annonce à fort impact : HH:MM, … Volatilité possible… ») ;
+  `assetImpacts` toujours `[]`, même relu depuis une ligne `EcoAnalysisCache` antérieure.
+- Clé de cache des résultats passée en `eco:analysis:v2:` (les anciennes portaient des sentiments).
+- Garde : `eco-calendar.compliance.spec.ts` (prompts, sorties, textes en code, affichage) + dossiers
+  `eco-calendar` ajoutés au balayage `ai-texts-compliance.spec.ts`.
+- Non touché (données de démo figées) : `DEMO_ECO_RECO` dans `session-morning.component.ts`
+  (« Évite d'ouvrir une position 5 min avant le NFP »), à revoir avec Greg.
+
 ## News live : traduction par lots et bandeau BREAKING (2026-10-06)
 - **Sources** (`market-news.sources.ts`, `NEWS_FEEDS`) : 4 flux FMP, chacun sa limite (aucun n'évince
   les autres) : `general-latest` (macro, rangée sous le symbole `MACRO`), `forex-latest`, ETF indices /

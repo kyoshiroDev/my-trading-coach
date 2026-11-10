@@ -18,7 +18,7 @@ function ev(partial: Partial<EcoEvent>): EcoEvent {
 interface SetupOpts {
   events?: EcoEvent[];
   user?: { tradingSessions?: string[]; isDemo?: boolean } | null;
-  analysis?: { interpretation: string; assetSentiments: { asset: string; sentiment: 'bull' | 'bear' | 'neutral'; shortReason: string }[] };
+  analysis?: { interpretation: string; gap: 'above' | 'inline' | 'below' | 'no_consensus' | null };
 }
 
 function setup(opts: SetupOpts = {}) {
@@ -28,7 +28,7 @@ function setup(opts: SetupOpts = {}) {
     getPinnedUpcoming: vi.fn(() => of({ data: [] })),
     getEventsRange: vi.fn(() => of({ data: [day] })),
     savePins: vi.fn(() => of({ data: [] })),
-    analyzeResult: vi.fn(() => of({ data: opts.analysis ?? { interpretation: 'interp', assetSentiments: [] } })),
+    analyzeResult: vi.fn(() => of({ data: opts.analysis ?? { interpretation: 'interp', gap: 'inline' } })),
   };
   const userStore = {
     user: signal(opts.user ?? null),
@@ -124,7 +124,7 @@ describe('EcoCalendarComponent', () => {
 
   describe('toggleAnalysis — lazy + cache', () => {
     it('un seul appel réseau, déplie/replie, re-ouverture sans nouvel appel', () => {
-      const { cmp, api } = setup({ analysis: { interpretation: 'IPP conforme', assetSentiments: [{ asset: 'USD', sentiment: 'bear', shortReason: 'r' }] } });
+      const { cmp, api } = setup({ analysis: { interpretation: 'IPP conforme', gap: 'inline' } });
       const target = ev({ name: 'IPP', impact: 'high', isReleased: true, currency: 'USD' });
 
       cmp.toggleAnalysis(target);                        // 1er dépliage → 1 appel
@@ -140,12 +140,12 @@ describe('EcoCalendarComponent', () => {
       expect(cmp.isOpen(target)).toBe(true);
     });
 
-    it('ccySent prend le sentiment de la devise de l\'event', () => {
-      const { cmp } = setup({ analysis: { interpretation: 'x', assetSentiments: [{ asset: 'EUR', sentiment: 'bull', shortReason: 'r' }] } });
+    it("écart calculé côté serveur affiché en clair, sans direction (#920)", () => {
+      const { cmp } = setup({ analysis: { interpretation: 'x', gap: 'above' } });
       const target = ev({ name: 'BCE', impact: 'high', isReleased: true, currency: 'EUR' });
-      expect(cmp.ccySent(target)).toBe('neutral');       // avant chargement
+      expect(cmp.gapLabel(target)).toBe('');              // avant chargement
       cmp.toggleAnalysis(target);
-      expect(cmp.ccySent(target)).toBe('bull');          // après chargement
+      expect(cmp.gapLabel(target)).toBe('Au-dessus de la prévision');
     });
   });
 

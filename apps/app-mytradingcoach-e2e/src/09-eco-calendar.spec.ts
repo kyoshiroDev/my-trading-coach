@@ -54,12 +54,11 @@ const MOCK_ECO_EVENTS_MIXED = {
       },
     ],
     analysis: {
-      summary: 'Journée chargée : NFP à 09:30 + PMI Europe. Prudence sur USD et EUR.',
-      recommendation: 'Éviter NQ et EUR/USD entre 09:15 et 10:15.',
-      assetImpacts: [
-        { asset: 'NQ', sentiment: 'bear', reason: 'NFP peut provoquer une forte volatilité.' },
-        { asset: 'EUR/USD', sentiment: 'bull', reason: 'PMI Euro supérieur aux attentes.' },
-      ],
+      // Forme de l'API depuis #920 (conformité) : résumé factuel, point d'attention calculé en code,
+      // aucun sentiment par actif.
+      summary: 'Journée chargée : NFP à 09:30 et PMI Europe à 10:00, devises USD et EUR.',
+      recommendation: 'Prochaine annonce à fort impact : 09:30, NFP US (USD). Volatilité possible autour de cet horaire.',
+      assetImpacts: [],
     },
     userAssets: ['NQ', 'BTC/USDT', 'EUR/USD'],
   },
@@ -67,11 +66,8 @@ const MOCK_ECO_EVENTS_MIXED = {
 
 const MOCK_ECO_RESULT_ANALYSIS = {
   data: {
-    interpretation: 'PMI supérieur aux attentes : surprise haussière pour l\'EUR.',
-    assetSentiments: [
-      { asset: 'EUR/USD', sentiment: 'bull', shortReason: 'Activité économique plus forte que prévu.' },
-      { asset: 'NQ', sentiment: 'neutral', shortReason: 'Pas d\'impact direct sur les indices US.' },
-    ],
+    interpretation: "Le PMI mesure l'activité des entreprises : il est ressorti au-dessus de la prévision.",
+    gap: 'above',
   },
 };
 
@@ -168,7 +164,7 @@ test.describe('Calendrier Économique', () => {
     await page.waitForSelector('[data-testid="eco-calendar"]');
     const ecoCard = page.getByTestId('eco-calendar');
     await expect(ecoCard).toContainText('Journée chargée');
-    await expect(ecoCard).toContainText('Éviter NQ');
+    await expect(ecoCard).toContainText('Prochaine annonce à fort impact : 09:30');
   });
 
   test('distingue les événements fort impact avec le badge "Fort"', async ({ page }) => {

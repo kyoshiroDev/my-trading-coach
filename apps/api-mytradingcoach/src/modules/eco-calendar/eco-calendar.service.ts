@@ -14,6 +14,7 @@ import { classifyEcoEvent, type EcoImpact } from './eco-calendar.impact';
 import { readUserPins, saveUserPins, sortWithPins, userTopAssets } from './eco-calendar.pins';
 import { fetchWithTimeout } from '../../common/utils/fetch-timeout';
 import { buildBriefing } from './eco-calendar.briefing';
+import { morningFocus } from './eco-calendar.gap';
 import { datesToCatchUp, datesToPoll, hasNumericResult, parisDate, shiftDate } from './eco-calendar.schedule';
 
 // Réexport : les appelants existants importent ces types depuis le service.
@@ -441,6 +442,17 @@ export class EcoCalendarService {
     events: EcoEvent[],
     userAssets: string[],
   ): Promise<EcoAnalysis> {
+    // Conformité (#920) : seul le résumé vient du modèle. Le point d'attention est calculé en code
+    // et aucun sentiment par actif n'est renvoyé, même depuis une ligne de cache plus ancienne.
+    const a = await this.morningSummary(date, events, userAssets);
+    return { summary: a.summary, recommendation: morningFocus(events), assetImpacts: [] };
+  }
+
+  private async morningSummary(
+    date: string,
+    events: EcoEvent[],
+    userAssets: string[],
+  ): Promise<EcoAnalysis> {
     const fallback: EcoAnalysis = {
       summary:
         events.length === 0
@@ -617,7 +629,8 @@ export class EcoCalendarService {
     // Même normalisation que `rememberSignature` (trim, majuscules, dédoublonnage, sans vide, tri) :
     // le clic (actifs bruts) et l'auto (actifs normalisés) tombent sur la même clé.
     const assetsSig = this.normalizedAssets(userAssets).join(',') || 'none';
-    return `eco:analysis:${day}:${stripPeriod(eventName)}:${assetsSig}`;
+    // v2 (#920, conformité) : les analyses d'avant portaient un sentiment par actif, jamais relues.
+    return `eco:analysis:v2:${day}:${stripPeriod(eventName)}:${assetsSig}`;
   }
 
   /**

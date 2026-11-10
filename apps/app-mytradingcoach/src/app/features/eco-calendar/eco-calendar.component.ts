@@ -10,7 +10,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize } from 'rxjs';
-import { EcoCalendarApi, EcoResultAnalysis } from '../../core/api/eco-calendar.api';
+import { ECO_GAP_LABEL, EcoCalendarApi, EcoResultAnalysis } from '../../core/api/eco-calendar.api';
 import { translateEcoEvent } from '../../core/data/eco-event-translations';
 
 import { UserStore } from '../../core/stores/user.store';
@@ -404,21 +404,10 @@ export class EcoCalendarComponent implements OnInit {
     return this.analyses().get(event.name);
   }
 
-  protected sentArrow(s: string): string { return s === 'bull' ? '▲' : s === 'bear' ? '▼' : '→'; }
-  protected sentLabel(s: string): string { return s === 'bull' ? 'haussier' : s === 'bear' ? 'baissier' : 'neutre'; }
-  protected sentCls(s: string): string { return s === 'bull' ? 'green' : s === 'bear' ? 'red' : 'neutral'; }
-
-  /** Sentiment de la devise de l'event (sinon dominant des actifs analysés). Neutre tant que non chargé. */
-  protected ccySent(event: EcoEvent): string {
-    const a = this.analyses().get(event.name);
-    if (!a) return 'neutral';
-    const match = a.assetSentiments.find(x => x.asset === event.currency);
-    if (match) return match.sentiment;
-    let bull = 0, bear = 0;
-    for (const x of a.assetSentiments) {
-      if (x.sentiment === 'bull') bull++; else if (x.sentiment === 'bear') bear++;
-    }
-    return bull > bear ? 'bull' : bear > bull ? 'bear' : 'neutral';
+  /** Écart publié / prévu, calculé côté serveur : « Au-dessus de la prévision »… (aucune direction). */
+  protected gapLabel(event: EcoEvent): string {
+    const gap = this.analyses().get(event.name)?.gap;
+    return gap ? ECO_GAP_LABEL[gap] : '';
   }
 
   private setDefaultSelectedDay(): void {

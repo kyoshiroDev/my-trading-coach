@@ -468,7 +468,7 @@ export async function createTestTrade(page: Page) {
 ├── smoke.spec.ts                   ← parcours démo, lancé en CI (non bloquant)
 ├── critical-paths.spec.ts          → auth, routes protégées, journal, paywalls FREE/PREMIUM
 ├── 08-session-mode.spec.ts         → vue morning, démarrer session, vue live, quick trade
-├── 09-eco-calendar.spec.ts         → events, analyse IA, bull/bear, dim hors session
+├── 09-eco-calendar.spec.ts         → events, analyse IA factuelle (écart calculé, pas de bull/bear, #920), dim hors session
 ├── 10-activity-calendar.spec.ts
 ├── 11-referral-ambassador.spec.ts  → parrainage : lien, paiement Stripe test, commission 20 %
 ├── 12-activation.spec.ts           → funnel n°1 : inscription → wizard → premier trade

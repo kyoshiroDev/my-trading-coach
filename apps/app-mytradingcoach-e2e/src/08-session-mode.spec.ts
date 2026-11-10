@@ -85,8 +85,8 @@ const MOCK_ECO_CALENDAR = {
     ],
     analysis: {
       summary: 'Journée chargée côté EUR.',
-      recommendation: 'Évite EUR/USD à 10h.',
-      assetImpacts: [{ asset: 'NQ', sentiment: 'neutral', reason: 'Pas d\'impact direct.' }],
+      recommendation: 'Prochaine annonce à fort impact : 10:00, PMI Zone Euro (EUR). Volatilité possible autour de cet horaire.',
+      assetImpacts: [],
     },
     userAssets: ['NQ', 'BTC/USDT'],
   },

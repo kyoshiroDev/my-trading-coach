@@ -14,14 +14,17 @@ export interface EcoCalendarData {
   briefing?: EcoBriefingLine[];
 }
 
-export interface EcoResultAnalysis {
-  interpretation: string;
-  assetSentiments: {
-    asset: string;
-    sentiment: 'bull' | 'bear' | 'neutral';
-    shortReason: string;
-  }[];
-}
+// Écart résultat / prévision calculé côté serveur + interprétation neutre (#920, conformité).
+export type { EcoReleaseGap, EcoResultAnalysis } from '@mtc/shared';
+import type { EcoReleaseGap, EcoResultAnalysis } from '@mtc/shared';
+
+/** Libellés neutres de l'écart : un fait comparatif, jamais une direction de marché. */
+export const ECO_GAP_LABEL: Record<EcoReleaseGap, string> = {
+  above: 'Au-dessus de la prévision',
+  inline: 'En ligne avec la prévision',
+  below: 'En dessous de la prévision',
+  no_consensus: 'Pas de consensus publié',
+};
 
 @Injectable({ providedIn: 'root' })
 export class EcoCalendarApi {

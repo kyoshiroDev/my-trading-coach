@@ -49,3 +49,12 @@ export interface EcoBriefingLine {
   /** Phrase prête à afficher : « 14:30 · NFP (USD) · prévision 180K · précédent 150K · concerne NQ. » */
   text: string;
 }
+
+/** Écart résultat / prévision calculé en code : un fait comparatif, jamais une direction de marché. */
+export type EcoReleaseGap = 'above' | 'inline' | 'below' | 'no_consensus';
+
+/** Analyse d'un résultat publié : écart calculé en code + interprétation neutre rédigée par l'IA. */
+export interface EcoResultAnalysis {
+  interpretation: string;
+  gap: EcoReleaseGap | null;
+}
