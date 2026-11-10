@@ -1714,3 +1714,6 @@ textes (la déconnexion supprime nos jetons, elle ne révoque rien chez Tradovat
 - Interventions sans chiffre (`event.hasResult === false`, discours, conférences, minutes) : colonne IA
   `talk` (« 🎙 sans chiffre »), statut neutre sous le libellé (`talkStatus`), jamais analysées. Heure passée
   sans chiffre : ligne en état `past`, distinct de `published` (`event.status`, contrat partagé).
+- Dashboard matin (`session-morning`) : `ecoBriefing` = `ecoCalendar().briefing` filtré sur
+  `status === 'upcoming'` (aujourd'hui seulement) ; une ligne factuelle calculée côté serveur, affichée telle
+  quelle (`line.text`), aucune direction ni conseil.

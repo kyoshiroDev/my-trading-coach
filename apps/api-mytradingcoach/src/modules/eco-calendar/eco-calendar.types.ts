@@ -1,4 +1,4 @@
-import type { EcoAnalysis, EcoEvent } from '@mtc/shared';
+import type { EcoAnalysis, EcoBriefingLine, EcoEvent } from '@mtc/shared';
 
 export interface EcoResultAnalysis {
   interpretation: string;
@@ -10,6 +10,8 @@ export interface EcoCalendarData {
   analysis: EcoAnalysis;
   userAssets: string[];
   pinnedEvents?: string[];
+  /** Annonces fortes du jour, une ligne factuelle chacune (aujourd'hui seulement). */
+  briefing?: EcoBriefingLine[];
 }
 
 /** Événement brut renvoyé par l'API Financial Modeling Prep. */

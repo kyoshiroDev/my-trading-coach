@@ -483,7 +483,7 @@ describe('EcoCalendarService', () => {
 
     it('appelle analyzeEcoEvents quand des events sont présents', async () => {
       mockPrisma.ecoEvent.findMany.mockResolvedValue([{
-        time: '15:30', name: 'NFP', country: 'US', currency: 'USD',
+        time: '15:30', name: 'Non Farm Payrolls', country: 'US', currency: 'USD',
         impact: 'high', actual: null, estimate: 180000, previous: 150000,
         isReleased: false, unit: 'K',
       }]);
@@ -496,6 +496,9 @@ describe('EcoCalendarService', () => {
 
       expect(mockAi.analyzeEcoEvents).toHaveBeenCalledOnce();
       expect(result.analysis.summary).toContain('NFP');
+      // Briefing factuel calculé en code (#920) : une ligne par annonce forte, actifs concernés.
+      expect(result.briefing).toHaveLength(1);
+      expect(result.briefing?.[0].assets).toEqual(['NQ']);
     });
 
     it('mutualise l’analyse : 2 users mêmes actifs → 1 seul appel IA (le 2e lit le cache BDD)', async () => {

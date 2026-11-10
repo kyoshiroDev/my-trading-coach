@@ -13,6 +13,7 @@ import * as dates from './eco-calendar.dates';
 import { classifyEcoEvent, type EcoImpact } from './eco-calendar.impact';
 import { readUserPins, saveUserPins, sortWithPins, userTopAssets } from './eco-calendar.pins';
 import { fetchWithTimeout } from '../../common/utils/fetch-timeout';
+import { buildBriefing } from './eco-calendar.briefing';
 import { datesToCatchUp, datesToPoll, hasNumericResult, parisDate, shiftDate } from './eco-calendar.schedule';
 
 // Réexport : les appelants existants importent ces types depuis le service.
@@ -505,7 +506,13 @@ export class EcoCalendarService {
 
     // Épinglés en premier, puis tri par heure
     const sortedEvents = this.sortWithPins(events, userPins);
-    const result: EcoCalendarData = { events: sortedEvents, analysis, userAssets, pinnedEvents: userPins };
+    const result: EcoCalendarData = {
+      events: sortedEvents,
+      analysis,
+      userAssets,
+      pinnedEvents: userPins,
+      briefing: buildBriefing(events, userAssets),
+    };
     try {
       await this.redis.setex(cacheKey, CACHE_TTL.ECO_EVENTS, JSON.stringify(result));
     } catch {

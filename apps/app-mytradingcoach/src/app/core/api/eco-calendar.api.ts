@@ -2,14 +2,16 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '@app/environments/environment';
-import type { EcoAnalysis, EcoEvent } from '@mtc/shared';
-export type { EcoEvent, EcoAnalysis };
+import type { EcoAnalysis, EcoBriefingLine, EcoEvent } from '@mtc/shared';
+export type { EcoEvent, EcoAnalysis, EcoBriefingLine };
 
 export interface EcoCalendarData {
   events: EcoEvent[];
   analysis: EcoAnalysis;
   userAssets: string[];
   pinnedEvents?: string[];
+  /** Annonces fortes du jour : ligne factuelle (heure, prévision, précédent, actifs concernés). */
+  briefing?: EcoBriefingLine[];
 }
 
 export interface EcoResultAnalysis {

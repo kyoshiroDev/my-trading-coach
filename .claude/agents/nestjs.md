@@ -2425,6 +2425,16 @@ global à la file ; Resend = 10 req/s par équipe, clé partagée entre environn
 - Pas de source de texte branchée. Existantes, non ajoutées : flux RSS des discours de la Fed
   (federalreserve.gov) et communiqués/discours BCE (ecb.europa.eu) ; FMP n'en fournit pas.
 
+## Calendrier éco : briefing factuel avant les annonces fortes (2026-11-10, #920)
+
+- `GET /eco-calendar/today` renvoie `briefing: EcoBriefingLine[]` (`eco-calendar.briefing.ts`, pur, sans
+  IA) : une ligne par annonce forte du jour, « HH:MM · libellé (devise) · prévision X · précédent Y ·
+  concerne <actifs du trader dans la devise> ». Sans prévision : « pas de consensus publié » ; intervention :
+  « pas de chiffre attendu ». Aucune direction ni conseil (test : `findForbiddenTerms` vide).
+- `assetCurrencies(asset)` : racine de contrat avec ou sans échéance (NQZ6, MNQ 12-26), paires (EUR/USD,
+  XAUUSD), futures devises CME (6E…), indices (GER40, UK100…), crypto → USD ; inconnu (actions) → aucune.
+- Dashboard matin (`session-morning`) : lignes des annonces encore à venir (`status === 'upcoming'`).
+
 ## News live : traduction par lots et bandeau BREAKING (2026-10-06)
 - **Sources** (`market-news.sources.ts`, `NEWS_FEEDS`) : 4 flux FMP, chacun sa limite (aucun n'évince
   les autres) : `general-latest` (macro, rangée sous le symbole `MACRO`), `forex-latest`, ETF indices /
