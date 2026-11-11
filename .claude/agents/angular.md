@@ -545,6 +545,13 @@ envoyées à l'API sont des horodatages ISO complets.
 - **Récap du matin** : la carte montre la dernière journée tradée (API, 7 jours) ; « Hier · » seulement si
   c'est hier (`recapIsYesterday`), sinon le nom du jour.
 - **Mes comptes** : « P&L cumulé » = `metrics.tradingPnl` (payouts rajoutés), jamais `realizedPnl`.
+- **Pourcentages** : un seul format, `formatPercent` (`@mtc/shared`) ou le pipe `pct` (`@mtc/front-ui`) :
+  « 63% » (entier par défaut), « — » si inconnu, « 0% » pour zéro (jamais « - »), jamais « -0% ».
+  Pas de `number:'1.0-1'` + « % » à la main, pas de `toFixed` pour un win rate.
+- **Montants** : `money` / `formatMoney` dans la devise du compte, jamais « $ » en dur ; un montant
+  négatif passe le signe au formateur (`(0 - x) | money`), jamais « -{{ x | money }} » (« -$0.00 »).
+- **Formulaire de trade en édition** : levier retrouvé depuis le P&L stocké (`editLeverage`), % sur le
+  capital engagé (`editPnlPct`), R/R par `plannedRiskReward` (avec le sens).
 
 ## Tableau de lignes — pattern partagé (Journal · Mes comptes)
 
