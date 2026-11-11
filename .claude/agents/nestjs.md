@@ -2159,8 +2159,12 @@ scripts ; les requêtes `analytics.sql.ts` prennent un `SqlClient` (`$queryRaw` 
 enregistrés, sans IA (texte inchangé), hors démo. Simulation par défaut (bilan sans identifiant),
 `--apply` exige `--backup <nouveau fichier>` (ligne `{ id, stats }` écrite avant chaque mise à
 jour), `--user <id>` pour un essai, `--restore <fichier> [--apply]` pour revenir en arrière. Lancé
-par Greg dans le conteneur API (commande esbuild en tête du script). Exclusion des comptes
-échoués / archivés selon leur statut actuel.
+dans le worker API (procédure en tête du script : copie dans `/tmp`, `-e NODE_PATH=/app/node_modules`,
+sauvegarde dans `/tmp` puis copiée sur le VPS). Exclusion des comptes échoués / archivés selon leur
+statut actuel. **Semaine sans plus aucun trade clôturé** (décision du 11/11) : débrief NON touché si
+la semaine en avait à la génération (`tradesAtGeneration`, somme des `insights.accounts[].stats.totalTrades`)
+ou si l'ancien format n'a pas de sections ; compté dans `ignores`. Semaine déjà vide à la génération :
+recalculée (0 trade = vraie valeur).
 **Drawdown d'une séance** (`session-totals.ts`, #935) : `worstAccountDrawdown` sur ses trades, pire
 compte gardé. Une ancienne séance sans compte rattache toujours les trades du jour de tous les
 comptes (totaux inchangés, voulu), mais son drawdown n'est jamais une série mélangée. Lire
