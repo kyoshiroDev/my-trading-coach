@@ -11,12 +11,16 @@ import { debriefStats } from './debrief-stats';
  *   enregistrées dans le débrief (celles de `getWeekInfo` à la génération) ;
  * - seul `stats` est réécrit : le texte de l'IA (résumé, insights, objectifs) ne bouge pas, aucun appel IA ;
  * - comptes démo exclus ;
+ * - débrief dont la semaine n'a PLUS aucun trade clôturé (supprimés ou réimportés depuis) : NON
+ *   touché, compté dans `ignores` (décision de Greg du 11/11). On ne recalcule une semaine vide que
+ *   si elle l'était déjà à la génération (somme des `insights.accounts[].stats.totalTrades` = 0) :
+ *   « 0 trade » est alors la vraie valeur. Format sans sections de comptes : inconnu, non touché ;
  * - simulation par défaut ; en écriture, chaque ligne est sauvegardée AVANT d'être modifiée.
  * Les comptes échoués ou archivés sont exclus selon leur statut ACTUEL (comme `getSummary`), pas celui
  * du jour de la génération.
  */
 
-export type RecomputeClient = Pick<PrismaClient, '$queryRaw' | 'weeklyDebrief'>;
+export type RecomputeClient = Pick<PrismaClient, '$queryRaw' | 'weeklyDebrief' | 'trade'>;
 
 /** Ligne de sauvegarde : de quoi remettre `stats` tel qu'il était (`restoreDebriefStats`). */
 export interface DebriefStatsBackupRow {
@@ -31,6 +35,25 @@ export interface RecomputeReport {
   inchanges: number;
   /** Nombre de débriefs modifiés par champ de `stats` (ex. `totalTrades: 12`). */
   champs: Record<string, number>;
+  /**
+   * Débriefs laissés tels quels, semaine sans plus aucun trade clôturé : `tradesSupprimes` = la semaine
+   * en avait à la génération ; `formatInconnu` = ancien format sans sections de comptes.
+   */
+  ignores: { tradesSupprimes: number; formatInconnu: number };
+}
+
+/**
+ * Trades de la semaine au moment de la génération, d'après les sections de comptes enregistrées
+ * (`insights.accounts[].stats.totalTrades`, calculé sur la semaine même avant #934). null : ancien
+ * format sans sections, nombre inconnu.
+ */
+export function tradesAtGeneration(insights: unknown): number | null {
+  const accounts = (insights as { accounts?: unknown } | null)?.accounts;
+  if (!Array.isArray(accounts)) return null;
+  return accounts.reduce<number>((sum, a) => {
+    const n = Number((a as { stats?: { totalTrades?: unknown } } | null)?.stats?.totalTrades);
+    return sum + (Number.isFinite(n) ? n : 0);
+  }, 0);
 }
 
 /** JSON aux clés triées, pour comparer deux `stats` sans dépendre de l'ordre des clés. */
@@ -64,15 +87,15 @@ export async function recomputeDebriefStats(
   },
 ): Promise<RecomputeReport> {
   if (opts.apply && !opts.backup) throw new Error('Écriture sans sauvegarde refusée');
-  const report: RecomputeReport = { lus: 0, modifies: 0, inchanges: 0, champs: {} };
+  const report: RecomputeReport = { lus: 0, modifies: 0, inchanges: 0, champs: {}, ignores: { tradesSupprimes: 0, formatInconnu: 0 } };
   const take = opts.batchSize ?? 200;
   let cursor: string | null = null;
 
   for (;;) {
-    const batch: { id: string; userId: string; startDate: Date; endDate: Date; stats: Prisma.JsonValue }[] =
+    const batch: { id: string; userId: string; startDate: Date; endDate: Date; stats: Prisma.JsonValue; insights: Prisma.JsonValue }[] =
       await prisma.weeklyDebrief.findMany({
         where: { user: { isDemo: false }, ...(opts.userId ? { userId: opts.userId } : {}) },
-        select: { id: true, userId: true, startDate: true, endDate: true, stats: true },
+        select: { id: true, userId: true, startDate: true, endDate: true, stats: true, insights: true },
         orderBy: { id: 'asc' },
         take,
         ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
@@ -81,6 +104,16 @@ export async function recomputeDebriefStats(
 
     for (const d of batch) {
       report.lus++;
+      // Trades clôturés encore présents dans la semaine, tous comptes (même critère que le diagnostic).
+      const weekTrades = await prisma.trade.count({
+        where: { userId: d.userId, tradedAt: { gte: d.startDate, lte: d.endDate }, pnl: { not: null } },
+      });
+      const atGeneration = tradesAtGeneration(d.insights);
+      if (weekTrades === 0 && atGeneration !== 0) {
+        if (atGeneration === null) report.ignores.formatInconnu++;
+        else report.ignores.tradesSupprimes++;
+        continue;
+      }
       const next = debriefStats(await computeSummary(prisma, { userId: d.userId, from: d.startDate, to: d.endDate }));
       const fields = changedStatsFields(d.stats, next);
       if (fields.length === 0) {

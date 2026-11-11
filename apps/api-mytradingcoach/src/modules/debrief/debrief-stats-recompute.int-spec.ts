@@ -51,13 +51,17 @@ async function trades(owner: string) {
   });
 }
 
-async function staleDebrief(owner: string) {
+/** `atGeneration` : trades de la semaine à la génération (sections de comptes) ; null = ancien format. */
+async function staleDebrief(owner: string, atGeneration: number | null = 1) {
   return prisma.weeklyDebrief.create({
     data: {
       userId: owner,
       ...week,
       aiSummary: 'Texte écrit par l’IA',
-      insights: [{ type: 'pattern', text: 'insight' }],
+      insights:
+        atGeneration === null
+          ? { summary: 'ancien format' }
+          : { summary: 'insight', accounts: [{ name: 'Compte', stats: { totalTrades: atGeneration } }] },
       objectives: [{ text: 'objectif' }],
       stats: historyStats,
     },
@@ -78,10 +82,13 @@ beforeAll(async () => {
   await staleDebrief(demoId);
 }, 120_000);
 
+const extraUsers: string[] = [];
+
 afterAll(async () => {
+  const all = [userId, demoId, ...extraUsers];
   await prisma.trade.deleteMany({ where: { id: { startsWith: RUN } } });
-  await prisma.setup.deleteMany({ where: { userId: { in: [userId, demoId] } } });
-  await prisma.user.deleteMany({ where: { id: { in: [userId, demoId] } } });
+  await prisma.setup.deleteMany({ where: { userId: { in: all } } });
+  await prisma.user.deleteMany({ where: { id: { in: all } } });
   await app.close();
 });
 
@@ -133,5 +140,45 @@ describe('recomputeDebriefStats (#943), vrai Postgres', () => {
     );
     const viaScript = debriefStats(await computeSummary(prisma, { userId, from: week.startDate, to: week.endDate }));
     expect(viaScript).toEqual(viaService);
+  });
+});
+
+describe('semaine sans plus aucun trade (décision du 11/11), vrai Postgres', () => {
+  /** Trader dont la semaine du débrief n'a aucun trade aujourd'hui (seulement un trade plus ancien). */
+  async function emptyWeekTrader(tag: string, atGeneration: number | null) {
+    const id = (await prisma.user.create({ data: { email: `int-943-${tag}-${RUN}@test.local`, password: 'x' } })).id;
+    extraUsers.push(id);
+    const setup = await prisma.setup.create({ data: { userId: id, title: 'Breakout', color: '#10b981' } });
+    await prisma.trade.create({
+      data: {
+        id: `${RUN}-${tag}-old`, userId: id, setupId: setup.id, asset: 'MNQ', side: TradeSide.LONG, entry: 20000,
+        pnl: 80, session: TradingSession.NEW_YORK, timeframe: '5M', tradedAt: new Date('2026-10-01T10:00:00'),
+      },
+    });
+    await staleDebrief(id, atGeneration);
+    return id;
+  }
+
+  it('trades supprimés depuis la génération : débrief laissé tel quel, compté à part', async () => {
+    const id = await emptyWeekTrader('supprimes', 4);
+    const before = (await read(id)).stats;
+    const report = await recomputeDebriefStats(prisma, { apply: true, userId: id, backup: () => undefined });
+    expect(report).toMatchObject({ lus: 1, modifies: 0, ignores: { tradesSupprimes: 1, formatInconnu: 0 } });
+    expect((await read(id)).stats).toEqual(before);
+  });
+
+  it('ancien format sans sections, semaine vide : laissé tel quel', async () => {
+    const id = await emptyWeekTrader('inconnu', null);
+    const report = await recomputeDebriefStats(prisma, { apply: false, userId: id });
+    expect(report).toMatchObject({ modifies: 0, ignores: { tradesSupprimes: 0, formatInconnu: 1 } });
+  });
+
+  it('semaine déjà vide à la génération : stats de la semaine (0 trade) au lieu de l’historique', async () => {
+    const id = await emptyWeekTrader('vide', 0);
+    const backup: DebriefStatsBackupRow[] = [];
+    const report = await recomputeDebriefStats(prisma, { apply: true, userId: id, backup: (r) => backup.push(r) });
+    expect(report).toMatchObject({ modifies: 1, ignores: { tradesSupprimes: 0, formatInconnu: 0 } });
+    expect((await read(id)).stats).toMatchObject({ totalTrades: 0, totalPnl: 0 });
+    expect(backup).toHaveLength(1);
   });
 });
