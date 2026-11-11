@@ -157,21 +157,27 @@ export function presetRange(
   now = new Date(),
 ): { dateFrom?: string; dateTo?: string } {
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  if (preset === 'today') return { dateFrom: today.toISOString(), dateTo: now.toISOString() };
+  // Fin de journée, pas « maintenant » : la borne est calculée une fois par filtre, et un trade saisi
+  // ou importé après l'ouverture du journal sortait des chiffres (#947).
+  const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999).toISOString();
+  if (preset === 'today') return { dateFrom: today.toISOString(), dateTo: endOfToday };
   if (preset === 'week') {
     const weekStart = new Date(today);
-    weekStart.setDate(today.getDate() - today.getDay()); // la semaine commence le dimanche
-    return { dateFrom: weekStart.toISOString(), dateTo: now.toISOString() };
+    // Semaine ISO, lundi → dimanche, comme les regroupements du journal, le tableau de bord et le débrief.
+    weekStart.setDate(today.getDate() - ((today.getDay() + 6) % 7));
+    return { dateFrom: weekStart.toISOString(), dateTo: endOfToday };
   }
   if (preset === 'month') {
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-    return { dateFrom: monthStart.toISOString(), dateTo: now.toISOString() };
+    return { dateFrom: monthStart.toISOString(), dateTo: endOfToday };
   }
   if (preset === 'custom') {
     if (!customFrom) return {};
     return {
-      dateFrom: new Date(customFrom).toISOString(),
-      dateTo: customTo ? new Date(customTo + 'T23:59:59').toISOString() : now.toISOString(),
+      // Minuit LOCAL du premier jour (`new Date('AAAA-MM-JJ')` est lu en UTC : 01:00 ou 02:00 à
+      // Paris, les trades de la première heure étaient exclus), comme la borne de fin.
+      dateFrom: new Date(customFrom + 'T00:00:00').toISOString(),
+      dateTo: customTo ? new Date(customTo + 'T23:59:59.999').toISOString() : endOfToday,
     };
   }
   return {}; // 'all' → pas de borne
