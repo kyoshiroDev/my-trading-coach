@@ -14,7 +14,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { AnalyticsService } from './analytics.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../infra/redis.service';
-import { minuteKey, downsampleEquity, EQUITY_MAX_POINTS, bestByWinRate, periodBefore, splitPayouts } from './analytics.service';
+import { minuteKey, downsampleEquity, EQUITY_MAX_POINTS, periodBefore, splitPayouts } from './analytics.service';
+import { bestByWinRate } from './analytics-summary';
 
 const mockPrisma = {
   setup: {
