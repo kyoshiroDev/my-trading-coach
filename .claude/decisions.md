@@ -1,5 +1,6 @@
 # Décisions de Greg (lues par l'agent relecteur)
 
+- 2026-11-11 : #916, liaison des brackets introuvable (`parentId`/`ocoId` vides en prod : 0 lié sur 19). Diagnostic en lecture seule (#955) derrière un interrupteur éteint par défaut (`TRADOVATE_LINK_DIAGNOSTIC`), une fois par jour et par connexion, sans prix ni compte. L'inférence par ID adjacent n'est toujours PAS validée. Le découpage par fill a son propre ticket (#956). (Délégué au relecteur par Greg.)
 - 2026-11-11 : recalcul des anciens débriefs (#943) : ne recalculer que si la semaine a encore au moins un trade clôturé, ou si elle était déjà vide à la génération (0 trade = vraie valeur) ; un débrief dont les trades ont disparu depuis (supprimés, réimportés) ou d'ancien format sans sections reste tel quel, compté à part. Pas de suppression de débriefs.
 - 2026-11-11 : autorisation ponctuelle de Greg : Claude lance les commandes VPS dev et prod pour #943 SEULEMENT (« je t'autorise à lancer les commandes sur les VPS dev et prod pour #943 »). La règle « aucune commande VPS par Claude » reste en vigueur.
 - 2026-11-11 : débriefs hebdo enregistrés avant #942 (stats calculées sur tout l'historique, #934) : pas de recalcul dans la PR du correctif. Ticket à part #943 : un script lancé par Greg, en simulation par défaut, sans IA, qui ne recalcule que `WeeklyDebrief.stats`.
