@@ -563,7 +563,10 @@ export class DashboardComponent {
    * inconnu/0 (sinon la division /1 produit des pourcentages absurdes → « - »).
    */
   protected readonly tradeRows = computed<DashboardTradeRow[]>(() =>
-    buildTradeRows(this.tradesStore.trades().slice(0, 8), this.baseCapital()),
+    buildTradeRows(this.tradesStore.trades().slice(0, 8), this.baseCapital(), (id) => {
+      const a = id ? this.selectedAccount.accounts().find((x) => x.id === id) : undefined;
+      return a ? (a.metrics.startingBalance ?? null) : null;
+    }),
   );
 
   goToJournal() { this.showTradeForm.set(true); }

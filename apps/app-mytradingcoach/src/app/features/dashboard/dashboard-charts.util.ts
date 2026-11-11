@@ -362,21 +362,31 @@ export function buildCoachInsights(
 /** Issue d'une ligne : classement partagé sur le net, `open` tant que le trade n'est pas clôturé. */
 export type TradeRowOutcome = TradeOutcome | 'open';
 
-/** Ligne du tableau « historique » : P&L % sur le capital de base, `null` si capital inconnu ou trade ouvert. */
+/** Ligne du tableau « historique » : P&L % sur le capital du compte du trade, `null` si capital inconnu ou trade ouvert. */
 export type DashboardTradeRow = Trade & { outcome: TradeRowOutcome; pct: number | null };
 
 /**
  * Lignes de l'historique sur le P&L NET (frais déduits), comme les KPIs et le calendrier. Un trade
  * ouvert (pnl absent) n'est ni gagnant ni perdant : `open`, sans P&L % (#655).
  */
-export function buildTradeRows(trades: readonly Trade[], baseCapital: number): DashboardTradeRow[] {
+/**
+ * P&L % = rendement sur le capital DU COMPTE du trade (`capitalOf(accountId)`), jamais sur la somme
+ * des comptes (#947 : +500 sur un 50K à côté d'un 100K affichait +0,33 % au lieu de +1 %) ;
+ * `fallbackCapital` (compte choisi, ou capital du profil) si le compte n'est pas connu.
+ */
+export function buildTradeRows(
+  trades: readonly Trade[],
+  fallbackCapital: number,
+  capitalOf: (accountId: string | null | undefined) => number | null = () => null,
+): DashboardTradeRow[] {
   return trades.map((t) => {
     const net = netPnl(t);
+    const capital = capitalOf(t.accountId) ?? fallbackCapital;
     return {
       ...t,
       pnl: net,
       outcome: net === null ? 'open' : classifyTrade(net),
-      pct: net !== null && baseCapital > 0 ? (net / baseCapital) * 100 : null,
+      pct: net !== null && capital > 0 ? (net / capital) * 100 : null,
     };
   });
 }
