@@ -62,4 +62,24 @@ describe('MRR Stripe : après remise, sans écart avec la base', () => {
     expect(res.mrrStripe).toBe(Math.round(29 + 29 + 290 / 12));
     expect(res.gap).toBe(0);
   });
+
+  it('essai `trialing` et compte interne exclus du MRR Stripe, comme du MRR base (#947)', async () => {
+    const subs = [
+      sub('s1', 4900, 'month'),
+      { ...sub('trial', 2900, 'month'), status: 'trialing' }, // réservation fondateur en essai
+      sub('interne', 4900, 'month'), // compte interne payant
+    ];
+    const users = { adminStats: vi.fn().mockResolvedValue({ mrr: 49 }) };
+    const prisma = {
+      user: {
+        findMany: vi.fn()
+          .mockResolvedValueOnce([]) // abonnés de la base
+          .mockResolvedValueOnce([{ stripeSubscriptionId: 'interne' }]), // hors périmètre
+      },
+    };
+    const admin = new AdminService(prisma as never, users as never, { listActiveSubscriptions: vi.fn().mockResolvedValue(subs) } as never);
+    const res = await admin.reconcileStripe();
+    expect(res.mrrStripe).toBe(49);
+    expect(res.gap).toBe(0);
+  });
 });

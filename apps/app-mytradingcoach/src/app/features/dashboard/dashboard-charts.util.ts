@@ -111,21 +111,20 @@ export function setupsDonutFromTrades(
 
 export interface EmotionShare { emotion: string; pct: number }
 
-/** Top 4 des émotions (émotion effective, sinon humeur de session) ; non renseignées exclues. */
-export function emotionShares(
-  trades: { effectiveEmotion?: string | null; emotion: string | null }[],
-): EmotionShare[] {
-  const withEmotion = trades
-    .map(t => t.effectiveEmotion ?? t.emotion)
-    .filter((e): e is string => !!e);
-  const total = withEmotion.length;
+/**
+ * Top 4 des émotions effectives (émotion du trade, sinon humeur de la séance : TIRED est une humeur),
+ * en % des trades de la période, depuis les stats par émotion de l'API. Avant (#947), le donut était
+ * calculé sur les 6 derniers trades chargés par le tableau de bord.
+ */
+export function emotionSharesFromStats(stats: readonly { emotion: string; count: number }[]): EmotionShare[] {
+  const total = stats.reduce((s, e) => s + e.count, 0);
   if (!total) return [];
   return (['REVENGE', 'STRESSED', 'CONFIDENT', 'FOCUSED', 'FEAR', 'NEUTRAL', 'TIRED'] as const)
-    .map(emotion => ({
+    .map((emotion) => ({
       emotion,
-      pct: Math.round((withEmotion.filter(e => e === emotion).length / total) * 100),
+      pct: Math.round(((stats.find((s) => s.emotion === emotion)?.count ?? 0) / total) * 100),
     }))
-    .filter(e => e.pct > 0)
+    .filter((e) => e.pct > 0)
     .sort((a, b) => b.pct - a.pct)
     .slice(0, 4);
 }
@@ -319,6 +318,8 @@ export function buildCoachInsights(
   s: AnalyticsSummary | null,
   byEmotion: EmotionStat[],
   bySetup: SetupStat[],
+  /** Période des chiffres (« sur 30 jours », « au total »…) : jamais « ce mois » en dur (#947). */
+  periodShort = 'sur la période',
 ): CoachInsight[] {
   if (!s || s.totalTrades === 0) return [];
   const lbl: Record<string, string> = {
@@ -327,8 +328,8 @@ export function buildCoachInsights(
   };
   const out: CoachInsight[] = [];
 
-  if (s.winRate >= 50) out.push({ tone: 'good', text: `Ton win rate est de ${s.winRate.toFixed(0)}% ce mois, au-dessus de la barre des 50%.` });
-  else out.push({ tone: 'warn', text: `Ton win rate est de ${s.winRate.toFixed(0)}% ce mois. Vise 50%+ en filtrant mieux tes setups.` });
+  if (s.winRate >= 50) out.push({ tone: 'good', text: `Ton win rate est de ${s.winRate.toFixed(0)}% ${periodShort}, au-dessus de la barre des 50%.` });
+  else out.push({ tone: 'warn', text: `Ton win rate est de ${s.winRate.toFixed(0)}% ${periodShort}. Vise 50%+ en filtrant mieux tes setups.` });
 
   if (s.profitFactor != null) {
     if (s.profitFactor >= 1.5) out.push({ tone: 'good', text: `Profit factor de ${s.profitFactor.toFixed(2)} : tes gains couvrent largement tes pertes.` });

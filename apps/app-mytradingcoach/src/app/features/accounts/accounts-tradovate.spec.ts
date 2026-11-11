@@ -29,7 +29,7 @@ function acct(id: string, label: string, p: Partial<TradingAccount> = {}): Tradi
     profitTarget: null, maxDrawdown: null, drawdownType: 'TRAILING', propFirmPlanId: null, platform: null, lastPayoutAt: null,
     createdAt: '2026-01-01T00:00:00.000Z', updatedAt: '2026-01-01T00:00:00.000Z',
     metrics: {
-      startingBalance: 50000, realizedPnl: 0, currentBalance: 50000, tradesCount: 0,
+      startingBalance: 50000, realizedPnl: 0, tradingPnl: 0, currentBalance: 50000, tradesCount: 0,
       winRate: null, bestDay: null, worstDay: null,
       objective: null, drawdown: null, drawdownUnconfirmed: false, dailyLoss: null, progress: null, broker: null, estimated: true, disclaimer: 'estimé',
     },

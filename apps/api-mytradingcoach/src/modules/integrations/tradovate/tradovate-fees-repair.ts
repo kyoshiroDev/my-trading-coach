@@ -18,6 +18,9 @@ export interface RecomputedTrade {
   pnl?: number | null;
   /** Frais complets recalculés ; absent = frais indisponibles sur la fenêtre. */
   commission?: number | null;
+  /** Fills de la paire (frais d'un fill partagé répartis au prorata, #947). */
+  _buyFillId?: string;
+  _sellFillId?: string;
 }
 
 export interface StoredTrade extends RecomputedTrade {
@@ -34,6 +37,12 @@ export interface FeeRepairPlan {
   skippedLower: number;
   /** Trade recalculé sans frais disponibles : rien à poser. */
   noFees: number;
+  /**
+   * Trade dont un fill sert aussi à un autre trade : jamais monté (#947). Ses frais sont maintenant
+   * répartis au prorata ; en base, l'ancienne règle les a tous posés sur le premier trade. Monter
+   * seulement les suivants compterait le fill deux fois. Ces trades relèvent du script #950.
+   */
+  skippedShared: number;
   /** Trades recalculés absents de la base (trade supprimé, autre fuseau, autre source). */
   notFound: number;
   /** Σ des frais ajoutés par les mises à jour. */
@@ -55,8 +64,11 @@ export function planFeeRepairs(computed: RecomputedTrade[], stored: StoredTrade[
     pool.set(k, [...(pool.get(k) ?? []), t]);
   }
   const plan: FeeRepairPlan = {
-    updates: [], matched: 0, unchanged: 0, skippedLower: 0, noFees: 0, notFound: 0, feesAdded: 0,
+    updates: [], matched: 0, unchanged: 0, skippedLower: 0, noFees: 0, skippedShared: 0, notFound: 0, feesAdded: 0,
   };
+  const uses = new Map<string, number>();
+  for (const c of computed) for (const f of new Set([c._buyFillId, c._sellFillId])) if (f) uses.set(f, (uses.get(f) ?? 0) + 1);
+  const shared = (c: RecomputedTrade) => [c._buyFillId, c._sellFillId].some((f) => f && (uses.get(f) ?? 0) > 1);
   for (const c of computed) {
     const candidates = pool.get(dedupeKey(c));
     const t = candidates?.shift();
@@ -65,6 +77,10 @@ export function planFeeRepairs(computed: RecomputedTrade[], stored: StoredTrade[
       continue;
     }
     plan.matched++;
+    if (shared(c)) {
+      plan.skippedShared++;
+      continue;
+    }
     if (typeof c.commission !== 'number' || !Number.isFinite(c.commission)) {
       plan.noFees++;
       continue;

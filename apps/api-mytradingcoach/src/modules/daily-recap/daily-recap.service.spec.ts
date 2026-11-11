@@ -29,7 +29,7 @@ const makeTrade = (overrides: Record<string, unknown> = {}) => ({
 const mockPrisma = {
   trade: { findMany: vi.fn() },
   user: { findUnique: vi.fn() },
-  dailyRecap: { upsert: vi.fn(), findUnique: vi.fn() },
+  dailyRecap: { upsert: vi.fn(), findUnique: vi.fn(), findFirst: vi.fn() },
   // Devise des montants du one-liner = celle des comptes.
   tradingAccount: { findMany: vi.fn().mockResolvedValue([{ currency: 'USD' }]) },
 };
@@ -185,6 +185,20 @@ describe('DailyRecapService', () => {
       }),
     );
     expect(result).toEqual(updatedRecap);
+  });
+
+  describe('getYesterdayRecap : dernière journée tradée (#947)', () => {
+    it('cherche le récap le plus récent avant aujourd’hui sur 7 jours (le lundi : vendredi, pas dimanche)', async () => {
+      const friday = { id: 'r', date: new Date('2026-11-06'), aiOneLiner: 'x' };
+      mockPrisma.dailyRecap.findFirst.mockResolvedValue(friday);
+      const r = await service.getYesterdayRecap('u1', false);
+      const arg = mockPrisma.dailyRecap.findFirst.mock.calls.at(-1)![0];
+      expect(arg.orderBy).toEqual({ date: 'desc' });
+      const { gte, lt } = arg.where.date as { gte: Date; lt: Date };
+      expect(lt.getHours()).toBe(0); // aujourd'hui minuit exclu
+      expect(Math.round((lt.getTime() - gte.getTime()) / 864e5)).toBe(7);
+      expect(r).toEqual({ ...friday, aiOneLiner: null }); // one-liner IA réservé Premium
+    });
   });
 
   describe('patterns 7j', () => {

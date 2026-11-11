@@ -27,6 +27,27 @@ export type TradeListFilters = Pick<
     | 'includeInactive'
   >;
 
+/** Net d'un trade arrondi au centime, en SQL (alias `t`) : `round(pnl − |commission|, 2)`. */
+export const TRADE_NET_SQL = Prisma.sql`round((t."pnl" - abs(coalesce(t."commission", 0)))::text::numeric, 2)`;
+
+/**
+ * `where` Prisma COMPLET de la liste : `buildTradeWhere` + le filtre de résultat, qui dépend du net
+ * (`pnl − |commission|`) et ne s'exprime pas en Prisma. Les ids sont sélectionnés par le filtre SQL
+ * (`buildTradeFilterSql`) : la liste et les chiffres du journal lisent exactement les mêmes trades.
+ */
+export async function resolveTradeWhere(
+  db: { $queryRaw<T = unknown>(query: Prisma.Sql): Promise<T> },
+  userId: string,
+  f: TradeListFilters,
+): Promise<Prisma.TradeWhereInput> {
+  const where = buildTradeWhere(userId, f);
+  if (!f.result) return where;
+  const rows = await db.$queryRaw<{ id: string }[]>(Prisma.sql`
+    SELECT t."id" FROM "Trade" t LEFT JOIN "TradeSession" s ON s."id" = t."sessionId"
+    WHERE ${buildTradeFilterSql(userId, f)}`);
+  return { ...where, id: { in: rows.map((r) => r.id) } };
+}
+
 export function buildTradeWhere(userId: string, f: TradeListFilters): Prisma.TradeWhereInput {
   const where: Prisma.TradeWhereInput = { userId };
   // Clé `AND` : le filtre renvoie un `OR`, déjà utilisé ici par l'émotion.
@@ -36,12 +57,10 @@ export function buildTradeWhere(userId: string, f: TradeListFilters): Prisma.Tra
   if (f.side) where.side = f.side;
   if (f.setupId) where.setupId = f.setupId;
 
-  // Résultat : mêmes seuils ε que trade-stats.util (les null/ouverts sont exclus par
-  // les comparaisons SQL). WIN pnl>ε · LOSS pnl<-ε · BREAKEVEN -ε≤pnl≤ε.
-  if (f.result === 'WIN') where.pnl = { gt: BREAKEVEN_EPSILON };
-  else if (f.result === 'LOSS') where.pnl = { lt: -BREAKEVEN_EPSILON };
-  else if (f.result === 'BREAKEVEN')
-    where.pnl = { gte: -BREAKEVEN_EPSILON, lte: BREAKEVEN_EPSILON };
+  // Résultat (gagnant / perdant / BE) : classé sur le NET arrondi, comme partout. Prisma ne sait
+  // pas comparer `pnl − |commission|` : ce filtre est appliqué par `resolveTradeWhere` (ids
+  // sélectionnés en SQL). Ici on ne garde que les trades clôturés.
+  if (f.result) where.pnl = { not: null };
 
   // Note d'exécution : enum direct ; 'NONE' → non évaluée (null).
   if (f.executionGrade === 'NONE') where.executionGrade = null;
@@ -91,10 +110,15 @@ export function buildTradeFilterSql(
   if (f.side) parts.push(Prisma.sql`t."side"::text = ${f.side}`);
   if (f.setupId) parts.push(Prisma.sql`t."setupId" = ${f.setupId}`);
 
-  if (f.result === 'WIN') parts.push(Prisma.sql`t."pnl" > ${BREAKEVEN_EPSILON}`);
-  else if (f.result === 'LOSS') parts.push(Prisma.sql`t."pnl" < ${-BREAKEVEN_EPSILON}`);
-  else if (f.result === 'BREAKEVEN')
-    parts.push(Prisma.sql`t."pnl" >= ${-BREAKEVEN_EPSILON} AND t."pnl" <= ${BREAKEVEN_EPSILON}`);
+  // Résultat sur le NET arrondi au centime (même règle que computeTradeStats et les stats du
+  // journal) : avant, sur le brut, un trade +1 $ brut / 1,24 $ de frais tombait dans « Gagnants ».
+  if (f.result) {
+    const net = TRADE_NET_SQL;
+    if (f.result === 'WIN') parts.push(Prisma.sql`t."pnl" IS NOT NULL AND ${net} > ${BREAKEVEN_EPSILON}`);
+    else if (f.result === 'LOSS') parts.push(Prisma.sql`t."pnl" IS NOT NULL AND ${net} < ${-BREAKEVEN_EPSILON}`);
+    else if (f.result === 'BREAKEVEN')
+      parts.push(Prisma.sql`t."pnl" IS NOT NULL AND ${net} >= ${-BREAKEVEN_EPSILON} AND ${net} <= ${BREAKEVEN_EPSILON}`);
+  }
 
   if (f.executionGrade === 'NONE') parts.push(Prisma.sql`t."executionGrade" IS NULL`);
   else if (f.executionGrade) parts.push(Prisma.sql`t."executionGrade"::text = ${f.executionGrade}`);

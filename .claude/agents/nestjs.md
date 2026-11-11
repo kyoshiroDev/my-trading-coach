@@ -60,17 +60,17 @@ PATCH  /api/trades/:id
 DELETE /api/trades/:id
 
 GET    /api/analytics/summary                    FREE + PREMIUM (pas de PremiumGuard). ?from&to = periode glissante du dashboard (sans bornes = tout l'historique)
-GET    /api/analytics/by-setup                   PREMIUM
-GET    /api/analytics/by-emotion                 PREMIUM
-GET    /api/analytics/by-hour                    PREMIUM
-GET    /api/analytics/equity-curve               PREMIUM
-GET    /api/analytics/equity-curve/current-month FREE (carte equite dashboard, legacy)
+GET    /api/analytics/by-setup                   PREMIUM, ?from&to (période du dashboard / des Statistiques, #947)
+GET    /api/analytics/by-emotion                 FREE (vue de base, donut du dashboard), ?from&to
+GET    /api/analytics/by-hour                    PREMIUM, ?from&to
+GET    /api/analytics/equity-curve               FREE
+GET    /api/analytics/equity-curve/current-month FREE (carte equite dashboard, legacy ; mois dans la clé de cache)
 GET    /api/analytics/equity-curve/daily         FREE, ?from&to → carte equite scopee periode
 GET    /api/analytics/activity/range             FREE, ?from&to → P&L par jour du dashboard (agregation jour/semaine/mois cote front)
 GET    /api/analytics/activity/current-month     FREE (activite mensuelle)
-GET    /api/analytics/activity/:year/:month      PREMIUM
-GET    /api/analytics/top-assets                 PREMIUM
-GET    /api/analytics/daily-recap/yesterday      JWT → recap de la veille
+GET    /api/analytics/activity/:year/:month      FREE (donnée propre de l'utilisateur, analytics.controller.spec)
+GET    /api/analytics/top-assets                 FREE (vue de base), ?from&to
+GET    /api/analytics/daily-recap/yesterday      JWT → récap de la DERNIÈRE journée tradée sur 7 jours (le lundi : vendredi, #947)
 
 POST   /api/session/start              JWT → démarrer une session, { mood: MoodState }
 GET    /api/session/active             JWT → session active en cours (null si aucune)
@@ -851,6 +851,23 @@ Ne jamais écrire `where: { userId, status: ACTIVE }` sur `TradeSession` : passe
 journée précédente n'est jamais renvoyée comme active (chrono à 265 h, P&L du jour rapporté à
 une session de 11 jours). Seul `startSession` ferme encore TOUTES les `ACTIVE` sans borne.
 
+### Clôture d'un trade depuis la séance (#947)
+`SessionService.closeTrade` (`POST /session/trades/:id/close`) calcule le P&L par `calculatePnl`
+(valeur du tick × quantité, ou capital engagé) : jamais l'écart de prix brut (avant : MNQ 2 contrats
++10 pts enregistré 10 $ au lieu de 40 $).
+
+### Totaux stockés d'une séance clôturée (#947)
+`TradingSession.totalPnl / winRate / totalTrades / maxDrawdown / bestTrade*` sont écrits à la clôture,
+puis RECALCULÉS par `refreshClosedSessionTotals` (`session/refresh-session-totals.ts`, même
+`sessionTotalsFrom` que la clôture) dès qu'un de leurs trades change : `TradesService.update`, `remove`,
+`removeBrokerImported`, `reassignAccount`, `refreshAfterFeesRepair`, et `SessionService.closeTrade`.
+Toute nouvelle écriture sur un trade rattaché à une séance passe par lui.
+
+### Filtre Gagnants / Perdants / BE du journal (#947)
+Classé sur le NET arrondi (`TRADE_NET_SQL` = `round(pnl − |commission|, 2)`), comme les stats. Prisma ne
+sait pas comparer `pnl − |commission|` : la liste passe par `resolveTradeWhere` (ids sélectionnés par
+`buildTradeFilterSql`), jamais par `buildTradeWhere` seul quand `result` est posé.
+
 ### Crons V2
 
 | Cron | Planning | Rôle |
@@ -1551,6 +1568,9 @@ sont en direct.
   futures/spot, Bybit, IBKR, MEXC, MT4/MT5), séparateur européen, `splitCsvLine`,
   `mapNormalizedCsvToDto`, `detectSession`, et les types `BrokerType` / `ImportDto`. Fonctions
   PURES : aucun service injecté, testables directement (`csv-parsers.spec.ts`, `csv-import.service.spec.ts`).
+- **MEXC (`parseMexc`, #947)** : « Realized PNL » est NET des frais → stocké en BRUT
+  (`roundCents(realized) + roundCents(|fee|)`), frais dans `commission`, pour que `netPnl` ne les retire
+  pas deux fois.
 - **IBKR (`parseIBKR`, #784)** : relevé Activity Statement, détecté même si la 1ʳᵉ ligne est la
   section `Statement` (on cherche un `Trades,Header` avec `Asset Category`). Un trade = une exécution
   de CLÔTURE (P/L ≠ 0 ou code `C`) : achat = ferme un SHORT, vente = ferme un LONG (sens via
@@ -2191,8 +2211,10 @@ comptes en une requête, plus de chargement des trades. `computeRuleMetrics(comp
 (= `aggregateRuleTrades` étalon JS + `ruleMetricsFromAgg`). ⚠️ Règle propre aux comptes,
 conservée : solde / objectif / drawdown / meilleur-pire jour lisent `pnl − commission`
 **signée, sans arrondi** (une commission négative augmente le solde), alors que le win rate et
-tout le reste de l'app lisent `netPnl` (`round(pnl − |commission|, 2)`). Équivalence :
-`account-rules-sql.int-spec.ts`.
+tout le reste de l'app lisent `netPnl` (`round(pnl − |commission|, 2)`). Depuis #947, `TradesService`
+stocke toujours |commission| : plus de frais négatifs écrits. Meilleur / pire jour = **journée CME**
+(`tradingDay`, 17:00 Chicago), comme la consistency et la perte journalière (décision du 11/11 ; avant,
+date UTC). Équivalence : `account-rules-sql.int-spec.ts`.
 
 ### Solde et equity lus chez le broker (2026-10-03)
 

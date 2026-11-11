@@ -14,6 +14,9 @@ import { openPositionsKey, parseOpenPositions } from '../integrations/tradovate/
 import { parseWorkingOrders, protectionFor, workingOrdersKey } from '../integrations/tradovate/tradovate-orders';
 import { activeSessionWhere, tradingDayStart } from './active-session';
 import { autoCloseData, sessionTotalsFrom } from './session-totals';
+import { calculatePnl } from '../trades/trade-metrics.util';
+import { refreshClosedSessionTotals, sessionTradesFor } from './refresh-session-totals';
+import type { CreateTradeDto } from '../trades/dto/create-trade.dto';
 
 // Forme de GET /session/history : contrat partagé avec le front (@mtc/shared).
 export type { SessionHistoryItem };
@@ -142,11 +145,7 @@ export class SessionService {
   }
 
   private sessionTrades(userId: string, sessionId: string, sameAccount: { accountId?: string }) {
-    return this.prisma.trade.findMany({
-      where: { userId, sessionId, ...sameAccount },
-      select: { pnl: true, commission: true, asset: true, tradedAt: true, accountId: true },
-      orderBy: { tradedAt: 'asc' },
-    });
+    return sessionTradesFor(this.prisma, userId, sessionId, sameAccount.accountId ?? null);
   }
 
   /**
@@ -418,20 +417,27 @@ export class SessionService {
       if (isTP) closeType = 'TP';
     }
 
-    const rawPoints =
-      trade.side === 'LONG'
-        ? exitPrice - trade.entry
-        : trade.entry - exitPrice;
+    // P&L en argent par la règle unique (valeur du tick × quantité, ou capital engagé) : avant,
+    // l'écart de prix brut était enregistré comme P&L (MNQ 2 contrats +10 pts → 10 $ au lieu de 40 $).
+    const pnl = calculatePnl({
+      asset: trade.asset,
+      side: trade.side,
+      entry: trade.entry,
+      exit: exitPrice,
+      quantity: trade.quantity ?? undefined,
+      capitalEngaged: trade.capitalEngaged ?? undefined,
+    } as CreateTradeDto);
 
     const closed = await this.prisma.trade.update({
       where: { id: tradeId },
       data: {
         exit: exitPrice,
-        pnl: rawPoints,
+        pnl: pnl ?? null,
         tags: { push: closeType },
       },
     });
-    // Le P&L change : les statistiques en cache (dashboard) doivent être recalculées.
+    // Le P&L change : totaux de sa séance si elle est déjà clôturée, et statistiques en cache.
+    await refreshClosedSessionTotals(this.prisma, [trade.sessionId]);
     await this.analytics.invalidateUserCache(userId);
     return closed;
   }

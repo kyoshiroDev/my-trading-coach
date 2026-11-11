@@ -464,7 +464,7 @@ export class AdminService {
    * raté), ou actif chez Stripe mais pas marqué actif en DB.
    */
   async reconcileStripe() {
-    const [stats, stripeSubs, dbSubs] = await Promise.all([
+    const [stats, stripeSubs, dbSubs, excludedSubs] = await Promise.all([
       this.users.adminStats(),
       this.stripeSubscriptions.listActiveSubscriptions(),
       this.prisma.user.findMany({
@@ -477,6 +477,11 @@ export class AdminService {
           id: true, email: true, name: true, plan: true,
           stripeSubscriptionId: true, stripeSubscriptionStatus: true,
         },
+      }),
+      // Abonnements des comptes hors MRR base (démo, internes, admin : REAL_USERS_WHERE).
+      this.prisma.user.findMany({
+        where: { NOT: REAL_USERS_WHERE, stripeSubscriptionId: { not: null } },
+        select: { stripeSubscriptionId: true },
       }),
     ]);
 
@@ -508,7 +513,14 @@ export class AdminService {
       }
       return Math.max(0, total);
     };
-    const mrrStripe = Math.round(stripeSubs.reduce((sum, s) => sum + monthlyOf(s), 0));
+    // Même périmètre que le MRR base (#947) : abonnements `active` seulement (un essai `trialing` ne
+    // paie qu'à sa fin, décision du 2026-10-25) et vrais utilisateurs (ni démo, ni interne, ni admin).
+    // Avant, une réservation fondateur en essai et un compte interne payant faisaient un écart
+    // permanent de 78 € présenté comme une divergence.
+    const excluded = new Set(excludedSubs.map((u) => u.stripeSubscriptionId as string));
+    const mrrStripe = Math.round(
+      stripeSubs.filter((s) => s.status === 'active' && !excluded.has(s.id)).reduce((sum, s) => sum + monthlyOf(s), 0),
+    );
 
     const stripeIds = new Set(stripeSubs.map((s) => s.id));
     const dbIds = new Set(dbSubs.map((u) => u.stripeSubscriptionId as string));

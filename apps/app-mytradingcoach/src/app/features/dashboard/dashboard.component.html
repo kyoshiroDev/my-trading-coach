@@ -152,7 +152,7 @@
 
     <!-- Répartition stratégies -->
     <div class="mtc-panel">
-      <div class="mtc-panel-head"><div class="mtc-panel-head-l"><svg [lucideIcon]="SetupsIcon" [size]="15" class="mtc-phi"></svg><div><div class="mtc-panel-title">Répartition stratégies</div><div class="mtc-panel-sub">% des trades par setup</div></div></div></div>
+      <div class="mtc-panel-head"><div class="mtc-panel-head-l"><svg [lucideIcon]="SetupsIcon" [size]="15" class="mtc-phi"></svg><div><div class="mtc-panel-title">Répartition stratégies</div><div class="mtc-panel-sub">{{ userStore.isPremium() ? '% des trades par setup' : 'Sur tes 6 derniers trades' }}</div></div></div></div>
       <div class="mtc-panel-body">
         <!-- Répartition % des setups = vue de base FREE (client-side) ; centre win rate = Premium. -->
         @let sd = setupsDonutView();

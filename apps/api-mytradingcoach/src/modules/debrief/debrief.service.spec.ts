@@ -1,3 +1,4 @@
+import { inactiveAccountsTradeWhere } from '../accounts/account-status-scope';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
@@ -245,7 +246,9 @@ describe('DebriefService', () => {
 
       const where = mockPrisma.user.findMany.mock.calls.at(-1)![0].where;
       expect(where).toMatchObject({ isDemo: false, debriefAutomatic: true });
-      expect(where.trades).toEqual({ some: { tradedAt: { gte: startDate, lte: endDate } } });
+      // Même filtre que generate : comptes perdus exclus, sinon débrief à 0 trade (#947).
+      expect(where.trades).toEqual({ some: { tradedAt: { gte: startDate, lte: endDate }, ...inactiveAccountsTradeWhere() } });
+      expect(where.trades.some.OR).toBeDefined();
     });
   });
 

@@ -9,16 +9,18 @@ describe('account-rules (SCA-B2-03)', () => {
     expect(queryRaw).not.toHaveBeenCalled();
   });
 
-  it('étalon JS : commission signée pour le solde, net arrondi absolu pour le win rate, jours UTC', () => {
+  it('étalon JS : commission signée pour le solde, net arrondi absolu pour le win rate, journées CME', () => {
     const d = (iso: string) => new Date(iso);
     const agg = aggregateRuleTrades([
-      { pnl: 100, commission: -5, tradedAt: d('2026-05-04T22:00:00Z') }, // solde +105, gagnant
-      { pnl: -40, commission: 2, tradedAt: d('2026-05-04T23:30:00Z') }, // même jour UTC
-      { pnl: 1, commission: 1.9, tradedAt: d('2026-05-05T09:00:00Z') }, // perte au net (−0,90)
+      { pnl: 100, commission: -5, tradedAt: d('2026-05-04T21:00:00Z') }, // 16:00 CT : journée du 04/05, solde +105
+      { pnl: -40, commission: 2, tradedAt: d('2026-05-04T23:30:00Z') }, // 18:30 CT : déjà la journée du 05/05
+      { pnl: 1, commission: 1.9, tradedAt: d('2026-05-05T09:00:00Z') }, // journée du 05/05, perte au net (−0,90)
     ]);
     expect(agg).toMatchObject({ count: 3, wins: 1, losses: 2 });
-    expect(agg.bestDay).toBeCloseTo(63);
-    expect(agg.worstDay).toBeCloseTo(-0.9);
+    // Journées CME (#947, décision du 11/11) : 04/05 = +105 ; 05/05 = −42 − 0,90 = −42,90. En date UTC,
+    // les deux premiers trades auraient été le même jour (+63).
+    expect(agg.bestDay).toBeCloseTo(105);
+    expect(agg.worstDay).toBeCloseTo(-42.9);
     expect(agg.realized).toBeCloseTo(62.1);
     expect(agg.maxCumulative).toBe(105);
     expect(aggregateRuleTrades([])).toBe(EMPTY_RULE_AGG);

@@ -17,7 +17,7 @@ import SESSION_TEMPLATE from '../../session-live.component.html?raw';
 /** Panneau de suivi prop firm de la session live, sur son VRAI template. */
 
 const metrics = (p: Partial<AccountRuleMetrics> = {}): AccountRuleMetrics => ({
-  startingBalance: 50000, realizedPnl: 820, currentBalance: 50820, tradesCount: 4,
+  startingBalance: 50000, realizedPnl: 820, tradingPnl: 820, currentBalance: 50820, tradesCount: 4,
   winRate: 50, bestDay: null, worstDay: null, objective: null,
   drawdown: {
     type: 'TRAILING', floor: 48820, margin: 1350, maxDrawdown: 2000, pct: 0.675, breached: false,

@@ -21,6 +21,18 @@ describe('planFeeRepairs', () => {
     expect(plan.matched).toBe(1);
   });
 
+  it('fill partagé (ancienne répartition 2,18 / 0, recalcul 1,09 / 1,09) : aucun trade monté (#947)', () => {
+    // Sans garde-fou : A ignoré (plus haut), B monté à 1,09 → total 3,27 $ au lieu de 2,18 $.
+    const a = trade({ exit: 7753 });
+    const b = trade({ exit: 7754 });
+    const plan = planFeeRepairs(
+      [{ ...a, commission: 1.09, _buyFillId: '1', _sellFillId: '2' }, { ...b, commission: 1.09, _buyFillId: '1', _sellFillId: '3' }],
+      [{ id: 'A', ...a, commission: 2.18 }, { id: 'B', ...b, commission: 0 }],
+    );
+    expect(plan.updates).toEqual([]);
+    expect(plan.skippedShared).toBe(2);
+  });
+
   it('contre-épreuve : frais déjà justes → aucune mise à jour', () => {
     const plan = planFeeRepairs([trade({ commission: 4.36 })], [{ id: 't1', ...trade({ commission: 4.36 }) }]);
     expect(plan.updates).toEqual([]);

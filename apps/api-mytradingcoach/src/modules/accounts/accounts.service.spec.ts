@@ -887,6 +887,16 @@ describe('AccountsService', () => {
       expect(m.drawdown?.pct).toBe(0);
     });
 
+    it('P&L cumulé (tradingPnl) : un payout n’est pas une perte, il est rajouté (#947)', () => {
+      const acc = { startingBalance: 50000, accountSize: null, profitTarget: null, maxDrawdown: null, drawdownType: 'STATIC' as const };
+      const payouts = { last: '2026-06-03', count: 1, manualTotal: 2000, total: 2000 };
+      // Compte manuel : +5 000 de trades, 2 000 retirés → solde 53 000.
+      const m = svc.ruleMetricsFromAgg(acc as never, aggregateRuleTrades([t(5000, 1)]), null, null, null, null, new Date(), [], payouts);
+      expect(m.currentBalance).toBe(53000);
+      expect(m.realizedPnl).toBe(3000); // base de l'objectif et du cycle de payout, inchangée
+      expect(m.tradingPnl).toBe(5000); // ce qu'affiche Mes comptes, comme le tableau de bord
+    });
+
     it('sans règles (maxDrawdown null) → drawdown null, startingBalance via accountSize', () => {
       const m = svc.computeRuleMetrics(
         { startingBalance: null, accountSize: 10000, profitTarget: null, maxDrawdown: null, drawdownType: 'STATIC' },
@@ -897,7 +907,7 @@ describe('AccountsService', () => {
       expect(m.drawdown).toBeNull();
     });
 
-    it('winRate / bestDay / worstDay : PnL groupé par jour UTC (somme intra-jour)', () => {
+    it('winRate / bestDay / worstDay : PnL groupé par journée CME (somme intra-jour)', () => {
       // Dates UTC explicites → indépendant du fuseau de la machine de test.
       const u = (pnl: number, day: number, h = 12) => ({ pnl, tradedAt: new Date(Date.UTC(2026, 5, day, h)) });
       const m = svc.computeRuleMetrics(

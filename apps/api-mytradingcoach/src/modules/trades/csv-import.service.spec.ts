@@ -6,6 +6,7 @@ import * as XLSX from 'xlsx';
 import { AI_BATCH, AI_CHUNK_MAX_TOKENS, CSV_AI_FALLBACK_DAILY_LIMIT, CsvImportService, WORST_TOKENS_PER_TRADE, type FeesReport } from './csv-import.service';
 // Parseurs extraits en fonctions pures (étape 4 de l'audit) : testés directement.
 import { detectBroker, normalizeMexcSymbol, normalizeSeparator, parseMexc } from './csv-parsers';
+import { netPnl } from '@mtc/shared';
 // Le vrai calcul du mapping : le test du registre doit exercer le code, pas un faux.
 import { applyMappingWithPnlCheck } from './csv-mapping';
 
@@ -61,9 +62,19 @@ describe('CsvImportService — MEXC (parser dédié, sans IA)', () => {
     expect(t.entry).toBe(73602.51);
     expect(t.exit).toBe(73692.56);
     expect(t.quantity).toBe(550);
-    expect(t.pnl).toBeCloseTo(-6.5727459, 5); // PnL net déjà calculé, pas recalculé
-    expect(t.commission).toBeCloseTo(1.6202459, 5); // suffixe USDT retiré
+    // Realized PNL MEXC = NET des frais : stocké en BRUT (net + frais) pour que netPnl ne
+    // retire pas les frais une 2e fois. Net affiché = −6,57 $ comme chez MEXC.
+    expect(t.pnl).toBe(-4.95); // −6,57 + 1,62
+    expect(t.commission).toBe(1.62); // suffixe USDT retiré, arrondi au centime
+    expect(netPnl({ pnl: t.pnl!, commission: t.commission })).toBe(-6.57);
     expect(t.tradedAt).toBe('2026-05-30T14:31:55+02:00'); // Close Time UTC+02:00
+  });
+
+  it('net affiché = Realized PNL MEXC arrondi, même quand arrondir le brut donnerait 1 centime d’écart', async () => {
+    // Realized 10,006 (net) et frais 0,006 : arrondir (net + frais) donnerait 10,01 − 0,01 = 10,00.
+    const row = MEXC_ROW.replace('1.6202459USDT', '0.006USDT').replace('-6.5727459USDT', '10.006USDT');
+    const dtos = await svc.parseCSV(Buffer.from([MEXC_HEADER, row].join('\n')), 'mexc.csv');
+    expect(netPnl({ pnl: dtos[0].pnl!, commission: dtos[0].commission })).toBe(10.01);
   });
 
   it("ne laisse aucun \\r résiduel dans les valeurs (CRLF Windows)", async () => {
@@ -575,14 +586,12 @@ describe('CsvImportService — Fusion Tradovate (Performance + Cash history)', (
   });
 
   it('compte chaque fill partagé une seule fois (3 fills partagés)', async () => {
-    // Commissions MNQ = 0,52 par fill. Sans dédup, tout trade à 2 fills ferait ≥ 1,04.
-    // La présence de trades à 0,52 prouve qu'UN de leurs fills était déjà consommé
-    // (fill partagé qui clôture un trade et en ouvre un autre) → compté une seule fois.
-    // À l'inverse, un trade à 2,08 a ses deux fills neufs (2 × 1,04). Total exact = 21,84.
+    // Commissions MNQ = 0,52 par côté-contrat. Un fill partagé (qui clôture un trade et en ouvre
+    // un autre) est RÉPARTI au prorata de la quantité (#947), jamais compté deux fois : chaque
+    // trade d'1 contrat porte ses 2 côtés = 1,04, celui de 2 contrats 2,08. Total exact = 21,84.
     const { dtos } = await importWithFees();
     const commissions = dtos.map((d) => +(d.commission ?? 0).toFixed(2));
-    expect(commissions).toContain(0.52); // ≥ 1 fill déjà consommé (dédup effective)
-    expect(commissions).toContain(2.08); // trade à deux fills neufs
+    expect(dtos.map((d) => +(d.commission ?? 0).toFixed(2))).toEqual(dtos.map((d) => 1.04 * (d.quantity ?? 1)));
     // 3 fills partagés → 3,12 $ de double comptage évité (24,96 naïf − 21,84 exact).
     const total = +commissions.reduce((s, c) => s + c, 0).toFixed(2);
     expect(total).toBe(21.84);
@@ -890,5 +899,15 @@ describe('CsvImportService · limite quotidienne et journal du repli', () => {
     expect(events[0]).toMatchObject({ event: 'csv_ai_fallback', userId: 'u1', rows: 30, batches: 2, trades: 2 });
     for (const l of logs.filter((x) => x.startsWith('{'))) expect(l).not.toMatch(/998877|Jean|MNQ|ACC/);
     expect(create).toHaveBeenCalled();
+  });
+});
+
+describe('CsvImportService — frais totaux répartis (#947)', () => {
+  it('la somme des parts = total saisi, au centime (10 $ sur 3 trades → 3,33 + 3,33 + 3,34)', () => {
+    const svc = makeService() as unknown as { distributeFees: (d: { quantity?: number; commission?: number }[], f: number) => { commission?: number }[] };
+    const out = svc.distributeFees([{ quantity: 1 }, { quantity: 1 }, { quantity: 1 }], 10);
+    expect(out.map((d) => d.commission)).toEqual([3.33, 3.33, 3.34]);
+    const prorata = svc.distributeFees([{ quantity: 3 }, { quantity: 1, commission: 0.5 }], 8);
+    expect(prorata.map((d) => d.commission)).toEqual([6, 2.5]);
   });
 });
