@@ -6,7 +6,7 @@
   </div>
   @if (floorHead(); as fh) {
     <span class="pc-value pc-floor" [class.wide]="narrow()" [class.warn]="fh.tone === 'yellow'" [class.neg]="fh.tone === 'red'" data-testid="perf-chart-value">
-      <span class="pc-floor-main"><span class="pc-vlab">Marge avant la limite</span> {{ fh.margin }}</span>
+      <span class="pc-floor-main"><span class="pc-vlab" [title]="ddLabels.margin.help">{{ ddLabels.margin.label }}</span> {{ fh.margin }}</span>
       <span class="pc-floor-sub" data-testid="perf-chart-floor">Solde {{ fh.balance }} · {{ fh.locked ? 'Plancher gelé à' : 'plancher actuel' }} {{ fh.floor }}</span>
     </span>
   } @else if (keyValue(); as kv) {
@@ -14,6 +14,9 @@
       {{ kv.text }}
       @if (kv.max && !narrow()) {
         <span class="pc-max">(max {{ kv.max }})</span>
+      }
+      @if (kv.scope) {
+        <span class="pc-max" data-testid="perf-chart-scope">{{ kv.scope }}</span>
       }
     </span>
   }

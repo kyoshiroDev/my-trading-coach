@@ -24,6 +24,7 @@ interface T {
   setupId?: string;
   setup?: { title: string; color: string };
   tradedAt?: Date;
+  accountId?: string | null;
 }
 
 const today10h = () => new Date(new Date().setHours(10, 0, 0, 0));
@@ -63,6 +64,7 @@ async function seed(trades: T[], activeSetups: { id: string; title: string; colo
       session: TradingSession.LONDON,
       timeframe: '1H',
       tradedAt: t.tradedAt ?? today10h(),
+      accountId: t.accountId ?? null,
     })),
   });
 }
@@ -143,6 +145,77 @@ describe('getSummary — accessible FREE et PREMIUM', () => {
     it('compte perdant dès le premier trade → drawdown depuis le pic 0', async () => {
       await seed([makeTrade(-80), makeTrade(-40)]);
       expect((await service.getSummary(userId)).maxDrawdown).toBe(120);
+    });
+  });
+
+  // PROMPT-drawdown-max-par-compte : une série par compte, jamais une série mélangée.
+  describe('drawdown maximum par compte (vue « Tous les comptes »)', () => {
+    const accounts: string[] = [];
+    const account = async (label: string, status: 'ACTIVE' | 'ARCHIVED' | 'FAILED' = 'ACTIVE') => {
+      const a = await prisma.tradingAccount.create({ data: { userId, label: `${label}-${RUN}`, status } });
+      accounts.push(a.id);
+      return a.id;
+    };
+    afterAll(async () => {
+      if (!prisma || !userId) return;
+      await prisma.trade.deleteMany({ where: { userId } });
+      await prisma.tradingAccount.deleteMany({ where: { id: { in: accounts } } });
+    });
+
+    it('test 1 : A gagne +500 pendant que B perd −400 (entrelacés) → 400 sur B, pas 200 (série mélangée)', async () => {
+      const [a, b] = [await account('A'), await account('B')];
+      await seed(inOrder([
+        { ...makeTrade(250), accountId: a },
+        { ...makeTrade(-200), accountId: b },
+        { ...makeTrade(250), accountId: a },
+        { ...makeTrade(-200), accountId: b },
+      ]));
+      const all = await service.getSummary(userId);
+      expect(all.maxDrawdown).toBe(400);
+      expect(all.maxDrawdownAccountId).toBe(b);
+      const curve = await service.getEquityCurveTrades(userId, new Date(Date.now() - 86_400_000), new Date(Date.now() + 86_400_000));
+      expect(curve.points.map((p) => p.cumulativePnl)).toEqual([250, 50, 300, 100]); // courbe = somme des comptes
+      expect(curve.maxDrawdown).toBe(-400);
+      expect(curve.maxDrawdownAccountId).toBe(b);
+    });
+
+    it('test 2 : vue d’un seul compte → valeurs d’avant (montée, baisse de 240, remontée)', async () => {
+      const [a, b] = [await account('A'), await account('B')];
+      // Même scénario que « plus forte baisse depuis le pic » (240), sur A ; B perd à côté.
+      await seed(inOrder([
+        { ...makeTrade(100), accountId: a },
+        { ...makeTrade(-500), accountId: b },
+        { ...makeTrade(200), accountId: a },
+        { ...makeTrade(-50), accountId: a },
+        { ...makeTrade(-190), accountId: a },
+        { ...makeTrade(100), accountId: a },
+      ]));
+      const onlyA = await service.getSummary(userId, a);
+      expect(onlyA.maxDrawdown).toBe(240);
+      expect(onlyA.maxDrawdownAccountId).toBe(a);
+      expect((await service.getSummary(userId, b)).maxDrawdown).toBe(500);
+    });
+
+    it('test 4 : compte archivé ou échoué exclu par défaut, inclus avec la case', async () => {
+      const [active, archived, failed] = [await account('Actif'), await account('Archivé', 'ARCHIVED'), await account('Échoué', 'FAILED')];
+      await seed(inOrder([
+        { ...makeTrade(-100), accountId: active },
+        { ...makeTrade(-700), accountId: archived },
+        { ...makeTrade(-300), accountId: failed },
+      ]));
+      const byDefault = await service.getSummary(userId);
+      expect(byDefault.maxDrawdown).toBe(100);
+      expect(byDefault.maxDrawdownAccountId).toBe(active);
+      const withInactive = await service.getSummary(userId, undefined, undefined, undefined, true);
+      expect(withInactive.maxDrawdown).toBe(700);
+      expect(withInactive.maxDrawdownAccountId).toBe(archived);
+    });
+
+    it('test 5 : aucun trade → 0, aucun compte, pas d’erreur', async () => {
+      await seed([]);
+      expect(await service.getSummary(userId)).toMatchObject({ maxDrawdown: 0, maxDrawdownAccountId: null });
+      const curve = await service.getEquityCurveTrades(userId, new Date(Date.now() - 86_400_000), new Date());
+      expect(curve).toMatchObject({ maxDrawdown: 0, maxDrawdownAccountId: null, trades: 0 });
     });
   });
 

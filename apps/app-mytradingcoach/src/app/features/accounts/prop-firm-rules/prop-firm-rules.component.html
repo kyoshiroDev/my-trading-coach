@@ -41,9 +41,10 @@
       </ul>
     </section>
 
-    <!-- Drawdown max -->
+    <!-- Règle de drawdown (taille de la règle, pas la baisse mesurée) -->
     <section class="pfr-card">
-      <h4 class="pfr-lbl"><svg [lucideIcon]="icons.TrendingDown" [size]="13"></svg>Drawdown max</h4>
+      <h4 class="pfr-lbl"><svg [lucideIcon]="icons.TrendingDown" [size]="13"></svg>{{ ddLabels.rule.label }}
+        <mtc-info-tooltip [label]="'À propos : ' + ddLabels.rule.label" [text]="ddLabels.rule.help" /></h4>
       <div class="pfr-val">{{ fmt.amount(ph.max_drawdown.amount, cur) }}</div>
       <ul class="pfr-facts">
         @if (has(ph.starting_balance) && ph.starting_balance !== p.accountSize) {

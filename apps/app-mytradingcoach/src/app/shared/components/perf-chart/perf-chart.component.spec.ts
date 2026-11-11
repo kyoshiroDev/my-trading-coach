@@ -40,7 +40,7 @@ describe('PerfChartComponent', () => {
     // Entrées SIGNAL : `setInput` ne les alimente pas en JIT sous vitest (cf.
     // tradovate-connect-modal.component.spec.ts) → remplacées avant le premier rendu.
     const cmp = f.componentInstance as unknown as Record<string, unknown>;
-    const defaults = { points: [], startingCapital: null, planFloor: null, before: null, objective: null, emptyMessage: 'Aucun trade sur cette période', loading: false };
+    const defaults = { points: [], startingCapital: null, planFloor: null, before: null, objective: null, worst: null, emptyMessage: 'Aucun trade sur cette période', loading: false };
     for (const [k, v] of Object.entries({ ...defaults, ...inputs })) cmp[k] = signal(v);
     f.detectChanges();
     return f.nativeElement as HTMLElement;
@@ -50,6 +50,19 @@ describe('PerfChartComponent', () => {
     const el = render({ kind: 'equity', points: [], emptyMessage: 'Aucun trade sur la période' });
     expect(el.querySelector('.pc-empty')?.textContent).toContain('Aucun trade sur la période');
     expect(el.querySelector('[data-testid="perf-chart-value"]')).toBeNull();
+  });
+
+  it('drawdown « tous les comptes » : pire compte et son nom en en-tête, courbe masquée avec message', () => {
+    const el = render({
+      kind: 'drawdown', points: [], worst: { value: -400, scope: 'sur le compte Lucid B' },
+      emptyMessage: 'Choisis un compte pour voir la courbe',
+    });
+    const value = el.querySelector('[data-testid="perf-chart-value"]');
+    expect(value?.textContent).toContain('Max -$400.00');
+    expect(value?.classList).toContain('neg');
+    expect(el.querySelector('[data-testid="perf-chart-scope"]')?.textContent).toBe('sur le compte Lucid B');
+    expect(el.querySelector('.pc-empty')?.textContent).toContain('Choisis un compte pour voir la courbe');
+    expect(chart.buildDrawdownChart).not.toHaveBeenCalled();
   });
 
   it('pas de message vide pendant le chargement', () => {
@@ -90,14 +103,14 @@ describe('PerfChartComponent', () => {
     expect(value?.classList).not.toContain('neg');
   });
 
-  it('drawdown avec plan : marge avant la limite, solde et plancher actuel du suivi du compte', () => {
+  it('drawdown avec plan : marge avant le plancher, solde et plancher actuel du suivi du compte', () => {
     const planFloor = {
       rule: { kind: 'trailing_eod', amount: 2_000, startingBalance: 50_000, locksAt: null, lockedFloor: null },
       floor: 49_275.47, margin: 1_802.91, pct: 0.9, breached: false, peakProfit: 1_275.47, balance: 51_078.38, locked: false,
     };
     const el = render({ kind: 'drawdown', points: [pt('2025-01-06', 500)], startingCapital: 50_000, planFloor });
     const value = el.querySelector('[data-testid="perf-chart-value"]');
-    expect(value?.textContent).toContain('Marge avant la limite');
+    expect(value?.textContent).toContain('Marge avant le plancher');
     expect(value?.textContent).toContain('$1,803');
     expect(el.querySelector('[data-testid="perf-chart-floor"]')?.textContent).toContain('Solde $51,078 · plancher actuel $49,275');
     expect(value?.classList).not.toContain('neg');

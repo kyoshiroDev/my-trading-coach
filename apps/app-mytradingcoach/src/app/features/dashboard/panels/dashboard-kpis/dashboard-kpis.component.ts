@@ -5,6 +5,7 @@ import { AnalyticsSummary } from '@app/core/api/analytics.api';
 import { InfoTooltipComponent } from '@app/shared/components/info-tooltip/info-tooltip.component';
 import { PnlFormatPipe } from '@app/shared/pipes';
 import { sparkPath, TradeCountBar } from '../../dashboard-charts.util';
+import { DRAWDOWN_PICK_ACCOUNT } from '@app/core/services/drawdown-scope.util';
 
 /** Rangée des 6 KPIs du dashboard (capital, P&L, win rate, profit factor, trades, drawdown). */
 @Component({
@@ -26,6 +27,10 @@ export class DashboardKpisComponent {
   readonly maxDrawdown = input(0);
   /** Drawdown après chaque clôture de la période (≤ 0), point de départ compris. */
   readonly drawdownSeries = input<number[]>([]);
+  /** Vue « Tous les comptes » à plusieurs comptes : drawdown du pire compte, sparkline masquée. */
+  readonly multiAccount = input(false);
+  /** Compte du pire drawdown en vue multi-comptes (« sur le compte X ») ; null → sous-titre standard. */
+  readonly drawdownScope = input<string | null>(null);
   /** P&L cumulé jour par jour sur la période (source des sparklines). */
   readonly equitySeries = input<number[]>([]);
   /** Payouts cumulés aux mêmes points : la sparkline du Capital les déduit (fin = Capital). */
@@ -37,6 +42,7 @@ export class DashboardKpisComponent {
   readonly fallbackTradesCount = input(0);
 
   protected readonly sparkPath = sparkPath;
+  protected readonly pickAccount = DRAWDOWN_PICK_ACCOUNT;
 
   /** Profit factor : valeur 2 décimales, ∞ si aucune perte, - si aucune donnée. */
   protected readonly profitFactorDisplay = computed(() => {

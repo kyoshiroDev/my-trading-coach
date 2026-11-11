@@ -84,7 +84,7 @@
         <span class="right">P&amp;L</span>
         <span class="right">Trades</span>
         <span>Objectif</span>
-        <span>Marge drawdown</span>
+        <span [title]="ddLabels.margin.help">{{ ddLabels.margin.label }}</span>
         <span>Synchro</span>
         <span></span>
       </div>
@@ -694,7 +694,8 @@
                      (ngModelChange)="patch({ profitTarget: $event })" placeholder="3000" />
             </label>
             <label class="fld">
-              <span class="fld-lbl">Drawdown max</span>
+              <span class="fld-lbl">{{ ddLabels.rule.label }}
+                <mtc-info-tooltip [label]="'À propos : ' + ddLabels.rule.label" [text]="ddLabels.rule.help" /></span>
               <input class="inp" type="number" [ngModel]="form().maxDrawdown"
                      (ngModelChange)="patch({ maxDrawdown: $event })" placeholder="2500" />
             </label>
@@ -721,7 +722,7 @@
         }
 
         <p class="modal-note">
-          Les règles sont estimées d'après tes trades loggés (objectif + marge drawdown), pas
+          Les règles sont estimées d'après tes trades loggés (objectif + marge avant le plancher), pas
           l'equity temps réel de la prop firm.
         </p>
       </div>

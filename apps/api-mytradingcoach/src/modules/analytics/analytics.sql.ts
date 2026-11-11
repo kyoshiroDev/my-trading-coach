@@ -125,7 +125,7 @@ export interface SummaryTotals {
 /**
  * Totaux du résumé en une requête : sommes et série en cours (gagnant = net > 0, sinon « non
  * gagnant »), dans l'ordre chronologique. Le drawdown max n'est PLUS calculé ici : source unique
- * `maxDrawdownOfTrades` (`@mtc/shared`) sur `closedTradeNets`.
+ * `worstAccountDrawdown` (`@mtc/shared`, par compte) sur `closedTradeNets`.
  */
 export async function summaryTotals(prisma: PrismaService, f: TradeFilter): Promise<SummaryTotals> {
   const [row] = await prisma.$queryRaw<SummaryTotals[]>`
@@ -153,17 +153,22 @@ export async function summaryTotals(prisma: PrismaService, f: TradeFilter): Prom
   return row;
 }
 
+/** Trade clôturé lu pour la courbe par trade et le drawdown max. */
+export interface ClosedTradeNet {
+  closedAt: Date;
+  pnl: number;
+  /** Compte du trade ; null = trade sans compte. Sert au drawdown PAR COMPTE (`worstAccountDrawdown`). */
+  accountId: string | null;
+}
+
 /**
- * P&L NET de chaque trade clôturé avec son heure de clôture (`tradedAt`), dans l'ordre
- * chronologique : matière de la courbe par trade et du drawdown max (`closedTradeSteps` de
- * `@mtc/shared`, qui regroupe les trades du même instant). Deux colonnes par trade.
+ * P&L NET de chaque trade clôturé avec son heure de clôture (`tradedAt`) et son compte, dans
+ * l'ordre chronologique : matière de la courbe par trade (`closedTradeSteps`) et du drawdown max
+ * par compte (`worstAccountDrawdown` de `@mtc/shared` : une série par compte, jamais mélangée).
  */
-export async function closedTradeNets(
-  prisma: PrismaService,
-  f: TradeFilter,
-): Promise<{ closedAt: Date; pnl: number }[]> {
-  return prisma.$queryRaw<{ closedAt: Date; pnl: number }[]>`
-    SELECT t."tradedAt" AS "closedAt", ${NET}::float8 AS "pnl"
+export async function closedTradeNets(prisma: PrismaService, f: TradeFilter): Promise<ClosedTradeNet[]> {
+  return prisma.$queryRaw<ClosedTradeNet[]>`
+    SELECT t."tradedAt" AS "closedAt", ${NET}::float8 AS "pnl", t."accountId" AS "accountId"
     FROM "Trade" t WHERE ${where(f)}
     ORDER BY t."tradedAt", t."id"`;
 }

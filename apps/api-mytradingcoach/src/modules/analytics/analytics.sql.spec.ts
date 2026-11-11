@@ -87,6 +87,8 @@ describe('summaryTotals / cumulativeByTrade', () => {
   it('nets par trade : heure de clôture + net frais déduits, ordre chronologique', async () => {
     await closedTradeNets(prisma, { userId: 'u1', accountId: 'a1', from: new Date('2026-10-10') });
     expect(text()).toContain('t."tradedAt" AS "closedAt"');
+    // Compte du trade : drawdown max PAR COMPTE (worstAccountDrawdown), jamais une série mélangée.
+    expect(text()).toContain('t."accountId" AS "accountId"');
     expect(text()).toContain('abs(coalesce(t."commission", 0))');
     expect(text()).toContain('ORDER BY t."tradedAt", t."id"');
     expect(lastSql().values).toEqual(expect.arrayContaining(['u1', 'a1']));

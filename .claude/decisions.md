@@ -1,5 +1,6 @@
 # Décisions de Greg (lues par l'agent relecteur)
 
+- 2026-11-11 : drawdown max PAR COMPTE (PROMPT-drawdown-max-par-compte, conseils du relecteur appliqués sur demande de Greg) : vue « Tous les comptes » = pire drawdown parmi les comptes inclus, avec « sur le compte {nom} », courbe de drawdown masquée (« Choisis un compte pour voir la courbe ») ; jamais une série qui mélange les comptes. Vocabulaire : « Drawdown max » = baisse mesurée, « Marge avant le plancher » = distance solde → plancher, « Règle de drawdown » = taille de la règle. Branche `fix/drawdown-max-par-compte`.
 - 2026-11-11 : `DEMO_ECO_RECO` (dashboard démo du matin) remplacé par le point d'attention factuel au format de `morningFocus` (« Prochaine annonce à fort impact : 14:30, … Volatilité possible autour de cet horaire. »), plus de consigne.
 - 2026-11-10 : seed démo du calendrier éco (faux vendredi `seedFakePastRelease`) au format factuel du produit `{ interpretation, gap }` : chiffre publié comparé à la prévision et au mois précédent, écart calculé en code, aucun sentiment ni direction de marché.
 - 2026-11-10 : R/R des trades synchronisés (#916) : capture EN DIRECT à l'entrée validée (stop et objectif liés à l'ordre d'entrée, figés à l'entrée, écrits à la création du trade). L'inférence après coup sur le rapport Orders n'est PAS validée.

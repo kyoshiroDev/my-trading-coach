@@ -95,15 +95,19 @@
       <div class="mtc-kpi-l">
         <div class="mtc-kpi-lab">Drawdown max
           <mtc-info-tooltip class="align-end" label="Comment le drawdown max est calculé"
-            text="Plus forte baisse de ton solde entre un sommet et le creux qui suit, sur la période affichée. Calculé sur les trades clôturés (frais inclus), hors variations en cours de trade." />
+            text="Plus forte baisse depuis un sommet, trade par trade, sur la période. Tous comptes : le compte le plus touché. Calculé sur les trades clôturés (frais inclus), hors variations en cours de trade." />
         </div>
         <div class="mtc-kpi-val" [style.color]="drawdownColor()">{{ drawdownDisplay() | pnlFormat }}</div>
         <div class="mtc-kpi-sub">
-          @if ((summary()?.totalTrades ?? 0) > 0) { trades clôturés · {{ periodShort() }} } @else { Aucune donnée }
+          @if ((summary()?.totalTrades ?? 0) > 0) {
+            @if (multiAccount() && drawdownScope(); as scope) { {{ scope }} · {{ periodShort() }} } @else { trades clôturés · {{ periodShort() }} }
+          } @else { Aucune donnée }
         </div>
       </div>
       @let dd = sparkPath(ddSeries(), 72, 42, true);
-      @if (dd.line) {
+      @if (multiAccount()) {
+        @if ((summary()?.totalTrades ?? 0) > 0) { <div class="mtc-kpi-hint">{{ pickAccount }}</div> }
+      } @else if (dd.line) {
         <svg class="mtc-spark" viewBox="0 0 72 42" preserveAspectRatio="none">
           <path [attr.d]="dd.area" fill="var(--red)" fill-opacity="0.13" />
           <path [attr.d]="dd.line" fill="none" stroke="var(--red)" stroke-width="1.6" stroke-linejoin="round" vector-effect="non-scaling-stroke" />

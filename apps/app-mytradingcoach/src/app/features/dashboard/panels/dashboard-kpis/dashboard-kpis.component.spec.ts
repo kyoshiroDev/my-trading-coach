@@ -111,6 +111,32 @@ describe('DashboardKpisComponent — drawdown max par trade', () => {
     expect(area.endsWith('L72,0 L0,0 Z')).toBe(true);
   });
 
+  it('tous les comptes : pire compte avec son nom, courbe masquée (jamais une série mélangée)', () => {
+    // A +500, B −400 entrelacés : l'API renvoie −400 sur B.
+    const el = render({
+      summary: SUMMARY, maxDrawdown: -400, drawdownSeries: [], multiAccount: true,
+      drawdownScope: 'sur le compte Lucid B', periodShort: 'sur 30 jours',
+    }).nativeElement as HTMLElement;
+    const ddCard = card(el, 'Drawdown max');
+    expect(ddCard.querySelector('.mtc-kpi-val')!.textContent!.trim()).toBe(usd(-400));
+    expect(ddCard.querySelector('.mtc-kpi-sub')!.textContent!.trim()).toBe('sur le compte Lucid B · sur 30 jours');
+    expect(ddCard.querySelector('svg')).toBeNull();
+    expect(ddCard.querySelector('.mtc-kpi-hint')!.textContent!.trim()).toBe('Choisis un compte pour voir la courbe');
+  });
+
+  it('tous les comptes sans nom de compte (ancien cache) : sous-titre standard, courbe masquée, aucune erreur', () => {
+    const el = render({ summary: SUMMARY, maxDrawdown: -400, multiAccount: true, drawdownScope: null, periodShort: 'sur 30 jours' }).nativeElement as HTMLElement;
+    const ddCard = card(el, 'Drawdown max');
+    expect(ddCard.querySelector('.mtc-kpi-sub')!.textContent!.trim()).toBe('trades clôturés · sur 30 jours');
+    expect(ddCard.querySelector('svg')).toBeNull();
+  });
+
+  it('info-bulle : définition trade par trade et cas « tous les comptes »', () => {
+    const tooltip = card(renderCase().nativeElement, 'Drawdown max').querySelector('mtc-info-tooltip')!;
+    expect(tooltip.getAttribute('text')).toContain('Plus forte baisse depuis un sommet, trade par trade, sur la période.');
+    expect(tooltip.getAttribute('text')).toContain('Tous comptes : le compte le plus touché.');
+  });
+
   it('aucun trade : 0 et « Aucune donnée »', () => {
     const fixture = render({ summary: { ...SUMMARY, totalTrades: 0, totalPnl: 0, winRate: 0, profitFactor: null }, maxDrawdown: 0 });
     const ddCard = card(fixture.nativeElement, 'Drawdown max');

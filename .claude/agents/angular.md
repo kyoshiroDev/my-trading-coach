@@ -428,7 +428,14 @@ envoyées à l'API sont des horodatages ISO complets.
   solde APRÈS CHAQUE TRADE CLÔTURÉ de la période (net des frais, solde du début de période = premier
   sommet, trades du même instant regroupés en une étape). Valeur = `maxDrawdown` de
   `/analytics/equity-curve/trades` (toutes les clôtures, avant réduction). Libellé : « trades
-  clôturés », jamais de précision intra-trade. La courbe d'équité du dashboard est PAR TRADE
+  clôturés », jamais de précision intra-trade.
+  **Vue « Tous les comptes » à plusieurs comptes** (`isMultiAccountView`, `drawdown-scope.util.ts`,
+  PROMPT-drawdown-max-par-compte) : la valeur est le PIRE drawdown parmi les comptes (API,
+  `maxDrawdownAccountId`), sous-titre « sur le compte {nom} · période » (« sur les trades sans compte »
+  si besoin, `drawdownScopeLabel`), sparkline masquée et remplacée par « Choisis un compte pour voir
+  la courbe » (la courbe additionne les comptes : ce n'est le drawdown d'aucun). Repli sans valeur API
+  en multi-comptes : 0, jamais une série mélangée. Champ absent (ancien cache, 5 min) : sous-titre
+  standard, aucune erreur. Un seul compte dans la vue « tous » : comportement d'un compte. La courbe d'équité du dashboard est PAR TRADE
   (`/equity-curve/trades`, ≤ 500 points, pics et creux gardés ; payouts par `withPayoutsByTrade`,
   infobulle « Trade » / « N trades » avec l'heure). Axe X : repères posés par `dateTickIndices` (premier
   point de chaque date, 7 au plus, 4 en étroit, premier et dernier gardés) dans `afterBuildTicks`,
@@ -436,7 +443,14 @@ envoyées à l'API sont des horodatages ISO complets.
 - **Carte drawdown des Statistiques** : sans plan relié, même règle (`drawdownSeries` =
   `maxDrawdownOfCumulative` sur les points de `/equity-curve/trades`, `drawdownPoints`) → même
   chiffre que le KPI du dashboard. Plan prop firm relié : courbe journalière + `floorSeries`
-  (plancher du plan, `before.peak`), inchangé. `anchoredDrawdown` n'existe plus.
+  (plancher du plan, `before.peak`), inchangé. `anchoredDrawdown` n'existe plus. Vue multi-comptes :
+  points vides, en-tête `worst` de `mtc-perf-chart` (« Max -$X » + « sur le compte {nom} ») et message
+  « Choisis un compte pour voir la courbe ».
+- **Vocabulaire du drawdown** (`core/constants/drawdown-labels.const.ts`, verrouillé par son spec) :
+  « Drawdown max » = baisse mesurée ; « Marge avant le plancher » = distance solde → plancher (ce que
+  les firms appellent « drawdown ») ; « Règle de drawdown » = taille de la règle (ex. 2 000 $), jamais
+  « Drawdown max ». Infobulle `mtc-info-tooltip` avec le texte de la constante sur chaque libellé
+  (fiche règles du plan, formulaire du compte, onboarding, débrief, séance).
 - **Payouts reçus** (détectés chez le broker, `payouts` + `before.payouts` de l'API) : `withPayouts`
   les insère dans les points (jour sans trade = point au même P&L, champ `payout`). Seules les
   courbes de SOLDE les déduisent : équité, marge de la carte drawdown (`floorSeries`), sparkline du

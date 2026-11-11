@@ -36,6 +36,16 @@ pnl       = ticks × tickValue × qty
 
 ---
 
+## Drawdown max PAR COMPTE et écart Capital / P&L (PROMPT-drawdown-max-par-compte, 2026-11-11)
+- Drawdown max : une série par compte (`worstAccountDrawdown`, `@mtc/shared`), le pire gardé en vue
+  « Tous les comptes ». Les règles des prop firms s'appliquent compte par compte : jamais une série
+  qui additionne plusieurs comptes.
+- « Capital » affiché = solde du compte (`currentBalance`) : celui du BROKER pour un compte connecté.
+  « P&L net » = somme des trades clôturés de la PÉRIODE. Sans broker, solde = départ + Σ nets − payouts
+  saisis, au centime près (aucun écart d'arrondi possible). Un écart « départ + P&L ≠ Capital » vient
+  donc du solde broker (frais d'entrée d'une position encore ouverte, frais absents des trades MTC,
+  payouts) ou de trades hors période ; jamais d'un arrondi.
+
 ## Convention P&L unique — brut stocké, net calculé (PROMPT-213)
 `Trade.pnl` est TOUJOURS le P&L **BRUT** (résultat des prix) ; les frais vivent dans `commission`
 (positive). Le **net** = `pnl − |commission|` n'est jamais stocké : il est calculé à la lecture par

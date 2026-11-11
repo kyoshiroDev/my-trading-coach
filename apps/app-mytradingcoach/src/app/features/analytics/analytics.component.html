@@ -108,6 +108,8 @@
         [before]="equityData()?.before ?? null"
         [startingCapital]="equityStartCapital()"
         [planFloor]="planFloor()"
+        [worst]="drawdownWorst()"
+        [emptyMessage]="drawdownEmpty()"
         [loading]="equityLoading()"
       >
         <mtc-info-tooltip chartInfo label="Ce que représente le drawdown" [text]="drawdownHelp()" />

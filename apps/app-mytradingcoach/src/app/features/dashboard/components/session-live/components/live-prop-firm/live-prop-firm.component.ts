@@ -31,6 +31,8 @@ import { relativeTime } from '@app/core/utils/tradovate-return.util';
 import { progressTitle } from '@app/features/accounts/account-progress.util';
 import { AccountPlanWizardComponent } from '@app/features/accounts/account-plan-wizard/account-plan-wizard.component';
 import { barWidth, drawdownTone, missedAlert, missedAlertPct, objectiveRatio } from './live-prop-firm.util';
+import { InfoTooltipComponent } from '@app/shared/components/info-tooltip/info-tooltip.component';
+import { DRAWDOWN_LABELS } from '@app/core/constants/drawdown-labels.const';
 
 /**
  * Suivi prop firm de la session live (FREE) : à la place de « Trade rapide » quand le compte de
@@ -43,11 +45,13 @@ import { barWidth, drawdownTone, missedAlert, missedAlertPct, objectiveRatio } f
 @Component({
   selector: 'mtc-live-prop-firm',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [LucideDynamicIcon, RouterLink, PlanModalComponent, AccountPlanWizardComponent],
+  imports: [LucideDynamicIcon, RouterLink, PlanModalComponent, AccountPlanWizardComponent, InfoTooltipComponent],
   templateUrl: './live-prop-firm.component.html',
   styleUrl: './live-prop-firm.component.css',
 })
 export class LivePropFirmComponent {
+  /** Vocabulaire du drawdown (règle / marge / drawdown max), commun à tous les écrans. */
+  protected readonly ddLabels = DRAWDOWN_LABELS;
   readonly accountId = input.required<string>();
   /** P&L réalisé de la session (trades clôturés, frais déduits), affiché sous l'equity en PC. */
   readonly realized = input<number | null>(null);
