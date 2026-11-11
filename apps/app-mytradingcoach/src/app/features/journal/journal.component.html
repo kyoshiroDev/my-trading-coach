@@ -138,7 +138,7 @@
           <mtc-info-tooltip label="Comment le win rate est calculé"
             text="Trades gagnants ÷ (gagnants + perdants). Les trades break-even ne sont pas comptés dans le calcul." />
         </span>
-        <span class="period-value">{{ s.winRate | number:'1.0-0' }}%</span>
+        <span class="period-value">{{ s.winRate | pct }}</span>
       </div>
       <div class="period-stat">
         <span class="period-label">P&L Net</span>
@@ -152,7 +152,7 @@
             text="Total des commissions et frais de la période, déjà déduits du P&L net." />
         </span>
         <span class="period-value" data-testid="period-fees" style="color:var(--red)">
-          -{{ s.totalCommissions | money:2:false }}
+          {{ (0 - s.totalCommissions) | money:2:false }}
         </span>
       </div>
       <div class="period-stat">

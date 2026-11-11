@@ -1,3 +1,4 @@
+import { PctPipe } from '@mtc/front-ui';
 import {
   ChangeDetectionStrategy, Component, DestroyRef,
   computed, effect, inject, signal, untracked,
@@ -45,7 +46,7 @@ import {
 
 @Component({
   selector: 'mtc-journal',
-  imports: [
+  imports: [PctPipe, 
     DialogDirective,
     DatePipe, DecimalPipe, TitleCasePipe, LucideDynamicIcon,
     TopbarComponent, TradeFormComponent, TradeStopDialogComponent, CsvImportComponent,
