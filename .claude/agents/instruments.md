@@ -45,6 +45,9 @@ pnl       = ticks × tickValue × qty
   saisis, au centime près (aucun écart d'arrondi possible). Un écart « départ + P&L ≠ Capital » vient
   donc du solde broker (frais d'entrée d'une position encore ouverte, frais absents des trades MTC,
   payouts) ou de trades hors période ; jamais d'un arrondi.
+- « P&L cumulé » de Mes comptes = `metrics.tradingPnl` = solde − départ + TOUS les payouts (#947) : un
+  retrait n'est pas une perte. `realizedPnl` (solde − départ) reste la base de l'objectif et du cycle
+  de payout ; ne jamais l'afficher comme P&L.
 
 ## Convention P&L unique — brut stocké, net calculé (PROMPT-213)
 `Trade.pnl` est TOUJOURS le P&L **BRUT** (résultat des prix) ; les frais vivent dans `commission`

@@ -4,7 +4,7 @@ import type { TradovateConnection } from '@app/core/api/tradovate.api';
 import { barWidth, drawdownTone, isLivePropAccount, objectiveRatio, missedAlert, missedAlertPct } from './live-prop-firm.util';
 
 const metrics = (p: Partial<AccountRuleMetrics> = {}): AccountRuleMetrics => ({
-  startingBalance: 50000, realizedPnl: 0, currentBalance: 50000, tradesCount: 0,
+  startingBalance: 50000, realizedPnl: 0, tradingPnl: 0, currentBalance: 50000, tradesCount: 0,
   winRate: null, bestDay: null, worstDay: null, objective: null, drawdown: null,
   drawdownUnconfirmed: false, dailyLoss: null, progress: null, broker: null, estimated: true, disclaimer: 'estimé',
   ...p,

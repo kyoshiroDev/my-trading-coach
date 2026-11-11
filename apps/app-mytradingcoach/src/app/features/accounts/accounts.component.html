@@ -175,8 +175,8 @@
 
             <!-- 3 · P&L -->
             <div class="cell num right strong cell-pnl" data-label="P&amp;L"
-                 [class.text-green]="a.metrics.realizedPnl >= 0" [class.text-red]="a.metrics.realizedPnl < 0">
-              {{ money(a.metrics.realizedPnl, a.currency, true) }}
+                 [class.text-green]="a.metrics.tradingPnl >= 0" [class.text-red]="a.metrics.tradingPnl < 0">
+              {{ money(a.metrics.tradingPnl, a.currency, true) }}
             </div>
 
             <!-- 4 · Trades -->

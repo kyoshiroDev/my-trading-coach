@@ -18,7 +18,7 @@ import { statsScopeStub } from '../../core/stores/selected-account.store.stub';
 
  
 function acc(startingBalance: number, status = 'ACTIVE', currentBalance = startingBalance): any {
-  return { id: 'a' + startingBalance, status, metrics: { startingBalance, currentBalance, realizedPnl: currentBalance - startingBalance } };
+  return { id: 'a' + startingBalance, status, metrics: { startingBalance, currentBalance, realizedPnl: currentBalance, tradingPnl: currentBalance - startingBalance } };
 }
 
 interface Cfg {

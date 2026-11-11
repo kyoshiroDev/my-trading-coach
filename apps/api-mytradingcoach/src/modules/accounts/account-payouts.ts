@@ -32,6 +32,8 @@ export interface RulePayouts {
    * détectés chez le broker n'en font pas partie : le solde lu chez le broker les a déjà perdus.
    */
   manualTotal?: number;
+  /** Total de TOUS les payouts du compte (détectés et saisis) : rajouté au P&L de trading (#947). */
+  total?: number;
 }
 
 export function isManualPayout(changeType: string): boolean {
@@ -51,6 +53,7 @@ export function summarizePayouts(rows: readonly PayoutRow[]): RulePayouts | null
     lastConfidence: last.confidence === 'probable' ? 'probable' : 'certain',
     lastManual: isManualPayout(last.changeType),
     manualTotal: Math.round(manualTotal * 100) / 100,
+    total: Math.round(rows.reduce((s, r) => s + r.amount, 0) * 100) / 100,
   };
 }
 
