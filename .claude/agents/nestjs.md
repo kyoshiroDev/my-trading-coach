@@ -2131,7 +2131,19 @@ du même instant = une étape). Résumé et `/equity-curve/trades` : `worstAccou
 PAR COMPTE (trades sans compte = un groupe, égalité → plus petit id), le pire gardé, et
 `maxDrawdownAccountId` (PROMPT-drawdown-max-par-compte). Jamais une série mélangée : le gain d'un
 compte n'efface pas la perte d'un autre. Le débrief retire `maxDrawdownAccountId` avant le prompt IA
-et `WeeklyDebrief.stats` (format inchangé). **Plus aucun calcul ne charge tous les trades en mémoire.**
+et `WeeklyDebrief.stats` (format inchangé). `/equity-curve/trades` seul renvoie aussi
+`maxDrawdownAccountCount` (groupes ayant un trade clôturé, trades sans compte = un groupe) : l'app
+masque la courbe de drawdown dès 2 séries (#940) ; jamais dans le résumé.
+**Stats du débrief = semaine du débrief** (#934) : `getSummary(userId, undefined, startDate, endDate)`
+avec les bornes de `getWeekInfo` (lundi 00:00 → dimanche 23:59:59.999, heure du serveur = Paris),
+les mêmes que les trades du débrief. Elles partent dans le prompt IA, `WeeklyDebrief.stats` et
+l'e-mail « débrief prêt » : jamais `getSummary(userId)` seul (tout l'historique). Les débriefs
+enregistrés avant le 11/11 gardent des stats sur tout l'historique (aucun recalcul).
+**Drawdown d'une séance** (`session-totals.ts`, #935) : `worstAccountDrawdown` sur ses trades, pire
+compte gardé. Une ancienne séance sans compte rattache toujours les trades du jour de tous les
+comptes (totaux inchangés, voulu), mais son drawdown n'est jamais une série mélangée. Lire
+`accountId` avec les trades de la séance (`sessionTrades`, `scripts/close-sessions.ts`).
+**Plus aucun calcul ne charge tous les trades en mémoire.**
 - Règles reproduites à l'identique : net = `round(pnl − |commission|, 2)` (comme `netPnl`),
   gagnant si net > 0 ; R:R compté s'il est renseigné et non nul ; heure / jour dans le **fuseau du
   processus** (`processTimeZone()`, comme les anciens `getHours()` ; TZ=Europe/Paris en prod) ;
@@ -2745,7 +2757,11 @@ Module `modules/push/` (`TraderPushModule`). Plan et décisions : `docs/audit-pu
   libellé saisi par le trader** (écran verrouillé) : repère `{compte}` remplacé dans
   `TraderNotifier` par le nom de catalogue (`push-account-name.ts` : « Apex 50K », « Apex 50K compte 2 »
   pour le suivant de même firme et taille, « ton compte » sans plan relié). « (estimation
-  MyTradingCoach) » sur toute règle de firm (détecteurs A compris), aucun conseil. Clic →
+  MyTradingCoach) » sur toute règle de firm (détecteurs A compris), aucun conseil. Vocabulaire du
+  drawdown (#938) : « marge avant le plancher » (critique), « Plancher de drawdown franchi »
+  (dépassé), jamais « drawdown max » pour la règle. Même vocabulaire dans le prompt du débrief
+  (« règle de drawdown », « MARGE estimée avant le plancher », #936) et les erreurs des DTO de
+  compte (« La règle de drawdown… »). Clic →
   `/session` (récap → `/dashboard`, connexion → `/accounts`). TTL : 1 h pour une alerte de séance.
   Payload `TraderPushPayload` (`@mtc/shared`), lu par le service worker maison de l'app (phase 2).
 - **Routes `/push/*`** (`JwtAuthGuard`, mutations bloquées en démo par `DemoReadOnlyGuard`) :

@@ -435,7 +435,11 @@ envoyées à l'API sont des horodatages ISO complets.
   si besoin, `drawdownScopeLabel`), sparkline masquée et remplacée par « Choisis un compte pour voir
   la courbe » (la courbe additionne les comptes : ce n'est le drawdown d'aucun). Repli sans valeur API
   en multi-comptes : 0, jamais une série mélangée. Champ absent (ancien cache, 5 min) : sous-titre
-  standard, aucune erreur. Un seul compte dans la vue « tous » : comportement d'un compte. La courbe d'équité du dashboard est PAR TRADE
+  standard, aucune erreur. Un seul compte dans la vue « tous » : comportement d'un compte, SAUF s'il
+  y a aussi des trades sans compte dans la période (#940) : `isMultiAccountView(id, comptes,
+  maxDrawdownAccountCount)` lit le nombre de groupes renvoyé par `/equity-curve/trades` (dashboard :
+  `equityCurveResource`, Statistiques : `tradesData`), vrai dès 2 séries ; champ absent (ancien
+  cache) → règle des comptes seule. La courbe d'équité du dashboard est PAR TRADE
   (`/equity-curve/trades`, ≤ 500 points, pics et creux gardés ; payouts par `withPayoutsByTrade`,
   infobulle « Trade » / « N trades » avec l'heure). Axe X : repères posés par `dateTickIndices` (premier
   point de chaque date, 7 au plus, 4 en étroit, premier et dernier gardés) dans `afterBuildTicks`,
@@ -446,11 +450,14 @@ envoyées à l'API sont des horodatages ISO complets.
   (plancher du plan, `before.peak`), inchangé. `anchoredDrawdown` n'existe plus. Vue multi-comptes :
   points vides, en-tête `worst` de `mtc-perf-chart` (« Max -$X » + « sur le compte {nom} ») et message
   « Choisis un compte pour voir la courbe ».
-- **Vocabulaire du drawdown** (`core/constants/drawdown-labels.const.ts`, verrouillé par son spec) :
+- **Vocabulaire du drawdown** (`DRAWDOWN_LABELS`, source unique `libs/shared/src/drawdown-labels.ts`
+  partagée avec la landing ; `core/constants/drawdown-labels.const.ts` n'est qu'un ré-export,
+  verrouillé par son spec) :
   « Drawdown max » = baisse mesurée ; « Marge avant le plancher » = distance solde → plancher (ce que
   les firms appellent « drawdown ») ; « Règle de drawdown » = taille de la règle (ex. 2 000 $), jamais
   « Drawdown max ». Infobulle `mtc-info-tooltip` avec le texte de la constante sur chaque libellé
-  (fiche règles du plan, formulaire du compte, onboarding, débrief, séance).
+  (fiche règles du plan, formulaire du compte, onboarding, débrief, séance). Carte « À surveiller » de
+  Mes comptes : « proche du plancher » (#939).
 - **Payouts reçus** (détectés chez le broker, `payouts` + `before.payouts` de l'API) : `withPayouts`
   les insère dans les points (jour sans trade = point au même P&L, champ `payout`). Seules les
   courbes de SOLDE les déduisent : équité, marge de la carte drawdown (`floorSeries`), sparkline du
