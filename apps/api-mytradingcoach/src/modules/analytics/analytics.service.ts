@@ -178,7 +178,11 @@ export class AnalyticsService {
     return this.withCache(userId, `equity${this.accKey(accountId, includeInactive)}`, CACHE_TTL.ANALYTICS, () => this.computeEquityCurve({ userId, accountId, includeInactive }));
   }
   async getEquityCurveCurrentMonth(userId: string, accountId?: string, includeInactive = false) {
-    return this.withCache(userId, `equity:month${this.accKey(accountId, includeInactive)}`, CACHE_TTL.ANALYTICS, () => this.computeEquityCurveCurrentMonth({ userId, accountId, includeInactive }));
+    // Le mois dans la clé (même base que le calcul : fuseau du serveur, Paris) : au changement de mois,
+    // l'ancien mois n'est plus servi depuis le cache pendant son TTL (#947).
+    const now = new Date();
+    const month = `${now.getFullYear()}-${now.getMonth() + 1}`;
+    return this.withCache(userId, `equity:month:${month}${this.accKey(accountId, includeInactive)}`, CACHE_TTL.ANALYTICS, () => this.computeEquityCurveCurrentMonth({ userId, accountId, includeInactive }));
   }
   async getTopAssets(userId: string, accountId?: string, includeInactive = false) {
     return this.withCache(userId, `topassets${this.accKey(accountId, includeInactive)}`, CACHE_TTL.ANALYTICS, () => this.computeTopAssets({ userId, accountId, includeInactive }));
