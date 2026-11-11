@@ -842,6 +842,16 @@ Ne jamais écrire `where: { userId, status: ACTIVE }` sur `TradeSession` : passe
 journée précédente n'est jamais renvoyée comme active (chrono à 265 h, P&L du jour rapporté à
 une session de 11 jours). Seul `startSession` ferme encore TOUTES les `ACTIVE` sans borne.
 
+### Clôture d'un trade depuis la séance (#947)
+`SessionService.closeTrade` (`POST /session/trades/:id/close`) calcule le P&L par `calculatePnl`
+(valeur du tick × quantité, ou capital engagé) : jamais l'écart de prix brut (avant : MNQ 2 contrats
++10 pts enregistré 10 $ au lieu de 40 $).
+
+### Filtre Gagnants / Perdants / BE du journal (#947)
+Classé sur le NET arrondi (`TRADE_NET_SQL` = `round(pnl − |commission|, 2)`), comme les stats. Prisma ne
+sait pas comparer `pnl − |commission|` : la liste passe par `resolveTradeWhere` (ids sélectionnés par
+`buildTradeFilterSql`), jamais par `buildTradeWhere` seul quand `result` est posé.
+
 ### Crons V2
 
 | Cron | Planning | Rôle |
@@ -1542,6 +1552,9 @@ sont en direct.
   futures/spot, Bybit, IBKR, MEXC, MT4/MT5), séparateur européen, `splitCsvLine`,
   `mapNormalizedCsvToDto`, `detectSession`, et les types `BrokerType` / `ImportDto`. Fonctions
   PURES : aucun service injecté, testables directement (`csv-parsers.spec.ts`, `csv-import.service.spec.ts`).
+- **MEXC (`parseMexc`, #947)** : « Realized PNL » est NET des frais → stocké en BRUT
+  (`roundCents(realized) + roundCents(|fee|)`), frais dans `commission`, pour que `netPnl` ne les retire
+  pas deux fois.
 - **IBKR (`parseIBKR`, #784)** : relevé Activity Statement, détecté même si la 1ʳᵉ ligne est la
   section `Statement` (on cherche un `Trades,Header` avec `Asset Category`). Un trade = une exécution
   de CLÔTURE (P/L ≠ 0 ou code `C`) : achat = ferme un SHORT, vente = ferme un LONG (sens via

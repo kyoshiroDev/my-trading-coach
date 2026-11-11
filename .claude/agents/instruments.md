@@ -79,6 +79,10 @@ On ne recalcule (points × tickValue × qty) que si AUCUN pnl n'est fourni.
 (1 contrat BTC = 0.0001 BTC). Un recalcul `points × quantité(contrats)` gonfle le P&L d'un facteur =
 taille du contrat (×10000 sur BTC). D'où la priorité au pnl réalisé du fichier. Ne jamais réintroduire
 un recalcul qui écrase un pnl réalisé fourni.
+⚠️ MEXC « Realized PNL » est NET des frais (brut − Trading Fee). Le parseur (`parseMexc`) stocke le
+BRUT = `roundCents(realized) + roundCents(|fee|)` et les frais dans `commission` : le net affiché
+(`netPnl`) redonne exactement le Realized PNL arrondi. Stocker le net tel quel retirait les frais une
+2ᵉ fois (#947 : −6,57 $ affiché −8,19 $).
 
 ## Pourcentage affiché à côté d'un P&L — variation du prix, jamais P&L / prix
 Le `%` des lignes du journal est `priceMovePct` (`@mtc/shared`) : `(exit − entry) / entry × 100`,

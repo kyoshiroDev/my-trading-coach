@@ -64,10 +64,17 @@ describe('CsvImportService — MEXC (parser dédié, sans IA)', () => {
     expect(t.quantity).toBe(550);
     // Realized PNL MEXC = NET des frais : stocké en BRUT (net + frais) pour que netPnl ne
     // retire pas les frais une 2e fois. Net affiché = −6,57 $ comme chez MEXC.
-    expect(t.pnl).toBeCloseTo(-4.9525, 5);
+    expect(t.pnl).toBe(-4.95); // −6,57 + 1,62
+    expect(t.commission).toBe(1.62); // suffixe USDT retiré, arrondi au centime
     expect(netPnl({ pnl: t.pnl!, commission: t.commission })).toBe(-6.57);
-    expect(t.commission).toBeCloseTo(1.6202459, 5); // suffixe USDT retiré
     expect(t.tradedAt).toBe('2026-05-30T14:31:55+02:00'); // Close Time UTC+02:00
+  });
+
+  it('net affiché = Realized PNL MEXC arrondi, même quand arrondir le brut donnerait 1 centime d’écart', async () => {
+    // Realized 10,006 (net) et frais 0,006 : arrondir (net + frais) donnerait 10,01 − 0,01 = 10,00.
+    const row = MEXC_ROW.replace('1.6202459USDT', '0.006USDT').replace('-6.5727459USDT', '10.006USDT');
+    const dtos = await svc.parseCSV(Buffer.from([MEXC_HEADER, row].join('\n')), 'mexc.csv');
+    expect(netPnl({ pnl: dtos[0].pnl!, commission: dtos[0].commission })).toBe(10.01);
   });
 
   it("ne laisse aucun \\r résiduel dans les valeurs (CRLF Windows)", async () => {
