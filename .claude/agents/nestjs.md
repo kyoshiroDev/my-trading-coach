@@ -710,9 +710,12 @@ débrief stocké garde les vrais ids (onglets, PDF).
 - `IS_CRON_WORKER=true` sur 1 seul worker → seul lui exécute `@Cron`
 - `ScheduleModule.forRoot()` conditionnel dans `app.module.ts`, en **opt-in** :
   ```typescript
-  ...(process.env['IS_CRON_WORKER'] === 'true' ? [ScheduleModule.forRoot()] : [])
+  ...(runsCrons() ? [ScheduleModule.forRoot()] : [])
   ```
-- En dev : process unique, pas de clustering. Crons INACTIFS sauf `IS_CRON_WORKER=true` dans `.env`
+  `runsCrons()` (`config/app-role.ts`) = `APP_ROLE !== 'web'` **et** `IS_CRON_WORKER === 'true'`.
+- En dev : process unique, pas de clustering. Crons INACTIFS sauf `IS_CRON_WORKER=true` dans `.env`.
+  Le worker du VPS dev (`mtc_api_dev_worker`) tourne avec `IS_CRON_WORKER=false` : son log de démarrage
+  dit « crons non ». **Aucun cron ne s'observe sur dev** (vérifié le 2026-11-11).
 - Worker mort : relancé avec un délai croissant (1 s → 30 s) ; au-delà de 5 morts en une minute,
   le process principal sort en erreur et Docker redémarre le conteneur (pas de boucle infinie).
 - SIGTERM (docker stop) : le principal le transmet aux workers sans les relancer ;
@@ -2469,6 +2472,9 @@ global à la file ; Resend = 10 req/s par équipe, clé partagée entre environn
   (calendriers par user reconstruits à la demande ; ne touche ni `eco:analysis:*` ni les verrous).
 - Coût FMP : avant ~603 requêtes/jour ouvré ; après = 3 à 5 fixes + 1 par tick de 20 s pendant les
   fenêtres (au plus 45 par créneau horaire si FMP ne publie jamais le chiffre).
+- **Observable en prod seulement** : relevé du soir, `🔔 … nouveaux résultats`, `✨ … analyse(s)` (analyse
+  auto). Dev n'a ni crons ni IA (`AI_ENABLED=false`) ; `POST /eco-calendar/fetch/:date` (admin) remplit
+  `EcoEvent` sans broadcast ni analyse. Vérifier sur le worker prod : logs, `EcoEvent`, `AiUsageLog`.
 
 ## Calendrier éco : analyse automatique des résultats forts (2026-11-10, #920)
 
