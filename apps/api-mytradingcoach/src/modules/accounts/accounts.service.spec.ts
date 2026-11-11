@@ -897,7 +897,7 @@ describe('AccountsService', () => {
       expect(m.drawdown).toBeNull();
     });
 
-    it('winRate / bestDay / worstDay : PnL groupé par jour UTC (somme intra-jour)', () => {
+    it('winRate / bestDay / worstDay : PnL groupé par journée CME (somme intra-jour)', () => {
       // Dates UTC explicites → indépendant du fuseau de la machine de test.
       const u = (pnl: number, day: number, h = 12) => ({ pnl, tradedAt: new Date(Date.UTC(2026, 5, day, h)) });
       const m = svc.computeRuleMetrics(

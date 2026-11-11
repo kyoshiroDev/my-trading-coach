@@ -10,9 +10,11 @@ import type { PrismaService } from '../../prisma/prisma.service';
  *
  * ⚠️ Règle propre aux comptes, conservée telle quelle : solde, objectif, drawdown et meilleur /
  * pire jour lisent `pnl − commission` (commission SIGNÉE, sans arrondi), alors que le win rate
- * lit le net de `netPnl` (`round(pnl − |commission|, 2)`). Meilleur / pire jour = date calendaire
- * UTC. Le plus haut de fin de journée (drawdown EOD des plans du catalogue) suit la journée de
- * trading CME : 17:00 heure de Chicago → 17:00 le lendemain (= 18:00 → 18:00 heure de New York).
+ * lit le net de `netPnl` (`round(pnl − |commission|, 2)`). Les frais sont toujours positifs en base
+ * depuis #947 (`TradesService` stocke |commission|). Meilleur / pire jour ET plus haut de fin de
+ * journée (drawdown EOD) suivent la journée de trading CME : 17:00 heure de Chicago → 17:00 le
+ * lendemain (= 18:00 → 18:00 heure de New York), comme la consistency et la perte journalière
+ * (décision de Greg du 2026-11-11 ; avant, le meilleur jour était en date UTC).
  */
 export type RuleTrade = { pnl: number | null; commission?: number | null; tradedAt: Date };
 
@@ -67,8 +69,8 @@ export function aggregateRuleTrades(trades: RuleTrade[]): RuleAgg {
   for (const t of sorted) {
     cum += raw(t);
     if (cum > maxCumulative) maxCumulative = cum;
-    eodByTradingDay.set(tradingDay(t.tradedAt), cum);
-    const key = t.tradedAt.toISOString().slice(0, 10);
+    const key = tradingDay(t.tradedAt);
+    eodByTradingDay.set(key, cum);
     byDay.set(key, (byDay.get(key) ?? 0) + raw(t));
   }
   const days = [...byDay.values()];
@@ -111,7 +113,7 @@ export async function ruleAggregatesSql(
       GROUP BY "accountId"
     ), days AS (
       SELECT "accountId", max(d) AS "bestDay", min(d) AS "worstDay"
-      FROM (SELECT "accountId", sum(raw) AS d FROM tr GROUP BY "accountId", ("tradedAt")::date) x
+      FROM (SELECT "accountId", sum(raw) AS d FROM tr GROUP BY "accountId", tday) x
       GROUP BY "accountId"
     )
     SELECT tr."accountId",

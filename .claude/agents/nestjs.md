@@ -2187,8 +2187,10 @@ comptes en une requête, plus de chargement des trades. `computeRuleMetrics(comp
 (= `aggregateRuleTrades` étalon JS + `ruleMetricsFromAgg`). ⚠️ Règle propre aux comptes,
 conservée : solde / objectif / drawdown / meilleur-pire jour lisent `pnl − commission`
 **signée, sans arrondi** (une commission négative augmente le solde), alors que le win rate et
-tout le reste de l'app lisent `netPnl` (`round(pnl − |commission|, 2)`). Équivalence :
-`account-rules-sql.int-spec.ts`.
+tout le reste de l'app lisent `netPnl` (`round(pnl − |commission|, 2)`). Depuis #947, `TradesService`
+stocke toujours |commission| : plus de frais négatifs écrits. Meilleur / pire jour = **journée CME**
+(`tradingDay`, 17:00 Chicago), comme la consistency et la perte journalière (décision du 11/11 ; avant,
+date UTC). Équivalence : `account-rules-sql.int-spec.ts`.
 
 ### Solde et equity lus chez le broker (2026-10-03)
 
