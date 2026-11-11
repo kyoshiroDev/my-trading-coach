@@ -28,7 +28,7 @@ import { CreateTradeDto } from './dto/create-trade.dto';
 import { UpdateTradeDto } from './dto/update-trade.dto';
 import type { SetTradeStopDto } from './dto/set-trade-stop.dto';
 import { TradeFiltersDto } from './dto/trade-filters.dto';
-import { buildTradeWhere } from './trade-filters.util';
+import { resolveTradeWhere } from './trade-filters.util';
 import { calculatePnl, calculateRiskReward } from './trade-metrics.util';
 import { dedupeKey, duplicateIdentity, occurrenceHash } from './trade-identity.util';
 import { journalStatsForFilters, type JournalStats } from './journal-stats.util';
@@ -344,7 +344,7 @@ export class TradesService {
 
   async findAll(userId: string, filters: TradeFiltersDto) {
     const { cursor, limit = 20 } = filters;
-    const where = buildTradeWhere(userId, filters);
+    const where = await resolveTradeWhere(this.prisma, userId, filters);
 
     const trades = await this.prisma.trade.findMany({
       take: limit + 1,

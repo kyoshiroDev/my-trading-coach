@@ -1,6 +1,6 @@
 import { AccountStatus, Prisma } from '@prisma/client';
 import { excludesInactiveAccounts, INACTIVE_ACCOUNT_STATUSES } from '../accounts/account-status-scope';
-import { buildTradeFilterSql, tradeFiltersScope, type TradeListFilters } from './trade-filters.util';
+import { buildTradeFilterSql, TRADE_NET_SQL, tradeFiltersScope, type TradeListFilters } from './trade-filters.util';
 import { computeTradeStats } from '@mtc/shared';
 import type { PrismaService } from '../../prisma/prisma.service';
 
@@ -65,7 +65,7 @@ export async function journalStatsSql(
   prisma: PrismaService,
   filter: Prisma.Sql,
 ): Promise<JournalStats> {
-  const NET = Prisma.sql`round((t."pnl" - abs(coalesce(t."commission", 0)))::text::numeric, 2)`;
+  const NET = TRADE_NET_SQL;
   const RAW_NET = Prisma.sql`(coalesce(t."pnl", 0) - abs(coalesce(t."commission", 0)))`;
   const [r] = await prisma.$queryRaw<
     { total: number; wins: number; losses: number; brut: number; fees: number; best: number | null; worst: number | null }[]

@@ -2,7 +2,7 @@
  * Stats du journal en SQL (SCA-B2-02) ≡ calcul JavaScript d'avant, et filtre SQL ≡ filtre Prisma.
  *
  * 1. Pour chaque filtre seul puis 80 combinaisons aléatoires (graine fixe), `buildTradeFilterSql`
- *    sélectionne EXACTEMENT les mêmes trades que `buildTradeWhere` (la liste paginée) : les stats
+ *    sélectionne EXACTEMENT les mêmes trades que `resolveTradeWhere` (la liste paginée) : les stats
  *    ne peuvent pas diverger de la liste affichée.
  * 2. Sur ces mêmes combinaisons, `journalStatsSql` ≡ `summarizeJournal(findMany(where))` (l'ancien
  *    calcul, resté dans le code comme étalon), écart ≤ 0,01.
@@ -14,7 +14,8 @@ import type { INestApplication } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { createIntegrationApp } from '../../test/integration-app.helper';
 import { PrismaService } from '../../prisma/prisma.service';
-import { buildTradeFilterSql, buildTradeWhere } from './trade-filters.util';
+import { netPnl } from '@mtc/shared';
+import { buildTradeFilterSql, buildTradeWhere, resolveTradeWhere } from './trade-filters.util';
 import { journalStatsSql, summarizeJournal } from './journal-stats.util';
 
 const RUN = `${Date.now().toString(36)}${Math.floor(Math.random() * 1e6).toString(36)}`;
@@ -117,7 +118,7 @@ describe('B2-02 — filtre SQL ≡ filtre Prisma, stats SQL ≡ stats JavaScript
   it('le filtre SQL sélectionne exactement les mêmes trades que la liste (filtres seuls + 80 combinaisons)', async () => {
     let nonEmpty = 0;
     for (const f of filterCases()) {
-      const prismaIds = (await prisma.trade.findMany({ where: buildTradeWhere(userId, f), select: { id: true } })).map((t) => t.id).sort();
+      const prismaIds = (await prisma.trade.findMany({ where: await resolveTradeWhere(prisma, userId, f), select: { id: true } })).map((t) => t.id).sort();
       const sqlIds = (
         await prisma.$queryRaw<{ id: string }[]>(Prisma.sql`
           SELECT t."id" FROM "Trade" t LEFT JOIN "TradeSession" s ON s."id" = t."sessionId"
@@ -129,9 +130,26 @@ describe('B2-02 — filtre SQL ≡ filtre Prisma, stats SQL ≡ stats JavaScript
     expect(nonEmpty).toBeGreaterThan(40); // les combinaisons sélectionnent bien quelque chose
   }, 120_000);
 
+  it('le filtre Gagnants / Perdants / BE classe sur le NET arrondi (pnl − |frais|), pas sur le brut', async () => {
+    const all = await prisma.trade.findMany({ where: { userId }, select: { id: true, pnl: true, commission: true } });
+    const expected = { WIN: [] as string[], LOSS: [] as string[], BREAKEVEN: [] as string[] };
+    for (const t of all) {
+      const net = netPnl(t);
+      if (net == null) continue;
+      expected[net > 0 ? 'WIN' : net < 0 ? 'LOSS' : 'BREAKEVEN'].push(t.id);
+    }
+    for (const result of ['WIN', 'LOSS', 'BREAKEVEN'] as const) {
+      const ids = (await prisma.trade.findMany({ where: await resolveTradeWhere(prisma, userId, { result, includeInactive: true }), select: { id: true } }))
+        .map((t) => t.id).sort();
+      expect(ids, result).toEqual(expected[result].sort());
+    }
+    // Le jeu contient bien des trades où brut et net ne classent pas pareil (frais > gain brut).
+    expect(all.some((t) => t.pnl != null && t.pnl > 0 && (netPnl(t) ?? 0) <= 0)).toBe(true);
+  }, 120_000);
+
   it('les stats SQL égalent l’ancien calcul (summarizeJournal) pour chaque combinaison', async () => {
     for (const f of filterCases()) {
-      const trades = await prisma.trade.findMany({ where: buildTradeWhere(userId, f), select: { pnl: true, commission: true } });
+      const trades = await prisma.trade.findMany({ where: await resolveTradeWhere(prisma, userId, f), select: { pnl: true, commission: true } });
       const before = summarizeJournal(trades);
       const after = await journalStatsSql(prisma, buildTradeFilterSql(userId, f));
       for (const k of Object.keys(before) as (keyof typeof before)[]) {
