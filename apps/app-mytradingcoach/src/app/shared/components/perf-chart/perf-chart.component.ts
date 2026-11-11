@@ -29,6 +29,7 @@ import {
   PlanFloor,
 } from '../../../core/services/chart-series.util';
 import { drawdownTone } from '../../../features/dashboard/components/session-live/components/live-prop-firm/live-prop-firm.util';
+import { DRAWDOWN_LABELS } from '../../../core/constants/drawdown-labels.const';
 
 /** Sous cette largeur de carte : repères mobiles (4 par axe) et max du drawdown masqué. */
 const NARROW_PX = 560;
@@ -46,6 +47,8 @@ const NARROW_PX = 560;
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PerfChartComponent {
+  /** Vocabulaire du drawdown (règle / marge / drawdown max), commun à tous les écrans. */
+  protected readonly ddLabels = DRAWDOWN_LABELS;
   readonly kind = input.required<'equity' | 'drawdown'>();
   readonly points = input<EquityPoint[]>([]);
   readonly startingCapital = input<number | null>(null);
