@@ -46,8 +46,8 @@ function propAlert(e: PropAlertEvent, opts: { background?: boolean } = {}): Trad
   const body = (() => {
     switch (e.kind) {
       case 'drawdown':
-        if (e.level === 'critical') return `Il reste moins de 10 % de ta marge de drawdown ${ESTIMATION}.`;
-        if (e.level === 'breached') return `Drawdown max dépassé, d'après tes trades synchronisés ${ESTIMATION}.`;
+        if (e.level === 'critical') return `Il reste moins de 10 % de ta marge avant le plancher ${ESTIMATION}.`;
+        if (e.level === 'breached') return `Plancher de drawdown franchi, d'après tes trades synchronisés ${ESTIMATION}.`;
         return null;
       case 'daily_loss':
         if (e.level === 'critical') return `Il reste moins de 10 % de ta perte max du jour ${ESTIMATION}.`;

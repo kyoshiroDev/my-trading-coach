@@ -57,8 +57,8 @@ export class UpdateAccountDto {
   profitTarget?: number;
 
   @IsOptional()
-  @IsNumber({}, { message: 'Le drawdown max doit être un nombre.' })
-  @Min(0, { message: 'Le drawdown max ne peut pas être négatif.' })
+  @IsNumber({}, { message: 'La règle de drawdown doit être un nombre.' })
+  @Min(0, { message: 'La règle de drawdown ne peut pas être négative.' })
   maxDrawdown?: number;
 
   @IsOptional()

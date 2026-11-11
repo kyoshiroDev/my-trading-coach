@@ -224,7 +224,7 @@ describe('PropAlertsService → push (#666)', () => {
     await svc.check('u', 'a', emit, NOW);
     await flush();
     expect(notifier.send).toHaveBeenLastCalledWith(
-      'u', 'PROP_RULES', expect.objectContaining({ body: expect.stringContaining('Drawdown max dépassé') }),
+      'u', 'PROP_RULES', expect.objectContaining({ body: expect.stringContaining('Plancher de drawdown franchi') }),
       { accountId: 'a', dedupKey: 'prop:drawdown:breached', force: true },
     );
     expect(notifier.send).toHaveBeenCalledTimes(2);
