@@ -132,7 +132,7 @@ export class PerfChartComponent {
     const head = this.floorHead();
     const base = chartAriaLabel(this.kind(), this.series(), this.money.currency());
     return head
-      ? `Drawdown du compte : marge avant la limite du plan ${head.margin}, solde ${head.balance}, plancher ${head.locked ? 'gelé à' : 'actuel'} ${head.floor}.`
+      ? `Drawdown du compte : marge avant le plancher ${head.margin}, solde ${head.balance}, plancher ${head.locked ? 'gelé à' : 'actuel'} ${head.floor}.`
       : base;
   });
 

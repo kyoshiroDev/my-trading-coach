@@ -87,6 +87,8 @@ import { KeptAccountPanelComponent } from './kept-account/kept-account-panel.com
 import { AccountPayoutsComponent } from './account-payouts/account-payouts.component';
 import { LostAccountFlowService } from '../../core/services/lost-account-flow.service';
 import { countsInAggregate, statusBadgeClass, statusLabel } from '../../core/utils/account-status.util';
+import { InfoTooltipComponent } from '@app/shared/components/info-tooltip/info-tooltip.component';
+import { DRAWDOWN_LABELS } from '@app/core/constants/drawdown-labels.const';
 
 interface AccountFormState {
   label: string;
@@ -156,7 +158,7 @@ export function menuPositionFor(rect: Pick<DOMRect, 'top' | 'bottom' | 'right'>,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     DialogDirective,
-    FormsModule, LucideDynamicIcon, TopbarComponent, PlanModalComponent,
+    FormsModule, LucideDynamicIcon, TopbarComponent, PlanModalComponent, InfoTooltipComponent,
     TradovateConnectModalComponent, TradovateAccountPickerComponent, PropFirmPlanPickerComponent,
     PropFirmRulesComponent, AccountPlanWizardComponent, NgTemplateOutlet, FloorReachedBannerComponent, KeptAccountPanelComponent, AccountPayoutsComponent,
     RouterLink,
@@ -165,6 +167,8 @@ export function menuPositionFor(rect: Pick<DOMRect, 'top' | 'bottom' | 'right'>,
   styleUrl: './accounts.component.css',
 })
 export class AccountsComponent implements OnInit {
+  /** Vocabulaire du drawdown (règle / marge / drawdown max), commun à tous les écrans. */
+  protected readonly ddLabels = DRAWDOWN_LABELS;
   protected readonly store = inject(SelectedAccountStore);
   protected readonly userStore = inject(UserStore);
   private readonly api = inject(AccountsApi);
@@ -673,7 +677,7 @@ export class AccountsComponent implements OnInit {
     return phase === 'evaluation' ? 'évaluation' : phase === 'funded' ? 'compte funded' : 'compte funded direct';
   }
   protected ddLabel(a: TradingAccount): string {
-    return a.metrics.drawdown?.type === 'TRAILING' ? 'Marge trailing drawdown' : 'Marge drawdown';
+    return a.metrics.drawdown?.type === 'TRAILING' ? `${DRAWDOWN_LABELS.margin.label} (trailing)` : DRAWDOWN_LABELS.margin.label;
   }
 
   // ── Ligne dépliable (mobile) ────────────────────────────────────────────

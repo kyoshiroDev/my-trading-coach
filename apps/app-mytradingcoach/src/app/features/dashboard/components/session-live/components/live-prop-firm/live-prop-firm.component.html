@@ -80,7 +80,8 @@
       <!-- 2. Marge avant le plancher de drawdown -->
       <div class="pf-gauge" data-testid="live-prop-firm-drawdown">
         <div class="pf-row">
-          <span>Marge avant le plancher</span>
+          <span>{{ ddLabels.margin.label }}
+            <mtc-info-tooltip [label]="'À propos : ' + ddLabels.margin.label" [text]="ddLabels.margin.help" /></span>
           @if (drawdown(); as dd) {
             @if (dd.breached) {
               <span class="pf-val red">plancher dépassé</span>
