@@ -153,6 +153,14 @@ export class SessionMorningComponent {
 
   /** Recap « Hier » : réel, ou exemple en démo. */
   protected readonly recapView = computed(() => this.yesterdayRecap() ?? (this.isDemo() ? DEMO_RECAP : null));
+  /** Le récap est celui de la dernière journée tradée (#947) : « Hier » seulement si c'est hier. */
+  protected readonly recapIsYesterday = computed(() => {
+    const recap = this.recapView();
+    if (!recap) return false;
+    const y = new Date();
+    y.setDate(y.getDate() - 1);
+    return new Date(recap.date).toDateString() === y.toDateString();
+  });
   /** Résumé/reco IA de l'agenda : réel, ou exemple en démo. */
   protected readonly ecoSummaryText = computed(() => this.ecoCalendar()?.analysis.summary || (this.isDemo() ? DEMO_ECO_SUMMARY : ''));
   protected readonly ecoRecoText    = computed(() => this.ecoCalendar()?.analysis.recommendation || (this.isDemo() ? DEMO_ECO_RECO : ''));

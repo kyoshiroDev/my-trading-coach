@@ -203,13 +203,20 @@ export class DailyRecapService {
     });
   }
 
+  /**
+   * Récap de la DERNIÈRE journée tradée avant aujourd'hui, sur 7 jours au plus. Avant (#947), seul
+   * le récap d'hier était cherché : le lundi, « Hier » = dimanche, donc jamais de récap alors que
+   * vendredi en avait un. Le front l'intitule « Hier » si c'est hier, sinon par le nom du jour.
+   */
   async getYesterdayRecap(userId: string, isPremium = false) {
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    yesterday.setHours(0, 0, 0, 0);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const weekAgo = new Date(today);
+    weekAgo.setDate(weekAgo.getDate() - 7);
 
-    const recap = await this.prisma.dailyRecap.findUnique({
-      where: { userId_date: { userId, date: yesterday } },
+    const recap = await this.prisma.dailyRecap.findFirst({
+      where: { userId, date: { gte: weekAgo, lt: today } },
+      orderBy: { date: 'desc' },
     });
 
     if (!recap || isPremium) return recap;
