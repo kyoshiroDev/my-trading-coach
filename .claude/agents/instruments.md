@@ -100,6 +100,9 @@ un chiffre plausible mais tout aussi faux). Le pipe `pnlFormat` prend le trade
 | Dow | MYM / YM | 1.0 | $0.50 / $5.00 |
 | Russell | M2K / RTY | 0.10 | $0.50 / $5.00 |
 | Crude Oil | MCL / CL | 0.01 | $1.00 / $10.00 |
+| E-mini Crude Oil | QM | 0.025 | $12.50 |
+| Natural Gas | NG / QG (E-mini) | 0.001 / 0.005 | $10.00 / $12.50 |
+| Copper | HG | 0.0005 | $12.50 |
 | Gold | MGC / GC | 0.10 | $1.00 / $10.00 |
 | Silver | SIL / SI | 0.005 | $1.25 / $25.00 |
 | Euro FX | M6E / 6E | 0.0001 / 0.00005 | $1.25 / $6.25 |
@@ -108,6 +111,7 @@ un chiffre plausible mais tout aussi faux). Le pipe `pnlFormat` prend le trade
 | Micro Bitcoin | MBT | 5.0 | $5.00 |
 | Bitcoin | BTC | 5.0 | $25.00 |
 | Micro Ether | MET | 0.10 | $0.10 |
+| T-Note 2Y | ZT | 0.00390625 | $7.8125 |
 | T-Note 5Y | ZF | 0.0078125 | $7.8125 |
 | T-Note 10Y | ZN | 0.015625 | $15.625 |
 | T-Bond 30Y | ZB | 0.03125 | $31.25 |
