@@ -84,6 +84,24 @@ describe('SelectedAccountStore', () => {
       acc('arc', { status: 'ARCHIVED' }),
     ];
 
+    it('devise de « Tous les comptes » : seulement les comptes comptés (#947)', () => {
+      const { store } = setup({ accounts: [
+        acc('usd', { status: 'ACTIVE', currency: 'USD' }),
+        acc('eur-arc', { status: 'ARCHIVED', currency: 'EUR' }),
+        acc('eur-ko', { status: 'FAILED', currency: 'EUR' }),
+      ] });
+      store.load();
+      expect(store.displayCurrency()).toBe('USD');
+      store.setIncludeInactive(true);
+      expect(store.displayCurrency()).toBeNull(); // l'interrupteur les ramène : devises mêlées
+    });
+
+    it('aucun compte compté (tous perdus) : devise de ces comptes, pas l\'USD par défaut', () => {
+      const { store } = setup({ accounts: [acc('eur-ko', { status: 'FAILED', currency: 'EUR' })] });
+      store.load();
+      expect(store.displayCurrency()).toBe('EUR');
+    });
+
     it('compte les comptes exclus par statut', () => {
       const { store } = setup({ accounts: list() });
       store.load();

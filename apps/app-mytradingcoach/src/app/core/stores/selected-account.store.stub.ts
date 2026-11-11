@@ -1,4 +1,5 @@
 import { signal } from '@angular/core';
+import { commonCurrency } from '@mtc/shared';
 import { countsInAggregate, type ExcludedAccounts } from '../utils/account-status.util';
 
 /**
@@ -35,6 +36,11 @@ export function statsScopeStub() {
     },
     aggregateAccounts(this: StubHost) {
       return this.accounts().filter((a) => countsInAggregate(a.status, this.includeInactive()));
+    },
+    aggregateCurrency(this: StubHost): string | null {
+      const all = this.accounts() as { status: string; currency?: string }[];
+      const counted = all.filter((a) => countsInAggregate(a.status, this.includeInactive()));
+      return commonCurrency((counted.length ? counted : all).map((a) => a.currency));
     },
     excludedAccounts(this: StubHost): ExcludedAccounts {
       const list = this.accounts();
