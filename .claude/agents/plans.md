@@ -120,7 +120,8 @@ réservée au Premium. Changer une ligne → `libs/shared/src/plan-benefits.ts` 
 > mesurent PAS la même chose, **non comparables**.
 > - **Barème A — STOP_BASED** (`stopLoss` présent) : 4 critères intrinsèques — stop respecté (35) · R:R
 >   ≥1.5 (25) · émotion effective saine (20) · risque ≤1% (20). **Inchangé.**
-> - **Barème B — BEHAVIORAL** (`stopLoss` absent : scalp manuel, imports broker) : 3 critères **relatifs à
+> - **Barème B — BEHAVIORAL** (`stopLoss` absent : scalp manuel, imports broker ; ou stop présent mais
+>   barème A non mesurable — stop seul, ni objectif ni émotion, #929) : 3 critères **relatifs à
 >   l'historique du compte** (médianes) — **perte contenue** (40, sur trade perdant : `L≤1.5×Lméd`→1,
 >   `≤3×`→0.5, sinon 0) · **pas de revenge** (35, délai depuis le dernier perdant du **même jour** :
 >   `<2 min`→0, `2-10`→0.5, `>10`→1) · **taille constante** (25, anti-martingale strict, si le trade

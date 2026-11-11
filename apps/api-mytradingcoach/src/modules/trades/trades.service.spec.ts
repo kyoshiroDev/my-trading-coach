@@ -1048,6 +1048,16 @@ describe('TradesService', () => {
       expect(behavioralGradeUpdates(asGraded(trades)).map((u) => u.id)).not.toContain('t5');
     });
 
+    it('stop SANS note A (stop seul, ni objectif ni émotion) : note comportementale, comme sans stop (#929)', () => {
+      const trades = buildTrades(20);
+      trades[5].stopLoss = 42;
+      trades[5].executionScore = null;
+      trades[5].executionGrade = null;
+      trades[5].executionMethod = null;
+      const u = behavioralGradeUpdates(asGraded(trades)).find((x) => x.id === 't5');
+      expect(u).toMatchObject({ grade: 'EXCELLENT', method: 'BEHAVIORAL' });
+    });
+
     it(`notes déjà à jour → rien d'écrit ; 2 500 changements → ${Math.ceil(2500 / GRADE_UPDATE_CHUNK)} requêtes dans une transaction`, async () => {
       await writeGradeUpdates(mockPrisma as never, 'acc-1', []);
       expect(mockPrisma.$executeRaw).not.toHaveBeenCalled();

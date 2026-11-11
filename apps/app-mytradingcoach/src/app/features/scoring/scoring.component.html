@@ -97,16 +97,16 @@
 
           <div class="score-items">
             @for (bar of bars(); track bar.name) {
-              <div class="score-row">
+              <div class="score-row" [attr.title]="bar.hint ?? null" [attr.data-testid]="'score-row-' + bar.name">
                 <span class="score-name">{{ bar.name }}</span>
                 <div class="bar-track">
                   <div
                     class="bar-fill"
-                    [style.width.%]="bar.score"
+                    [style.width.%]="bar.score ?? 0"
                     [style.background]="bar.color"
                   ></div>
                 </div>
-                <span class="score-val mono">{{ bar.score }}</span>
+                <span class="score-val mono" [class.score-val-none]="bar.score === null">{{ bar.score ?? '—' }}</span>
               </div>
             }
           </div>

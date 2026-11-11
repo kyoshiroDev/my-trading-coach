@@ -86,7 +86,6 @@ describe('TradeStopDialogComponent', () => {
     expect(txt(q(f, 'trade-stop-rr'))).toBe('—');
     type(f, 'trade-target-input', '28138,25'); // virgule décimale acceptée
     expect(txt(q(f, 'trade-stop-rr'))).toBe('4.55');
-    expect(q(f, 'trade-stop-grade-warning')).toBeNull();
     expect((q(f, 'trade-stop-save') as HTMLButtonElement).disabled).toBe(false);
   });
 
@@ -116,7 +115,8 @@ describe('TradeStopDialogComponent', () => {
     const f = await render(synced());
     type(f, 'trade-stop-input', '26862.5');
     expect(txt(q(f, 'trade-stop-rr'))).toBe('—');
-    expect(txt(q(f, 'trade-stop-grade-warning'))).toBe("Sans objectif, la note d'exécution peut passer à « Non évaluée ».");
+    // Plus d'alerte sur la note : sans objectif, le trade garde sa note comportementale (#929).
+    expect(q(f, 'trade-stop-grade-warning')).toBeNull();
     const saved = vi.fn();
     f.componentInstance.saved.subscribe(saved);
     (q(f, 'trade-stop-save') as HTMLButtonElement).click();

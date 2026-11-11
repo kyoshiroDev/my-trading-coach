@@ -515,6 +515,11 @@ envoyées à l'API sont des horodatages ISO complets.
   le R/R. »), trades récents, Analytics par setup, conseils du tableau de bord (émotions sans R/R
   écartées), objectif « R:R minimum » de la session (`minRrFailureLabel`). Moyennes : R/R connus
   seulement (`averageKnownRiskReward`). Templates : `!== null && !== undefined` (lint eqeqeq).
+- Score trader : sans aucun R/R connu, la barre « Gestion risque » est **non mesurée** (`score: null`,
+  « — », infobulle `RISK_UNMEASURED_HINT`) et **exclue du score global** (`globalScoreOf`), au lieu de
+  valoir 0 (#930).
+- Fenêtre de saisie du stop : plus d'alerte « note Non évaluée » — un stop sans objectif garde la note
+  comportementale (#929), l'infobulle de la note le dit (`gradeTooltip`).
 - Ligne du Journal sans R/R : bouton cible « Ajouter le stop initial » (`data-testid="trade-add-stop"`,
   colonne actions passée à 88 px, Exécution 1.15fr / Setup 0.95fr pour garder l'en-tête sur une ligne à
   1440 px) → `mtc-trade-stop-dialog` (stop obligatoire, objectif facultatif,

@@ -50,7 +50,6 @@
           </div>
           @if (riskReward() === null) {
             <p class="stop-hint">Ajoute un objectif pour calculer le R/R.</p>
-            <p class="stop-hint" data-testid="trade-stop-grade-warning">Sans objectif, la note d'exécution peut passer à « Non évaluée ».</p>
           }
           @if (missingPointValue()) {
             <p class="stop-hint" data-testid="trade-stop-no-point-value">

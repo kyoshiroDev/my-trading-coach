@@ -654,7 +654,9 @@ déjà `retry-after` ; prompt caching déjà posé (`cache_control`) sur les sys
 ## Notes comportementales (barème B) — recalcul (SCA-B5-04, 2026-10-07)
 
 `trades/behavioral-grades.ts` : `behavioralGradeUpdates(trades)` (pur : médianes du compte, une
-passe, seulement les trades sans stop dont la note change) puis `writeGradeUpdates` : **un
+passe, seulement les trades hors barème A dont la note change : sans stop, ou avec un stop mais
+sans note STOP_BASED — stop seul, ni objectif ni émotion, #929 — pour que poser son stop ne fasse
+jamais perdre la note) puis `writeGradeUpdates` : **un
 `UPDATE "Trade" … FROM (VALUES …)` par paquet de 1 000**, tous dans une transaction, filtré sur
 `accountId` (plus un UPDATE Prisma par trade). Volontairement **synchrone et sur tout le compte** :
 la réponse de création d'un trade porte sa note, et un nouveau trade décale les médianes de tous.

@@ -27,7 +27,9 @@ export const GRADE_UPDATE_CHUNK = 1000;
 
 /**
  * Recalcul par lot du barème comportemental d'un compte, EN UNE SEULE PASSE.
- * Ne touche QUE les trades sans stop (ceux avec stop gardent leur barème A intrinsèque). Contextuel :
+ * Ne touche pas les trades notés au barème A (stop + au moins 2 critères mesurables : note intrinsèque).
+ * Un trade avec stop mais non mesurable au barème A (stop seul, sans objectif ni émotion : #929) reçoit
+ * la note comportementale, comme un trade sans stop : poser son stop ne fait jamais perdre la note. Contextuel :
  * les 3 critères dépendent des médianes du compte → la note d'un trade évolue quand l'historique
  * s'étoffe (attendu). Charge les trades clôturés triés une fois, calcule les médianes une fois,
  * puis parcourt : aucune requête par trade (N+1 évité). Écritures limitées aux trades dont la note
@@ -45,7 +47,7 @@ export async function recomputeBehavioralGrades(prisma: PrismaService, accountId
   await writeGradeUpdates(prisma, accountId, behavioralGradeUpdates(trades));
 }
 
-/** Notes à réécrire (pur) : seulement les trades sans stop dont la note change. `trades` triés par date. */
+/** Notes à réécrire (pur) : trades hors barème A dont la note change. `trades` triés par date. */
 export function behavioralGradeUpdates(trades: GradedTrade[]): GradeUpdate[] {
   const eps = BREAKEVEN_EPSILON;
   const isLoss = (pnl: number | null) => pnl != null && pnl < -eps;
@@ -62,7 +64,8 @@ export function behavioralGradeUpdates(trades: GradedTrade[]): GradeUpdate[] {
 
   for (let i = 0; i < trades.length; i++) {
     const t = trades[i];
-    if (t.stopLoss != null) continue; // barème A → on ne touche pas
+    // Barème A posé (stop + critères mesurables) → on ne touche pas. Stop sans note A → barème B.
+    if (t.stopLoss != null && t.executionMethod === ExecutionMethod.STOP_BASED) continue;
 
     let score: number | null = null;
     let grade: ExecutionGrade | null = null;

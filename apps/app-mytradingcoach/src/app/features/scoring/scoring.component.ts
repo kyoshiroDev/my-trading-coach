@@ -32,8 +32,21 @@ type Trade = Pick<ApiTrade, 'pnl' | 'riskReward' | 'emotion' | 'effectiveEmotion
 
 interface ScoreBar {
   name: string;
-  score: number;
+  /** null = non mesurable (aucune donnée) : affiché « — », exclu du score global. */
+  score: number | null;
   color: string;
+  /** Pourquoi la barre n'est pas mesurée (infobulle). */
+  hint?: string;
+}
+
+/** Aucun trade clôturé avec R/R connu : « Gestion risque » non mesurée (#930). */
+export const RISK_UNMEASURED_HINT =
+  'Non mesurée : aucun trade avec un R/R connu. Ajoute ton stop et ton objectif dans le Journal pour la calculer.';
+
+/** Score global = moyenne des seules barres mesurées (une barre « — » ne compte pas pour 0). */
+export function globalScoreOf(bars: ScoreBar[]): number {
+  const measured = bars.filter((b): b is ScoreBar & { score: number } => b.score !== null);
+  return measured.length ? Math.round(measured.reduce((sum, b) => sum + b.score, 0) / measured.length) : 0;
 }
 
 export function computeScore(trades: Trade[]): ScoreBar[] {
@@ -65,10 +78,10 @@ export function computeScore(trades: Trade[]): ScoreBar[] {
   const rrValues = closed
     .filter((t): t is typeof t & { riskReward: number } => t.riskReward != null)
     .map((t) => t.riskReward);
-  const avgRR = rrValues.length
-    ? rrValues.reduce((a, b) => a + b, 0) / rrValues.length
-    : 0;
-  const riskScore = Math.min(100, avgRR * 33);
+  // Aucun R/R connu → non mesurée, et non pas 0 : un R/R absent n'est pas un mauvais R/R (#930).
+  const riskScore = rrValues.length
+    ? Math.min(100, (rrValues.reduce((a, b) => a + b, 0) / rrValues.length) * 33)
+    : null;
 
   const setups = [...new Set(trades.map((t) => t.setupId))];
   const setupWRs = setups.map((s) => {
@@ -101,11 +114,9 @@ export function computeScore(trades: Trade[]): ScoreBar[] {
       score: Math.round(psychScore),
       color: barColor(Math.round(psychScore)),
     },
-    {
-      name: 'Gestion risque',
-      score: Math.round(riskScore),
-      color: barColor(Math.round(riskScore)),
-    },
+    riskScore === null
+      ? { name: 'Gestion risque', score: null, color: 'transparent', hint: RISK_UNMEASURED_HINT }
+      : { name: 'Gestion risque', score: Math.round(riskScore), color: barColor(Math.round(riskScore)) },
     {
       name: 'Consistance',
       score: Math.round(consistScore),
@@ -193,12 +204,7 @@ export class ScoringComponent {
   );
 
   protected readonly bars = computed(() => computeScore(this.trades()));
-  protected readonly globalScore = computed(() => {
-    const b = this.bars();
-    return b.length
-      ? Math.round(b.reduce((sum, x) => sum + x.score, 0) / b.length)
-      : 0;
-  });
+  protected readonly globalScore = computed(() => globalScoreOf(this.bars()));
   protected readonly tradeCount = computed(() => this.trades().length);
   protected readonly scoreLabel = scoreLabel;
 

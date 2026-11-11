@@ -187,7 +187,7 @@ export function gradeTooltip(t: Trade): string {
   const base = `Note calculée : ${t.executionScore}/100. `;
   return t.executionMethod === 'BEHAVIORAL'
     ? base +
-        'Note comportementale (aucun stop loss sur ce trade) : perte contenue, absence de revenge trading, régularité de la taille de position.'
+        `Note comportementale (${t.stopLoss != null ? 'stop posé, mais moins de 2 critères mesurables pour la note standard' : 'aucun stop loss sur ce trade'}) : perte contenue, absence de revenge trading, régularité de la taille de position.`
     : base +
         "Barème standard : stop respecté, R:R, émotion effective et risque engagé.";
 }

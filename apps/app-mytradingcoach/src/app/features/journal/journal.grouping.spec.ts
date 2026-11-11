@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { netPnl } from '@mtc/shared';
 import type { Trade } from '../../core/stores/trades.store';
 import {
-  groupByDay, groupByWeek, isoWeek, PARTIAL_HINT, presetRange, tradeCountLabel,
+  gradeTooltip, groupByDay, groupByWeek, isoWeek, PARTIAL_HINT, presetRange, tradeCountLabel,
 } from './journal.grouping';
 
 /** Trade clôturé minimal : pnl BRUT + frais, à une heure donnée du 27/10/2026 (heure locale). */
@@ -142,5 +142,22 @@ describe('journal.grouping', () => {
       expect(PARTIAL_HINT.day).toBe('Charge plus de trades pour voir le total du jour.');
       expect(PARTIAL_HINT.week).toBe('Charge plus de trades pour voir le total de la semaine.');
     });
+  });
+});
+
+describe('gradeTooltip', () => {
+  const t = (over: Partial<Trade>) => ({ executionScore: 80, ...over }) as unknown as Trade;
+
+  it('note comportementale : explique pourquoi, avec ou sans stop (#929)', () => {
+    expect(gradeTooltip(t({ executionMethod: 'BEHAVIORAL', stopLoss: null }))).toContain('aucun stop loss sur ce trade');
+    expect(gradeTooltip(t({ executionMethod: 'BEHAVIORAL', stopLoss: 26862.5 }))).toContain(
+      'stop posé, mais moins de 2 critères mesurables pour la note standard',
+    );
+  });
+
+  it('barème standard', () => {
+    expect(gradeTooltip(t({ executionMethod: 'STOP_BASED', stopLoss: 1 }))).toBe(
+      'Note calculée : 80/100. Barème standard : stop respecté, R:R, émotion effective et risque engagé.',
+    );
   });
 });
