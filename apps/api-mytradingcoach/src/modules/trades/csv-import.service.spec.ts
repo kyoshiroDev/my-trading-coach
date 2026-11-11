@@ -6,6 +6,7 @@ import * as XLSX from 'xlsx';
 import { AI_BATCH, AI_CHUNK_MAX_TOKENS, CSV_AI_FALLBACK_DAILY_LIMIT, CsvImportService, WORST_TOKENS_PER_TRADE, type FeesReport } from './csv-import.service';
 // Parseurs extraits en fonctions pures (étape 4 de l'audit) : testés directement.
 import { detectBroker, normalizeMexcSymbol, normalizeSeparator, parseMexc } from './csv-parsers';
+import { netPnl } from '@mtc/shared';
 // Le vrai calcul du mapping : le test du registre doit exercer le code, pas un faux.
 import { applyMappingWithPnlCheck } from './csv-mapping';
 
@@ -61,7 +62,10 @@ describe('CsvImportService — MEXC (parser dédié, sans IA)', () => {
     expect(t.entry).toBe(73602.51);
     expect(t.exit).toBe(73692.56);
     expect(t.quantity).toBe(550);
-    expect(t.pnl).toBeCloseTo(-6.5727459, 5); // PnL net déjà calculé, pas recalculé
+    // Realized PNL MEXC = NET des frais : stocké en BRUT (net + frais) pour que netPnl ne
+    // retire pas les frais une 2e fois. Net affiché = −6,57 $ comme chez MEXC.
+    expect(t.pnl).toBeCloseTo(-4.9525, 5);
+    expect(netPnl({ pnl: t.pnl!, commission: t.commission })).toBe(-6.57);
     expect(t.commission).toBeCloseTo(1.6202459, 5); // suffixe USDT retiré
     expect(t.tradedAt).toBe('2026-05-30T14:31:55+02:00'); // Close Time UTC+02:00
   });

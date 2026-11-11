@@ -651,9 +651,12 @@ export function parseMexc(lines: string[]): string {
     const tradedAt = `${(c[iClose] ?? '').trim().replace(' ', 'T')}+02:00`;
 
     if (!asset || !isFinite(entry) || !isFinite(pnl)) continue;
-    out.push(
-      [asset, side, entry, exit, quantity, pnl, tradedAt, isFinite(fee) ? Math.abs(fee) : 0].join(','),
-    );
+    // « Realized PNL » MEXC est NET des frais (brut − Trading Fee). Convention unique : `pnl`
+    // = BRUT, les frais dans `commission`, le net calculé à la lecture (netPnl). Stocker le net
+    // tel quel retirait les frais une deuxième fois (−6,57 $ affiché −8,19 $).
+    const commission = isFinite(fee) ? Math.abs(fee) : 0;
+    const grossPnl = Math.round((pnl + commission) * 1e8) / 1e8;
+    out.push([asset, side, entry, exit, quantity, grossPnl, tradedAt, commission].join(','));
   }
   return out.join('\n');
 }
