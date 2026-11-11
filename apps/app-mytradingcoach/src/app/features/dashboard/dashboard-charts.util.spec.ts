@@ -5,6 +5,7 @@ import {
   buildPlBuckets,
   buildTradeRows,
   emotionShares,
+  emotionSharesFromStats,
   plGranularityFor,
   setupsDonutFromStats,
   setupsDonutFromTrades,
@@ -197,5 +198,21 @@ describe('buildTradeRows (historique des trades, #655)', () => {
     const [row] = buildTradeRows([trade(100)], 0);
     expect(row.outcome).toBe('win');
     expect(row.pct).toBeNull();
+  });
+});
+
+describe('emotionSharesFromStats — donut sur la période, pas les 6 derniers trades (#947)', () => {
+  it('parts calculées sur tous les trades de la période renvoyés par l’API', () => {
+    const shares = emotionSharesFromStats([
+      { emotion: 'FOCUSED', count: 6 },
+      { emotion: 'STRESSED', count: 90 },
+      { emotion: 'CONFIDENT', count: 24 },
+    ]);
+    expect(shares).toEqual([
+      { emotion: 'STRESSED', pct: 75 },
+      { emotion: 'CONFIDENT', pct: 20 },
+      { emotion: 'FOCUSED', pct: 5 },
+    ]);
+    expect(emotionSharesFromStats([])).toEqual([]);
   });
 });
