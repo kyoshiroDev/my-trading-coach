@@ -40,7 +40,7 @@ describe('PerfChartComponent', () => {
     // Entrées SIGNAL : `setInput` ne les alimente pas en JIT sous vitest (cf.
     // tradovate-connect-modal.component.spec.ts) → remplacées avant le premier rendu.
     const cmp = f.componentInstance as unknown as Record<string, unknown>;
-    const defaults = { points: [], startingCapital: null, planFloor: null, before: null, objective: null, emptyMessage: 'Aucun trade sur cette période', loading: false };
+    const defaults = { points: [], startingCapital: null, planFloor: null, before: null, objective: null, worst: null, emptyMessage: 'Aucun trade sur cette période', loading: false };
     for (const [k, v] of Object.entries({ ...defaults, ...inputs })) cmp[k] = signal(v);
     f.detectChanges();
     return f.nativeElement as HTMLElement;
@@ -50,6 +50,19 @@ describe('PerfChartComponent', () => {
     const el = render({ kind: 'equity', points: [], emptyMessage: 'Aucun trade sur la période' });
     expect(el.querySelector('.pc-empty')?.textContent).toContain('Aucun trade sur la période');
     expect(el.querySelector('[data-testid="perf-chart-value"]')).toBeNull();
+  });
+
+  it('drawdown « tous les comptes » : pire compte et son nom en en-tête, courbe masquée avec message', () => {
+    const el = render({
+      kind: 'drawdown', points: [], worst: { value: -400, scope: 'sur le compte Lucid B' },
+      emptyMessage: 'Choisis un compte pour voir la courbe',
+    });
+    const value = el.querySelector('[data-testid="perf-chart-value"]');
+    expect(value?.textContent).toContain('Max -$400.00');
+    expect(value?.classList).toContain('neg');
+    expect(el.querySelector('[data-testid="perf-chart-scope"]')?.textContent).toBe('sur le compte Lucid B');
+    expect(el.querySelector('.pc-empty')?.textContent).toContain('Choisis un compte pour voir la courbe');
+    expect(chart.buildDrawdownChart).not.toHaveBeenCalled();
   });
 
   it('pas de message vide pendant le chargement', () => {

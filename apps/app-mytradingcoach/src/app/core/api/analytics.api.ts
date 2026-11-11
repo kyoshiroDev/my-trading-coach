@@ -8,6 +8,11 @@ export interface AnalyticsSummary {
   totalPnl: number;
   totalTrades: number;
   maxDrawdown: number;
+  /**
+   * Compte du drawdown max (vue « Tous les comptes » : le pire compte). null : trades sans compte
+   * ou aucune baisse ; absent : réponse en cache d'avant le champ.
+   */
+  maxDrawdownAccountId?: string | null;
   profitFactor: number | null;
   streak: number;
   topSession: string;
@@ -83,11 +88,13 @@ export interface DailyEquityCurve {
 
 /**
  * Réponse de `/equity-curve/trades` : un point par clôture de trade (réduit à ~500 en gardant pics
- * et creux) et le drawdown max de la période (≤ 0), calculé sur TOUTES les clôtures par
- * `maxDrawdownOfTrades` (`@mtc/shared`).
+ * et creux) et le drawdown max de la période (≤ 0), calculé sur TOUTES les clôtures, compte par
+ * compte (`worstAccountDrawdown` de `@mtc/shared`) : en vue « Tous les comptes », le pire compte.
  */
 export interface TradesEquityCurve extends DailyEquityCurve {
   maxDrawdown: number;
+  /** Compte du drawdown max (null : trades sans compte ou aucune baisse ; absent : ancien cache). */
+  maxDrawdownAccountId?: string | null;
   /** Trades clôturés de la période. */
   trades: number;
 }

@@ -59,6 +59,11 @@ export class PerfChartComponent {
   /** Équité : objectif de gain du plan / du compte (`planObjectiveLine`) ; null → pas de ligne. */
   readonly objective = input<ObjectiveLine | null>(null);
   readonly emptyMessage = input('Aucun trade sur cette période');
+  /**
+   * Drawdown en vue « Tous les comptes » : pire drawdown PARMI les comptes (≤ 0) et son compte
+   * (« sur le compte X »), affiché en en-tête à la place de la courbe (masquée : `points` vide).
+   */
+  readonly worst = input<{ value: number; scope: string | null } | null>(null);
   readonly loading = input(false);
 
   private readonly chartService = inject(ChartService);
@@ -102,11 +107,15 @@ export class PerfChartComponent {
 
   /** Valeur de l'en-tête : P&L de la période (équité) ou drawdown actuel + max (drawdown). */
   protected readonly keyValue = computed(() => {
+    const worst = this.kind() === 'drawdown' ? this.worst() : null;
+    if (worst) {
+      return { text: `Max ${this.money.format(worst.value, { sign: false })}`, tone: worst.value < 0 ? 'neg' : '', max: null, scope: worst.scope };
+    }
     const pts = this.points();
     if (!pts.length) return null;
     if (this.kind() === 'equity') {
       const pnl = pts[pts.length - 1].cumulativePnl;
-      return { text: this.money.format(pnl), tone: pnl > 0 ? 'pos' : pnl < 0 ? 'neg' : '', max: null };
+      return { text: this.money.format(pnl), tone: pnl > 0 ? 'pos' : pnl < 0 ? 'neg' : '', max: null, scope: null };
     }
     const values = this.series().values;
     const current = values[values.length - 1];
@@ -115,6 +124,7 @@ export class PerfChartComponent {
       text: this.money.format(current, { sign: false }),
       tone: current < 0 ? 'neg' : '',
       max: maxIdx === null ? null : this.money.format(values[maxIdx], { sign: false }),
+      scope: null,
     };
   });
 

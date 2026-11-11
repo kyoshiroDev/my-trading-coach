@@ -15,6 +15,9 @@
       @if (kv.max && !narrow()) {
         <span class="pc-max">(max {{ kv.max }})</span>
       }
+      @if (kv.scope) {
+        <span class="pc-max" data-testid="perf-chart-scope">{{ kv.scope }}</span>
+      }
     </span>
   }
   <div class="pc-controls"><ng-content select="[chartControls]" /></div>

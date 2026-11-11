@@ -26,6 +26,7 @@ import { MoneyService } from '../../core/services/money.service';
 import { cumulativePayouts, periodStartBalance, viewBalance, withPayoutsByTrade } from '../../core/services/equity-period.util';
 import { maxDrawdownOfCumulative } from '@mtc/shared';
 import { planObjectiveLine } from '../../core/services/chart-series.util';
+import { drawdownScopeLabel, isMultiAccountView } from '../../core/services/drawdown-scope.util';
 import { MixedCurrencyNoticeComponent } from '../../shared/components/mixed-currency-notice/mixed-currency-notice.component';
 import { TradesStore } from '../../core/stores/trades.store';
 import { SessionStore } from '../../core/stores/session.store';
@@ -322,11 +323,27 @@ export class DashboardComponent {
    * sparkline ; la valeur du KPI est celle de l'API (toutes les clôtures, avant réduction).
    */
   protected readonly drawdownSeries = computed(() =>
-    maxDrawdownOfCumulative(this.equityCurve().map((p) => p.cumulativePnl)).series,
+    this.multiAccountView() ? [] : maxDrawdownOfCumulative(this.equityCurve().map((p) => p.cumulativePnl)).series,
+  );
+  /**
+   * Vue « Tous les comptes » avec plusieurs comptes (PROMPT-drawdown-max-par-compte) : le drawdown
+   * max est celui du PIRE compte (API), la sparkline est masquée (la courbe additionne les comptes,
+   * ce n'est le drawdown d'aucun d'eux) et le repli ne recalcule jamais une série mélangée.
+   */
+  protected readonly multiAccountView = computed(() =>
+    isMultiAccountView(this.selectedAccount.selectedAccountId(), this.selectedAccount.aggregateAccounts().length),
   );
   protected readonly maxDrawdown = computed(
-    () => this.equityCurveResource.value()?.data?.maxDrawdown ?? Math.min(0, ...this.drawdownSeries()),
+    () =>
+      this.equityCurveResource.value()?.data?.maxDrawdown ??
+      (this.multiAccountView() ? 0 : Math.min(0, ...this.drawdownSeries())),
   );
+  /** « sur le compte X » sous le drawdown max en vue multi-comptes ; null sinon. */
+  protected readonly drawdownScope = computed(() => {
+    if (!this.multiAccountView()) return null;
+    const data = this.equityCurveResource.value()?.data;
+    return drawdownScopeLabel(data?.maxDrawdownAccountId, data?.maxDrawdown ?? 0, this.selectedAccount.accounts());
+  });
   /**
    * Message quand la courbe ne se trace pas : ne JAMAIS dire « aucun trade » si les KPIs en
    * comptent (critère d'acceptation de la courbe). Une courbe a besoin d'au moins 2 jours tradés ;
