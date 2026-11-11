@@ -33,6 +33,7 @@ import { periodPnl, periodStartBalance, viewBalance, withPayouts, withPayoutsByT
 import { environment } from '@app/environments/environment';
 import { MoneyService } from '../../core/services/money.service';
 import { drawdownHelp, planFloorOf, planObjectiveLine } from '../../core/services/chart-series.util';
+import { DRAWDOWN_PICK_ACCOUNT, drawdownScopeLabel, isMultiAccountView } from '../../core/services/drawdown-scope.util';
 import { MixedCurrencyNoticeComponent } from '../../shared/components/mixed-currency-notice/mixed-currency-notice.component';
 import { ErrorStateComponent } from '@mtc/front-ui';
 import { InactiveAccountsToggleComponent } from '../../shared/components/inactive-accounts-toggle/inactive-accounts-toggle.component';
@@ -162,9 +163,34 @@ export class AnalyticsComponent {
    * EOD/intraday inchangée) ; sinon après chaque trade clôturé (même règle que le tableau de bord).
    */
   protected readonly drawdownPoints = computed(() =>
-    this.planFloor()
-      ? this.equityCurve()
-      : withPayoutsByTrade(this.tradesData()?.points ?? [], this.tradesData()?.payouts),
+    this.multiAccountView()
+      ? []
+      : this.planFloor()
+        ? this.equityCurve()
+        : withPayoutsByTrade(this.tradesData()?.points ?? [], this.tradesData()?.payouts),
+  );
+  /**
+   * Vue « Tous les comptes » à plusieurs comptes (PROMPT-drawdown-max-par-compte) : la carte
+   * drawdown affiche le PIRE compte (valeur API) et masque la courbe, qui additionnerait les comptes.
+   * Un compte plus des trades sans compte compte aussi comme plusieurs séries (#940, chiffre API).
+   */
+  protected readonly multiAccountView = computed(() =>
+    isMultiAccountView(
+      this.selectedAccount.selectedAccountId(),
+      this.selectedAccount.aggregateAccounts().length,
+      this.tradesData()?.maxDrawdownAccountCount,
+    ),
+  );
+  protected readonly drawdownWorst = computed(() => {
+    const data = this.tradesData();
+    if (!this.multiAccountView() || !data) return null;
+    return {
+      value: data.maxDrawdown,
+      scope: drawdownScopeLabel(data.maxDrawdownAccountId, data.maxDrawdown, this.selectedAccount.accounts()),
+    };
+  });
+  protected readonly drawdownEmpty = computed(() =>
+    this.multiAccountView() ? DRAWDOWN_PICK_ACCOUNT : 'Aucun trade sur cette période',
   );
   /** Repères du plan relié au compte sélectionné : plancher de drawdown, objectif de gain. */
   protected readonly planFloor = computed(() => planFloorOf(this.selectedAccount.selected()));

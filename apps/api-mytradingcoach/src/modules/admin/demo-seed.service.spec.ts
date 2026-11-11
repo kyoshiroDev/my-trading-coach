@@ -44,15 +44,16 @@ describe('DemoSeedService.ensureFresh', () => {
     expect(run).not.toHaveBeenCalled();
   });
 
-  it('séance du jour ouverte depuis le seed de 03:20 → périmée (Londres le matin, New York ensuite)', async () => {
+  it('en semaine, marché ouvert : position ouverte de plus de 45 min → périmée, sinon servie telle quelle', async () => {
     const day = new Date('2026-10-06T00:00:00'); // mardi
     const at = (h: number, m = 0) => { const d = new Date(day); d.setHours(h, m, 0, 0); return d; };
-    expect(await setup(at(2, 45)).service.isStale(at(8))).toBe(false); // avant l'ouverture
-    expect(await setup(at(-9, 0)).service.isStale(at(8)), 'veille 15:00, avant 09:45 : séance d’hier suffit').toBe(false);
-    expect(await setup(at(2, 45)).service.isStale(at(11))).toBe(true); // Londres ouverte
-    expect(await setup(at(9, 38)).service.isStale(at(11))).toBe(false); // déjà montrée
-    expect(await setup(at(9, 38)).service.isStale(at(17))).toBe(true); // New York ouverte
-    expect(await setup(at(15, 57)).service.isStale(at(22))).toBe(false);
+    expect(await setup(at(10, 0)).service.isStale(at(10, 30))).toBe(false); // 30 min
+    expect(await setup(at(10, 0)).service.isStale(at(10, 46))).toBe(true); // 46 min → recalée
+    expect(await setup(at(2, 0)).service.isStale(at(18, 17))).toBe(true); // seed de la nuit
+    expect(await setup(at(18, 11)).service.isStale(at(18, 17))).toBe(false);
+    // Hors créneau (coupure de 23:00, tout début de journée) : la séance de la veille suffit.
+    expect(await setup(at(22, 50)).service.isStale(at(23, 30))).toBe(false);
+    expect(await setup(at(-2, -10)).service.isStale(at(0, 20)), 'veille 22:50, à 00:20').toBe(false);
   });
 
   it('aucune session live pour la journée de trading en cours (week-end, après minuit) → re-seed', async () => {

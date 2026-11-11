@@ -30,7 +30,8 @@ export interface DebriefPdfData {
     totalTrades: number;
     winRate: number;
     totalPnl: number;
-    avgRR: number;
+    /** null = aucun trade de la semaine n'a de R/R (ni stop ni objectif). */
+    avgRR: number | null;
     bestTrade: number;
     worstTrade: number;
   };
@@ -301,7 +302,7 @@ export class PdfService implements OnModuleDestroy {
     </div>
     <div class="stat-box">
       <div class="stat-box-label">R/R moyen</div>
-      <div class="stat-box-value">${data.stats.avgRR.toFixed(1)}</div>
+      <div class="stat-box-value">${data.stats.avgRR != null ? data.stats.avgRR.toFixed(1) : '—'}</div>
     </div>
     <div class="stat-box">
       <div class="stat-box-label">Best trade</div>

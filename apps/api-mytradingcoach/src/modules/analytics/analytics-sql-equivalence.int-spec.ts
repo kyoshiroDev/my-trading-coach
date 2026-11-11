@@ -17,6 +17,7 @@ import { createIntegrationApp } from '../../test/integration-app.helper';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AnalyticsService } from './analytics.service';
 import { LegacyAnalyticsService } from '../../test/analytics-legacy.service';
+import { netPnl } from '@mtc/shared';
 
 const RUN = `${Date.now().toString(36)}${Math.floor(Math.random() * 1e6).toString(36)}`;
 const EMAIL = `int-b2-equiv-${RUN}@test.local`;
@@ -153,16 +154,49 @@ describe('B2-01 — statistiques SQL ≡ calculs JavaScript d’avant (5 000 tra
   const RANGE_FROM = new Date(Date.UTC(2024, 5, 1));
   const RANGE_TO = new Date(Date.UTC(2025, 2, 31, 12));
 
+  /**
+   * Drawdown max attendu en vue « Tous les comptes » (PROMPT-drawdown-max-par-compte) : la boucle de
+   * l'étalon (pic depuis 0, après chaque trade) rejouée COMPTE PAR COMPTE (trades sans compte = un
+   * groupe), et le pire gardé. L'étalon, lui, faisait une seule série mélangée.
+   */
+  async function worstPerAccount(from?: Date, to?: Date): Promise<number> {
+    const trades = await prisma.trade.findMany({
+      where: { userId, pnl: { not: null }, ...(from || to ? { tradedAt: { ...(from ? { gte: from } : {}), ...(to ? { lte: to } : {}) } } : {}) },
+      select: { pnl: true, commission: true, accountId: true },
+      orderBy: [{ tradedAt: 'asc' }, { id: 'asc' }],
+    });
+    const state = new Map<string | null, { cum: number; peak: number; dd: number }>();
+    for (const t of trades) {
+      const g = state.get(t.accountId) ?? { cum: 0, peak: 0, dd: 0 };
+      g.cum += netPnl(t) ?? 0;
+      g.peak = Math.max(g.peak, g.cum);
+      g.dd = Math.max(g.dd, g.peak - g.cum);
+      state.set(t.accountId, g);
+    }
+    return Math.max(0, ...[...state.values()].map((g) => g.dd));
+  }
+
   it('résumé : tout l’historique, une période, un compte', async () => {
     for (const args of [[userId], [userId, undefined, RANGE_FROM, RANGE_TO], [userId, accA], [userId, accB, RANGE_FROM]]) {
       const { n, l } = await both('computeSummary', ...args);
-      expectClose(n, l);
+      const { maxDrawdownAccountId, ...rest } = n as { maxDrawdownAccountId: string | null; maxDrawdown: number };
+      const [, accountId, from, to] = args as [string, string | undefined, Date | undefined, Date | undefined];
+      if (accountId) {
+        // Un seul compte : identique à l'étalon, et le drawdown vient bien de ce compte.
+        expectClose(rest, l);
+        if (rest.maxDrawdown > 0) expect(maxDrawdownAccountId).toBe(accountId);
+      } else {
+        // Tous les comptes : tout identique sauf le drawdown, désormais le pire des comptes.
+        expectClose({ ...rest, maxDrawdown: 0 }, { ...(l as object), maxDrawdown: 0 });
+        expectClose(rest.maxDrawdown, await worstPerAccount(from, to), 'maxDrawdown (pire compte)');
+        expect([accA, accB, null]).toContain(maxDrawdownAccountId);
+      }
     }
   });
 
   it('résumé sans aucun trade dans la période', async () => {
     const { n, l } = await both('computeSummary', userId, undefined, new Date(Date.UTC(2030, 0, 1)), new Date(Date.UTC(2030, 1, 1)));
-    expectClose(n, l);
+    expectClose(n, { ...(l as object), maxDrawdownAccountId: null });
   });
 
   it('par setup : setups actifs dans l’ordre, puis les archivés', async () => {

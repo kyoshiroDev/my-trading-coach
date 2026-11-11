@@ -26,6 +26,10 @@ const mockPrisma = {
     findUnique: vi.fn().mockResolvedValue(null),
     upsert: vi.fn().mockResolvedValue({}),
   },
+  ecoReleaseAnalysis: {
+    upsert: vi.fn().mockResolvedValue({}),
+    findMany: vi.fn().mockResolvedValue([]),
+  },
 };
 
 const mockAi = {
@@ -309,6 +313,31 @@ describe('EcoCalendarService', () => {
     });
   });
 
+  describe('getEventsFromDb · interventions sans chiffre et état « passé » (#920)', () => {
+    afterEach(() => vi.useRealTimers());
+
+    it('discours passé : hasResult false, status past (plus « non publié » indéfiniment)', async () => {
+      vi.useFakeTimers({ toFake: ['Date'] });
+      vi.setSystemTime(new Date('2026-11-04T19:45:00Z')); // 20:45 Paris
+      mockPrisma.ecoEvent.findMany.mockResolvedValue([
+        { date: '2026-11-04', time: '20:00', name: 'Fed Interest Rate Decision', nameFr: null, country: 'US',
+          currency: 'USD', impact: 'high', actual: 3.75, estimate: 3.75, previous: 4, isReleased: true, unit: '%' },
+        { date: '2026-11-04', time: '20:30', name: 'Fed Chair Powell Press Conference', nameFr: null, country: 'US',
+          currency: 'USD', impact: 'high', actual: null, estimate: null, previous: null, isReleased: false, unit: null },
+        { date: '2026-11-04', time: '22:00', name: 'ECB President Lagarde Speech', nameFr: null, country: 'EU',
+          currency: 'EUR', impact: 'high', actual: null, estimate: null, previous: null, isReleased: false, unit: null },
+      ]);
+
+      const result = await service.getEventsFromDb('2026-11-04');
+
+      expect(result.map((e) => [e.name, e.hasResult, e.status, e.isReleased])).toEqual([
+        ['Fed Interest Rate Decision', true, 'released', true],
+        ['Fed Chair Powell Press Conference', false, 'past', false],
+        ['ECB President Lagarde Speech', false, 'upcoming', false],
+      ]);
+    });
+  });
+
   // ── checkNewReleases ──────────────────────────────────────────────────────
 
   describe('checkNewReleases', () => {
@@ -410,6 +439,11 @@ describe('EcoCalendarService', () => {
       const r = await service.analyzeReleasedEvent('user-1', 'NFP');
       expect(r).toEqual(analysis);
       expect(mockAi.analyzeEcoResult).toHaveBeenCalledTimes(1);
+      // Gardée en base pour relire l'analyse les jours suivants (calendrier d'un jour passé).
+      expect(mockPrisma.ecoReleaseAnalysis.upsert).toHaveBeenCalledWith(expect.objectContaining({
+        where: { date_eventName_assetsKey: expect.objectContaining({ eventName: 'NFP' }) },
+        update: {},
+      }));
       expect(service['redis'].setex).toHaveBeenCalledWith(
         expect.stringMatching(/^eco:analysis:.*:NFP:/),
         expect.any(Number),
@@ -458,7 +492,7 @@ describe('EcoCalendarService', () => {
 
     it('appelle analyzeEcoEvents quand des events sont présents', async () => {
       mockPrisma.ecoEvent.findMany.mockResolvedValue([{
-        time: '15:30', name: 'NFP', country: 'US', currency: 'USD',
+        time: '15:30', name: 'Non Farm Payrolls', country: 'US', currency: 'USD',
         impact: 'high', actual: null, estimate: 180000, previous: 150000,
         isReleased: false, unit: 'K',
       }]);
@@ -471,6 +505,9 @@ describe('EcoCalendarService', () => {
 
       expect(mockAi.analyzeEcoEvents).toHaveBeenCalledOnce();
       expect(result.analysis.summary).toContain('NFP');
+      // Briefing factuel calculé en code (#920) : une ligne par annonce forte, actifs concernés.
+      expect(result.briefing).toHaveLength(1);
+      expect(result.briefing?.[0].assets).toEqual(['NQ']);
     });
 
     it('mutualise l’analyse : 2 users mêmes actifs → 1 seul appel IA (le 2e lit le cache BDD)', async () => {
@@ -556,10 +593,10 @@ describe('EcoCalendarService', () => {
         actual: 52.1, estimate: 51.0, previous: 50.5,
       };
       const cached = { events: [event], analysis: {}, userAssets: ['EUR/USD'] };
-      // cache calendrier = hit (events) ; cache d'analyse IA = miss → le modèle est appelé
+      // cache calendrier = hit (events) ; cache d'analyse IA, échec récent, verrou = miss → le modèle est appelé
       vi.spyOn(service['redis'], 'get').mockImplementation(
         ((key: string) =>
-          Promise.resolve(key.startsWith('eco:analysis:') ? null : JSON.stringify(cached))) as never,
+          Promise.resolve(key.startsWith('eco:calendar:') ? JSON.stringify(cached) : null)) as never,
       );
       mockPrisma.trade.findMany.mockResolvedValue([{ asset: 'EUR/USD' }]);
       mockAi.analyzeEcoResult.mockResolvedValue({
@@ -570,7 +607,8 @@ describe('EcoCalendarService', () => {
       const result = await service.analyzeReleasedEvent('user-1', 'PMI Zone Euro');
 
       expect(mockAi.analyzeEcoResult).toHaveBeenCalledWith(
-        expect.objectContaining({ userId: 'user-1', event }),
+        // Analyse mutualisée par signature : comptée comme job partagé (userId null).
+        expect.objectContaining({ userId: null, event }),
       );
       expect(result?.interpretation).toContain('PMI');
     });
@@ -792,5 +830,23 @@ describe('EcoCalendarService', () => {
 
       expect(mockAnthropic.create).not.toHaveBeenCalled();
     });
+  });
+});
+
+describe('EcoCalendarService.getReleaseAnalyses (jour passé, sans IA)', () => {
+  it('aujourd’hui ou après → vide, sans lecture ; jour passé → analyses de la base, aucun appel IA', async () => {
+    const service = new EcoCalendarService(mockPrisma as never, mockAi as never, { client: {} } as never, {} as never);
+    mockPrisma.ecoReleaseAnalysis.findMany.mockClear();
+    mockPrisma.ecoEvent.findMany.mockResolvedValueOnce([{ name: 'Nonfarm Payrolls (Oct)', nameFr: 'Créations d’emplois non agricoles (NFP)' }]);
+    mockPrisma.trade.findMany.mockResolvedValue([]);
+    mockAi.analyzeEcoResult.mockClear();
+    expect(await service.getReleaseAnalyses('u', '2999-01-01')).toEqual({});
+    expect(mockPrisma.ecoReleaseAnalysis.findMany).not.toHaveBeenCalled();
+    mockPrisma.ecoReleaseAnalysis.findMany.mockResolvedValueOnce([
+      { eventName: 'Nonfarm Payrolls', assetsKey: 'none', analysisJson: JSON.stringify({ interpretation: 'i', assetSentiments: [] }), createdAt: new Date() },
+    ]);
+    const out = await service.getReleaseAnalyses('u', '2026-11-06');
+    expect(Object.keys(out).sort()).toEqual(['Créations d’emplois non agricoles', 'Nonfarm Payrolls']);
+    expect(mockAi.analyzeEcoResult).not.toHaveBeenCalled();
   });
 });

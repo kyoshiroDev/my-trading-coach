@@ -234,11 +234,11 @@ describe('AnalyticsService', () => {
     // Cas réel du prompt : vendredi 06/11 −268 (08:22), −267,50 (08:45), +447 (22:45) ;
     // lundi 09/11 +1 406,50 puis −253,60. Nets déjà frais déduits (SQL).
     const nets = [
-      { closedAt: new Date('2026-11-06T08:22:00Z'), pnl: -268 },
-      { closedAt: new Date('2026-11-06T08:45:00Z'), pnl: -267.5 },
-      { closedAt: new Date('2026-11-06T22:45:00Z'), pnl: 447 },
-      { closedAt: new Date('2026-11-09T09:00:00Z'), pnl: 1406.5 },
-      { closedAt: new Date('2026-11-09T10:00:00Z'), pnl: -253.6 },
+      { closedAt: new Date('2026-11-06T08:22:00Z'), pnl: -268, accountId: 'L' },
+      { closedAt: new Date('2026-11-06T08:45:00Z'), pnl: -267.5, accountId: 'L' },
+      { closedAt: new Date('2026-11-06T22:45:00Z'), pnl: 447, accountId: 'L' },
+      { closedAt: new Date('2026-11-09T09:00:00Z'), pnl: 1406.5, accountId: 'L' },
+      { closedAt: new Date('2026-11-09T10:00:00Z'), pnl: -253.6, accountId: 'L' },
     ];
 
     it('un point par clôture et le creux −535,50 (pas la clôture du jour −88,50)', async () => {
@@ -247,14 +247,48 @@ describe('AnalyticsService', () => {
       const r = await service.getEquityCurveTrades('u-dd', new Date('2026-10-10T00:00:00Z'), new Date('2026-11-09T23:59:59Z'));
       expect(r.points.map((p) => p.cumulativePnl)).toEqual([-268, -535.5, -88.5, 1318, 1064.4]);
       expect(r.maxDrawdown).toBe(-535.5);
+      expect(r.maxDrawdownAccountId).toBe('L');
+      expect(r.maxDrawdownAccountCount).toBe(1);
       expect(r.trades).toBe(5);
+    });
+
+    it('tous les comptes : la courbe additionne, le drawdown max est celui du pire compte', async () => {
+      mockRedisService.client.get.mockResolvedValue(null);
+      // A gagne +500 pendant que B perd −400, trades entrelacés.
+      vi.mocked(closedTradeNets).mockResolvedValueOnce([
+        { closedAt: new Date('2026-11-09T09:00:00Z'), pnl: 250, accountId: 'A' },
+        { closedAt: new Date('2026-11-09T09:05:00Z'), pnl: -200, accountId: 'B' },
+        { closedAt: new Date('2026-11-09T09:10:00Z'), pnl: 250, accountId: 'A' },
+        { closedAt: new Date('2026-11-09T09:15:00Z'), pnl: -200, accountId: 'B' },
+      ]);
+      const r = await service.getEquityCurveTrades('u-multi', new Date('2026-11-01T00:00:00Z'), new Date('2026-11-09T23:59:59Z'));
+      expect(r.points.map((p) => p.cumulativePnl)).toEqual([250, 50, 300, 100]);
+      expect(r.maxDrawdown).toBe(-400);
+      expect(r.maxDrawdownAccountId).toBe('B');
+      expect(r.maxDrawdownAccountCount).toBe(2);
+    });
+
+    it('#940 : un compte + des trades sans compte = 2 groupes (courbe masquée côté app)', async () => {
+      mockRedisService.client.get.mockResolvedValue(null);
+      vi.mocked(closedTradeNets).mockResolvedValueOnce([
+        { closedAt: new Date('2026-11-09T09:00:00Z'), pnl: 250, accountId: 'A' },
+        { closedAt: new Date('2026-11-09T09:05:00Z'), pnl: -100, accountId: null },
+      ]);
+      const r = await service.getEquityCurveTrades('u-sans-compte', new Date('2026-11-01T00:00:00Z'), new Date('2026-11-09T23:59:59Z'));
+      expect(r.maxDrawdownAccountCount).toBe(2);
+      expect(r.maxDrawdown).toBe(-100);
+      expect(r.maxDrawdownAccountId).toBeNull();
     });
 
     it('résumé : maxDrawdown (montant positif) par la même règle', async () => {
       vi.mocked(closedTradeNets).mockResolvedValueOnce(nets);
       vi.mocked(summaryTotals).mockResolvedValueOnce({ count: 5, wins: 2, losses: 3, pnl: 1064.4, grossProfit: 1853.5, grossLoss: 789.1, streak: -1 });
-      const r = await (service as unknown as { computeSummary: (f: object) => Promise<{ maxDrawdown: number; profitFactor: number }> }).computeSummary({ userId: 'u1' });
+      const r = await (service as unknown as { computeSummary: (f: object) => Promise<{ maxDrawdown: number; maxDrawdownAccountId: string | null; profitFactor: number }> }).computeSummary({ userId: 'u1' });
       expect(r.maxDrawdown).toBe(535.5);
+      expect(r.maxDrawdownAccountId).toBe('L');
+      // Le nombre de groupes reste hors du résumé (ni prompt IA, ni WeeklyDebrief.stats).
+      expect(r).not.toHaveProperty('maxDrawdownAccountCount');
+      expect(r).not.toHaveProperty('accountCount');
       expect(r.profitFactor).toBe(2.35);
     });
   });
@@ -310,9 +344,9 @@ describe('AnalyticsService', () => {
       expect(top[0].asset).toBe('A11');
     });
 
-    it('par émotion : R:R moyen à 0 (et non null) sans R:R, comme avant', async () => {
+    it('par émotion : R:R moyen null (jamais 0) quand aucun trade n’a de R:R', async () => {
       vi.mocked(groupTrades).mockResolvedValueOnce([agg('FOCUSED', { count: 1, wins: 1 })]);
-      expect(await svc()['computeByEmotion']({ userId: 'u1' })).toEqual([{ emotion: 'FOCUSED', winRate: 100, avgRR: 0, count: 1 }]);
+      expect(await svc()['computeByEmotion']({ userId: 'u1' })).toEqual([{ emotion: 'FOCUSED', winRate: 100, avgRR: null, count: 1 }]);
     });
 
     it('équité journalière et activité : jours triés, P&L cumulé, totaux du mois', async () => {

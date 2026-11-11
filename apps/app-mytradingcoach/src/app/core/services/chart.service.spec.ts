@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi, onTestFinished } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
 import type { ChartConfiguration } from 'chart.js';
@@ -74,6 +74,46 @@ describe('ChartService — style des courbes', () => {
     expect(desktop?.['x']?.ticks?.maxTicksLimit).toBe(7);
     expect(desktop?.['y']?.ticks?.maxTicksLimit).toBe(6);
     expect(configs[0].data.labels).toHaveLength(301);
+  });
+
+  it('courbe par trade : infobulle au centime, un repère par date (Départ, 06/11, 09/11)', () => {
+    // Dates fixes : horloge figée au 09/11/2026 (règle du dépôt).
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-11-09T18:00:00Z'));
+    onTestFinished(() => { vi.useRealTimers(); });
+    const { service, configs, canvas } = setup();
+    const t = (date: string, cumulativePnl: number, pnl: number) => ({ date, cumulativePnl, pnl, trades: 1 });
+    service.buildEquityChart(canvas, [
+      t('2026-11-06T08:22:00.000Z', -268, -268), t('2026-11-06T08:45:00.000Z', -535.5, -267.5),
+      t('2026-11-06T22:45:00.000Z', -88.5, 447), t('2026-11-09T09:00:00.000Z', -342.1, -253.6),
+      t('2026-11-09T10:00:00.000Z', 1064.4, 1406.5),
+    ], 50_000, { narrow: false, animate: false });
+    const cb = configs[0].options?.plugins?.tooltip?.callbacks as unknown as {
+      label: (i: { dataIndex: number; parsed: { y: number } }) => string;
+      footer: (i: { dataIndex: number }[]) => string[];
+    };
+    expect(cb.label({ dataIndex: 2, parsed: { y: 49_464.5 } })).toBe('$49,464.50');
+    expect(cb.footer([{ dataIndex: 2 }])).toEqual(['Trade -$267.50']);
+    const x = configs[0].options?.scales?.['x'] as unknown as { afterBuildTicks: (s: { ticks: unknown }) => void; ticks: { autoSkip: boolean } };
+    const scale = { ticks: [] as unknown };
+    x.afterBuildTicks(scale);
+    expect(scale.ticks).toEqual([{ value: 0 }, { value: 1 }, { value: 4 }]);
+    expect(x.ticks.autoSkip).toBe(false);
+  });
+
+  it('courbe par jour : infobulle toujours au dollar', () => {
+    // Dates fixes : horloge figée au 09/11/2026 (règle du dépôt).
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-11-09T18:00:00Z'));
+    onTestFinished(() => { vi.useRealTimers(); });
+    const { service, configs, canvas } = setup();
+    service.buildEquityChart(canvas, [pt('2026-11-06T00:00:00.000Z', -88.5)], 50_000, { narrow: false, animate: false });
+    const cb = configs[0].options?.plugins?.tooltip?.callbacks as unknown as {
+      label: (i: { dataIndex: number; parsed: { y: number } }) => string;
+      footer: (i: { dataIndex: number }[]) => string[];
+    };
+    expect(cb.label({ dataIndex: 1, parsed: { y: 49_911.5 } })).toBe('$49,912');
+    expect(cb.footer([{ dataIndex: 1 }])).toEqual(['Jour -$89']);
   });
 
   it('drawdown sans plan : sous l’eau depuis 0, un seul tracé', () => {

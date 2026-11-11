@@ -22,7 +22,7 @@ Le trader peut avoir plusieurs comptes (perso, prop firm en évaluation ou funde
 Réponds TOUJOURS et UNIQUEMENT en JSON valide. Pas de texte avant ou après le JSON.
 Langue : français, ton coach bienveillant mais direct.
 ${NO_EM_DASH_RULE}
-Conformité AMF : jamais de promesse de gain, jamais un chiffre présenté comme officiel. Pour les comptes prop firm, les règles (marge avant drawdown, pacing de l'objectif) sont des ESTIMATIONS calculées depuis les trades loggés dans l'app, PAS le calcul officiel de la firme (qui tient compte des positions ouvertes, du fuseau, du trailing intraday). Tu le précises explicitement.
+Conformité AMF : jamais de promesse de gain, jamais un chiffre présenté comme officiel. Pour les comptes prop firm, les règles (marge avant le plancher, pacing de l'objectif) sont des ESTIMATIONS calculées depuis les trades loggés dans l'app, PAS le calcul officiel de la firme (qui tient compte des positions ouvertes, du fuseau, du trailing intraday). Tu le précises explicitement.
 ${COMPLIANCE_RULE}`;
 
 /** Compte (avec ses règles) transmis à l'IA pour l'analyse dédiée. */
@@ -61,7 +61,7 @@ export const buildDebriefPrompt = (data: {
           const amount = (v: number | null, none: string) =>
             v == null ? none : formatMoney(v, a.currency, { decimals: 0, sign: false });
           const rules = a.maxDrawdown != null || a.profitTarget != null
-            ? ` : départ ${amount(a.startingBalance, '?')}, objectif ${amount(a.profitTarget, 'aucun')}, drawdown max ${amount(a.maxDrawdown, 'aucun')} (${a.drawdownType ?? 'STATIC'})`
+            ? ` : départ ${amount(a.startingBalance, '?')}, objectif ${amount(a.profitTarget, 'aucun')}, règle de drawdown ${amount(a.maxDrawdown, 'aucune')} (${a.drawdownType ?? 'STATIC'})`
             : '';
           return `- [${a.accountId}] "${a.name}" (${a.type}, devise ${a.currency})${rules}. ${a.tradesCount} trade(s) cette semaine.`;
         })
@@ -109,7 +109,7 @@ RÈGLES D'ANALYSE PAR COMPTE :
 - Une entrée "accounts" par compte ayant des trades cette semaine OU des règles prop firm (même sans trade : explique quoi faire).
 - Reprends EXACTEMENT l'accountId fourni (compte-1, compte-2…). Si des trades sont sous "unassigned", crée une entrée accountId="unassigned".
 - "summary" : 1-2 phrases sur ce compte précis.
-- "propNote" (comptes prop firm EVALUATION/FUNDED avec règles UNIQUEMENT, sinon null) : comportemental, intègre la MARGE estimée avant drawdown et le PACING de l'objectif, et termine par « (estimation depuis tes trades loggés, pas le calcul officiel de la firme) ». Jamais de chiffre officiel ni de promesse de gain.
+- "propNote" (comptes prop firm EVALUATION/FUNDED avec règles UNIQUEMENT, sinon null) : comportemental, intègre la MARGE estimée avant le plancher et le PACING de l'objectif, et termine par « (estimation depuis tes trades loggés, pas le calcul officiel de la firme) ». Jamais de chiffre officiel ni de promesse de gain.
 - Si le SUIVI PROP FIRM EN DIRECT existe pour ce compte, le "propNote" s'appuie D'ABORD dessus : marge la plus basse touchée et quand, alertes, épisodes de tilt, consistency, ce qui reste avant l'objectif ou le payout. Relie-les aux trades et à l'humeur de la semaine. Utilise ces chiffres tels quels, n'en invente aucun.
 
 RÈGLES OBJECTIFS GLOBAUX (IMPÉRATIF) :

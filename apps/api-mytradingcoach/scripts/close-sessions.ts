@@ -41,7 +41,7 @@ async function main() {
       // Même lecture que SessionService.sessionTrades
       const trades = await prisma.trade.findMany({
         where: { userId: s.userId, sessionId: s.id, ...(s.accountId ? { accountId: s.accountId } : {}) },
-        select: { pnl: true, commission: true, asset: true, tradedAt: true },
+        select: { pnl: true, commission: true, asset: true, tradedAt: true, accountId: true },
         orderBy: { tradedAt: 'asc' },
       });
       const data = autoCloseData(s.startedAt, trades);

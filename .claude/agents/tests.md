@@ -149,6 +149,9 @@ env $(grep -vE '^#|^$' ../../.env | xargs -d '\n') \
 > sur le vrai réseau avec un jeton factice. Rapports simulés comme le vrai serveur face à un jeton
 > factice (401 à corps vide). `tradovate-live.int-spec.ts` refuse en plus tout appel sortant autre
 > que l'API locale du test, et son dernier test exige zéro appel refusé.
+> `tradovate-sync.int-spec.ts` (clause 2i) : le faux Tradovate lève et note dans `forbidden` toute
+> méthode autre que GET (sauf l'instantané de solde, exposé en POST) et toute route `/order/*` ou
+> `/orderVersion/*` qui n'est pas `list` ; les tests de capture du stop exigent `forbidden` vide.
 >
 > ⚠️ **Redis local protégé par mot de passe.** Sans `REDIS_PASSWORD`, chaque appel Redis échoue
 > en silence (les verrous et pauses retombent sur « pas de Redis ») : `tradovate-sync.int-spec`
@@ -385,6 +388,8 @@ await page.route('**/api/debrief/generate', route => route.fulfill({
   rate, journées rouges) portent sur `activeTrades(created)`, le jeu de données principal ; les comptes
   perdus (échoué + sa tentative active, archivé ; volontairement aucun validé) ont leurs propres tests
   (trades antérieurs à la fenêtre, jours ouvrés, plancher dépassé, aucun PASSED, aucune connexion broker).
+  `demo-seed-eco.spec.ts` : analyses du faux vendredi au format `{ interpretation, gap }`, écarts
+  above/below/above, aucun terme directionnel (`findForbiddenTerms` + regex), relues par `pickReleaseAnalyses`.
 - **App, faux `SelectedAccountStore`** : un composant qui lit `statsQuery()`, `excludedAccounts()`,
   `aggregateAccounts()`… plante sur un faux store partiel (« is not a function »). Étaler
   `...statsScopeStub()` (`core/stores/selected-account.store.stub.ts`, tests uniquement) EN PREMIER
@@ -468,7 +473,7 @@ export async function createTestTrade(page: Page) {
 ├── smoke.spec.ts                   ← parcours démo, lancé en CI (non bloquant)
 ├── critical-paths.spec.ts          → auth, routes protégées, journal, paywalls FREE/PREMIUM
 ├── 08-session-mode.spec.ts         → vue morning, démarrer session, vue live, quick trade
-├── 09-eco-calendar.spec.ts         → events, analyse IA, bull/bear, dim hors session
+├── 09-eco-calendar.spec.ts         → events, analyse IA factuelle (écart calculé, pas de bull/bear, #920), dim hors session
 ├── 10-activity-calendar.spec.ts
 ├── 11-referral-ambassador.spec.ts  → parrainage : lien, paiement Stripe test, commission 20 %
 ├── 12-activation.spec.ts           → funnel n°1 : inscription → wizard → premier trade

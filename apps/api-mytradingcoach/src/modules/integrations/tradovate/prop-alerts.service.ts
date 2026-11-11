@@ -29,7 +29,7 @@ export interface PropAlertEvent {
    * aujourd'hui sans casser la consistency ; ≤ 0 si dépassé. 0 pour `objective` / `payout`.
    */
   remaining: number;
-  /** Drawdown max, limite journalière, ou gain max du jour (consistency). */
+  /** Règle de drawdown, limite journalière, ou gain max du jour (consistency). */
   limit: number;
   /** Perte journalière : ce que fait la firm quand elle est atteinte. */
   breach: 'account_failed' | 'trading_paused_for_day' | null;

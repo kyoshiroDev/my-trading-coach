@@ -1,15 +1,15 @@
-import type { EcoAnalysis, EcoEvent } from '@mtc/shared';
+import type { EcoAnalysis, EcoBriefingLine, EcoEvent } from '@mtc/shared';
 
-export interface EcoResultAnalysis {
-  interpretation: string;
-  assetSentiments: { asset: string; sentiment: 'bull' | 'bear' | 'neutral'; shortReason: string }[];
-}
+// Forme partagée avec le front (#920, conformité) : plus de sentiment haussier/baissier par actif.
+export type { EcoResultAnalysis } from '@mtc/shared';
 
 export interface EcoCalendarData {
   events: EcoEvent[];
   analysis: EcoAnalysis;
   userAssets: string[];
   pinnedEvents?: string[];
+  /** Annonces fortes du jour, une ligne factuelle chacune (aujourd'hui seulement). */
+  briefing?: EcoBriefingLine[];
 }
 
 /** Événement brut renvoyé par l'API Financial Modeling Prep. */

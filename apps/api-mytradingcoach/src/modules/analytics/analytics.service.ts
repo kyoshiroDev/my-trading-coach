@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../infra/redis.service';
 import { CACHE_TTL } from '../../common/constants/cache-ttl.const';
-import { closedTradeSteps, maxDrawdownOfCumulative, maxDrawdownOfTrades, roundCents } from '@mtc/shared';
+import { closedTradeSteps, roundCents, worstAccountDrawdown } from '@mtc/shared';
 import { closedTradeNets, cumulativeByTrade, groupTrades, summaryTotals, type TradeFilter } from './analytics.sql';
 import { analyticsVersionKey, bumpAnalyticsVersion } from './analytics-cache';
 import { activeAccountsWhere } from '../accounts/account-status-scope';
@@ -211,7 +211,8 @@ export class AnalyticsService {
   /**
    * Courbe d'équité PAR TRADE CLÔTURÉ sur une période (dashboard) : un point par clôture (trades
    * du même instant regroupés), réduite à ~500 points en gardant pics et creux, et le drawdown max
-   * calculé sur TOUTES les clôtures (`maxDrawdownOfCumulative`, source unique `@mtc/shared`).
+   * calculé sur TOUTES les clôtures, compte par compte (`worstAccountDrawdown`, source unique
+   * `@mtc/shared`) : en vue « Tous les comptes », le pire compte et son id (`maxDrawdownAccountId`).
    * `before` et `payouts` : comme `/equity-curve/daily` (ancrage du solde de départ).
    */
   async getEquityCurveTrades(userId: string, from?: Date, to?: Date, accountId?: string, includeInactive = false) {
@@ -256,6 +257,7 @@ export class AnalyticsService {
         totalPnl: 0,
         totalTrades: 0,
         maxDrawdown: 0,
+        maxDrawdownAccountId: null,
         profitFactor: null,
         streak: 0,
         topSession: '-',
@@ -269,6 +271,9 @@ export class AnalyticsService {
       totals.grossLoss > 0 ? Math.round((totals.grossProfit / totals.grossLoss) * 100) / 100 : null;
     const topSession = bestByWinRate(sessions);
     const topHour = bestByWinRate(hours);
+    // Drawdown max PAR COMPTE : le pire des comptes de la vue, jamais une série mélangée.
+    // Le net arrive déjà frais déduits (SQL) : commission 0 pour ne pas les retirer deux fois.
+    const dd = worstAccountDrawdown(nets.map((n) => ({ ...n, commission: 0 })));
 
     return {
       // Mêmes règles que computeTradeStats : sur le NET, BE exclus du dénominateur.
@@ -276,7 +281,9 @@ export class AnalyticsService {
       totalPnl: roundCents(totals.pnl),
       totalTrades: totals.count,
       // Montant positif (contrat historique de l'API, lu par le débrief) ; règle unique @mtc/shared.
-      maxDrawdown: -maxDrawdownOfTrades(nets.map((n) => ({ closedAt: n.closedAt, pnl: n.pnl, commission: 0 }))).maxDrawdown || 0,
+      maxDrawdown: -dd.maxDrawdown || 0,
+      // Compte du pire drawdown (null : trades sans compte ou aucune baisse). Jamais envoyé à l'IA.
+      maxDrawdownAccountId: dd.accountId,
       profitFactor,
       streak: totals.streak,
       topSession: topSession?.key ?? '-',
@@ -331,7 +338,8 @@ export class AnalyticsService {
     return groups.map((g) => ({
       emotion: g.key,
       winRate: AnalyticsService.winRate(g) as number,
-      avgRR: g.rrCount ? g.rrSum / g.rrCount : 0,
+      // null quand aucun trade de l'émotion n'a de R:R : jamais 0 pour « inconnu ».
+      avgRR: g.rrCount ? g.rrSum / g.rrCount : null,
       count: g.count,
     }));
   }
@@ -388,12 +396,18 @@ export class AnalyticsService {
       from ? groupTrades(this.prisma, { ...sc, before: from }, 'parisDate') : Promise.resolve([]),
     ]);
     // Le net arrive déjà frais déduits (SQL) : commission 0 pour ne pas les retirer deux fois.
-    const steps = closedTradeSteps(rows.map((r) => ({ closedAt: r.closedAt, pnl: r.pnl, commission: 0 })));
-    const { maxDrawdown } = maxDrawdownOfCumulative(steps.map((s) => s.cumulativePnl));
+    const nets = rows.map((r) => ({ ...r, commission: 0 }));
+    const steps = closedTradeSteps(nets);
+    // Courbe = tous les comptes de la vue ; drawdown max = pire compte (une série par compte).
+    const dd = worstAccountDrawdown(nets);
     return {
       points: downsampleEquity(steps, EQUITY_MAX_POINTS),
       trades: rows.length,
-      maxDrawdown,
+      maxDrawdown: dd.maxDrawdown,
+      maxDrawdownAccountId: dd.accountId,
+      // Groupes (comptes + trades sans compte) de la période : au-delà de 1, l'app masque la courbe
+      // de drawdown, qui mélangerait des séries (#940). Pas dans le résumé (ni IA, ni débrief).
+      maxDrawdownAccountCount: dd.accountCount,
       startingCapital,
       before: periodBefore(earlier),
     };

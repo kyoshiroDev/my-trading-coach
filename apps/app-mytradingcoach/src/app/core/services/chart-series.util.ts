@@ -134,18 +134,21 @@ export function tickDate(iso: string | null, span: number): string {
 }
 
 /**
- * Libellés de l'axe des dates : une courbe par trade a plusieurs points le même jour ; seul le
- * premier point d'une date porte le libellé, les suivants restent vides (jamais deux fois la même
- * date sur l'axe).
+ * Repères de l'axe des dates (indices des points) : le PREMIER point de chaque date seulement (une
+ * courbe par trade a plusieurs points le même jour), puis au plus `max` repères répartis sur la
+ * largeur, premier et dernier compris. Jamais deux fois la même date, jamais un repère vide.
  */
-export function tickLabels(dates: (string | null)[], span: number): string[] {
+export function dateTickIndices(dates: (string | null)[], span: number, max: number): number[] {
+  const firsts: number[] = [];
   let previous: string | null = null;
-  return dates.map((d) => {
+  dates.forEach((d, i) => {
     const label = tickDate(d, span);
-    if (label === previous) return '';
+    if (label !== previous) firsts.push(i);
     previous = label;
-    return label;
   });
+  if (firsts.length <= max || max < 2) return firsts;
+  const step = (firsts.length - 1) / (max - 1);
+  return [...new Set(Array.from({ length: max }, (_, k) => firsts[Math.round(k * step)]))];
 }
 
 /** Date courte d'un repère : `14/10`. */

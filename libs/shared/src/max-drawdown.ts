@@ -107,3 +107,55 @@ export function maxDrawdownOfCumulative(cumulative: readonly number[]): MaxDrawd
 export function maxDrawdownOfTrades(trades: readonly DrawdownTrade[]): MaxDrawdown {
   return maxDrawdownOfCumulative(closedTradeSteps(trades).map((s) => s.cumulativePnl));
 }
+
+/** Trade lu pour le drawdown par compte : `accountId` null = trade sans compte (groupe à part). */
+export interface AccountDrawdownTrade extends DrawdownTrade {
+  accountId: string | null;
+}
+
+/** Pire drawdown parmi les comptes d'une vue (« Tous les comptes »). */
+export interface WorstAccountDrawdown {
+  /** Plus fort drawdown (≤ 0) d'UN compte ; 0 sans baisse ou sans trade. */
+  maxDrawdown: number;
+  /**
+   * Compte d'où vient ce drawdown ; null s'il vient des trades sans compte, ou s'il n'y a aucune
+   * baisse (`maxDrawdown` = 0).
+   */
+  accountId: string | null;
+  /**
+   * Nombre de groupes ayant au moins un trade clôturé (un par compte, les trades sans compte
+   * comptant pour un groupe). Au-delà de 1, une courbe « tous comptes » mélangerait des séries
+   * (#940) : c'est ce chiffre, pas le nombre de comptes, qui dit si la vue est multi-comptes.
+   */
+  accountCount: number;
+}
+
+/**
+ * Drawdown max PAR COMPTE (PROMPT-drawdown-max-par-compte) : chaque compte a sa propre série
+ * (règle de `maxDrawdownOfTrades`, trades du même instant regroupés À L'INTÉRIEUR du compte), et on
+ * garde le pire. Jamais une série qui mélange plusieurs comptes : le gain d'un compte n'efface pas
+ * la perte d'un autre, comme pour les règles des prop firms, qui s'appliquent compte par compte.
+ * Les trades sans compte forment leur propre groupe. Égalité entre deux groupes : le plus petit
+ * identifiant gagne (trades sans compte en premier), pour un résultat stable d'un appel à l'autre.
+ * Vue d'un seul compte : même résultat que `maxDrawdownOfTrades`.
+ */
+export function worstAccountDrawdown(trades: readonly AccountDrawdownTrade[]): WorstAccountDrawdown {
+  const byAccount = new Map<string | null, AccountDrawdownTrade[]>();
+  for (const t of trades) {
+    const group = byAccount.get(t.accountId);
+    if (group) group.push(t);
+    else byAccount.set(t.accountId, [t]);
+  }
+  // Ordre binaire (pas localeCompare) : identique quelle que soit la langue du processus.
+  const key = (id: string | null) => id ?? '';
+  const ordered = [...byAccount].sort(([a], [b]) => (key(a) < key(b) ? -1 : key(a) > key(b) ? 1 : 0));
+  let worst = { maxDrawdown: 0, accountId: null as string | null };
+  let accountCount = 0;
+  for (const [accountId, group] of ordered) {
+    const steps = closedTradeSteps(group);
+    if (steps.length > 0) accountCount++;
+    const dd = maxDrawdownOfCumulative(steps.map((s) => s.cumulativePnl)).maxDrawdown;
+    if (dd < worst.maxDrawdown) worst = { maxDrawdown: dd, accountId };
+  }
+  return { ...worst, accountCount };
+}

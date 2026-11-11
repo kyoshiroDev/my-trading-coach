@@ -68,18 +68,23 @@ import {
   type Step,
 } from './onboarding.model';
 import { clearProgress, loadProgress, saveProgress } from './onboarding-progress';
+import { InfoTooltipComponent } from '@app/shared/components/info-tooltip/info-tooltip.component';
+import { DRAWDOWN_LABELS } from '@app/core/constants/drawdown-labels.const';
 
 @Component({
   selector: 'mtc-onboarding',
   imports: [
     LucideDynamicIcon, TradeFormComponent, CsvImportComponent, SetupFormModalComponent,
     TradovateConnectModalComponent, TradovateAccountPickerComponent, AccountPlanWizardComponent,
+    InfoTooltipComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './onboarding.component.html',
   styleUrl: './onboarding.component.css',
 })
 export class OnboardingComponent {
+  /** Vocabulaire du drawdown (règle / marge / drawdown max), commun à tous les écrans. */
+  protected readonly ddLabels = DRAWDOWN_LABELS;
   completed = output<void>();
 
   private readonly usersApi    = inject(UsersApi);

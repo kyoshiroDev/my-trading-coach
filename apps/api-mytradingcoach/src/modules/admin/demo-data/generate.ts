@@ -84,17 +84,26 @@ export function quantityFor(r: Rand, asset: Sym, setup: SetupTitle): number {
 }
 
 /**
- * Séance « du jour » de la démo selon l'heure (Paris) : un trader français sur les indices US.
- * Avant 09:45, pas encore de séance (la veille est complète, la Pré-session est l'écran du
- * moment) ; le matin, l'ouverture de Londres ; à partir de 16:15, l'ouverture de New York.
- * AVANT : les trades du jour étaient placés juste avant le run, donc à 01:40 / 02:45 pour le
- * re-seed de 03:20, et le timer de séance dépassait 22 h le soir.
+ * Séance « du jour » de la démo, calée sur l'heure de la visite (Paris). Le CME tourne en semaine
+ * de 00:00 à 23:00 (heure de Paris) : à toute heure de ce créneau, la vitrine montre 3 ou 4 trades
+ * clôturés AVANT `now` (gains et une perte), puis une position ouverte 6 min avant `now`.
+ * `null` : week-end, coupure de 23:00 (la journée CME suivante commence) ou tout début de
+ * journée (moins de 40 min depuis 00:00) → séance sans trade clôturé.
+ * AVANT (jusqu'au 2026-11-09) : deux créneaux figés (09:22 / 09:38 ou 15:38 / 15:57) et rien avant
+ * 09:45 ; la position ouverte vieillissait jusqu'au seed suivant (« ouvert depuis 5 h »).
  */
-export function demoTodaySlot(now: Date): { trades: [number, number][] } | null {
+export function demoTodaySlot(now: Date): { trades: [number, number][]; open: [number, number] } | null {
+  const wd = now.getDay();
+  if (wd === 0 || wd === 6) return null;
   const m = now.getHours() * 60 + now.getMinutes();
-  if (m < 9 * 60 + 45) return null;
-  if (m < 16 * 60 + 15) return { trades: [[9, 22], [9, 38]] };
-  return { trades: [[15, 38], [15, 57]] };
+  if (m >= 23 * 60 || m < 40) return null;
+  const open = m - 6;
+  const n = now.getDate() % 2 === 0 ? 4 : 3;
+  // Écart entre deux trades : 30 min, resserré en tout début de journée (jamais avant 00:05).
+  const step = Math.min(30, Math.floor((open - 5) / n));
+  const hm = (x: number): [number, number] => [Math.floor(x / 60), x % 60];
+  const trades = Array.from({ length: n }, (_, k) => hm(open - (n - k) * step));
+  return { trades, open: hm(open) };
 }
 
 export function generate(now: Date, seed: number): DemoDay[] {
@@ -181,19 +190,31 @@ export function generate(now: Date, seed: number): DemoDay[] {
 
   // Aujourd'hui (J-0) : la vitrine montre TOUJOURS une session live (compte Apex connecté, suivi
   // prop firm), avec un trade saisi à la main encore ouvert (barre SL / entrée / TP).
-  //  - jour ouvré et séance ouverte (`demoTodaySlot`) : deux trades du jour AVANT `now`, puis la
-  //    position ouverte quelques minutes après ;
-  //  - week-end ou avant 09:45 : marché fermé, aucun trade du jour (jamais un samedi / dimanche),
-  //    la position ouverte date de la dernière séance (gardée), d'où « ouvert depuis… ».
+  //  - en semaine, marché ouvert (`demoTodaySlot`) : 3 ou 4 trades du jour AVANT `now` (3 gains,
+  //    une perte, donc un meilleur trade ET un trade à revoir au débrief), puis la position ouverte
+  //    6 min avant `now`. `isStale` re-seede à la connexion démo quand elle a plus de 45 min ;
+  //  - week-end : marché fermé, aucun trade du jour, la position ouverte date de la dernière
+  //    séance (gardée), d'où « ouvert depuis… » ; coupure de 23:00 : position ouverte à 22:50.
   const slot = demoTodaySlot(now);
   if (tradesToday && slot) {
-    const [[h1, m1], [h2, m2]] = slot.trades;
-    const a = buildTrade(r, { account: 'apex', setup: 'Breakout', win: true, asset: 'MNQ', quantity: 3, at: dayAt(now, 0, h1, m1), daysAgo: 0, moodStart: 'FOCUSED', emotion: 'CONFIDENT' });
-    const b = buildTrade(r, { account: 'apex', setup: 'Scalping', win: true, asset: 'MES', quantity: 5, at: dayAt(now, 0, h2, m2), daysAgo: 0, moodStart: 'FOCUSED', forceNoStop: true, emotion: null });
-    const openTrade = buildOpenTrade(r, { at: dayAt(now, 0, h2, m2 + 4), daysAgo: 0 });
-    days.push({ daysAgo: 0, account: 'apex', moodStart: 'FOCUSED', moodEnd: 'CONFIDENT', kind: 'today', trades: [a, b], openTrade });
+    const at = ([h, m]: [number, number]) => dayAt(now, 0, h, m);
+    const plan: { setup: SetupTitle; win: boolean; asset: Sym; quantity: number; noStop?: boolean; lossMult?: number; emotion: EmotionState | null }[] = [
+      { setup: 'Breakout', win: true, asset: 'MNQ', quantity: 3, emotion: 'CONFIDENT' },
+      { setup: 'Reversal', win: false, asset: 'MES', quantity: 2, lossMult: 0.8, emotion: 'STRESSED' },
+      { setup: 'Scalping', win: true, asset: 'MES', quantity: 5, noStop: true, emotion: null },
+      { setup: 'Pullback', win: true, asset: 'MNQ', quantity: 3, emotion: 'FOCUSED' },
+    ];
+    const trades = slot.trades.map((hm, k) => {
+      const p = plan[k];
+      return buildTrade(r, { account: 'apex', setup: p.setup, win: p.win, asset: p.asset, quantity: p.quantity, at: at(hm), daysAgo: 0, moodStart: 'FOCUSED', forceNoStop: p.noStop, lossMult: p.lossMult, emotion: p.emotion });
+    });
+    const openTrade = buildOpenTrade(r, { at: at(slot.open), daysAgo: 0 });
+    days.push({ daysAgo: 0, account: 'apex', moodStart: 'FOCUSED', moodEnd: 'CONFIDENT', kind: 'today', trades, openTrade });
   } else {
-    const openTrade = buildOpenTrade(r, { at: dayAt(now, lastDay, 21, 40), daysAgo: lastDay });
+    const lateCut = tradesToday && now.getHours() >= 23;
+    const openTrade = lateCut
+      ? buildOpenTrade(r, { at: dayAt(now, 0, 22, 50), daysAgo: 0 })
+      : buildOpenTrade(r, { at: dayAt(now, lastDay, 21, 40), daysAgo: lastDay });
     days.push({ daysAgo: 0, account: 'apex', moodStart: 'FOCUSED', moodEnd: 'FOCUSED', kind: 'today', trades: [], openTrade });
   }
 
@@ -244,7 +265,7 @@ export function gradeAll(days: DemoDay[]): void {
     const medianLoss = median(ts.filter(isLoss).map((t) => Math.abs(t.pnl)));
     const medianQuantity = median(ts.map((t) => t.quantity));
     ts.forEach((t, i) => {
-      if (t.stopLoss != null) return;
+      if (t.executionMethod === ExecutionMethod.STOP_BASED) return; // barème A posé ; stop seul → barème B (#929)
       const day = t.tradedAt.toISOString().slice(0, 10);
       let lastSameDayLossAt: Date | null = null;
       for (let j = i - 1; j >= 0; j--) {

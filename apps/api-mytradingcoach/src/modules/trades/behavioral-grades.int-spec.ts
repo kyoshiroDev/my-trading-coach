@@ -7,6 +7,7 @@ import type { INestApplication } from '@nestjs/common';
 import { createIntegrationApp } from '../../test/integration-app.helper';
 import { PrismaService } from '../../prisma/prisma.service';
 import { behavioralGradeUpdates, recomputeBehavioralGrades, writeGradeUpdates } from './behavioral-grades';
+import { TradesService } from './trades.service';
 
 const RUN = `${Date.now().toString(36)}${Math.floor(Math.random() * 1e6).toString(36)}`;
 const SELECT = {
@@ -80,5 +81,18 @@ describe('Notes comportementales — écriture groupée (base réelle)', () => {
     await writeGradeUpdates(prisma, accountId, [{ id: mine.id, score: null, grade: null, method: null }]);
     expect(await prisma.trade.findUniqueOrThrow({ where: { id: mine.id }, select: { executionScore: true, executionGrade: true, executionMethod: true } }))
       .toEqual({ executionScore: null, executionGrade: null, executionMethod: null });
+  });
+
+  it('stop posé SANS objectif sur un trade noté au comportement : la note reste (#929)', async () => {
+    const t = await prisma.trade.findFirstOrThrow({
+      where: { accountId, stopLoss: null, executionMethod: 'BEHAVIORAL' },
+      select: { id: true, executionGrade: true },
+    });
+    // Entrée 1 (LONG) : stop sous l'entrée, pas d'objectif, pas d'émotion → barème A non mesurable.
+    const res = await app.get(TradesService).setStop(userId, t.id, { stopLoss: 0.5 });
+    expect(res).toMatchObject({ stopLoss: 0.5, executionMethod: 'BEHAVIORAL' });
+    expect(res.executionGrade).not.toBeNull();
+    expect(await prisma.trade.findUniqueOrThrow({ where: { id: t.id }, select: { executionMethod: true } }))
+      .toEqual({ executionMethod: 'BEHAVIORAL' });
   });
 });

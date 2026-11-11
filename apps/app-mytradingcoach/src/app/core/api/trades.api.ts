@@ -23,6 +23,7 @@ import type {
   TradesPage,
   UpdateTradeRequest as UpdateTradeDto,
   InstrumentSearchResult,
+  SetTradeStopRequest,
 } from '@mtc/shared';
 export type { CreateTradeDto, InstrumentSearchResult, JournalStats, Trade, TradeFilters, TradeSetup, TradesPage, UpdateTradeDto };
 
@@ -107,6 +108,11 @@ export class TradesApi {
 
   update(id: string, dto: UpdateTradeDto): Observable<{ data: Trade }> {
     return this.http.patch<{ data: Trade }>(`${this.base}/${id}`, dto);
+  }
+
+  /** Saisie rapide du stop initial (et de l'objectif) : l'API recalcule R/R et note d'exécution. */
+  setStop(id: string, body: SetTradeStopRequest): Observable<{ data: Trade }> {
+    return this.http.patch<{ data: Trade }>(`${this.base}/${id}/stop`, body);
   }
 
   delete(id: string): Observable<void> {

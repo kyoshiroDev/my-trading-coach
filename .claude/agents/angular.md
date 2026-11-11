@@ -179,6 +179,10 @@ la maquette design (« The Terminal »).
     place (la démo montre sa session live même le week-end). Sur `EcoSocketService.newReleases$`,
     la ligne passe à « publiée » : chiffre publié / prévu / précédent, 1re phrase de l'analyse IA
     (`analyze-result`), reste dépliable ; retour à la suivante sur « J'ai lu » ou après 15 min.
+- **Calendrier éco, jour passé (2026-11-09)** : `eco-calendar.component.ts` relit les analyses
+  enregistrées du jour affiché (`getReleaseAnalyses`, une lecture par jour, au choix du jour) et
+  n'appelle JAMAIS `analyze-result` pour un jour passé. Les annonces de la vue semaine (`range`)
+  n'ont pas de `date` : c'est celle du jour sélectionné. Clé du cache : `date|nom sans suffixe`.
     Mêmes appels que l'ancien calendrier live (`refreshAnalysis` → `ecoCalendarRefreshed`, puis une
     analyse par annonce) : **aucun appel IA de plus**.
   - **Trade en cours** (`live-position`) : une position (broker si rôle `LIVE_POSITION_ROLES` et
@@ -201,7 +205,8 @@ la maquette design (« The Terminal »).
   compte pour lancer la session » ne s'affiche que si AUCUNE séance n'est active, que l'utilisateur a
   des comptes et que l'en-tête est sur « Tous les comptes ». Séance active : la liste montre le compte
   de la séance (désactivée), quel que soit le choix de l'en-tête. La démo a toujours une séance
-  active après le seed (même le week-end ou avant 09:45 ; le `demo-login` reseede une démo périmée).
+  active après le seed (même le week-end ; en semaine elle est calée sur l'heure de la visite, le
+  `demo-login` reseede une démo périmée ou dont la position ouverte a plus de 45 min).
 - **Colonne suivi prop firm** : compte de la session **éval ou funded synchronisé Tradovate**
   (`isLivePropAccount`, `live-prop-firm.util.ts`). `SessionLiveComponent` charge lui-même
   `TradovateStore` s'il ne l'est pas (sinon bloc masqué en ouverture directe / après F5, #437).
@@ -423,13 +428,36 @@ envoyées à l'API sont des horodatages ISO complets.
   solde APRÈS CHAQUE TRADE CLÔTURÉ de la période (net des frais, solde du début de période = premier
   sommet, trades du même instant regroupés en une étape). Valeur = `maxDrawdown` de
   `/analytics/equity-curve/trades` (toutes les clôtures, avant réduction). Libellé : « trades
-  clôturés », jamais de précision intra-trade. La courbe d'équité du dashboard est PAR TRADE
+  clôturés », jamais de précision intra-trade.
+  **Vue « Tous les comptes » à plusieurs comptes** (`isMultiAccountView`, `drawdown-scope.util.ts`,
+  PROMPT-drawdown-max-par-compte) : la valeur est le PIRE drawdown parmi les comptes (API,
+  `maxDrawdownAccountId`), sous-titre « sur le compte {nom} · période » (« sur les trades sans compte »
+  si besoin, `drawdownScopeLabel`), sparkline masquée et remplacée par « Choisis un compte pour voir
+  la courbe » (la courbe additionne les comptes : ce n'est le drawdown d'aucun). Repli sans valeur API
+  en multi-comptes : 0, jamais une série mélangée. Champ absent (ancien cache, 5 min) : sous-titre
+  standard, aucune erreur. Un seul compte dans la vue « tous » : comportement d'un compte, SAUF s'il
+  y a aussi des trades sans compte dans la période (#940) : `isMultiAccountView(id, comptes,
+  maxDrawdownAccountCount)` lit le nombre de groupes renvoyé par `/equity-curve/trades` (dashboard :
+  `equityCurveResource`, Statistiques : `tradesData`), vrai dès 2 séries ; champ absent (ancien
+  cache) → règle des comptes seule. La courbe d'équité du dashboard est PAR TRADE
   (`/equity-curve/trades`, ≤ 500 points, pics et creux gardés ; payouts par `withPayoutsByTrade`,
-  infobulle « Trade » / « N trades » avec l'heure).
+  infobulle « Trade » / « N trades » avec l'heure). Axe X : repères posés par `dateTickIndices` (premier
+  point de chaque date, 7 au plus, 4 en étroit, premier et dernier gardés) dans `afterBuildTicks`,
+  `autoSkip: false` ; ne pas revenir à des libellés vides + auto-saut (le 06/11 disparaissait).
 - **Carte drawdown des Statistiques** : sans plan relié, même règle (`drawdownSeries` =
   `maxDrawdownOfCumulative` sur les points de `/equity-curve/trades`, `drawdownPoints`) → même
   chiffre que le KPI du dashboard. Plan prop firm relié : courbe journalière + `floorSeries`
-  (plancher du plan, `before.peak`), inchangé. `anchoredDrawdown` n'existe plus.
+  (plancher du plan, `before.peak`), inchangé. `anchoredDrawdown` n'existe plus. Vue multi-comptes :
+  points vides, en-tête `worst` de `mtc-perf-chart` (« Max -$X » + « sur le compte {nom} ») et message
+  « Choisis un compte pour voir la courbe ».
+- **Vocabulaire du drawdown** (`DRAWDOWN_LABELS`, source unique `libs/shared/src/drawdown-labels.ts`
+  partagée avec la landing ; `core/constants/drawdown-labels.const.ts` n'est qu'un ré-export,
+  verrouillé par son spec) :
+  « Drawdown max » = baisse mesurée ; « Marge avant le plancher » = distance solde → plancher (ce que
+  les firms appellent « drawdown ») ; « Règle de drawdown » = taille de la règle (ex. 2 000 $), jamais
+  « Drawdown max ». Infobulle `mtc-info-tooltip` avec le texte de la constante sur chaque libellé
+  (fiche règles du plan, formulaire du compte, onboarding, débrief, séance). Carte « À surveiller » de
+  Mes comptes : « proche du plancher » (#939).
 - **Payouts reçus** (détectés chez le broker, `payouts` + `before.payouts` de l'API) : `withPayouts`
   les insère dans les points (jour sans trade = point au même P&L, champ `payout`). Seules les
   courbes de SOLDE les déduisent : équité, marge de la carte drawdown (`floorSeries`), sparkline du
@@ -479,6 +507,28 @@ envoyées à l'API sont des horodatages ISO complets.
 ```
 
 ---
+
+## R/R inconnu et saisie du stop initial (Journal, #916)
+
+- Un R/R `null` ou absent s'affiche **« — »**, jamais « 0 » (un 0 se lit comme un R/R mesuré nul) :
+  Journal (info-bulle « Stop loss ou take profit non renseigné. Ajoute ton stop initial pour calculer
+  le R/R. »), trades récents, Analytics par setup, conseils du tableau de bord (émotions sans R/R
+  écartées), objectif « R:R minimum » de la session (`minRrFailureLabel`). Moyennes : R/R connus
+  seulement (`averageKnownRiskReward`). Templates : `!== null && !== undefined` (lint eqeqeq).
+- Score trader : sans aucun R/R connu, la barre « Gestion risque » est **non mesurée** (`score: null`,
+  « — », infobulle `RISK_UNMEASURED_HINT`) et **exclue du score global** (`globalScoreOf`), au lieu de
+  valoir 0 (#930).
+- Fenêtre de saisie du stop : plus d'alerte « note Non évaluée » — un stop sans objectif garde la note
+  comportementale (#929), l'infobulle de la note le dit (`gradeTooltip`).
+- Ligne du Journal sans R/R : bouton cible « Ajouter le stop initial » (`data-testid="trade-add-stop"`,
+  colonne actions passée à 88 px, Exécution 1.15fr / Setup 0.95fr pour garder l'en-tête sur une ligne à
+  1440 px) → `mtc-trade-stop-dialog` (stop obligatoire, objectif facultatif,
+  virgule acceptée). Aperçu en direct du risque (`stopRiskAmount` avec `tickValue`/`tickSize` de
+  `GET /instruments`, en points si l'instrument n'a pas de valeur du point) et du R/R
+  (`plannedRiskReward`), refus du mauvais côté (`stopPlacementError`) : mêmes fonctions que l'API
+  (`@mtc/shared`), qui revérifie. Proposé sur tout trade sans R/R (synchronisé, importé ou manuel).
+- Test d'un composant à `templateUrl` + `input()` sous vitest (JIT) : template lu par `readFileSync`
+  + `overrideComponent`, et signal posé directement sur l'instance (`trade-stop-dialog.component.spec.ts`).
 
 ## Tableau de lignes — pattern partagé (Journal · Mes comptes)
 
@@ -1702,3 +1752,16 @@ masquée, sous-ligne `tradovate-paused-<id>` avec le texte validé (« échoué 
 Tradovate de ce compte ? », puis, s'il y a des trades importés, « La synchro s'arrête. Tes trades
 déjà importés restent, sauf si tu choisis de les supprimer. » Jamais le mot « révoqué » dans ces
 textes (la déconnexion supprime nos jetons, elle ne révoque rien chez Tradovate).
+
+## Calendrier éco : analyses ouvertes d'office (2026-11-10, #920)
+
+- `eco-calendar.component` : au chargement de la semaine, les annonces **fortes publiées du jour** voient
+  leur analyse chargée (`POST /eco-calendar/analyze-result`, cache serveur) et dépliée sans clic
+  (`openEvents`, plusieurs à la fois). Le clic replie/déplie. Erreur de chargement automatique : pas de
+  toast (le panneau dit « indisponible »). **Compte démo** : rien d'office (POST refusé en lecture seule).
+- Interventions sans chiffre (`event.hasResult === false`, discours, conférences, minutes) : colonne IA
+  `talk` (« 🎙 sans chiffre »), statut neutre sous le libellé (`talkStatus`), jamais analysées. Heure passée
+  sans chiffre : ligne en état `past`, distinct de `published` (`event.status`, contrat partagé).
+- Dashboard matin (`session-morning`) : `ecoBriefing` = `ecoCalendar().briefing` filtré sur
+  `status === 'upcoming'` (aujourd'hui seulement) ; une ligne factuelle calculée côté serveur, affichée telle
+  quelle (`line.text`), aucune direction ni conseil.

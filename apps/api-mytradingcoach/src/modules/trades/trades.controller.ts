@@ -21,6 +21,7 @@ import { TradesService } from './trades.service';
 import { CsvImportService, type FeesReport } from './csv-import.service';
 import { CreateTradeDto } from './dto/create-trade.dto';
 import { UpdateTradeDto } from './dto/update-trade.dto';
+import { SetTradeStopDto } from './dto/set-trade-stop.dto';
 import { TradeFiltersDto } from './dto/trade-filters.dto';
 import { ImportTradesBodyDto } from './dto/import-trades.dto';
 import { ReassignTradesDto } from './dto/reassign-trades.dto';
@@ -221,6 +222,16 @@ export class TradesController {
   @Get(':id')
   findOne(@CurrentUser() user: { id: string }, @Param('id') id: string) {
     return this.tradesService.findOne(user.id, id);
+  }
+
+  /** Saisie rapide du stop initial (et de l'objectif) : R/R, risque et note recalculés. */
+  @Patch(':id/stop')
+  setStop(
+    @CurrentUser() user: { id: string },
+    @Param('id') id: string,
+    @Body() dto: SetTradeStopDto,
+  ) {
+    return this.tradesService.setStop(user.id, id, dto);
   }
 
   @Patch(':id')

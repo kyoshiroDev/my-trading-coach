@@ -184,7 +184,8 @@
           <div class="stat-card"><div class="stat-label">Trades</div><div class="stat-value">{{ a.stats.totalTrades }}</div></div>
           @if (isProp(a) && a.rules) {
             <div class="stat-card"><div class="stat-label">Objectif</div><div class="stat-value small">{{ a.rules.profitTarget !== null ? (a.rules.profitTarget | number) + ' $' : '-' }}</div></div>
-            <div class="stat-card"><div class="stat-label">Drawdown max</div><div class="stat-value small text-amber">{{ a.rules.maxDrawdown !== null ? (a.rules.maxDrawdown | number) + ' $' : '-' }}</div></div>
+            <div class="stat-card"><div class="stat-label">{{ ddLabels.rule.label }}
+              <mtc-info-tooltip [label]="'À propos : ' + ddLabels.rule.label" [text]="ddLabels.rule.help" /></div><div class="stat-value small text-amber">{{ a.rules.maxDrawdown !== null ? (a.rules.maxDrawdown | number) + ' $' : '-' }}</div></div>
           } @else {
             <div class="stat-card"><div class="stat-label">Win Rate</div>
               <div class="stat-value" [class.text-green]="a.stats.winRate >= 50" [class.text-red]="a.stats.winRate > 0 && a.stats.winRate < 50" [class.text-muted]="!a.stats.totalTrades">

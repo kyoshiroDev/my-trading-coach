@@ -193,7 +193,7 @@
         <span class="th-qty">Qté</span>
         <span class="th-rr">R/R
           <mtc-info-tooltip label="Comment le R/R est calculé"
-            text="Ratio risque/rendement du trade. Affiche « - » quand le stop loss ou le take profit n'est pas renseigné." />
+            text="Ratio risque/rendement prévu : objectif ÷ risque jusqu'au stop. « — » quand le stop loss ou le take profit n'est pas renseigné (cas des trades synchronisés : la synchronisation ne récupère pas le stop)." />
         </span>
         <span class="th-exec">Exécution
           <mtc-info-tooltip label="Comment la note d'exécution est calculée"
@@ -333,9 +333,9 @@
                     @if (trade.riskReward !== null && trade.riskReward !== undefined) {
                       {{ trade.riskReward.toFixed(2) }}
                     } @else {
-                      0
-                      <mtc-info-tooltip label="Pourquoi le R:R vaut 0"
-                        text="R:R incalculable : stop loss ou take profit non renseigné sur ce trade." />
+                      <span class="rr-unknown" data-testid="trade-rr-unknown">—</span>
+                      <mtc-info-tooltip label="Pourquoi le R/R est inconnu"
+                        text="Stop loss ou take profit non renseigné. Ajoute ton stop initial pour calculer le R/R." />
                     }
                   </span>
                   <span class="td-exec">
@@ -348,7 +348,7 @@
                     } @else {
                       <span class="exec-none">Non évaluée</span>
                       <mtc-info-tooltip class="align-end" label="Pourquoi cette note est indisponible"
-                        text="Note indisponible : soit le trade a un stop loss mais moins de 2 critères mesurables, soit il n'a pas de stop et l'historique est insuffisant (moins de 20 trades clôturés sur le compte) pour la note comportementale." />
+                        text="Note indisponible : moins de 2 critères mesurables pour la note standard, et historique trop court (moins de 20 trades clôturés sur le compte) pour la note comportementale." />
                     }
                   </span>
                   <span class="td-emotion">
@@ -359,6 +359,12 @@
                   </span>
                   <span class="td-setup"><span class="setup-badge"><span class="setup-badge-dot" [style.background]="trade.setup.color"></span>{{ trade.setup.title }}</span></span>
                   <span class="td-actions">
+                    @if (trade.riskReward === null || trade.riskReward === undefined) {
+                      <button aria-label="Ajouter le stop initial" class="btn-stop" data-testid="trade-add-stop"
+                        (click)="stopTrade.set(trade)" title="Ajouter le stop initial">
+                        <svg [lucideIcon]="StopIcon" [size]="12"></svg>
+                      </button>
+                    }
                     <button aria-label="Modifier" class="btn-edit" (click)="openEditModal(trade)" title="Modifier">
                       <svg [lucideIcon]="PencilIcon" [size]="12"></svg>
                     </button>
@@ -391,6 +397,10 @@
   (dismissed)="closeModal()"
   (formSave)="submitTrade($event)"
 />
+
+@if (stopTrade(); as trade) {
+  <mtc-trade-stop-dialog [trade]="trade" (dismissed)="stopTrade.set(null)" (saved)="onStopSaved($event)" />
+}
 
 <mtc-csv-import
   [open]="showImport()"

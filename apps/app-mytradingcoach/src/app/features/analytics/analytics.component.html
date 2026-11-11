@@ -108,6 +108,8 @@
         [before]="equityData()?.before ?? null"
         [startingCapital]="equityStartCapital()"
         [planFloor]="planFloor()"
+        [worst]="drawdownWorst()"
+        [emptyMessage]="drawdownEmpty()"
         [loading]="equityLoading()"
       >
         <mtc-info-tooltip chartInfo label="Ce que représente le drawdown" [text]="drawdownHelp()" />
@@ -271,7 +273,7 @@
                     {{ setup.avgRR.toFixed(2) }}
                   </td>
                 } @else {
-                  <td class="mono" title="Renseigne un stop et un objectif pour mesurer le R:R">–</td>
+                  <td class="mono" title="Renseigne un stop et un objectif pour mesurer le R:R">—</td>
                 }
               </tr>
             }

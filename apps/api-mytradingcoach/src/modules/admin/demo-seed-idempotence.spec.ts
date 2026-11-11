@@ -120,6 +120,7 @@ function fakePrisma(calls: Call[]) {
     dailyRecap: model('dailyRecap'),
     setup: model('setup'),
     ecoEvent: model('ecoEvent'),
+    ecoReleaseAnalysis: model('ecoReleaseAnalysis'),
     tradingAccount: model('tradingAccount'),
     brokerConnection: model('brokerConnection'),
     brokerDailyClose: model('brokerDailyClose'),
@@ -572,7 +573,7 @@ describe('seedDemo — connexion Tradovate démo', () => {
 });
 
 describe('seedDemo — calendrier éco partagé', () => {
-  const ecoWrites = (calls: Call[]) => calls.filter((c) => c.model === 'ecoEvent' && c.op !== 'findMany');
+  const ecoWrites = (calls: Call[]) => calls.filter((c) => (c.model === 'ecoEvent' || c.model === 'ecoReleaseAnalysis') && c.op !== 'findMany');
   const pinsUpdate = (calls: Call[]) =>
     calls.find((c) => c.model === 'user' && c.op === 'update' && 'pinnedEcoEvents' in (c.args['data'] as object));
 
@@ -596,6 +597,11 @@ describe('seedDemo — calendrier éco partagé', () => {
       const calls: Call[] = [];
       await seedDemo(fakePrisma(calls).prisma);
       expect(ecoWrites(calls).length).toBeGreaterThan(0);
+      // Jour passé : le vendredi précédent, annonces publiées + analyses IA (calendrier d'un jour passé).
+      const past = calls.filter((c) => c.model === 'ecoReleaseAnalysis' && c.op === 'upsert');
+      expect(past.map((c) => (c.args['create'] as Record<string, string>)['eventName'])).toContain('Nonfarm Payrolls');
+      const date = (past[0].args['create'] as Record<string, string>)['date'];
+      expect(new Date(`${date}T12:00:00`).getDay()).toBe(5);
       const data = pinsUpdate(calls)?.args['data'] as Record<string, unknown>;
       expect(data['pinnedEcoEvents']).toHaveLength(2);
       expect(data['pinnedEcoDate']).toMatch(/^\d{4}-\d{2}-\d{2}$/);
@@ -736,18 +742,19 @@ describe('seedDemo — réalisme validé : un trader crédible, pas un gagnant p
 });
 
 describe('seedDemo — dates relatives au run (cron quotidien de 03:20)', () => {
-  it('à 03:20 (avant l’ouverture) : aucun trade du jour, session live avec la position d’hier, récap daté d’hier', async () => {
+  it('à 03:20 (cron) : séance du jour calée avant le seed, position ouverte 6 min avant, récap daté d’hier', async () => {
     const now = weekdayAt(3, 20);
     const { prisma, created } = fakePrisma([]);
     await seedDemo(prisma, now);
 
     expect(created['trade'].filter((t) => (t['tradedAt'] as Date) > now)).toHaveLength(0);
-    // Plus de trades « du jour » à 01:40 / 02:45 : la séance du jour attend l'ouverture. La vitrine
-    // montre quand même une session live, avec la position ouverte la veille au soir.
     const startOfDay = new Date(now); startOfDay.setHours(0, 0, 0, 0);
-    expect(created['trade'].filter((t) => (t['tradedAt'] as Date) >= startOfDay)).toHaveLength(0);
+    const today = created['trade'].filter((t) => (t['tradedAt'] as Date) >= startOfDay && t['pnl'] !== null);
+    expect([3, 4]).toContain(today.length);
     expect(created['tradeSession'].filter((x) => x['status'] === 'ACTIVE')).toHaveLength(1);
-    expect(created['trade'].filter((t) => t['pnl'] === null)).toHaveLength(1);
+    const open = created['trade'].filter((t) => t['pnl'] === null);
+    expect(open).toHaveLength(1);
+    expect(now.getTime() - (open[0]['tradedAt'] as Date).getTime()).toBe(6 * 60_000);
 
     const startOfToday = new Date(now);
     startOfToday.setHours(0, 0, 0, 0);
@@ -760,26 +767,39 @@ describe('seedDemo — dates relatives au run (cron quotidien de 03:20)', () => 
       JSON.stringify(w['insights']).includes('Séances suivies en direct'))).toBe(true);
   });
 
-  it('séance du jour aux heures de marché, sur le compte Apex connecté : Londres le matin, New York l’après-midi', async () => {
-    for (const [hour, first, last] of [[11, '09:22', '09:38'], [18, '15:38', '15:57']] as const) {
-      const now = weekdayAt(hour);
+  it('séance du jour vivante à toute heure de marché : 3 ou 4 trades (gains et une perte) puis une position ouverte depuis 6 min, sur le compte Apex', async () => {
+    for (const [hour, minute] of [[1, 0], [11, 0], [18, 17], [22, 58]] as const) {
+      const now = weekdayAt(hour, minute);
       const { prisma, created } = fakePrisma([]);
       await seedDemo(prisma, now);
       const startOfToday = new Date(now); startOfToday.setHours(0, 0, 0, 0);
       const today = created['trade'].filter((t) => (t['tradedAt'] as Date) >= startOfToday && t['pnl'] !== null);
-      const hhmm = (d: Date) => d.toTimeString().slice(0, 5);
-      expect(today.map((t) => hhmm(t['tradedAt'] as Date)), `séance de ${hour} h`).toEqual([first, last]);
-      // Puis une position encore ouverte, 4 min après le dernier trade (barre SL / TP de la vitrine).
+      const label = `séance de ${hour}:${minute}`;
+      expect([3, 4], label).toContain(today.length);
+      const times = today.map((t) => (t['tradedAt'] as Date).getTime());
+      expect([...times].sort((x, y) => x - y), label).toEqual(times);
+      expect(times.every((t) => t < now.getTime()), label).toBe(true);
+      expect(today.some((t) => (t['pnl'] as number) < 0), `${label} : un trade à revoir`).toBe(true);
+      expect(today.filter((t) => (t['pnl'] as number) > 0).length, label).toBeGreaterThanOrEqual(2);
+      expect(today.every((t) => t['accountId'] === 'tradingAccount-1')).toBe(true); // Apex
       const open = created['trade'].filter((t) => t['pnl'] === null);
       expect(open).toHaveLength(1);
-      expect((open[0]['tradedAt'] as Date) < now).toBe(true);
-      expect(today.every((t) => t['accountId'] === 'tradingAccount-1')).toBe(true); // Apex
+      expect(now.getTime() - (open[0]['tradedAt'] as Date).getTime(), label).toBe(6 * 60_000);
       const active = created['tradeSession'].filter((x) => x['status'] === 'ACTIVE');
       expect(active).toHaveLength(1);
       expect(active[0]['accountId']).toBe('tradingAccount-1');
-      // Séance démarrée 25 min avant le premier trade, jamais en pleine nuit.
-      expect((active[0]['startedAt'] as Date).getHours()).toBeGreaterThanOrEqual(8);
+      expect((active[0]['startedAt'] as Date).getTime()).toBeGreaterThanOrEqual(startOfToday.getTime());
     }
+  });
+
+  it('coupure de 23:00 : aucun trade dans la coupure, position ouverte à 22:50', async () => {
+    const now = weekdayAt(23, 30);
+    const { prisma, created } = fakePrisma([]);
+    await seedDemo(prisma, now);
+    const open = created['trade'].filter((t) => t['pnl'] === null);
+    expect(open).toHaveLength(1);
+    expect((open[0]['tradedAt'] as Date).toTimeString().slice(0, 5)).toBe('22:50');
+    expect(created['trade'].filter((t) => (t['tradedAt'] as Date).getHours() === 23)).toHaveLength(0);
   });
 
   it('la journée de revenge tombe dans la semaine du dernier débrief (celui affiché), jamais la veille', async () => {

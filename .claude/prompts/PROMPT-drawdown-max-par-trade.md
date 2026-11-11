@@ -14,3 +14,8 @@ CONSTAT (mon compte Lucid 50k) : le tableau de bord affiche "Drawdown max -88,50
 7. Captures avant / après du tableau de bord à 1440 et 390 px, sans données personnelles.
 
 RAPPORT : tableau d'inventaire, règle appliquée, écarts dans les autres écrans (corrigés ou non, pourquoi), tests, commandes et résultats, état de la branche, ce que je dois vérifier à la main sur dev, écarts avec ce prompt. Aucun push avant mon "OK push".
+
+---
+Complément du 2026-11-09 (après vérification en prod) : « oui corrige les deux et supprime le worktree »
+1. L'infobulle de la courbe par trade arrondit au dollar (trade −267,50 affiché « -$268 », solde 49 464,50 affiché « $49,465 ») : afficher les centimes.
+2. Axe des dates de la courbe d'équité du tableau de bord : seuls « Départ » et « 09/11/26 » s'affichent, le 06/11 disparaît depuis la déduplication des dates.

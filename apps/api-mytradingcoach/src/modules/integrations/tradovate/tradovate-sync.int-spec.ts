@@ -68,6 +68,26 @@ let extraPairs = 0;                 // paires supplémentaires sur le compte 777
 let listOmits = new Set<number>();  // fills absents de /fill/list et /fillFee/list
 let itemsNotFound = false;          // /fill/items répond 404 quoi qu'on demande
 let pairListNotFound = false;       // /fillPair/list répond 404
+let bracket = false;                // /order/list + /orderVersion/list : bracket posé sur le trade 30000 → 30010
+let forbidden: string[] = [];       // appels d'écriture ou routes d'ordre hors lecture (clause 2i) : doit rester vide
+let orderListMode: 'ok' | '500' | '401' | 'penalty' = 'ok'; // réponse de /order/list
+
+// Bracket du trade LONG 30000 → 30010 (fill d'achat 900000000001, donc ordre d'entrée 900000000002) :
+// stop posé à 29990 puis remonté à 29995 (deux versions), objectif 30020.
+const ENTRY_ORDER = 900000000002;
+const bracketOrders = () => [
+  { id: ENTRY_ORDER, accountId: EXT_ACCOUNT, contractId: CONTRACT, action: 'Buy', ordStatus: 'Filled' },
+  { id: 950000000001, accountId: EXT_ACCOUNT, contractId: CONTRACT, action: 'Sell', ordStatus: 'Canceled', parentId: ENTRY_ORDER, ocoId: 950000000002 },
+  { id: 950000000002, accountId: EXT_ACCOUNT, contractId: CONTRACT, action: 'Sell', ordStatus: 'Filled', parentId: ENTRY_ORDER, ocoId: 950000000001 },
+  // Même forme sur un AUTRE compte du login : jamais retenu.
+  { id: 960000000001, accountId: 999, contractId: CONTRACT, action: 'Sell', ordStatus: 'Canceled', parentId: ENTRY_ORDER },
+];
+const bracketVersions = () => [
+  { id: 1, orderId: 950000000001, orderType: 'Stop', price: null, stopPrice: 29990 },
+  { id: 5, orderId: 950000000001, orderType: 'Stop', price: null, stopPrice: 29995 },
+  { id: 2, orderId: 950000000002, orderType: 'Limit', price: 30020, stopPrice: null },
+  { id: 3, orderId: 960000000001, orderType: 'Stop', price: null, stopPrice: 29980 },
+];
 
 const EXTRA_BASE = 700000000000;
 const at = (minute: number, second: number) => new Date(Date.UTC(2026, 6, 12, 14, minute, second)).toISOString();
@@ -140,6 +160,20 @@ function tradovate(rawUrl: string, init?: RequestInit): Response {
 
   const env = url.hostname.startsWith('demo.') ? 'demo' : 'live';
   const path = url.pathname.replace('/v1', '');
+  // Lecture seule (contrat NinjaTrader, clause 2i) : aucune écriture, aucune route d'ordre hors `list`.
+  const method = init?.method ?? 'GET';
+  if ((method !== 'GET' && path !== '/cashBalance/getcashbalancesnapshot') ||
+      (/^\/(order|orderVersion)\//.test(path) && !/^\/(order|orderVersion)\/list$/.test(path))) {
+    forbidden.push(`${method} ${path}`);
+    throw new Error(`appel interdit vers Tradovate : ${method} ${path}`);
+  }
+  if (path === '/order/list') {
+    if (orderListMode === '500') return new Response('', { status: 500 });
+    if (orderListMode === '401') return new Response('', { status: 401 });
+    if (orderListMode === 'penalty') return json({ 'p-ticket': 'ticket-de-test', 'p-time': 600 });
+    return json(bracket ? bracketOrders() : []);
+  }
+  if (path === '/orderVersion/list') return json(bracket ? bracketVersions() : []);
   if (path === '/auth/renewaccesstoken') return json({ errorText: 'Access is denied' });
   if (path === '/account/list') {
     // Compte de prop firm = simulé → n'existe que sur l'hôte demo.
@@ -216,6 +250,9 @@ beforeEach(async () => {
   itemsNotFound = false;
   pairListNotFound = false;
   identicalPairs = 0;
+  bracket = false;
+  forbidden = [];
+  orderListMode = 'ok';
 });
 
 /**
@@ -460,6 +497,72 @@ describe('Tradovate — synchro', () => {
     const [view] = (JSON.parse(text) as { data: Record<string, unknown>[] }).data;
     expect(view).toMatchObject({ accountId: account.id, status: 'CONNECTED', tradesImported: 1, needsAccountSelection: false });
     expect(view['lastSyncAt']).toBeTruthy();
+  });
+
+  it('bracket lié à l’ordre d’entrée : stop et objectif INITIAUX posés à la création, R/R et note calculés', async () => {
+    const { id: userId, token } = await registerUser();
+    const account = await createAccount(userId, 'Lucid');
+    bracket = true;
+    calls = [];
+    await connect(token, account.id);
+
+    const t = await prisma.trade.findFirstOrThrow({ where: { userId, entry: 30000 } });
+    // Première version du stop (29990), pas la version remontée (29995) ; jambe de l'autre compte ignorée.
+    expect(t).toMatchObject({ source: 'BROKER_SYNC', stopLoss: 29990, takeProfit: 30020, riskReward: 2, executionMethod: 'STOP_BASED' });
+    // Les trades sans bracket restent sans stop.
+    expect(await prisma.trade.count({ where: { userId, stopLoss: { not: null } } })).toBe(1);
+    // Lecture seule : les ordres sont lus par leurs listes, en GET, rien d'autre.
+    const orderCalls = calls.filter((c) => /\/(order|orderVersion)\//.test(new URL(c.url).pathname));
+    expect(orderCalls.map((c) => `${c.method} ${new URL(c.url).pathname}`).sort())
+      .toEqual(expect.arrayContaining(['GET /v1/order/list', 'GET /v1/orderVersion/list']));
+    expect(orderCalls.every((c) => c.method === 'GET')).toBe(true);
+    expect(forbidden).toEqual([]);
+  });
+
+  it('trade déjà en base sans stop : une resynchro qui voit le bracket ne le modifie pas', async () => {
+    const { id: userId, token } = await registerUser();
+    const account = await createAccount(userId, 'Lucid');
+    await connect(token, account.id); // ordres illisibles ou absents : trade créé sans stop
+    bracket = true;
+    const res = await api(token, `/accounts/${account.id}/sync`, 'POST');
+    expect(res.status, await res.clone().text()).toBe(201);
+    const t = await prisma.trade.findFirstOrThrow({ where: { userId, entry: 30000 } });
+    expect(t).toMatchObject({ stopLoss: null, takeProfit: null, riskReward: null });
+    expect(forbidden).toEqual([]);
+  });
+
+  it.each(['500', '401'] as const)('ordres illisibles (%s) : la synchro aboutit, trades créés sans stop', async (mode) => {
+    const { id: userId, token } = await registerUser();
+    const account = await createAccount(userId, 'Lucid');
+    await connect(token, account.id);
+    await prisma.trade.deleteMany({ where: { userId } });
+    bracket = true;
+    orderListMode = mode;
+    const res = await api(token, `/accounts/${account.id}/sync`, 'POST');
+    expect(res.status, await res.clone().text()).toBe(201);
+    expect(await prisma.trade.count({ where: { userId } })).toBe(3);
+    expect(await prisma.trade.count({ where: { userId, OR: [{ stopLoss: { not: null } }, { riskReward: { not: null } }] } })).toBe(0);
+    const conn = await prisma.brokerConnection.findFirstOrThrow({ where: { accountId: account.id } });
+    expect(conn.status).toBe(BrokerConnectionStatus.CONNECTED);
+    expect(forbidden).toEqual([]);
+  });
+
+  it('ordres pénalisés (p-ticket) : erreur relancée, pause notée, aucun trade créé', async () => {
+    const { id: userId, token } = await registerUser();
+    const account = await createAccount(userId, 'Lucid');
+    await connect(token, account.id);
+    await prisma.trade.deleteMany({ where: { userId } });
+    orderListMode = 'penalty';
+    const res = await api(token, `/accounts/${account.id}/sync`, 'POST');
+    expect(res.status).toBe(503);
+    expect(((await res.json()) as { code: string }).code).toBe('TRADOVATE_PENALIZED');
+    expect(await prisma.trade.count({ where: { userId } })).toBe(0);
+    // Pause en cours : la synchro suivante ne touche plus Tradovate.
+    calls = [];
+    const again = await api(token, `/accounts/${account.id}/sync`, 'POST');
+    expect(again.status).toBe(503);
+    expect(calls).toEqual([]);
+    expect(forbidden).toEqual([]);
   });
 
   it('première synchro : tout l’historique, y compris les fills ANTÉRIEURS à la connexion (aucune borne de date)', async () => {

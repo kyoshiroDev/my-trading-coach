@@ -1,6 +1,6 @@
 import { hashPassword } from '../auth/password-hashing';
 import { PrismaClient, SessionStatus, AccountStatus, BrokerProvider, BrokerConnectionStatus } from '@prisma/client';
-import { computeTradeStats, maxDrawdownOfTrades } from '@mtc/shared';
+import { computeTradeStats, maxDrawdownOfTrades, type EcoResultAnalysis } from '@mtc/shared';
 import { seedDefaultSetups } from '../setups/setups.defaults';
 import { type AccountKey, APEX_DAILY_LOSS_LIMIT, DEMO_ACCOUNTS, DEMO_EMAIL, round2 } from './demo-data/config';
 import { ONELINERS, PLANS, REFLECTIONS_GREEN, REFLECTIONS_RED, REFLECTION_REVENGE } from './demo-data/texts';
@@ -11,6 +11,8 @@ import { tradingDay } from '../accounts/account-rules';
 import { tradingDayStart } from '../session/active-session';
 import { buildDemoRiskJournal, dayRiskLine, weekRiskNote } from './demo-data/prop-risk';
 import { classifyEcoEvent } from '../eco-calendar/eco-calendar.impact';
+import { assetsSignature } from '../eco-calendar/eco-release-analysis';
+import { releaseGap } from '../eco-calendar/eco-calendar.gap';
 import { seedDemoPush } from './demo-data/push';
 import { DEMO_INCIDENT_ANALYSIS, LOST_DEMO_ACCOUNTS, buildLostDemoIncident, buildLostDemoTrades } from './demo-data/lost-accounts';
 
@@ -124,7 +126,7 @@ export async function seedTradingData(
   for (const d of days) {
     if (!d.trades.length && !d.openTrade) continue;
     const isToday = d.kind === 'today';
-    // Session du jour sans trade clôturé (week-end, avant 09:45) : ouverte il y a 30 min, jamais
+    // Session du jour sans trade clôturé (week-end, coupure de 23:00, juste après minuit) : ouverte il y a 30 min, jamais
     // avant le début de la journée de trading en cours (sinon elle ne serait pas « active »).
     // `now` = celui du seed (et non l'heure réelle) : un seed daté reste cohérent avec lui-même.
     const first = d.trades[0]?.tradedAt ?? new Date(Math.max(tradingDayStart(now).getTime(), now.getTime() - 30 * 60_000) + 25 * 60_000);
@@ -374,6 +376,9 @@ export async function seedTradingData(
   const pinnedEcoEvents = process.env['FMP_API_KEY']
     ? await pickRealEcoPins(prisma, today)
     : await seedFakeEcoEvents(prisma, today);
+  // Jour passé avec annonces publiées ET leur analyse IA (calendrier éco), sans FMP seulement :
+  // jamais de fausse analyse sur une vraie annonce FMP (tables partagées avec les vrais users).
+  if (!process.env['FMP_API_KEY']) await seedFakePastRelease(prisma, user.id, now);
   await prisma.user.update({
     where: { id: user.id },
     // Sans la date du jour, readUserPins jugeait la sélection expirée et la vidait aussitôt.
@@ -493,6 +498,65 @@ async function seedFakeEcoEvents(prisma: PrismaClient, today: string): Promise<s
     });
   }
   return ['Inflation CPI (US):USD', 'Discours de Lagarde (BCE):EUR'];
+}
+
+/**
+ * Sans FMP (local, tests) : le vendredi précédent, NFP et chômage US publiés à 14:30 avec leur
+ * analyse déjà produite (`EcoReleaseAnalysis`, signature d'actifs du compte démo, format factuel
+ * `{ interpretation, gap }`) : le calendrier d'un jour passé montre l'analyse, sans appel IA.
+ */
+async function seedFakePastRelease(prisma: PrismaClient, userId: string, now: Date): Promise<void> {
+  const friday = new Date(now);
+  do friday.setDate(friday.getDate() - 1); while (friday.getDay() !== 5);
+  const date = friday.toLocaleDateString('fr-CA', { timeZone: 'Europe/Paris' });
+  const events = [
+    { time: '14:30', name: 'Nonfarm Payrolls', nameFr: 'Créations d’emplois non agricoles (NFP)', impact: 'high', actual: 254, estimate: 180, previous: 223, unit: 'K' },
+    { time: '14:30', name: 'Unemployment Rate', nameFr: 'Taux de chômage', impact: 'high', actual: 4.1, estimate: 4.2, previous: 4.2, unit: '%' },
+    { time: '16:00', name: 'ISM Services PMI', nameFr: 'ISM des services', impact: 'high', actual: 54.9, estimate: 53.6, previous: 51.5, unit: null },
+  ];
+  for (const e of events) {
+    const data = { time: e.time, nameFr: e.nameFr, country: 'US', impact: e.impact, actual: e.actual, estimate: e.estimate, previous: e.previous, isReleased: true, unit: e.unit };
+    await prisma.ecoEvent.upsert({
+      where: { date_name_currency: { date, name: e.name, currency: 'USD' } },
+      update: data,
+      create: { date, name: e.name, currency: 'USD', ...data },
+    });
+  }
+  // Même signature d'actifs que l'API (`userTopAssets` : 5 actifs les plus tradés sur 100 trades).
+  const recent = await prisma.trade.findMany({ where: { userId }, select: { asset: true }, take: 100, orderBy: { tradedAt: 'desc' } });
+  const count = new Map<string, number>();
+  recent.forEach((t) => count.set(t.asset, (count.get(t.asset) ?? 0) + 1));
+  const assets = [...count.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5).map(([a]) => a);
+  const assetsKey = assetsSignature(assets);
+  const analyses = fakePastReleaseAnalyses(events);
+  for (const [eventName, analysis] of Object.entries(analyses)) {
+    await prisma.ecoReleaseAnalysis.upsert({
+      where: { date_eventName_assetsKey: { date, eventName, assetsKey } },
+      update: { analysisJson: JSON.stringify(analysis) },
+      create: { date, eventName, assetsKey, analysisJson: JSON.stringify(analysis) },
+    });
+  }
+}
+
+const FAKE_RELEASE_TEXTS: Record<string, string> = {
+  'Nonfarm Payrolls': 'Créations d’emplois au-dessus de la prévision : 254K publiés pour 180K attendus (223K le mois précédent). Ce chiffre mesure les emplois créés hors agriculture aux États-Unis sur le mois.',
+  'Unemployment Rate': 'Taux de chômage à 4,1 %, sous la prévision et le mois précédent (4,2 %). Il mesure la part de la population active sans emploi.',
+  'ISM Services PMI': 'ISM des services à 54,9, au-dessus de la prévision (53,6) et du mois précédent (51,5). Au-dessus de 50, l’indice signale une activité des services en expansion.',
+};
+
+/**
+ * Analyses du faux vendredi au format du produit (`{ interpretation, gap }`) : texte factuel, écart
+ * calculé en code comme pour une vraie analyse, aucune direction de marché ni sentiment.
+ */
+export function fakePastReleaseAnalyses(
+  events: { name: string; actual: number | null; estimate: number | null }[],
+): Record<string, EcoResultAnalysis> {
+  const out: Record<string, EcoResultAnalysis> = {};
+  for (const e of events) {
+    const interpretation = FAKE_RELEASE_TEXTS[e.name];
+    if (interpretation) out[e.name] = { interpretation, gap: releaseGap(e.actual, e.estimate) };
+  }
+  return out;
 }
 
 // Réexports : API publique historique de ce module (cron, service, spec, script).

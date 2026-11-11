@@ -7,12 +7,16 @@ import { AiService } from '../ai/ai.service';
 import { CACHE_TTL } from '../../common/constants/cache-ttl.const';
 import { AI_MODELS } from '../infra/ai-pricing.const';
 import { normalizeEventKey, toParisDateStr, todayParis } from '@mtc/shared';
-import type { EcoAnalysis, EcoEvent } from '@mtc/shared';
+import type { EcoAnalysis, EcoEvent, EcoEventStatus } from '@mtc/shared';
 import type { EcoCalendarData, EcoResultAnalysis, FmpEcoEvent } from './eco-calendar.types';
 import * as dates from './eco-calendar.dates';
 import { classifyEcoEvent, type EcoImpact } from './eco-calendar.impact';
 import { readUserPins, saveUserPins, sortWithPins, userTopAssets } from './eco-calendar.pins';
+import { assetsSignature, normalizeAssets, pickReleaseAnalyses, stripPeriod, withDisplayNames } from './eco-release-analysis';
 import { fetchWithTimeout } from '../../common/utils/fetch-timeout';
+import { buildBriefing } from './eco-calendar.briefing';
+import { morningFocus } from './eco-calendar.gap';
+import { datesToCatchUp, datesToPoll, hasNumericResult, parisDate, shiftDate } from './eco-calendar.schedule';
 
 // Réexport : les appelants existants importent ces types depuis le service.
 export type { EcoCalendarData, EcoResultAnalysis } from './eco-calendar.types';
@@ -27,6 +31,29 @@ const TRANSLATION_BATCH = 15;
  */
 const TRANSLATION_RETRY_TTL_S = 12 * 60 * 60;
 const translationLockKey = (name: string) => `eco:label-tr:${name}`;
+
+/**
+ * État affiché d'une annonce : « passée » se distingue de « publiée » (une intervention sans chiffre
+ * ne reste plus indéfiniment « à venir / non publiée »).
+ */
+function eventStatus(actual: number | null, timePassed: boolean): EcoEventStatus {
+  if (actual !== null) return 'released';
+  return timePassed ? 'past' : 'upcoming';
+}
+
+
+/** Verrou d'une génération d'analyse : couvre largement un appel modèle (délai max ~60 s). */
+const ECO_ANALYSIS_LOCK_S = 90;
+/** Après un échec du modèle, nouvel essai possible au bout de 10 min (clic ou relevé suivant). */
+const ECO_ANALYSIS_RETRY_S = 10 * 60;
+/** Attente max d'une génération lancée par un autre trader de la même signature. */
+const ECO_ANALYSIS_WAIT_MS = 15_000;
+const ECO_ANALYSIS_POLL_MS = 500;
+/** Plafond d'analyses de résultats par jour (toutes signatures). ECO_RESULT_ANALYSIS_DAILY_MAX. */
+function ecoResultAnalysisDailyMax(): number {
+  const n = Number(process.env['ECO_RESULT_ANALYSIS_DAILY_MAX']);
+  return Number.isFinite(n) && n > 0 ? n : 200;
+}
 
 
 @Injectable()
@@ -155,6 +182,8 @@ export class EcoCalendarService {
           previous: row.previous ?? null,
           isReleased: row.isReleased,
           unit: row.unit,
+          hasResult: hasNumericResult(row.name),
+          status: eventStatus(row.actual ?? null, isPast),
         });
       }
 
@@ -324,6 +353,9 @@ export class EcoCalendarService {
         previous: r.previous ?? null,
         isReleased: actual !== null,
         unit: r.unit,
+        // Sur le libellé anglais FMP : les règles de `hasNumericResult` sont écrites pour lui.
+        hasResult: hasNumericResult(r.name),
+        status: eventStatus(actual, eventDateTime <= parisNow),
       };
     });
   }
@@ -355,6 +387,41 @@ export class EcoCalendarService {
     return { hasNew: brandNew.length > 0, newEvents: brandNew };
   }
 
+  // ── Planification du relevé (cf. eco-calendar.schedule.ts) ────────────────
+
+  /**
+   * Jours de Paris à demander à FMP maintenant : ceux d'une annonce chiffrée sans résultat dont
+   * l'heure prévue est passée depuis moins de 15 min. Une lecture en base, aucune requête FMP.
+   */
+  async datesToPollNow(now: Date = new Date()): Promise<string[]> {
+    const today = parisDate(now);
+    // La veille aussi : une annonce de 23 h 50 reste dans sa fenêtre après minuit.
+    const rows = await this.prisma.ecoEvent.findMany({
+      where: { date: { in: [shiftDate(today, -1), today] }, actual: null },
+      select: { date: true, time: true, name: true, actual: true },
+    });
+    return datesToPoll(rows, now);
+  }
+
+  /**
+   * Rattrapage du matin : resynchronise les jours récents (4 derniers) où une annonce chiffrée
+   * passée est restée sans résultat, sauf `alreadyFetched`. Couvre la veille, et le vendredi soir
+   * au fetch du lundi. Renvoie les jours resynchronisés.
+   */
+  async catchUpMissingResults(alreadyFetched: string[], now: Date = new Date()): Promise<string[]> {
+    const today = parisDate(now);
+    const rows = await this.prisma.ecoEvent.findMany({
+      where: {
+        date: { gte: shiftDate(today, -4), lte: today },
+        actual: null,
+      },
+      select: { date: true, time: true, name: true, actual: true },
+    });
+    const days = datesToCatchUp(rows, now, alreadyFetched);
+    for (const day of days) await this.fetchAndStoreEvents(day);
+    return days;
+  }
+
   // ── Analyse IA mutualisée par signature d'actifs (cache BDD) ──────────────
 
   /** Signature normalisée d'une liste d'actifs (trim, upper, dédup, tri). */
@@ -370,6 +437,17 @@ export class EcoCalendarService {
    * 1 appel IA par (date, signature) au lieu d'un par user. Persisté en BDD.
    */
   private async getSharedMorningAnalysis(
+    date: string,
+    events: EcoEvent[],
+    userAssets: string[],
+  ): Promise<EcoAnalysis> {
+    // Conformité (#920) : seul le résumé vient du modèle. Le point d'attention est calculé en code
+    // et aucun sentiment par actif n'est renvoyé, même depuis une ligne de cache plus ancienne.
+    const a = await this.morningSummary(date, events, userAssets);
+    return { summary: a.summary, recommendation: morningFocus(events), assetImpacts: [] };
+  }
+
+  private async morningSummary(
     date: string,
     events: EcoEvent[],
     userAssets: string[],
@@ -397,7 +475,9 @@ export class EcoCalendarService {
     }
 
     try {
-      const analysis = await this.ai.analyzeEcoEvents({ userId: 'shared', events, userAssets });
+      // userId null = job mutualisé : 'shared' violait la clé étrangère d'AiUsageLog, et ces
+      // appels n'étaient jamais comptés (« AiUsageLog skipped »).
+      const analysis = await this.ai.analyzeEcoEvents({ userId: null, events, userAssets });
       await this.prisma.ecoAnalysisCache
         .upsert({
           where: { date_assetsKey: { date, assetsKey: key } },
@@ -414,7 +494,8 @@ export class EcoCalendarService {
 
   // ── getTodayEvents : lecture BDD + cache Redis + analyse IA ───────────────
 
-  async getTodayEvents(userId: string): Promise<EcoCalendarData> {
+  /** `isDemo` : la signature du compte démo ne déclenche pas de génération automatique (payante). */
+  async getTodayEvents(userId: string, isDemo = false): Promise<EcoCalendarData> {
     const today = todayParis();
     const cacheKey = `eco:calendar:${today}:${userId}`;
 
@@ -432,10 +513,17 @@ export class EcoCalendarService {
     ]);
 
     const analysis = await this.getSharedMorningAnalysis(today, events, userAssets);
+    if (!isDemo) await this.rememberSignature(today, userAssets);
 
     // Épinglés en premier, puis tri par heure
     const sortedEvents = this.sortWithPins(events, userPins);
-    const result: EcoCalendarData = { events: sortedEvents, analysis, userAssets, pinnedEvents: userPins };
+    const result: EcoCalendarData = {
+      events: sortedEvents,
+      analysis,
+      userAssets,
+      pinnedEvents: userPins,
+      briefing: buildBriefing(events, userAssets),
+    };
     try {
       await this.redis.setex(cacheKey, CACHE_TTL.ECO_EVENTS, JSON.stringify(result));
     } catch {
@@ -483,9 +571,13 @@ export class EcoCalendarService {
     return result;
   }
 
-  // ── analyzeReleasedEvent (inchangé) ────────────────────────────────────────
+  // ── Analyse d'un résultat publié : une génération par (jour, événement, signature) ─────
 
-  async analyzeReleasedEvent(userId: string, eventName: string): Promise<EcoResultAnalysis | null> {
+  /**
+   * Analyse d'un event publié, à la demande (clic, widget de session). Réutilise le cache que la
+   * génération automatique remplit au moment de la publication (`autoAnalyzeReleased`).
+   */
+  async analyzeReleasedEvent(userId: string, eventName: string, isDemo = false): Promise<EcoResultAnalysis | null> {
     const today = todayParis();
     const cacheKey = `eco:calendar:${today}:${userId}`;
 
@@ -501,42 +593,206 @@ export class EcoCalendarService {
     if (!events) events = await this.getEventsFromDb(today);
 
     // Match tolérant : nom exact, sinon nom sans suffixe de période ("(Jun)"…).
-    const stripPeriod = (n: string) => n.replace(/\s*\([^)]*\)\s*$/, '').trim();
-    let event = events.find((e) => e.name === eventName);
-    if (!event) {
-      const target = stripPeriod(eventName);
-      event = events.find((e) => stripPeriod(e.name) === target);
-    }
+    const target = stripPeriod(eventName);
+    const event = events.find((e) => e.name === eventName) ?? events.find((e) => stripPeriod(e.name) === target);
     if (!event?.isReleased) return null;
 
     const userAssets = await this.getUserTopAssets(userId);
+    if (!isDemo) await this.rememberSignature(today, userAssets);
+    return this.ensureReleasedAnalysis(today, event, userAssets, 'clic');
+  }
 
-    // Cache serveur : l'analyse d'un event publié est stable sur la journée.
-    // Clé = (date, event sans suffixe, signature actifs) → mutualise entre users
-    // de mêmes actifs et évite tout rappel modèle à la 2ᵉ ouverture de session.
-    const assetsSig = [...userAssets].map((a) => a.trim().toUpperCase()).sort().join(',') || 'none';
-    const analysisKey = `eco:analysis:${today}:${stripPeriod(event.name)}:${assetsSig}`;
-    try {
-      const cached = await this.redis.get(analysisKey);
-      if (cached) return JSON.parse(cached) as EcoResultAnalysis;
-    } catch {
-      // Redis indisponible → on calcule
-    }
+  /**
+   * Génération automatique dès la publication (appelée par le relevé planifié) : annonces fortes
+   * et chiffrées seulement, pour chaque signature d'actifs vue aujourd'hui ou hier (les traders
+   * qui ont ouvert le calendrier). Une autre signature est servie à sa première lecture, avec la
+   * même règle d'un seul appel. Jamais hors production.
+   */
+  async autoAnalyzeReleased(day: string, released: EcoEvent[]): Promise<number> {
+    if (process.env['NODE_ENV'] !== 'production') return 0;
+    const targets = released.filter((e) => e.impact === 'high' && e.isReleased && hasNumericResult(e.name));
+    if (!targets.length) return 0;
 
-    const analysis = await this.ai
-      .analyzeEcoResult({ userId, event, userAssets })
-      .catch((err: Error) => {
-        this.logger.warn(`Eco result analysis skipped: ${err.message}`);
-        return null;
-      });
-    if (analysis) {
-      try {
-        await this.redis.setex(analysisKey, CACHE_TTL.ECO_ANALYSIS, JSON.stringify(analysis));
-      } catch {
-        // cache best-effort
+    const signatures = await this.recentSignatures(day);
+    let generated = 0;
+    for (const event of targets) {
+      for (const assets of signatures) {
+        if (await this.ensureReleasedAnalysis(day, event, assets, 'auto')) generated++;
       }
     }
-    return analysis;
+    return generated;
+  }
+
+  /** Clé de cache d'une analyse : partagée par tous les traders de la même signature. */
+  private releasedAnalysisKey(day: string, eventName: string, userAssets: string[]): string {
+    // `assetsSignature` (trim, majuscules, dédoublonnage, sans vide, tri) : même clé pour le clic
+    // (actifs bruts), l'auto (actifs normalisés) et la ligne EcoReleaseAnalysis (`assetsKey`).
+    const assetsSig = assetsSignature(userAssets);
+    // v2 (#920, conformité) : les analyses d'avant portaient un sentiment par actif, jamais relues.
+    return `eco:analysis:v2:${day}:${stripPeriod(eventName)}:${assetsSig}`;
+  }
+
+  /**
+   * Analyse en cache, sinon un seul appel modèle pour la clé, même si 50 traders la demandent en
+   * même temps : verrou Redis (SET NX), les autres attendent le résultat en cache. Échec du modèle
+   * → `null` et nouvel essai possible après ECO_ANALYSIS_RETRY_S. Plafond quotidien configurable
+   * (ECO_RESULT_ANALYSIS_DAILY_MAX). Les journaux comptent les appels, jamais leur contenu.
+   */
+  async ensureReleasedAnalysis(
+    day: string,
+    event: EcoEvent,
+    userAssets: string[],
+    source: 'auto' | 'clic',
+  ): Promise<EcoResultAnalysis | null> {
+    if (event.actual === null) return null; // aucun appel avec une valeur inventée
+    const key = this.releasedAnalysisKey(day, event.name, userAssets);
+    const lockKey = `eco:analysis-lock:${key}`;
+    const failKey = `eco:analysis-fail:${key}`;
+
+    let locked: boolean;
+    try {
+      const cached = await this.redis.get(key);
+      if (cached) return JSON.parse(cached) as EcoResultAnalysis;
+      if (await this.redis.get(failKey)) return null; // échec récent : on attend avant de relancer
+      locked = (await this.redis.set(lockKey, '1', 'EX', ECO_ANALYSIS_LOCK_S, 'NX')) === 'OK';
+    } catch (err) {
+      // Redis indisponible : pas de verrou possible. Le clic garde son comportement d'avant (un
+      // appel), la génération automatique s'abstient pour ne pas risquer une rafale.
+      if (source === 'auto') return null;
+      this.logger.warn(`Eco analyse : Redis indisponible (${(err as Error).message}), appel sans verrou`);
+      return this.callResultModel(event, userAssets, source, day);
+    }
+
+    if (!locked) return this.waitForAnalysis(key);
+
+    try {
+      // Re-vérifie après la prise du verrou : un autre process a pu finir entre-temps.
+      const cached = await this.redis.get(key);
+      if (cached) return JSON.parse(cached) as EcoResultAnalysis;
+
+      const count = await this.redis.incr(`eco:analysis-count:${day}`);
+      if (count === 1) await this.redis.expire(`eco:analysis-count:${day}`, 2 * 24 * 3600);
+      const cap = ecoResultAnalysisDailyMax();
+      if (count > cap) {
+        this.logger.warn(`Eco analyse : plafond quotidien atteint (${cap}), ${source} ignoré`);
+        return null;
+      }
+
+      const analysis = await this.callResultModel(event, userAssets, source, day, count, cap);
+      if (analysis) {
+        await this.redis.setex(key, CACHE_TTL.ECO_ANALYSIS, JSON.stringify(analysis));
+        await this.storeReleaseAnalysis(day, event.name, userAssets, analysis);
+      } else {
+        await this.redis.setex(failKey, ECO_ANALYSIS_RETRY_S, '1');
+      }
+      return analysis;
+    } catch (err) {
+      this.logger.warn(`Eco analyse : cache indisponible (${(err as Error).message})`);
+      return null;
+    } finally {
+      await this.redis.del(lockKey).catch(() => undefined);
+    }
+  }
+
+  /**
+   * Gardée en base pour les jours suivants (calendrier d'un jour passé, `getReleaseAnalyses`), sans
+   * nouvel appel IA. Clé (jour, nom sans période, signature d'actifs) ; une ligne existante n'est
+   * jamais réécrite.
+   */
+  private async storeReleaseAnalysis(
+    day: string,
+    eventName: string,
+    userAssets: string[],
+    analysis: EcoResultAnalysis,
+  ): Promise<void> {
+    const where = { date: day, eventName: stripPeriod(eventName), assetsKey: assetsSignature(userAssets) };
+    await this.prisma.ecoReleaseAnalysis
+      .upsert({
+        where: { date_eventName_assetsKey: where },
+        update: {},
+        create: { ...where, analysisJson: JSON.stringify(analysis) },
+      })
+      .catch((err: Error) => this.logger.warn(`Eco result analysis not stored: ${err.message}`));
+  }
+
+  private async callResultModel(
+    event: EcoEvent,
+    userAssets: string[],
+    source: 'auto' | 'clic',
+    day: string,
+    count?: number,
+    cap?: number,
+  ): Promise<EcoResultAnalysis | null> {
+    try {
+      const analysis = await this.ai.analyzeEcoResult({ userId: null, event, userAssets });
+      this.logger.log(
+        `Eco analyse résultat générée (${source}, ${day}${count ? `, ${count}/${cap}` : ''})`,
+      );
+      return analysis;
+    } catch (err) {
+      this.logger.warn(`Eco result analysis skipped (${source}): ${(err as Error).message}`);
+      return null;
+    }
+  }
+
+  /** Un autre process génère : on attend son résultat en cache, sans appeler le modèle. */
+  private async waitForAnalysis(key: string): Promise<EcoResultAnalysis | null> {
+    const deadline = Date.now() + ECO_ANALYSIS_WAIT_MS;
+    while (Date.now() < deadline) {
+      await new Promise((r) => setTimeout(r, ECO_ANALYSIS_POLL_MS));
+      try {
+        const cached = await this.redis.get(key);
+        if (cached) return JSON.parse(cached) as EcoResultAnalysis;
+        if (!(await this.redis.get(`eco:analysis-lock:${key}`))) return null; // fini sans résultat
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  }
+
+  /** Signatures d'actifs vues ce jour : cibles de la génération automatique. */
+  private async rememberSignature(day: string, userAssets: string[]): Promise<void> {
+    try {
+      const k = `eco:sigs:${day}`;
+      await this.redis.sadd(k, JSON.stringify(normalizeAssets(userAssets)));
+      await this.redis.expire(k, 3 * 24 * 3600);
+    } catch {
+      // best-effort : la signature sera servie à sa première lecture
+    }
+  }
+
+  private async recentSignatures(day: string): Promise<string[][]> {
+    try {
+      const [today, yesterday] = await Promise.all([
+        this.redis.smembers(`eco:sigs:${day}`),
+        this.redis.smembers(`eco:sigs:${shiftDate(day, -1)}`),
+      ]);
+      return [...new Set([...today, ...yesterday])].map((s) => JSON.parse(s) as string[]);
+    } catch {
+      return [];
+    }
+  }
+
+
+  /**
+   * Analyses déjà produites pour les annonces publiées d'un jour PASSÉ, par nom d'annonce sans
+   * suffixe de période. Lecture seule, aucun appel IA (donc ouverte au compte démo). Aujourd'hui
+   * et après : vide, l'analyse du jour passe par `analyze-result`.
+   */
+  async getReleaseAnalyses(userId: string, date: string): Promise<Record<string, EcoResultAnalysis>> {
+    if (date >= todayParis()) return {};
+    const [rows, userAssets, events] = await Promise.all([
+      this.prisma.ecoReleaseAnalysis.findMany({
+        where: { date },
+        select: { eventName: true, assetsKey: true, analysisJson: true, createdAt: true },
+      }),
+      this.getUserTopAssets(userId),
+      this.prisma.ecoEvent.findMany({ where: { date }, select: { name: true, nameFr: true } }),
+    ]);
+    // Le calendrier affiche les annonces sous leur libellé français (`nameFr ?? name`) : l'analyse,
+    // rangée sous le nom FMP, est aussi rendue sous ce libellé (sans suffixe de période).
+    return withDisplayNames(pickReleaseAnalyses(rows, userAssets), events);
   }
 
 

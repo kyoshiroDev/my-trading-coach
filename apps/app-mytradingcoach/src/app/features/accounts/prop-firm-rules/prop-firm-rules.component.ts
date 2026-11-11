@@ -28,6 +28,8 @@ import {
   timeLabel,
   yesNo,
 } from './prop-firm-rules.util';
+import { InfoTooltipComponent } from '@app/shared/components/info-tooltip/info-tooltip.component';
+import { DRAWDOWN_LABELS } from '@app/core/constants/drawdown-labels.const';
 
 /**
  * Règles officielles du plan prop firm relié à un compte, phase par phase. Lecture seule :
@@ -35,12 +37,14 @@ import {
  */
 @Component({
   selector: 'mtc-prop-firm-rules',
-  imports: [LucideDynamicIcon],
+  imports: [LucideDynamicIcon, InfoTooltipComponent],
   templateUrl: './prop-firm-rules.component.html',
   styleUrl: './prop-firm-rules.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PropFirmRulesComponent {
+  /** Vocabulaire du drawdown (règle / marge / drawdown max), commun à tous les écrans. */
+  protected readonly ddLabels = DRAWDOWN_LABELS;
   readonly plan = input.required<PropFirmPlanDetail>();
   readonly accountType = input.required<AccountType>();
 

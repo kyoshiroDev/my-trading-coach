@@ -155,6 +155,43 @@ describe('DebriefService', () => {
       expect(result.created).toBe(true);
     });
 
+    it("stats du résumé : l'id du compte du pire drawdown ne part ni à l'IA ni en base", async () => {
+      mockPrisma.weeklyDebrief.findFirst.mockResolvedValue(null);
+      mockPrisma.weeklyDebrief.upsert.mockResolvedValue(mockDebrief);
+      mockAnalyticsService.getSummary.mockResolvedValueOnce({ winRate: 60, totalPnl: 250, totalTrades: 5, maxDrawdown: 400, maxDrawdownAccountId: 'acc-b' });
+
+      await service.generate('user-123');
+
+      const sent = (mockAiService.generateDebrief.mock.calls[0][0] as { stats: object }).stats;
+      const upsert = mockPrisma.weeklyDebrief.upsert.mock.calls[0][0] as { create: { stats: object }; update: { stats: object } };
+      for (const stats of [sent, upsert.create.stats, upsert.update.stats]) {
+        expect(stats).toEqual({ winRate: 60, totalPnl: 250, totalTrades: 5, maxDrawdown: 400 });
+      }
+    });
+
+    it('stats du résumé limitées à la semaine du débrief, du lundi 00:00 au dimanche 23:59:59.999 (#934)', async () => {
+      mockPrisma.weeklyDebrief.findFirst.mockResolvedValue(null);
+      mockPrisma.weeklyDebrief.upsert.mockResolvedValue(mockDebrief);
+
+      await service.generate('user-123', Role.USER, true, { refDate: new Date('2026-11-11T15:00:00') });
+      expect(mockAnalyticsService.getSummary).toHaveBeenLastCalledWith(
+        'user-123',
+        undefined,
+        new Date('2026-11-09T00:00:00.000'),
+        new Date('2026-11-15T23:59:59.999'),
+      );
+
+      // Semaine passée : les bornes suivent refDate (jamais tout l'historique).
+      mockPrisma.weeklyDebrief.findUnique.mockResolvedValue(null);
+      await service.generate('user-123', Role.USER, true, { refDate: new Date('2026-06-24T12:00:00') });
+      expect(mockAnalyticsService.getSummary).toHaveBeenLastCalledWith(
+        'user-123',
+        undefined,
+        new Date('2026-06-22T00:00:00.000'),
+        new Date('2026-06-28T23:59:59.999'),
+      );
+    });
+
     it('idempotent : débrief existant + pas de force → retourne l\'existant, zéro IA, zéro upsert', async () => {
       mockPrisma.weeklyDebrief.findUnique.mockResolvedValue(mockDebrief);
 

@@ -120,7 +120,8 @@ réservée au Premium. Changer une ligne → `libs/shared/src/plan-benefits.ts` 
 > mesurent PAS la même chose, **non comparables**.
 > - **Barème A — STOP_BASED** (`stopLoss` présent) : 4 critères intrinsèques — stop respecté (35) · R:R
 >   ≥1.5 (25) · émotion effective saine (20) · risque ≤1% (20). **Inchangé.**
-> - **Barème B — BEHAVIORAL** (`stopLoss` absent : scalp manuel, imports broker) : 3 critères **relatifs à
+> - **Barème B — BEHAVIORAL** (`stopLoss` absent : scalp manuel, imports broker ; ou stop présent mais
+>   barème A non mesurable — stop seul, ni objectif ni émotion, #929) : 3 critères **relatifs à
 >   l'historique du compte** (médianes) — **perte contenue** (40, sur trade perdant : `L≤1.5×Lméd`→1,
 >   `≤3×`→0.5, sinon 0) · **pas de revenge** (35, délai depuis le dernier perdant du **même jour** :
 >   `<2 min`→0, `2-10`→0.5, `>10`→1) · **taille constante** (25, anti-martingale strict, si le trade
@@ -160,7 +161,12 @@ On tiér par **structure de coût**, PAS par « IA vs pas d'IA ».
 
 - **MUTUALISÉ** — coût O(signatures d'actifs / clés partagées), indépendant du nb de users → **FREE** :
   - Contexte marché : 1 clé Redis partagée `market:context` (TTL).
-  - Calendrier éco : cache BDD `ecoAnalysisCache` par `(date, assetsKey)`, `userId:'shared'`.
+  - Calendrier éco : cache BDD `ecoAnalysisCache` par `(date, assetsKey)`, journalisé `userId: null` (job
+    mutualisé ; `'shared'` violait la clé étrangère et n'était jamais compté dans AiUsageLog, #920).
+  - Calendrier éco, résultats publiés (#920) : génération automatique des annonces **fortes chiffrées**, un
+    appel par (jour, événement, signature d'actifs) sous verrou Redis, pour les signatures vues aujourd'hui
+    ou hier (compte démo exclu) ; plafond `ECO_RESULT_ANALYSIS_DAILY_MAX` (200/jour par défaut) ; jamais
+    hors production. Le clic réutilise le même cache.
   - News : `marketNews` partagé (cron) ; traduction Haiku **1×/article**, `userId:null`, cachée.
 - **BORNÉ** — 1/user/période, `max_tokens` capé → **PREMIUM** :
   - Weekly Debrief : 1/user/semaine. `max_tokens` = min(10 240, 2 500 + 1 125 × comptes)

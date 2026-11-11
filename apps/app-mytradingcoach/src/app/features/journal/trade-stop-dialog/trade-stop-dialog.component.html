@@ -1,0 +1,75 @@
+@let t = trade();
+<div class="modal-overlay" role="button" tabindex="0" aria-label="Annuler"
+  (click)="dismissed.emit()" (keydown.escape)="dismissed.emit()">
+  <div class="stop-modal" role="dialog" aria-modal="true" aria-labelledby="stop-modal-title"
+    mtcDialog (mtcDialogClose)="dismissed.emit()" data-testid="trade-stop-dialog"
+    (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
+    <div class="stop-modal-header">
+      <h3 class="stop-modal-title" id="stop-modal-title">Stop initial</h3>
+      <p class="stop-modal-sub">
+        {{ t.asset }} · <span [class]="t.side === 'LONG' ? 'long' : 'short'">{{ t.side }}</span>
+        · entrée {{ t.entry }} · qté {{ t.quantity ?? 1 }}
+      </p>
+    </div>
+
+    <form class="stop-form" (submit)="$event.preventDefault(); save()">
+      <label class="stop-field">
+        <span class="stop-label label-sl">Stop loss</span>
+        <input class="input-sl" type="text" inputmode="decimal" autocomplete="off"
+          data-testid="trade-stop-input"
+          [class.input-error]="placementError() !== null"
+          [value]="stopRaw()" (input)="onInput('stop', $event)"
+          [attr.aria-invalid]="placementError() !== null" aria-describedby="stop-modal-feedback" />
+      </label>
+      <label class="stop-field">
+        <span class="stop-label label-tp">Objectif <span class="optional">(facultatif)</span></span>
+        <input class="input-tp" type="text" inputmode="decimal" autocomplete="off"
+          data-testid="trade-target-input"
+          [value]="targetRaw()" (input)="onInput('target', $event)" />
+      </label>
+
+      <div class="stop-preview" id="stop-modal-feedback" aria-live="polite">
+        @if (placementError(); as erreur) {
+          <p class="stop-error" role="alert" data-testid="trade-stop-error">{{ erreur }}</p>
+        } @else if (valid()) {
+          <div class="stop-preview-row">
+            <span class="stop-preview-label">Risque</span>
+            <span class="stop-preview-value" data-testid="trade-stop-risk">
+              @if (riskAmount() !== null) {
+                {{ riskAmount() | money:2:false:t.accountId }}
+              } @else {
+                {{ riskPoints() }} pts
+              }
+            </span>
+          </div>
+          <div class="stop-preview-row">
+            <span class="stop-preview-label">R/R</span>
+            <span class="stop-preview-value" data-testid="trade-stop-rr">
+              @if (riskReward() !== null) { {{ riskReward()?.toFixed(2) }} } @else { — }
+            </span>
+          </div>
+          @if (riskReward() === null) {
+            <p class="stop-hint">Ajoute un objectif pour calculer le R/R.</p>
+          }
+          @if (missingPointValue()) {
+            <p class="stop-hint" data-testid="trade-stop-no-point-value">
+              Valeur du point inconnue pour {{ t.asset }} : risque affiché en points.
+            </p>
+          }
+        } @else {
+          <p class="stop-hint">Le prix où ton stop était posé à l'entrée.</p>
+        }
+        @if (apiError(); as erreur) {
+          <p class="stop-error" role="alert" data-testid="trade-stop-api-error">{{ erreur }}</p>
+        }
+      </div>
+
+      <div class="stop-actions">
+        <button type="button" class="btn-cancel" (click)="dismissed.emit()" [disabled]="isSaving()">Annuler</button>
+        <button type="submit" class="btn-save" data-testid="trade-stop-save" [disabled]="!valid() || isSaving()">
+          @if (isSaving()) { Enregistrement... } @else { Enregistrer }
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

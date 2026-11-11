@@ -17,6 +17,7 @@ import {
   LucideCalendar as Calendar,
   LucideTrash2 as Trash2,
   LucideArrowRightLeft as ArrowRightLeft,
+  LucideCrosshair as Crosshair,
 } from '@lucide/angular';
 import { TradesStore, Trade } from '../../core/stores/trades.store';
 import { CreateTradeDto, TradesApi } from '../../core/api/trades.api';
@@ -24,6 +25,7 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
 import { SetupsStore } from '../../core/stores/setups.store';
 import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
 import { TradeFormComponent } from './trade-form.component';
+import { TradeStopDialogComponent } from './trade-stop-dialog/trade-stop-dialog.component';
 import { CsvImportComponent } from './csv-import.component';
 import { MoneyPipe, PnlColorPipe, PnlFormatPipe, EmotionEmojiPipe } from '../../shared/pipes';
 import { InfoTooltipComponent } from '../../shared/components/info-tooltip/info-tooltip.component';
@@ -46,7 +48,7 @@ import {
   imports: [
     DialogDirective,
     DatePipe, DecimalPipe, TitleCasePipe, LucideDynamicIcon,
-    TopbarComponent, TradeFormComponent, CsvImportComponent,
+    TopbarComponent, TradeFormComponent, TradeStopDialogComponent, CsvImportComponent,
     PnlColorPipe, PnlFormatPipe, MoneyPipe, EmotionEmojiPipe, InfoTooltipComponent,
     MixedCurrencyNoticeComponent, InactiveAccountsToggleComponent,
   ],
@@ -182,6 +184,7 @@ export class JournalComponent {
 
   protected readonly XIcon            = X;
   protected readonly PencilIcon       = Pencil;
+  protected readonly StopIcon         = Crosshair;
   protected readonly UploadIcon       = Upload;
   protected readonly ChevronDownIcon  = ChevronDown;
   protected readonly ChevronRightIcon = ChevronRight;
@@ -348,6 +351,16 @@ export class JournalComponent {
     this.selectedTrade.set(null);
     this.showModal.set(true);
     this.submitError.set(null);
+  }
+
+  /** Trade dont on saisit le stop initial (fenêtre ouverte), ou null. */
+  protected readonly stopTrade = signal<Trade | null>(null);
+
+  protected onStopSaved(trade: Trade): void {
+    this.tradesStore.updateTrade(trade);
+    this.refreshStats();
+    this.stopTrade.set(null);
+    this.toast.success('Stop enregistré');
   }
 
   protected openEditModal(trade: Trade): void {

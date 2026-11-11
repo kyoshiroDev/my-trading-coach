@@ -525,6 +525,114 @@ describe('TradesService', () => {
     });
   });
 
+  // Trades synchronisés : la synchronisation ne récupère pas le stop → R/R inconnu. Saisie rapide du stop
+  // initial depuis le Journal (PATCH /trades/:id/stop), mêmes règles que la saisie manuelle.
+  describe('setStop — stop initial d’un trade synchronisé', () => {
+    // MNQ du 9/11 (compte Lucid de Greg) : entrée 27092.25, sortie au marché 27796.
+    const synced = {
+      ...mockTrade,
+      asset: 'MNQ',
+      side: TradeSide.LONG,
+      entry: 27092.25,
+      exit: 27796,
+      pnl: 1407.5,
+      quantity: 1,
+      stopLoss: null,
+      takeProfit: null,
+      riskReward: null,
+      accountId: 'acc-1',
+      executionScore: 60,
+      executionGrade: 'BON',
+      executionMethod: 'BEHAVIORAL',
+    };
+
+    beforeEach(() => {
+      mockPrisma.trade.update.mockImplementation(({ data }) => Promise.resolve({ ...synced, ...data }));
+    });
+
+    it('LONG avec objectif : stop, objectif et R/R enregistrés, note recalculée « avec stop »', async () => {
+      mockPrisma.trade.findUnique.mockResolvedValue(synced);
+      await service.setStop('user-123', 'trade-123', { stopLoss: 26862.5, takeProfit: 28138.25 });
+      const { data } = mockPrisma.trade.update.mock.calls[0][0];
+      expect(data).toMatchObject({ stopLoss: 26862.5, takeProfit: 28138.25, riskReward: 4.55, executionMethod: 'STOP_BASED' });
+      expect(data.executionGrade).not.toBeNull();
+      // Barème comportemental du compte relancé (médianes et trades voisins).
+      expect(mockPrisma.trade.findMany).toHaveBeenCalledWith(expect.objectContaining({ where: { accountId: 'acc-1', pnl: { not: null } } }));
+    });
+
+    it('SHORT avec objectif : R/R dans le bon sens', async () => {
+      mockPrisma.trade.findUnique.mockResolvedValue({ ...synced, side: TradeSide.SHORT, entry: 100, exit: 95 });
+      await service.setStop('user-123', 'trade-123', { stopLoss: 104, takeProfit: 90 });
+      expect(mockPrisma.trade.update.mock.calls[0][0].data).toMatchObject({ stopLoss: 104, takeProfit: 90, riskReward: 2.5 });
+    });
+
+    it('sans objectif : stop enregistré, R/R reste inconnu (null), jamais 0', async () => {
+      mockPrisma.trade.findUnique.mockResolvedValue(synced);
+      await service.setStop('user-123', 'trade-123', { stopLoss: 26862.5 });
+      const { data } = mockPrisma.trade.update.mock.calls[0][0];
+      expect(data.stopLoss).toBe(26862.5);
+      expect(data.riskReward).toBeNull();
+      expect(data).not.toHaveProperty('takeProfit');
+      expect(data.executionMethod).toBe('STOP_BASED');
+    });
+
+    it('stop du mauvais côté : refusé avec un message clair, rien n’est écrit', async () => {
+      mockPrisma.trade.findUnique.mockResolvedValue(synced);
+      await expect(service.setStop('user-123', 'trade-123', { stopLoss: 27100 })).rejects.toThrow(
+        new BadRequestException("Sur un achat (LONG), le stop doit être sous le prix d'entrée (27092.25)."),
+      );
+      mockPrisma.trade.findUnique.mockResolvedValue({ ...synced, side: TradeSide.SHORT });
+      await expect(service.setStop('user-123', 'trade-123', { stopLoss: 27000 })).rejects.toThrow(/au-dessus du prix d'entrée/);
+      expect(mockPrisma.trade.update).not.toHaveBeenCalled();
+    });
+
+    it('objectif du mauvais côté : refusé', async () => {
+      mockPrisma.trade.findUnique.mockResolvedValue(synced);
+      await expect(service.setStop('user-123', 'trade-123', { stopLoss: 26862.5, takeProfit: 27000 })).rejects.toThrow(/l'objectif doit être au-dessus/);
+      expect(mockPrisma.trade.update).not.toHaveBeenCalled();
+    });
+
+    it('objectif absent : celui du trade est gardé (et vérifié) ; null : il est retiré', async () => {
+      mockPrisma.trade.findUnique.mockResolvedValue({ ...synced, takeProfit: 28138.25 });
+      await service.setStop('user-123', 'trade-123', { stopLoss: 26862.5 });
+      expect(mockPrisma.trade.update.mock.calls[0][0].data.riskReward).toBe(4.55);
+
+      mockPrisma.trade.update.mockClear();
+      await service.setStop('user-123', 'trade-123', { stopLoss: 26862.5, takeProfit: null });
+      expect(mockPrisma.trade.update.mock.calls[0][0].data).toMatchObject({ takeProfit: null, riskReward: null });
+    });
+
+    it('trade d’un autre utilisateur : refusé avant toute écriture', async () => {
+      mockPrisma.trade.findUnique.mockResolvedValue({ ...synced, userId: 'other' });
+      await expect(service.setStop('user-123', 'trade-123', { stopLoss: 26862.5 })).rejects.toThrow(ForbiddenException);
+      expect(mockPrisma.trade.update).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('update — R/R recalculé quand le stop ou l’objectif change seul', () => {
+    it('stop ajouté sans toucher aux prix : R/R calculé (avant : laissé vide)', async () => {
+      const existing = { ...mockTrade, stopLoss: null, takeProfit: 53000, riskReward: null };
+      mockPrisma.trade.findUnique.mockResolvedValue(existing);
+      mockPrisma.trade.update.mockImplementation(({ data }) => Promise.resolve({ ...existing, ...data }));
+      await service.update('user-123', 'trade-123', { stopLoss: 49000 });
+      expect(mockPrisma.trade.update.mock.calls[0][0].data.riskReward).toBe(3);
+    });
+
+    it('stop retiré : R/R effacé (null), pas figé sur l’ancienne valeur', async () => {
+      mockPrisma.trade.findUnique.mockResolvedValue(mockTrade);
+      mockPrisma.trade.update.mockImplementation(({ data }) => Promise.resolve({ ...mockTrade, ...data }));
+      await service.update('user-123', 'trade-123', { stopLoss: null as unknown as number });
+      expect(mockPrisma.trade.update.mock.calls[0][0].data.riskReward).toBeNull();
+    });
+
+    it('seuls setup/émotion changent : R/R non touché', async () => {
+      mockPrisma.trade.findUnique.mockResolvedValue(mockTrade);
+      mockPrisma.trade.update.mockImplementation(({ data }) => Promise.resolve({ ...mockTrade, ...data }));
+      await service.update('user-123', 'trade-123', { setupId: 'setup-2' });
+      expect(mockPrisma.trade.update.mock.calls[0][0].data).not.toHaveProperty('riskReward');
+    });
+  });
+
   // un setup archivé ne doit plus geler les trades qui l'utilisent.
   // Le front renvoie le DTO complet à chaque édition : revalider un `setupId`
   // inchangé rendait tout trade historique non modifiable dès que son setup était
@@ -938,6 +1046,16 @@ describe('TradesService', () => {
       trades[5].executionGrade = 'BON';
       trades[5].executionMethod = 'STOP_BASED';
       expect(behavioralGradeUpdates(asGraded(trades)).map((u) => u.id)).not.toContain('t5');
+    });
+
+    it('stop SANS note A (stop seul, ni objectif ni émotion) : note comportementale, comme sans stop (#929)', () => {
+      const trades = buildTrades(20);
+      trades[5].stopLoss = 42;
+      trades[5].executionScore = null;
+      trades[5].executionGrade = null;
+      trades[5].executionMethod = null;
+      const u = behavioralGradeUpdates(asGraded(trades)).find((x) => x.id === 't5');
+      expect(u).toMatchObject({ grade: 'EXCELLENT', method: 'BEHAVIORAL' });
     });
 
     it(`notes déjà à jour → rien d'écrit ; 2 500 changements → ${Math.ceil(2500 / GRADE_UPDATE_CHUNK)} requêtes dans une transaction`, async () => {

@@ -25,6 +25,8 @@ import { switchMap, map, takeWhile } from 'rxjs/operators';
 import { DebriefApi } from '../../core/api/debrief.api';
 import type { DebriefAccountSection as AccountSection, DebriefBadgeItem as DebriefItem, WeeklyDebrief } from '@mtc/shared';
 import { ErrorStateComponent } from '@mtc/front-ui';
+import { InfoTooltipComponent } from '@app/shared/components/info-tooltip/info-tooltip.component';
+import { DRAWDOWN_LABELS } from '@app/core/constants/drawdown-labels.const';
 
 const TAB_KEY = 'mtc.debriefTab';
 
@@ -49,6 +51,7 @@ function typeBadge(type: string): { label: string; cls: string } | null {
   selector: 'mtc-debrief',
   imports: [
     ErrorStateComponent,
+    InfoTooltipComponent,
     DatePipe,
     DecimalPipe,
     LucideDynamicIcon,
@@ -61,6 +64,8 @@ function typeBadge(type: string): { label: string; cls: string } | null {
   templateUrl: './debrief.component.html',
 })
 export class DebriefComponent {
+  /** Vocabulaire du drawdown (règle / marge / drawdown max), commun à tous les écrans. */
+  protected readonly ddLabels = DRAWDOWN_LABELS;
   private readonly debriefApi = inject(DebriefApi);
   private readonly destroyRef = inject(DestroyRef);
   private readonly toast = inject(ToastService);

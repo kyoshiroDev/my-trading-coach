@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
   START_LABEL,
   stepLabel,
-  tickLabels,
+  dateTickIndices,
   tooltipDate,
   chartAriaLabel,
   compactMoney,
@@ -372,12 +372,25 @@ describe('« ? » de la carte drawdown selon la règle du plan relié', () => {
 });
 
 describe('axe des dates d’une courbe par trade', () => {
-  it('plusieurs clôtures le même jour : la date n’apparaît qu’une fois', () => {
-    const dates = [null, '2026-11-06T08:22:00.000Z', '2026-11-06T08:45:00.000Z', '2026-11-06T22:45:00.000Z', '2026-11-09T09:00:00.000Z'];
-    const labels = tickLabels(dates, 30);
-    expect(labels[0]).toBe(START_LABEL);
-    expect(labels.filter((l) => l !== '')).toEqual([START_LABEL, '06/11/26', '09/11/26']);
-    expect(labels[2]).toBe('');
+  // Dates fixes : horloge figée au 09/11/2026 (règle du dépôt).
+  beforeEach(() => { vi.useFakeTimers({ toFake: ['Date'] }); vi.setSystemTime(new Date('2026-11-09T18:00:00Z')); });
+  afterEach(() => { vi.useRealTimers(); });
+  // Cas réel en prod : Départ, 3 clôtures le 06/11, 2 le 09/11 → seuls Départ et 09/11 s'affichaient.
+  const dates = [null, '2026-11-06T08:22:00.000Z', '2026-11-06T08:45:00.000Z', '2026-11-06T22:45:00.000Z',
+    '2026-11-09T09:00:00.000Z', '2026-11-09T10:00:00.000Z'];
+
+  it('un repère par date, sur le premier point du jour : Départ, 06/11, 09/11', () => {
+    expect(dateTickIndices(dates, 30, 7)).toEqual([0, 1, 4]);
+    expect(dateTickIndices(dates, 30, 4)).toEqual([0, 1, 4]);
+  });
+
+  it('plus de dates que de repères : répartis, premier et dernier gardés, aucun doublon', () => {
+    const days = [null, ...Array.from({ length: 30 }, (_, i) => new Date(Date.UTC(2026, 9, 1 + i, 12)).toISOString())];
+    const idx = dateTickIndices(days, 30, 7);
+    expect(idx).toHaveLength(7);
+    expect(idx[0]).toBe(0);
+    expect(idx.at(-1)).toBe(30);
+    expect(new Set(idx).size).toBe(7);
   });
 });
 

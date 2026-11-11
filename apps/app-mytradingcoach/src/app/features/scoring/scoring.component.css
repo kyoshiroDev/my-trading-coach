@@ -75,6 +75,9 @@
   min-width: 26px;
   text-align: right;
 }
+.score-val-none {
+  color: var(--text-3);
+}
 
 .bar-track {
   flex: 1;

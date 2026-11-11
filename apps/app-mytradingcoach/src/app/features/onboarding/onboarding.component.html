@@ -166,7 +166,8 @@
                     [value]="profitTarget()" (input)="onProfitTargetInput($event)" placeholder="Ex : 3000" />
                 </div>
                 <div class="prop-col">
-                  <div class="field-label">Drawdown max <span class="field-opt">· optionnel</span></div>
+                  <div class="field-label">{{ ddLabels.rule.label }} <span class="field-opt">· optionnel</span>
+                    <mtc-info-tooltip [label]="'À propos : ' + ddLabels.rule.label" [text]="ddLabels.rule.help" /></div>
                   <input type="text" class="capital-input prop-input" data-testid="account-max-drawdown"
                     [value]="maxDrawdown()" (input)="onMaxDrawdownInput($event)" placeholder="Ex : 2500" />
                 </div>

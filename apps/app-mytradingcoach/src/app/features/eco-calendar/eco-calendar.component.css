@@ -182,8 +182,9 @@ table.cal { width: 100%; border-collapse: collapse; font-size: 13px; }
 .nowline .lbl { font-family: var(--font-mono); font-size: 11px; font-weight: 600; color: #fff; background: var(--primary); padding: 2px 9px; border-radius: 7px; }
 .nowline .ln { flex: 1; height: 2px; background: linear-gradient(90deg, var(--blue), transparent); }
 
-.r-ev.published td { color: var(--text-3); }
-.r-ev.published .evt { color: var(--text-2); }
+.r-ev.published td, .r-ev.past td { color: var(--text-3); }
+.r-ev.published .evt, .r-ev.past .evt { color: var(--text-2); }
+.evt-note { display: block; margin-top: 2px; font-size: var(--fs-2xs); color: var(--text-3); line-height: 1.35; }
 .r-ev.next td { background: #0f1d33; }
 .c-pin { width: 32px; text-align: center; }
 .pin { width: 22px; height: 22px; border-radius: 6px; font-size: 12px; color: var(--text-3); background: none; border: none; cursor: pointer; }
@@ -209,15 +210,12 @@ table.cal { width: 100%; border-collapse: collapse; font-size: 13px; }
   font-family: var(--font-mono); font-size: 12px; background: none; cursor: pointer;
 }
 .ia-cell:hover { border-color: var(--border-hover); background: var(--bg-2); }
-.ia-cell.green { color: var(--green); }
-.ia-cell.red { color: var(--red); }
 .ia-cell.neutral { color: var(--text-2); }
 .ia-cell.ia-locked { cursor: pointer; color: var(--text-3); opacity: .65; }
 .ia-cell.ia-locked:hover { border-color: var(--border-hover); background: var(--bg-2); opacity: 1; }
 .ia-lock { display: inline-flex; }
 .ia-lock svg { width: 12px; height: 12px; }
 .ia-ccy { font-weight: 600; letter-spacing: .3px; }
-.ia-arrow { font-size: 13px; font-weight: 700; }
 .ia-spark { font-size: 11px; }
 .ia-chev { font-size: var(--fs-2xs); color: var(--text-3); }
 .ia-wait { font-family: var(--font-mono); font-size: var(--fs-2xs); color: var(--text-3); white-space: nowrap; }
@@ -225,19 +223,10 @@ table.cal { width: 100%; border-collapse: collapse; font-size: 13px; }
 .ia-loading { font-family: var(--font-mono); font-size: var(--fs-2xs); color: var(--text-3); }
 
 /* ── Panneau IA déplié ── */
-.vchip { font-family: var(--font-mono); font-size: var(--fs-2xs); padding: 2px 7px; border-radius: 6px; white-space: nowrap; }
-.vchip .va { font-weight: 700; }
-.vchip.green { background: var(--green-dim); color: var(--green); }
-.vchip.red { background: var(--red-dim); color: var(--red); }
-.vchip.neutral { background: var(--bg-3); color: var(--text-2); }
 .r-ai td { padding: 0 !important; background: transparent !important; border-bottom: 1px solid var(--border); }
 .ai-panel { background: var(--bg-2); border-left: 3px solid var(--blue); border-radius: 0 10px 10px 0; margin: 8px 14px 12px; padding: 14px 16px; }
 .ai-h { font-family: var(--font-display); font-size: 12px; font-weight: 600; color: var(--blue-bright); margin-bottom: 8px; }
 .ai-interp { font-size: 12.5px; color: var(--text); line-height: 1.6; margin-bottom: 11px; }
-.ai-assets { display: flex; flex-direction: column; gap: 7px; }
-.ai-asset { display: flex; align-items: center; gap: 9px; }
-.ai-asset .as-name { font-family: var(--font-mono); font-size: 11px; font-weight: 600; color: var(--text); min-width: 42px; }
-.ai-asset .as-reason { font-size: 11.5px; color: var(--text-2); }
 
 /* ── Ma sélection (fixe) ── */
 .eco-selection-col { display: flex; flex-direction: column; min-height: 0; }
@@ -310,7 +299,7 @@ table.cal { width: 100%; border-collapse: collapse; font-size: 13px; }
   .cal tbody tr.r-ev { display: flex; flex-wrap: wrap; align-items: flex-start; padding: 10px 0 10px 58px; border-top: 1px solid var(--border); }
   .cal tbody tr.r-ev.high { box-shadow: inset 3px 0 0 var(--red); }
   .cal tbody tr.r-ev.medium { box-shadow: inset 3px 0 0 var(--yellow); }
-  .cal tbody tr.r-ev.published { opacity: .6; }
+  .cal tbody tr.r-ev.published, .cal tbody tr.r-ev.past { opacity: .6; }
   .cal tbody tr.r-ev.next { background: #0f1d33; }
   .cal tbody tr.r-ev td { display: block; padding: 0; border: none; background: none; order: 5; }
   .cal tbody tr.r-ev td.c-time { order: 1; flex: 0 0 46px; margin-left: -46px; padding-top: 1px; font-size: 12px; }
@@ -335,3 +324,5 @@ table.cal { width: 100%; border-collapse: collapse; font-size: 13px; }
   .pin { position: relative; min-width: 22px; }
   .pin::before { content: ''; position: absolute; inset: -11px; }
 }
+
+.ai-gap { font-family: var(--font-mono); font-size: var(--fs-2xs); color: var(--text-2); margin-bottom: 4px; }
