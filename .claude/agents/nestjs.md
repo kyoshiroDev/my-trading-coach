@@ -217,7 +217,8 @@ POST   /api/test/upgrade-user          NODE_ENV=test uniquement
   jour UTC et par connexion (clé Redis `tradovate:linkdiag:{connId}:{AAAA-MM-JJ}`, SET NX EX 172800 posée AVANT les
   lectures), 2 GET en plus (`/orderStrategy/list`, `/orderStrategyLink/list`), log « Liaison bracket Tradovate » :
   noms de champs bruts + pour chaque entrée, ordres opposés du contrat en ÉCART d'id (`+1`), `parentId` / `ocoId` /
-  `linkedId` relatifs, rattachement par stratégie. Jamais de prix, compte ni id brut ; ne casse jamais la synchro.
+  `linkedId` relatifs, rattachement par stratégie. Jamais de prix, compte ni id brut ; ne casse jamais la synchro ;
+  pénalité sur une lecture du diagnostic → pause notée (`notePenalty`), diagnostic arrêté.
   **À retirer** dans le correctif qui codera la vraie liaison.
 - **Borne haute des périodes analytics** : un `to` date seule (`2026-09-14`) couvre la journée
   entière (`AnalyticsController.endBound`) ; lu tel quel il valait minuit et excluait les trades du jour.

@@ -354,7 +354,7 @@ export class TradovateSyncService {
         `Capture stop Tradovate ${conn.id} : ${c.linked} liés, ${c['no-leg']} sans jambe liée, ` +
           `${c.ambiguous} ambigus, ${c['session-gone']} séance passée.`,
       );
-      if (c['no-leg'] > 0 && capture) await this.logBracketLinks(conn.id, get, capture);
+      if (c['no-leg'] > 0 && capture) await this.logBracketLinks(conn, get, capture);
     }
 
     return {
@@ -417,11 +417,15 @@ export class TradovateSyncService {
    * Ne fait jamais échouer la synchro. Le log ne contient ni prix, ni compte, ni id brut.
    */
   private async logBracketLinks(
-    connectionId: string,
+    conn: BrokerConnection,
     get: <R>(path: string, query?: Record<string, string>) => Promise<R>,
     capture: EntryCapture,
   ): Promise<void> {
     if (!linkDiagnosticEnabled() || !this.redis) return;
+    const connectionId = conn.id;
+    // Pénalité : pause notée comme pour toute lecture (les trades sont déjà créés, on ne relance
+    // pas l'erreur) et diagnostic arrêté, sans seconde lecture vers une API qui vient de refuser.
+    let penalized = false;
     try {
       const key = linkDiagnosticKey(connectionId, new Date());
       if ((await this.redis.client.set(key, '1', 'EX', LINK_DIAGNOSTIC_TTL_S, 'NX')) !== 'OK') return;
@@ -430,12 +434,18 @@ export class TradovateSyncService {
           const r = await get<unknown[]>(path);
           return Array.isArray(r) ? r : null;
         } catch (err) {
+          if (err instanceof TradovatePenaltyError) {
+            penalized = true;
+            await this.connections.notePenalty(conn, err);
+          }
           this.logger.warn(`Liaison bracket Tradovate ${connectionId} : ${path} illisible (${(err as Error).message})`);
           return null;
         }
       };
       const strategies = await read('/orderStrategy/list');
+      if (penalized) return;
       const strategyLinks = await read('/orderStrategyLink/list');
+      if (penalized) return;
       this.logger.log(
         `Liaison bracket Tradovate ${connectionId} : ` +
           describeBracketLinks({ ...capture, strategies, strategyLinks }),

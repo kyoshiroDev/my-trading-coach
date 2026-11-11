@@ -605,9 +605,25 @@ describe('Tradovate — synchro', () => {
       const account = await createAccount(userId, 'Lucid');
       unlinked = true;
       strategyMode = mode;
-      const { firstSync } = await connect(token, account.id);
-      expect(firstSync?.created).toBeGreaterThan(0);
-      expect(await prisma.trade.count({ where: { userId } })).toBe(firstSync?.created);
+      const spy = vi.spyOn(Logger.prototype, 'log');
+      try {
+        const { firstSync } = await connect(token, account.id);
+        expect(firstSync?.created).toBeGreaterThan(0);
+        expect(await prisma.trade.count({ where: { userId } })).toBe(firstSync?.created);
+        if (mode === 'penalty') {
+          // Diagnostic arrêté : pas de seconde lecture, pas de log.
+          expect(calls.some((c) => new URL(c.url).pathname.endsWith('/orderStrategyLink/list'))).toBe(false);
+          expect(diagLogs(spy)).toEqual([]);
+          // Pause notée : la synchro suivante ne touche plus Tradovate.
+          calls = [];
+          const again = await api(token, `/accounts/${account.id}/sync`, 'POST');
+          expect(again.status).toBe(503);
+          expect(((await again.json()) as { code: string }).code).toBe('TRADOVATE_PENALIZED');
+          expect(calls).toEqual([]);
+        }
+      } finally {
+        spy.mockRestore();
+      }
     });
   });
 
