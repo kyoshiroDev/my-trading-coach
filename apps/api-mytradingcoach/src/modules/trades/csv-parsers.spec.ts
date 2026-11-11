@@ -382,3 +382,16 @@ describe('IBKR — relevé Activity Statement', () => {
     expect(mapNormalizedCsvToDto(csv).map((d) => d.asset)).toEqual(['AMD']);
   });
 });
+
+describe('parseBybit — date illisible (#947)', () => {
+  it('ignore la ligne au lieu de faire planter tout l’import (colonnes décalées)', () => {
+    const lines = [
+      'Time,Symbol,Side,Entry,Exit,Qty,PnL',
+      'BTCUSDT,Buy,60000,61000,0.01,10,2026-05-01 10:00:00', // décalée : la date est en dernier
+      '2026-05-01 10:00:00,BTCUSDT,Buy,60000,61000,0.01,10',
+    ];
+    const out = parseBybit(lines).split('\n');
+    expect(out).toHaveLength(2); // en-tête + la seule ligne lisible
+    expect(out[1]).toContain('2026-05-01');
+  });
+});

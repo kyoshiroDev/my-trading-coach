@@ -525,7 +525,12 @@ export function parseBybit(lines: string[]): string {
 
     const side = rawSide === 'Buy' ? 'LONG' : 'SHORT';
     const symbol = normalizeBinanceSymbol(rawSymbol);
-    const tradedAt = timeStr ? new Date(timeStr).toISOString() : new Date().toISOString();
+    // Date absente ou illisible (colonnes décalées) : ligne ignorée. Avant, `toISOString()` levait
+    // une RangeError qui faisait échouer tout l'import, et une date absente datait le trade de
+    // l'instant de l'import (#947, format réel Bybit à confirmer : #952).
+    const when = new Date(timeStr);
+    if (!timeStr || isNaN(when.getTime())) continue;
+    const tradedAt = when.toISOString();
 
     result.push(`${symbol},${side},${entry},${exit},${qty},${pnl},${tradedAt}`);
   }
