@@ -198,6 +198,9 @@ naïf 24,96 $ vs exact 21,84 $). Elle est **répartie au prorata de la quantité
 qui utilisent ce fill (`assignFeesOncePerFill`, #947), au centime, le dernier trade prend le reste.
 Ne jamais revenir à « tout au premier trade, 0 aux suivants » : total juste mais net par trade faux
 (achat 2 ES vendu en 2 fois : 6,54 $ / 2,18 $ au lieu de 4,36 $ / 4,36 $, un trade perdant affiché gagnant).
+La réparation des frais #783 (`planFeeRepairs`) ne monte JAMAIS un trade dont un fill sert à un autre
+trade (`skippedShared`) : en base, l'ancienne règle a tout posé sur le premier ; ne monter que les
+suivants compterait le fill deux fois. Ces trades sont repris par le script #950.
 
 **Checksum** : `Σ commission(trade) == Σ |Delta| des frais` (à 0,01 près) → `reconciled`. En cas
 d'écart : warning + `reconciled=false` (non bloquant, « frais partiellement rapprochés »), jamais de
