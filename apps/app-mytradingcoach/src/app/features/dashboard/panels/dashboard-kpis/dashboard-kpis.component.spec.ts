@@ -96,7 +96,7 @@ describe('DashboardKpisComponent — drawdown max par trade', () => {
   it('non-régression des autres chiffres sur le même jeu : P&L, win rate, profit factor, trades', () => {
     const el = renderCase().nativeElement as HTMLElement;
     expect(card(el, 'P&L net').querySelector('.mtc-kpi-val')!.textContent!.trim()).toBe(usd(1064.4));
-    expect(card(el, 'Win rate').querySelector('.mtc-kpi-val')!.textContent!.trim()).toBe('40.0%');
+    expect(card(el, 'Win rate').querySelector('.mtc-kpi-val')!.textContent!.trim()).toBe('40%');
     expect(card(el, 'Profit factor').querySelector('.mtc-kpi-val')!.textContent!.trim()).toBe('2.35');
     expect(card(el, 'Trades pris').querySelector('.mtc-kpi-val')!.textContent!.trim()).toBe('5');
   });
