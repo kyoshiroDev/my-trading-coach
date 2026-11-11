@@ -39,31 +39,47 @@ export function normFillId(raw?: string | number | null): string | null {
 }
 
 /**
- * Attribue à chaque trade les frais de SES fills, chaque fill n'étant compté qu'UNE fois sur
- * tout le lot : un même fill peut clôturer un trade ET en ouvrir un autre (scalping, fills
- * partiels), et compter deux fois sa commission double-compte le net. Parcours dans l'ordre
- * du lot avec un Set de fills consommés — même règle pour le CSV et l'API.
+ * Attribue à chaque trade les frais de SES fills. Un même fill peut servir plusieurs trades (un
+ * achat de 2 contrats clôturé en deux ventes, ou un fill qui clôture un trade et en ouvre un autre) :
+ * ses frais sont RÉPARTIS entre ces trades au prorata de leur quantité, et ne sont jamais comptés
+ * deux fois sur le lot. Avant (#947), tout le fill allait au premier trade et 0 aux suivants : total
+ * juste, mais net par trade faux (un trade gagnant pouvait s'afficher perdant, et l'inverse).
+ * Répartition au centime : le dernier trade du fill prend le reste, la somme = frais du fill.
+ * Même règle pour le CSV et l'API.
  *
  * Mute `commission` (positive, arrondie au centime) sur chaque trade.
  */
 export function assignFeesOncePerFill(
-  trades: { _buyFillId?: string; _sellFillId?: string; commission?: number }[],
+  trades: { _buyFillId?: string; _sellFillId?: string; commission?: number; quantity?: number | null }[],
   feeByFill: Map<string, number>,
 ): { assigned: number; consumed: number } {
-  const consumed = new Set<string>();
-  let assigned = 0;
-  for (const t of trades) {
-    let fee = 0;
-    for (const fid of [normFillId(t._buyFillId), normFillId(t._sellFillId)]) {
-      if (fid && feeByFill.has(fid) && !consumed.has(fid)) {
-        fee += feeByFill.get(fid) ?? 0;
-        consumed.add(fid);
-      }
-    }
-    t.commission = +fee.toFixed(2);
-    assigned += fee;
+  const qty = (t: { quantity?: number | null }) => (t.quantity != null && t.quantity > 0 ? t.quantity : 1);
+  const fillsOf = (t: { _buyFillId?: string; _sellFillId?: string }) =>
+    [...new Set([normFillId(t._buyFillId), normFillId(t._sellFillId)])].filter(
+      (fid): fid is string => !!fid && feeByFill.has(fid),
+    );
+
+  // Trades de chaque fill (dans l'ordre du lot) et quantité totale servie par ce fill.
+  const users = new Map<string, number[]>();
+  trades.forEach((t, i) => {
+    for (const fid of fillsOf(t)) users.set(fid, [...(users.get(fid) ?? []), i]);
+  });
+
+  const cents = new Array<number>(trades.length).fill(0);
+  let assignedCents = 0;
+  for (const [fid, idx] of users) {
+    const feeCents = Math.round((feeByFill.get(fid) ?? 0) * 100);
+    const totalQty = idx.reduce((sum, i) => sum + qty(trades[i]), 0);
+    let left = feeCents;
+    idx.forEach((i, k) => {
+      const share = k === idx.length - 1 ? left : Math.round((feeCents * qty(trades[i])) / totalQty);
+      cents[i] += share;
+      left -= share;
+    });
+    assignedCents += feeCents;
   }
-  return { assigned: +assigned.toFixed(2), consumed: consumed.size };
+  trades.forEach((t, i) => (t.commission = cents[i] / 100));
+  return { assigned: assignedCents / 100, consumed: users.size };
 }
 
 /** Session de marché selon l'heure UTC de clôture (même découpage pour tous les imports). */

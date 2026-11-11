@@ -130,7 +130,9 @@ describe('frais — même règle que la fusion Cash history', () => {
     i.pairs[1] = { ...i.pairs[1], sellFillId: 566569084424 };
     const fees = new Map([566569084424, 566569084433, 566569084441].map((id) => [id, fee(id, 0.35)]));
     const { trades, fees: report } = mapTradovatePairs({ ...i, fees });
-    expect(trades.map((t) => t.commission)).toEqual([1.04, 0.52]);
+    // Le fill partagé (0,52) est réparti au prorata de la quantité (#947) : 0,26 chacun, au lieu de
+    // tout au 1ᵉʳ trade (1,04 / 0,52 avant). Total inchangé, jamais compté deux fois.
+    expect(trades.map((t) => t.commission)).toEqual([0.78, 0.78]);
     expect(report.assigned).toBe(report.expected);
   });
 

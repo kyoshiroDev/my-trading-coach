@@ -586,14 +586,12 @@ describe('CsvImportService — Fusion Tradovate (Performance + Cash history)', (
   });
 
   it('compte chaque fill partagé une seule fois (3 fills partagés)', async () => {
-    // Commissions MNQ = 0,52 par fill. Sans dédup, tout trade à 2 fills ferait ≥ 1,04.
-    // La présence de trades à 0,52 prouve qu'UN de leurs fills était déjà consommé
-    // (fill partagé qui clôture un trade et en ouvre un autre) → compté une seule fois.
-    // À l'inverse, un trade à 2,08 a ses deux fills neufs (2 × 1,04). Total exact = 21,84.
+    // Commissions MNQ = 0,52 par côté-contrat. Un fill partagé (qui clôture un trade et en ouvre
+    // un autre) est RÉPARTI au prorata de la quantité (#947), jamais compté deux fois : chaque
+    // trade d'1 contrat porte ses 2 côtés = 1,04, celui de 2 contrats 2,08. Total exact = 21,84.
     const { dtos } = await importWithFees();
     const commissions = dtos.map((d) => +(d.commission ?? 0).toFixed(2));
-    expect(commissions).toContain(0.52); // ≥ 1 fill déjà consommé (dédup effective)
-    expect(commissions).toContain(2.08); // trade à deux fills neufs
+    expect(dtos.map((d) => +(d.commission ?? 0).toFixed(2))).toEqual(dtos.map((d) => 1.04 * (d.quantity ?? 1)));
     // 3 fills partagés → 3,12 $ de double comptage évité (24,96 naïf − 21,84 exact).
     const total = +commissions.reduce((s, c) => s + c, 0).toFixed(2);
     expect(total).toBe(21.84);

@@ -186,10 +186,11 @@ variable : 0/30 sur l'export réel du 27/10). Une ligne sans fill du lot reste *
 posée sur un autre fill) → checksum en écart. Fixtures réelles : `__fixtures__/tradovate-fees-2026-10-27-*`.
 
 **Dédup obligatoire (scalping)** : un même `fillId` peut clôturer un trade ET en ouvrir un autre.
-Sa commission ne compte qu'**une fois** sur tout l'import. On parcourt les trades **dans l'ordre du
-fichier** avec un `Set<fillId>` consommés ; un fill n'ajoute sa commission que s'il n'a pas déjà été
-consommé, puis on le marque. Sinon double comptage (ex. données de Val : naïf 24,96 $ vs exact 21,84 $,
-soit +3,12 $ de 3 fills partagés comptés deux fois).
+Sa commission ne compte qu'**une fois** sur tout l'import (sinon double comptage : données de Val,
+naïf 24,96 $ vs exact 21,84 $). Elle est **répartie au prorata de la quantité** entre les trades du lot
+qui utilisent ce fill (`assignFeesOncePerFill`, #947), au centime, le dernier trade prend le reste.
+Ne jamais revenir à « tout au premier trade, 0 aux suivants » : total juste mais net par trade faux
+(achat 2 ES vendu en 2 fois : 6,54 $ / 2,18 $ au lieu de 4,36 $ / 4,36 $, un trade perdant affiché gagnant).
 
 **Checksum** : `Σ commission(trade) == Σ |Delta| des frais` (à 0,01 près) → `reconciled`. En cas
 d'écart : warning + `reconciled=false` (non bloquant, « frais partiellement rapprochés »), jamais de
