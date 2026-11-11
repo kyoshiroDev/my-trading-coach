@@ -218,6 +218,14 @@
         </div>
       }
 
+      @if (ecoBriefing().length) {
+        <ul class="eco-briefing" aria-label="Annonces à fort impact à venir">
+          @for (line of ecoBriefing(); track line.time + line.name + line.currency) {
+            <li>{{ line.text }}</li>
+          }
+        </ul>
+      }
+
       @if (highImpactCountView() > 0) {
         <div class="eco-warning">
           <svg [lucideIcon]="WarnIcon" [size]="14" class="ew-ic"></svg>

@@ -18,10 +18,10 @@ function ev(partial: Partial<EcoEvent>): EcoEvent {
 
 interface SetupOpts {
   events?: EcoEvent[];
-  user?: { tradingSessions?: string[] } | null;
-  analysis?: { interpretation: string; assetSentiments: { asset: string; sentiment: 'bull' | 'bear' | 'neutral'; shortReason: string }[] };
+  user?: { tradingSessions?: string[]; isDemo?: boolean } | null;
+  analysis?: { interpretation: string; gap: 'above' | 'inline' | 'below' | 'no_consensus' | null };
   /** Analyses enregistrées d'un jour passé (release-analyses), par nom sans suffixe de période. */
-  past?: Record<string, { interpretation: string; assetSentiments: { asset: string; sentiment: 'bull' | 'bear' | 'neutral'; shortReason: string }[] }>;
+  past?: Record<string, { interpretation: string; gap?: 'above' | 'inline' | 'below' | 'no_consensus' | null; assetSentiments?: unknown[] }>;
 }
 
 function setup(opts: SetupOpts = {}) {
@@ -31,7 +31,7 @@ function setup(opts: SetupOpts = {}) {
     getPinnedUpcoming: vi.fn(() => of({ data: [] })),
     getEventsRange: vi.fn(() => of({ data: [day] })),
     savePins: vi.fn(() => of({ data: [] })),
-    analyzeResult: vi.fn(() => of({ data: opts.analysis ?? { interpretation: 'interp', assetSentiments: [] } })),
+    analyzeResult: vi.fn(() => of({ data: opts.analysis ?? { interpretation: 'interp', gap: 'inline' } })),
     getReleaseAnalyses: vi.fn(() => of({ data: opts.past ?? {} })),
   };
   const userStore = {
@@ -128,28 +128,45 @@ describe('EcoCalendarComponent', () => {
 
   describe('toggleAnalysis — lazy + cache', () => {
     it('un seul appel réseau, déplie/replie, re-ouverture sans nouvel appel', () => {
-      const { cmp, api } = setup({ analysis: { interpretation: 'IPP conforme', assetSentiments: [{ asset: 'USD', sentiment: 'bear', shortReason: 'r' }] } });
+      const { cmp, api } = setup({ analysis: { interpretation: 'IPP conforme', gap: 'inline' } });
       const target = ev({ name: 'IPP', impact: 'high', isReleased: true, currency: 'USD', date: todayParis() });
 
       cmp.toggleAnalysis(target);                        // 1er dépliage → 1 appel
       expect(api.analyzeResult).toHaveBeenCalledTimes(1);
-      expect(cmp.expandedEvent()).toBe('IPP');
+      expect(cmp.isOpen(target)).toBe(true);
       expect(cmp.analysisFor(target)?.interpretation).toBe('IPP conforme');
 
       cmp.toggleAnalysis(target);                        // replie
-      expect(cmp.expandedEvent()).toBeNull();
+      expect(cmp.isOpen(target)).toBe(false);
 
       cmp.toggleAnalysis(target);                        // ré-ouverture → cache, pas de nouvel appel
       expect(api.analyzeResult).toHaveBeenCalledTimes(1);
-      expect(cmp.expandedEvent()).toBe('IPP');
+      expect(cmp.isOpen(target)).toBe(true);
     });
 
-    it('ccySent prend le sentiment de la devise de l\'event', () => {
-      const { cmp } = setup({ analysis: { interpretation: 'x', assetSentiments: [{ asset: 'EUR', sentiment: 'bull', shortReason: 'r' }] } });
+    it("écart calculé côté serveur affiché en clair, sans direction (#920)", () => {
+      const { cmp } = setup({ analysis: { interpretation: 'x', gap: 'above' } });
       const target = ev({ name: 'BCE', impact: 'high', isReleased: true, currency: 'EUR', date: todayParis() });
-      expect(cmp.ccySent(target)).toBe('neutral');       // avant chargement
+      expect(cmp.gapLabel(target)).toBe('');              // avant chargement
       cmp.toggleAnalysis(target);
-      expect(cmp.ccySent(target)).toBe('bull');          // après chargement
+      expect(cmp.gapLabel(target)).toBe('Au-dessus de la prévision');
+    });
+  });
+
+  describe('analyse sans clic (#920)', () => {
+    it("annonce forte publiée aujourd'hui : analyse chargée et dépliée au chargement de la semaine", () => {
+      vi.useFakeTimers({ toFake: ['Date'] });
+      vi.setSystemTime(new Date('2026-06-11T16:00:00Z'));
+      try {
+        const nfp = ev({ name: 'NFP', impact: 'high', isReleased: true, actual: 210 });
+        const { cmp, api } = setup({ events: [nfp, ev({ name: 'ISM', impact: 'medium', isReleased: true }), ev({ name: 'CPI', impact: 'high' })] });
+        expect(api.analyzeResult).toHaveBeenCalledTimes(1);
+        expect(api.analyzeResult).toHaveBeenCalledWith('NFP');
+        expect(cmp.isOpen(nfp)).toBe(true);
+        expect(cmp.analysisFor(nfp)?.interpretation).toBe('interp');
+      } finally {
+        vi.useRealTimers();
+      }
     });
   });
 
@@ -161,7 +178,9 @@ describe('EcoCalendarComponent', () => {
       expect(api.analyzeResult).not.toHaveBeenCalled();
       expect(api.getReleaseAnalyses).toHaveBeenCalledWith('2026-06-11');
       expect(cmp.analysisFor(nfp)?.interpretation).toBe('NFP au-dessus');
-      expect(cmp.ccySent(nfp)).toBe('bull');
+      // Ligne enregistrée à l'ancien format (sentiments, sans écart) : interprétation lue, sentiments
+      // ignorés, aucun écart affiché (#920, lecture tolérante).
+      expect(cmp.gapLabel(nfp)).toBe('');
       const calls = api.getReleaseAnalyses.mock.calls.length;
       cmp.toggleAnalysis(nfp); cmp.toggleAnalysis(nfp);
       expect(api.getReleaseAnalyses).toHaveBeenCalledTimes(calls);
@@ -182,7 +201,7 @@ describe('EcoCalendarComponent', () => {
       cmp.toggleAnalysis(old);
       expect(api.analyzeResult).not.toHaveBeenCalled();
       expect(cmp.analysisFor(old)).toBeUndefined();
-      expect(cmp.loadingAnalysis()).toBeNull();
+      expect(cmp.isLoadingAnalysis(old)).toBe(false);
     });
   });
 
@@ -192,6 +211,54 @@ describe('EcoCalendarComponent', () => {
       expect(cmp.iaState(ev({ impact: 'high', isReleased: true }))).toBe('ready');
       expect(cmp.iaState(ev({ impact: 'high', isReleased: false }))).toBe('wait');
       expect(cmp.iaState(ev({ impact: 'medium', isReleased: true }))).toBe('na');
+    });
+
+    it('intervention forte sans chiffre → talk, jamais analysée', () => {
+      const { cmp } = setup();
+      expect(cmp.iaState(ev({ impact: 'high', hasResult: false }))).toBe('talk');
+    });
+  });
+
+  describe('interventions sans chiffre (#920)', () => {
+    it('statut neutre avant et après, ligne « passée » distincte de « publiée », aucune analyse chargée', () => {
+      vi.useFakeTimers({ toFake: ['Date'] });
+      vi.setSystemTime(new Date('2026-06-11T19:45:00Z')); // 21:45 Paris
+      try {
+        const talk = ev({ name: 'Powell', impact: 'high', time: '20:30', hasResult: false, status: 'past' });
+        const fed = ev({ name: 'Fed', impact: 'high', time: '20:00', isReleased: true, actual: 3.75, status: 'released' });
+        const { cmp, api } = setup({ events: [talk, fed] });
+        const states = Object.fromEntries(
+          cmp.tableRows().filter((r: { kind: string }) => r.kind === 'ev').map((r: { event: EcoEvent; state: string }) => [r.event.name, r.state]),
+        );
+        expect(states).toEqual({ Powell: 'past', Fed: 'published' });
+        expect(api.analyzeResult).toHaveBeenCalledWith('Fed');
+        expect(api.analyzeResult).not.toHaveBeenCalledWith('Powell');
+        expect(cmp.talkStatus(talk, false)).toBe(
+          "Intervention prévue à 20:30, volatilité possible. Pas de résultat chiffré, pas d'analyse automatique.",
+        );
+        expect(cmp.talkStatus(talk, true)).toBe(
+          "Intervention passée (20:30). Pas de résultat chiffré, pas d'analyse automatique.",
+        );
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+  });
+
+  describe('analyse sans clic · compte démo (#920)', () => {
+    it("démo : aucun chargement ni dépliage d'office (POST refusé en lecture seule), le clic reste possible", () => {
+      vi.useFakeTimers({ toFake: ['Date'] });
+      vi.setSystemTime(new Date('2026-06-11T16:00:00Z'));
+      try {
+        const nfp = ev({ name: 'NFP', impact: 'high', isReleased: true, actual: 210 });
+        const { cmp, api } = setup({ events: [nfp], user: { isDemo: true } });
+        expect(api.analyzeResult).not.toHaveBeenCalled();
+        expect(cmp.isOpen(nfp)).toBe(false);
+        cmp.toggleAnalysis(nfp);
+        expect(api.analyzeResult).toHaveBeenCalledTimes(1);
+      } finally {
+        vi.useRealTimers();
+      }
     });
   });
 });

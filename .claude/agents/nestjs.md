@@ -108,7 +108,10 @@ POST   /api/eco-calendar/analyze-result PREMIUM → analyse d'un résultat tomb�
 GET    /api/eco-calendar/release-analyses?date=YYYY-MM-DD JWT → analyses déjà produites d'un jour PASSÉ
        (EcoReleaseAnalysis, aucun appel IA, donc ouverte à la démo ; vide pour aujourd'hui et après) ;
        renvoyées sous le nom FMP ET sous le libellé affiché (`nameFr`), sans suffixe de période.
-       Signature d'actifs de l'utilisateur d'abord, sinon la plus récente réduite à ses actifs.
+       Signature d'actifs de l'utilisateur d'abord, sinon la plus récente. Rendu = `{ interpretation, gap }`
+       (#920) ; une ligne à l'ancien format (sentiments par actif) est lue sans ses sentiments, jamais réécrite.
+       Écrites au clic ET par la génération automatique (`ensureReleasedAnalysis`, même `assetsSignature`
+       dédoublonnée que la clé Redis).
 
 POST   /api/ai/insights                PREMIUM → cooldown 4h par user
 POST   /api/ai/chat                    PREMIUM → 50 messages/jour par user
@@ -2406,6 +2409,81 @@ global à la file ; Resend = 10 req/s par équipe, clé partagée entre environn
   fantôme, « Balance courante »…) apparaissaient chaque nuit chez tout le monde ; purgés par la migration
   `20261005160000_purge_demo_fake_eco_events`. Le seed écrit aussi `pinnedEcoDate` (sinon
   `readUserPins` vidait la sélection démo).
+
+## Calendrier éco : relevé planifié autour de chaque annonce (2026-11-10, #920)
+
+- Plus de fenêtre fixe 8 h-18 h. `EcoCalendarCron.pollScheduledReleases` tourne **toutes les 20 s** mais
+  n'appelle FMP que si une annonce chiffrée sans résultat est dans sa fenêtre : de son heure prévue à
+  **+15 min** (`eco-calendar.schedule.ts`, pur, `datesToPoll`). Hors fenêtre : une lecture en base, zéro
+  requête FMP. Semaine de marché : dimanche 18 h → vendredi 23 h 59 Paris (`isInTradingWeek`).
+- `EcoEvent.date/time` sont l'heure murale de Paris : `parisWallTimeToUtc` la reconvertit (heure d'été
+  comprise). La veille est lue aussi (annonce de 23 h 50 encore en fenêtre après minuit).
+- `hasNumericResult(name)` : discours, auditions, conférences de presse, communiqués, minutes, rapports de
+  politique monétaire et gouverneurs nommés = **sans chiffre**, jamais relevés (prod 30 j : 0 `actual` sur
+  38). Une décision de taux reste chiffrée.
+- 6 h (lun-ven) : today + prochain jour ouvré, puis `catchUpMissingResults` resynchronise les 4 derniers
+  jours où une annonce chiffrée passée est restée sans résultat (la veille ; le vendredi soir le lundi).
+  Dimanche 17 h : today + lundi (annonces du dimanche soir). 18 h 30 : filet + purge `eco:calendar:<jour>:*`
+  (calendriers par user reconstruits à la demande ; ne touche ni `eco:analysis:*` ni les verrous).
+- Coût FMP : avant ~603 requêtes/jour ouvré ; après = 3 à 5 fixes + 1 par tick de 20 s pendant les
+  fenêtres (au plus 45 par créneau horaire si FMP ne publie jamais le chiffre).
+
+## Calendrier éco : analyse automatique des résultats forts (2026-11-10, #920)
+
+- `ensureReleasedAnalysis(day, event, assets, 'auto'|'clic')` : **un seul appel modèle par clé**
+  `eco:analysis:<jour>:<nom sans période>:<actifs triés ,>` (la clé du clic d'avant), même à 50 traders
+  simultanés : verrou `eco:analysis-lock:<clé>` (SET NX EX 90), les autres attendent le cache (15 s max).
+  Échec du modèle → `null` + `eco:analysis-fail:<clé>` 10 min (nouvel essai ensuite). Plafond quotidien
+  `ECO_RESULT_ANALYSIS_DAILY_MAX` (défaut 200, compteur `eco:analysis-count:<jour>`). Journal : « générée
+  (auto|clic, jour, n/plafond) », jamais le contenu. Redis indisponible : le clic appelle sans verrou
+  (comportement d'avant), l'auto s'abstient.
+- `autoAnalyzeReleased(day, newEvents)` : appelé par le relevé planifié après la diffusion (non attendu),
+  annonces **fortes + chiffrées** publiées seulement, pour les signatures vues aujourd'hui ou hier
+  (`eco:sigs:<jour>`, alimenté par `/today` et `/analyze-result`). Jamais hors `NODE_ENV=production`.
+- `analyzeEcoResult` : plus de `actual ?? 0` / `estimate ?? 0`. Sans résultat → rejet sans appel ; sans
+  prévision → « pas de consensus publié », aucune surprise calculée.
+- Analyses du matin et des résultats journalisées avec `userId: null` (job mutualisé) : `'shared'` violait
+  la clé étrangère d'`AiUsageLog`, ces appels n'étaient jamais comptés.
+- Front (`eco-calendar.component`) : les annonces fortes publiées du jour sont chargées et dépliées sans
+  clic (`openEvents`), le clic replie/déplie et réutilise le cache.
+
+## Calendrier éco : interventions sans chiffre, état « passé » (2026-11-10, #920)
+
+- `EcoEvent` (contrat `@mtc/shared`) gagne `hasResult` (false = discours, conférence de presse, minutes,
+  communiqué : `hasNumericResult` sur le libellé anglais FMP) et `status` : `released` (chiffre publié),
+  `past` (heure passée sans chiffre), `upcoming`. Les deux sont optionnels (données figées de démo).
+- Front calendrier : colonne IA `talk` (« 🎙 sans chiffre ») + statut neutre sous le libellé : « Intervention
+  prévue à HH:MM, volatilité possible. Pas de résultat chiffré, pas d'analyse automatique. » puis
+  « Intervention passée (HH:MM)… » ; ligne en état `past`, distinct de `published`. Aucune analyse IA.
+- Pas de source de texte branchée. Existantes, non ajoutées : flux RSS des discours de la Fed
+  (federalreserve.gov) et communiqués/discours BCE (ecb.europa.eu) ; FMP n'en fournit pas.
+
+## Calendrier éco : briefing factuel avant les annonces fortes (2026-11-10, #920)
+
+- `GET /eco-calendar/today` renvoie `briefing: EcoBriefingLine[]` (`eco-calendar.briefing.ts`, pur, sans
+  IA) : une ligne par annonce forte du jour, « HH:MM · libellé (devise) · prévision X · précédent Y ·
+  concerne <actifs du trader dans la devise> ». Sans prévision : « pas de consensus publié » ; intervention :
+  « pas de chiffre attendu ». Aucune direction ni conseil (test : `findForbiddenTerms` vide).
+- `assetCurrencies(asset)` : racine de contrat avec ou sans échéance (NQZ6, MNQ 12-26), paires (EUR/USD,
+  XAUUSD), futures devises CME (6E…), indices (GER40, UK100…), crypto → USD ; inconnu (actions) → aucune.
+- Dashboard matin (`session-morning`) : lignes des annonces encore à venir (`status === 'upcoming'`).
+
+## Calendrier éco : sorties IA factuelles, conformité (2026-11-10, #920, commit séparé)
+
+- Avant : sentiment `bull/bear/neutral` par actif (matin et résultat), flèches ▲▼ par devise dans le
+  calendrier, « haussier/baissier » dans le widget live, recommandation rédigée par le modèle.
+- Maintenant : `EcoResultAnalysis` (contrat partagé) = `{ interpretation, gap }`. `gap` = `releaseGap`
+  (`eco-calendar.gap.ts`, pur) : `above` / `inline` (à la précision de la prévision) / `below` /
+  `no_consensus`. Le modèle rédige 1 à 2 phrases neutres (ce que mesure l'indicateur, ce que dit le
+  résultat vs prévision et précédent), sans direction ni conseil.
+- Matin : le modèle ne rédige que `summary` (factuel : annonces, heures, devises) ; `recommendation` =
+  `morningFocus` en code (« Prochaine annonce à fort impact : HH:MM, … Volatilité possible… ») ;
+  `assetImpacts` toujours `[]`, même relu depuis une ligne `EcoAnalysisCache` antérieure.
+- Clé de cache des résultats passée en `eco:analysis:v2:` (les anciennes portaient des sentiments).
+- Garde : `eco-calendar.compliance.spec.ts` (prompts, sorties, textes en code, affichage) + dossiers
+  `eco-calendar` ajoutés au balayage `ai-texts-compliance.spec.ts`.
+- Non touché (données de démo figées) : `DEMO_ECO_RECO` dans `session-morning.component.ts`
+  (« Évite d'ouvrir une position 5 min avant le NFP »), à revoir avec Greg.
 
 ## News live : traduction par lots et bandeau BREAKING (2026-10-06)
 - **Sources** (`market-news.sources.ts`, `NEWS_FEEDS`) : 4 flux FMP, chacun sa limite (aucun n'évince

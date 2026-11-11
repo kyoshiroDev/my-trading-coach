@@ -20,6 +20,7 @@ const APP = 'apps/app-mytradingcoach/src/app';
 /** Fichiers et dossiers balayés. Un dossier est lu récursivement (hors specs). */
 const TARGETS = [
   `${API}/modules/ai`,
+  `${API}/modules/eco-calendar`,
   `${API}/modules/accounts/incidents`,
   `${API}/modules/admin/demo-data`,
   `${API}/modules/admin/demo-seed.ts`,
@@ -31,6 +32,7 @@ const TARGETS = [
   `${API}/modules/push/trader-notifier.service.ts`,
   `${API}/modules/integrations/tradovate/tilt-detection.ts`,
   `${APP}/features/ai-insights`,
+  `${APP}/features/eco-calendar`,
   `${APP}/features/weekly-debrief`,
   `${APP}/features/dashboard`,
   `${APP}/features/analytics/analytics.component.html`,

@@ -2,12 +2,20 @@
 // Nest) : le seed démo les importe aussi sous tsx (cf. mémoire « seed démo sous tsx »).
 import type { EcoResultAnalysis } from './eco-calendar.types';
 
+const GAPS = new Set(['above', 'inline', 'below', 'no_consensus']);
+
 /** Nom d'annonce sans suffixe de période : « Nonfarm Payrolls (Oct) » → « Nonfarm Payrolls ». */
 export const stripPeriod = (name: string): string => name.replace(/\s*\([^)]*\)\s*$/, '').trim();
 
-/** Signature normalisée des actifs (même règle que la clé Redis de `analyzeReleasedEvent`). */
-export const assetsSignature = (assets: readonly string[]): string =>
-  [...assets].map((a) => a.trim().toUpperCase()).sort().join(',') || 'none';
+/** Actifs normalisés : trim, majuscules, sans vide, dédoublonnés, triés. */
+export const normalizeAssets = (assets: readonly string[]): string[] =>
+  [...new Set(assets.map((a) => a.trim().toUpperCase()).filter(Boolean))].sort();
+
+/**
+ * Signature des actifs : clé Redis de l'analyse, `assetsKey` d'EcoReleaseAnalysis et signatures de
+ * la génération automatique (#920). Dédoublonnée : « MNQ, mnq » = « MNQ ».
+ */
+export const assetsSignature = (assets: readonly string[]): string => normalizeAssets(assets).join(',') || 'none';
 
 export interface StoredReleaseAnalysis {
   eventName: string;
@@ -18,33 +26,33 @@ export interface StoredReleaseAnalysis {
 
 /**
  * Une analyse par annonce pour l'utilisateur : celle de SA signature d'actifs si elle existe,
- * sinon la plus récente d'une autre signature, réduite aux actifs qu'il trade (l'interprétation
- * reste ; aucun sentiment sur un actif qu'il ne trade pas). Aucune analyse → annonce absente.
+ * sinon la plus récente d'une autre signature (l'interprétation et l'écart ne dépendent pas des
+ * actifs). Aucune analyse → annonce absente.
  */
 export function pickReleaseAnalyses(
   rows: readonly StoredReleaseAnalysis[],
   userAssets: readonly string[],
 ): Record<string, EcoResultAnalysis> {
   const sig = assetsSignature(userAssets);
-  const mine = new Set(userAssets.map((a) => a.trim().toUpperCase()));
   const byEvent = new Map<string, StoredReleaseAnalysis[]>();
   for (const r of rows) byEvent.set(r.eventName, [...(byEvent.get(r.eventName) ?? []), r]);
   const out: Record<string, EcoResultAnalysis> = {};
   for (const [eventName, list] of byEvent) {
     const exact = list.find((r) => r.assetsKey === sig);
     const row = exact ?? [...list].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())[0];
-    let analysis: EcoResultAnalysis;
+    let stored: { interpretation?: unknown; gap?: unknown };
     try {
-      analysis = JSON.parse(row.analysisJson) as EcoResultAnalysis;
+      stored = JSON.parse(row.analysisJson) as { interpretation?: unknown; gap?: unknown };
     } catch {
       continue;
     }
-    if (!exact) {
-      analysis = {
-        ...analysis,
-        assetSentiments: (analysis.assetSentiments ?? []).filter((s) => mine.has(s.asset.trim().toUpperCase())),
-      };
-    }
+    // Lecture tolérante (#920, conformité) : une ligne à l'ancien format portait un sentiment par
+    // actif ; seuls l'interprétation et l'écart calculé (s'il existe) sont rendus, jamais réécrits.
+    if (typeof stored.interpretation !== 'string') continue;
+    const analysis: EcoResultAnalysis = {
+      interpretation: stored.interpretation,
+      gap: GAPS.has(stored.gap as string) ? (stored.gap as EcoResultAnalysis['gap']) : null,
+    };
     out[eventName] = analysis;
   }
   return out;

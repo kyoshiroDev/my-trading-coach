@@ -38,9 +38,7 @@
             @if (expanded()) {
               <div class="ne-more" data-testid="live-release-more">
                 @if (s.rest) { <p>{{ s.rest }}</p> }
-                @for (a of r.analysis!.assetSentiments; track a.asset) {
-                  <div class="ne-asset"><b>{{ a.asset }}</b> {{ a.sentiment === 'bull' ? 'haussier' : a.sentiment === 'bear' ? 'baissier' : 'neutre' }} · {{ a.shortReason }}</div>
-                }
+                @if (gapLabel(r.analysis); as g) { <div class="ne-asset">{{ g }}</div> }
               </div>
             }
           }

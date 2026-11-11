@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, input
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { catchError, forkJoin, interval, map, of } from 'rxjs';
 import type { EcoEvent } from '@mtc/shared';
-import { EcoCalendarApi, EcoCalendarData, EcoResultAnalysis } from '@app/core/api/eco-calendar.api';
+import { ECO_GAP_LABEL, EcoCalendarApi, EcoCalendarData, EcoResultAnalysis } from '@app/core/api/eco-calendar.api';
 import { translateEcoEvent } from '@app/core/data/eco-event-translations';
 import { EcoSocketService } from '@app/core/services/eco-socket.service';
 import { byImpact, cmeReopenLabel, countdownLabel, nextAnnouncement, releaseExpired, splitFirstSentence, surprise } from '../../session-live.util';
@@ -171,6 +171,11 @@ export class LiveNextEventComponent {
   /** Point sur un onglet pas encore ouvert. */
   protected unread(name: string): boolean {
     return name !== this.release()?.event.name && !this.readTabs().has(name);
+  }
+
+  /** Écart publié / prévu calculé côté serveur (aucune direction de marché). */
+  protected gapLabel(a: EcoResultAnalysis | null): string {
+    return a?.gap ? ECO_GAP_LABEL[a.gap] : '';
   }
 
   protected impactLabel(impact: 'high' | 'medium'): string {

@@ -155,6 +155,10 @@ export class SessionMorningComponent {
   /** Résumé/reco IA de l'agenda : réel, ou exemple en démo. */
   protected readonly ecoSummaryText = computed(() => this.ecoCalendar()?.analysis.summary || (this.isDemo() ? DEMO_ECO_SUMMARY : ''));
   protected readonly ecoRecoText    = computed(() => this.ecoCalendar()?.analysis.recommendation || (this.isDemo() ? DEMO_ECO_RECO : ''));
+  /** Briefing factuel des annonces fortes du jour encore à venir (calculé côté serveur). */
+  protected readonly ecoBriefing = computed(() =>
+    this.isNextDay() ? [] : (this.ecoCalendar()?.briefing ?? []).filter((l) => l.status === 'upcoming'),
+  );
   /** Nb d'events fort impact (démo-aware). */
   protected readonly highImpactCountView = computed(() =>
     this.isDemo()

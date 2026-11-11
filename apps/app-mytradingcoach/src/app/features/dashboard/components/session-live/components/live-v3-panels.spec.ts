@@ -24,8 +24,8 @@ const releases$ = new Subject<EcoEvent[]>();
 const ecoApi = {
   refreshAnalysis: vi.fn(() => of({ data: { events: [] } })),
   analyzeResult: vi.fn(() => of({ data: {
-    interpretation: 'Inflation au-dessus du consensus. Pression sur le Nasdaq.',
-    assetSentiments: [{ asset: 'NQ', sentiment: 'bear', shortReason: 'taux plus hauts' }],
+    interpretation: "Inflation au-dessus du consensus. Les prix ont progressé plus vite qu'attendu.",
+    gap: 'above',
   } })),
 };
 
@@ -187,8 +187,10 @@ describe('Session live v3 — annonce publiée (WebSocket éco)', () => {
     expect(el.querySelector('[data-testid="live-release-more"]')).toBeNull();
     (el.querySelector('.ne-toggle') as HTMLButtonElement).click();
     fixture.detectChanges();
-    expect(text('live-release-more')).toContain('Pression sur le Nasdaq.');
-    expect(text('live-release-more')).toContain('NQ baissier');
+    expect(text('live-release-more')).toContain("Les prix ont progressé plus vite qu'attendu.");
+    // Écart calculé côté serveur, aucun sentiment haussier/baissier par actif (#920).
+    expect(text('live-release-more')).toContain('Au-dessus de la prévision');
+    expect(text('live-release-more')).not.toMatch(/haussier|baissier/);
   });
 
   it('mêmes appels qu’avant, aucun de plus : relecture du calendrier + une analyse par annonce', () => {
@@ -220,7 +222,7 @@ describe('Session live v3 — annonce publiée (WebSocket éco)', () => {
   it('deux annonces fortes publiées ensemble : un onglet chacune, la plus surprenante ouverte, l’autre marquée non lue', () => {
     ecoApi.analyzeResult.mockImplementation(((name: string) => of({ data: {
       interpretation: name === 'NFP' ? 'Emploi bien au-dessus des attentes. Fed patiente.' : 'Chômage stable. Peu d’effet.',
-      assetSentiments: [],
+      gap: 'above',
     } })) as never);
     const { el, text, fixture } = render(LiveNextEventComponent, { events: [] }, NEXT_TEMPLATE);
     releases$.next([
