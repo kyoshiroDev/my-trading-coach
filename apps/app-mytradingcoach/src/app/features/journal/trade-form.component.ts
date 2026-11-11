@@ -28,6 +28,8 @@ import { CreateTradeSchema } from '../../core/schemas/trade.schema';
 import { SetupsStore } from '../../core/stores/setups.store';
 import { PnlFormatPipe } from '../../shared/pipes';
 import type { TradeSide } from '@mtc/shared';
+import { plannedRiskReward } from '@mtc/shared';
+import { editLeverage, editPnlPct } from './trade-form-edit.util';
 import { DialogDirective } from '@mtc/front-ui';
 
 const EMOTIONS: NonNullable<Trade['emotion']>[] = [
@@ -227,11 +229,14 @@ export class TradeFormComponent {
         });
         this.assetSearch.set(t.asset);
         this.autoPnl.set(t.pnl ?? undefined);
-        this.autoPnlPct.set(
-          t.pnl != null && t.entry > 0
-            ? +((t.pnl / t.entry) * 100).toFixed(2)
-            : undefined,
-        );
+        // Levier non stocké : retrouvé depuis le P&L enregistré (P&L = variation × capital × levier).
+        // Avant (#947), il repartait à 1 : toute retouche (frais, stop…) relançait le calcul et
+        // divisait le P&L par le levier (+200 $ à ×10 réenregistré +20 $).
+        const lev = editLeverage(t);
+        this.leverage.set(lev);
+        // % = rendement sur le capital engagé, comme à la saisie (jamais P&L / prix d'entrée, la
+        // formule interdite : « +0,95 % » pour un MNQ à +0,48 %). Sans capital : pas de %.
+        this.autoPnlPct.set(editPnlPct(t, lev));
         this.autoRR.set(t.riskReward ?? undefined);
       } else {
         this.originalTradedAtTime.set(null);
@@ -240,8 +245,8 @@ export class TradeFormComponent {
         this.autoPnl.set(undefined);
         this.autoPnlPct.set(undefined);
         this.autoRR.set(undefined);
+        this.leverage.set(1);
       }
-      this.leverage.set(1);
       this.exitMode.set(null);
       this.submitted.set(false);
       this.zodErrors.set({});
@@ -343,18 +348,12 @@ export class TradeFormComponent {
       effectiveExit = tp;
     }
 
-    // R/R (commun à tous les modes)
+    // R/R (commun à tous les modes) : règle unique `plannedRiskReward` (@mtc/shared), avec le sens.
+    // Avant (#947), `|objectif − entrée|` donnait un R/R positif à un objectif du mauvais côté.
     if (entry > 0 && sl > 0 && tp > 0) {
-      const reward = Math.abs(tp - entry);
-      const risk = Math.abs(entry - sl);
-      if (risk > 0) {
-        const rr = +(reward / risk).toFixed(2);
-        this.autoRR.set(rr);
-        this.form.update((ff) => ({ ...ff, riskReward: rr }));
-      } else {
-        this.autoRR.set(undefined);
-        this.form.update((ff) => ({ ...ff, riskReward: undefined }));
-      }
+      const rr = plannedRiskReward(isLong ? 'LONG' : 'SHORT', entry, sl, tp);
+      this.autoRR.set(rr);
+      this.form.update((ff) => ({ ...ff, riskReward: rr }));
     } else {
       this.autoRR.set(undefined);
       this.form.update((ff) => ({ ...ff, riskReward: undefined }));
