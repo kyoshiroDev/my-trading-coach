@@ -13,7 +13,8 @@
  *   pnpm exec esbuild apps/api-mytradingcoach/scripts/recompute-debrief-stats.ts --bundle --platform=node \
  *     --tsconfig=apps/api-mytradingcoach/tsconfig.app.json \
  *     --external:@prisma/client --external:@prisma/adapter-pg --external:pg --outfile=recompute-debrief-stats.js
- *   docker cp recompute-debrief-stats.js <conteneur>:/app/
+ *   scp recompute-debrief-stats.js <vps>:~/   (depuis l'ordinateur où le bundle a été fait)
+ *   docker cp ~/recompute-debrief-stats.js <conteneur>:/app/
  *   docker exec <conteneur> node /app/recompute-debrief-stats.js
  *   docker exec <conteneur> node /app/recompute-debrief-stats.js --apply --backup /app/debrief-stats-backup-AAAAMMJJ-HHMM.jsonl
  *   docker cp <conteneur>:/app/debrief-stats-backup-AAAAMMJJ-HHMM.jsonl .   (garder la sauvegarde hors du conteneur)
