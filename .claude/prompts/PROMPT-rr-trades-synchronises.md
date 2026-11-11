@@ -20,3 +20,9 @@ RAPPORT : résultat de la mesure (trade par trade), ce qui est corrigé, tests, 
 ---
 COMPLÉMENT (Greg, 2026-11-10, après la phase 1 mergée en #919) :
 valide la capture en direct à l'entrée
+
+---
+COMPLÉMENT (Greg, 2026-11-11, après la phase 0 mesurée : capture prod « 0 liés, 19 sans jambe liée ») :
+envoie tous a l'agent de relecture il verifie et suis ce qu'l propose
+
+(Décisions 1 et 2 de #916 déléguées au relecteur : diagnostic de liaison en lecture seule #955, découpage par fill en ticket séparé #956.)

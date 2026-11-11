@@ -8,7 +8,7 @@
  * rapprochement avec un import CSV antérieur, et l'absence de tout appel d'écriture au broker.
  */
 import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
-import { INestApplication, RequestMethod, ValidationPipe } from '@nestjs/common';
+import { INestApplication, Logger, RequestMethod, ValidationPipe } from '@nestjs/common';
 import cookieParser from 'cookie-parser';
 import { randomBytes } from 'node:crypto';
 import { readFileSync } from 'node:fs';
@@ -71,6 +71,8 @@ let pairListNotFound = false;       // /fillPair/list répond 404
 let bracket = false;                // /order/list + /orderVersion/list : bracket posé sur le trade 30000 → 30010
 let forbidden: string[] = [];       // appels d'écriture ou routes d'ordre hors lecture (clause 2i) : doit rester vide
 let orderListMode: 'ok' | '500' | '401' | 'penalty' = 'ok'; // réponse de /order/list
+let unlinked = false;               // bracket « TradingView » : jambes SANS parentId, reliées par stratégie (#916)
+let strategyMode: 'ok' | '500' | 'penalty' = 'ok'; // réponse de /orderStrategy/list
 
 // Bracket du trade LONG 30000 → 30010 (fill d'achat 900000000001, donc ordre d'entrée 900000000002) :
 // stop posé à 29990 puis remonté à 29995 (deux versions), objectif 30020.
@@ -81,6 +83,22 @@ const bracketOrders = () => [
   { id: 950000000002, accountId: EXT_ACCOUNT, contractId: CONTRACT, action: 'Sell', ordStatus: 'Filled', parentId: ENTRY_ORDER, ocoId: 950000000001 },
   // Même forme sur un AUTRE compte du login : jamais retenu.
   { id: 960000000001, accountId: 999, contractId: CONTRACT, action: 'Sell', ordStatus: 'Canceled', parentId: ENTRY_ORDER },
+];
+// Bracket posé par stratégie (constat prod du 2026-11-11) : ni parentId ni ocoId, lien par orderStrategyLink.
+const unlinkedOrders = () => [
+  { id: ENTRY_ORDER, accountId: EXT_ACCOUNT, contractId: CONTRACT, action: 'Buy', ordStatus: 'Filled' },
+  { id: ENTRY_ORDER + 3, accountId: EXT_ACCOUNT, contractId: CONTRACT, action: 'Sell', ordStatus: 'Canceled' },
+  { id: ENTRY_ORDER + 5, accountId: EXT_ACCOUNT, contractId: CONTRACT, action: 'Sell', ordStatus: 'Filled' },
+];
+const unlinkedVersions = () => [
+  { id: 11, orderId: ENTRY_ORDER + 3, orderType: 'Limit', price: 30123.25, stopPrice: null },
+  { id: 12, orderId: ENTRY_ORDER + 5, orderType: 'Stop', price: null, stopPrice: 29987.75 },
+];
+const STRATEGY = 880000000001;
+const strategyLinks = () => [
+  { id: 1, orderStrategyId: STRATEGY, orderId: ENTRY_ORDER, label: 'Entry' },
+  { id: 2, orderStrategyId: STRATEGY, orderId: ENTRY_ORDER + 3, label: 'TP' },
+  { id: 3, orderStrategyId: STRATEGY, orderId: ENTRY_ORDER + 5, label: 'SL' },
 ];
 const bracketVersions = () => [
   { id: 1, orderId: 950000000001, orderType: 'Stop', price: null, stopPrice: 29990 },
@@ -163,7 +181,8 @@ function tradovate(rawUrl: string, init?: RequestInit): Response {
   // Lecture seule (contrat NinjaTrader, clause 2i) : aucune écriture, aucune route d'ordre hors `list`.
   const method = init?.method ?? 'GET';
   if ((method !== 'GET' && path !== '/cashBalance/getcashbalancesnapshot') ||
-      (/^\/(order|orderVersion)\//.test(path) && !/^\/(order|orderVersion)\/list$/.test(path))) {
+      (/^\/(order|orderVersion|orderStrategy|orderStrategyLink)\//.test(path) &&
+        !/^\/(order|orderVersion|orderStrategy|orderStrategyLink)\/list$/.test(path))) {
     forbidden.push(`${method} ${path}`);
     throw new Error(`appel interdit vers Tradovate : ${method} ${path}`);
   }
@@ -171,9 +190,15 @@ function tradovate(rawUrl: string, init?: RequestInit): Response {
     if (orderListMode === '500') return new Response('', { status: 500 });
     if (orderListMode === '401') return new Response('', { status: 401 });
     if (orderListMode === 'penalty') return json({ 'p-ticket': 'ticket-de-test', 'p-time': 600 });
-    return json(bracket ? bracketOrders() : []);
+    return json(unlinked ? unlinkedOrders() : bracket ? bracketOrders() : []);
   }
-  if (path === '/orderVersion/list') return json(bracket ? bracketVersions() : []);
+  if (path === '/orderVersion/list') return json(unlinked ? unlinkedVersions() : bracket ? bracketVersions() : []);
+  if (path === '/orderStrategy/list') {
+    if (strategyMode === '500') return new Response('', { status: 500 });
+    if (strategyMode === 'penalty') return json({ 'p-ticket': 'ticket-de-test', 'p-time': 600 });
+    return json(unlinked ? [{ id: STRATEGY, accountId: EXT_ACCOUNT, contractId: CONTRACT, status: 'Completed' }] : []);
+  }
+  if (path === '/orderStrategyLink/list') return json(unlinked ? strategyLinks() : []);
   if (path === '/auth/renewaccesstoken') return json({ errorText: 'Access is denied' });
   if (path === '/account/list') {
     // Compte de prop firm = simulé → n'existe que sur l'hôte demo.
@@ -253,6 +278,9 @@ beforeEach(async () => {
   bracket = false;
   forbidden = [];
   orderListMode = 'ok';
+  unlinked = false;
+  strategyMode = 'ok';
+  delete process.env['TRADOVATE_LINK_DIAGNOSTIC'];
 });
 
 /**
@@ -517,6 +545,86 @@ describe('Tradovate — synchro', () => {
       .toEqual(expect.arrayContaining(['GET /v1/order/list', 'GET /v1/orderVersion/list']));
     expect(orderCalls.every((c) => c.method === 'GET')).toBe(true);
     expect(forbidden).toEqual([]);
+  });
+
+  describe('diagnostic de liaison des brackets (#916, temporaire)', () => {
+    const strategyCalls = () => calls.filter((c) => /\/orderStrategy(Link)?\//.test(new URL(c.url).pathname));
+    const diagLogs = (spy: { mock: { calls: unknown[][] } }) =>
+      spy.mock.calls.map((c: unknown[]) => String(c[0])).filter((m: string) => m.startsWith('Liaison bracket Tradovate'));
+
+    it('interrupteur absent : aucune lecture de stratégie, aucun log', async () => {
+      const { id: userId, token } = await registerUser();
+      const account = await createAccount(userId, 'Lucid');
+      unlinked = true;
+      const spy = vi.spyOn(Logger.prototype, 'log');
+      try {
+        await connect(token, account.id);
+        expect(strategyCalls()).toEqual([]);
+        expect(diagLogs(spy)).toEqual([]);
+      } finally {
+        spy.mockRestore();
+      }
+    });
+
+    it('allumé : un log par jour, lien par stratégie décrit, ni prix ni compte ni id ; lecture seule', async () => {
+      process.env['TRADOVATE_LINK_DIAGNOSTIC'] = 'true';
+      const { id: userId, token } = await registerUser();
+      const account = await createAccount(userId, 'Lucid');
+      unlinked = true;
+      const spy = vi.spyOn(Logger.prototype, 'log');
+      try {
+        const { firstSync } = await connect(token, account.id);
+        expect(firstSync?.created).toBeGreaterThan(0);
+        // Jambes sans parentId : aucune capture (le diagnostic ne change rien aux trades).
+        expect(await prisma.trade.count({ where: { userId, stopLoss: { not: null } } })).toBe(0);
+        const logs = diagLogs(spy);
+        expect(logs).toHaveLength(1);
+        expect(logs[0]).toContain('+3(Canceled parent=∅ oco=∅ linked=∅ strat=même:TP)');
+        expect(logs[0]).toContain('+5(Filled parent=∅ oco=∅ linked=∅ strat=même:SL)');
+        for (const secret of ['30123', '29987', String(EXT_ACCOUNT), String(ENTRY_ORDER), String(STRATEGY)]) {
+          expect(logs[0]).not.toContain(secret);
+        }
+        expect(strategyCalls().map((c) => `${c.method} ${new URL(c.url).pathname}`).sort())
+          .toEqual(['GET /v1/orderStrategy/list', 'GET /v1/orderStrategyLink/list']);
+
+        // Seconde synchro le même jour : pas de nouvelle lecture, pas de second log.
+        calls = [];
+        const again = await api(token, `/accounts/${account.id}/sync`, 'POST');
+        expect(again.status, await again.clone().text()).toBe(201);
+        expect(strategyCalls()).toEqual([]);
+        expect(diagLogs(spy)).toHaveLength(1);
+        expect(forbidden).toEqual([]);
+      } finally {
+        spy.mockRestore();
+      }
+    });
+
+    it.each(['500', 'penalty'] as const)('stratégies en %s : synchro réussie, trades créés', async (mode) => {
+      process.env['TRADOVATE_LINK_DIAGNOSTIC'] = 'true';
+      const { id: userId, token } = await registerUser();
+      const account = await createAccount(userId, 'Lucid');
+      unlinked = true;
+      strategyMode = mode;
+      const spy = vi.spyOn(Logger.prototype, 'log');
+      try {
+        const { firstSync } = await connect(token, account.id);
+        expect(firstSync?.created).toBeGreaterThan(0);
+        expect(await prisma.trade.count({ where: { userId } })).toBe(firstSync?.created);
+        if (mode === 'penalty') {
+          // Diagnostic arrêté : pas de seconde lecture, pas de log.
+          expect(calls.some((c) => new URL(c.url).pathname.endsWith('/orderStrategyLink/list'))).toBe(false);
+          expect(diagLogs(spy)).toEqual([]);
+          // Pause notée : la synchro suivante ne touche plus Tradovate.
+          calls = [];
+          const again = await api(token, `/accounts/${account.id}/sync`, 'POST');
+          expect(again.status).toBe(503);
+          expect(((await again.json()) as { code: string }).code).toBe('TRADOVATE_PENALIZED');
+          expect(calls).toEqual([]);
+        }
+      } finally {
+        spy.mockRestore();
+      }
+    });
   });
 
   it('trade déjà en base sans stop : une resynchro qui voit le bracket ne le modifie pas', async () => {
