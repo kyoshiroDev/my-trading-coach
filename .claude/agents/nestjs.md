@@ -211,6 +211,14 @@ POST   /api/test/upgrade-user          NODE_ENV=test uniquement
   côté ; sinon rien. Un trade existant n'est jamais mis à jour (la saisie utilisateur prime). Log
   de mesure « Capture stop Tradovate » (liés / sans jambe liée / ambigus / séance passée), sans
   montant. `BROKER_HISTORY` (rapport après coup) : pas de stop, non validé par Greg.
+  **Constat prod du 2026-11-11** : 0 lié sur 19 entrées alors que les 18 trades avaient un bracket
+  (TradingView / multibracket) → `parentId` ne porte pas le lien. **Diagnostic TEMPORAIRE** (`tradovate-link-diagnostics.ts`,
+  pur) derrière `TRADOVATE_LINK_DIAGNOSTIC=true` (absent = éteint) : si au moins un « sans jambe liée », une fois par
+  jour UTC et par connexion (clé Redis `tradovate:linkdiag:{connId}:{AAAA-MM-JJ}`, SET NX EX 172800 posée AVANT les
+  lectures), 2 GET en plus (`/orderStrategy/list`, `/orderStrategyLink/list`), log « Liaison bracket Tradovate » :
+  noms de champs bruts + pour chaque entrée, ordres opposés du contrat en ÉCART d'id (`+1`), `parentId` / `ocoId` /
+  `linkedId` relatifs, rattachement par stratégie. Jamais de prix, compte ni id brut ; ne casse jamais la synchro.
+  **À retirer** dans le correctif qui codera la vraie liaison.
 - **Borne haute des périodes analytics** : un `to` date seule (`2026-09-14`) couvre la journée
   entière (`AnalyticsController.endBound`) ; lu tel quel il valait minuit et excluait les trades du jour.
 - **Setup des trades importés = « Sans setup »** (PROMPT-213) : la synchro broker, l'import CSV sans
