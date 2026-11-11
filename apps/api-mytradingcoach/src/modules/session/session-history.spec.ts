@@ -50,4 +50,10 @@ describe('SessionService.getSessionHistory — gains / pertes par séance (#947)
     const [h] = await service.getSessionHistory('u1');
     expect(h).toMatchObject({ wins: 1, losses: 1 });
   });
+
+  it('renvoie le compte de la séance (montants dans sa devise)', async () => {
+    const { service } = serviceWith([{ ...session('s1', '2026-09-24T07:30:00.000Z'), accountId: 'acc-eur' }], []);
+    const [h] = await service.getSessionHistory('u1');
+    expect(h.accountId).toBe('acc-eur');
+  });
 });

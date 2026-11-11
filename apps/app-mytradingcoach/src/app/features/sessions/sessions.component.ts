@@ -21,6 +21,8 @@ import { AccountSelectorComponent } from '../../shared/components/account-select
 import { InactiveAccountsToggleComponent } from '../../shared/components/inactive-accounts-toggle/inactive-accounts-toggle.component';
 import { SelectedAccountStore } from '../../core/stores/selected-account.store';
 import { UserStore } from '../../core/stores/user.store';
+import { MoneyService } from '../../core/services/money.service';
+import { MixedCurrencyNoticeComponent } from '../../shared/components/mixed-currency-notice/mixed-currency-notice.component';
 import { ErrorStateComponent } from '@mtc/front-ui';
 import {
   LucideDynamicIcon,
@@ -45,7 +47,7 @@ interface WeekGroup {
   selector: 'mtc-sessions',
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './sessions.component.css',
-  imports: [PctPipe, LucideDynamicIcon, ErrorStateComponent, DatePipe, DecimalPipe, PnlFormatPipe, EmotionEmojiPipe, RouterLink, AccountSelectorComponent, InactiveAccountsToggleComponent],
+  imports: [PctPipe, MixedCurrencyNoticeComponent, LucideDynamicIcon, ErrorStateComponent, DatePipe, DecimalPipe, PnlFormatPipe, EmotionEmojiPipe, RouterLink, AccountSelectorComponent, InactiveAccountsToggleComponent],
   templateUrl: './sessions.component.html',
 })
 export class SessionsComponent {
@@ -59,6 +61,7 @@ export class SessionsComponent {
   private readonly destroyRef = inject(DestroyRef);
   protected readonly selectedAccount = inject(SelectedAccountStore);
   protected readonly userStore = inject(UserStore);
+  protected readonly money = inject(MoneyService);
 
   protected readonly sessions = signal<SessionHistoryItem[]>([]);
   protected readonly isLoading = signal(true);

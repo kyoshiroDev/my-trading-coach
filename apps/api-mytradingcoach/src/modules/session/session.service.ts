@@ -224,6 +224,7 @@ export class SessionService {
       take: limit,
       select: {
         id: true,
+        accountId: true,
         startedAt: true,
         endedAt: true,
         moodStart: true,
@@ -259,6 +260,7 @@ export class SessionService {
 
       return {
         id: row.id,
+        accountId: row.accountId,
         startedAt: row.startedAt.toISOString(),
         endedAt: row.endedAt?.toISOString(),
         moodStart: row.moodStart,
