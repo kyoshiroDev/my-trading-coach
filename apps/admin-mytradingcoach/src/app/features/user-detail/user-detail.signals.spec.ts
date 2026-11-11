@@ -28,11 +28,11 @@ function makeData(over: {
       tradingSessions: [], tradesPerDayMin: null, tradesPerDayMax: null,
       strategyDescription: null, startingCapital: 0,
     },
-    usage: { totalTrades: over.totalTrades ?? 0, tradesThisMonth: 0, totalPnl: 0, winRate: 0 },
+    usage: { totalTrades: over.totalTrades ?? 0, tradesThisMonth: 0, totalPnl: 0, winRate: 0, currency: 'USD' },
     topAssets: [],
     offer: { founder: null, partner: null },
     sessions: Array.from({ length: over.sessions ?? 0 }, () => ({
-      date: '2026-06-05T09:00:00.000Z', trades: 1, pnl: 0, winRate: 0, emotion: null, durationMinutes: null,
+      date: '2026-06-05T09:00:00.000Z', trades: 1, pnl: 0, currency: 'USD', winRate: 0, emotion: null, durationMinutes: null,
     })),
   };
 }

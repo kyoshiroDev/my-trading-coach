@@ -7,7 +7,7 @@ import { httpResource } from '@angular/common/http';
 import { map } from 'rxjs';
 import { environment } from '@admin/environments/environment';
 import { ConfirmService } from '@mtc/front-ui';
-import { acquisitionLabel, acquisitionQueryParams, apiErrorMessage, subscriptionState } from '@mtc/shared';
+import { acquisitionLabel, acquisitionQueryParams, apiErrorMessage, formatMoney, subscriptionState } from '@mtc/shared';
 import { AdminApi, UserDetailData } from '../../core/api/admin.api';
 import { ActivityCalendarComponent } from './activity-calendar.component';
 
@@ -332,10 +332,16 @@ export class UserDetailComponent {
   });
 
   // ── Usage ──
+  // Montants de trading dans la devise des comptes du trader, jamais « $ » en dur (#947).
+  // Devises mêlées : pas de somme USD + EUR, « — ».
   protected readonly pnlDisplay = computed(() => {
-    const p = this.data()?.usage.totalPnl ?? 0;
-    return `${p >= 0 ? '+' : ''}${p.toFixed(2)}$`;
+    const u = this.data()?.usage;
+    if (!u) return '—';
+    return u.currency === null ? '—' : formatMoney(u.totalPnl, u.currency, { decimals: 2 });
   });
+  protected sessionPnl(s: { pnl: number; currency: string | null }): string {
+    return formatMoney(s.pnl, s.currency, { decimals: 2 });
+  }
   protected readonly lastConn = computed(() => {
     const iso = this.data()?.kpis.lastConnection;
     return iso ? this.relTime(iso) : 'Jamais';
