@@ -9,6 +9,8 @@ import {
 } from '@angular/core';
 import { PlanModalComponent } from '../../shared/components/plan-modal/plan-modal.component';
 import { PnlFormatPipe } from '../../shared/pipes/pnl-format.pipe';
+import { MoneyPipe } from '../../shared/pipes/money.pipe';
+import { SelectedAccountStore } from '../../core/stores/selected-account.store';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { UserStore } from '../../core/stores/user.store';
 import { DatePipe, DecimalPipe } from '@angular/common';
@@ -59,6 +61,7 @@ function typeBadge(type: string): { label: string; cls: string } | null {
     TopbarComponent,
     PlanModalComponent,
     PnlFormatPipe,
+    MoneyPipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './debrief.component.css',
@@ -71,6 +74,7 @@ export class DebriefComponent {
   private readonly destroyRef = inject(DestroyRef);
   private readonly toast = inject(ToastService);
   protected readonly userStore = inject(UserStore);
+  private readonly accountStore = inject(SelectedAccountStore);
   protected readonly showPlanModal = signal(false);
 
   protected readonly CalendarDaysIcon = CalendarDays;
@@ -106,6 +110,9 @@ export class DebriefComponent {
   });
 
   constructor() {
+    // Devise de chaque compte des onglets (`money` / `pnlFormat` par accountId) : comptes chargés
+    // même en ouverture directe de /debrief, sinon repli sur l'USD par défaut (#947).
+    if (!this.accountStore.loaded() && !this.accountStore.isLoading()) this.accountStore.load();
     if (!this.userStore.isPremium()) {
       this.isLoading.set(false);
       return;

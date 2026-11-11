@@ -3,6 +3,7 @@ import {
   ACCOUNT_CURRENCIES,
   DEFAULT_ACCOUNT_CURRENCY,
   commonCurrency,
+  currencyAffix,
   formatMoney,
   isAccountCurrency,
   normalizeCurrencyCode,
@@ -80,5 +81,14 @@ describe('formatMoney : montant tel quel, jamais converti', () => {
   it('options : sans signe, sans symbole', () => {
     expect(formatMoney(12.3, 'USD', { sign: false })).toBe('$12.30');
     expect(formatMoney(24, 'USD', { decimals: 0, symbol: false })).toBe('+24');
+  });
+});
+
+describe('currencyAffix (#947)', () => {
+  it('symbole, sinon le code, vide si inconnue ou mêlée', () => {
+    expect(currencyAffix('USD')).toBe('$');
+    expect(currencyAffix('EUR')).toBe('€');
+    expect(currencyAffix('USDT')).toBe('USDT');
+    expect(currencyAffix(null)).toBe('');
   });
 });

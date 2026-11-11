@@ -183,16 +183,16 @@
         <div class="stats-row">
           <div class="stat-card"><div class="stat-label">Trades</div><div class="stat-value">{{ a.stats.totalTrades }}</div></div>
           @if (isProp(a) && a.rules) {
-            <div class="stat-card"><div class="stat-label">Objectif</div><div class="stat-value small">{{ a.rules.profitTarget !== null ? (a.rules.profitTarget | number) + ' $' : '-' }}</div></div>
+            <div class="stat-card"><div class="stat-label">Objectif</div><div class="stat-value small">{{ a.rules.profitTarget !== null ? (a.rules.profitTarget | money:0:false:a.accountId) : '—' }}</div></div>
             <div class="stat-card"><div class="stat-label">{{ ddLabels.rule.label }}
-              <mtc-info-tooltip [label]="'À propos : ' + ddLabels.rule.label" [text]="ddLabels.rule.help" /></div><div class="stat-value small text-amber">{{ a.rules.maxDrawdown !== null ? (a.rules.maxDrawdown | number) + ' $' : '-' }}</div></div>
+              <mtc-info-tooltip [label]="'À propos : ' + ddLabels.rule.label" [text]="ddLabels.rule.help" /></div><div class="stat-value small text-amber">{{ a.rules.maxDrawdown !== null ? (a.rules.maxDrawdown | money:0:false:a.accountId) : '—' }}</div></div>
           } @else {
             <div class="stat-card"><div class="stat-label">Win Rate</div>
               <div class="stat-value" [class.text-green]="a.stats.winRate >= 50" [class.text-red]="a.stats.winRate > 0 && a.stats.winRate < 50" [class.text-muted]="!a.stats.totalTrades">
                 {{ a.stats.totalTrades ? (a.stats.winRate | pct) : '—' }}
               </div>
             </div>
-            <div class="stat-card"><div class="stat-label">P&amp;L</div><div class="stat-value" [class.text-green]="a.stats.totalPnl >= 0" [class.text-red]="a.stats.totalPnl < 0">{{ a.stats.totalPnl | pnlFormat }}</div></div>
+            <div class="stat-card"><div class="stat-label">P&amp;L</div><div class="stat-value" [class.text-green]="a.stats.totalPnl >= 0" [class.text-red]="a.stats.totalPnl < 0">{{ a.stats.totalPnl | pnlFormat : null : a.accountId }}</div></div>
           }
         </div>
 

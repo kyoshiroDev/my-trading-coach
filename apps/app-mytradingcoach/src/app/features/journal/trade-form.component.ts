@@ -28,7 +28,8 @@ import { CreateTradeSchema } from '../../core/schemas/trade.schema';
 import { SetupsStore } from '../../core/stores/setups.store';
 import { PnlFormatPipe } from '../../shared/pipes';
 import type { TradeSide } from '@mtc/shared';
-import { plannedRiskReward } from '@mtc/shared';
+import { currencyAffix, plannedRiskReward } from '@mtc/shared';
+import { SelectedAccountStore } from '../../core/stores/selected-account.store';
 import { editLeverage, editPnlPct } from './trade-form-edit.util';
 import { DialogDirective } from '@mtc/front-ui';
 
@@ -73,6 +74,17 @@ export class TradeFormComponent {
   readonly editTrade = input<Trade | null>(null);
   readonly isSaving = input(false);
   readonly apiError = input<string | null>(null);
+
+  private readonly selectedAccount = inject(SelectedAccountStore);
+  /**
+   * Symbole des champs Capital et Frais : devise du compte du trade édité, sinon celle de la vue
+   * (le nouveau trade va dans le compte choisi). Jamais « $ » en dur (#947).
+   */
+  protected readonly affix = computed(() => {
+    const accountId = this.editTrade()?.accountId;
+    const cur = accountId ? this.selectedAccount.currencyOf(accountId) : undefined;
+    return currencyAffix(cur ?? this.selectedAccount.displayCurrency());
+  });
   readonly dismissed = output<void>();
   readonly formSave = output<CreateTradeDto>();
 
