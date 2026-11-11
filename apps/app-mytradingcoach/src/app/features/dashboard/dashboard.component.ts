@@ -329,9 +329,14 @@ export class DashboardComponent {
    * Vue « Tous les comptes » avec plusieurs comptes (PROMPT-drawdown-max-par-compte) : le drawdown
    * max est celui du PIRE compte (API), la sparkline est masquée (la courbe additionne les comptes,
    * ce n'est le drawdown d'aucun d'eux) et le repli ne recalcule jamais une série mélangée.
+   * Un compte plus des trades sans compte compte aussi comme plusieurs séries (#940, chiffre API).
    */
   protected readonly multiAccountView = computed(() =>
-    isMultiAccountView(this.selectedAccount.selectedAccountId(), this.selectedAccount.aggregateAccounts().length),
+    isMultiAccountView(
+      this.selectedAccount.selectedAccountId(),
+      this.selectedAccount.aggregateAccounts().length,
+      this.equityCurveResource.value()?.data?.maxDrawdownAccountCount,
+    ),
   );
   protected readonly maxDrawdown = computed(
     () =>

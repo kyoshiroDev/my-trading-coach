@@ -248,6 +248,7 @@ describe('AnalyticsService', () => {
       expect(r.points.map((p) => p.cumulativePnl)).toEqual([-268, -535.5, -88.5, 1318, 1064.4]);
       expect(r.maxDrawdown).toBe(-535.5);
       expect(r.maxDrawdownAccountId).toBe('L');
+      expect(r.maxDrawdownAccountCount).toBe(1);
       expect(r.trades).toBe(5);
     });
 
@@ -264,6 +265,19 @@ describe('AnalyticsService', () => {
       expect(r.points.map((p) => p.cumulativePnl)).toEqual([250, 50, 300, 100]);
       expect(r.maxDrawdown).toBe(-400);
       expect(r.maxDrawdownAccountId).toBe('B');
+      expect(r.maxDrawdownAccountCount).toBe(2);
+    });
+
+    it('#940 : un compte + des trades sans compte = 2 groupes (courbe masquée côté app)', async () => {
+      mockRedisService.client.get.mockResolvedValue(null);
+      vi.mocked(closedTradeNets).mockResolvedValueOnce([
+        { closedAt: new Date('2026-11-09T09:00:00Z'), pnl: 250, accountId: 'A' },
+        { closedAt: new Date('2026-11-09T09:05:00Z'), pnl: -100, accountId: null },
+      ]);
+      const r = await service.getEquityCurveTrades('u-sans-compte', new Date('2026-11-01T00:00:00Z'), new Date('2026-11-09T23:59:59Z'));
+      expect(r.maxDrawdownAccountCount).toBe(2);
+      expect(r.maxDrawdown).toBe(-100);
+      expect(r.maxDrawdownAccountId).toBeNull();
     });
 
     it('résumé : maxDrawdown (montant positif) par la même règle', async () => {
@@ -272,6 +286,9 @@ describe('AnalyticsService', () => {
       const r = await (service as unknown as { computeSummary: (f: object) => Promise<{ maxDrawdown: number; maxDrawdownAccountId: string | null; profitFactor: number }> }).computeSummary({ userId: 'u1' });
       expect(r.maxDrawdown).toBe(535.5);
       expect(r.maxDrawdownAccountId).toBe('L');
+      // Le nombre de groupes reste hors du résumé (ni prompt IA, ni WeeklyDebrief.stats).
+      expect(r).not.toHaveProperty('maxDrawdownAccountCount');
+      expect(r).not.toHaveProperty('accountCount');
       expect(r.profitFactor).toBe(2.35);
     });
   });

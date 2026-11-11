@@ -132,6 +132,13 @@ describe('maxDrawdownOfCumulative', () => {
 const at = (accountId: string | null, closedAt: string, pnl: number | null): AccountDrawdownTrade => ({ accountId, closedAt, pnl, commission: 0 });
 
 describe('worstAccountDrawdown — un drawdown par compte, jamais une série mélangée', () => {
+  it('#940 : un compte + des trades sans compte = 2 groupes, même sans baisse ; trades ouverts non comptés', () => {
+    expect(worstAccountDrawdown([at('A', '2026-11-09T09:00:00Z', 100), at(null, '2026-11-09T09:30:00Z', 50)]).accountCount).toBe(2);
+    expect(worstAccountDrawdown([at('A', '2026-11-09T09:00:00Z', 100), at('A', '2026-11-09T09:30:00Z', -50)]).accountCount).toBe(1);
+    expect(worstAccountDrawdown([at('A', '2026-11-09T09:00:00Z', 100), at(null, '2026-11-09T09:30:00Z', null)]).accountCount).toBe(1);
+  });
+
+
   it('test 1 : A gagne +500 pendant que B perd -400 (trades entrelacés) → -400 sur B', () => {
     const trades = [
       at('A', '2026-11-09T09:00:00Z', 250),
@@ -139,7 +146,7 @@ describe('worstAccountDrawdown — un drawdown par compte, jamais une série mé
       at('A', '2026-11-09T09:10:00Z', 250),
       at('B', '2026-11-09T09:15:00Z', -200),
     ];
-    expect(worstAccountDrawdown(trades)).toEqual({ maxDrawdown: -400, accountId: 'B' });
+    expect(worstAccountDrawdown(trades)).toEqual({ maxDrawdown: -400, accountId: 'B', accountCount: 2 });
     // L'ancien calcul (une seule série) donnait -200 : le gain de A effaçait la perte de B.
     expect(maxDrawdownOfTrades(trades).maxDrawdown).toBe(-200);
   });
@@ -148,17 +155,17 @@ describe('worstAccountDrawdown — un drawdown par compte, jamais une série mé
     // Vendredi Lucid : -268, -267,5, +447 → clôture du jour -88,50, creux -535,50.
     const trades = FRIDAY.map((x) => ({ ...x, accountId: 'L' }));
     const r = worstAccountDrawdown(trades);
-    expect(r).toEqual({ maxDrawdown: -535.5, accountId: 'L' });
+    expect(r).toEqual({ maxDrawdown: -535.5, accountId: 'L', accountCount: 1 });
     expect(r.maxDrawdown).toBeLessThan(-88.5);
   });
 
   it('test 5 : aucun trade → 0, aucun compte, pas d’erreur', () => {
-    expect(worstAccountDrawdown([])).toEqual({ maxDrawdown: 0, accountId: null });
+    expect(worstAccountDrawdown([])).toEqual({ maxDrawdown: 0, accountId: null, accountCount: 0 });
   });
 
   it('trades ouverts seuls ou comptes sans baisse → 0, aucun compte', () => {
     expect(worstAccountDrawdown([at('A', '2026-11-09T09:00:00Z', null), at('B', '2026-11-09T09:00:00Z', 120)]))
-      .toEqual({ maxDrawdown: 0, accountId: null });
+      .toEqual({ maxDrawdown: 0, accountId: null, accountCount: 1 });
   });
 
   it('un seul compte : même valeur que maxDrawdownOfTrades (non-régression)', () => {
@@ -169,18 +176,18 @@ describe('worstAccountDrawdown — un drawdown par compte, jamais une série mé
   it('trades du même instant sur deux comptes : jamais regroupés entre comptes', () => {
     // Regroupés, +100 et -100 feraient une étape à 0 ; par compte, B est à -100.
     const trades = [at('A', '2026-11-09T09:00:00Z', 100), at('B', '2026-11-09T09:00:00Z', -100)];
-    expect(worstAccountDrawdown(trades)).toEqual({ maxDrawdown: -100, accountId: 'B' });
+    expect(worstAccountDrawdown(trades)).toEqual({ maxDrawdown: -100, accountId: 'B', accountCount: 2 });
   });
 
   it('égalité entre deux comptes : le plus petit identifiant, quel que soit l’ordre des trades', () => {
     const a = at('cm-b', '2026-11-09T09:00:00Z', -50);
     const b = at('cm-a', '2026-11-09T10:00:00Z', -50);
-    expect(worstAccountDrawdown([a, b])).toEqual({ maxDrawdown: -50, accountId: 'cm-a' });
-    expect(worstAccountDrawdown([b, a])).toEqual({ maxDrawdown: -50, accountId: 'cm-a' });
+    expect(worstAccountDrawdown([a, b])).toEqual({ maxDrawdown: -50, accountId: 'cm-a', accountCount: 2 });
+    expect(worstAccountDrawdown([b, a])).toEqual({ maxDrawdown: -50, accountId: 'cm-a', accountCount: 2 });
   });
 
   it('trades sans compte : leur propre groupe (accountId null)', () => {
     const trades = [at(null, '2026-11-09T09:00:00Z', -300), at('A', '2026-11-09T09:30:00Z', -100)];
-    expect(worstAccountDrawdown(trades)).toEqual({ maxDrawdown: -300, accountId: null });
+    expect(worstAccountDrawdown(trades)).toEqual({ maxDrawdown: -300, accountId: null, accountCount: 2 });
   });
 });

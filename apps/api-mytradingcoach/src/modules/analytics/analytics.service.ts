@@ -405,6 +405,9 @@ export class AnalyticsService {
       trades: rows.length,
       maxDrawdown: dd.maxDrawdown,
       maxDrawdownAccountId: dd.accountId,
+      // Groupes (comptes + trades sans compte) de la période : au-delà de 1, l'app masque la courbe
+      // de drawdown, qui mélangerait des séries (#940). Pas dans le résumé (ni IA, ni débrief).
+      maxDrawdownAccountCount: dd.accountCount,
       startingCapital,
       before: periodBefore(earlier),
     };
