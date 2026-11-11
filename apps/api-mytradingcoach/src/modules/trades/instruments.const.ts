@@ -32,7 +32,7 @@ export const INSTRUMENTS: Instrument[] = [
   // ── Metals Futures ────────────────────────────────────────────────────────
   { symbol: 'MGC', label: 'Micro Gold (MGC)',                category: 'FUTURES_US', tickValue: 1.0,      tickSize: 0.1       },
   { symbol: 'GC',  label: 'Gold (GC)',                       category: 'FUTURES_US', tickValue: 10.0,     tickSize: 0.1       },
-  { symbol: 'SIL', label: 'Micro Silver (SIL)',              category: 'FUTURES_US', tickValue: 1.0,      tickSize: 0.005     },
+  { symbol: 'SIL', label: 'Micro Silver (SIL)',              category: 'FUTURES_US', tickValue: 5.0,      tickSize: 0.005     }, // 1 000 oz × 0,005 (#933, était 1.0)
   { symbol: 'SI',  label: 'Silver (SI)',                     category: 'FUTURES_US', tickValue: 25.0,     tickSize: 0.005     },
   { symbol: 'HG',  label: 'Copper (HG)',                     category: 'FUTURES_US', tickValue: 12.5,     tickSize: 0.0005    },
   // ── Bond Futures ──────────────────────────────────────────────────────────
@@ -41,18 +41,19 @@ export const INSTRUMENTS: Instrument[] = [
   { symbol: 'ZN',  label: '10-Year T-Note (ZN)',             category: 'FUTURES_US', tickValue: 15.625,   tickSize: 0.015625  },
   { symbol: 'ZB',  label: '30-Year T-Bond (ZB)',             category: 'FUTURES_US', tickValue: 31.25,    tickSize: 0.03125   },
   // ── Crypto Futures CME ───────────────────────────────────────────────────
+  // MET/ETH, 6A/6C/6S (#933) : tick CME réel ; la valeur du point (seule utilisée) ne change pas.
   { symbol: 'MBT', label: 'Micro Bitcoin CME (MBT)', category: 'FUTURES_US', tickValue: 0.5,    tickSize: 5.0  },
   { symbol: 'BTC', label: 'Bitcoin CME (BTC)',        category: 'FUTURES_US', tickValue: 25.0,   tickSize: 5.0  },
-  { symbol: 'MET', label: 'Micro Ether CME (MET)',    category: 'FUTURES_US', tickValue: 0.005,  tickSize: 0.05 },
-  { symbol: 'ETH', label: 'Ether CME (ETH)',          category: 'FUTURES_US', tickValue: 2.5,    tickSize: 0.05 },
+  { symbol: 'MET', label: 'Micro Ether CME (MET)',    category: 'FUTURES_US', tickValue: 0.05,   tickSize: 0.5  }, // 0,1 ETH × 0,50
+  { symbol: 'ETH', label: 'Ether CME (ETH)',          category: 'FUTURES_US', tickValue: 25.0,   tickSize: 0.5  }, // 50 ETH × 0,50
   // ── Forex Futures ─────────────────────────────────────────────────────────
   { symbol: '6E',  label: 'Euro FX (6E)',                    category: 'FUTURES_US', tickValue: 6.25,     tickSize: 0.00005   },
-  { symbol: 'M6E', label: 'Micro Euro FX (M6E)',             category: 'FUTURES_US', tickValue: 0.625,    tickSize: 0.0001    },
+  { symbol: 'M6E', label: 'Micro Euro FX (M6E)',             category: 'FUTURES_US', tickValue: 1.25,     tickSize: 0.0001    }, // 12 500 € × 0,0001 (#933, était 0.625)
   { symbol: '6B',  label: 'British Pound (6B)',              category: 'FUTURES_US', tickValue: 6.25,     tickSize: 0.0001    },
   { symbol: '6J',  label: 'Japanese Yen (6J)',               category: 'FUTURES_US', tickValue: 6.25,     tickSize: 0.0000005 },
-  { symbol: '6A',  label: 'Australian Dollar (6A)',          category: 'FUTURES_US', tickValue: 10.0,     tickSize: 0.0001    },
-  { symbol: '6C',  label: 'Canadian Dollar (6C)',            category: 'FUTURES_US', tickValue: 10.0,     tickSize: 0.0001    },
-  { symbol: '6S',  label: 'Swiss Franc (6S)',                category: 'FUTURES_US', tickValue: 12.5,     tickSize: 0.0001    },
+  { symbol: '6A',  label: 'Australian Dollar (6A)',          category: 'FUTURES_US', tickValue: 5.0,      tickSize: 0.00005   },
+  { symbol: '6C',  label: 'Canadian Dollar (6C)',            category: 'FUTURES_US', tickValue: 5.0,      tickSize: 0.00005   },
+  { symbol: '6S',  label: 'Swiss Franc (6S)',                category: 'FUTURES_US', tickValue: 6.25,     tickSize: 0.00005   },
   // ── Crypto / Forex spot : tickValue null, FMP fournit labels ─────────────
   { symbol: 'BTC/USDT', label: 'Bitcoin (BTC/USDT)',  category: 'CRYPTO', tickValue: null },
   { symbol: 'ETH/USDT', label: 'Ethereum (ETH/USDT)', category: 'CRYPTO', tickValue: null },
