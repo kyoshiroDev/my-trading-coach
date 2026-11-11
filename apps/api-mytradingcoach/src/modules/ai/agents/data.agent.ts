@@ -46,16 +46,15 @@ export class DataAgent {
         {},
       );
       return Object.entries(groups)
-        .map(([k, ts]) => {
-          const w = ts.filter((t) => (t.pnl ?? 0) > 0).length;
-          return `${k}:${w}W/${ts.length - w}L`;
-        })
+        .map(([k, ts]) => `${k}:${winLossLabel(ts)}`)
         .join(', ');
     };
 
     // R:R moyen global + par setup (trades avec riskReward seulement)
+    // Même règle qu'Analytics : un R:R à 0 (ou NaN) n'est pas un R:R connu.
     const withRR = trades.filter(
-      (t): t is TradeSummaryInput & { riskReward: number } => t.riskReward != null,
+      (t): t is TradeSummaryInput & { riskReward: number } =>
+        t.riskReward != null && Number.isFinite(t.riskReward) && t.riskReward !== 0,
     );
     const avgRR = withRR.length
       ? (withRR.reduce((s, t) => s + t.riskReward, 0) / withRR.length).toFixed(2)
@@ -84,10 +83,7 @@ export class DataAgent {
       {},
     );
     const tfStats = Object.entries(tfGroups)
-      .map(([k, ts]) => {
-        const w = ts.filter((t) => (t.pnl ?? 0) > 0).length;
-        return `${k}:${w}W/${ts.length - w}L`;
-      })
+      .map(([k, ts]) => `${k}:${winLossLabel(ts)}`)
       .join(', ');
 
     // Top 5 trades significatifs : R:R + note tronquée (≤120 car)
@@ -121,4 +117,14 @@ Séquences revenge (perte→REVENGE): ${revengeSeq}
 Top 5 trades significatifs:
 ${top5lines.join('\n')}`;
   }
+}
+
+/**
+ * « 3W/1L » (+ « /1BE ») d'un groupe de trades, par le helper unique `computeTradeStats` : gagnant =
+ * net > 0, perdant = net < 0, BE à part, trades ouverts hors calcul. Avant (#947), le « L » comptait
+ * aussi les BE et les trades ouverts : l'IA recevait 3W/2L (60 %) pour 3 gagnants, 1 BE, 1 ouvert.
+ */
+function winLossLabel(ts: readonly TradeSummaryInput[]): string {
+  const s = computeTradeStats(ts);
+  return `${s.wins}W/${s.losses}L${s.breakeven ? `/${s.breakeven}BE` : ''}`;
 }

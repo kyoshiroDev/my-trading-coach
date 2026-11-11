@@ -44,6 +44,13 @@ describe('DataAgent.buildTradesSummary', () => {
     expect(out).toContain('RANGE:0.8');
   });
 
+  it('W/L : les BE et les trades ouverts ne sont pas des pertes (#947)', () => {
+    const t = (pnl: number | null) => base({ setup: 'Breakout', pnl });
+    const out = agent.buildTradesSummary([t(10), t(20), t(30), t(0), t(null)]);
+    expect(out).toContain('Breakout:3W/0L/1BE');
+    expect(out).not.toContain('3W/2L');
+  });
+
   it('calcule les stats par timeframe (W/L)', () => {
     const out = agent.buildTradesSummary([
       base({ timeframe: '1m', pnl: -50 }),
