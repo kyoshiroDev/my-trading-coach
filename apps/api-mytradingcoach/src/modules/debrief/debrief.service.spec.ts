@@ -155,6 +155,20 @@ describe('DebriefService', () => {
       expect(result.created).toBe(true);
     });
 
+    it("stats du résumé : l'id du compte du pire drawdown ne part ni à l'IA ni en base", async () => {
+      mockPrisma.weeklyDebrief.findFirst.mockResolvedValue(null);
+      mockPrisma.weeklyDebrief.upsert.mockResolvedValue(mockDebrief);
+      mockAnalyticsService.getSummary.mockResolvedValueOnce({ winRate: 60, totalPnl: 250, totalTrades: 5, maxDrawdown: 400, maxDrawdownAccountId: 'acc-b' });
+
+      await service.generate('user-123');
+
+      const sent = (mockAiService.generateDebrief.mock.calls[0][0] as { stats: object }).stats;
+      const upsert = mockPrisma.weeklyDebrief.upsert.mock.calls[0][0] as { create: { stats: object }; update: { stats: object } };
+      for (const stats of [sent, upsert.create.stats, upsert.update.stats]) {
+        expect(stats).toEqual({ winRate: 60, totalPnl: 250, totalTrades: 5, maxDrawdown: 400 });
+      }
+    });
+
     it('idempotent : débrief existant + pas de force → retourne l\'existant, zéro IA, zéro upsert', async () => {
       mockPrisma.weeklyDebrief.findUnique.mockResolvedValue(mockDebrief);
 
