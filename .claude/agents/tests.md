@@ -388,6 +388,8 @@ await page.route('**/api/debrief/generate', route => route.fulfill({
   rate, journées rouges) portent sur `activeTrades(created)`, le jeu de données principal ; les comptes
   perdus (échoué + sa tentative active, archivé ; volontairement aucun validé) ont leurs propres tests
   (trades antérieurs à la fenêtre, jours ouvrés, plancher dépassé, aucun PASSED, aucune connexion broker).
+  `demo-seed-eco.spec.ts` : analyses du faux vendredi au format `{ interpretation, gap }`, écarts
+  above/below/above, aucun terme directionnel (`findForbiddenTerms` + regex), relues par `pickReleaseAnalyses`.
 - **App, faux `SelectedAccountStore`** : un composant qui lit `statsQuery()`, `excludedAccounts()`,
   `aggregateAccounts()`… plante sur un faux store partiel (« is not a function »). Étaler
   `...statsScopeStub()` (`core/stores/selected-account.store.stub.ts`, tests uniquement) EN PREMIER
