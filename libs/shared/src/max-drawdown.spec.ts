@@ -138,7 +138,6 @@ describe('worstAccountDrawdown — un drawdown par compte, jamais une série mé
     expect(worstAccountDrawdown([at('A', '2026-11-09T09:00:00Z', 100), at(null, '2026-11-09T09:30:00Z', null)]).accountCount).toBe(1);
   });
 
-
   it('test 1 : A gagne +500 pendant que B perd -400 (trades entrelacés) → -400 sur B', () => {
     const trades = [
       at('A', '2026-11-09T09:00:00Z', 250),
