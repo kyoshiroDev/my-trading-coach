@@ -47,8 +47,13 @@ export class AnalyticsController {
     @CurrentUser() user: { id: string },
     @Query('accountId') accountId?: string,
     @Query('includeInactive') includeInactive?: string,
+    @Query('from') from?: string,
+    @Query('to') to?: string,
   ) {
-    return this.analyticsService.getBySetup(user.id, await this.accountId(user.id, accountId), parseIncludeInactive(includeInactive));
+    return this.analyticsService.getBySetup(
+      user.id, await this.accountId(user.id, accountId), parseIncludeInactive(includeInactive),
+      from ? new Date(from) : undefined, to ? this.endBound(to) : undefined,
+    );
   }
 
   // Vue de base (États émotionnels) = socle FREE.
@@ -57,8 +62,13 @@ export class AnalyticsController {
     @CurrentUser() user: { id: string },
     @Query('accountId') accountId?: string,
     @Query('includeInactive') includeInactive?: string,
+    @Query('from') from?: string,
+    @Query('to') to?: string,
   ) {
-    return this.analyticsService.getByEmotion(user.id, await this.accountId(user.id, accountId), parseIncludeInactive(includeInactive));
+    return this.analyticsService.getByEmotion(
+      user.id, await this.accountId(user.id, accountId), parseIncludeInactive(includeInactive),
+      from ? new Date(from) : undefined, to ? this.endBound(to) : undefined,
+    );
   }
 
   @UseGuards(PremiumGuard)
@@ -67,8 +77,13 @@ export class AnalyticsController {
     @CurrentUser() user: { id: string },
     @Query('accountId') accountId?: string,
     @Query('includeInactive') includeInactive?: string,
+    @Query('from') from?: string,
+    @Query('to') to?: string,
   ) {
-    return this.analyticsService.getByHour(user.id, await this.accountId(user.id, accountId), parseIncludeInactive(includeInactive));
+    return this.analyticsService.getByHour(
+      user.id, await this.accountId(user.id, accountId), parseIncludeInactive(includeInactive),
+      from ? new Date(from) : undefined, to ? this.endBound(to) : undefined,
+    );
   }
 
   // Courbe d'équité simple = vue de base FREE (la profondeur : drawdown détaillé,
@@ -144,8 +159,13 @@ export class AnalyticsController {
     @CurrentUser() user: { id: string },
     @Query('accountId') accountId?: string,
     @Query('includeInactive') includeInactive?: string,
+    @Query('from') from?: string,
+    @Query('to') to?: string,
   ) {
-    return this.analyticsService.getTopAssets(user.id, await this.accountId(user.id, accountId), parseIncludeInactive(includeInactive));
+    return this.analyticsService.getTopAssets(
+      user.id, await this.accountId(user.id, accountId), parseIncludeInactive(includeInactive),
+      from ? new Date(from) : undefined, to ? this.endBound(to) : undefined,
+    );
   }
 
   @Get('activity/current-month')

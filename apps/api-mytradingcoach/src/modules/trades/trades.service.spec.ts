@@ -73,6 +73,9 @@ const mockPrisma = {
   tradeSession: {
     findFirst: vi.fn().mockResolvedValue(null),
     findUnique: vi.fn().mockResolvedValue(null), // moodStart (note d'exécution)
+    // Totaux des séances clôturées recalculés après édition / suppression (#947).
+    findMany: vi.fn().mockResolvedValue([]),
+    update: vi.fn(),
   },
   // Compte cible pour la note d'exécution (capital) — null par défaut (critère risque ignoré).
   tradingAccount: {
@@ -352,8 +355,9 @@ describe('TradesService', () => {
         timeframe: '1m',
       });
 
-      // P&L stocké brut ; le net (valeur absolue des frais) : netPnl → 195
+      // P&L stocké brut ; frais stockés POSITIFS (#947 : le solde des comptes lit le signe) ; net 195
       expect(result.pnl).toBe(200);
+      expect(result.commission).toBe(5);
       expect(netPnl(result)).toBe(195);
     });
 
@@ -507,6 +511,44 @@ describe('TradesService', () => {
       // (le net 190 est calculé à la lecture par netPnl).
       expect(result.pnl).toBe(200);
       expect(result.commission).toBe(10);
+    });
+
+    it('édition ou suppression d’un trade d’une séance → totaux de la séance recalculés (#947)', async () => {
+      const existingTrade = { ...mockTrade, pnl: 80, sessionId: 'sess-1' };
+      mockPrisma.trade.findUnique.mockResolvedValue(existingTrade);
+      mockPrisma.trade.update.mockImplementation(({ data }) => Promise.resolve({ ...existingTrade, ...data }));
+
+      await service.update('user-123', 'trade-123', { commission: 2 });
+      expect(mockPrisma.tradeSession.findMany).toHaveBeenLastCalledWith(
+        expect.objectContaining({ where: { id: { in: ['sess-1'] }, status: 'CLOSED' } }),
+      );
+
+      mockPrisma.tradeSession.findMany.mockClear();
+      await service.remove('user-123', 'trade-123');
+      expect(mockPrisma.tradeSession.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { id: { in: ['sess-1'] }, status: 'CLOSED' } }),
+      );
+    });
+
+    it('sortie corrigée sans P&L envoyé : P&L recalculé si la valeur du tick est connue (#947)', async () => {
+      const existingTrade = { ...mockTrade, asset: 'MNQ', side: 'LONG', entry: 20000, exit: 20010, quantity: 1, pnl: 20, importHash: null };
+      mockPrisma.trade.findUnique.mockResolvedValue(existingTrade);
+      mockPrisma.trade.update.mockImplementation(({ data }) => Promise.resolve({ ...existingTrade, ...data }));
+      // Le front renvoie le DTO complet : entrée inchangée, sortie corrigée.
+      const result = await service.update('user-123', 'trade-123', { entry: 20000, exit: 20020 });
+      expect(result.pnl).toBe(40); // 20 pts × 2 $ (avant : 20, l'ancien P&L gardé)
+    });
+
+    it('trade importé ou actif sans valeur de tick ni capital : P&L réalisé gardé (#947)', async () => {
+      const imported = { ...mockTrade, asset: 'BTC/USDT', side: 'SHORT', entry: 73602.51, exit: 73692.56, quantity: 550, pnl: -4.95, importHash: 'h' };
+      mockPrisma.trade.findUnique.mockResolvedValue(imported);
+      mockPrisma.trade.update.mockImplementation(({ data }) => Promise.resolve({ ...imported, ...data }));
+      expect((await service.update('user-123', 'trade-123', { exit: 73000 })).pnl).toBe(-4.95);
+
+      const manual = { ...imported, asset: 'XYZ', importHash: null, capitalEngaged: null, pnl: 12 };
+      mockPrisma.trade.findUnique.mockResolvedValue(manual);
+      mockPrisma.trade.update.mockImplementation(({ data }) => Promise.resolve({ ...manual, ...data }));
+      expect((await service.update('user-123', 'trade-123', { exit: 73000 })).pnl).toBe(12);
     });
 
     it('ne recalcule pas le P&L si seuls setup/emotion changent', async () => {
@@ -711,6 +753,22 @@ describe('TradesService', () => {
       expect(res.duplicates).toBe(1); // BTC déjà en base
       const [first, second] = hashes();
       expect(second).toBe(`${first}#2`);
+    });
+
+    it('ré-import MEXC d’un trade stocké à l’ancien format (P&L net) : doublon, pas recréé (#947)', async () => {
+      // Avant #947, le parseur MEXC stockait le Realized PNL (net) dans `pnl` ; il stocke maintenant le
+      // brut (net + frais). Le même fichier ré-importé ne doit pas recréer ces trades.
+      const mexcAt = new Date('2026-05-30T12:31:55.000Z');
+      mockPrisma.trade.findMany.mockResolvedValue([
+        { asset: 'BTC/USDT', side: TradeSide.SHORT, tradedAt: mexcAt, entry: 73602.51, exit: 73692.56, pnl: -6.5727459 },
+      ]);
+      mockPrisma.trade.create.mockResolvedValue(mockTrade);
+      const res = await service.importTrades('user-123', [{
+        asset: 'BTC/USDT', side: TradeSide.SHORT, entry: 73602.51, exit: 73692.56, pnl: -4.95, commission: 1.62,
+        tradedAt: mexcAt.toISOString(), setupId: 'setup-1', emotion: EmotionState.NEUTRAL,
+        session: TradingSession.LONDON, timeframe: '1h',
+      }]);
+      expect(res).toMatchObject({ created: 0, duplicates: 1 });
     });
 
     it('réimport de la même source : aucune répétition recréée', async () => {

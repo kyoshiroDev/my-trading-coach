@@ -28,9 +28,11 @@ import { CreateTradeDto } from './dto/create-trade.dto';
 import { UpdateTradeDto } from './dto/update-trade.dto';
 import type { SetTradeStopDto } from './dto/set-trade-stop.dto';
 import { TradeFiltersDto } from './dto/trade-filters.dto';
-import { buildTradeWhere } from './trade-filters.util';
+import { resolveTradeWhere } from './trade-filters.util';
+import { getTickValue } from './instruments.const';
+import { refreshClosedSessionTotals } from '../session/refresh-session-totals';
 import { calculatePnl, calculateRiskReward } from './trade-metrics.util';
-import { dedupeKey, duplicateIdentity, occurrenceHash } from './trade-identity.util';
+import { dedupeKey, duplicateIdentity, LegacyNetPnlPool, occurrenceHash } from './trade-identity.util';
 import { journalStatsForFilters, type JournalStats } from './journal-stats.util';
 import { recomputeBehavioralGrades } from './behavioral-grades';
 import { stopPlacementError } from '@mtc/shared';
@@ -80,6 +82,9 @@ export class TradesService {
     // `create()` directement avec un setup déjà résolu (resolveBatchSetupId) —
     // éventuellement absent si le user n'a plus aucun setup actif.
     if (dto.setupId) await (batch ? batch.ownedSetup(dto.setupId) : this.setups.assertOwnedActive(userId, dto.setupId));
+    // Frais toujours positifs en base : les écrans lisent |commission|, mais le solde des comptes
+    // lisait `pnl − commission` signé (−5 de frais saisis = +5 $ sur le compte, −5 $ au dashboard).
+    if (dto.commission != null) dto = { ...dto, commission: Math.abs(dto.commission) };
     const pnl = calculatePnl(dto);
     const riskReward = calculateRiskReward(dto);
 
@@ -214,6 +219,8 @@ export class TradesService {
     // Même trade déjà en base mais daté dans un autre fuseau (export CSV sans fuseau ↔ API en
     // UTC) : doublon, un-pour-un. Vaut dans les deux sens : CSV avant OU après la synchro.
     const otherTimezone = new CrossSourcePool(existing);
+    // Trade stocké à l'ancien format (P&L net, ancien parseur MEXC) : doublon, un-pour-un (#947).
+    const legacyNet = new LegacyNetPnlPool(existing);
     // Empreintes déjà prises : la clé, puis `#2`, `#3`… autant de fois que la clé existe en base.
     const seen = new Set<string>();
     const inBase = new Map<string, number>();
@@ -242,7 +249,7 @@ export class TradesService {
       const n = (inSource.get(key) ?? 0) + 1;
       inSource.set(key, n);
       const hash = occurrenceHash(key, n);
-      if (seen.has(hash)) {
+      if (seen.has(hash) || legacyNet.take(dto)) {
         duplicates++;
         continue;
       }
@@ -344,7 +351,7 @@ export class TradesService {
 
   async findAll(userId: string, filters: TradeFiltersDto) {
     const { cursor, limit = 20 } = filters;
-    const where = buildTradeWhere(userId, filters);
+    const where = await resolveTradeWhere(this.prisma, userId, filters);
 
     const trades = await this.prisma.trade.findMany({
       take: limit + 1,
@@ -393,6 +400,7 @@ export class TradesService {
       await this.setups.assertOwnedActive(userId, dto.setupId);
     }
 
+    if (dto.commission != null) dto = { ...dto, commission: Math.abs(dto.commission) }; // cf. create
     const merged = { ...existing, ...dto } as CreateTradeDto;
 
     const priceFieldsChanged =
@@ -402,7 +410,21 @@ export class TradesService {
       dto.commission !== undefined ||
       dto.pnl !== undefined;
 
-    const newPnl = priceFieldsChanged ? calculatePnl(merged) : undefined;
+    // `merged` porte l'ancien `pnl` : `calculatePnl` le renvoyait tel quel, et changer un prix sans
+    // envoyer de P&L gardait l'ancien (#947). Recalcul depuis les prix quand un prix, la quantité, le
+    // sens ou le capital CHANGE réellement (le front renvoie le DTO complet), sans P&L fourni, et
+    // seulement si la règle est sûre : valeur du tick connue ou capital engagé. Jamais sur un trade
+    // importé (P&L réalisé du broker, quantité parfois en contrats : instruments.md).
+    const moved = (['entry', 'exit', 'quantity', 'side', 'capitalEngaged'] as const).some(
+      (k) => dto[k] !== undefined && dto[k] !== existing[k],
+    );
+    const recomputable =
+      !existing.importHash &&
+      (getTickValue(merged.asset) != null || (merged.capitalEngaged != null && merged.capitalEngaged > 0));
+    const newPnl =
+      dto.pnl === undefined && moved && recomputable
+        ? calculatePnl({ ...merged, pnl: undefined })
+        : priceFieldsChanged ? calculatePnl(merged) : undefined;
     // R/R recalculé dès qu'un de SES champs change : avant, ajouter ou retirer un stop sans toucher
     // aux prix laissait le R/R d'avant (absent ou périmé). Un R/R fourni par le client prime, comme
     // à la création ; sinon un R/R devenu incalculable s'efface (null), il ne reste pas figé.
@@ -472,6 +494,8 @@ export class TradesService {
         tradeSession: { select: { moodStart: true } },
       },
     });
+    // Totaux stockés de la séance clôturée (ancienne et nouvelle si le trade change de séance).
+    await refreshClosedSessionTotals(this.prisma, [existing.sessionId, result.sessionId]);
     await this.analyticsService.invalidateUserCache(userId);
 
     // L'édition (P&L, quantité…) modifie les médianes du compte → recalcul comportemental (une passe).
@@ -514,6 +538,7 @@ export class TradesService {
   async remove(userId: string, id: string) {
     const existing = await this.findOne(userId, id);
     await this.prisma.trade.delete({ where: { id } });
+    await refreshClosedSessionTotals(this.prisma, [existing.sessionId]);
     await this.analyticsService.invalidateUserCache(userId);
     // La suppression modifie les médianes du compte → recalcul comportemental.
     if (existing.accountId) await this.recomputeBehavioralGrades(existing.accountId);
@@ -525,10 +550,11 @@ export class TradesService {
    * Le `userId` dans le `where` garantit qu'on ne touche que ses trades (anti-IDOR).
    */
   async removeBrokerImported(userId: string, accountId: string): Promise<number> {
-    const { count } = await this.prisma.trade.deleteMany({
-      where: { userId, accountId, source: { in: BROKER_TRADE_SOURCES } },
-    });
+    const where = { userId, accountId, source: { in: BROKER_TRADE_SOURCES } };
+    const sessions = await this.prisma.trade.findMany({ where, select: { sessionId: true }, distinct: ['sessionId'] });
+    const { count } = await this.prisma.trade.deleteMany({ where });
     if (count > 0) {
+      await refreshClosedSessionTotals(this.prisma, sessions.map((s) => s.sessionId));
       await this.analyticsService.invalidateUserCache(userId);
       // Les médianes du compte changent → recalcul comportemental (cf. remove).
       await this.recomputeBehavioralGrades(accountId);
@@ -545,12 +571,14 @@ export class TradesService {
     // Comptes source (avant déplacement) pour recalculer leur barème comportemental.
     const before = await this.prisma.trade.findMany({
       where: { id: { in: tradeIds }, userId },
-      select: { accountId: true },
+      select: { accountId: true, sessionId: true },
     });
     const result = await this.prisma.trade.updateMany({
       where: { id: { in: tradeIds }, userId },
       data: { accountId },
     });
+    // 1 séance = 1 compte : un trade déplacé sort des totaux de sa séance d'un autre compte.
+    await refreshClosedSessionTotals(this.prisma, before.map((t) => t.sessionId));
     await this.analyticsService.invalidateUserCache(userId);
 
     const accounts = new Set<string>([
@@ -590,6 +618,12 @@ export class TradesService {
    */
   async refreshAfterFeesRepair(userId: string, accountId: string): Promise<void> {
     await this.recomputeBehavioralGrades(accountId);
+    const sessions = await this.prisma.trade.findMany({
+      where: { userId, accountId, sessionId: { not: null } },
+      select: { sessionId: true },
+      distinct: ['sessionId'],
+    });
+    await refreshClosedSessionTotals(this.prisma, sessions.map((s) => s.sessionId));
     await this.analyticsService.invalidateUserCache(userId);
   }
 }

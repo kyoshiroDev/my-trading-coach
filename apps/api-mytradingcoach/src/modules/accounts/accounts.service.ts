@@ -179,6 +179,12 @@ export interface DrawdownPlanRule {
 export interface AccountRuleMetrics {
   startingBalance: number;
   realizedPnl: number;
+  /**
+   * P&L de trading cumulé du compte (« P&L cumulé » de Mes comptes) : solde − départ + payouts. Un
+   * retrait n'est pas une perte (#947) : 5 000 $ de trades dont 2 000 $ retirés = +5 000 $, comme le
+   * tableau de bord. `realizedPnl` (solde − départ) reste la base de l'objectif et du cycle de payout.
+   */
+  tradingPnl: number;
   currentBalance: number;
   tradesCount: number;
   winRate: number | null; // ratio 0..1 des trades gagnants (pnl > 0), null si 0 trade
@@ -585,6 +591,7 @@ export class AccountsService {
     return {
       startingBalance,
       realizedPnl,
+      tradingPnl: agg.count === 0 ? 0 : Math.round((realizedPnl + (payouts?.total ?? 0)) * 100) / 100,
       currentBalance,
       tradesCount: agg.count,
       winRate,

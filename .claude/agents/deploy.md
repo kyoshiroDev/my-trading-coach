@@ -1020,6 +1020,12 @@ manuel, le bot Discord et `deployed/prod` restent en retard jusqu'au prochain CD
   landing et de `PLAN_BENEFITS` (`plans.md`, veille serveur) : inerte sur l'ancien code. Couper : retirer la variable ou `0`, recréer l'API (les WS en veille
   se ferment à l'arrêt ; le registre Redis `tradovate:watch` expire seul en ≤ 10 h, inerte éteint).
   Journal : `Veille Tradovate : N reprise(s)` (après un déploiement), `plafond … atteint` en warn.
+- **Diagnostic de liaison des brackets (#916) : `TRADOVATE_LINK_DIAGNOSTIC`**, TEMPORAIRE. Absente = **éteint**
+  (défaut partout). `true` dans le `.env` de l'API (prod : blue, green ET worker, la synchro tourne aussi dans le
+  worker) puis recréer l'API. Effet : un log `Liaison bracket Tradovate <connexion> : …` par jour et par connexion,
+  seulement si une synchro a des entrées « sans jambe liée » ; 2 lectures GET de plus, aucun prix ni compte.
+  Lire : `docker logs <conteneur> 2>&1 | grep 'Liaison bracket Tradovate'`. Couper : retirer la variable, recréer.
+  Allumage en prod = accord de Greg. À retirer avec le correctif de liaison.
 - Service worker de l'**app** (`push-sw.js`, #666) : fichier fixe à la racine, push seulement. Il est
   enregistré avec `updateViaCache: 'none'` : le navigateur le revérifie sur le réseau même si la
   règle des `.js` le met en cache un an. Une `location = /push-sw.js` en `no-cache` reste possible

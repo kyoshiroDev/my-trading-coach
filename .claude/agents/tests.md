@@ -339,6 +339,7 @@ await page.route('**/api/debrief/generate', route => route.fulfill({
 │   → closeTrade détecte SL pour un LONG (exitPrice ≤ stopLoss)
 │   → closeTrade détecte TP pour un LONG (exitPrice ≥ takeProfit)
 │   → closeTrade détecte Manuel si ni SL ni TP touché
+│   → closeTrade enregistre le P&L en argent (MNQ 2 ct +10 pts = 40 $ ; ES SHORT −10 pts = 500 $)
 │   → getLiveStats calcule winRate correctement
 │
 ├── daily-recap.service.spec.ts    ← V2

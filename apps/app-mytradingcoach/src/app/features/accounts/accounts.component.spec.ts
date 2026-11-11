@@ -30,7 +30,7 @@ function acct(
     updatedAt: '2026-01-01T00:00:00.000Z',
     metrics: {
       startingBalance: 50000,
-      realizedPnl: 0,
+      realizedPnl: 0, tradingPnl: 0,
       currentBalance: 50000,
       tradesCount: 0,
       winRate: null,
@@ -97,9 +97,9 @@ describe('AccountsComponent — logique', () => {
     const c = setup({
       premium: true,
       accounts: [
-        acct({ id: 'a', metrics: { startingBalance: 50000, realizedPnl: 1240, currentBalance: 51240, tradesCount: 38, objective: null, drawdown: null, estimated: true, disclaimer: '' } }),
-        acct({ id: 'b', metrics: { startingBalance: 50000, realizedPnl: 890, currentBalance: 50890, tradesCount: 21, objective: null, drawdown: null, estimated: true, disclaimer: '' } }),
-        acct({ id: 'z', status: 'ARCHIVED', metrics: { startingBalance: 99999, realizedPnl: 9999, currentBalance: 0, tradesCount: 99, objective: null, drawdown: null, estimated: true, disclaimer: '' } }),
+        acct({ id: 'a', metrics: { startingBalance: 50000, realizedPnl: 1240, tradingPnl: 1240, currentBalance: 51240, tradesCount: 38, objective: null, drawdown: null, estimated: true, disclaimer: '' } }),
+        acct({ id: 'b', metrics: { startingBalance: 50000, realizedPnl: 890, tradingPnl: 890, currentBalance: 50890, tradesCount: 21, objective: null, drawdown: null, estimated: true, disclaimer: '' } }),
+        acct({ id: 'z', status: 'ARCHIVED', metrics: { startingBalance: 99999, realizedPnl: 9999, tradingPnl: 9999, currentBalance: 0, tradesCount: 99, objective: null, drawdown: null, estimated: true, disclaimer: '' } }),
       ],
     });
     expect((c['trackedCapital'] as () => number)()).toBe(100000);
@@ -123,9 +123,9 @@ describe('AccountsComponent — logique', () => {
     const c = setup({
       premium: true,
       accounts: [
-        acct({ id: 'safe', metrics: { startingBalance: 0, realizedPnl: 0, currentBalance: 0, tradesCount: 0, objective: null, drawdown: dd(0.7, false), estimated: true, disclaimer: '' } }),
-        acct({ id: 'low', metrics: { startingBalance: 0, realizedPnl: 0, currentBalance: 0, tradesCount: 0, objective: null, drawdown: dd(0.18, false), estimated: true, disclaimer: '' } }),
-        acct({ id: 'breach', metrics: { startingBalance: 0, realizedPnl: 0, currentBalance: 0, tradesCount: 0, objective: null, drawdown: dd(0, true), estimated: true, disclaimer: '' } }),
+        acct({ id: 'safe', metrics: { startingBalance: 0, realizedPnl: 0, tradingPnl: 0, currentBalance: 0, tradesCount: 0, objective: null, drawdown: dd(0.7, false), estimated: true, disclaimer: '' } }),
+        acct({ id: 'low', metrics: { startingBalance: 0, realizedPnl: 0, tradingPnl: 0, currentBalance: 0, tradesCount: 0, objective: null, drawdown: dd(0.18, false), estimated: true, disclaimer: '' } }),
+        acct({ id: 'breach', metrics: { startingBalance: 0, realizedPnl: 0, tradingPnl: 0, currentBalance: 0, tradesCount: 0, objective: null, drawdown: dd(0, true), estimated: true, disclaimer: '' } }),
       ],
     });
     expect((c['atRiskCount'] as () => number)()).toBe(2);
@@ -133,7 +133,7 @@ describe('AccountsComponent — logique', () => {
 
   it('compte sélectionné → grille + KPI scopés sur ce seul compte', () => {
     const m = (startingBalance: number, realizedPnl: number, tradesCount: number) => ({
-      startingBalance, realizedPnl, currentBalance: startingBalance + realizedPnl,
+      startingBalance, realizedPnl, tradingPnl: realizedPnl, currentBalance: startingBalance + realizedPnl,
       tradesCount, winRate: null, bestDay: null, worstDay: null,
       objective: null, drawdown: null, estimated: true as const, disclaimer: '',
     });
@@ -157,16 +157,16 @@ describe('AccountsComponent — logique', () => {
 
   it('barre objectif : largeur = pct, atteint à 100 %', () => {
     const c = setup({ premium: true, accounts: [] });
-    const a = acct({ id: 'a', metrics: { startingBalance: 0, realizedPnl: 0, currentBalance: 0, tradesCount: 0, objective: { current: 1500, target: 3000, pct: 0.5 }, drawdown: null, estimated: true, disclaimer: '' } });
+    const a = acct({ id: 'a', metrics: { startingBalance: 0, realizedPnl: 0, tradingPnl: 0, currentBalance: 0, tradesCount: 0, objective: { current: 1500, target: 3000, pct: 0.5 }, drawdown: null, estimated: true, disclaimer: '' } });
     expect((c['objWidth'] as (x: TradingAccount) => number)(a)).toBe(50);
     expect((c['objReached'] as (x: TradingAccount) => boolean)(a)).toBe(false);
-    const done = acct({ id: 'b', metrics: { startingBalance: 0, realizedPnl: 0, currentBalance: 0, tradesCount: 0, objective: { current: 3000, target: 3000, pct: 1 }, drawdown: null, estimated: true, disclaimer: '' } });
+    const done = acct({ id: 'b', metrics: { startingBalance: 0, realizedPnl: 0, tradingPnl: 0, currentBalance: 0, tradesCount: 0, objective: { current: 3000, target: 3000, pct: 1 }, drawdown: null, estimated: true, disclaimer: '' } });
     expect((c['objReached'] as (x: TradingAccount) => boolean)(done)).toBe(true);
   });
 
   it('couleur marge drawdown : rouge si critique, vert si confortable', () => {
     const c = setup({ premium: true, accounts: [] });
-    const mk = (pct: number, breached: boolean) => acct({ id: 'x', metrics: { startingBalance: 0, realizedPnl: 0, currentBalance: 0, tradesCount: 0, objective: null, drawdown: { type: 'TRAILING', floor: 0, margin: 0, maxDrawdown: 2500, pct, breached, source: 'manual', rule: null }, estimated: true, disclaimer: '' } });
+    const mk = (pct: number, breached: boolean) => acct({ id: 'x', metrics: { startingBalance: 0, realizedPnl: 0, tradingPnl: 0, currentBalance: 0, tradesCount: 0, objective: null, drawdown: { type: 'TRAILING', floor: 0, margin: 0, maxDrawdown: 2500, pct, breached, source: 'manual', rule: null }, estimated: true, disclaimer: '' } });
     const ddColor = c['ddColor'] as (x: TradingAccount) => string;
     expect(ddColor(mk(0.8, false))).toBe('var(--green)');
     expect(ddColor(mk(0.4, false))).toBe('var(--yellow)');

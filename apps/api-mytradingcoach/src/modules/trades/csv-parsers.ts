@@ -6,6 +6,7 @@
  */
 import type { CreateTradeDto } from './dto/create-trade.dto';
 import { detectTradingSession, normalizeFuturesSymbol, resolvePairDirection } from './tradovate-pair.util';
+import { roundCents } from '@mtc/shared';
 
 export type BrokerType =
   | 'tradovate'
@@ -524,7 +525,12 @@ export function parseBybit(lines: string[]): string {
 
     const side = rawSide === 'Buy' ? 'LONG' : 'SHORT';
     const symbol = normalizeBinanceSymbol(rawSymbol);
-    const tradedAt = timeStr ? new Date(timeStr).toISOString() : new Date().toISOString();
+    // Date absente ou illisible (colonnes décalées) : ligne ignorée. Avant, `toISOString()` levait
+    // une RangeError qui faisait échouer tout l'import, et une date absente datait le trade de
+    // l'instant de l'import (#947, format réel Bybit à confirmer : #952).
+    const when = new Date(timeStr);
+    if (!timeStr || isNaN(when.getTime())) continue;
+    const tradedAt = when.toISOString();
 
     result.push(`${symbol},${side},${entry},${exit},${qty},${pnl},${tradedAt}`);
   }
@@ -651,9 +657,14 @@ export function parseMexc(lines: string[]): string {
     const tradedAt = `${(c[iClose] ?? '').trim().replace(' ', 'T')}+02:00`;
 
     if (!asset || !isFinite(entry) || !isFinite(pnl)) continue;
-    out.push(
-      [asset, side, entry, exit, quantity, pnl, tradedAt, isFinite(fee) ? Math.abs(fee) : 0].join(','),
-    );
+    // « Realized PNL » MEXC est NET des frais (brut − Trading Fee). Convention unique : `pnl`
+    // = BRUT, les frais dans `commission`, le net calculé à la lecture (netPnl). Stocker le net
+    // tel quel retirait les frais une deuxième fois (−6,57 $ affiché −8,19 $).
+    // Les deux arrondis au centime AVANT l'addition : le net affiché (brut − frais) redonne alors
+    // exactement le Realized PNL arrondi de MEXC, même si le brut est arrondi plus loin.
+    const commission = isFinite(fee) ? roundCents(Math.abs(fee)) : 0;
+    const grossPnl = roundCents(roundCents(pnl) + commission);
+    out.push([asset, side, entry, exit, quantity, grossPnl, tradedAt, commission].join(','));
   }
   return out.join('\n');
 }

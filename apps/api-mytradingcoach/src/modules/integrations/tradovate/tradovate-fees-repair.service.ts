@@ -37,6 +37,8 @@ export interface FeesRepairConnectionReport {
   updated: number;
   unchanged: number;
   skippedLower: number;
+  /** Trades à fill partagé, jamais montés (#947, relèvent de #950). */
+  skippedShared: number;
   noFees: number;
   notFound: number;
   feesAdded: number;
@@ -126,7 +128,7 @@ export class TradovateFeesRepairService {
   async repairConnection(conn: BrokerConnection, apply: boolean): Promise<FeesRepairConnectionReport> {
     const r: FeesRepairConnectionReport = {
       connectionId: conn.id, windows: 0, failedWindows: 0, windowsWithoutFullFees: 0, computed: 0,
-      matched: 0, updated: 0, unchanged: 0, skippedLower: 0, noFees: 0, notFound: 0, feesAdded: 0,
+      matched: 0, updated: 0, unchanged: 0, skippedLower: 0, skippedShared: 0, noFees: 0, notFound: 0, feesAdded: 0,
     };
     try {
       for await (const w of this.history.recomputedWindows(conn)) {
@@ -154,6 +156,7 @@ export class TradovateFeesRepairService {
         r.matched += plan.matched;
         r.unchanged += plan.unchanged;
         r.skippedLower += plan.skippedLower;
+        r.skippedShared += plan.skippedShared;
         r.noFees += plan.noFees;
         r.notFound += plan.notFound;
         r.updated += plan.updates.length;
@@ -171,7 +174,7 @@ export class TradovateFeesRepairService {
     this.logger.log(
       `Réparation des frais, connexion : ${r.windows} mois (${r.failedWindows} en échec), ` +
         `${r.computed} recalculé(s), ${r.matched} retrouvé(s), ${r.updated} ${apply ? 'corrigé(s)' : 'à corriger'} ` +
-        `(+${r.feesAdded} $), ${r.skippedLower} plus élevé(s) en base, ${r.notFound} absent(s)` +
+        `(+${r.feesAdded} $), ${r.skippedLower} plus élevé(s) en base, ${r.skippedShared} à fill partagé, ${r.notFound} absent(s)` +
         `${r.error ? ', abandonnée' : ''}.`,
     );
     return r;

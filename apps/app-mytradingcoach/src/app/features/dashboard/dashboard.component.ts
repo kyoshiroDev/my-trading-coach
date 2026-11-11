@@ -55,7 +55,7 @@ import {
   buildEmotionsDonut,
   buildPlBuckets,
   buildTradeRows,
-  emotionShares,
+  emotionSharesFromStats,
   plGranularityFor,
   plTitleFor,
   plTooltipFor,
@@ -162,9 +162,14 @@ export class DashboardComponent {
     this.dashboardPeriod.set(p);
   }
 
-  /** Bornes glissantes de la période courante. `from = null` → tout l'historique. */
+  /**
+   * Bornes glissantes de la période courante. `from = null` → tout l'historique. `to` = fin de la
+   * journée, pas « maintenant » : ce computed ne se recalcule qu'au changement de période, et un
+   * `to` figé à l'ouverture de la page excluait des KPI un trade saisi ou importé ensuite (#947).
+   */
   protected readonly periodRange = computed<{ from: Date | null; to: Date }>(() => {
     const to = new Date();
+    to.setHours(23, 59, 59, 999);
     const p = this.dashboardPeriod();
     if (p === 'ALL') return { from: null, to };
     const days = p === '1M' ? 30 : p === '3M' ? 90 : 180;
@@ -193,13 +198,6 @@ export class DashboardComponent {
     }
   });
 
-  // Suffixe query du compte sélectionné (multi-comptes). « Tous » → '' (agrégé, sans les comptes
-  // échoués et archivés, sauf interrupteur). Lu dans les URL des resources → tout se refetch
-  // automatiquement au changement de compte ou d'interrupteur.
-  private accQuery(): string {
-    return this.selectedAccount.statsQuery();
-  }
-
   // Query compte + bornes de période (KPIs / équité / P&L par jour). Lu dans les URL des
   // resources → refetch auto au changement de compte OU de période.
   private rangeQuery(): string {
@@ -225,15 +223,18 @@ export class DashboardComponent {
   private readonly activityResource = httpResource<{
     data: { days: { date: string; pnl: number; tradesCount: number }[] };
   }>(() => `${environment.apiUrl}/analytics/activity/range${this.rangeQuery()}`);
+  // Setups, émotions et top actifs sur la MÊME période que les KPI (#947) : avant, by-setup et
+  // top-assets portaient sur tout l'historique et le donut des émotions sur les 6 derniers trades.
   private readonly bySetupResource = httpResource<{ data: SetupStat[] }>(() =>
-    this.userStore.isPremium() ? `${environment.apiUrl}/analytics/by-setup${this.accQuery()}` : undefined,
+    this.userStore.isPremium() ? `${environment.apiUrl}/analytics/by-setup${this.rangeQuery()}` : undefined,
   );
-  private readonly byEmotionResource = httpResource<{ data: EmotionStat[] }>(() =>
-    this.userStore.isPremium() ? `${environment.apiUrl}/analytics/by-emotion${this.accQuery()}` : undefined,
+  // by-emotion = vue de base FREE : chargée pour tous les plans (donut des états émotionnels).
+  private readonly byEmotionResource = httpResource<{ data: EmotionStat[] }>(
+    () => `${environment.apiUrl}/analytics/by-emotion${this.rangeQuery()}`,
   );
   // Top actifs (P&L par instrument) vue simple = vue de base FREE.
   private readonly topAssetsResource = httpResource<{ data: TopAsset[] }>(() =>
-    `${environment.apiUrl}/analytics/top-assets${this.accQuery()}`,
+    `${environment.apiUrl}/analytics/top-assets${this.rangeQuery()}`,
   );
 
   /**
@@ -519,6 +520,8 @@ export class DashboardComponent {
     this.equityCurveResource.reload();
     this.activityResource.reload();
     this.topAssetsResource.reload();
+    this.bySetupResource.reload();
+    this.byEmotionResource.reload();
   }
 
   // ── Viz (calculs dans dashboard-charts.util.ts) ────────────────────────────
@@ -530,7 +533,7 @@ export class DashboardComponent {
       : setupsDonutFromTrades(this.tradesStore.trades()),
   );
 
-  protected readonly emotionStats = computed(() => emotionShares(this.tradesStore.trades()));
+  protected readonly emotionStats = computed(() => emotionSharesFromStats(this.byEmotion()));
   /** Donut états émotionnels (état dominant au centre). */
   protected readonly emotionsDonut = computed(() => buildEmotionsDonut(this.emotionStats()));
 
@@ -551,7 +554,7 @@ export class DashboardComponent {
 
   /** Feedback « AI Coach » dérivé des vraies données (summary + émotions + setups). */
   protected readonly coachInsights = computed(() =>
-    buildCoachInsights(this.summary(), this.byEmotion(), this.bySetup()),
+    buildCoachInsights(this.summary(), this.byEmotion(), this.bySetup(), this.periodShort()),
   );
 
   /**

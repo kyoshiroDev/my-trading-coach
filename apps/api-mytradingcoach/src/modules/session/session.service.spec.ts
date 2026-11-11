@@ -66,6 +66,7 @@ describe('SessionService', () => {
 
   beforeEach(async () => {
     vi.clearAllMocks();
+    mockPrisma.tradeSession.findMany.mockResolvedValue([]);
 
     const module = await Test.createTestingModule({
       providers: [
@@ -422,6 +423,52 @@ describe('SessionService', () => {
         expect.objectContaining({
           data: expect.objectContaining({ tags: { push: 'SL' } }),
         }),
+      );
+    });
+
+    it('enregistre le P&L en dollars (valeur du point × quantité), pas l’écart de prix', async () => {
+      // MNQ : 0,25 pt = 0,50 $ → 2 $/pt. 2 contrats × 10 pts = 40 $ (avant : 10, l'écart brut).
+      const trade = makeTrade({ asset: 'MNQ', entry: 20000, quantity: 2, side: 'LONG', stopLoss: null, takeProfit: null });
+      mockPrisma.trade.findFirst.mockResolvedValue(trade);
+      mockPrisma.trade.update.mockResolvedValue({ ...trade, pnl: 40 });
+
+      await service.closeTrade('user-1', 'trade-1', 20010);
+
+      expect(mockPrisma.trade.update).toHaveBeenCalledWith(
+        expect.objectContaining({ data: expect.objectContaining({ exit: 20010, pnl: 40 }) }),
+      );
+    });
+
+    it('trade d’une séance déjà clôturée → totaux de la séance recalculés (pas figés à la clôture)', async () => {
+      const trade = makeTrade({ asset: 'MNQ', entry: 20000, quantity: 1, side: 'LONG', stopLoss: null, takeProfit: null, sessionId: 's1' });
+      mockPrisma.trade.findFirst.mockResolvedValue(trade);
+      mockPrisma.trade.update.mockResolvedValue({ ...trade, pnl: 20 });
+      mockPrisma.tradeSession.findMany.mockResolvedValue([{ id: 's1', userId: 'user-1', accountId: null }]);
+      mockPrisma.trade.findMany.mockResolvedValue([
+        { pnl: 100, commission: 0, asset: 'MNQ', tradedAt: new Date('2026-11-10T14:00:00Z'), accountId: null },
+        { pnl: 20, commission: 1, asset: 'MNQ', tradedAt: new Date('2026-11-10T15:00:00Z'), accountId: null },
+      ]);
+
+      await service.closeTrade('user-1', 'trade-1', 20010);
+
+      expect(mockPrisma.tradeSession.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { id: { in: ['s1'] }, status: 'CLOSED' } }),
+      );
+      expect(mockPrisma.tradeSession.update).toHaveBeenCalledWith({
+        where: { id: 's1' },
+        data: expect.objectContaining({ totalPnl: 119, totalTrades: 2, winRate: 100 }),
+      });
+    });
+
+    it('SHORT ES 1 contrat : 5000 → 4990 = +500 $', async () => {
+      const trade = makeTrade({ asset: 'ES', entry: 5000, quantity: 1, side: 'SHORT', stopLoss: null, takeProfit: null });
+      mockPrisma.trade.findFirst.mockResolvedValue(trade);
+      mockPrisma.trade.update.mockResolvedValue({ ...trade, pnl: 500 });
+
+      await service.closeTrade('user-1', 'trade-1', 4990);
+
+      expect(mockPrisma.trade.update).toHaveBeenCalledWith(
+        expect.objectContaining({ data: expect.objectContaining({ pnl: 500 }) }),
       );
     });
 

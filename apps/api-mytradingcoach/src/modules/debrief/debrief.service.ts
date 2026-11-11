@@ -345,7 +345,9 @@ export class DebriefService {
           { role: Role.BETA_TESTER },
           { trialEndsAt: { gt: new Date() } },
         ],
-        trades: { some: { tradedAt: { gte: startDate, lte: endDate } } },
+        // Même filtre que `generate` (comptes perdus exclus, #681) : un trader dont tous les trades de
+        // la semaine sont sur un compte échoué ou archivé recevait un débrief à 0 trade (#947).
+        trades: { some: { tradedAt: { gte: startDate, lte: endDate }, ...inactiveAccountsTradeWhere() } },
       },
       select: { id: true },
     });

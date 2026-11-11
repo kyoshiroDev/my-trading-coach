@@ -160,7 +160,8 @@ ${COMPLIANCE_RULE}`;
       ].join(', ');
       const rrVals = recentTrades
         .map((t) => t.riskReward)
-        .filter((v): v is number => v != null);
+        // Même règle qu'Analytics : un R:R à 0 (ou NaN) n'est pas un R:R connu.
+        .filter((v): v is number => v != null && Number.isFinite(v) && v !== 0);
       const avgRR = rrVals.length
         ? (rrVals.reduce((a, b) => a + b, 0) / rrVals.length).toFixed(2)
         : null;

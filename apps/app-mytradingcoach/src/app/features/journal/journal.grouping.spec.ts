@@ -22,8 +22,18 @@ describe('journal.grouping', () => {
     const now = new Date(2026, 6, 15, 10);
     expect(presetRange('custom', '', '2026-07-10', now)).toEqual({});
     const r = presetRange('custom', '2026-07-01', '2026-07-10', now);
-    expect(r.dateTo).toBe(new Date('2026-07-10T23:59:59').toISOString());
+    expect(r.dateTo).toBe(new Date('2026-07-10T23:59:59.999').toISOString());
+    // Début = minuit LOCAL (pas minuit UTC, qui excluait la première heure à Paris, #947).
+    expect(r.dateFrom).toBe(new Date(2026, 6, 1).toISOString());
     expect(presetRange('all', '', '', now)).toEqual({});
+  });
+
+  it('« Cette semaine » commence le lundi, et la fin = fin de journée, pas l’heure d’ouverture (#947)', () => {
+    const sunday = new Date(2026, 6, 12, 10); // dimanche 12/07
+    expect(presetRange('week', '', '', sunday).dateFrom).toBe(new Date(2026, 6, 6).toISOString()); // lundi 06/07
+    const monday = new Date(2026, 6, 13, 10);
+    expect(presetRange('week', '', '', monday).dateFrom).toBe(new Date(2026, 6, 13).toISOString());
+    expect(presetRange('today', '', '', monday).dateTo).toBe(new Date(2026, 6, 13, 23, 59, 59, 999).toISOString());
   });
 
   it('le mois courant démarre le 1er', () => {

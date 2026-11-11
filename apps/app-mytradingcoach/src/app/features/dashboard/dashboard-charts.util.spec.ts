@@ -4,7 +4,7 @@ import {
   buildEmotionsDonut,
   buildPlBuckets,
   buildTradeRows,
-  emotionShares,
+  emotionSharesFromStats,
   plGranularityFor,
   setupsDonutFromStats,
   setupsDonutFromTrades,
@@ -103,13 +103,8 @@ describe('donuts', () => {
     expect(d?.legend).toEqual([{ label: 'Sans setup', color: '#888', pct: 100 }]);
   });
 
-  it('émotion effective prioritaire, émotions absentes exclues, top 4', () => {
-    const shares = emotionShares([
-      { effectiveEmotion: 'FOCUSED', emotion: 'REVENGE' },
-      { emotion: 'FOCUSED' },
-      { emotion: 'FEAR' },
-      { emotion: null },
-    ]);
+  it('donut des émotions : état dominant au centre', () => {
+    const shares = emotionSharesFromStats([{ emotion: 'FOCUSED', count: 2 }, { emotion: 'FEAR', count: 1 }]);
     expect(shares).toEqual([{ emotion: 'FOCUSED', pct: 67 }, { emotion: 'FEAR', pct: 33 }]);
     expect(buildEmotionsDonut(shares)?.centerValue).toBe('67%');
     expect(buildEmotionsDonut([])).toBeNull();
@@ -197,5 +192,21 @@ describe('buildTradeRows (historique des trades, #655)', () => {
     const [row] = buildTradeRows([trade(100)], 0);
     expect(row.outcome).toBe('win');
     expect(row.pct).toBeNull();
+  });
+});
+
+describe('emotionSharesFromStats — donut sur la période, pas les 6 derniers trades (#947)', () => {
+  it('parts calculées sur tous les trades de la période renvoyés par l’API', () => {
+    const shares = emotionSharesFromStats([
+      { emotion: 'FOCUSED', count: 6 },
+      { emotion: 'STRESSED', count: 90 },
+      { emotion: 'CONFIDENT', count: 24 },
+    ]);
+    expect(shares).toEqual([
+      { emotion: 'STRESSED', pct: 75 },
+      { emotion: 'CONFIDENT', pct: 20 },
+      { emotion: 'FOCUSED', pct: 5 },
+    ]);
+    expect(emotionSharesFromStats([])).toEqual([]);
   });
 });

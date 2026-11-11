@@ -45,6 +45,9 @@ pnl       = ticks × tickValue × qty
   saisis, au centime près (aucun écart d'arrondi possible). Un écart « départ + P&L ≠ Capital » vient
   donc du solde broker (frais d'entrée d'une position encore ouverte, frais absents des trades MTC,
   payouts) ou de trades hors période ; jamais d'un arrondi.
+- « P&L cumulé » de Mes comptes = `metrics.tradingPnl` = solde − départ + TOUS les payouts (#947) : un
+  retrait n'est pas une perte. `realizedPnl` (solde − départ) reste la base de l'objectif et du cycle
+  de payout ; ne jamais l'afficher comme P&L.
 
 ## Convention P&L unique — brut stocké, net calculé (PROMPT-213)
 `Trade.pnl` est TOUJOURS le P&L **BRUT** (résultat des prix) ; les frais vivent dans `commission`
@@ -74,11 +77,19 @@ Si un `pnl` réalisé est fourni (import broker, ou édition sans changement de 
 `calculatePnl` retourne `dto.pnl` (brut, arrondi au centime) AVANT tout recalcul `points × qty`.
 On ne recalcule (points × tickValue × qty) que si AUCUN pnl n'est fourni.
 `update()` ne recalcule le pnl QUE si un champ de prix change (entry/exit/quantity/commission/pnl).
+Sans `pnl` envoyé, un changement RÉEL d'entrée / sortie / quantité / sens / capital (comparé à la base :
+le front renvoie le DTO complet) recalcule le P&L depuis les prix (#947), seulement si la valeur du tick
+est connue ou le capital engagé renseigné, et jamais sur un trade importé (`importHash`) : sinon le
+P&L réalisé est gardé.
 
 ⚠️ Crypto / MEXC : la quantité importée est en CONTRATS (« Closing Qty (Cont.) »), pas en coins
 (1 contrat BTC = 0.0001 BTC). Un recalcul `points × quantité(contrats)` gonfle le P&L d'un facteur =
 taille du contrat (×10000 sur BTC). D'où la priorité au pnl réalisé du fichier. Ne jamais réintroduire
 un recalcul qui écrase un pnl réalisé fourni.
+⚠️ MEXC « Realized PNL » est NET des frais (brut − Trading Fee). Le parseur (`parseMexc`) stocke le
+BRUT = `roundCents(realized) + roundCents(|fee|)` et les frais dans `commission` : le net affiché
+(`netPnl`) redonne exactement le Realized PNL arrondi. Stocker le net tel quel retirait les frais une
+2ᵉ fois (#947 : −6,57 $ affiché −8,19 $).
 
 ## Pourcentage affiché à côté d'un P&L — variation du prix, jamais P&L / prix
 Le `%` des lignes du journal est `priceMovePct` (`@mtc/shared`) : `(exit − entry) / entry × 100`,
@@ -182,10 +193,14 @@ variable : 0/30 sur l'export réel du 27/10). Une ligne sans fill du lot reste *
 posée sur un autre fill) → checksum en écart. Fixtures réelles : `__fixtures__/tradovate-fees-2026-10-27-*`.
 
 **Dédup obligatoire (scalping)** : un même `fillId` peut clôturer un trade ET en ouvrir un autre.
-Sa commission ne compte qu'**une fois** sur tout l'import. On parcourt les trades **dans l'ordre du
-fichier** avec un `Set<fillId>` consommés ; un fill n'ajoute sa commission que s'il n'a pas déjà été
-consommé, puis on le marque. Sinon double comptage (ex. données de Val : naïf 24,96 $ vs exact 21,84 $,
-soit +3,12 $ de 3 fills partagés comptés deux fois).
+Sa commission ne compte qu'**une fois** sur tout l'import (sinon double comptage : données de Val,
+naïf 24,96 $ vs exact 21,84 $). Elle est **répartie au prorata de la quantité** entre les trades du lot
+qui utilisent ce fill (`assignFeesOncePerFill`, #947), au centime, le dernier trade prend le reste.
+Ne jamais revenir à « tout au premier trade, 0 aux suivants » : total juste mais net par trade faux
+(achat 2 ES vendu en 2 fois : 6,54 $ / 2,18 $ au lieu de 4,36 $ / 4,36 $, un trade perdant affiché gagnant).
+La réparation des frais #783 (`planFeeRepairs`) ne monte JAMAIS un trade dont un fill sert à un autre
+trade (`skippedShared`) : en base, l'ancienne règle a tout posé sur le premier ; ne monter que les
+suivants compterait le fill deux fois. Ces trades sont repris par le script #950.
 
 **Checksum** : `Σ commission(trade) == Σ |Delta| des frais` (à 0,01 près) → `reconciled`. En cas
 d'écart : warning + `reconciled=false` (non bloquant, « frais partiellement rapprochés »), jamais de

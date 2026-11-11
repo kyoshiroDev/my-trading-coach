@@ -93,6 +93,8 @@ export interface DailyLossMetrics {
 export interface AccountRuleMetrics {
   startingBalance: number;
   realizedPnl: number;
+  /** P&L de trading cumulé : solde − départ + payouts (un retrait n'est pas une perte, #947). */
+  tradingPnl: number;
   currentBalance: number;
   tradesCount: number;
   winRate: number | null;

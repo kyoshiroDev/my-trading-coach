@@ -60,17 +60,17 @@ PATCH  /api/trades/:id
 DELETE /api/trades/:id
 
 GET    /api/analytics/summary                    FREE + PREMIUM (pas de PremiumGuard). ?from&to = periode glissante du dashboard (sans bornes = tout l'historique)
-GET    /api/analytics/by-setup                   PREMIUM
-GET    /api/analytics/by-emotion                 PREMIUM
-GET    /api/analytics/by-hour                    PREMIUM
-GET    /api/analytics/equity-curve               PREMIUM
-GET    /api/analytics/equity-curve/current-month FREE (carte equite dashboard, legacy)
+GET    /api/analytics/by-setup                   PREMIUM, ?from&to (période du dashboard / des Statistiques, #947)
+GET    /api/analytics/by-emotion                 FREE (vue de base, donut du dashboard), ?from&to
+GET    /api/analytics/by-hour                    PREMIUM, ?from&to
+GET    /api/analytics/equity-curve               FREE
+GET    /api/analytics/equity-curve/current-month FREE (carte equite dashboard, legacy ; mois dans la clé de cache)
 GET    /api/analytics/equity-curve/daily         FREE, ?from&to → carte equite scopee periode
 GET    /api/analytics/activity/range             FREE, ?from&to → P&L par jour du dashboard (agregation jour/semaine/mois cote front)
 GET    /api/analytics/activity/current-month     FREE (activite mensuelle)
-GET    /api/analytics/activity/:year/:month      PREMIUM
-GET    /api/analytics/top-assets                 PREMIUM
-GET    /api/analytics/daily-recap/yesterday      JWT → recap de la veille
+GET    /api/analytics/activity/:year/:month      FREE (donnée propre de l'utilisateur, analytics.controller.spec)
+GET    /api/analytics/top-assets                 FREE (vue de base), ?from&to
+GET    /api/analytics/daily-recap/yesterday      JWT → récap de la DERNIÈRE journée tradée sur 7 jours (le lundi : vendredi, #947)
 
 POST   /api/session/start              JWT → démarrer une session, { mood: MoodState }
 GET    /api/session/active             JWT → session active en cours (null si aucune)
@@ -211,6 +211,15 @@ POST   /api/test/upgrade-user          NODE_ENV=test uniquement
   côté ; sinon rien. Un trade existant n'est jamais mis à jour (la saisie utilisateur prime). Log
   de mesure « Capture stop Tradovate » (liés / sans jambe liée / ambigus / séance passée), sans
   montant. `BROKER_HISTORY` (rapport après coup) : pas de stop, non validé par Greg.
+  **Constat prod du 2026-11-11** : 0 lié sur 19 entrées alors que les 18 trades avaient un bracket
+  (TradingView / multibracket) → `parentId` ne porte pas le lien. **Diagnostic TEMPORAIRE** (`tradovate-link-diagnostics.ts`,
+  pur) derrière `TRADOVATE_LINK_DIAGNOSTIC=true` (absent = éteint) : si au moins un « sans jambe liée », une fois par
+  jour UTC et par connexion (clé Redis `tradovate:linkdiag:{connId}:{AAAA-MM-JJ}`, SET NX EX 172800 posée AVANT les
+  lectures), 2 GET en plus (`/orderStrategy/list`, `/orderStrategyLink/list`), log « Liaison bracket Tradovate » :
+  noms de champs bruts + pour chaque entrée, ordres opposés du contrat en ÉCART d'id (`+1`), `parentId` / `ocoId` /
+  `linkedId` relatifs, rattachement par stratégie. Jamais de prix, compte ni id brut ; ne casse jamais la synchro ;
+  pénalité sur une lecture du diagnostic → pause notée (`notePenalty`), diagnostic arrêté.
+  **À retirer** dans le correctif qui codera la vraie liaison.
 - **Borne haute des périodes analytics** : un `to` date seule (`2026-09-14`) couvre la journée
   entière (`AnalyticsController.endBound`) ; lu tel quel il valait minuit et excluait les trades du jour.
 - **Setup des trades importés = « Sans setup »** (PROMPT-213) : la synchro broker, l'import CSV sans
@@ -701,9 +710,12 @@ débrief stocké garde les vrais ids (onglets, PDF).
 - `IS_CRON_WORKER=true` sur 1 seul worker → seul lui exécute `@Cron`
 - `ScheduleModule.forRoot()` conditionnel dans `app.module.ts`, en **opt-in** :
   ```typescript
-  ...(process.env['IS_CRON_WORKER'] === 'true' ? [ScheduleModule.forRoot()] : [])
+  ...(runsCrons() ? [ScheduleModule.forRoot()] : [])
   ```
-- En dev : process unique, pas de clustering. Crons INACTIFS sauf `IS_CRON_WORKER=true` dans `.env`
+  `runsCrons()` (`config/app-role.ts`) = `APP_ROLE !== 'web'` **et** `IS_CRON_WORKER === 'true'`.
+- En dev : process unique, pas de clustering. Crons INACTIFS sauf `IS_CRON_WORKER=true` dans `.env`.
+  Le worker du VPS dev (`mtc_api_dev_worker`) tourne avec `IS_CRON_WORKER=false` : son log de démarrage
+  dit « crons non ». **Aucun cron ne s'observe sur dev** (vérifié le 2026-11-11).
 - Worker mort : relancé avec un délai croissant (1 s → 30 s) ; au-delà de 5 morts en une minute,
   le process principal sort en erreur et Docker redémarre le conteneur (pas de boucle infinie).
 - SIGTERM (docker stop) : le principal le transmet aux workers sans les relancer ;
@@ -841,6 +853,23 @@ Ne jamais écrire `where: { userId, status: ACTIVE }` sur `TradeSession` : passe
 `startedAt >= tradingDayStart(now)` (17:00 Chicago, cf. `tradingDay`). Une session d'une
 journée précédente n'est jamais renvoyée comme active (chrono à 265 h, P&L du jour rapporté à
 une session de 11 jours). Seul `startSession` ferme encore TOUTES les `ACTIVE` sans borne.
+
+### Clôture d'un trade depuis la séance (#947)
+`SessionService.closeTrade` (`POST /session/trades/:id/close`) calcule le P&L par `calculatePnl`
+(valeur du tick × quantité, ou capital engagé) : jamais l'écart de prix brut (avant : MNQ 2 contrats
++10 pts enregistré 10 $ au lieu de 40 $).
+
+### Totaux stockés d'une séance clôturée (#947)
+`TradingSession.totalPnl / winRate / totalTrades / maxDrawdown / bestTrade*` sont écrits à la clôture,
+puis RECALCULÉS par `refreshClosedSessionTotals` (`session/refresh-session-totals.ts`, même
+`sessionTotalsFrom` que la clôture) dès qu'un de leurs trades change : `TradesService.update`, `remove`,
+`removeBrokerImported`, `reassignAccount`, `refreshAfterFeesRepair`, et `SessionService.closeTrade`.
+Toute nouvelle écriture sur un trade rattaché à une séance passe par lui.
+
+### Filtre Gagnants / Perdants / BE du journal (#947)
+Classé sur le NET arrondi (`TRADE_NET_SQL` = `round(pnl − |commission|, 2)`), comme les stats. Prisma ne
+sait pas comparer `pnl − |commission|` : la liste passe par `resolveTradeWhere` (ids sélectionnés par
+`buildTradeFilterSql`), jamais par `buildTradeWhere` seul quand `result` est posé.
 
 ### Crons V2
 
@@ -1542,6 +1571,9 @@ sont en direct.
   futures/spot, Bybit, IBKR, MEXC, MT4/MT5), séparateur européen, `splitCsvLine`,
   `mapNormalizedCsvToDto`, `detectSession`, et les types `BrokerType` / `ImportDto`. Fonctions
   PURES : aucun service injecté, testables directement (`csv-parsers.spec.ts`, `csv-import.service.spec.ts`).
+- **MEXC (`parseMexc`, #947)** : « Realized PNL » est NET des frais → stocké en BRUT
+  (`roundCents(realized) + roundCents(|fee|)`), frais dans `commission`, pour que `netPnl` ne les retire
+  pas deux fois.
 - **IBKR (`parseIBKR`, #784)** : relevé Activity Statement, détecté même si la 1ʳᵉ ligne est la
   section `Statement` (on cherche un `Trades,Header` avec `Asset Category`). Un trade = une exécution
   de CLÔTURE (P/L ≠ 0 ou code `C`) : achat = ferme un SHORT, vente = ferme un LONG (sens via
@@ -2150,8 +2182,12 @@ scripts ; les requêtes `analytics.sql.ts` prennent un `SqlClient` (`$queryRaw` 
 enregistrés, sans IA (texte inchangé), hors démo. Simulation par défaut (bilan sans identifiant),
 `--apply` exige `--backup <nouveau fichier>` (ligne `{ id, stats }` écrite avant chaque mise à
 jour), `--user <id>` pour un essai, `--restore <fichier> [--apply]` pour revenir en arrière. Lancé
-par Greg dans le conteneur API (commande esbuild en tête du script). Exclusion des comptes
-échoués / archivés selon leur statut actuel.
+dans le worker API (procédure en tête du script : copie dans `/tmp`, `-e NODE_PATH=/app/node_modules`,
+sauvegarde dans `/tmp` puis copiée sur le VPS). Exclusion des comptes échoués / archivés selon leur
+statut actuel. **Semaine sans plus aucun trade clôturé** (décision du 11/11) : débrief NON touché si
+la semaine en avait à la génération (`tradesAtGeneration`, somme des `insights.accounts[].stats.totalTrades`)
+ou si l'ancien format n'a pas de sections ; compté dans `ignores`. Semaine déjà vide à la génération :
+recalculée (0 trade = vraie valeur).
 **Drawdown d'une séance** (`session-totals.ts`, #935) : `worstAccountDrawdown` sur ses trades, pire
 compte gardé. Une ancienne séance sans compte rattache toujours les trades du jour de tous les
 comptes (totaux inchangés, voulu), mais son drawdown n'est jamais une série mélangée. Lire
@@ -2178,8 +2214,10 @@ comptes en une requête, plus de chargement des trades. `computeRuleMetrics(comp
 (= `aggregateRuleTrades` étalon JS + `ruleMetricsFromAgg`). ⚠️ Règle propre aux comptes,
 conservée : solde / objectif / drawdown / meilleur-pire jour lisent `pnl − commission`
 **signée, sans arrondi** (une commission négative augmente le solde), alors que le win rate et
-tout le reste de l'app lisent `netPnl` (`round(pnl − |commission|, 2)`). Équivalence :
-`account-rules-sql.int-spec.ts`.
+tout le reste de l'app lisent `netPnl` (`round(pnl − |commission|, 2)`). Depuis #947, `TradesService`
+stocke toujours |commission| : plus de frais négatifs écrits. Meilleur / pire jour = **journée CME**
+(`tradingDay`, 17:00 Chicago), comme la consistency et la perte journalière (décision du 11/11 ; avant,
+date UTC). Équivalence : `account-rules-sql.int-spec.ts`.
 
 ### Solde et equity lus chez le broker (2026-10-03)
 
@@ -2456,6 +2494,9 @@ global à la file ; Resend = 10 req/s par équipe, clé partagée entre environn
   (calendriers par user reconstruits à la demande ; ne touche ni `eco:analysis:*` ni les verrous).
 - Coût FMP : avant ~603 requêtes/jour ouvré ; après = 3 à 5 fixes + 1 par tick de 20 s pendant les
   fenêtres (au plus 45 par créneau horaire si FMP ne publie jamais le chiffre).
+- **Observable en prod seulement** : relevé du soir, `🔔 … nouveaux résultats`, `✨ … analyse(s)` (analyse
+  auto). Dev n'a ni crons ni IA (`AI_ENABLED=false`) ; `POST /eco-calendar/fetch/:date` (admin) remplit
+  `EcoEvent` sans broadcast ni analyse. Vérifier sur le worker prod : logs, `EcoEvent`, `AiUsageLog`.
 
 ## Calendrier éco : analyse automatique des résultats forts (2026-11-10, #920)
 

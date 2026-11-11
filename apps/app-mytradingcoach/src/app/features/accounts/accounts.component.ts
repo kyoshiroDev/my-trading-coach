@@ -295,7 +295,7 @@ export class AccountsComponent implements OnInit {
     this.visibleAccounts().reduce((s, a) => s + (a.metrics.startingBalance ?? 0), 0),
   );
   protected readonly totalPnl = computed(() =>
-    this.visibleAccounts().reduce((s, a) => s + a.metrics.realizedPnl, 0),
+    this.visibleAccounts().reduce((s, a) => s + a.metrics.tradingPnl, 0),
   );
   protected readonly totalTrades = computed(() =>
     this.visibleAccounts().reduce((s, a) => s + a.metrics.tradesCount, 0),

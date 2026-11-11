@@ -1,23 +1,26 @@
 /**
  * Recalcul des stats des débriefs hebdo déjà enregistrés (#943, suite de #934). Logique et règles :
  * `src/modules/debrief/debrief-stats-recompute.ts` (même calcul que la génération, `stats` seul,
- * aucun appel IA, comptes démo exclus).
+ * aucun appel IA, comptes démo exclus, semaine dont les trades ont disparu laissée telle quelle).
  *
- * Sans `--apply` : LECTURE SEULE, bilan sans identifiant (lus, modifiés, inchangés, champs touchés).
+ * Sans `--apply` : LECTURE SEULE, bilan sans identifiant (lus, modifiés, inchangés, champs touchés,
+ * ignorés : trades supprimés depuis la génération / ancien format).
  * Avec `--apply` : `--backup <fichier>` obligatoire, NOUVEAU fichier (jamais écrasé), une ligne JSON
  * `{ id, stats }` écrite AVANT chaque modification.
  * `--user <id>` : un seul trader (essai sur un compte avant le passage complet).
  * Retour arrière : `--restore <fichier>` (simulation), puis `--restore <fichier> --apply`.
  *
- * Exécution dans le conteneur API (DATABASE_URL déjà présent), lancée par Greg :
+ * Exécution dans le conteneur worker de l'API (DATABASE_URL déjà présent, fuseau de l'API) :
  *   pnpm exec esbuild apps/api-mytradingcoach/scripts/recompute-debrief-stats.ts --bundle --platform=node \
  *     --tsconfig=apps/api-mytradingcoach/tsconfig.app.json \
- *     --external:@prisma/client --external:@prisma/adapter-pg --external:pg --outfile=recompute-debrief-stats.js
- *   scp recompute-debrief-stats.js <vps>:~/   (depuis l'ordinateur où le bundle a été fait)
- *   docker cp ~/recompute-debrief-stats.js <conteneur>:/app/
- *   docker exec <conteneur> node /app/recompute-debrief-stats.js
- *   docker exec <conteneur> node /app/recompute-debrief-stats.js --apply --backup /app/debrief-stats-backup-AAAAMMJJ-HHMM.jsonl
- *   docker cp <conteneur>:/app/debrief-stats-backup-AAAAMMJJ-HHMM.jsonl .   (garder la sauvegarde hors du conteneur)
+ *     --external:@prisma/client --external:@prisma/adapter-pg --external:pg --outfile=rds.js
+ *   scp rds.js <vps>:~/rds-943.js   (depuis l'ordinateur où le bundle a été fait)
+ *   docker cp ~/rds-943.js <conteneur>:/tmp/   (/app appartient à root, le conteneur tourne en uid 1001)
+ *   docker exec -e NODE_PATH=/app/node_modules <conteneur> node /tmp/rds-943.js
+ *   docker exec -e NODE_PATH=/app/node_modules <conteneur> node /tmp/rds-943.js --apply --backup /tmp/debrief-stats-backup-AAAAMMJJ-HHMM.jsonl
+ *   docker cp <conteneur>:/tmp/debrief-stats-backup-AAAAMMJJ-HHMM.jsonl ~/ && wc -l ~/debrief-stats-backup-*.jsonl
+ *   (NODE_PATH : hors de /app, Node ne trouve pas @prisma/client. Garder la sauvegarde hors du
+ *   conteneur : un redéploiement efface /tmp.)
  */
 import { closeSync, fsyncSync, openSync, readFileSync, writeSync } from 'node:fs';
 import { PrismaClient } from '@prisma/client';

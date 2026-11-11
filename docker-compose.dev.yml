@@ -74,7 +74,8 @@ services:
     environment:
       <<: *api-env
       APP_ROLE: worker
-      # Un seul process : il porte les crons (worker cron du cluster) et les files.
+      # Un seul process, files BullMQ seulement : pas de cluster hors NODE_ENV=production, donc pas
+      # de crons (IS_CRON_WORKER=false).
       WEB_CONCURRENCY: "1"
     mem_limit: 1g
     memswap_limit: 1g

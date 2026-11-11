@@ -79,7 +79,7 @@
         <div class="mtc-kpi-sub">
           @if ((summary()?.streak ?? 0) > 0) { <span style="color:var(--green)">+{{ summary()?.streak }} streak</span> }
           @else if ((summary()?.streak ?? 0) < 0) { <span style="color:var(--red)">{{ summary()?.streak }} streak</span> }
-          @else { ce mois }
+          @else { {{ periodShort() }} }
         </div>
       </div>
       @if (tradeBars().length) {
