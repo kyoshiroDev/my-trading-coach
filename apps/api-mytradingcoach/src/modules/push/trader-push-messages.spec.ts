@@ -57,6 +57,17 @@ describe('TRADER_PUSH_MESSAGES', () => {
     expect(TRADER_PUSH_MESSAGES.behavior('a', { type: 'B_REVENGE', message: 'Entrée rapide.' } as never).body).toBe('Entrée rapide.');
   });
 
+  it('drawdown : la règle (plancher) est franchie, jamais un « drawdown max dépassé » (#938)', () => {
+    const breached = TRADER_PUSH_MESSAGES.propAlert(prop({ level: 'breached' }))!.body;
+    expect(breached).toContain('Plancher de drawdown franchi');
+    expect(TRADER_PUSH_MESSAGES.propAlert(prop({ level: 'critical' }))!.body).toContain('marge avant le plancher');
+    for (const background of [false, true]) {
+      for (const level of ['critical', 'breached'] as const) {
+        expect(TRADER_PUSH_MESSAGES.propAlert(prop({ level }), { background })!.body).not.toMatch(/drawdown max|marge de drawdown/i);
+      }
+    }
+  });
+
   it('aucun montant, aucun conseil, aucun tiret cadratin', () => {
     for (const m of all()) {
       const text = `${m.title} ${m.body}`;

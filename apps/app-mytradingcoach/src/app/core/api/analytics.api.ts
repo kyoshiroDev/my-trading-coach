@@ -95,6 +95,11 @@ export interface TradesEquityCurve extends DailyEquityCurve {
   maxDrawdown: number;
   /** Compte du drawdown max (null : trades sans compte ou aucune baisse ; absent : ancien cache). */
   maxDrawdownAccountId?: string | null;
+  /**
+   * Groupes de la période ayant un trade clôturé (un par compte, trades sans compte = un groupe).
+   * Absent : ancien cache.
+   */
+  maxDrawdownAccountCount?: number;
   /** Trades clôturés de la période. */
   trades: number;
 }

@@ -122,6 +122,12 @@ export interface WorstAccountDrawdown {
    * baisse (`maxDrawdown` = 0).
    */
   accountId: string | null;
+  /**
+   * Nombre de groupes ayant au moins un trade clôturé (un par compte, les trades sans compte
+   * comptant pour un groupe). Au-delà de 1, une courbe « tous comptes » mélangerait des séries
+   * (#940) : c'est ce chiffre, pas le nombre de comptes, qui dit si la vue est multi-comptes.
+   */
+  accountCount: number;
 }
 
 /**
@@ -143,10 +149,13 @@ export function worstAccountDrawdown(trades: readonly AccountDrawdownTrade[]): W
   // Ordre binaire (pas localeCompare) : identique quelle que soit la langue du processus.
   const key = (id: string | null) => id ?? '';
   const ordered = [...byAccount].sort(([a], [b]) => (key(a) < key(b) ? -1 : key(a) > key(b) ? 1 : 0));
-  let worst: WorstAccountDrawdown = { maxDrawdown: 0, accountId: null };
+  let worst = { maxDrawdown: 0, accountId: null as string | null };
+  let accountCount = 0;
   for (const [accountId, group] of ordered) {
-    const dd = maxDrawdownOfTrades(group).maxDrawdown;
+    const steps = closedTradeSteps(group);
+    if (steps.length > 0) accountCount++;
+    const dd = maxDrawdownOfCumulative(steps.map((s) => s.cumulativePnl)).maxDrawdown;
     if (dd < worst.maxDrawdown) worst = { maxDrawdown: dd, accountId };
   }
-  return worst;
+  return { ...worst, accountCount };
 }

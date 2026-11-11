@@ -14,6 +14,7 @@ export * from './signup-pitch';
 export * from './trade-stats';
 export * from './trade-risk';
 export * from './max-drawdown';
+export * from './drawdown-labels';
 export * from './contracts';
 export * from './eco-event-key';
 export * from './paris-date';

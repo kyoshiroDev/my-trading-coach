@@ -172,9 +172,14 @@ export class AnalyticsComponent {
   /**
    * Vue « Tous les comptes » à plusieurs comptes (PROMPT-drawdown-max-par-compte) : la carte
    * drawdown affiche le PIRE compte (valeur API) et masque la courbe, qui additionnerait les comptes.
+   * Un compte plus des trades sans compte compte aussi comme plusieurs séries (#940, chiffre API).
    */
   protected readonly multiAccountView = computed(() =>
-    isMultiAccountView(this.selectedAccount.selectedAccountId(), this.selectedAccount.aggregateAccounts().length),
+    isMultiAccountView(
+      this.selectedAccount.selectedAccountId(),
+      this.selectedAccount.aggregateAccounts().length,
+      this.tradesData()?.maxDrawdownAccountCount,
+    ),
   );
   protected readonly drawdownWorst = computed(() => {
     const data = this.tradesData();

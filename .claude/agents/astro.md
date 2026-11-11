@@ -45,6 +45,13 @@ src/
 
 ## Règles de contenu (audit du 27/09/2026)
 
+- **Vocabulaire du drawdown** (#937) : `DRAWDOWN_LABELS` de `@mtc/shared` (même source que l'app).
+  Taille de la règle = `DRAWDOWN_LABELS.rule.label` (« Règle de drawdown », fiche des règles
+  `prop-firm-rules-view.ts`), jamais « Drawdown max » ; marge = « marge avant le plancher », jamais
+  « avant (le) drawdown » ni « il te reste » (réservé à l'objectif, contexte-com.md). Verrouillé par
+  `libs/shared/src/drawdown-labels.spec.ts` (la landing n'a pas de suite de tests). « Drawdown max »
+  reste correct pour une baisse mesurée (blog). La capture `app-prop-firm-rules-mobile.webp` montre
+  encore l'ancien libellé : à recapturer avec son `alt`.
 - **Prix** : toujours `PREMIUM_PRICE_EUR` / `PREMIUM_ANNUAL_SAVINGS_EUR` de `@mtc/shared` (alias dans
   `tsconfig.json`), jamais un nombre en dur : Hero, Pricing, Compare, CGU, FAQ et JSON-LD en dépendent.
 - **Liens vers l'app** : `${APP_URL}/register` (jamais `https://app.mytradingcoach.app` en dur) ;

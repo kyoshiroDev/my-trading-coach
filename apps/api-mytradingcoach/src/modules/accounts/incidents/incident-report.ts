@@ -13,7 +13,7 @@ export type IncidentKind = 'drawdown' | 'daily_loss' | 'manual';
 
 /** Chiffres relevés à la détection (`AccountIncident.data`). */
 export interface IncidentSnapshot {
-  /** Drawdown max ou perte du jour autorisée. */
+  /** Règle de drawdown ou perte du jour autorisée. */
   limit: number | null;
   /** Marge restante (≤ 0 : limite franchie). */
   remaining: number | null;

@@ -152,9 +152,16 @@ export class DebriefService {
       (tradesByAccount[key] ??= []).push(t);
     }
 
-    // Format des stats du débrief inchangé : l'id du compte du pire drawdown (identifiant interne)
-    // ne part ni dans le prompt IA ni dans WeeklyDebrief.stats.
-    const { maxDrawdownAccountId: _accountId, ...stats } = await this.analyticsService.getSummary(userId);
+    // Stats de la semaine du débrief seulement (mêmes bornes que les trades ci-dessus, #934) : elles
+    // partent dans le prompt IA, dans WeeklyDebrief.stats et dans l'e-mail « débrief prêt ».
+    // Format inchangé : l'id du compte du pire drawdown (identifiant interne) ne part ni dans le
+    // prompt IA ni dans WeeklyDebrief.stats.
+    const { maxDrawdownAccountId: _accountId, ...stats } = await this.analyticsService.getSummary(
+      userId,
+      undefined,
+      startDate,
+      endDate,
+    );
 
     const previousDebrief = await this.prisma.weeklyDebrief.findFirst({
       where: { userId, year },

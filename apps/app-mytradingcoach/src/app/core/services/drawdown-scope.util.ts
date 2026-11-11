@@ -31,9 +31,16 @@ export function drawdownScopeLabel(
 }
 
 /**
- * Vue « Tous les comptes » avec plusieurs comptes dans les chiffres : drawdown du pire compte,
- * courbes de drawdown masquées. Avec un seul compte, la vue « tous » est ce compte : rien ne change.
+ * Vue « Tous les comptes » avec plusieurs séries dans les chiffres : drawdown du pire compte,
+ * courbes de drawdown masquées. Plusieurs séries = plusieurs comptes, OU (#940) un compte plus des
+ * trades sans compte, que seule l'API voit (`maxDrawdownAccountCount` de la courbe par trade).
+ * Sans ce chiffre (ancien cache), on s'en tient aux comptes. Avec une seule série, la vue « tous »
+ * est ce compte : rien ne change.
  */
-export function isMultiAccountView(selectedAccountId: string, aggregateAccountCount: number): boolean {
-  return selectedAccountId === 'all' && aggregateAccountCount > 1;
+export function isMultiAccountView(
+  selectedAccountId: string,
+  aggregateAccountCount: number,
+  drawdownGroupCount?: number,
+): boolean {
+  return selectedAccountId === 'all' && (aggregateAccountCount > 1 || (drawdownGroupCount ?? 0) > 1);
 }

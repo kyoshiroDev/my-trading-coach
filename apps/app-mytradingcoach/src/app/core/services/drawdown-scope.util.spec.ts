@@ -25,5 +25,16 @@ describe('isMultiAccountView', () => {
     expect(isMultiAccountView('all', 0)).toBe(false);
     expect(isMultiAccountView('a', 3)).toBe(false);
   });
+  it('#940 : un compte + des trades sans compte (2 groupes côté API) → oui', () => {
+    expect(isMultiAccountView('all', 1, 2)).toBe(true);
+    expect(isMultiAccountView('all', 0, 2)).toBe(true);
+  });
+  it('#940 : un seul groupe, ancien cache sans le chiffre, ou compte choisi → comportement des comptes', () => {
+    expect(isMultiAccountView('all', 1, 1)).toBe(false);
+    expect(isMultiAccountView('all', 1, undefined)).toBe(false);
+    expect(isMultiAccountView('all', 2, undefined)).toBe(true);
+    expect(isMultiAccountView('all', 2, 1)).toBe(true);
+    expect(isMultiAccountView('a', 1, 2)).toBe(false);
+  });
   it('texte à la place de la courbe', () => expect(DRAWDOWN_PICK_ACCOUNT).toBe('Choisis un compte pour voir la courbe'));
 });

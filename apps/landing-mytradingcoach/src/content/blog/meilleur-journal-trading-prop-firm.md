@@ -17,7 +17,7 @@ En prop firm, tu as rarement un seul compte. Un challenge en cours, un compte fu
 
 <h2>Les règles de la firme, suivies pour de vrai</h2>
 <p>
-Une prop firm te vire sur une seule règle cassée : drawdown journalier dépassé, drawdown total, parfois un objectif de jours de trading. Un journal utile ne se contente pas d'afficher ton P&L, il te situe par rapport à ces limites. Combien il te reste avant le drawdown max. Où tu en es sur la période. C'est ça qui transforme un journal en garde-fou, pas juste en carnet de comptes.
+Une prop firm te vire sur une seule règle cassée : drawdown journalier dépassé, drawdown total, parfois un objectif de jours de trading. Un journal utile ne se contente pas d'afficher ton P&L, il te situe par rapport à ces limites. Ta marge avant le plancher. Où tu en es sur la période. C'est ça qui transforme un journal en garde-fou, pas juste en carnet de comptes.
 </p>
 
 <h2>L'import de ton broker, sans friction</h2>

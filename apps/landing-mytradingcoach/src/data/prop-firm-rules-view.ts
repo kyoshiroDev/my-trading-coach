@@ -3,6 +3,8 @@
  * catalogue : importées par le rendu serveur ET par le script client du sélecteur, qui ne
  * reçoit que la version compacte (`prop-firm-catalog.ts`, JSON embarqué dans la page).
  */
+import { DRAWDOWN_LABELS } from '@mtc/shared';
+
 export type PhaseKind = 'evaluation' | 'funded' | 'direct';
 
 export interface CompactPhase {
@@ -118,7 +120,8 @@ export function ruleRows(p: CompactPhase, currency: string): RuleRow[] {
   if (p.dd) {
     const type = DD_TYPE[p.dd.type] ?? p.dd.type;
     rows.push({
-      label: 'Drawdown max',
+      // Taille de la règle : vocabulaire partagé avec l'app (#937), jamais « Drawdown max ».
+      label: DRAWDOWN_LABELS.rule.label,
       value: m(p.dd.amount),
       detail: p.dd.lockFloor !== null && p.dd.type !== 'static' ? `${type} · figé à ${m(p.dd.lockFloor)}` : type,
     });

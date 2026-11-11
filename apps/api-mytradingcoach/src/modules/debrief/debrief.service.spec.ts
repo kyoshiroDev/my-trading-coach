@@ -169,6 +169,29 @@ describe('DebriefService', () => {
       }
     });
 
+    it('stats du résumé limitées à la semaine du débrief, du lundi 00:00 au dimanche 23:59:59.999 (#934)', async () => {
+      mockPrisma.weeklyDebrief.findFirst.mockResolvedValue(null);
+      mockPrisma.weeklyDebrief.upsert.mockResolvedValue(mockDebrief);
+
+      await service.generate('user-123', Role.USER, true, { refDate: new Date('2026-11-11T15:00:00') });
+      expect(mockAnalyticsService.getSummary).toHaveBeenLastCalledWith(
+        'user-123',
+        undefined,
+        new Date('2026-11-09T00:00:00.000'),
+        new Date('2026-11-15T23:59:59.999'),
+      );
+
+      // Semaine passée : les bornes suivent refDate (jamais tout l'historique).
+      mockPrisma.weeklyDebrief.findUnique.mockResolvedValue(null);
+      await service.generate('user-123', Role.USER, true, { refDate: new Date('2026-06-24T12:00:00') });
+      expect(mockAnalyticsService.getSummary).toHaveBeenLastCalledWith(
+        'user-123',
+        undefined,
+        new Date('2026-06-22T00:00:00.000'),
+        new Date('2026-06-28T23:59:59.999'),
+      );
+    });
+
     it('idempotent : débrief existant + pas de force → retourne l\'existant, zéro IA, zéro upsert', async () => {
       mockPrisma.weeklyDebrief.findUnique.mockResolvedValue(mockDebrief);
 
