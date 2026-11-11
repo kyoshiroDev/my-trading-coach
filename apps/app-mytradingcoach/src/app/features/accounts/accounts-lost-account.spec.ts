@@ -231,3 +231,19 @@ describe('Mes comptes · payouts d\'un compte funded', () => {
   });
 });
 
+
+describe('Mes comptes · totaux en devises mêlées (#947)', () => {
+  beforeEach(() => TestBed.resetTestingModule());
+
+  it('capital suivi et P&L cumulé : pas de somme USD + EUR, avertissement', () => {
+    const { el } = setup([
+      acct('u', 'Apex USD', {}, 100, 1),
+      acct('e', 'Compte EUR', { currency: 'EUR', startingBalance: 10000 }, 50, 1),
+    ]);
+    const values = [...el.querySelectorAll('.stats-row .stat-value')].map((n) => n.textContent!.trim());
+    expect(values[0]).toBe('—');
+    expect(values[1]).toBe('—');
+    const subs = [...el.querySelectorAll('.stats-row .stat-sub')].map((n) => n.textContent!.trim());
+    expect(subs[1]).toContain('devises différentes');
+  });
+});
