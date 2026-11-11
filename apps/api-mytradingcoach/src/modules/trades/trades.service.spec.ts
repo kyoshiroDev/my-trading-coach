@@ -530,6 +530,27 @@ describe('TradesService', () => {
       );
     });
 
+    it('sortie corrigée sans P&L envoyé : P&L recalculé si la valeur du tick est connue (#947)', async () => {
+      const existingTrade = { ...mockTrade, asset: 'MNQ', side: 'LONG', entry: 20000, exit: 20010, quantity: 1, pnl: 20, importHash: null };
+      mockPrisma.trade.findUnique.mockResolvedValue(existingTrade);
+      mockPrisma.trade.update.mockImplementation(({ data }) => Promise.resolve({ ...existingTrade, ...data }));
+      // Le front renvoie le DTO complet : entrée inchangée, sortie corrigée.
+      const result = await service.update('user-123', 'trade-123', { entry: 20000, exit: 20020 });
+      expect(result.pnl).toBe(40); // 20 pts × 2 $ (avant : 20, l'ancien P&L gardé)
+    });
+
+    it('trade importé ou actif sans valeur de tick ni capital : P&L réalisé gardé (#947)', async () => {
+      const imported = { ...mockTrade, asset: 'BTC/USDT', side: 'SHORT', entry: 73602.51, exit: 73692.56, quantity: 550, pnl: -4.95, importHash: 'h' };
+      mockPrisma.trade.findUnique.mockResolvedValue(imported);
+      mockPrisma.trade.update.mockImplementation(({ data }) => Promise.resolve({ ...imported, ...data }));
+      expect((await service.update('user-123', 'trade-123', { exit: 73000 })).pnl).toBe(-4.95);
+
+      const manual = { ...imported, asset: 'XYZ', importHash: null, capitalEngaged: null, pnl: 12 };
+      mockPrisma.trade.findUnique.mockResolvedValue(manual);
+      mockPrisma.trade.update.mockImplementation(({ data }) => Promise.resolve({ ...manual, ...data }));
+      expect((await service.update('user-123', 'trade-123', { exit: 73000 })).pnl).toBe(12);
+    });
+
     it('ne recalcule pas le P&L si seuls setup/emotion changent', async () => {
       const existingTrade = { ...mockTrade, pnl: 2000 };
       mockPrisma.trade.findUnique.mockResolvedValue(existingTrade);

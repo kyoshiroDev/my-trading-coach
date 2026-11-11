@@ -29,6 +29,7 @@ import { UpdateTradeDto } from './dto/update-trade.dto';
 import type { SetTradeStopDto } from './dto/set-trade-stop.dto';
 import { TradeFiltersDto } from './dto/trade-filters.dto';
 import { resolveTradeWhere } from './trade-filters.util';
+import { getTickValue } from './instruments.const';
 import { refreshClosedSessionTotals } from '../session/refresh-session-totals';
 import { calculatePnl, calculateRiskReward } from './trade-metrics.util';
 import { dedupeKey, duplicateIdentity, occurrenceHash } from './trade-identity.util';
@@ -407,7 +408,21 @@ export class TradesService {
       dto.commission !== undefined ||
       dto.pnl !== undefined;
 
-    const newPnl = priceFieldsChanged ? calculatePnl(merged) : undefined;
+    // `merged` porte l'ancien `pnl` : `calculatePnl` le renvoyait tel quel, et changer un prix sans
+    // envoyer de P&L gardait l'ancien (#947). Recalcul depuis les prix quand un prix, la quantité, le
+    // sens ou le capital CHANGE réellement (le front renvoie le DTO complet), sans P&L fourni, et
+    // seulement si la règle est sûre : valeur du tick connue ou capital engagé. Jamais sur un trade
+    // importé (P&L réalisé du broker, quantité parfois en contrats : instruments.md).
+    const moved = (['entry', 'exit', 'quantity', 'side', 'capitalEngaged'] as const).some(
+      (k) => dto[k] !== undefined && dto[k] !== existing[k],
+    );
+    const recomputable =
+      !existing.importHash &&
+      (getTickValue(merged.asset) != null || (merged.capitalEngaged != null && merged.capitalEngaged > 0));
+    const newPnl =
+      dto.pnl === undefined && moved && recomputable
+        ? calculatePnl({ ...merged, pnl: undefined })
+        : priceFieldsChanged ? calculatePnl(merged) : undefined;
     // R/R recalculé dès qu'un de SES champs change : avant, ajouter ou retirer un stop sans toucher
     // aux prix laissait le R/R d'avant (absent ou périmé). Un R/R fourni par le client prime, comme
     // à la création ; sinon un R/R devenu incalculable s'efface (null), il ne reste pas figé.

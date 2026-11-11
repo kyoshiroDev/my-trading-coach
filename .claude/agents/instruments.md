@@ -77,6 +77,10 @@ Si un `pnl` réalisé est fourni (import broker, ou édition sans changement de 
 `calculatePnl` retourne `dto.pnl` (brut, arrondi au centime) AVANT tout recalcul `points × qty`.
 On ne recalcule (points × tickValue × qty) que si AUCUN pnl n'est fourni.
 `update()` ne recalcule le pnl QUE si un champ de prix change (entry/exit/quantity/commission/pnl).
+Sans `pnl` envoyé, un changement RÉEL d'entrée / sortie / quantité / sens / capital (comparé à la base :
+le front renvoie le DTO complet) recalcule le P&L depuis les prix (#947), seulement si la valeur du tick
+est connue ou le capital engagé renseigné, et jamais sur un trade importé (`importHash`) : sinon le
+P&L réalisé est gardé.
 
 ⚠️ Crypto / MEXC : la quantité importée est en CONTRATS (« Closing Qty (Cont.) »), pas en coins
 (1 contrat BTC = 0.0001 BTC). Un recalcul `points × quantité(contrats)` gonfle le P&L d'un facteur =
