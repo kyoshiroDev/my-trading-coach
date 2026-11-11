@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { AnalyticsController } from './analytics.controller';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { PremiumGuard } from '../../common/guards/premium.guard';
@@ -52,5 +52,17 @@ describe('AnalyticsController — gating par plan', () => {
     for (const m of ['getSummary', 'getByEmotion', 'getEquityCurve', 'getTopAssets']) {
       expect(guardsOf(m), `${m} doit rester accessible en FREE`).not.toContain(PremiumGuard);
     }
+  });
+});
+describe('AnalyticsController — par setup / émotion / heure / actif bornés à la période (#947)', () => {
+  it.each(['getBySetup', 'getByEmotion', 'getByHour', 'getTopAssets'] as const)('%s transmet from / to', async (method) => {
+    const service = { [method]: vi.fn().mockResolvedValue([]) };
+    const accounts = { accountWhere: vi.fn().mockResolvedValue({}) };
+    const ctrl = new AnalyticsController(service as never, {} as never, accounts as never);
+    await (ctrl[method] as (...a: unknown[]) => Promise<unknown>)({ id: 'u1' }, undefined, undefined, '2026-10-12T00:00:00.000Z', '2026-11-11');
+    const [, , , from, to] = service[method].mock.calls[0];
+    expect(from).toEqual(new Date('2026-10-12T00:00:00.000Z'));
+    expect(to).toBeInstanceOf(Date); // date seule → fin de journée (endBound)
+    expect((to as Date).getTime()).toBeGreaterThan(new Date('2026-11-11T00:00:00.000Z').getTime());
   });
 });

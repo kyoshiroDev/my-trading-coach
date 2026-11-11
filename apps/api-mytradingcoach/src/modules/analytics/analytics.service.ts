@@ -165,14 +165,20 @@ export class AnalyticsService {
     const key = `summary${this.accKey(accountId, includeInactive)}${this.rangeKey(from, to)}`;
     return this.withCache(userId, key, CACHE_TTL.ANALYTICS, () => this.computeSummary({ userId, accountId, from, to, includeInactive }));
   }
-  async getBySetup(userId: string, accountId?: string, includeInactive = false) {
-    return this.withCache(userId, `setup${this.accKey(accountId, includeInactive)}`, CACHE_TTL.ANALYTICS, () => this.computeBySetup({ userId, accountId, includeInactive }));
+  // Par setup / émotion / heure / actif : bornés à la période choisie quand `from`/`to` sont fournis
+  // (#947 : le tableau de bord et les Statistiques les affichaient sur tout l'historique sous un
+  // sélecteur « 30 derniers jours »). Sans bornes : tout l'historique, comme avant.
+  async getBySetup(userId: string, accountId?: string, includeInactive = false, from?: Date, to?: Date) {
+    const key = `setup${this.accKey(accountId, includeInactive)}${this.rangeKey(from, to)}`;
+    return this.withCache(userId, key, CACHE_TTL.ANALYTICS, () => this.computeBySetup({ userId, accountId, includeInactive, from, to }));
   }
-  async getByEmotion(userId: string, accountId?: string, includeInactive = false) {
-    return this.withCache(userId, `emotion${this.accKey(accountId, includeInactive)}`, CACHE_TTL.ANALYTICS, () => this.computeByEmotion({ userId, accountId, includeInactive }));
+  async getByEmotion(userId: string, accountId?: string, includeInactive = false, from?: Date, to?: Date) {
+    const key = `emotion${this.accKey(accountId, includeInactive)}${this.rangeKey(from, to)}`;
+    return this.withCache(userId, key, CACHE_TTL.ANALYTICS, () => this.computeByEmotion({ userId, accountId, includeInactive, from, to }));
   }
-  async getByHour(userId: string, accountId?: string, includeInactive = false) {
-    return this.withCache(userId, `hour${this.accKey(accountId, includeInactive)}`, CACHE_TTL.ANALYTICS, () => this.computeByHour({ userId, accountId, includeInactive }));
+  async getByHour(userId: string, accountId?: string, includeInactive = false, from?: Date, to?: Date) {
+    const key = `hour${this.accKey(accountId, includeInactive)}${this.rangeKey(from, to)}`;
+    return this.withCache(userId, key, CACHE_TTL.ANALYTICS, () => this.computeByHour({ userId, accountId, includeInactive, from, to }));
   }
   async getEquityCurve(userId: string, accountId?: string, includeInactive = false) {
     return this.withCache(userId, `equity${this.accKey(accountId, includeInactive)}`, CACHE_TTL.ANALYTICS, () => this.computeEquityCurve({ userId, accountId, includeInactive }));
@@ -184,8 +190,9 @@ export class AnalyticsService {
     const month = `${now.getFullYear()}-${now.getMonth() + 1}`;
     return this.withCache(userId, `equity:month:${month}${this.accKey(accountId, includeInactive)}`, CACHE_TTL.ANALYTICS, () => this.computeEquityCurveCurrentMonth({ userId, accountId, includeInactive }));
   }
-  async getTopAssets(userId: string, accountId?: string, includeInactive = false) {
-    return this.withCache(userId, `topassets${this.accKey(accountId, includeInactive)}`, CACHE_TTL.ANALYTICS, () => this.computeTopAssets({ userId, accountId, includeInactive }));
+  async getTopAssets(userId: string, accountId?: string, includeInactive = false, from?: Date, to?: Date) {
+    const key = `topassets${this.accKey(accountId, includeInactive)}${this.rangeKey(from, to)}`;
+    return this.withCache(userId, key, CACHE_TTL.ANALYTICS, () => this.computeTopAssets({ userId, accountId, includeInactive, from, to }));
   }
   async getMonthlyActivity(userId: string, year: number, month: number, accountId?: string, includeInactive = false) {
     return this.withCache(userId, `activity:${year}:${month}${this.accKey(accountId, includeInactive)}`, CACHE_TTL.ANALYTICS, () => this.computeMonthlyActivity({ userId, accountId, includeInactive }, year, month));
