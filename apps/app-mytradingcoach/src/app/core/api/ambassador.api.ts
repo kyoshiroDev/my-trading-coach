@@ -11,6 +11,8 @@ export interface ReferralUser {
   plan: Plan;
   createdAt: string;
   isActive: boolean;
+  /** 20 % du montant mensuel réellement payé, calculé par l'API (fondateur, annuel, code partenaire). */
+  monthlyCommission: number;
 }
 
 export interface AmbassadorStats {

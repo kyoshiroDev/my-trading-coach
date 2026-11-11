@@ -7,6 +7,7 @@ import {
 import { Prisma, Role } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuthUserCacheService } from '../infra/auth-user-cache.service';
+import { referralMonthlyCommission } from './ambassador-commission.util';
 
 // Lien de parrainage : même format que celui affiché par le dashboard ambassadeur.
 const REFERRAL_BASE = 'https://mytradingcoach.app';
@@ -36,6 +37,8 @@ export interface ReferralUser {
   plan: string;
   createdAt: Date;
   isActive: boolean;
+  /** 20 % du montant mensuel réellement payé (fondateur, annuel ÷ 12, code partenaire) ; 0 sans abonnement actif. */
+  monthlyCommission: number;
 }
 
 export interface AmbassadorStats {
@@ -273,10 +276,17 @@ export class AmbassadorService {
         plan: true,
         createdAt: true,
         _count: { select: { trades: true } },
+        stripeInterval: true,
+        stripeSubscriptionStatus: true,
+        founderSeat: { select: { status: true } },
+        partnerRedemption: {
+          select: { status: true, priceMonthlyEur: true, priceAnnualEur: true, durationMonths: true, createdAt: true },
+        },
       },
       orderBy: { createdAt: 'desc' },
     });
 
+    const now = new Date();
     const free    = referredUsers.filter(u => u.plan === 'FREE').length;
     const premium = referredUsers.filter(u => u.plan === 'PREMIUM').length;
 
@@ -305,6 +315,7 @@ export class AmbassadorService {
         plan: u.plan,
         createdAt: u.createdAt,
         isActive: u._count.trades > 0,
+        monthlyCommission: referralMonthlyCommission(u, now),
       })),
       total: referredUsers.length,
       free,
