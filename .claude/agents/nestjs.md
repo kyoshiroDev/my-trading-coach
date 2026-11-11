@@ -60,17 +60,17 @@ PATCH  /api/trades/:id
 DELETE /api/trades/:id
 
 GET    /api/analytics/summary                    FREE + PREMIUM (pas de PremiumGuard). ?from&to = periode glissante du dashboard (sans bornes = tout l'historique)
-GET    /api/analytics/by-setup                   PREMIUM
-GET    /api/analytics/by-emotion                 PREMIUM
-GET    /api/analytics/by-hour                    PREMIUM
-GET    /api/analytics/equity-curve               PREMIUM
-GET    /api/analytics/equity-curve/current-month FREE (carte equite dashboard, legacy)
+GET    /api/analytics/by-setup                   PREMIUM, ?from&to (période du dashboard / des Statistiques, #947)
+GET    /api/analytics/by-emotion                 FREE (vue de base, donut du dashboard), ?from&to
+GET    /api/analytics/by-hour                    PREMIUM, ?from&to
+GET    /api/analytics/equity-curve               FREE
+GET    /api/analytics/equity-curve/current-month FREE (carte equite dashboard, legacy ; mois dans la clé de cache)
 GET    /api/analytics/equity-curve/daily         FREE, ?from&to → carte equite scopee periode
 GET    /api/analytics/activity/range             FREE, ?from&to → P&L par jour du dashboard (agregation jour/semaine/mois cote front)
 GET    /api/analytics/activity/current-month     FREE (activite mensuelle)
-GET    /api/analytics/activity/:year/:month      PREMIUM
-GET    /api/analytics/top-assets                 PREMIUM
-GET    /api/analytics/daily-recap/yesterday      JWT → recap de la veille
+GET    /api/analytics/activity/:year/:month      FREE (donnée propre de l'utilisateur, analytics.controller.spec)
+GET    /api/analytics/top-assets                 FREE (vue de base), ?from&to
+GET    /api/analytics/daily-recap/yesterday      JWT → récap de la DERNIÈRE journée tradée sur 7 jours (le lundi : vendredi, #947)
 
 POST   /api/session/start              JWT → démarrer une session, { mood: MoodState }
 GET    /api/session/active             JWT → session active en cours (null si aucune)

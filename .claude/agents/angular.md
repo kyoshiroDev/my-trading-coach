@@ -530,6 +530,22 @@ envoyées à l'API sont des horodatages ISO complets.
 - Test d'un composant à `templateUrl` + `input()` sous vitest (JIT) : template lu par `readFileSync`
   + `overrideComponent`, et signal posé directement sur l'instance (`trade-stop-dialog.component.spec.ts`).
 
+## Périodes et chiffres affichés (audit des chiffres, #947)
+- **Bornes de période** : la fin d'une période glissante est la **fin de la journée** (23:59:59.999), jamais
+  `new Date()` dans un `computed` (figé à l'ouverture : un trade saisi ou importé ensuite sortait des KPI).
+  Tableau de bord : `periodRange.to` ; Journal : `presetRange` (aujourd'hui / semaine / mois / perso).
+- **Semaine = lundi → dimanche** (ISO) partout, préréglage « Cette semaine » du Journal compris.
+- **Période perso** : début à minuit LOCAL (`'AAAA-MM-JJ' + 'T00:00:00'`), jamais `new Date('AAAA-MM-JJ')`
+  (lu en UTC : la première heure du jour exclue à Paris).
+- **Tableau de bord** : by-setup, by-emotion et top-assets reçoivent la même `rangeQuery()` que les KPI.
+  Donut des émotions = `emotionSharesFromStats(by-emotion)` pour TOUS les plans (by-emotion est FREE).
+  Donut « répartition stratégies » FREE = 6 derniers trades (by-setup est Premium) avec le sous-titre
+  « Sur tes 6 derniers trades » : jamais un chiffre sous un sélecteur de période qu'il ne suit pas.
+  Libellés de période (`periodShort`) : jamais « ce mois » en dur (KPI Trades pris, coach).
+- **Récap du matin** : la carte montre la dernière journée tradée (API, 7 jours) ; « Hier · » seulement si
+  c'est hier (`recapIsYesterday`), sinon le nom du jour.
+- **Mes comptes** : « P&L cumulé » = `metrics.tradingPnl` (payouts rajoutés), jamais `realizedPnl`.
+
 ## Tableau de lignes — pattern partagé (Journal · Mes comptes)
 
 Une liste d'objets comparables (trades, comptes) s'affiche en **lignes alignées**, jamais en
