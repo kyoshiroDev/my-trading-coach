@@ -847,6 +847,13 @@ une session de 11 jours). Seul `startSession` ferme encore TOUTES les `ACTIVE` s
 (valeur du tick × quantité, ou capital engagé) : jamais l'écart de prix brut (avant : MNQ 2 contrats
 +10 pts enregistré 10 $ au lieu de 40 $).
 
+### Totaux stockés d'une séance clôturée (#947)
+`TradingSession.totalPnl / winRate / totalTrades / maxDrawdown / bestTrade*` sont écrits à la clôture,
+puis RECALCULÉS par `refreshClosedSessionTotals` (`session/refresh-session-totals.ts`, même
+`sessionTotalsFrom` que la clôture) dès qu'un de leurs trades change : `TradesService.update`, `remove`,
+`removeBrokerImported`, `reassignAccount`, `refreshAfterFeesRepair`, et `SessionService.closeTrade`.
+Toute nouvelle écriture sur un trade rattaché à une séance passe par lui.
+
 ### Filtre Gagnants / Perdants / BE du journal (#947)
 Classé sur le NET arrondi (`TRADE_NET_SQL` = `round(pnl − |commission|, 2)`), comme les stats. Prisma ne
 sait pas comparer `pnl − |commission|` : la liste passe par `resolveTradeWhere` (ids sélectionnés par

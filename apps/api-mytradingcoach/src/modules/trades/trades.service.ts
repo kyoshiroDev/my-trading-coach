@@ -29,6 +29,7 @@ import { UpdateTradeDto } from './dto/update-trade.dto';
 import type { SetTradeStopDto } from './dto/set-trade-stop.dto';
 import { TradeFiltersDto } from './dto/trade-filters.dto';
 import { resolveTradeWhere } from './trade-filters.util';
+import { refreshClosedSessionTotals } from '../session/refresh-session-totals';
 import { calculatePnl, calculateRiskReward } from './trade-metrics.util';
 import { dedupeKey, duplicateIdentity, occurrenceHash } from './trade-identity.util';
 import { journalStatsForFilters, type JournalStats } from './journal-stats.util';
@@ -472,6 +473,8 @@ export class TradesService {
         tradeSession: { select: { moodStart: true } },
       },
     });
+    // Totaux stockés de la séance clôturée (ancienne et nouvelle si le trade change de séance).
+    await refreshClosedSessionTotals(this.prisma, [existing.sessionId, result.sessionId]);
     await this.analyticsService.invalidateUserCache(userId);
 
     // L'édition (P&L, quantité…) modifie les médianes du compte → recalcul comportemental (une passe).
@@ -514,6 +517,7 @@ export class TradesService {
   async remove(userId: string, id: string) {
     const existing = await this.findOne(userId, id);
     await this.prisma.trade.delete({ where: { id } });
+    await refreshClosedSessionTotals(this.prisma, [existing.sessionId]);
     await this.analyticsService.invalidateUserCache(userId);
     // La suppression modifie les médianes du compte → recalcul comportemental.
     if (existing.accountId) await this.recomputeBehavioralGrades(existing.accountId);
@@ -525,10 +529,11 @@ export class TradesService {
    * Le `userId` dans le `where` garantit qu'on ne touche que ses trades (anti-IDOR).
    */
   async removeBrokerImported(userId: string, accountId: string): Promise<number> {
-    const { count } = await this.prisma.trade.deleteMany({
-      where: { userId, accountId, source: { in: BROKER_TRADE_SOURCES } },
-    });
+    const where = { userId, accountId, source: { in: BROKER_TRADE_SOURCES } };
+    const sessions = await this.prisma.trade.findMany({ where, select: { sessionId: true }, distinct: ['sessionId'] });
+    const { count } = await this.prisma.trade.deleteMany({ where });
     if (count > 0) {
+      await refreshClosedSessionTotals(this.prisma, sessions.map((s) => s.sessionId));
       await this.analyticsService.invalidateUserCache(userId);
       // Les médianes du compte changent → recalcul comportemental (cf. remove).
       await this.recomputeBehavioralGrades(accountId);
@@ -545,12 +550,14 @@ export class TradesService {
     // Comptes source (avant déplacement) pour recalculer leur barème comportemental.
     const before = await this.prisma.trade.findMany({
       where: { id: { in: tradeIds }, userId },
-      select: { accountId: true },
+      select: { accountId: true, sessionId: true },
     });
     const result = await this.prisma.trade.updateMany({
       where: { id: { in: tradeIds }, userId },
       data: { accountId },
     });
+    // 1 séance = 1 compte : un trade déplacé sort des totaux de sa séance d'un autre compte.
+    await refreshClosedSessionTotals(this.prisma, before.map((t) => t.sessionId));
     await this.analyticsService.invalidateUserCache(userId);
 
     const accounts = new Set<string>([
@@ -590,6 +597,12 @@ export class TradesService {
    */
   async refreshAfterFeesRepair(userId: string, accountId: string): Promise<void> {
     await this.recomputeBehavioralGrades(accountId);
+    const sessions = await this.prisma.trade.findMany({
+      where: { userId, accountId, sessionId: { not: null } },
+      select: { sessionId: true },
+      distinct: ['sessionId'],
+    });
+    await refreshClosedSessionTotals(this.prisma, sessions.map((s) => s.sessionId));
     await this.analyticsService.invalidateUserCache(userId);
   }
 }

@@ -15,6 +15,7 @@ import { parseWorkingOrders, protectionFor, workingOrdersKey } from '../integrat
 import { activeSessionWhere, tradingDayStart } from './active-session';
 import { autoCloseData, sessionTotalsFrom } from './session-totals';
 import { calculatePnl } from '../trades/trade-metrics.util';
+import { refreshClosedSessionTotals, sessionTradesFor } from './refresh-session-totals';
 import type { CreateTradeDto } from '../trades/dto/create-trade.dto';
 
 // Forme de GET /session/history : contrat partagé avec le front (@mtc/shared).
@@ -144,11 +145,7 @@ export class SessionService {
   }
 
   private sessionTrades(userId: string, sessionId: string, sameAccount: { accountId?: string }) {
-    return this.prisma.trade.findMany({
-      where: { userId, sessionId, ...sameAccount },
-      select: { pnl: true, commission: true, asset: true, tradedAt: true, accountId: true },
-      orderBy: { tradedAt: 'asc' },
-    });
+    return sessionTradesFor(this.prisma, userId, sessionId, sameAccount.accountId ?? null);
   }
 
   /**
@@ -439,7 +436,8 @@ export class SessionService {
         tags: { push: closeType },
       },
     });
-    // Le P&L change : les statistiques en cache (dashboard) doivent être recalculées.
+    // Le P&L change : totaux de sa séance si elle est déjà clôturée, et statistiques en cache.
+    await refreshClosedSessionTotals(this.prisma, [trade.sessionId]);
     await this.analytics.invalidateUserCache(userId);
     return closed;
   }

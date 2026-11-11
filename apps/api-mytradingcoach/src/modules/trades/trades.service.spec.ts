@@ -73,6 +73,9 @@ const mockPrisma = {
   tradeSession: {
     findFirst: vi.fn().mockResolvedValue(null),
     findUnique: vi.fn().mockResolvedValue(null), // moodStart (note d'exécution)
+    // Totaux des séances clôturées recalculés après édition / suppression (#947).
+    findMany: vi.fn().mockResolvedValue([]),
+    update: vi.fn(),
   },
   // Compte cible pour la note d'exécution (capital) — null par défaut (critère risque ignoré).
   tradingAccount: {
@@ -507,6 +510,23 @@ describe('TradesService', () => {
       // (le net 190 est calculé à la lecture par netPnl).
       expect(result.pnl).toBe(200);
       expect(result.commission).toBe(10);
+    });
+
+    it('édition ou suppression d’un trade d’une séance → totaux de la séance recalculés (#947)', async () => {
+      const existingTrade = { ...mockTrade, pnl: 80, sessionId: 'sess-1' };
+      mockPrisma.trade.findUnique.mockResolvedValue(existingTrade);
+      mockPrisma.trade.update.mockImplementation(({ data }) => Promise.resolve({ ...existingTrade, ...data }));
+
+      await service.update('user-123', 'trade-123', { commission: 2 });
+      expect(mockPrisma.tradeSession.findMany).toHaveBeenLastCalledWith(
+        expect.objectContaining({ where: { id: { in: ['sess-1'] }, status: 'CLOSED' } }),
+      );
+
+      mockPrisma.tradeSession.findMany.mockClear();
+      await service.remove('user-123', 'trade-123');
+      expect(mockPrisma.tradeSession.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { id: { in: ['sess-1'] }, status: 'CLOSED' } }),
+      );
     });
 
     it('ne recalcule pas le P&L si seuls setup/emotion changent', async () => {
