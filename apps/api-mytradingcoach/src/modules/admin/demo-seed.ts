@@ -1,6 +1,6 @@
 import { hashPassword } from '../auth/password-hashing';
 import { PrismaClient, SessionStatus, AccountStatus, BrokerProvider, BrokerConnectionStatus } from '@prisma/client';
-import { computeTradeStats, maxDrawdownOfTrades } from '@mtc/shared';
+import { computeTradeStats, maxDrawdownOfTrades, type EcoResultAnalysis } from '@mtc/shared';
 import { seedDefaultSetups } from '../setups/setups.defaults';
 import { type AccountKey, APEX_DAILY_LOSS_LIMIT, DEMO_ACCOUNTS, DEMO_EMAIL, round2 } from './demo-data/config';
 import { ONELINERS, PLANS, REFLECTIONS_GREEN, REFLECTIONS_RED, REFLECTION_REVENGE } from './demo-data/texts';
@@ -12,6 +12,7 @@ import { tradingDayStart } from '../session/active-session';
 import { buildDemoRiskJournal, dayRiskLine, weekRiskNote } from './demo-data/prop-risk';
 import { classifyEcoEvent } from '../eco-calendar/eco-calendar.impact';
 import { assetsSignature } from '../eco-calendar/eco-release-analysis';
+import { releaseGap } from '../eco-calendar/eco-calendar.gap';
 import { seedDemoPush } from './demo-data/push';
 import { DEMO_INCIDENT_ANALYSIS, LOST_DEMO_ACCOUNTS, buildLostDemoIncident, buildLostDemoTrades } from './demo-data/lost-accounts';
 
@@ -501,8 +502,8 @@ async function seedFakeEcoEvents(prisma: PrismaClient, today: string): Promise<s
 
 /**
  * Sans FMP (local, tests) : le vendredi précédent, NFP et chômage US publiés à 14:30 avec leur
- * analyse IA déjà produite (`EcoReleaseAnalysis`, signature d'actifs du compte démo) : le calendrier
- * d'un jour passé montre l'analyse, sans appel IA.
+ * analyse déjà produite (`EcoReleaseAnalysis`, signature d'actifs du compte démo, format factuel
+ * `{ interpretation, gap }`) : le calendrier d'un jour passé montre l'analyse, sans appel IA.
  */
 async function seedFakePastRelease(prisma: PrismaClient, userId: string, now: Date): Promise<void> {
   const friday = new Date(now);
@@ -527,22 +528,7 @@ async function seedFakePastRelease(prisma: PrismaClient, userId: string, now: Da
   recent.forEach((t) => count.set(t.asset, (count.get(t.asset) ?? 0) + 1));
   const assets = [...count.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5).map(([a]) => a);
   const assetsKey = assetsSignature(assets);
-  const sentiments = (sentiment: 'bull' | 'bear' | 'neutral', reason: string) =>
-    assets.map((asset) => ({ asset, sentiment, shortReason: reason }));
-  const analyses: Record<string, { interpretation: string; assetSentiments: ReturnType<typeof sentiments> }> = {
-    'Nonfarm Payrolls': {
-      interpretation: 'Emploi nettement au-dessus du consensus (254K contre 180K) : le marché repousse la baisse des taux de la Fed, les rendements montent et les indices actions reculent à l’ouverture.',
-      assetSentiments: sentiments('bear', 'taux plus hauts plus longtemps, pression sur les valorisations'),
-    },
-    'Unemployment Rate': {
-      interpretation: 'Chômage en baisse à 4,1 % : il confirme un marché du travail solide, dans le même sens que les NFP.',
-      assetSentiments: sentiments('bear', 'confirme le scénario d’une Fed patiente'),
-    },
-    'ISM Services PMI': {
-      interpretation: 'Activité des services en accélération : signal de croissance, mais la composante prix reste élevée. Réaction partagée après le choc des NFP.',
-      assetSentiments: sentiments('neutral', 'croissance solide, inflation des services à surveiller'),
-    },
-  };
+  const analyses = fakePastReleaseAnalyses(events);
   for (const [eventName, analysis] of Object.entries(analyses)) {
     await prisma.ecoReleaseAnalysis.upsert({
       where: { date_eventName_assetsKey: { date, eventName, assetsKey } },
@@ -550,6 +536,27 @@ async function seedFakePastRelease(prisma: PrismaClient, userId: string, now: Da
       create: { date, eventName, assetsKey, analysisJson: JSON.stringify(analysis) },
     });
   }
+}
+
+const FAKE_RELEASE_TEXTS: Record<string, string> = {
+  'Nonfarm Payrolls': 'Créations d’emplois au-dessus de la prévision : 254K publiés pour 180K attendus (223K le mois précédent). Ce chiffre mesure les emplois créés hors agriculture aux États-Unis sur le mois.',
+  'Unemployment Rate': 'Taux de chômage à 4,1 %, sous la prévision et le mois précédent (4,2 %). Il mesure la part de la population active sans emploi.',
+  'ISM Services PMI': 'ISM des services à 54,9, au-dessus de la prévision (53,6) et du mois précédent (51,5). Au-dessus de 50, l’indice signale une activité des services en expansion.',
+};
+
+/**
+ * Analyses du faux vendredi au format du produit (`{ interpretation, gap }`) : texte factuel, écart
+ * calculé en code comme pour une vraie analyse, aucune direction de marché ni sentiment.
+ */
+export function fakePastReleaseAnalyses(
+  events: { name: string; actual: number | null; estimate: number | null }[],
+): Record<string, EcoResultAnalysis> {
+  const out: Record<string, EcoResultAnalysis> = {};
+  for (const e of events) {
+    const interpretation = FAKE_RELEASE_TEXTS[e.name];
+    if (interpretation) out[e.name] = { interpretation, gap: releaseGap(e.actual, e.estimate) };
+  }
+  return out;
 }
 
 // Réexports : API publique historique de ce module (cron, service, spec, script).
