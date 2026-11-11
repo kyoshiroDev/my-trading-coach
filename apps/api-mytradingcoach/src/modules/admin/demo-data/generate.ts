@@ -265,7 +265,7 @@ export function gradeAll(days: DemoDay[]): void {
     const medianLoss = median(ts.filter(isLoss).map((t) => Math.abs(t.pnl)));
     const medianQuantity = median(ts.map((t) => t.quantity));
     ts.forEach((t, i) => {
-      if (t.stopLoss != null) return;
+      if (t.executionMethod === ExecutionMethod.STOP_BASED) return; // barème A posé ; stop seul → barème B (#929)
       const day = t.tradedAt.toISOString().slice(0, 10);
       let lastSameDayLossAt: Date | null = null;
       for (let j = i - 1; j >= 0; j--) {
