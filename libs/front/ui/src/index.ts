@@ -11,3 +11,4 @@ export * from './lib/scroll-memory/scroll-memory.directive';
 export * from './lib/http/error.interceptor';
 export * from './lib/http/error-notifier';
 export * from './lib/http/silent-errors';
+export * from './lib/percent/percent.pipe';
