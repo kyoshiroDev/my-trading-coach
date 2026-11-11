@@ -171,3 +171,13 @@ describe('gradeTooltip', () => {
     );
   });
 });
+
+describe('en-têtes jour / semaine : fraction gagnants / décisifs (#947)', () => {
+  it('BE et ouverts exclus, comme computeTradeStats', () => {
+    const open = { id: 'o', pnl: null, commission: 0, tradedAt: new Date(2026, 9, 27, 15).toISOString() } as unknown as Trade;
+    const [day] = groupByDay([trade('w', 100, 0, 9), trade('l', -40, 0, 10), trade('be', 2, 2, 11), open]);
+    expect(day).toMatchObject({ count: 4, winCount: 1, lossCount: 1 });
+    const [week] = groupByWeek([day]);
+    expect(week).toMatchObject({ count: 4, winCount: 1, lossCount: 1 });
+  });
+});
