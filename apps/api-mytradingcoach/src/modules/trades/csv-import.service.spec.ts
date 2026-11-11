@@ -901,3 +901,13 @@ describe('CsvImportService · limite quotidienne et journal du repli', () => {
     expect(create).toHaveBeenCalled();
   });
 });
+
+describe('CsvImportService — frais totaux répartis (#947)', () => {
+  it('la somme des parts = total saisi, au centime (10 $ sur 3 trades → 3,33 + 3,33 + 3,34)', () => {
+    const svc = makeService() as unknown as { distributeFees: (d: { quantity?: number; commission?: number }[], f: number) => { commission?: number }[] };
+    const out = svc.distributeFees([{ quantity: 1 }, { quantity: 1 }, { quantity: 1 }], 10);
+    expect(out.map((d) => d.commission)).toEqual([3.33, 3.33, 3.34]);
+    const prorata = svc.distributeFees([{ quantity: 3 }, { quantity: 1, commission: 0.5 }], 8);
+    expect(prorata.map((d) => d.commission)).toEqual([6, 2.5]);
+  });
+});

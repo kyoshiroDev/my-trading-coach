@@ -321,11 +321,16 @@ export class CsvImportService {
     const totalQty = dtos.reduce((sum, d) => sum + (d.quantity ?? 1), 0);
     if (totalQty <= 0) return dtos;
 
-    return dtos.map((d) => {
+    // Répartition au centime : le dernier trade prend le reste, la somme des parts = total saisi
+    // (avant, 10 $ sur 3 trades donnait 3 × 3,33 = 9,99 $, #947).
+    const totalCents = Math.round(totalFees * 100);
+    let left = totalCents;
+    return dtos.map((d, i) => {
       const qty = d.quantity ?? 1;
-      const fee = +(totalFees * (qty / totalQty)).toFixed(2);
+      const feeCents = i === dtos.length - 1 ? left : Math.round((totalCents * qty) / totalQty);
+      left -= feeCents;
       // On additionne aux frais éventuels déjà présents (CSV), sinon on pose.
-      const commission = +((d.commission ?? 0) + fee).toFixed(2);
+      const commission = +((d.commission ?? 0) + feeCents / 100).toFixed(2);
       return { ...d, commission };
     });
   }
