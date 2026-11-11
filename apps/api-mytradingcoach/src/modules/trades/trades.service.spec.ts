@@ -755,6 +755,22 @@ describe('TradesService', () => {
       expect(second).toBe(`${first}#2`);
     });
 
+    it('ré-import MEXC d’un trade stocké à l’ancien format (P&L net) : doublon, pas recréé (#947)', async () => {
+      // Avant #947, le parseur MEXC stockait le Realized PNL (net) dans `pnl` ; il stocke maintenant le
+      // brut (net + frais). Le même fichier ré-importé ne doit pas recréer ces trades.
+      const mexcAt = new Date('2026-05-30T12:31:55.000Z');
+      mockPrisma.trade.findMany.mockResolvedValue([
+        { asset: 'BTC/USDT', side: TradeSide.SHORT, tradedAt: mexcAt, entry: 73602.51, exit: 73692.56, pnl: -6.5727459 },
+      ]);
+      mockPrisma.trade.create.mockResolvedValue(mockTrade);
+      const res = await service.importTrades('user-123', [{
+        asset: 'BTC/USDT', side: TradeSide.SHORT, entry: 73602.51, exit: 73692.56, pnl: -4.95, commission: 1.62,
+        tradedAt: mexcAt.toISOString(), setupId: 'setup-1', emotion: EmotionState.NEUTRAL,
+        session: TradingSession.LONDON, timeframe: '1h',
+      }]);
+      expect(res).toMatchObject({ created: 0, duplicates: 1 });
+    });
+
     it('réimport de la même source : aucune répétition recréée', async () => {
       mockPrisma.trade.findMany.mockResolvedValue([row('ETH/USDT'), row('ETH/USDT')]);
       mockPrisma.tradeSession.findFirst.mockResolvedValue(null);

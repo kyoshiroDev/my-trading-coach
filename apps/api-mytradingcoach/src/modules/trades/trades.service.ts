@@ -32,7 +32,7 @@ import { resolveTradeWhere } from './trade-filters.util';
 import { getTickValue } from './instruments.const';
 import { refreshClosedSessionTotals } from '../session/refresh-session-totals';
 import { calculatePnl, calculateRiskReward } from './trade-metrics.util';
-import { dedupeKey, duplicateIdentity, occurrenceHash } from './trade-identity.util';
+import { dedupeKey, duplicateIdentity, LegacyNetPnlPool, occurrenceHash } from './trade-identity.util';
 import { journalStatsForFilters, type JournalStats } from './journal-stats.util';
 import { recomputeBehavioralGrades } from './behavioral-grades';
 import { stopPlacementError } from '@mtc/shared';
@@ -219,6 +219,8 @@ export class TradesService {
     // Même trade déjà en base mais daté dans un autre fuseau (export CSV sans fuseau ↔ API en
     // UTC) : doublon, un-pour-un. Vaut dans les deux sens : CSV avant OU après la synchro.
     const otherTimezone = new CrossSourcePool(existing);
+    // Trade stocké à l'ancien format (P&L net, ancien parseur MEXC) : doublon, un-pour-un (#947).
+    const legacyNet = new LegacyNetPnlPool(existing);
     // Empreintes déjà prises : la clé, puis `#2`, `#3`… autant de fois que la clé existe en base.
     const seen = new Set<string>();
     const inBase = new Map<string, number>();
@@ -247,7 +249,7 @@ export class TradesService {
       const n = (inSource.get(key) ?? 0) + 1;
       inSource.set(key, n);
       const hash = occurrenceHash(key, n);
-      if (seen.has(hash)) {
+      if (seen.has(hash) || legacyNet.take(dto)) {
         duplicates++;
         continue;
       }
