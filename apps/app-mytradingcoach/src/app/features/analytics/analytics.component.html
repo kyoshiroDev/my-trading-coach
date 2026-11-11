@@ -22,7 +22,7 @@
         data-testid="analytics-win-rate"
         [style.color]="winRateColor()"
       >
-        {{ summary() ? summary()!.winRate.toFixed(1) + '%' : '-' }}
+        {{ summary()?.winRate | pct }}
       </div>
       <div class="stat-sub" data-testid="analytics-trades">
         {{ summary()?.totalTrades ?? 0 }} trades
@@ -170,7 +170,7 @@
                       "
                     >
                       @if (cell) {
-                        {{ cell.winRate.toFixed(0) }}%
+                        {{ cell.winRate | pct }}
                       }
                     </td>
                   }
@@ -219,7 +219,7 @@
                 <td class="td-asset">{{ asset.asset }}</td>
                 <td class="mono">{{ asset.count }}</td>
                 <td class="mono" [style.color]="rateColor(asset.winRate)">
-                  {{ asset.winRate.toFixed(0) }}%
+                  {{ asset.winRate | pct }}
                 </td>
                 <td class="mono" [style.color]="pnlColor(asset.pnl)">
                   {{ asset.pnl | pnlFormat }}
@@ -262,7 +262,7 @@
                 </td>
                 <td class="mono">{{ setup.count }}</td>
                 <td class="mono" [style.color]="setup.winRate !== null ? rateColor(setup.winRate) : null">
-                  @if (setup.winRate !== null) { {{ setup.winRate.toFixed(0) }}% } @else { - }
+                  {{ setup.winRate | pct }}
                 </td>
                 @if (setup.avgRR !== null) {
                   <td

@@ -1,3 +1,4 @@
+import { PctPipe } from '@mtc/front-ui';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -61,7 +62,7 @@ const EMOTION_COLORS: Record<string, string> = {
 
 @Component({
   selector: 'mtc-today-session',
-  imports: [DialogDirective, ErrorStateComponent, DatePipe, LucideDynamicIcon, SessionMorningComponent, SessionLiveComponent, ResultsShareComponent, EmotionEmojiPipe, PnlColorPipe, PnlFormatPipe],
+  imports: [PctPipe, DialogDirective, ErrorStateComponent, DatePipe, LucideDynamicIcon, SessionMorningComponent, SessionLiveComponent, ResultsShareComponent, EmotionEmojiPipe, PnlColorPipe, PnlFormatPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './today-session.component.css',
   templateUrl: './today-session.component.html',

@@ -189,7 +189,7 @@
             <div class="card4-l">Trades</div>
           </div>
           <div class="card4">
-            <div class="card4-v">{{ (debriefStats()?.winRate ?? 0) > 0 ? (debriefStats()!.winRate.toFixed(0) + '%') : '-' }}</div>
+            <div class="card4-v">{{ debriefStats()?.winRate | pct }}</div>
             <div class="card4-l">Win Rate</div>
           </div>
           <div class="card4">

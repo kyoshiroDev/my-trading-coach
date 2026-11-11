@@ -1,3 +1,4 @@
+import { PctPipe } from '@mtc/front-ui';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -49,7 +50,7 @@ function typeBadge(type: string): { label: string; cls: string } | null {
 
 @Component({
   selector: 'mtc-debrief',
-  imports: [
+  imports: [PctPipe, 
     ErrorStateComponent,
     InfoTooltipComponent,
     DatePipe,

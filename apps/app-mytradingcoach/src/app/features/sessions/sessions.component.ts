@@ -1,3 +1,4 @@
+import { PctPipe } from '@mtc/front-ui';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -42,7 +43,7 @@ interface WeekGroup {
   selector: 'mtc-sessions',
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './sessions.component.css',
-  imports: [LucideDynamicIcon, ErrorStateComponent, DatePipe, DecimalPipe, PnlFormatPipe, EmotionEmojiPipe, RouterLink, AccountSelectorComponent, InactiveAccountsToggleComponent],
+  imports: [PctPipe, LucideDynamicIcon, ErrorStateComponent, DatePipe, DecimalPipe, PnlFormatPipe, EmotionEmojiPipe, RouterLink, AccountSelectorComponent, InactiveAccountsToggleComponent],
   templateUrl: './sessions.component.html',
 })
 export class SessionsComponent {

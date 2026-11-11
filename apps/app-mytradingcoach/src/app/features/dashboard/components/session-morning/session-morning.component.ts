@@ -1,3 +1,4 @@
+import { PctPipe } from '@mtc/front-ui';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -63,7 +64,7 @@ const DEMO_OBJECTIVES: DebriefObjective[] = [
 
 @Component({
   selector: 'mtc-session-morning',
-  imports: [DatePipe, RouterLink, LucideDynamicIcon, PremiumLockComponent, MoneyPipe],
+  imports: [PctPipe, DatePipe, RouterLink, LucideDynamicIcon, PremiumLockComponent, MoneyPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './session-morning.component.css',
   templateUrl: './session-morning.component.html',

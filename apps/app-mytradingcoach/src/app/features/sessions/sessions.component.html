@@ -135,7 +135,7 @@
                   </div>
                   <div class="stat">
                     <div class="stat-val">
-                      {{ session.winRate !== null && session.winRate !== undefined ? (session.winRate | number:'1.0-0') + '\u00A0%' : '-' }}
+                      {{ session.winRate | pct }}
                     </div>
                     <div class="stat-lbl">Win Rate</div>
                   </div>

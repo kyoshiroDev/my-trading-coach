@@ -1,3 +1,4 @@
+import { PctPipe } from '@mtc/front-ui';
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -129,7 +130,7 @@ import { activeTrial } from '../../core/utils/trial.util';
 
 @Component({
   selector: 'mtc-admin-user-detail',
-  imports: [DatePipe, RouterLink, ActivityCalendarComponent],
+  imports: [PctPipe, DatePipe, RouterLink, ActivityCalendarComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './user-detail.component.css',
   templateUrl: './user-detail.component.html',

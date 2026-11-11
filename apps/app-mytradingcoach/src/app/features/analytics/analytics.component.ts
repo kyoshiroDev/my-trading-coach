@@ -1,3 +1,4 @@
+import { PctPipe } from '@mtc/front-ui';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -51,7 +52,7 @@ const MOCK_SETUP_BARS = [88, 72, 65, 54, 38] as const;
 
 @Component({
   selector: 'mtc-analytics',
-  imports: [
+  imports: [PctPipe, 
     TopbarComponent,
     PnlFormatPipe,
     SessionLabelPipe,

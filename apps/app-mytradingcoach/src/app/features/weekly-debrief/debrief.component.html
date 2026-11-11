@@ -132,7 +132,7 @@
                   </div>
                   <div class="cmp-stat"><span class="cmp-l">Trades</span>{{ a.stats.totalTrades }}</div>
                   <div class="cmp-stat"><span class="cmp-l">Win rate</span>
-                    @if (a.stats.totalTrades) { <span class="b">{{ a.stats.winRate.toFixed(1) }}%</span> } @else { <span class="muted">-</span> }
+                    @if (a.stats.totalTrades) { <span class="b">{{ a.stats.winRate | pct }}</span> } @else { <span class="muted">-</span> }
                   </div>
                   <div class="cmp-stat"><span class="cmp-l">P&amp;L</span>
                     <span [class.g]="a.stats.totalPnl >= 0" [class.r]="a.stats.totalPnl < 0">{{ a.stats.totalPnl | pnlFormat }}</span>
@@ -189,7 +189,7 @@
           } @else {
             <div class="stat-card"><div class="stat-label">Win Rate</div>
               <div class="stat-value" [class.text-green]="a.stats.winRate >= 50" [class.text-red]="a.stats.winRate > 0 && a.stats.winRate < 50" [class.text-muted]="!a.stats.totalTrades">
-                {{ a.stats.totalTrades ? a.stats.winRate.toFixed(1) + '%' : '-' }}
+                {{ a.stats.totalTrades ? (a.stats.winRate | pct) : '—' }}
               </div>
             </div>
             <div class="stat-card"><div class="stat-label">P&amp;L</div><div class="stat-value" [class.text-green]="a.stats.totalPnl >= 0" [class.text-red]="a.stats.totalPnl < 0">{{ a.stats.totalPnl | pnlFormat }}</div></div>
