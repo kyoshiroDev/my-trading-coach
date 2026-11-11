@@ -34,3 +34,20 @@ describe('SessionService.getSessionHistory — résumé IA du jour', () => {
     expect(recapFindMany).not.toHaveBeenCalled();
   });
 });
+
+describe('SessionService.getSessionHistory — gains / pertes par séance (#947)', () => {
+  it('wins / losses nets des frais, break-even et ouverts exclus', async () => {
+    const row = {
+      ...session('s1', '2026-09-24T07:30:00.000Z'),
+      trades: [
+        { asset: 'NQ', pnl: 100, commission: 0 },
+        { asset: 'NQ', pnl: 1, commission: 2 }, // +1 brut, −1 net : perte
+        { asset: 'NQ', pnl: 0, commission: 0 }, // BE
+        { asset: 'NQ', pnl: null, commission: null }, // ouvert
+      ],
+    };
+    const { service } = serviceWith([row], []);
+    const [h] = await service.getSessionHistory('u1');
+    expect(h).toMatchObject({ wins: 1, losses: 1 });
+  });
+});

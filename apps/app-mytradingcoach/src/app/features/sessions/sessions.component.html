@@ -44,8 +44,8 @@
         <div class="ms-lbl">Trades</div>
       </div>
       <div class="ms-card">
-        <div class="ms-val b">{{ monthSummary().avgWinRate | number:'1.0-0' }}&nbsp;%</div>
-        <div class="ms-lbl">Win Rate moy.</div>
+        <div class="ms-val b">{{ monthSummary().avgWinRate | pct }}</div>
+        <div class="ms-lbl">Win Rate</div>
       </div>
       <div class="ms-card">
         <div class="ms-val b">{{ formatDurationSeconds(monthSummary().avgDuration) }}</div>

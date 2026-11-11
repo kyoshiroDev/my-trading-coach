@@ -10,6 +10,9 @@ export interface SessionHistoryItem {
   totalPnl?: number | null;
   totalTrades: number;
   winRate?: number | null;
+  /** Trades gagnants / perdants de la séance (net des frais, BE et ouverts exclus, computeTradeStats). */
+  wins: number;
+  losses: number;
   notes?: string | null;
   reflectionNote?: string | null;
   reflectionQuestion?: string | null;

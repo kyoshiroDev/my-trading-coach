@@ -1,4 +1,6 @@
 import { PctPipe } from '@mtc/front-ui';
+import { roundCents } from '@mtc/shared';
+import { sessionsWinRate } from './sessions-win-rate.util';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -84,12 +86,10 @@ export class SessionsComponent {
 
   protected readonly monthSummary = computed(() => {
     const s = this.sessions();
-    const totalPnl = s.reduce((acc, x) => acc + (x.totalPnl ?? 0), 0);
+    const totalPnl = roundCents(s.reduce((acc, x) => acc + (x.totalPnl ?? 0), 0));
     const sessionCount = s.length;
     const totalTrades = s.reduce((acc, x) => acc + (x.totalTrades ?? 0), 0);
-    const avgWinRate = sessionCount
-      ? s.reduce((acc, x) => acc + (x.winRate ?? 0), 0) / sessionCount
-      : 0;
+    const avgWinRate = sessionsWinRate(s);
     const avgDuration = sessionCount
       ? s.reduce((acc, x) => acc + this.durationSeconds(x.startedAt, x.endedAt), 0) / sessionCount
       : 0;
