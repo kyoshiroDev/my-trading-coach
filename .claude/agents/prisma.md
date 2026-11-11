@@ -512,7 +512,9 @@ publiée (`analyze-result`) est gardée par `(date, eventName sans suffixe de p�
 écrite au premier calcul (upsert, `update: {}`), au clic comme par la génération automatique des
 annonces fortes (#920, `ensureReleasedAnalysis`), relue pour un jour passé par
 `GET /eco-calendar/release-analyses` sans appel IA. Pas d'`@@index([date])` : préfixe de l'unique.
-Le seed démo n'en écrit que sans FMP (faux vendredi NFP), jamais sur des annonces FMP.
+Le seed démo n'en écrit que sans FMP (faux vendredi NFP, chômage, ISM), au format factuel
+`{ interpretation, gap }` (écart par `releaseGap`, aucun sentiment ; textes dans
+`fakePastReleaseAnalyses`), jamais sur des annonces FMP. Il réécrit ses propres lignes à chaque passage.
 
 ## Index des requêtes chaudes (SCA-B2-05, 2026-10-03)
 

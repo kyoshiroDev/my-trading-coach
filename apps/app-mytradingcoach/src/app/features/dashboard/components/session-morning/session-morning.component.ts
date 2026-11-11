@@ -46,7 +46,8 @@ const DEMO_ECO_EVENTS: EcoEvent[] = [
   { time: '11:00', name: 'IPC Zone Euro (final)', currency: 'EUR', country: 'EU', impact: 'medium', actual: 2.4, estimate: 2.4, previous: 2.4, isReleased: true, unit: '%' },
 ];
 const DEMO_ECO_SUMMARY = "Journée chargée côté USD : les chiffres de l'emploi peuvent créer de la volatilité sur NQ et ES en début d'après-midi.";
-const DEMO_ECO_RECO = "Évite d'ouvrir une position 5 min avant le NFP (14:30).";
+// Même format que `morningFocus` (API) sur DEMO_ECO_EVENTS : point d'attention factuel, aucune consigne.
+const DEMO_ECO_RECO = 'Prochaine annonce à fort impact : 14:30, Non-Farm Payrolls (USD), Taux de chômage (USD). Volatilité possible autour de cet horaire.';
 // Recap « Hier » d'exemple (mode démo).
 const DEMO_RECAP: DailyRecap = {
   id: 'demo', date: new Date(Date.now() - 864e5).toISOString(),
