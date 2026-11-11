@@ -1,4 +1,4 @@
-import type { LiveBrokerState } from '@mtc/shared';
+import { roundCents, type LiveBrokerState } from '@mtc/shared';
 
 /**
  * Bloc « Trade en cours » (bêta) : rôles qui le voient pendant la phase de test. Val
@@ -23,7 +23,7 @@ export function liveTotals(realized: number, broker: LiveBrokerState | null | un
   return {
     realized,
     latent,
-    total: latent === null ? null : Math.round((realized + latent) * 100) / 100,
+    total: latent === null ? null : roundCents(realized + latent),
     hasPosition,
   };
 }

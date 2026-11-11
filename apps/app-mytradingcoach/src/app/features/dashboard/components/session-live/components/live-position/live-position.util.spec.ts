@@ -24,6 +24,12 @@ describe('liveTotals', () => {
     expect(liveTotals(100, broker({ openPnl: null }))).toMatchObject({ latent: 0, total: 100, hasPosition: false });
   });
 
+  it('total arrondi par roundCents comme partout (#947)', () => {
+    // Math.round(x * 100) / 100 donnait −10,57 et 1,00 (flottants) ; roundCents : −10,58 et 1,01.
+    expect(liveTotals(-10, broker({ openPositions: [position], openPnl: -0.575 })).total).toBe(-10.58);
+    expect(liveTotals(0.5, broker({ openPositions: [position], openPnl: 0.505 })).total).toBe(1.01);
+  });
+
   it('compte non synchronisé → pas de latent', () => {
     expect(liveTotals(100, null)).toMatchObject({ latent: null, total: null, hasPosition: false });
   });
