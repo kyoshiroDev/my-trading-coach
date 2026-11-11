@@ -355,8 +355,9 @@ describe('TradesService', () => {
         timeframe: '1m',
       });
 
-      // P&L stocké brut ; le net (valeur absolue des frais) : netPnl → 195
+      // P&L stocké brut ; frais stockés POSITIFS (#947 : le solde des comptes lit le signe) ; net 195
       expect(result.pnl).toBe(200);
+      expect(result.commission).toBe(5);
       expect(netPnl(result)).toBe(195);
     });
 

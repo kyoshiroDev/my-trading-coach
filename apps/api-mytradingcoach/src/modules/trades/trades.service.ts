@@ -81,6 +81,9 @@ export class TradesService {
     // `create()` directement avec un setup déjà résolu (resolveBatchSetupId) —
     // éventuellement absent si le user n'a plus aucun setup actif.
     if (dto.setupId) await (batch ? batch.ownedSetup(dto.setupId) : this.setups.assertOwnedActive(userId, dto.setupId));
+    // Frais toujours positifs en base : les écrans lisent |commission|, mais le solde des comptes
+    // lisait `pnl − commission` signé (−5 de frais saisis = +5 $ sur le compte, −5 $ au dashboard).
+    if (dto.commission != null) dto = { ...dto, commission: Math.abs(dto.commission) };
     const pnl = calculatePnl(dto);
     const riskReward = calculateRiskReward(dto);
 
@@ -394,6 +397,7 @@ export class TradesService {
       await this.setups.assertOwnedActive(userId, dto.setupId);
     }
 
+    if (dto.commission != null) dto = { ...dto, commission: Math.abs(dto.commission) }; // cf. create
     const merged = { ...existing, ...dto } as CreateTradeDto;
 
     const priceFieldsChanged =
