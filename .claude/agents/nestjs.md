@@ -2159,8 +2159,23 @@ masque la courbe de drawdown dès 2 séries (#940) ; jamais dans le résumé.
 **Stats du débrief = semaine du débrief** (#934) : `getSummary(userId, undefined, startDate, endDate)`
 avec les bornes de `getWeekInfo` (lundi 00:00 → dimanche 23:59:59.999, heure du serveur = Paris),
 les mêmes que les trades du débrief. Elles partent dans le prompt IA, `WeeklyDebrief.stats` et
-l'e-mail « débrief prêt » : jamais `getSummary(userId)` seul (tout l'historique). Les débriefs
-enregistrés avant le 11/11 gardent des stats sur tout l'historique (aucun recalcul).
+l'e-mail « débrief prêt » : jamais `getSummary(userId)` seul (tout l'historique). Format des stats :
+`debriefStats()` (`debrief/debrief-stats.ts`, sans `maxDrawdownAccountId`).
+**Résumé = calcul pur unique** : `computeSummary(prisma, filtre)` dans `analytics/analytics-summary.ts`
+(avec `bestByWinRate`, `winRatePercent`), appelé par `AnalyticsService` (avec cache) et par les
+scripts ; les requêtes `analytics.sql.ts` prennent un `SqlClient` (`$queryRaw` seul), donc un
+`PrismaClient` nu de script convient. Ne jamais importer un service Nest dans un script.
+**Anciens débriefs (#943)** : `scripts/recompute-debrief-stats.ts` (logique testée dans
+`debrief/debrief-stats-recompute.ts`) recalcule `WeeklyDebrief.stats` sur les `startDate`/`endDate`
+enregistrés, sans IA (texte inchangé), hors démo. Simulation par défaut (bilan sans identifiant),
+`--apply` exige `--backup <nouveau fichier>` (ligne `{ id, stats }` écrite avant chaque mise à
+jour), `--user <id>` pour un essai, `--restore <fichier> [--apply]` pour revenir en arrière. Lancé
+dans le worker API (procédure en tête du script : copie dans `/tmp`, `-e NODE_PATH=/app/node_modules`,
+sauvegarde dans `/tmp` puis copiée sur le VPS). Exclusion des comptes échoués / archivés selon leur
+statut actuel. **Semaine sans plus aucun trade clôturé** (décision du 11/11) : débrief NON touché si
+la semaine en avait à la génération (`tradesAtGeneration`, somme des `insights.accounts[].stats.totalTrades`)
+ou si l'ancien format n'a pas de sections ; compté dans `ignores`. Semaine déjà vide à la génération :
+recalculée (0 trade = vraie valeur).
 **Drawdown d'une séance** (`session-totals.ts`, #935) : `worstAccountDrawdown` sur ses trades, pire
 compte gardé. Une ancienne séance sans compte rattache toujours les trades du jour de tous les
 comptes (totaux inchangés, voulu), mais son drawdown n'est jamais une série mélangée. Lire

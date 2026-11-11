@@ -1,6 +1,5 @@
-import { Prisma } from '@prisma/client';
+import { Prisma, type PrismaClient } from '@prisma/client';
 import { roundCents } from '@mtc/shared';
-import type { PrismaService } from '../../prisma/prisma.service';
 import { excludesInactiveAccounts, inactiveAccountsTradeSql } from '../accounts/account-status-scope';
 
 /**
@@ -26,6 +25,12 @@ export const processTimeZone = (): string => Intl.DateTimeFormat().resolvedOptio
 
 const NET = Prisma.sql`round((t."pnl" - abs(coalesce(t."commission", 0)))::text::numeric, 2)`;
 const localTs = (tz: string) => Prisma.sql`((t."tradedAt" AT TIME ZONE 'UTC') AT TIME ZONE ${tz})`;
+
+/**
+ * Client lu par ces requêtes : `$queryRaw` seulement. `PrismaService` (API) comme un `PrismaClient`
+ * nu (scripts ponctuels, ex. `scripts/recompute-debrief-stats.ts`) conviennent.
+ */
+export type SqlClient = Pick<PrismaClient, '$queryRaw'>;
 
 export interface TradeFilter {
   userId: string;
@@ -88,7 +93,7 @@ type GroupRow = Omit<GroupAgg, 'firstAt'> & { firstAt: Date };
 
 /** Agrège les trades clôturés par clé. Les trades dont la clé est nulle (émotion absente) sont exclus. */
 export async function groupTrades(
-  prisma: PrismaService,
+  prisma: SqlClient,
   f: TradeFilter,
   k: GroupKey,
   tz: string = processTimeZone(),
@@ -127,7 +132,7 @@ export interface SummaryTotals {
  * gagnant »), dans l'ordre chronologique. Le drawdown max n'est PLUS calculé ici : source unique
  * `worstAccountDrawdown` (`@mtc/shared`, par compte) sur `closedTradeNets`.
  */
-export async function summaryTotals(prisma: PrismaService, f: TradeFilter): Promise<SummaryTotals> {
+export async function summaryTotals(prisma: SqlClient, f: TradeFilter): Promise<SummaryTotals> {
   const [row] = await prisma.$queryRaw<SummaryTotals[]>`
     WITH o AS (
       SELECT ${NET} AS net, t."tradedAt", t."id"
@@ -166,7 +171,7 @@ export interface ClosedTradeNet {
  * l'ordre chronologique : matière de la courbe par trade (`closedTradeSteps`) et du drawdown max
  * par compte (`worstAccountDrawdown` de `@mtc/shared` : une série par compte, jamais mélangée).
  */
-export async function closedTradeNets(prisma: PrismaService, f: TradeFilter): Promise<ClosedTradeNet[]> {
+export async function closedTradeNets(prisma: SqlClient, f: TradeFilter): Promise<ClosedTradeNet[]> {
   return prisma.$queryRaw<ClosedTradeNet[]>`
     SELECT t."tradedAt" AS "closedAt", ${NET}::float8 AS "pnl", t."accountId" AS "accountId"
     FROM "Trade" t WHERE ${where(f)}
@@ -175,7 +180,7 @@ export async function closedTradeNets(prisma: PrismaService, f: TradeFilter): Pr
 
 /** P&L net cumulé trade par trade, dans l'ordre chronologique (courbe d'équité par trade). */
 export async function cumulativeByTrade(
-  prisma: PrismaService,
+  prisma: SqlClient,
   f: TradeFilter,
 ): Promise<{ date: Date; cumulativePnl: number }[]> {
   return prisma.$queryRaw<{ date: Date; cumulativePnl: number }[]>`
@@ -193,7 +198,7 @@ export async function cumulativeByTrade(
  * l'activité : TOUS les comptes, échoués et archivés compris.
  */
 export async function closedTradeStats(
-  prisma: PrismaService,
+  prisma: SqlClient,
   userId: string,
 ): Promise<{ closed: number; wins: number; losses: number; totalPnl: number; winRate: number }> {
   const [r] = await prisma.$queryRaw<{ closed: number; wins: number; losses: number; pnl: number }[]>`

@@ -31,6 +31,7 @@ import { PropRiskContextService } from '../accounts/prop-risk-context';
 import { accountKeys, analysesById, tradesByKey } from './debrief-account-keys';
 import { activeAccountsWhere, inactiveAccountsTradeWhere } from '../accounts/account-status-scope';
 import type { DebriefAccountSection, DebriefBadgeItem, DebriefObjective } from '@mtc/shared';
+import { debriefStats } from './debrief-stats';
 
 @Injectable()
 export class DebriefService {
@@ -154,14 +155,8 @@ export class DebriefService {
 
     // Stats de la semaine du débrief seulement (mêmes bornes que les trades ci-dessus, #934) : elles
     // partent dans le prompt IA, dans WeeklyDebrief.stats et dans l'e-mail « débrief prêt ».
-    // Format inchangé : l'id du compte du pire drawdown (identifiant interne) ne part ni dans le
-    // prompt IA ni dans WeeklyDebrief.stats.
-    const { maxDrawdownAccountId: _accountId, ...stats } = await this.analyticsService.getSummary(
-      userId,
-      undefined,
-      startDate,
-      endDate,
-    );
+    // Format (`debriefStats`) partagé avec le script de recalcul des anciens débriefs (#943).
+    const stats = debriefStats(await this.analyticsService.getSummary(userId, undefined, startDate, endDate));
 
     const previousDebrief = await this.prisma.weeklyDebrief.findFirst({
       where: { userId, year },
