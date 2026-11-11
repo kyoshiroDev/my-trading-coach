@@ -2124,10 +2124,14 @@ Module `accounts/incidents/` (dans `AccountsModule`, client Anthropic global : p
 
 `analytics/analytics.sql.ts` : `groupTrades` (agrégats par setup / émotion / actif / session /
 heure / jour-heure / date de Paris), `summaryTotals` (sommes, série en cours en fenêtres SQL),
-`cumulativeByTrade`, `closedTradeNets` (net + heure de clôture par trade). **Drawdown max : plus en
-SQL** — `summary.maxDrawdown` (montant positif, lu par le débrief), `/equity-curve/trades`, les
-totaux de session et le seed démo passent tous par `maxDrawdownOfTrades` de `@mtc/shared` (après
-chaque trade clôturé, trades du même instant = une étape). **Plus aucun calcul ne charge tous les trades en mémoire.**
+`cumulativeByTrade`, `closedTradeNets` (net + heure de clôture + compte par trade). **Drawdown max :
+plus en SQL** — `summary.maxDrawdown` (montant positif, lu par le débrief), `/equity-curve/trades`, les
+totaux de session et le seed démo passent tous par `@mtc/shared` (après chaque trade clôturé, trades
+du même instant = une étape). Résumé et `/equity-curve/trades` : `worstAccountDrawdown`, UNE SÉRIE
+PAR COMPTE (trades sans compte = un groupe, égalité → plus petit id), le pire gardé, et
+`maxDrawdownAccountId` (PROMPT-drawdown-max-par-compte). Jamais une série mélangée : le gain d'un
+compte n'efface pas la perte d'un autre. Le débrief retire `maxDrawdownAccountId` avant le prompt IA
+et `WeeklyDebrief.stats` (format inchangé). **Plus aucun calcul ne charge tous les trades en mémoire.**
 - Règles reproduites à l'identique : net = `round(pnl − |commission|, 2)` (comme `netPnl`),
   gagnant si net > 0 ; R:R compté s'il est renseigné et non nul ; heure / jour dans le **fuseau du
   processus** (`processTimeZone()`, comme les anciens `getHours()` ; TZ=Europe/Paris en prod) ;
