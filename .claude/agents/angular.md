@@ -1293,8 +1293,8 @@ en plein contenu. Le refus « mode démo » (403 `DemoReadOnlyGuard`) ne fait **
   - Points : `SIGNUP_PITCH_POINTS` (`@mtc/shared`, module `signup-pitch.ts` à part pour ne pas
     entrer dans le bundle initial avec `PLAN_BENEFITS`) ; nombre de firms `PROP_FIRM_COUNT`, tenu égal
     à `PROP_FIRM_CATALOG_FILES.length` par un spec (le catalogue fait 1,8 Mo de JSON).
-  - Mot de passe et confirmation côte à côte via `@container auth-card (min-width: 300px)` (= carte de
-    340 px). Bouton « Explorer la démo, sans compte » (`routerLink="/demo"`, `data-testid="register-demo"`)
+  - Mot de passe et confirmation **empilés à toutes les largeurs** (#967, plus de rangée côte à côte
+    ni de `.pw-row`), comme les autres champs. Bouton « Explorer la démo, sans compte » (`routerLink="/demo"`, `data-testid="register-demo"`)
     seulement dans le parcours gratuit (ni `offerFlow`, ni Premium).
   - `/forgot-password`, `/reset-password` et la finalisation Google gardent l'ancien gabarit carte
     seule (`auth-layout/card-page.css`, `card-page-signup.css`), à migrer si besoin.
