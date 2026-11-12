@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { countOutcomes, entryProtection, firstVersions } from './tradovate-entry-protection';
+import { countOutcomes, entryProtection, firstVersions, strategyByOrder } from './tradovate-entry-protection';
 import type { TradovateOrderEntity, TradovateOrderVersionEntity } from './tradovate-orders';
 
 const ACC = 777;
@@ -83,6 +83,63 @@ describe('entryProtection — stop et objectif initiaux liés à l’ordre d’e
   it('type inconnu (Market, MIT) : ignoré', () => {
     const vs = [v(1, 225, 'MIT', 27000, null)];
     expect(run([entry, stop], vs)).toEqual({ outcome: 'ambiguous' });
+  });
+});
+
+// Constat prod du 2026-11-12 (#955, ids fictifs) : bracket TradingView, ni parentId ni ocoId ; entrée,
+// stop et objectif partagent une stratégie d'ordres. D'autres stratégies (trades suivants) sur le contrat.
+describe('entryProtection — jambes reliées par stratégie d’ordres (orderStrategyLink)', () => {
+  const E = { id: 100, accountId: ACC, contractId: MNQ, action: 'Buy', ordStatus: 'Filled' };
+  const sl = { id: 103, accountId: ACC, contractId: MNQ, action: 'Sell', ordStatus: 'Filled' };
+  const tp = { id: 105, accountId: ACC, contractId: MNQ, action: 'Sell', ordStatus: 'Canceled' };
+  const others = [147, 149, 180, 218].map((id) => ({ id, accountId: ACC, contractId: MNQ, action: 'Sell', ordStatus: 'Filled' }));
+  const vs = [
+    v(1, 100, 'Market', null, null),
+    v(2, 103, 'Stop', null, 26900),
+    v(3, 105, 'Limit', 27300, null),
+    ...others.map((o, i) => v(10 + i, o.id, i % 2 ? 'Limit' : 'Stop', i % 2 ? 27500 : 26800, i % 2 ? null : 26800)),
+  ];
+  const links = strategyByOrder([
+    { id: 1, orderId: 100, orderStrategyId: 1 }, { id: 2, orderId: 103, orderStrategyId: 1 }, { id: 3, orderId: 105, orderStrategyId: 1 },
+    { id: 4, orderId: 147, orderStrategyId: 2 }, { id: 5, orderId: 149, orderStrategyId: 2 },
+    { id: 6, orderId: 180, orderStrategyId: 3 }, { id: 7, orderId: 218, orderStrategyId: 3 },
+  ]);
+  const go = (orders: TradovateOrderEntity[], versions = vs, strategyOf: Map<number, number> | undefined = links) =>
+    entryProtection({ entryOrderId: 100, side: 'LONG', entryPrice: 27000, orders, first: firstVersions(versions), strategyOf });
+
+  it('stop et objectif de la stratégie de l’entrée seulement, pas ceux des autres stratégies', () => {
+    expect(go([E, sl, tp, ...others])).toEqual({ outcome: 'linked', stopLoss: 26900, takeProfit: 27300 });
+  });
+
+  it('objectif sans prix dans sa première version : stop seul', () => {
+    const noPrice = vs.map((x) => (x.orderId === 105 ? { ...x, price: null } : x));
+    expect(go([E, sl, tp], noPrice)).toEqual({ outcome: 'linked', stopLoss: 26900 });
+  });
+
+  it('deux objectifs dans la stratégie (multibracket partiel) : objectif vide, stop gardé', () => {
+    const tp2 = { ...tp, id: 106 };
+    const l2 = new Map(links).set(106, 1);
+    expect(go([E, sl, tp, tp2], [...vs, v(4, 106, 'Limit', 27400, null)], l2)).toEqual({ outcome: 'linked', stopLoss: 26900 });
+  });
+
+  it('liens absents : comportement par parentId inchangé (aucune jambe ici)', () => {
+    expect(entryProtection({ entryOrderId: 100, side: 'LONG', entryPrice: 27000, orders: [E, sl, tp], first: firstVersions(vs) }))
+      .toEqual({ outcome: 'no-leg' });
+    expect(go([E, sl, tp], vs, new Map())).toEqual({ outcome: 'no-leg' });
+  });
+
+  it('même stratégie mais autre compte ou autre contrat : ignorée', () => {
+    expect(go([E, { ...sl, accountId: 999 }, { ...tp, contractId: 9 }])).toEqual({ outcome: 'no-leg' });
+  });
+
+  it('stop de la stratégie du mauvais côté : rejeté, objectif gardé', () => {
+    const wrong = vs.map((x) => (x.orderId === 103 ? { ...x, stopPrice: 27100 } : x));
+    expect(go([E, sl, tp], wrong)).toEqual({ outcome: 'linked', takeProfit: 27300 });
+  });
+
+  it('strategyByOrder ignore les liens incomplets', () => {
+    expect([...strategyByOrder([{ id: 1, orderId: 5 }, { id: 2, orderStrategyId: 3 }, { id: 3, orderId: 6, orderStrategyId: 4 }])])
+      .toEqual([[6, 4]]);
   });
 });
 
