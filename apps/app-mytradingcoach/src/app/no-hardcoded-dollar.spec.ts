@@ -8,8 +8,9 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 
-const ROOT = join(__dirname, 'features');
-const EXCLUS = ['auth/auth-preview.component.html'];
+// Tout `src/app` : features, mais aussi shared/ et core/ (composants partagés).
+const ROOT = __dirname;
+const EXCLUS = ['features/auth/auth-preview.component.html'];
 // « ' $' » concaténé, « ${{ x }} », « {{ x }}$ » / « {{ x }} $ », « >$< » (préfixe de champ).
 const DOLLAR = /' \$'|\$\{\{|\}\}\s?\$|>\s*\$\s*</;
 
@@ -32,5 +33,15 @@ describe('gabarits : pas de « $ » en dur sur un montant', () => {
       });
     }
     expect(hits).toEqual([]);
+  });
+});
+
+describe('débrief hebdo : chaque montant dans la devise de SON compte (#947)', () => {
+  it('pnlFormat et money reçoivent toujours l\'accountId de l\'onglet', () => {
+    const src = readFileSync(join(ROOT, 'features/weekly-debrief/debrief.component.html'), 'utf-8');
+    const bare = src.split('\n').flatMap((line, i) =>
+      /\|\s*(pnlFormat|money)[^|}]*\}\}/.test(line) && !/accountId/.test(line) ? [`debrief.component.html:${i + 1}`] : [],
+    );
+    expect(bare).toEqual([]);
   });
 });
