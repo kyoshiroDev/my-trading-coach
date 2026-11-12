@@ -138,7 +138,7 @@
           <mtc-info-tooltip label="Comment le win rate est calculé"
             text="Trades gagnants ÷ (gagnants + perdants). Les trades break-even ne sont pas comptés dans le calcul." />
         </span>
-        <span class="period-value">{{ s.winRate | number:'1.0-0' }}%</span>
+        <span class="period-value">{{ s.winRate | pct }}</span>
       </div>
       <div class="period-stat">
         <span class="period-label">P&L Net</span>
@@ -152,7 +152,7 @@
             text="Total des commissions et frais de la période, déjà déduits du P&L net." />
         </span>
         <span class="period-value" data-testid="period-fees" style="color:var(--red)">
-          -{{ s.totalCommissions | money:2:false }}
+          {{ (0 - s.totalCommissions) | money:2:false }}
         </span>
       </div>
       <div class="period-stat">
@@ -225,8 +225,11 @@
             <div class="week-label">{{ week.label }}</div>
             <div class="day-stats">
               <span class="day-count" data-testid="week-count">{{ tradeCountLabel(week.count, week.partial) }}</span>
-              <span class="day-dot">·</span>
-              <span class="day-winrate">{{ week.winCount }}/{{ week.count }}</span>
+              <!-- Gagnants / décisifs (BE et ouverts exclus), même règle que le win rate (#947). -->
+              @if (week.winCount + week.lossCount > 0) {
+                <span class="day-dot">·</span>
+                <span class="day-winrate" title="Gagnants / (gagnants + perdants) : break-even et trades ouverts exclus">{{ week.winCount }}/{{ week.winCount + week.lossCount }}</span>
+              }
               @if (!money.mixed()) {
               <span class="day-dot">·</span>
               @if (week.totalCommission > 0) {
@@ -268,8 +271,11 @@
             <div class="day-label">{{ day.label }}</div>
             <div class="day-stats">
               <span class="day-count" data-testid="day-count">{{ tradeCountLabel(day.count, day.partial) }}</span>
-              <span class="day-dot">·</span>
-              <span class="day-winrate">{{ day.winCount }}/{{ day.count }}</span>
+              <!-- Gagnants / décisifs (BE et ouverts exclus), même règle que le win rate (#947). -->
+              @if (day.winCount + day.lossCount > 0) {
+                <span class="day-dot">·</span>
+                <span class="day-winrate" title="Gagnants / (gagnants + perdants) : break-even et trades ouverts exclus">{{ day.winCount }}/{{ day.winCount + day.lossCount }}</span>
+              }
               @if (!money.mixed()) {
               <span class="day-dot">·</span>
               @if (day.totalCommission > 0) {

@@ -37,14 +37,15 @@ export class SelectedAccountStore {
 
   /**
    * Devise NATIVE des montants affichés : celle du compte sélectionné ; en « Tous
-   * les comptes », leur devise commune ; `null` si elles diffèrent (on n'additionne pas des USD
+   * les comptes », la devise commune des comptes COMPTÉS (`aggregateCurrency` : sans les comptes
+   * échoués ou archivés exclus des totaux, #947) ; `null` si elles diffèrent (on n'additionne pas des USD
    * et des EUR sous un symbole). Aucune conversion : jamais de `User.currencyRate`. Sans compte
    * chargé → USD, la devise par défaut d'un `TradingAccount`.
    */
   readonly displayCurrency = computed<string | null>(() => {
     const sel = this.selected();
     if (sel) return commonCurrency([sel.currency]);
-    return commonCurrency(this.accounts().map((a) => a.currency));
+    return this.aggregateCurrency();
   });
 
   /** Devise d'un compte donné (ligne de trade) ; `undefined` si le compte n'est pas chargé. */
@@ -70,6 +71,16 @@ export class SelectedAccountStore {
   readonly aggregateAccounts = computed(() =>
     this.accounts().filter((a) => countsInAggregate(a.status, this.includeInactive())),
   );
+
+  /**
+   * Devise commune des comptes comptés dans « Tous les comptes » (`null` si mêlées), indépendante
+   * du compte choisi : le solde total du sélecteur l'utilise même quand un compte est sélectionné.
+   */
+  readonly aggregateCurrency = computed<string | null>(() => {
+    const counted = this.aggregateAccounts();
+    // Aucun compte compté (tous perdus) : la devise de tous, plutôt que l'USD par défaut.
+    return commonCurrency((counted.length ? counted : this.accounts()).map((a) => a.currency));
+  });
 
   /** Comptes hors statistiques par défaut, pour la ligne « n comptes exclus des chiffres ». */
   readonly excludedAccounts = computed<ExcludedAccounts>(() => ({

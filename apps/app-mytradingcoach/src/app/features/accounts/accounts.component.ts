@@ -1,3 +1,4 @@
+import { formatPercent } from '@mtc/shared';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -655,21 +656,19 @@ export class AccountsComponent implements OnInit {
   }
 
   // ── Bloc « Activité » carte perso (métriques du 126, dégradation propre si absentes) ──
-  // Groupe milliers en fr-FR, comme DecimalPipe '1.0-0'.
-  private fmt0(n: number): string {
-    return Math.round(n).toLocaleString('fr-FR');
-  }
+  // Montants dans la devise du compte par le formateur unique (`formatMoney`) : avant, « 1 234 $ »
+  // en dur (faux pour un compte EUR) et « -0 $ » pour −0,40 (#947).
   protected bestDayLabel(a: TradingAccount): string {
     const v = a.metrics.bestDay;
-    return v == null ? '-' : `${v > 0 ? '+' : ''}${this.fmt0(v)} $`;
+    return v == null ? '—' : this.money(v, a.currency, true);
   }
   protected worstDayLabel(a: TradingAccount): string {
     const v = a.metrics.worstDay;
-    return v == null ? '-' : `${this.fmt0(v)} $`;
+    return v == null ? '—' : this.money(v, a.currency, true);
   }
   protected winRateLabel(a: TradingAccount): string {
-    const v = a.metrics.winRate;
-    return v == null ? '-' : `${this.fmt0(v * 100)} %`;
+    const v = a.metrics.winRate; // ratio 0..1
+    return formatPercent(v == null ? null : v * 100);
   }
 
   /** Libellé de la colonne marge : « trailing » n'est affiché que s'il s'applique. */

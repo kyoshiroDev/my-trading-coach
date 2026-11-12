@@ -444,6 +444,14 @@ et `(min-width: 1100px)` ; **aucune `max-width`**, aucun scroll horizontal à 36
 | Radius modals | `--radius-modal` | 16px |
 | Radius pills | `--radius-pill` | 100px |
 
+**Rangées de boutons (#967)** : une rangée de boutons en `white-space: nowrap` avec `flex-shrink: 0`
+déborde de sa carte sur téléphone (cas de « Fais ton premier pas » : 3 boutons sur une ligne, le 3e
+invisible à 360-414 px, coupé jusqu'à ~880 px avec le menu latéral). Règle : `flex-wrap: wrap` +
+`max-width: 100%` sur la rangée, et en `≤ 768 px` boutons empilés pleine largeur
+(`flex-direction: column; align-items: stretch`, `white-space: normal`, `text-align: center`).
+Vérifier à 360 px que `document.scrollWidth <= innerWidth` ET qu'aucun bouton ne dépasse la carte
+(un conteneur parent en `overflow: hidden` masque le débordement sans créer de défilement).
+
 **Burger mobile (≤ 768 px)** : bouton de la sidebar en `position: fixed` POSÉ PAR-DESSUS la topbar
 (aucun lien DOM). Hauteur `--topbar-btn-h` (= Discord voisin), centré dans la hauteur utile
 `(--topbar-h − --topbar-border-w − --topbar-btn-h) / 2` (idem dans le bandeau démo), zone tactile

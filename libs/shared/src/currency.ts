@@ -55,6 +55,15 @@ export interface MoneyOptions {
 const PREFIX_SYMBOLS: Record<string, string> = { USD: '$', EUR: '€' };
 
 /**
+ * Préfixe d'un champ de saisie de montant : « $ », « € », sinon le code (« USDT ») ; vide si la
+ * devise est inconnue ou mêlée (`null`). Jamais un « $ » en dur dans un gabarit (#947).
+ */
+export function currencyAffix(currency: string | null | undefined): string {
+  const code = normalizeCurrencyCode(currency);
+  return code ? (PREFIX_SYMBOLS[code] ?? code) : '';
+}
+
+/**
  * SEUL formateur d'argent (app, admin, API, e-mails) : ne pas réécrire un `toFixed` ou un `Intl` à côté.
  * `+$1,234.56`, `-€92.00`, `+10.00 USDT`, `-$1.2k`. Le montant est affiché TEL QUEL, jamais converti.
  * Devise `null` (inconnue, ou comptes de devises différentes) → aucun symbole, jamais un symbole deviné.

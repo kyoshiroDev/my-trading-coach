@@ -8,6 +8,8 @@ crois tu que l'agent de relecture pour refaire un tour complet de l'application 
 
 ok commence par les chiffres, vas-y
 
+OK pour relancer #943 après #950, attaque le lot 2
+
 ## Cadrage retenu (proposé par la session, accepté par Greg)
 
 - Périmètre : les chiffres d'abord (P&L, stats, totaux, montants, arrondis, cohérence entre vues). L'audit fonctionnel complet viendra plus tard.

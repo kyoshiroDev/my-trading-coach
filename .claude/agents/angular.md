@@ -545,6 +545,32 @@ envoyées à l'API sont des horodatages ISO complets.
 - **Récap du matin** : la carte montre la dernière journée tradée (API, 7 jours) ; « Hier · » seulement si
   c'est hier (`recapIsYesterday`), sinon le nom du jour.
 - **Mes comptes** : « P&L cumulé » = `metrics.tradingPnl` (payouts rajoutés), jamais `realizedPnl`.
+- **Pourcentages** : un seul format, `formatPercent` (`@mtc/shared`) ou le pipe `pct` (`@mtc/front-ui`) :
+  « 63% » (entier par défaut), « — » si inconnu, « 0% » pour zéro (jamais « - »), jamais « -0% ».
+  Pas de `number:'1.0-1'` + « % » à la main, pas de `toFixed` pour un win rate.
+- **Montants** : `money` / `formatMoney` dans la devise du compte, jamais « $ » en dur ; un montant
+  négatif passe le signe au formateur (`(0 - x) | money`), jamais « -{{ x | money }} » (« -$0.00 »).
+- **Formulaire de trade en édition** : levier retrouvé depuis le P&L stocké (`editLeverage`), % sur le
+  capital engagé (`editPnlPct`), R/R par `plannedRiskReward` (avec le sens).
+- **« 1M / 3M / 6M » = mois CALENDAIRES** partout (`rollingRange`, `core/utils/rolling-period.util.ts`) :
+  tableau de bord et Statistiques ont la même fenêtre, jamais 30 / 90 / 180 jours.
+- **Statistiques** : le sélecteur de période est au-dessus des KPI (tous les plans) et TOUS les chiffres
+  le suivent (summary, by-hour, top-assets, by-setup via `rangeQuery()`, courbes) ; seul le calendrier
+  d'activité garde sa navigation par mois.
+- **Win rate d'une liste de séances** = Σ gagnants ÷ (Σ gagnants + Σ perdants) (`sessionsWinRate`,
+  `wins`/`losses` renvoyés par `/session/history`), jamais une moyenne des win rates de séance.
+  Même règle pour la fraction des en-têtes du Journal (`winCount/(winCount + lossCount)`, BE et ouverts
+  exclus) et le score (consistance par setup via `computeTradeStats`, pertes sur le net).
+- **Débrief de la séance du jour** : trades de LA séance (`sessionScopedTrades`), relus à la clôture
+  (`SessionStore.applyClosed`) ; jamais ceux d'une autre séance du même jour.
+- **Devises** : la devise de « Tous les comptes » = celle des comptes COMPTÉS (`aggregateCurrency`, sans
+  les perdus exclus des totaux). Devises mêlées → aucune somme : « Devises mixtes » (sélecteur), « — »
+  + `mtc-mixed-currency-notice` (Sessions, Mes comptes, admin). Ligne d'un compte (séance, onglet du
+  débrief, trade) → `pnlFormat : null : accountId` / `money:…:accountId`. Champs de saisie :
+  `currencyAffix`. Garde : `no-hardcoded-dollar.spec.ts` échoue sur un « $ » en dur dans un gabarit.
+- **% d'un trade** (derniers trades du tableau de bord) : sur le capital du compte DU trade, jamais sur
+  la somme des comptes.
+- **Commission ambassadeur** affichée = `monthlyCommission` calculée par l'API (20 % du payé réel).
 
 ## Tableau de lignes — pattern partagé (Journal · Mes comptes)
 
@@ -1267,8 +1293,8 @@ en plein contenu. Le refus « mode démo » (403 `DemoReadOnlyGuard`) ne fait **
   - Points : `SIGNUP_PITCH_POINTS` (`@mtc/shared`, module `signup-pitch.ts` à part pour ne pas
     entrer dans le bundle initial avec `PLAN_BENEFITS`) ; nombre de firms `PROP_FIRM_COUNT`, tenu égal
     à `PROP_FIRM_CATALOG_FILES.length` par un spec (le catalogue fait 1,8 Mo de JSON).
-  - Mot de passe et confirmation côte à côte via `@container auth-card (min-width: 300px)` (= carte de
-    340 px). Bouton « Explorer la démo, sans compte » (`routerLink="/demo"`, `data-testid="register-demo"`)
+  - Mot de passe et confirmation **empilés à toutes les largeurs** (#967, plus de rangée côte à côte
+    ni de `.pw-row`), comme les autres champs. Bouton « Explorer la démo, sans compte » (`routerLink="/demo"`, `data-testid="register-demo"`)
     seulement dans le parcours gratuit (ni `offerFlow`, ni Premium).
   - `/forgot-password`, `/reset-password` et la finalisation Google gardent l'ancien gabarit carte
     seule (`auth-layout/card-page.css`, `card-page-signup.css`), à migrer si besoin.

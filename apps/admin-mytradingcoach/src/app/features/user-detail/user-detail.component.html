@@ -54,12 +54,12 @@
         <div class="kpi-top" [class.green]="d.usage.totalPnl > 0" [class.red]="d.usage.totalPnl < 0" [class.teal]="d.usage.totalPnl === 0"></div>
         <div class="kpi-label">P&amp;L total</div>
         <div class="kpi-value" [class.green]="d.usage.totalPnl > 0" [class.red]="d.usage.totalPnl < 0" [class.teal]="d.usage.totalPnl === 0">{{ pnlDisplay() }}</div>
-        <div class="kpi-sub">sur trades clos</div>
+        <div class="kpi-sub">{{ d.usage.currency === null ? 'devises différentes' : 'sur trades clos' }}</div>
       </div>
       <div class="kpi">
         <div class="kpi-top amber"></div>
         <div class="kpi-label">Win rate</div>
-        <div class="kpi-value amber">{{ d.usage.winRate }}%</div>
+        <div class="kpi-value amber">{{ d.usage.winRate | pct }}</div>
         <div class="kpi-sub">trades gagnants</div>
       </div>
     </div>
@@ -215,8 +215,8 @@
                 <tr>
                   <td data-label="Date" class="td-mono">{{ s.date | date:'dd/MM' }}</td>
                   <td data-label="Trades">{{ s.trades }}</td>
-                  <td data-label="P&L" class="td-mono" [class.pnl-pos]="s.pnl >= 0" [class.pnl-neg]="s.pnl < 0">{{ s.pnl >= 0 ? '+' : '' }}{{ s.pnl.toFixed(2) }}$</td>
-                  <td data-label="Win rate" class="td-mono">{{ s.winRate }}%</td>
+                  <td data-label="P&L" class="td-mono" [class.pnl-pos]="s.pnl >= 0" [class.pnl-neg]="s.pnl < 0">{{ sessionPnl(s) }}</td>
+                  <td data-label="Win rate" class="td-mono">{{ s.winRate | pct }}</td>
                   <td data-label="Humeur">{{ moodEmoji(s.emotion) }}</td>
                   <td data-label="Durée" class="td-mono">{{ fmtDuration(s.durationMinutes) }}</td>
                 </tr>

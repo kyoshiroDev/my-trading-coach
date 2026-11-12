@@ -188,6 +188,19 @@ describe('buildTradeRows (historique des trades, #655)', () => {
     expect(row.pnl).toBe(-0.9);
   });
 
+  it('« Tous les comptes » : % sur le capital du compte du trade, pas sur la somme (#947)', () => {
+    const t = { ...trade(500, 0), accountId: 'a50' } as Trade;
+    const caps: Record<string, number> = { a50: 50_000, a100: 100_000 };
+    const [row] = buildTradeRows([t], 150_000, (id) => (id ? caps[id] ?? null : null));
+    expect(row.pct).toBeCloseTo(1); // la somme des comptes donnait 0,33 %
+  });
+
+  it('compte inconnu : repli sur le capital de la vue', () => {
+    const t = { ...trade(500, 0), accountId: 'gone' } as Trade;
+    const [row] = buildTradeRows([t], 50_000, () => null);
+    expect(row.pct).toBeCloseTo(1);
+  });
+
   it('capital inconnu : pas de P&L %, le classement reste', () => {
     const [row] = buildTradeRows([trade(100)], 0);
     expect(row.outcome).toBe('win');

@@ -224,6 +224,7 @@ export class SessionService {
       take: limit,
       select: {
         id: true,
+        accountId: true,
         startedAt: true,
         endedAt: true,
         moodStart: true,
@@ -239,7 +240,7 @@ export class SessionService {
         maxDrawdown: true,
         bestTradePnl: true,
         bestTradeAsset: true,
-        trades: { select: { asset: true } },
+        trades: { select: { asset: true, pnl: true, commission: true } },
       },
     });
 
@@ -254,9 +255,12 @@ export class SessionService {
         .sort((a, b) => b[1] - a[1])
         .slice(0, 3)
         .map(([asset]) => asset);
+      // Gains / pertes pour le win rate de la page Sessions pondéré par les trades (#947).
+      const { wins, losses } = computeTradeStats(row.trades);
 
       return {
         id: row.id,
+        accountId: row.accountId,
         startedAt: row.startedAt.toISOString(),
         endedAt: row.endedAt?.toISOString(),
         moodStart: row.moodStart,
@@ -273,6 +277,8 @@ export class SessionService {
         bestTradePnl: row.bestTradePnl,
         bestTradeAsset: row.bestTradeAsset,
         topAssets,
+        wins,
+        losses,
         aiOneLiner: oneLiners.get(toParisDateStr(row.startedAt)) ?? null,
       };
     });

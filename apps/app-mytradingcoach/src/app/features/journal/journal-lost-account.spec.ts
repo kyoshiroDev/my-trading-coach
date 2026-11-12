@@ -4,6 +4,7 @@
  * les chiffres) ; l'interrupteur (`includeInactive`) les réinclut partout, badge à l'appui.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { PctPipe } from '@mtc/front-ui';
 import { TestBed } from '@angular/core/testing';
 import { signal, NO_ERRORS_SCHEMA } from '@angular/core';
 import { DatePipe, DecimalPipe, TitleCasePipe } from '@angular/common';
@@ -75,7 +76,7 @@ async function render(trades: Trade[]) {
   TestBed.overrideComponent(JournalComponent, {
     set: {
       template: JOURNAL_HTML, styleUrls: [], styleUrl: undefined as unknown as string,
-      imports: [DatePipe, DecimalPipe, TitleCasePipe, PnlColorPipe, PnlFormatPipe, MoneyPipe, EmotionEmojiPipe],
+      imports: [DatePipe, DecimalPipe, TitleCasePipe, PnlColorPipe, PnlFormatPipe, MoneyPipe, EmotionEmojiPipe, PctPipe],
       schemas: [NO_ERRORS_SCHEMA],
     },
   });

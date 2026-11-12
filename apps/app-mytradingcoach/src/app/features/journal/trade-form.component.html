@@ -201,10 +201,10 @@
             <div class="capital-leverage-row">
               <div class="field">
                 <label class="field-label-small" for="tf-capital"
-                  >Capital ($)</label
+                  >Capital{{ affix() ? ' (' + affix() + ')' : '' }}</label
                 >
                 <div class="input-prefix-wrap">
-                  <span class="input-prefix">$</span>
+                  <span class="input-prefix">{{ affix() }}</span>
                   <input
                     id="tf-capital"
                     type="text"
@@ -280,7 +280,7 @@
             </label>
             <div class="commission-row">
               <div class="input-prefix-wrap commission-input">
-                <span class="input-prefix">$</span>
+                <span class="input-prefix">{{ affix() }}</span>
                 <input
                   id="tf-commission"
                   type="text"

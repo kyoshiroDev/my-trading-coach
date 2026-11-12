@@ -3,6 +3,8 @@ import type { MoodState } from './enums';
 /** Session clôturée, telle que renvoyée par GET /session/history. Dates en ISO. */
 export interface SessionHistoryItem {
   id: string;
+  /** Compte de la séance (1 séance = 1 compte, #457) : montants dans SA devise (#947). */
+  accountId?: string | null;
   startedAt: string;
   endedAt?: string;
   moodStart?: MoodState | null;
@@ -10,6 +12,9 @@ export interface SessionHistoryItem {
   totalPnl?: number | null;
   totalTrades: number;
   winRate?: number | null;
+  /** Trades gagnants / perdants de la séance (net des frais, BE et ouverts exclus, computeTradeStats). */
+  wins: number;
+  losses: number;
   notes?: string | null;
   reflectionNote?: string | null;
   reflectionQuestion?: string | null;

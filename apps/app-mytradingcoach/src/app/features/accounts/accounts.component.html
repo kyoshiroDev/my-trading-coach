@@ -19,17 +19,22 @@
     <div class="stats-row">
       <div class="stat-card" style="--c:var(--blue)">
         <div class="stat-label"><svg [lucideIcon]="WalletIcon" [size]="13"></svg>Capital suivi</div>
-        <div class="stat-value">{{ money(trackedCapital(), totalsCurrency()) }}</div>
+        <!-- Devises mêlées : aucune somme USD + EUR (#947), comme le reste de l'app. -->
+        <div class="stat-value">{{ totalsCurrency() === null ? '—' : money(trackedCapital(), totalsCurrency()) }}</div>
         <div class="stat-sub">
           {{ totalsCurrency() === null ? 'devises différentes : choisis un compte' : visibleAccounts().length + ' compte(s) suivi(s)' }}
         </div>
       </div>
       <div class="stat-card" style="--c:var(--green)">
         <div class="stat-label"><svg [lucideIcon]="TrendingUpIcon" [size]="13"></svg>P&amp;L cumulé</div>
-        <div class="stat-value" [class.text-green]="totalPnl() >= 0" [class.text-red]="totalPnl() < 0">
-          {{ money(totalPnl(), totalsCurrency(), true) }}
+        <div class="stat-value"
+          [class.text-green]="totalsCurrency() !== null && totalPnl() >= 0"
+          [class.text-red]="totalsCurrency() !== null && totalPnl() < 0">
+          {{ totalsCurrency() === null ? '—' : money(totalPnl(), totalsCurrency(), true) }}
         </div>
-        <div class="stat-sub">{{ selectedAccountName() ?? 'tous comptes' }} · estimé</div>
+        <div class="stat-sub">
+          {{ totalsCurrency() === null ? 'devises différentes : choisis un compte' : (selectedAccountName() ?? 'tous comptes') + ' · estimé' }}
+        </div>
       </div>
       <div class="stat-card" style="--c:var(--purple)">
         <div class="stat-label"><svg [lucideIcon]="ListIcon" [size]="13"></svg>Trades cumulés</div>

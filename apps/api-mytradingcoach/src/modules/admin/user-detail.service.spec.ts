@@ -20,6 +20,7 @@ describe('UserDetailService', () => {
     };
     founderSeat: { findUnique: ReturnType<typeof vi.fn> };
     partnerRedemption: { findUnique: ReturnType<typeof vi.fn> };
+    tradingAccount: { findMany: ReturnType<typeof vi.fn> };
   };
 
   beforeEach(() => {
@@ -38,8 +39,32 @@ describe('UserDetailService', () => {
       // Offre fondateur / code partenaire (#525) : aucun par défaut.
       founderSeat: { findUnique: vi.fn().mockResolvedValue(null) },
       partnerRedemption: { findUnique: vi.fn().mockResolvedValue(null) },
+      tradingAccount: { findMany: vi.fn().mockResolvedValue([]) },
     };
     service = new UserDetailService(prisma as unknown as PrismaService);
+  });
+
+  describe('devise des montants de trading (#947)', () => {
+    beforeEach(() => {
+      prisma.user.findUnique.mockResolvedValue({ id: 'u1', email: 'a@test.com', plan: 'FREE', createdAt: new Date() });
+    });
+
+    it('un seul compte EUR : P&L total en EUR, séance dans la devise de son compte', async () => {
+      prisma.tradingAccount.findMany.mockResolvedValue([{ currency: 'EUR' }]);
+      prisma.tradeSession.findMany.mockResolvedValueOnce([
+        { startedAt: new Date('2026-06-05T09:00:00Z'), endedAt: null, totalTrades: 1, totalPnl: 10, winRate: 100,
+          moodStart: null, moodEnd: null, account: { currency: 'EUR' } },
+      ]);
+      const d = await service.getUserDetail('u1');
+      expect(d.usage.currency).toBe('EUR');
+      expect(d.sessions[0].currency).toBe('EUR');
+    });
+
+    it('comptes USD + EUR : pas de devise commune (null)', async () => {
+      prisma.tradingAccount.findMany.mockResolvedValue([{ currency: 'USD' }, { currency: 'EUR' }]);
+      const d = await service.getUserDetail('u1');
+      expect(d.usage.currency).toBeNull();
+    });
   });
 
   it('404 si utilisateur introuvable', async () => {
@@ -133,7 +158,7 @@ describe('UserDetailService', () => {
     expect(r.identity.acquisition).toEqual({ source: null, medium: null, campaign: null });
     expect(r.kpis.lastConnection).toBeNull();
     // 0 trade : pas encore activé
-    expect(r.usage).toEqual({ totalTrades: 0, tradesThisMonth: 0, totalPnl: 0, winRate: 0 });
+    expect(r.usage).toEqual({ totalTrades: 0, tradesThisMonth: 0, totalPnl: 0, winRate: 0, currency: 'USD' });
     expect(r.topAssets).toEqual([]);
     expect(r.profile.tradingStrategy).toEqual([]);
   });

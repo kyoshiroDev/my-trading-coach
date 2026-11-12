@@ -11,6 +11,13 @@
 }
 
 /* ── 4 Stats FREE ── */
+.stats-head {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 12px;
+  min-width: 0;
+}
+
 .stats-row {
   display: grid;
   grid-template-columns: repeat(4, 1fr);

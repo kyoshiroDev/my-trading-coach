@@ -75,6 +75,7 @@ GET    /api/analytics/daily-recap/yesterday      JWT → récap de la DERNIÈRE 
 POST   /api/session/start              JWT → démarrer une session, { mood: MoodState }
 GET    /api/session/active             JWT → session active en cours (null si aucune)
 GET    /api/session/today              JWT → session du jour : l'active, sinon la dernière clôturée aujourd'hui
+GET    /api/session/history            JWT → séances clôturées ; chaque ligne porte `accountId`, `wins`, `losses` (computeTradeStats, net), #947
                                        (avec ses trades) — utilisée par l'app au chargement (#456)
 POST   /api/session/:id/close          JWT → clôturer, { mood: MoodState, notes? }
 POST   /api/events                     JWT + @DemoAllowed → événements d'usage { event, place } (liste blanche
@@ -146,7 +147,7 @@ GET    /api/admin/users                ADMIN → liste (?page&limit&search&sourc
 GET    /api/admin/users/stats          ADMIN → KPIs (MRR, inscrits, essais) │ AdminUsersController
 GET    /api/admin/users/online         ADMIN                                │ (littéraux AVANT :id)
 GET    /api/admin/users/subscriptions  ADMIN → abonnements                  │
-GET    /api/admin/users/:id            ADMIN → fiche utilisateur complète   │
+GET    /api/admin/users/:id            ADMIN → fiche (usage.currency + sessions[].currency, #947) │
 PATCH  /api/admin/users/:id(/role)     ADMIN · DELETE /api/admin/users/:id  │
 POST   /api/admin/users/:id/offer-premium ADMIN → Premium offert {days?} 1-90 │
                                        (défaut 30, prolonge, 409 si Stripe/PREMIUM/rôle/démo) ┘

@@ -1,3 +1,5 @@
+import { roundCents } from '@mtc/shared';
+import { sessionsWinRate } from './sessions-win-rate.util';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -18,7 +20,9 @@ import { AccountSelectorComponent } from '../../shared/components/account-select
 import { InactiveAccountsToggleComponent } from '../../shared/components/inactive-accounts-toggle/inactive-accounts-toggle.component';
 import { SelectedAccountStore } from '../../core/stores/selected-account.store';
 import { UserStore } from '../../core/stores/user.store';
-import { ErrorStateComponent } from '@mtc/front-ui';
+import { MoneyService } from '../../core/services/money.service';
+import { MixedCurrencyNoticeComponent } from '../../shared/components/mixed-currency-notice/mixed-currency-notice.component';
+import { ErrorStateComponent, PctPipe } from '@mtc/front-ui';
 import {
   LucideDynamicIcon,
   LucideClipboardList as ClipboardList,
@@ -42,7 +46,7 @@ interface WeekGroup {
   selector: 'mtc-sessions',
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './sessions.component.css',
-  imports: [LucideDynamicIcon, ErrorStateComponent, DatePipe, DecimalPipe, PnlFormatPipe, EmotionEmojiPipe, RouterLink, AccountSelectorComponent, InactiveAccountsToggleComponent],
+  imports: [PctPipe, MixedCurrencyNoticeComponent, LucideDynamicIcon, ErrorStateComponent, DatePipe, DecimalPipe, PnlFormatPipe, EmotionEmojiPipe, RouterLink, AccountSelectorComponent, InactiveAccountsToggleComponent],
   templateUrl: './sessions.component.html',
 })
 export class SessionsComponent {
@@ -56,6 +60,7 @@ export class SessionsComponent {
   private readonly destroyRef = inject(DestroyRef);
   protected readonly selectedAccount = inject(SelectedAccountStore);
   protected readonly userStore = inject(UserStore);
+  protected readonly money = inject(MoneyService);
 
   protected readonly sessions = signal<SessionHistoryItem[]>([]);
   protected readonly isLoading = signal(true);
@@ -83,12 +88,10 @@ export class SessionsComponent {
 
   protected readonly monthSummary = computed(() => {
     const s = this.sessions();
-    const totalPnl = s.reduce((acc, x) => acc + (x.totalPnl ?? 0), 0);
+    const totalPnl = roundCents(s.reduce((acc, x) => acc + (x.totalPnl ?? 0), 0));
     const sessionCount = s.length;
     const totalTrades = s.reduce((acc, x) => acc + (x.totalTrades ?? 0), 0);
-    const avgWinRate = sessionCount
-      ? s.reduce((acc, x) => acc + (x.winRate ?? 0), 0) / sessionCount
-      : 0;
+    const avgWinRate = sessionsWinRate(s);
     const avgDuration = sessionCount
       ? s.reduce((acc, x) => acc + this.durationSeconds(x.startedAt, x.endedAt), 0) / sessionCount
       : 0;

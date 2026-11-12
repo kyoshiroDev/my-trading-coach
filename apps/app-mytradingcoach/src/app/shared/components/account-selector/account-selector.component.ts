@@ -112,8 +112,10 @@ export class AccountSelectorComponent implements OnInit {
   }
 
   protected totalBalanceStr(): string {
-    // Devise commune des comptes (null si mêlées : pas de symbole deviné).
-    return this.fmt(this.totalBalance(), this.store.displayCurrency());
+    // Devise des comptes COMPTÉS, indépendante du compte choisi (avant, #947 : le total de tous les
+    // comptes prenait la devise du compte sélectionné). Devises mêlées → pas de somme affichée.
+    const cur = this.store.aggregateCurrency();
+    return cur === null ? 'Devises mixtes' : this.fmt(this.totalBalance(), cur);
   }
 
   private fmt(n: number, currency: string | null): string {

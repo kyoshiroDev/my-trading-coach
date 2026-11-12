@@ -11,22 +11,6 @@
   text-align: center;
 }
 
-/* Mot de passe et confirmation côte à côte dès que la carte fait 340 px de large (la requête lit
-   la zone de contenu : 340 − 2 × 18 de marge interne − 2 de bordure ≈ 300). */
-@container auth-card (min-width: 300px) {
-  .pw-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    align-items: start;
-  }
-
-  /* Libellés sur une ligne : les deux champs restent alignés. */
-  .pw-row label {
-    white-space: nowrap;
-  }
-}
-
 .consent-check {
   display: flex;
   align-items: flex-start;
