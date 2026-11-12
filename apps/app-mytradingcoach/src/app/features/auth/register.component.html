@@ -73,84 +73,82 @@
       }
     </div>
 
-    <div class="pw-row">
-      <div class="form-group" [class.input-error]="passwordError()">
-        <label for="password"
-          >Mot de passe <span class="optional">(8 min)</span></label
+    <div class="form-group" [class.input-error]="passwordError()">
+      <label for="password"
+        >Mot de passe <span class="optional">(8 min)</span></label
+      >
+      <div class="input-wrapper">
+        <input
+          id="password"
+          [attr.aria-invalid]="!!passwordError()"
+          [attr.aria-describedby]="passwordError() ? 'password-error' : null"
+          data-testid="register-password"
+          [type]="showPassword() ? 'text' : 'password'"
+          [ngModel]="password()"
+          (ngModelChange)="password.set($event)"
+          name="password"
+          placeholder="••••••••"
+          autocomplete="new-password"
+          (blur)="passwordTouched.set(true)"
+        />
+        <button
+          type="button"
+          class="eye-btn"
+          [attr.aria-label]="
+            showPassword()
+              ? 'Masquer le mot de passe'
+              : 'Afficher le mot de passe'
+          "
+          [attr.aria-pressed]="showPassword()"
+          (click)="showPassword.set(!showPassword())"
         >
-        <div class="input-wrapper">
-          <input
-            id="password"
-            [attr.aria-invalid]="!!passwordError()"
-            [attr.aria-describedby]="passwordError() ? 'password-error' : null"
-            data-testid="register-password"
-            [type]="showPassword() ? 'text' : 'password'"
-            [ngModel]="password()"
-            (ngModelChange)="password.set($event)"
-            name="password"
-            placeholder="••••••••"
-            autocomplete="new-password"
-            (blur)="passwordTouched.set(true)"
-          />
-          <button
-            type="button"
-            class="eye-btn"
-            [attr.aria-label]="
-              showPassword()
-                ? 'Masquer le mot de passe'
-                : 'Afficher le mot de passe'
-            "
-            [attr.aria-pressed]="showPassword()"
-            (click)="showPassword.set(!showPassword())"
-          >
-            <mtc-eye-icon [off]="showPassword()" />
-          </button>
-        </div>
-        @if (passwordError()) {
-          <span class="field-error" id="password-error">{{
-            passwordError()
-          }}</span>
-        }
+          <mtc-eye-icon [off]="showPassword()" />
+        </button>
       </div>
+      @if (passwordError()) {
+        <span class="field-error" id="password-error">{{
+          passwordError()
+        }}</span>
+      }
+    </div>
 
-      <div class="form-group" [class.input-error]="confirmError()">
-        <label for="confirm-password">Confirmer</label>
-        <div class="input-wrapper">
-          <input
-            id="confirm-password"
-            [attr.aria-invalid]="!!confirmError()"
-            [attr.aria-describedby]="
-              confirmError() ? 'confirm-password-error' : null
-            "
-            data-testid="register-confirm"
-            [type]="showConfirm() ? 'text' : 'password'"
-            [ngModel]="confirmPassword()"
-            (ngModelChange)="confirmPassword.set($event)"
-            name="confirmPassword"
-            placeholder="••••••••"
-            autocomplete="new-password"
-            (blur)="confirmTouched.set(true)"
-          />
-          <button
-            type="button"
-            class="eye-btn"
-            [attr.aria-label]="
-              showConfirm()
-                ? 'Masquer le mot de passe'
-                : 'Afficher le mot de passe'
-            "
-            [attr.aria-pressed]="showConfirm()"
-            (click)="showConfirm.set(!showConfirm())"
-          >
-            <mtc-eye-icon [off]="showConfirm()" />
-          </button>
-        </div>
-        @if (confirmError()) {
-          <span class="field-error" id="confirm-password-error">{{
-            confirmError()
-          }}</span>
-        }
+    <div class="form-group" [class.input-error]="confirmError()">
+      <label for="confirm-password">Confirmer</label>
+      <div class="input-wrapper">
+        <input
+          id="confirm-password"
+          [attr.aria-invalid]="!!confirmError()"
+          [attr.aria-describedby]="
+            confirmError() ? 'confirm-password-error' : null
+          "
+          data-testid="register-confirm"
+          [type]="showConfirm() ? 'text' : 'password'"
+          [ngModel]="confirmPassword()"
+          (ngModelChange)="confirmPassword.set($event)"
+          name="confirmPassword"
+          placeholder="••••••••"
+          autocomplete="new-password"
+          (blur)="confirmTouched.set(true)"
+        />
+        <button
+          type="button"
+          class="eye-btn"
+          [attr.aria-label]="
+            showConfirm()
+              ? 'Masquer le mot de passe'
+              : 'Afficher le mot de passe'
+          "
+          [attr.aria-pressed]="showConfirm()"
+          (click)="showConfirm.set(!showConfirm())"
+        >
+          <mtc-eye-icon [off]="showConfirm()" />
+        </button>
       </div>
+      @if (confirmError()) {
+        <span class="field-error" id="confirm-password-error">{{
+          confirmError()
+        }}</span>
+      }
     </div>
 
     <label class="consent-check">
