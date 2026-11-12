@@ -1,4 +1,3 @@
-import { PctPipe } from '@mtc/front-ui';
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -6,7 +5,7 @@ import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { httpResource } from '@angular/common/http';
 import { map } from 'rxjs';
 import { environment } from '@admin/environments/environment';
-import { ConfirmService } from '@mtc/front-ui';
+import { ConfirmService, PctPipe } from '@mtc/front-ui';
 import { acquisitionLabel, acquisitionQueryParams, apiErrorMessage, formatMoney, subscriptionState } from '@mtc/shared';
 import { AdminApi, UserDetailData } from '../../core/api/admin.api';
 import { ActivityCalendarComponent } from './activity-calendar.component';

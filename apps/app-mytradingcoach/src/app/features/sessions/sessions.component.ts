@@ -1,4 +1,3 @@
-import { PctPipe } from '@mtc/front-ui';
 import { roundCents } from '@mtc/shared';
 import { sessionsWinRate } from './sessions-win-rate.util';
 import {
@@ -23,7 +22,7 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
 import { UserStore } from '../../core/stores/user.store';
 import { MoneyService } from '../../core/services/money.service';
 import { MixedCurrencyNoticeComponent } from '../../shared/components/mixed-currency-notice/mixed-currency-notice.component';
-import { ErrorStateComponent } from '@mtc/front-ui';
+import { ErrorStateComponent, PctPipe } from '@mtc/front-ui';
 import {
   LucideDynamicIcon,
   LucideClipboardList as ClipboardList,

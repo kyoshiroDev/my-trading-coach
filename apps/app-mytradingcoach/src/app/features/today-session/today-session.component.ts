@@ -1,4 +1,3 @@
-import { PctPipe } from '@mtc/front-ui';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -38,7 +37,7 @@ import { DebriefObjective } from '../../core/api/debrief.api';
 import { evaluateObjectiveCheck, minRrFailureLabel } from './objective-check.util';
 import { EmotionEmojiPipe, PnlColorPipe, PnlFormatPipe } from '../../shared/pipes';
 import { ToastService } from '../../core/services/toast.service';
-import { DialogDirective, ErrorStateComponent } from '@mtc/front-ui';
+import { DialogDirective, ErrorStateComponent, PctPipe } from '@mtc/front-ui';
 import { MoneyService } from '../../core/services/money.service';
 import { ResultsShareComponent } from './results-share/results-share.component';
 import {

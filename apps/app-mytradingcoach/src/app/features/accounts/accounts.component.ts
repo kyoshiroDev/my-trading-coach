@@ -671,7 +671,6 @@ export class AccountsComponent implements OnInit {
     return formatPercent(v == null ? null : v * 100);
   }
 
-
   /** Libellé de la colonne marge : « trailing » n'est affiché que s'il s'applique. */
   protected phaseLabel(phase: 'evaluation' | 'funded' | 'direct'): string {
     return phase === 'evaluation' ? 'évaluation' : phase === 'funded' ? 'compte funded' : 'compte funded direct';

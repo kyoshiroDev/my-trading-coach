@@ -1,4 +1,3 @@
-import { PctPipe } from '@mtc/front-ui';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -36,7 +35,7 @@ import { MoneyService } from '../../core/services/money.service';
 import { drawdownHelp, planFloorOf, planObjectiveLine } from '../../core/services/chart-series.util';
 import { DRAWDOWN_PICK_ACCOUNT, drawdownScopeLabel, isMultiAccountView } from '../../core/services/drawdown-scope.util';
 import { MixedCurrencyNoticeComponent } from '../../shared/components/mixed-currency-notice/mixed-currency-notice.component';
-import { ErrorStateComponent } from '@mtc/front-ui';
+import { ErrorStateComponent, PctPipe } from '@mtc/front-ui';
 import { InactiveAccountsToggleComponent } from '../../shared/components/inactive-accounts-toggle/inactive-accounts-toggle.component';
 import { TradesApi } from '../../core/api/trades.api';
 import { isInactiveStatus } from '../../core/utils/account-status.util';
@@ -53,7 +52,7 @@ const MOCK_SETUP_BARS = [88, 72, 65, 54, 38] as const;
 
 @Component({
   selector: 'mtc-analytics',
-  imports: [PctPipe, 
+  imports: [PctPipe,
     TopbarComponent,
     PnlFormatPipe,
     SessionLabelPipe,
