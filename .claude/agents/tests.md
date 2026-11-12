@@ -150,8 +150,9 @@ env $(grep -vE '^#|^$' ../../.env | xargs -d '\n') \
 > factice (401 à corps vide). `tradovate-live.int-spec.ts` refuse en plus tout appel sortant autre
 > que l'API locale du test, et son dernier test exige zéro appel refusé.
 > `tradovate-sync.int-spec.ts` (clause 2i) : le faux Tradovate lève et note dans `forbidden` toute
-> méthode autre que GET (sauf l'instantané de solde, exposé en POST) et toute route `/order/*` ou
-> `/orderVersion/*` qui n'est pas `list` ; les tests de capture du stop exigent `forbidden` vide.
+> méthode autre que GET (sauf l'instantané de solde, exposé en POST) et toute route `/order/*`,
+> `/orderVersion/*`, `/orderStrategy/*` ou `/orderStrategyLink/*` qui n'est pas `list` ; les tests de
+> capture du stop (dont la liaison par stratégie, #955) exigent `forbidden` vide.
 >
 > ⚠️ **Redis local protégé par mot de passe.** Sans `REDIS_PASSWORD`, chaque appel Redis échoue
 > en silence (les verrous et pauses retombent sur « pas de Redis ») : `tradovate-sync.int-spec`

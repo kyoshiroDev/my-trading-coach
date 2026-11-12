@@ -204,23 +204,20 @@ POST   /api/test/upgrade-user          NODE_ENV=test uniquement
   devient incalculable, sauf R/R fourni par le client. Une resynchronisation n'écrase rien :
   l'import broker n'insère que des trades nouveaux (dédoublonnage), il ne met jamais à jour un trade
   existant (`trade-stop.int-spec.ts`).
-- **Capture du stop à l'entrée (#916 phase 2, #925)** : `TradovateSyncService.run` lit, s'il y a des
-  trades à convertir, `/order/list` + `/orderVersion/list` (GET, best-effort : un échec ne casse pas
-  la synchro, sauf une pénalité, relancée pour que la pause soit notée) et pose `stopLoss` / `takeProfit` dans le DTO de CRÉATION via `entryProtection`
-  (`tradovate-entry-protection.ts`, pur) : ordre d'entrée = `orderId` du fill d'entrée, jambes =
-  `parentId` (+ OCO), même compte / contrat, sens opposé, PREMIÈRE version, candidat unique, bon
-  côté ; sinon rien. Un trade existant n'est jamais mis à jour (la saisie utilisateur prime). Log
-  de mesure « Capture stop Tradovate » (liés / sans jambe liée / ambigus / séance passée), sans
-  montant. `BROKER_HISTORY` (rapport après coup) : pas de stop, non validé par Greg.
-  **Constat prod du 2026-11-11** : 0 lié sur 19 entrées alors que les 18 trades avaient un bracket
-  (TradingView / multibracket) → `parentId` ne porte pas le lien. **Diagnostic TEMPORAIRE** (`tradovate-link-diagnostics.ts`,
-  pur) derrière `TRADOVATE_LINK_DIAGNOSTIC=true` (absent = éteint) : si au moins un « sans jambe liée », une fois par
-  jour UTC et par connexion (clé Redis `tradovate:linkdiag:{connId}:{AAAA-MM-JJ}`, SET NX EX 172800 posée AVANT les
-  lectures), 2 GET en plus (`/orderStrategy/list`, `/orderStrategyLink/list`), log « Liaison bracket Tradovate » :
-  noms de champs bruts + pour chaque entrée, ordres opposés du contrat en ÉCART d'id (`+1`), `parentId` / `ocoId` /
-  `linkedId` relatifs, rattachement par stratégie. Jamais de prix, compte ni id brut ; ne casse jamais la synchro ;
-  pénalité sur une lecture du diagnostic → pause notée (`notePenalty`), diagnostic arrêté.
-  **À retirer** dans le correctif qui codera la vraie liaison.
+- **Capture du stop à l'entrée (#916 phase 2, #925, liaison par stratégie #955)** : `TradovateSyncService.run`
+  lit, s'il y a des trades à convertir, `/order/list` + `/orderVersion/list` + `/orderStrategyLink/list`
+  (GET, best-effort : un échec ne casse pas la synchro, sauf une pénalité, relancée pour que la pause soit
+  notée ; liens de stratégie illisibles = liaison par `parentId` seule) et pose `stopLoss` / `takeProfit`
+  dans le DTO de CRÉATION via `entryProtection` (`tradovate-entry-protection.ts`, pur) : ordre d'entrée =
+  `orderId` du fill d'entrée, jambes = ordres de la **même stratégie d'ordres** que l'entrée
+  (`orderStrategyLink.orderStrategyId`) ou `parentId` = entrée (+ OCO), même compte / contrat, sens
+  opposé, PREMIÈRE version, candidat unique par rôle, bon côté ; sinon rien. Un trade existant n'est
+  jamais mis à jour (la saisie utilisateur prime). Log de mesure « Capture stop Tradovate » (liés / sans
+  jambe liée / ambigus / séance passée), sans montant. `BROKER_HISTORY` (rapport après coup) : pas de
+  stop, non validé par Greg. **Constat prod du 2026-11-12** (diagnostic #955, retiré depuis) : brackets
+  TradingView sans `parentId` / `ocoId` / `linkedId` ; entrée, stop et objectif partagent une stratégie
+  (3 ordres par stratégie). `/orderStrategy/list` n'est pas lu (inutile à la liaison). Jamais d'inférence
+  par id voisin (non validée).
 - **Borne haute des périodes analytics** : un `to` date seule (`2026-09-14`) couvre la journée
   entière (`AnalyticsController.endBound`) ; lu tel quel il valait minuit et excluait les trades du jour.
 - **Setup des trades importés = « Sans setup »** (PROMPT-213) : la synchro broker, l'import CSV sans
@@ -711,9 +708,12 @@ débrief stocké garde les vrais ids (onglets, PDF).
 - `IS_CRON_WORKER=true` sur 1 seul worker → seul lui exécute `@Cron`
 - `ScheduleModule.forRoot()` conditionnel dans `app.module.ts`, en **opt-in** :
   ```typescript
-  ...(process.env['IS_CRON_WORKER'] === 'true' ? [ScheduleModule.forRoot()] : [])
+  ...(runsCrons() ? [ScheduleModule.forRoot()] : [])
   ```
-- En dev : process unique, pas de clustering. Crons INACTIFS sauf `IS_CRON_WORKER=true` dans `.env`
+  `runsCrons()` (`config/app-role.ts`) = `APP_ROLE !== 'web'` **et** `IS_CRON_WORKER === 'true'`.
+- En dev : process unique, pas de clustering. Crons INACTIFS sauf `IS_CRON_WORKER=true` dans `.env`.
+  Le worker du VPS dev (`mtc_api_dev_worker`) tourne avec `IS_CRON_WORKER=false` : son log de démarrage
+  dit « crons non ». **Aucun cron ne s'observe sur dev** (vérifié le 2026-11-11).
 - Worker mort : relancé avec un délai croissant (1 s → 30 s) ; au-delà de 5 morts en une minute,
   le process principal sort en erreur et Docker redémarre le conteneur (pas de boucle infinie).
 - SIGTERM (docker stop) : le principal le transmet aux workers sans les relancer ;
@@ -2492,6 +2492,9 @@ global à la file ; Resend = 10 req/s par équipe, clé partagée entre environn
   (calendriers par user reconstruits à la demande ; ne touche ni `eco:analysis:*` ni les verrous).
 - Coût FMP : avant ~603 requêtes/jour ouvré ; après = 3 à 5 fixes + 1 par tick de 20 s pendant les
   fenêtres (au plus 45 par créneau horaire si FMP ne publie jamais le chiffre).
+- **Observable en prod seulement** : relevé du soir, `🔔 … nouveaux résultats`, `✨ … analyse(s)` (analyse
+  auto). Dev n'a ni crons ni IA (`AI_ENABLED=false`) ; `POST /eco-calendar/fetch/:date` (admin) remplit
+  `EcoEvent` sans broadcast ni analyse. Vérifier sur le worker prod : logs, `EcoEvent`, `AiUsageLog`.
 
 ## Calendrier éco : analyse automatique des résultats forts (2026-11-10, #920)
 

@@ -17,15 +17,18 @@ import { toOpenPositions } from './tradovate-open-positions';
 import { isPenaltyFailure, TradovateApiError, TradovateException, TradovatePenaltyError } from './tradovate.errors';
 import { mapTradovatePairs } from './tradovate-trade.mapper';
 import { describeTradovateSnapshot } from './tradovate-sync-diagnostics';
-import { countOutcomes, entryProtection, firstVersions, type EntryProtection } from './tradovate-entry-protection';
-import type { TradovateOrderEntity, TradovateOrderVersionEntity } from './tradovate-orders';
 import {
-  describeBracketLinks,
-  LINK_DIAGNOSTIC_TTL_S,
-  linkDiagnosticEnabled,
-  linkDiagnosticKey,
-} from './tradovate-link-diagnostics';
-import { RedisService } from '../../infra/redis.service';
+  countOutcomes,
+  entryProtection,
+  firstVersions,
+  strategyByOrder,
+  type EntryProtection,
+} from './tradovate-entry-protection';
+import type {
+  TradovateOrderEntity,
+  TradovateOrderStrategyLinkEntity,
+  TradovateOrderVersionEntity,
+} from './tradovate-orders';
 import type {
   TradovateAccount,
   TradovateContract,
@@ -46,14 +49,6 @@ import type {
  * compte actif échouait entièrement.
  */
 const ITEMS_BATCH = 10;
-
-/** Résultat de la capture à l'entrée, avec les ordres lus (réutilisés par le diagnostic #916). */
-interface EntryCapture {
-  protections: EntryProtection[];
-  orders: TradovateOrderEntity[];
-  versions: TradovateOrderVersionEntity[];
-  entryOrderIds: (number | undefined)[];
-}
 
 export interface TradovateSyncResult {
   created: number;
@@ -94,8 +89,6 @@ export class TradovateSyncService {
     private readonly trades: TradesService,
     private readonly setups: SetupsService,
     @Optional() private readonly freeLimit?: FreeLimitSyncService,
-    // Diagnostic de liaison des brackets (#916), une fois par jour : sans Redis, jamais lancé.
-    @Optional() private readonly redis?: RedisService,
   ) {}
 
   /**
@@ -313,8 +306,7 @@ export class TradovateSyncService {
 
     // Stop et objectif initiaux liés à l'ordre d'entrée (#916 phase 2), lus dans les ordres de la
     // séance. Best-effort : une lecture refusée ne fait jamais échouer la synchro.
-    const capture = await this.entryProtections(get, mapped.trades, fills);
-    const protections = capture?.protections ?? null;
+    const protections = await this.entryProtections(get, mapped.trades, fills);
 
     // Mêmes valeurs de lot que l'import CSV : compte cible, « Sans setup », émotion non renseignée.
     const setupId = await this.setups.getImportSetupId(userId);
@@ -348,13 +340,12 @@ export class TradovateSyncService {
         }),
     );
     if (protections) {
-      // Mesure (#916) : les brackets portent-ils le lien `parentId` ? Aucun montant, aucun compte.
+      // Mesure (#916) : jambes retrouvées par stratégie ou `parentId` ? Aucun montant, aucun compte.
       const c = countOutcomes(protections.map((p) => p.outcome));
       this.logger.log(
         `Capture stop Tradovate ${conn.id} : ${c.linked} liés, ${c['no-leg']} sans jambe liée, ` +
           `${c.ambiguous} ambigus, ${c['session-gone']} séance passée.`,
       );
-      if (c['no-leg'] > 0 && capture) await this.logBracketLinks(conn, get, capture);
     }
 
     return {
@@ -371,21 +362,29 @@ export class TradovateSyncService {
 
   /**
    * Protections initiales de chaque trade converti (même ordre que `trades`), ou `null` si aucun
-   * trade ou si les ordres de la séance sont illisibles. Deux lectures (`/order/list`,
-   * `/orderVersion/list`), faites seulement quand il y a des trades à convertir.
+   * trade ou si les ordres de la séance sont illisibles. Trois lectures (`/order/list`,
+   * `/orderVersion/list`, `/orderStrategyLink/list`), faites seulement quand il y a des trades à
+   * convertir. Liens de stratégie illisibles : capture par `parentId` / OCO seulement.
    */
   private async entryProtections(
     get: <R>(path: string, query?: Record<string, string>) => Promise<R>,
     trades: readonly { side?: 'LONG' | 'SHORT'; entry?: number; _buyFillId?: string; _sellFillId?: string }[],
     fills: Map<number, TradovateFill>,
-  ): Promise<EntryCapture | null> {
+  ): Promise<EntryProtection[] | null> {
     if (trades.length === 0) return null;
     let orders: TradovateOrderEntity[];
     let versions: TradovateOrderVersionEntity[];
+    let links: TradovateOrderStrategyLinkEntity[] | null;
     try {
-      [orders, versions] = await Promise.all([
+      [orders, versions, links] = await Promise.all([
         get<TradovateOrderEntity[]>('/order/list'),
         get<TradovateOrderVersionEntity[]>('/orderVersion/list'),
+        get<TradovateOrderStrategyLinkEntity[]>('/orderStrategyLink/list').catch((err: unknown) => {
+          // Pénalité : relancée (pause notée plus bas). Autre refus : liaison par parentId seule.
+          if (isPenaltyFailure(err)) throw err;
+          this.logger.warn(`Capture stop Tradovate : liens de stratégie illisibles (${(err as Error).message})`);
+          return null;
+        }),
       ]);
     } catch (err) {
       // Pénalité (limite de requêtes) : relancée comme toute lecture de la synchro, pour que la
@@ -396,63 +395,16 @@ export class TradovateSyncService {
       return null;
     }
     const list = Array.isArray(orders) ? orders : [];
-    const versionList = Array.isArray(versions) ? versions : [];
-    const first = firstVersions(versionList);
-    const entryOrderIds: (number | undefined)[] = [];
-    const protections = trades.map((t) => {
+    const first = firstVersions(Array.isArray(versions) ? versions : []);
+    const strategyOf = strategyByOrder(Array.isArray(links) ? links : []);
+    return trades.map((t) => {
       const entryFillId = t.side === 'LONG' ? t._buyFillId : t._sellFillId;
       const fill = entryFillId ? fills.get(Number(entryFillId)) : undefined;
-      entryOrderIds.push(fill?.orderId);
       if (t.entry == null || t.side == null) return { outcome: 'session-gone' as const };
-      return entryProtection({ entryOrderId: fill?.orderId, side: t.side, entryPrice: t.entry, orders: list, first });
+      return entryProtection({
+        entryOrderId: fill?.orderId, side: t.side, entryPrice: t.entry, orders: list, first, strategyOf,
+      });
     });
-    return { protections, orders: list, versions: versionList, entryOrderIds };
-  }
-
-  /**
-   * Diagnostic TEMPORAIRE (#916) : comment Tradovate relie les jambes d'un bracket à l'entrée.
-   * Éteint par défaut (`TRADOVATE_LINK_DIAGNOSTIC=true` pour l'allumer), une fois par jour UTC et
-   * par connexion (clé Redis posée AVANT les lectures : une erreur ne relance rien). Deux GET en plus
-   * (`/orderStrategy/list`, `/orderStrategyLink/list`), jamais un POST (contrat NinjaTrader 2i).
-   * Ne fait jamais échouer la synchro. Le log ne contient ni prix, ni compte, ni id brut.
-   */
-  private async logBracketLinks(
-    conn: BrokerConnection,
-    get: <R>(path: string, query?: Record<string, string>) => Promise<R>,
-    capture: EntryCapture,
-  ): Promise<void> {
-    if (!linkDiagnosticEnabled() || !this.redis) return;
-    const connectionId = conn.id;
-    // Pénalité : pause notée comme pour toute lecture (les trades sont déjà créés, on ne relance
-    // pas l'erreur) et diagnostic arrêté, sans seconde lecture vers une API qui vient de refuser.
-    let penalized = false;
-    try {
-      const key = linkDiagnosticKey(connectionId, new Date());
-      if ((await this.redis.client.set(key, '1', 'EX', LINK_DIAGNOSTIC_TTL_S, 'NX')) !== 'OK') return;
-      const read = async (path: string): Promise<unknown[] | null> => {
-        try {
-          const r = await get<unknown[]>(path);
-          return Array.isArray(r) ? r : null;
-        } catch (err) {
-          if (err instanceof TradovatePenaltyError) {
-            penalized = true;
-            await this.connections.notePenalty(conn, err);
-          }
-          this.logger.warn(`Liaison bracket Tradovate ${connectionId} : ${path} illisible (${(err as Error).message})`);
-          return null;
-        }
-      };
-      const strategies = await read('/orderStrategy/list');
-      if (penalized) return;
-      const strategyLinks = await read('/orderStrategyLink/list');
-      if (penalized) return;
-      this.logger.log(
-        `Liaison bracket Tradovate ${connectionId} : ` +
-          describeBracketLinks({ ...capture, strategies, strategyLinks }),
-      );
-    } catch (err) {
-      this.logger.warn(`Liaison bracket Tradovate ${connectionId} : diagnostic impossible (${(err as Error).message})`);
-    }
   }
 
   /** `/xxx/items?ids=1,2,3` par lots → Map id → entité. */

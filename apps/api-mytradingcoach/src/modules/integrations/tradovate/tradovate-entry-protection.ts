@@ -2,13 +2,15 @@
  * Stop et objectif INITIAUX d'un trade synchronisé, lus à la synchro dans les ordres de la séance
  * (#916, phase 2 : capture à l'entrée, décision du 2026-11-10) — fonctions PURES.
  *
- * Lecture seule (`/order/list`, `/orderVersion/list`, scope Orders:Read) : rien n'est jamais passé
- * ni modifié (contrat NinjaTrader, clause 2i).
+ * Lecture seule (`/order/list`, `/orderVersion/list`, `/orderStrategyLink/list`, scope Orders:Read) :
+ * rien n'est jamais passé ni modifié (contrat NinjaTrader, clause 2i).
  *
- * Liaison stricte, jamais une proximité horaire :
+ * Liaison stricte par un lien explicite de Tradovate, jamais une proximité horaire ni d'id :
  * - ordre d'entrée = `orderId` du fill d'entrée (achat d'un LONG, vente d'un SHORT) ;
- * - jambes = ordres dont `parentId` est l'ordre d'entrée (bracket), plus celles liées en OCO à une
- *   jambe ainsi trouvée ; même compte, même contrat, sens opposé à l'entrée ;
+ * - jambes = ordres de la MÊME stratégie d'ordres que l'entrée (`orderStrategyLink.orderStrategyId`,
+ *   brackets TradingView et multibracket : constat prod du 2026-11-12, #955, `parentId` / `ocoId` /
+ *   `linkedId` vides), ou dont `parentId` est l'ordre d'entrée, plus celles liées en OCO à une jambe
+ *   ainsi trouvée ; toujours même compte, même contrat, sens opposé à l'entrée ;
  * - prix INITIAL = PREMIÈRE version de la jambe (plus petit id d'`orderVersion`) : un stop déplacé
  *   ensuite garde son prix de départ ;
  * - un rôle (stop ou objectif) n'est posé que s'il a UN seul candidat et qu'il est du bon côté de
@@ -18,7 +20,11 @@
  * (`session-gone`), distingué de « pas de jambe liée » (`no-leg`) pour la mesure en production.
  */
 import { stopPlacementError } from '@mtc/shared';
-import type { TradovateOrderEntity, TradovateOrderVersionEntity } from './tradovate-orders';
+import type {
+  TradovateOrderEntity,
+  TradovateOrderStrategyLinkEntity,
+  TradovateOrderVersionEntity,
+} from './tradovate-orders';
 
 export type EntryProtectionOutcome = 'linked' | 'no-leg' | 'ambiguous' | 'session-gone';
 
@@ -51,8 +57,10 @@ export function entryProtection(input: {
   entryPrice: number;
   orders: readonly TradovateOrderEntity[];
   first: Map<number, TradovateOrderVersionEntity>;
+  /** Liens ordre → stratégie (`/orderStrategyLink/list`) ; absents ou illisibles = parentId seul. */
+  strategyOf?: Map<number, number>;
 }): EntryProtection {
-  const { entryOrderId, side, entryPrice, orders, first } = input;
+  const { entryOrderId, side, entryPrice, orders, first, strategyOf } = input;
   const entry = finite(entryOrderId) ? orders.find((o) => o.id === entryOrderId) : undefined;
   if (!entry) return { outcome: 'session-gone' };
 
@@ -60,7 +68,10 @@ export function entryProtection(input: {
   const sameAccount = (o: TradovateOrderEntity) =>
     o.id !== entry.id && o.accountId === entry.accountId && o.contractId === entry.contractId && o.action === exitAction;
 
-  const legs = orders.filter((o) => sameAccount(o) && o.parentId === entry.id);
+  const entryStrategy = strategyOf?.get(entry.id as number);
+  const sameStrategy = (o: TradovateOrderEntity) =>
+    entryStrategy !== undefined && strategyOf?.get(o.id as number) === entryStrategy;
+  const legs = orders.filter((o) => sameAccount(o) && (o.parentId === entry.id || sameStrategy(o)));
   // Jambes liées en OCO à une jambe du bracket (l'autre protection) : même filtre de compte.
   for (const o of orders) {
     if (!sameAccount(o) || legs.includes(o)) continue;
@@ -85,6 +96,13 @@ export function entryProtection(input: {
   const out: EntryProtection = { outcome: stopLoss !== undefined || takeProfit !== undefined ? 'linked' : 'ambiguous' };
   if (stopLoss !== undefined) out.stopLoss = stopLoss;
   if (takeProfit !== undefined) out.takeProfit = takeProfit;
+  return out;
+}
+
+/** Ordre → stratégie d'ordres, à partir des liens bruts (entrées invalides ignorées). */
+export function strategyByOrder(links: readonly TradovateOrderStrategyLinkEntity[]): Map<number, number> {
+  const out = new Map<number, number>();
+  for (const l of links) if (finite(l.orderId) && finite(l.orderStrategyId)) out.set(l.orderId, l.orderStrategyId);
   return out;
 }
 

@@ -75,8 +75,6 @@ export const ENV_VARS: EnvVar[] = [
   { name: 'TRADER_PUSH_ENABLED', level: 'optional', check: isBoolean },
   // Veille serveur (#770) : WebSockets Tradovate gardés app fermée, au plus N à la fois. Absente ou 0 = veille éteinte (conseillé : 500).
   { name: 'TRADOVATE_WATCH_MAX', level: 'optional', check: (v) => (/^\d+$/.test(v) ? undefined : 'doit être un entier ≥ 0') },
-  // Diagnostic TEMPORAIRE de liaison des brackets (#916) : un log par jour et par connexion, sans prix ni compte. Absent = éteint.
-  { name: 'TRADOVATE_LINK_DIAGNOSTIC', level: 'optional', check: isBoolean },
   { name: 'VAPID_SUBJECT', level: 'optional', check: (v) => (/^(mailto:[^@\s]+@[^@\s]+|https:\/\/\S+)$/.test(v) ? undefined : 'doit être mailto:… ou https://…') },
   // Connexion Google (#618). Bouton visible seulement si FEATURE_GOOGLE_AUTH=true ET GOOGLE_CLIENT_ID
   // défini (client OAuth « application web » propre à l'environnement) ; off par défaut.

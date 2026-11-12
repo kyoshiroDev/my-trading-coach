@@ -32,6 +32,16 @@ export interface TradovateOrderVersionEntity {
   stopPrice?: number | null;
 }
 
+/**
+ * Entité `orderStrategyLink` : rattache un ordre à une stratégie d'ordres (bracket TradingView,
+ * multibracket). Entrée, stop et objectif d'un même bracket partagent `orderStrategyId`.
+ */
+export interface TradovateOrderStrategyLinkEntity {
+  id?: number;
+  orderId?: number;
+  orderStrategyId?: number;
+}
+
 /** Ordre actif tel que gardé dans Redis : lien (order) + type et prix (dernière version). */
 export interface WorkingOrder {
   id: number;
