@@ -11,7 +11,8 @@ import {
   signal,
 } from '@angular/core';
 import { DatePipe, registerLocaleData } from '@angular/common';
-import { netPnl } from '@mtc/shared';
+import { computeTradeStats, formatPercent, netPnl } from '@mtc/shared';
+import { sessionScopedTrades } from './debrief-scope.util';
 import localeFr from '@angular/common/locales/fr';
 registerLocaleData(localeFr);
 import {
@@ -153,9 +154,19 @@ export class TodaySessionComponent implements OnInit, OnDestroy {
     () => canPublishResults(this.userStore.user()?.role, this.store.activeSession()?.status),
   );
   /** Chiffres du débrief et de la carte : ceux de la session clôturée d'abord (#457). */
-  protected readonly debriefStats = computed(() =>
-    debriefStats(this.store.activeSession(), this.store.todayStats()),
+  /** Trades de la séance affichée (pas ceux d'une autre séance du même jour, #947). */
+  protected readonly sessionTrades = computed(() =>
+    sessionScopedTrades(this.store.activeSession()?.id, this.store.todayTrades()),
   );
+  /**
+   * Séance clôturée : ses totaux stockés. Séance en cours : calculés sur SES trades (avant, #947,
+   * les stats de toute la journée du compte, autres séances comprises).
+   */
+  protected readonly debriefStats = computed(() => {
+    const trades = this.sessionTrades();
+    const st = computeTradeStats(trades);
+    return debriefStats(this.store.activeSession(), { totalPnl: st.totalPnl, winRate: st.winRate, tradesCount: trades.length });
+  });
   protected readonly canShareResults = computed(() => hasResultsToShare(this.debriefStats()));
   protected readonly sessionDate = computed(() => {
     const s = this.store.activeSession();
@@ -170,7 +181,7 @@ export class TodaySessionComponent implements OnInit, OnDestroy {
     return {
       pnlLabel: this.money.formatFor(this.store.activeSession()?.accountId, pnl),
       pnlPositive: pnl >= 0,
-      winRateLabel: `${Math.round(stats?.winRate ?? 0)}%`,
+      winRateLabel: formatPercent(stats?.winRate ?? 0),
       tradesCount: stats?.tradesCount ?? 0,
       moodEmoji: mood.emoji,
       moodLabel: mood.label,
@@ -180,10 +191,10 @@ export class TodaySessionComponent implements OnInit, OnDestroy {
   });
 
   // ── Trades ────────────────────────────────────────────────────────────────
-  protected readonly noTrades      = computed(() => this.store.todayTrades().length === 0);
+  protected readonly noTrades      = computed(() => this.sessionTrades().length === 0);
   /** Trades clôturés du jour, `pnl` remplacé par le NET (frais déduits) : c'est lui qui classe et s'affiche. */
   protected readonly closedTrades  = computed(() =>
-    this.store.todayTrades()
+    this.sessionTrades()
       .filter(t => t.pnl !== null)
       .map(t => ({ ...t, pnl: netPnl(t) })),
   );
@@ -200,7 +211,7 @@ export class TodaySessionComponent implements OnInit, OnDestroy {
 
   // ── Émotions ──────────────────────────────────────────────────────────────
   protected readonly emotionBreakdown = computed(() => {
-    const trades = this.store.todayTrades();
+    const trades = this.sessionTrades();
     const total = trades.length;
     if (!total) return [];
     const counts = new Map<string, number>();
@@ -213,7 +224,7 @@ export class TodaySessionComponent implements OnInit, OnDestroy {
   // ── Objectifs ─────────────────────────────────────────────────────────────
   protected readonly objectivesReview = computed(() => {
     const objs = this.store.currentObjectives();
-    const trades = this.store.todayTrades();
+    const trades = this.sessionTrades();
     const journalLen = this.journalText().length;
 
     return objs.map((o) => {
@@ -244,7 +255,7 @@ export class TodaySessionComponent implements OnInit, OnDestroy {
 
   // ── Score de discipline ───────────────────────────────────────────────────
   protected readonly disciplineScore = computed(() => {
-    const trades = this.store.todayTrades();
+    const trades = this.sessionTrades();
     if (!trades.length) return 100;
     let score = 100;
     score -= trades.filter(t => t.emotion === 'REVENGE').length * 20;
@@ -263,7 +274,7 @@ export class TodaySessionComponent implements OnInit, OnDestroy {
   protected readonly disciplinePhrase = computed(() => {
     if (this.noTrades()) return "Tu n'as pas forcé de trade aujourd'hui. C'est de la discipline.";
     const s = this.disciplineScore();
-    const revenge = this.store.todayTrades().filter(t => t.emotion === 'REVENGE').length;
+    const revenge = this.sessionTrades().filter(t => t.emotion === 'REVENGE').length;
     if (revenge > 0) return `${revenge} revenge trade${revenge > 1 ? 's' : ''} détecté${revenge > 1 ? 's' : ''} : travailler la gestion émotionnelle.`;
     if (s >= 85) return 'Excellente gestion : plan respecté, émotions sous contrôle.';
     if (s >= 70) return "Bonne session dans l'ensemble. Quelques petits ajustements possibles.";

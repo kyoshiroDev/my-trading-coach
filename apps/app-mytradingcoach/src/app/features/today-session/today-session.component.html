@@ -180,7 +180,7 @@
         <div class="debrief-cards-row">
           <div class="card4">
             <div class="card4-v" [class.green]="(debriefStats()?.totalPnl ?? 0) >= 0" [class.red]="(debriefStats()?.totalPnl ?? 0) < 0">
-              {{ debriefStats()?.totalPnl | pnlFormat }}
+              {{ debriefStats()?.totalPnl | pnlFormat : null : session.accountId }}
             </div>
             <div class="card4-l">P&L session</div>
           </div>
@@ -244,7 +244,7 @@
                   <div class="dtc-row">
                     <span class="dtc-time">{{ t.tradedAt | date:'HH:mm' }}</span>
                     <span>{{ t.emotion | emotionEmoji }}</span>
-                    <span class="dtc-pnl" [style.color]="t.pnl | pnlColor">{{ t.pnl | pnlFormat }}</span>
+                    <span class="dtc-pnl" [style.color]="t.pnl | pnlColor">{{ t.pnl | pnlFormat : null : session.accountId }}</span>
                   </div>
                 } @else { <div class="dtc-empty">Aucun trade clôturé aujourd'hui</div> }
               </div>
@@ -255,7 +255,7 @@
                   <div class="dtc-row">
                     <span class="dtc-time">{{ t.tradedAt | date:'HH:mm' }}</span>
                     <span>{{ t.emotion | emotionEmoji }}</span>
-                    <span class="dtc-pnl" [style.color]="t.pnl | pnlColor">{{ t.pnl | pnlFormat }}</span>
+                    <span class="dtc-pnl" [style.color]="t.pnl | pnlColor">{{ t.pnl | pnlFormat : null : session.accountId }}</span>
                   </div>
                 } @else { <div class="dtc-empty">Rien à analyser, journée sans trade</div> }
               </div>
