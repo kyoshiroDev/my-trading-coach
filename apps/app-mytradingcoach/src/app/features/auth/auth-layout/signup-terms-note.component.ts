@@ -16,7 +16,7 @@ const landing = environment.landingUrl.replace(/\/$/, '');
   templateUrl: './signup-terms-note.component.html',
 })
 export class SignupTermsNoteComponent {
-  /** `email` : bouton du formulaire · `google` : inscription Google · `google-login` : page de connexion. */
+  /** `email` : sous le bouton du formulaire, couvre aussi Google (#970) · `google` : inscription Google · `google-login` : page de connexion. */
   readonly variant = input<'email' | 'google' | 'google-login'>('email');
 
   protected readonly cguUrl = `${landing}/cgu`;

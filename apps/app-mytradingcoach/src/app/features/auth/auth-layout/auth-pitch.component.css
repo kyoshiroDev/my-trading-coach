@@ -179,3 +179,13 @@
     font-size: 15px;
   }
 }
+
+/* Inscription sur écran large et bas (#970, accord de Greg le 12/11) : marges verticales réduites
+   pour que la colonne tienne en 960 px de haut, contenu inchangé. Bas à 32 px : le pied reste
+   au-dessus du badge « interne » (8 + 22 px). La connexion (sans classe `signup`) n'est pas touchée. */
+@media (min-width: 1024px) and (max-height: 1000px) {
+  :host-context(.signup) {
+    padding-top: 28px;
+    padding-bottom: 32px;
+  }
+}

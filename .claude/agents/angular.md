@@ -1294,8 +1294,20 @@ en plein contenu. Le refus « mode démo » (403 `DemoReadOnlyGuard`) ne fait **
     entrer dans le bundle initial avec `PLAN_BENEFITS`) ; nombre de firms `PROP_FIRM_COUNT`, tenu égal
     à `PROP_FIRM_CATALOG_FILES.length` par un spec (le catalogue fait 1,8 Mo de JSON).
   - Mot de passe et confirmation **empilés à toutes les largeurs** (#967, plus de rangée côte à côte
-    ni de `.pw-row`), comme les autres champs. Bouton « Explorer la démo, sans compte » (`routerLink="/demo"`, `data-testid="register-demo"`)
-    seulement dans le parcours gratuit (ni `offerFlow`, ni Premium).
+    ni de `.pw-row`), comme les autres champs. Bouton « Explorer la démo, sans compte »
+    (`routerLink="/demo"`, `data-testid="register-demo"`) seulement dans le parcours gratuit (ni
+    `offerFlow`, ni Premium).
+  - Desktop sans défilement (#970) : `<mtc-auth-layout class="signup">` (réglages propres à
+    l'inscription par `:host(.signup)`, la connexion n'est pas touchée). ≥ 1024 px : case de
+    consentement sur 2 lignes, offre d'essai collée au bouton. `(min-width: 1024px) and
+    (max-height: 1079px)` : champs 38 px, écarts réduits, carte remontée (20 px) ; palier à 1079
+    car la carte complète (995 px + marges) déborde sous 1075 px de haut. Mention légale
+    UNIQUE sous le bouton principal (« En continuant (Google ou e-mail)… », variante `email`) ; celle
+    du bouton Google n'est masquée qu'en `(min-width: 1024px) and (min-height: 760px)`, où la
+    mention commune est visible sans défiler avant le clic Google (#745). Mobile : les deux restent.
+    Colonne de présentation (975 px de haut naturels à ≥ 1280 px) : marges verticales 28/32 px au
+    lieu de 40/44 (28/44 entre 1024 et 1279 px), palier `max-height: 1000px` (accord de Greg), via
+    `:host-context(.signup)` dans `auth-pitch`.
   - `/forgot-password`, `/reset-password` et la finalisation Google gardent l'ancien gabarit carte
     seule (`auth-layout/card-page.css`, `card-page-signup.css`), à migrer si besoin.
 - **Écran de chargement** (`#mtc-boot`, `index.html`) : logo et « Chargement… » statiques, style

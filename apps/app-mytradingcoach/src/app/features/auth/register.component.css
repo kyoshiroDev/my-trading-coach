@@ -100,3 +100,64 @@
   stroke-linecap: round;
   stroke-linejoin: round;
 }
+
+/* ─── Desktop deux colonnes (#970) : carte plus courte, rien de retiré ─── */
+@media (min-width: 1024px) {
+  /* Case de consentement sur 2 lignes (titre puis aide) au lieu de 3 : texte inchangé. */
+  .consent-check {
+    gap: 8px;
+    margin: 2px 0 12px;
+    padding: 9px 8px;
+  }
+
+  .consent-title {
+    font-size: 12.5px;
+  }
+
+  /* Offre d'essai collée au bouton principal. */
+  .free-note {
+    margin-top: 6px;
+    line-height: 1.35;
+  }
+}
+
+/* Mention légale unique : la phrase sous le bouton principal couvre Google et l'e-mail. Celle du
+   bouton Google n'est masquée que si l'écran est assez haut pour que la phrase commune soit visible
+   SANS défiler avant le clic sur Google (#745 : mention visible avant toute création de compte).
+   Mobile et écrans bas : les deux mentions restent. */
+@media (min-width: 1024px) and (min-height: 760px) {
+  mtc-google-auth-button + mtc-signup-terms-note {
+    display: none;
+  }
+}
+
+/* Écran bas (≤ 1079 px de haut) : champs et espacements resserrés. Cibles ≥ 38 px. En dessous de
+   1075 px de haut, la carte complète (995 px + marges) déborde : le palier va donc jusqu'à 1079. */
+@media (min-width: 1024px) and (max-height: 1079px) {
+  .auth-subtitle {
+    margin-bottom: 16px;
+  }
+
+  .form-group {
+    gap: 5px;
+    margin-bottom: 8px;
+  }
+
+  input {
+    min-height: 38px;
+    padding-top: 7px;
+    padding-bottom: 7px;
+  }
+
+  .consent-check input {
+    min-height: 0;
+  }
+
+  .sep {
+    margin: 12px 0;
+  }
+
+  .btn-demo {
+    min-height: 40px;
+  }
+}
