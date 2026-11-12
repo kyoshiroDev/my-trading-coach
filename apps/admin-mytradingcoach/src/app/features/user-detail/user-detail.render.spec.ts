@@ -33,7 +33,7 @@ function makeData(over: Partial<UserDetailData> = {}): UserDetailData {
       tradesPerDayMin: null, tradesPerDayMax: null,
       strategyDescription: null, startingCapital: 5000,
     },
-    usage: { totalTrades: 1, tradesThisMonth: 1, totalPnl: 0, winRate: 0 },
+    usage: { totalTrades: 1, tradesThisMonth: 1, totalPnl: 0, winRate: 0, currency: 'USD' },
     topAssets: [{ asset: 'ZEC/USDT', count: 1 }],
     offer: { founder: null, partner: null },
     sessions: [],
@@ -110,6 +110,19 @@ describe('UserDetailComponent — rendu densifié', () => {
     expect(el.querySelector('table.tbl')).toBeNull();
     expect(text).toContain('Dernières sessions');
     expect(text).toContain('aucune');
+  });
+
+  it('P&L dans la devise des comptes, « — » si devises mêlées (#947)', async () => {
+    const eur = await render(makeData({
+      usage: { totalTrades: 1, tradesThisMonth: 1, totalPnl: 12.5, winRate: 100, currency: 'EUR' },
+      sessions: [{ date: '2026-06-05T09:00:00.000Z', trades: 1, pnl: -4, currency: 'EUR', winRate: 0, emotion: null, durationMinutes: null }],
+    }));
+    expect(eur.text).toContain('+€12.50');
+    expect(eur.el.querySelector('table.tbl tbody td:nth-child(3)')!.textContent!.trim()).toBe('-€4.00');
+    expect(eur.text).not.toMatch(/\d\$/);
+    TestBed.resetTestingModule();
+    const mixed = await render(makeData({ usage: { totalTrades: 1, tradesThisMonth: 1, totalPnl: 12.5, winRate: 100, currency: null } }));
+    expect(mixed.text).toContain('devises différentes');
   });
 
   it('profil trader rendu en grille compacte (pgrid)', async () => {

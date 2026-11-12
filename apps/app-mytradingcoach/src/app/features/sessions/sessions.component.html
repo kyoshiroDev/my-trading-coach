@@ -28,10 +28,13 @@
 
   <!-- Résumé du mois -->
   @if (sessions().length > 0) {
+    @if (money.mixed()) {
+      <mtc-mixed-currency-notice />
+    }
     <div class="month-summary">
       <div class="ms-card">
         <div class="ms-val" [class.g]="monthSummary().totalPnl >= 0" [class.r]="monthSummary().totalPnl < 0">
-          {{ monthSummary().totalPnl | pnlFormat }}
+          {{ money.mixed() ? '—' : (monthSummary().totalPnl | pnlFormat) }}
         </div>
         <div class="ms-lbl">P&L du mois</div>
       </div>
@@ -44,8 +47,8 @@
         <div class="ms-lbl">Trades</div>
       </div>
       <div class="ms-card">
-        <div class="ms-val b">{{ monthSummary().avgWinRate | number:'1.0-0' }}&nbsp;%</div>
-        <div class="ms-lbl">Win Rate moy.</div>
+        <div class="ms-val b">{{ monthSummary().avgWinRate | pct }}</div>
+        <div class="ms-lbl">Win Rate</div>
       </div>
       <div class="ms-card">
         <div class="ms-val b">{{ formatDurationSeconds(monthSummary().avgDuration) }}</div>
@@ -78,7 +81,7 @@
           <div class="week-line"></div>
           <div class="week-stats">
             <span class="week-pnl" [class.g]="group.totalPnl >= 0" [class.r]="group.totalPnl < 0">
-              {{ group.totalPnl | pnlFormat }}
+              {{ money.mixed() ? '—' : (group.totalPnl | pnlFormat) }}
             </span>
             <span class="week-sep">·</span>
             <span class="week-count">{{ group.sessionCount }} session{{ group.sessionCount > 1 ? 's' : '' }}</span>
@@ -125,7 +128,7 @@
                     <div class="stat-val"
                          [class.g]="(session.totalPnl ?? 0) > 0"
                          [class.r]="(session.totalPnl ?? 0) < 0">
-                      {{ session.totalPnl | pnlFormat }}
+                      {{ session.totalPnl | pnlFormat : null : session.accountId }}
                     </div>
                     <div class="stat-lbl">P&L</div>
                   </div>
@@ -135,7 +138,7 @@
                   </div>
                   <div class="stat">
                     <div class="stat-val">
-                      {{ session.winRate !== null && session.winRate !== undefined ? (session.winRate | number:'1.0-0') + '\u00A0%' : '-' }}
+                      {{ session.winRate | pct }}
                     </div>
                     <div class="stat-lbl">Win Rate</div>
                   </div>
@@ -186,7 +189,7 @@
                         <div class="detail-field">
                           <div class="df-label"><svg [lucideIcon]="TrendingDownIcon" [size]="12"></svg>Drawdown intra-session</div>
                           <div class="df-value mono" [class.r]="session.maxDrawdown < 0">
-                            {{ session.maxDrawdown | pnlFormat }}
+                            {{ session.maxDrawdown | pnlFormat : null : session.accountId }}
                           </div>
                         </div>
                       }
@@ -194,7 +197,7 @@
                         <div class="detail-field">
                           <div class="df-label"><svg [lucideIcon]="TrophyIcon" [size]="12"></svg>Meilleur trade</div>
                           <div class="df-value mono g">
-                            {{ session.bestTradePnl | pnlFormat }}
+                            {{ session.bestTradePnl | pnlFormat : null : session.accountId }}
                             @if (session.bestTradeAsset) { · {{ session.bestTradeAsset }} }
                           </div>
                         </div>

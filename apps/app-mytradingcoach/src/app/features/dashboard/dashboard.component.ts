@@ -46,6 +46,7 @@ import {
 } from '../../core/api/analytics.api';
 import { environment } from '@app/environments/environment';
 import { SelectedAccountStore } from '../../core/stores/selected-account.store';
+import { rollingRange } from '../../core/utils/rolling-period.util';
 import { ToastService } from '../../core/services/toast.service';
 import { TradovateLiveSocketService } from '../../core/services/tradovate-live-socket.service';
 import { apiErrorMessage } from '../../core/utils/api-error';
@@ -167,22 +168,16 @@ export class DashboardComponent {
    * journée, pas « maintenant » : ce computed ne se recalcule qu'au changement de période, et un
    * `to` figé à l'ouverture de la page excluait des KPI un trade saisi ou importé ensuite (#947).
    */
-  protected readonly periodRange = computed<{ from: Date | null; to: Date }>(() => {
-    const to = new Date();
-    to.setHours(23, 59, 59, 999);
-    const p = this.dashboardPeriod();
-    if (p === 'ALL') return { from: null, to };
-    const days = p === '1M' ? 30 : p === '3M' ? 90 : 180;
-    const from = new Date(to);
-    from.setDate(from.getDate() - days);
-    from.setHours(0, 0, 0, 0);
-    return { from, to };
-  });
+  // Mois CALENDAIRES (« 1M » = du 11/10 au 11/11), même règle que Statistiques (`rollingRange`,
+  // #947) : avant, 30 / 90 / 180 jours, d'où un « 1 mois » différent entre les deux écrans.
+  protected readonly periodRange = computed<{ from: Date | null; to: Date }>(() =>
+    rollingRange({ '1M': 1, '3M': 3, '6M': 6, ALL: null }[this.dashboardPeriod()]),
+  );
 
   /** Libellé humain de la période (topbar + sous-titres). */
   protected readonly periodLabel = computed(() => {
     switch (this.dashboardPeriod()) {
-      case '1M': return '30 derniers jours';
+      case '1M': return 'Dernier mois';
       case '3M': return '3 derniers mois';
       case '6M': return '6 derniers mois';
       default:   return "Tout l'historique";
@@ -191,7 +186,7 @@ export class DashboardComponent {
   /** Suffixe court pour le sous-titre de la courbe d'équité (« +X sur 3 mois »). */
   protected readonly periodShort = computed(() => {
     switch (this.dashboardPeriod()) {
-      case '1M': return 'sur 30 jours';
+      case '1M': return 'sur 1 mois';
       case '3M': return 'sur 3 mois';
       case '6M': return 'sur 6 mois';
       default:   return 'au total';
@@ -563,7 +558,10 @@ export class DashboardComponent {
    * inconnu/0 (sinon la division /1 produit des pourcentages absurdes → « - »).
    */
   protected readonly tradeRows = computed<DashboardTradeRow[]>(() =>
-    buildTradeRows(this.tradesStore.trades().slice(0, 8), this.baseCapital()),
+    buildTradeRows(this.tradesStore.trades().slice(0, 8), this.baseCapital(), (id) => {
+      const a = id ? this.selectedAccount.accounts().find((x) => x.id === id) : undefined;
+      return a ? (a.metrics.startingBalance ?? null) : null;
+    }),
   );
 
   goToJournal() { this.showTradeForm.set(true); }

@@ -5,7 +5,7 @@ import { DashboardTradeRow, TradeRowOutcome } from '../../dashboard-charts.util'
 import { isInactiveStatus, statusBadgeClass, statusLabel } from '@app/core/utils/account-status.util';
 
 /**
- * « Historique des trades » du dashboard (derniers trades, P&L % sur le capital). Tableau sur tablette et
+ * « Historique des trades » du dashboard (derniers trades, P&L % sur le capital du compte du trade). Tableau sur tablette et
  * PC, cartes de 2 lignes sur téléphone : le tableau de 760 px défilait de côté et cachait le P&L (#633).
  * Un trade ouvert garde son badge « OUVERT » à toutes les tailles : colonne Résultat (large), à côté de
  * l'actif (moyenne, colonne masquée), dans la carte (téléphone). Un trade d'un compte échoué ou

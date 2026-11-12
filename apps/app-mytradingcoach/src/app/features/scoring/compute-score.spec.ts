@@ -3,7 +3,7 @@ import { computeScore, globalScoreOf, RISK_UNMEASURED_HINT } from './scoring.com
 
 type T = Parameters<typeof computeScore>[0][number];
 const trade = (over: Partial<T>): T => ({
-  pnl: -100, riskReward: 1, emotion: null, effectiveEmotion: null, setupId: 's1', tradedAt: '2026-09-01T10:00:00.000Z',
+  pnl: -100, commission: 0, riskReward: 1, emotion: null, effectiveEmotion: null, setupId: 's1', tradedAt: '2026-09-01T10:00:00.000Z',
   ...over,
 });
 const psych = (trades: T[]) => computeScore(trades).find((b) => b.name === 'Psychologie')?.score;
@@ -43,3 +43,29 @@ describe('computeScore — gestion du risque (#930)', () => {
   });
 });
 
+describe('computeScore — psychologie sur le net (#947)', () => {
+  it('une perte nette (+1 brut, 2 de frais) sous émotion difficile compte', () => {
+    const net = [trade({ pnl: 1, commission: 2, effectiveEmotion: 'STRESSED' }), trade({ pnl: 50 })];
+    const gain = [trade({ pnl: 5, commission: 2, effectiveEmotion: 'STRESSED' }), trade({ pnl: 50 })];
+    expect(psych(net)).toBeLessThan(psych(gain) ?? 0);
+  });
+});
+
+describe('computeScore — consistance : win rate par setup comme partout (#947)', () => {
+  const consist = (trades: T[]) => computeScore(trades).find((b) => b.name === 'Consistance')?.score;
+
+  it('break-even hors dénominateur', () => {
+    // s1 : 1 gain + 1 BE → 100 % ; s2 : 1 gain → 100 % ; variance nulle. Avant : s1 à 50 % → 75.
+    expect(consist([
+      trade({ pnl: 50, setupId: 's1' }), trade({ pnl: 0, setupId: 's1' }), trade({ pnl: 50, setupId: 's2' }),
+    ])).toBe(100);
+  });
+
+  it('net des frais : +1 brut avec 2 de frais est une perte', () => {
+    // s1 : +50 et −1 net → 50 % ; s2 : +50 et −100 → 50 % ; variance nulle. Avant : s1 à 100 % → 75.
+    expect(consist([
+      trade({ pnl: 50, setupId: 's1' }), trade({ pnl: 1, commission: 2, setupId: 's1' }),
+      trade({ pnl: 50, setupId: 's2' }), trade({ pnl: -100, setupId: 's2' }),
+    ])).toBe(100);
+  });
+});

@@ -29,7 +29,8 @@ import { PlanModalComponent } from '../../shared/components/plan-modal/plan-moda
 import { PushSettingsComponent } from './notifications/push-settings.component';
 import { InstallSettingsComponent } from '../install/install-settings.component';
 import { UserStore, calendarDaysUntil } from '../../core/stores/user.store';
-import { subscriptionState } from '@mtc/shared';
+import { currencyAffix, formatMoney, subscriptionState } from '@mtc/shared';
+import { SelectedAccountStore } from '../../core/stores/selected-account.store';
 import { AuthService } from '../../core/auth/auth.service';
 import { BillingApi } from '../../core/api/billing.api';
 import { UsersApi } from '../../core/api/users.api';
@@ -69,6 +70,12 @@ type ProfileTab = 'trader' | 'params';
 export class ProfileComponent implements OnInit {
   protected readonly GiftIcon = Gift;
   protected readonly userStore = inject(UserStore);
+  private readonly accountsStore = inject(SelectedAccountStore);
+  /** Capital du profil dans la devise des comptes comptés (aucune devise propre), jamais « $ » en dur (#947). */
+  protected readonly capitalLabel = computed(() =>
+    formatMoney(this.userStore.startingCapital(), this.accountsStore.aggregateCurrency(), { sign: false }),
+  );
+  protected readonly capitalAffix = computed(() => currencyAffix(this.accountsStore.aggregateCurrency()));
   private readonly auth = inject(AuthService);
   private readonly billingApi = inject(BillingApi);
   private readonly usersApi = inject(UsersApi);

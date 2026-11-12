@@ -8,6 +8,8 @@ import {
 } from '@angular/core';
 import { PlanModalComponent } from '../../shared/components/plan-modal/plan-modal.component';
 import { PnlFormatPipe } from '../../shared/pipes/pnl-format.pipe';
+import { MoneyPipe } from '../../shared/pipes/money.pipe';
+import { SelectedAccountStore } from '../../core/stores/selected-account.store';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { UserStore } from '../../core/stores/user.store';
 import { DatePipe, DecimalPipe } from '@angular/common';
@@ -24,7 +26,7 @@ import { timer } from 'rxjs';
 import { switchMap, map, takeWhile } from 'rxjs/operators';
 import { DebriefApi } from '../../core/api/debrief.api';
 import type { DebriefAccountSection as AccountSection, DebriefBadgeItem as DebriefItem, WeeklyDebrief } from '@mtc/shared';
-import { ErrorStateComponent } from '@mtc/front-ui';
+import { ErrorStateComponent, PctPipe } from '@mtc/front-ui';
 import { InfoTooltipComponent } from '@app/shared/components/info-tooltip/info-tooltip.component';
 import { DRAWDOWN_LABELS } from '@app/core/constants/drawdown-labels.const';
 
@@ -49,7 +51,7 @@ function typeBadge(type: string): { label: string; cls: string } | null {
 
 @Component({
   selector: 'mtc-debrief',
-  imports: [
+  imports: [PctPipe,
     ErrorStateComponent,
     InfoTooltipComponent,
     DatePipe,
@@ -58,6 +60,7 @@ function typeBadge(type: string): { label: string; cls: string } | null {
     TopbarComponent,
     PlanModalComponent,
     PnlFormatPipe,
+    MoneyPipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './debrief.component.css',
@@ -70,6 +73,7 @@ export class DebriefComponent {
   private readonly destroyRef = inject(DestroyRef);
   private readonly toast = inject(ToastService);
   protected readonly userStore = inject(UserStore);
+  private readonly accountStore = inject(SelectedAccountStore);
   protected readonly showPlanModal = signal(false);
 
   protected readonly CalendarDaysIcon = CalendarDays;
@@ -105,6 +109,9 @@ export class DebriefComponent {
   });
 
   constructor() {
+    // Devise de chaque compte des onglets (`money` / `pnlFormat` par accountId) : comptes chargés
+    // même en ouverture directe de /debrief, sinon repli sur l'USD par défaut (#947).
+    if (!this.accountStore.loaded() && !this.accountStore.isLoading()) this.accountStore.load();
     if (!this.userStore.isPremium()) {
       this.isLoading.set(false);
       return;

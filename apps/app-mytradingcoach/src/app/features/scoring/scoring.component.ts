@@ -22,13 +22,13 @@ import { TopbarComponent } from '../../shared/components/topbar/topbar.component
 import { PlanModalComponent } from '../../shared/components/plan-modal/plan-modal.component';
 import { UserStore } from '../../core/stores/user.store';
 import { environment } from '@app/environments/environment';
-import { computeTradeStats, todayParis } from '@mtc/shared';
+import { computeTradeStats, netPnl, todayParis } from '@mtc/shared';
 import type { Trade as ApiTrade } from '@mtc/shared';
 import { ErrorStateComponent } from '@mtc/front-ui';
 import { calculerStreak, decalerJour, joursOuvres } from './streak';
 
 /** Champs du trade utilisés par le calcul du score. */
-type Trade = Pick<ApiTrade, 'pnl' | 'riskReward' | 'emotion' | 'effectiveEmotion' | 'setupId' | 'tradedAt'>;
+type Trade = Pick<ApiTrade, 'pnl' | 'commission' | 'riskReward' | 'emotion' | 'effectiveEmotion' | 'setupId' | 'tradedAt'>;
 
 interface ScoreBar {
   name: string;
@@ -68,7 +68,7 @@ export function computeScore(trades: Trade[]): ScoreBar[] {
   // Émotion effective (saisie, sinon humeur de session) : même règle que le dashboard.
   const badLosses = trades.filter((t) => {
     const emotion = t.effectiveEmotion ?? t.emotion;
-    return emotion != null && badEmotions.includes(emotion) && (t.pnl ?? 0) < 0;
+    return emotion != null && badEmotions.includes(emotion) && (netPnl(t) ?? 0) < 0;
   });
   const psychScore = Math.max(
     0,
@@ -83,13 +83,13 @@ export function computeScore(trades: Trade[]): ScoreBar[] {
     ? Math.min(100, (rrValues.reduce((a, b) => a + b, 0) / rrValues.length) * 33)
     : null;
 
-  const setups = [...new Set(trades.map((t) => t.setupId))];
-  const setupWRs = setups.map((s) => {
-    const st = closed.filter((t) => t.setupId === s);
-    return st.length
-      ? st.filter((t) => (t.pnl ?? 0) > 0).length / st.length
-      : 0;
-  });
+  // Win rate par setup via le helper unique (#947) : net des frais, BE hors dénominateur ; un setup
+  // sans trade décisif (ouverts ou BE seulement) n'entre pas dans la variance.
+  const setups = [...new Set(closed.map((t) => t.setupId))];
+  const setupWRs = setups
+    .map((s) => computeTradeStats(closed.filter((t) => t.setupId === s)))
+    .filter((st) => st.wins + st.losses > 0)
+    .map((st) => st.winRate / 100);
   const avg = setupWRs.length
     ? setupWRs.reduce((a, b) => a + b, 0) / setupWRs.length
     : 0;

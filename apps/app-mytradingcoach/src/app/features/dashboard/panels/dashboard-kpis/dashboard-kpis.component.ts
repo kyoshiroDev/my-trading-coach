@@ -1,3 +1,4 @@
+import { PctPipe } from '@mtc/front-ui';
 import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import { MoneyService } from '@app/core/services/money.service';
 import { DecimalPipe } from '@angular/common';
@@ -10,7 +11,7 @@ import { DRAWDOWN_PICK_ACCOUNT } from '@app/core/services/drawdown-scope.util';
 /** Rangée des 6 KPIs du dashboard (capital, P&L, win rate, profit factor, trades, drawdown). */
 @Component({
   selector: 'mtc-dashboard-kpis',
-  imports: [DecimalPipe, PnlFormatPipe, InfoTooltipComponent],
+  imports: [PctPipe, DecimalPipe, PnlFormatPipe, InfoTooltipComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './dashboard-kpis.component.css',
   templateUrl: './dashboard-kpis.component.html',

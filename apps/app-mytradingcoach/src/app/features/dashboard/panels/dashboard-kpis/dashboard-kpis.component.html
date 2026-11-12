@@ -48,7 +48,7 @@
           <mtc-info-tooltip label="Comment le win rate est calculé"
             text="Trades gagnants ÷ (gagnants + perdants). Les break-even sont exclus du calcul." />
         </div>
-        <div class="mtc-kpi-val" [style.color]="winRateColor()">{{ (summary()?.winRate ?? 0).toFixed(1) }}%</div>
+        <div class="mtc-kpi-val" [style.color]="winRateColor()">{{ summary()?.winRate | pct }}</div>
         <div class="mtc-kpi-sub">
           @if ((summary()?.totalTrades ?? 0) > 0) { sur {{ summary()?.totalTrades }} trades } @else { Aucune donnée }
         </div>

@@ -24,12 +24,8 @@ import { AmbassadorApi, AmbassadorStats, ReferralUser } from '../../core/api/amb
 import { ReferralApi } from '../../core/api/referral.api';
 import { AmbassadorNotifService } from '../../core/services/ambassador-notif.service';
 import { ToastService } from '../../core/services/toast.service';
-import { PRICING } from '../../core/constants/pricing.const';
 import { environment } from '@app/environments/environment';
 import { ErrorStateComponent } from '@mtc/front-ui';
-
-// Commission mensuelle estimée par filleul payant (20% de la mensualité du plan).
-const COMMISSION_RATE = 0.2;
 
 @Component({
   selector: 'mtc-ambassador',
@@ -142,10 +138,12 @@ export class AmbassadorComponent implements OnInit {
     return u.plan === 'PREMIUM';
   }
 
-  /** Commission mensuelle estimée du filleul (20% de la mensualité Premium). */
+  /**
+   * Commission mensuelle estimée du filleul : 20 % de ce qu'il paie vraiment, calculée par l'API.
+   * Avant (#947), 9,80 € fixes pour tout Premium (faux pour fondateur, annuel, code partenaire, essai).
+   */
   protected monthlyCommission(u: ReferralUser): number {
-    if (u.plan === 'PREMIUM') return +(PRICING.premium.monthly * COMMISSION_RATE).toFixed(2);
-    return 0;
+    return u.monthlyCommission ?? 0;
   }
 
   protected avatar(u: ReferralUser): string {

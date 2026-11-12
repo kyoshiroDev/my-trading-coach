@@ -8,6 +8,7 @@
  */
 export * from './api-error';
 export * from './currency';
+export * from './percent';
 export * from './pricing';
 export * from './plan-benefits';
 export * from './signup-pitch';

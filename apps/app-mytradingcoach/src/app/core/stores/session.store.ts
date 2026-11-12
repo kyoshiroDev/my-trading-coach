@@ -192,8 +192,25 @@ export class SessionStore {
       .closeSession(session.id, payload.mood, payload.notes, payload.note, payload.question ?? undefined)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: (res) => this.activeSession.set(res.data),
+        next: (res) => this.applyClosed(res.data),
         error: (err) => this.toast.error(apiErrorMessage(err, 'La session n’a pas pu être clôturée. Réessaie.')),
+      });
+  }
+
+  /**
+   * Séance clôturée : ses totaux viennent de l'API, et ses trades sont relus (#947). Le dernier
+   * sondage date de 30 s au plus et couvrait toute la journée ; la clôture vient de rattacher les
+   * trades libres : le débrief lit ceux-là, comme après un rechargement de la page.
+   */
+  private applyClosed(session: TradingSession): void {
+    this.activeSession.set(session);
+    this.sessionApi
+      .getTodaySession()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => {
+          if (res.data?.id === session.id) this.todayTrades.set(res.data.trades ?? []);
+        },
       });
   }
 
@@ -205,7 +222,7 @@ export class SessionStore {
       .closeSession(session.id, 'NEUTRAL' as MoodState)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: (res) => this.activeSession.set(res.data),
+        next: (res) => this.applyClosed(res.data),
         error: (err) => this.toast.error(apiErrorMessage(err, 'La session n’a pas pu être clôturée. Réessaie.')),
       });
   }

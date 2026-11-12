@@ -62,6 +62,8 @@ export interface AdminUserDetail {
     tradesThisMonth: number;
     totalPnl: number;
     winRate: number;
+    /** Devise commune de ses comptes ; null si elles diffèrent (le P&L total n'a pas de sens, #947). */
+    currency: string | null;
   };
   topAssets: { asset: string; count: number }[];
   /** Offre fondateur / code partenaire (#525). `null` si aucun. */
@@ -94,6 +96,8 @@ export interface AdminUserDetail {
     date: string;
     trades: number;
     pnl: number;
+    /** Devise du compte de la séance ; null si inconnue. */
+    currency: string | null;
     winRate: number;
     emotion: string | null;
     durationMinutes: number | null;

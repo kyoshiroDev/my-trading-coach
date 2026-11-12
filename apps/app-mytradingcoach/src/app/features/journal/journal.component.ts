@@ -34,7 +34,7 @@ import { MoneyService } from '../../core/services/money.service';
 import { ToastService } from '../../core/services/toast.service';
 import { TradovateLiveSocketService } from '../../core/services/tradovate-live-socket.service';
 import { apiErrorMessage } from '../../core/utils/api-error';
-import { DialogDirective } from '@mtc/front-ui';
+import { DialogDirective, PctPipe } from '@mtc/front-ui';
 import { InactiveAccountsToggleComponent } from '../../shared/components/inactive-accounts-toggle/inactive-accounts-toggle.component';
 import { isInactiveStatus, statusBadgeClass, statusLabel } from '../../core/utils/account-status.util';
 import {
@@ -45,7 +45,7 @@ import {
 
 @Component({
   selector: 'mtc-journal',
-  imports: [
+  imports: [PctPipe,
     DialogDirective,
     DatePipe, DecimalPipe, TitleCasePipe, LucideDynamicIcon,
     TopbarComponent, TradeFormComponent, TradeStopDialogComponent, CsvImportComponent,

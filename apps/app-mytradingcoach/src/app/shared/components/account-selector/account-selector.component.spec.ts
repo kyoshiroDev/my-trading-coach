@@ -149,6 +149,18 @@ describe('AccountSelectorComponent · comptes perdus (vrai template)', () => {
     expect(cmp.totalBalance()).toBe(107_000);
   });
 
+  it('devises mêlées : pas de solde additionné sous « Tous les comptes », même un compte choisi (#947)', () => {
+    const eur = { ...full('e', 'ACTIVE', 10_000), currency: 'EUR' } as TradingAccount;
+    const { el } = render([full('a', 'ACTIVE', 50_000), eur], 'e');
+    expect(el.querySelector('[data-testid="account-option-all"] .opt-bal')!.textContent!.trim()).toBe('Devises mixtes');
+  });
+
+  it('compte EUR choisi, comptes tous en USD sauf lui exclus : solde total dans la devise des comptes comptés', () => {
+    const eurKo = { ...full('e', 'FAILED', 10_000), currency: 'EUR' } as TradingAccount;
+    const { el } = render([full('a', 'ACTIVE', 50_000), eurKo], 'e');
+    expect(el.querySelector('[data-testid="account-option-all"] .opt-bal')!.textContent!.trim()).toBe('$50,000');
+  });
+
   it('compte échoué ou archivé choisi : ligne discrète « il ne compte pas dans Tous les comptes »', () => {
     const failed = render([full('a', 'ACTIVE', 50_000), full('f', 'FAILED', 47_000)], 'f');
     expect(failed.el.querySelector('[data-testid="selected-inactive-note"]')!.textContent!.replace(/\s+/g, ' ').trim())

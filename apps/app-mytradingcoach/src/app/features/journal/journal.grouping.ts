@@ -19,6 +19,8 @@ export interface DayGroup {
   totalCommission: number; // affichage seul
   count: number;
   winCount: number;
+  /** Perdants (net) : l'en-tête montre gagnants / (gagnants + perdants), BE et ouverts exclus (#947). */
+  lossCount: number;
   /** Jour peut-être coupé par la pagination : ses totaux ne portent que sur les trades chargés (#796). */
   partial: boolean;
 }
@@ -29,6 +31,7 @@ export interface WeekGroup {
   days: DayGroup[];   // jours de la semaine, du plus récent au plus ancien
   count: number;
   winCount: number;
+  lossCount: number;
   totalPnl: number;        // Σ P&L NET des trades (computeTradeStats), frais déjà déduits
   totalPnlNet: number;     // = totalPnl : les frais ne sont PAS re-déduits (#795)
   totalCommission: number; // affichage seul
@@ -113,7 +116,7 @@ export function groupByWeek(days: DayGroup[]): WeekGroup[] {
       // st.totalPnl déjà NET : pas de seconde déduction des frais (#795).
       return {
         key, label, days: weekDays,
-        count: st.total, winCount: st.wins,
+        count: st.total, winCount: st.wins, lossCount: st.losses,
         totalPnl: st.totalPnl, totalPnlNet: st.totalPnl, totalCommission,
         partial: weekDays.some((d) => d.partial),
       };

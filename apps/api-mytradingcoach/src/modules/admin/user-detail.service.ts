@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { closedTradeStats } from '../analytics/analytics.sql';
 import type { AdminUserDetail as AdminUserDetailDto } from '@mtc/shared';
+import { commonCurrency } from '@mtc/shared';
 import { isOfferedPremium } from '../users/premium-offer.util';
 import { isPremiumAccess } from '../discord/discord-access.util';
 
@@ -72,12 +73,15 @@ export class UserDetailService {
       select: {
         startedAt: true, endedAt: true, totalTrades: true,
         totalPnl: true, winRate: true, moodStart: true, moodEnd: true,
+        account: { select: { currency: true } },
       },
     });
     const sessions = sessionRows.map((s) => ({
       date: s.startedAt.toISOString(),
       trades: s.totalTrades,
       pnl: s.totalPnl ?? 0,
+      /** Devise du compte de la séance (#947) ; null si la séance n'a plus de compte. */
+      currency: s.account?.currency ?? null,
       winRate: s.winRate ?? 0,
       emotion: s.moodEnd ?? s.moodStart ?? null,
       durationMinutes: s.endedAt
@@ -111,6 +115,9 @@ export class UserDetailService {
       }),
     ]);
     const totalPnl = uStats.totalPnl;
+    // Devise du P&L total : commune à tous ses comptes, sinon null (pas de somme USD + EUR, #947).
+    const accountCurrencies = await this.prisma.tradingAccount.findMany({ where: { userId: id }, select: { currency: true } });
+    const currency = commonCurrency(accountCurrencies.map((a) => a.currency));
     const winRate = Math.round(uStats.winRate);
     const topAssets = topAssetRows.map((a) => ({ asset: a.asset, count: a._count.asset }));
 
@@ -193,7 +200,7 @@ export class UserDetailService {
         strategyDescription: user.strategyDescription ?? null,
         startingCapital: user.startingCapital ?? 0,
       },
-      usage: { totalTrades, tradesThisMonth, totalPnl, winRate },
+      usage: { totalTrades, tradesThisMonth, totalPnl, winRate, currency },
       topAssets,
       offer,
       sessions,

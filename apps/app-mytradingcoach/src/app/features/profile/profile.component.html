@@ -36,7 +36,7 @@
 
             <div class="ssum-row">
               <span class="ssum-k">Capital</span>
-              <span class="ssum-v">${{ userStore.startingCapital() | number:'1.2-2' }}</span>
+              <span class="ssum-v">{{ capitalLabel() }}</span>
             </div>
             <div class="ssum-row">
               <span class="ssum-k">Style</span>
@@ -702,7 +702,7 @@
         <div class="stp-fld">
           <div class="stp-fld-label">Capital de départ</div>
           <div style="display:flex;align-items:center;gap:8px">
-            <span style="color:var(--text-3);font-family:var(--font-mono)">$</span>
+            <span style="color:var(--text-3);font-family:var(--font-mono)">{{ capitalAffix() }}</span>
             <input class="stp-inp" type="text" inputmode="decimal" [value]="draftCapital()"
               (input)="filterDraftCapital($event)" placeholder="ex : 5000" />
           </div>

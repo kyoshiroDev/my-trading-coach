@@ -19,7 +19,7 @@ import TEMPLATE from './scoring.component.html?raw';
 
 type T = Parameters<typeof computeScore>[0][number];
 const trade = (i: number): T => ({
-  pnl: i % 2 ? 50 : -30, riskReward: 1.5, emotion: null, effectiveEmotion: null, setupId: 's1',
+  pnl: i % 2 ? 50 : -30, commission: 0, riskReward: 1.5, emotion: null, effectiveEmotion: null, setupId: 's1',
   tradedAt: `2026-10-${String(1 + (i % 20)).padStart(2, '0')}T10:00:00.000Z`,
 });
 

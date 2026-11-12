@@ -447,6 +447,8 @@ Constantes : `FOUNDER_OFFER = { priceMonthlyEur: 29, priceAnnualEur: 290, seats:
   normal / fondateur / partenaires (`realMonthlyEur`). Le MRR Stripe déduit les remises
   (`expand: data.discounts`). Reste : le −10 % filleul n'est pas déduit du MRR base (écart connu).
 - Commission ambassadeur : 20 % de `invoice.amount_paid`, donc déjà sur le montant remisé.
+  Estimation mensuelle affichée à l'ambassadeur (`referralMonthlyCommission`, `ambassador-commission.util.ts`) :
+  20 % de `realMonthlyEur` (fondateur, annuel ÷ 12, code partenaire), abonnements `active` seulement (#947).
 - **Satisfait ou remboursé (choix #525)** : demande par e-mail à support@ depuis Profil > Abonnement et depuis l'écran de suppression
   (lien jusqu'à J+14 du 1er paiement), remboursement fait à la main dans Stripe ; le webhook
   `charge.refunded` rend la place et annule l'abonnement. Aucune route ne déplace d'argent toute seule.
