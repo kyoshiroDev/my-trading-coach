@@ -117,6 +117,21 @@
   }
 }
 
+/* Inscription sur écran bas (#970) : carte remontée et marges internes réduites pour tenir sans
+   défiler de 960 à 1079 px de haut (en dessous de 1075 px, la carte complète déborde). La connexion
+   (sans classe `signup`) garde ses marges. */
+@media (min-width: 1024px) and (max-height: 1079px) {
+  :host(.signup) .form-side {
+    padding-top: 20px;
+    padding-bottom: 20px;
+  }
+
+  :host(.signup) .auth-card {
+    padding-top: 24px;
+    padding-bottom: 20px;
+  }
+}
+
 /* Version complète. */
 @media (min-width: 1280px) {
   .form-side {
