@@ -552,6 +552,25 @@ envoyées à l'API sont des horodatages ISO complets.
   négatif passe le signe au formateur (`(0 - x) | money`), jamais « -{{ x | money }} » (« -$0.00 »).
 - **Formulaire de trade en édition** : levier retrouvé depuis le P&L stocké (`editLeverage`), % sur le
   capital engagé (`editPnlPct`), R/R par `plannedRiskReward` (avec le sens).
+- **« 1M / 3M / 6M » = mois CALENDAIRES** partout (`rollingRange`, `core/utils/rolling-period.util.ts`) :
+  tableau de bord et Statistiques ont la même fenêtre, jamais 30 / 90 / 180 jours.
+- **Statistiques** : le sélecteur de période est au-dessus des KPI (tous les plans) et TOUS les chiffres
+  le suivent (summary, by-hour, top-assets, by-setup via `rangeQuery()`, courbes) ; seul le calendrier
+  d'activité garde sa navigation par mois.
+- **Win rate d'une liste de séances** = Σ gagnants ÷ (Σ gagnants + Σ perdants) (`sessionsWinRate`,
+  `wins`/`losses` renvoyés par `/session/history`), jamais une moyenne des win rates de séance.
+  Même règle pour la fraction des en-têtes du Journal (`winCount/(winCount + lossCount)`, BE et ouverts
+  exclus) et le score (consistance par setup via `computeTradeStats`, pertes sur le net).
+- **Débrief de la séance du jour** : trades de LA séance (`sessionScopedTrades`), relus à la clôture
+  (`SessionStore.applyClosed`) ; jamais ceux d'une autre séance du même jour.
+- **Devises** : la devise de « Tous les comptes » = celle des comptes COMPTÉS (`aggregateCurrency`, sans
+  les perdus exclus des totaux). Devises mêlées → aucune somme : « Devises mixtes » (sélecteur), « — »
+  + `mtc-mixed-currency-notice` (Sessions, Mes comptes, admin). Ligne d'un compte (séance, onglet du
+  débrief, trade) → `pnlFormat : null : accountId` / `money:…:accountId`. Champs de saisie :
+  `currencyAffix`. Garde : `no-hardcoded-dollar.spec.ts` échoue sur un « $ » en dur dans un gabarit.
+- **% d'un trade** (derniers trades du tableau de bord) : sur le capital du compte DU trade, jamais sur
+  la somme des comptes.
+- **Commission ambassadeur** affichée = `monthlyCommission` calculée par l'API (20 % du payé réel).
 
 ## Tableau de lignes — pattern partagé (Journal · Mes comptes)
 
