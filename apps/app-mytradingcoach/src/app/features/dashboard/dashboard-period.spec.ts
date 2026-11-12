@@ -88,6 +88,19 @@ describe('DashboardComponent — période unique & granularité P&L', () => {
     expect(c.periodRange().from).toBeNull();
   });
 
+  it('1M = un mois calendaire, comme Statistiques (#947) : barres par jour', () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date(2026, 10, 11, 12));
+    try {
+      const c = setup();
+      c.setPeriod('1M');
+      expect(c.periodRange()).toEqual({ from: new Date(2026, 9, 11), to: new Date(2026, 10, 11, 23, 59, 59, 999) });
+      expect(c.plGranularity()).toBe('day');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('la granularité 6M reste ≤ 31 barres (≈ 26 semaines)', () => {
     const c = setup();
     c.setPeriod('6M');

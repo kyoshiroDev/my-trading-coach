@@ -10,6 +10,22 @@
   @if (money.mixed()) {
     <mtc-mixed-currency-notice />
   } @else {
+  <!-- ── Période : TOUS les chiffres de la page la suivent (KPI, heures, actifs, setups,
+       courbes), sélecteur visible par tous les plans (#947) ── -->
+  <div class="stats-head">
+    <div class="period-tabs" role="group" aria-label="Période des statistiques">
+      @for (p of periods; track p.key) {
+        <button
+          type="button"
+          class="period-tab"
+          [class.active]="equityPeriod() === p.key"
+          [attr.aria-pressed]="equityPeriod() === p.key"
+          (click)="selectPeriod(p.key)"
+        >{{ p.label }}</button>
+      }
+    </div>
+  </div>
+
   <!-- ── 4 Stats FREE (visibles par tous) ── -->
   <div class="stats-row">
     <div class="stat-card">
@@ -90,16 +106,6 @@
         [objective]="planObjective()"
         [loading]="equityLoading()"
       >
-        <div chartControls class="period-tabs">
-          @for (p of periods; track p.key) {
-            <button
-              type="button"
-              class="period-tab"
-              [class.active]="equityPeriod() === p.key"
-              (click)="selectPeriod(p.key)"
-            >{{ p.label }}</button>
-          }
-        </div>
       </mtc-perf-chart>
 
       <mtc-perf-chart

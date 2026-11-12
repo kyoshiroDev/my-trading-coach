@@ -172,7 +172,8 @@ export interface PeriodRange { from: Date | null; to: Date }
 export function plGranularityFor({ from, to }: PeriodRange): PlGranularity {
   if (!from) return 'month'; // ALL → mensuel
   const spanDays = Math.round((to.getTime() - from.getTime()) / 86_400_000);
-  if (spanDays <= 31) return 'day';
+  // Un mois calendaire de minuit à 23:59:59 compte jusqu'à 32 jours arrondis : barres par jour.
+  if (spanDays <= 32) return 'day';
   if (spanDays <= 31 * 7) return 'week';
   return 'month';
 }
@@ -318,7 +319,7 @@ export function buildCoachInsights(
   s: AnalyticsSummary | null,
   byEmotion: EmotionStat[],
   bySetup: SetupStat[],
-  /** Période des chiffres (« sur 30 jours », « au total »…) : jamais « ce mois » en dur (#947). */
+  /** Période des chiffres (« sur 1 mois », « au total »…) : jamais « ce mois » en dur (#947). */
   periodShort = 'sur la période',
 ): CoachInsight[] {
   if (!s || s.totalTrades === 0) return [];

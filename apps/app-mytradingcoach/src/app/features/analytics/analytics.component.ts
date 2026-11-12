@@ -40,6 +40,7 @@ import { ErrorStateComponent } from '@mtc/front-ui';
 import { InactiveAccountsToggleComponent } from '../../shared/components/inactive-accounts-toggle/inactive-accounts-toggle.component';
 import { TradesApi } from '../../core/api/trades.api';
 import { isInactiveStatus } from '../../core/utils/account-status.util';
+import { rollingRange } from '../../core/utils/rolling-period.util';
 import { NO_AUTO_PERIOD, periodChosenByUser, periodOnSelection, type AutoPeriodState } from '../../core/utils/inactive-period.util';
 
 const MOCK_HEATMAP_CELLS = [
@@ -81,11 +82,18 @@ export class AnalyticsComponent {
   /** Devises mêlées en « Tous les comptes » → pas de totaux. */
   protected readonly money = inject(MoneyService);
 
-  // Suffixe query du compte sélectionné (multi-comptes). « Tous » → '' (agrégé, sans les comptes
-  // échoués et archivés, sauf interrupteur). Lu dans les URL des resources → refetch auto au
-  // changement de compte ou d'interrupteur (pattern dashboard).
-  private accQuery(): string {
-    return this.selectedAccount.statsQuery();
+  // Suffixe query du compte sélectionné et de la période choisie (#947). « Tous » → agrégé, sans
+  // les comptes échoués et archivés, sauf interrupteur. Lu dans les URL des resources → refetch
+  // auto au changement de compte, d'interrupteur ou de période (pattern dashboard).
+  private rangeQuery(): string {
+    const p = new URLSearchParams(this.selectedAccount.statsParams());
+    const { from, to } = this.periodRange();
+    if (from) {
+      p.set('from', from.toISOString());
+      p.set('to', to.toISOString());
+    }
+    const q = p.toString();
+    return q ? `?${q}` : '';
   }
 
   protected readonly showPlanModal = signal(false);
@@ -97,16 +105,17 @@ export class AnalyticsComponent {
 
   // ── Période equity curve ─────────────────────────────────────────────────
   protected readonly equityPeriod = signal<'1m' | '3m' | '6m' | 'all'>('1m');
+  /**
+   * Bornes de la période : TOUS les chiffres sous le sélecteur la suivent (KPI, heures, actifs,
+   * setups, courbes), #947. Mois calendaires de minuit local à la fin de la journée, même règle
+   * que le tableau de bord (`rollingRange`).
+   */
+  protected readonly periodRange = computed(() =>
+    rollingRange({ '1m': 1, '3m': 3, '6m': 6, all: null }[this.equityPeriod()]),
+  );
   protected readonly equityDateRange = computed(() => {
-    const now = new Date();
-    if (this.equityPeriod() === 'all') return { from: undefined, to: undefined };
-    const from = new Date(now);
-    if (this.equityPeriod() === '1m') from.setMonth(from.getMonth() - 1);
-    else if (this.equityPeriod() === '3m') from.setMonth(from.getMonth() - 3);
-    else from.setMonth(from.getMonth() - 6);
-    // Horodatages complets : une date seule en `to` valait minuit et excluait les trades du
-    // jour même (courbe vide pour un compte qui n'avait tradé qu'aujourd'hui).
-    return { from: from.toISOString(), to: now.toISOString() };
+    const { from, to } = this.periodRange();
+    return from ? { from: from.toISOString(), to: to.toISOString() } : { from: undefined, to: undefined };
   });
   protected readonly equityData = signal<DailyEquityCurve | null>(null);
   /** Courbe par trade clôturé : carte drawdown « sous l'eau » (règle unique du drawdown max). */
@@ -115,22 +124,22 @@ export class AnalyticsComponent {
 
   // ── httpResource : pattern déclaratif, cancel auto, loading state natif ──
   private readonly summaryResource = httpResource<{ data: AnalyticsSummary }>(
-    () => `${environment.apiUrl}/analytics/summary${this.accQuery()}`,
+    () => `${environment.apiUrl}/analytics/summary${this.rangeQuery()}`,
   );
   private readonly heatmapResource = httpResource<{ data: HeatmapCell[] }>(
     () =>
       this.userStore.isPremium()
-        ? `${environment.apiUrl}/analytics/by-hour${this.accQuery()}`
+        ? `${environment.apiUrl}/analytics/by-hour${this.rangeQuery()}`
         : undefined,
   );
   private readonly topAssetsResource = httpResource<{ data: TopAsset[] }>(() =>
     this.userStore.isPremium()
-      ? `${environment.apiUrl}/analytics/top-assets${this.accQuery()}`
+      ? `${environment.apiUrl}/analytics/top-assets${this.rangeQuery()}`
       : undefined,
   );
   private readonly setupResource = httpResource<{ data: SetupStat[] }>(() =>
     this.userStore.isPremium()
-      ? `${environment.apiUrl}/analytics/by-setup${this.accQuery()}`
+      ? `${environment.apiUrl}/analytics/by-setup${this.rangeQuery()}`
       : undefined,
   );
 
@@ -286,19 +295,20 @@ export class AnalyticsComponent {
     });
 
     // Recharge les données impératives (courbe equity + calendrier) au changement de
-    // compte sélectionné. Les httpResources se refetchent seules via accQuery().
-    if (this.userStore.isPremium()) {
-      effect(() => {
-        this.selectedAccount.accountParam(); // dépendances réactives : compte sélectionné,
-        this.selectedAccount.inactiveIncluded(); // interrupteur des comptes perdus
-        const selected = this.selectedAccount.selected();
-        untracked(() => {
-          this.applyInactiveDefaults(selected);
-          this.loadEquityCurve();
-          this.loadCalendar(this.calYear(), this.calMonth());
-        });
+    // compte sélectionné. Les httpResources se refetchent seules via rangeQuery().
+    // Période par défaut d'un compte échoué ou archivé : pour tous les plans, le sélecteur de
+    // période et les KPI étant visibles par tous (#947). Courbes et calendrier : Premium.
+    effect(() => {
+      this.selectedAccount.accountParam(); // dépendances réactives : compte sélectionné,
+      this.selectedAccount.inactiveIncluded(); // interrupteur des comptes perdus
+      const selected = this.selectedAccount.selected();
+      untracked(() => {
+        this.applyInactiveDefaults(selected);
+        if (!this.userStore.isPremium()) return;
+        this.loadEquityCurve();
+        this.loadCalendar(this.calYear(), this.calMonth());
       });
-    }
+    });
   }
 
   protected loadEquityCurve(): void {

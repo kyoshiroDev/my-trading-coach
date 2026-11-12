@@ -2,7 +2,8 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { UserStore } from '../../core/stores/user.store';
 import { AnalyticsComponent } from './analytics.component';
 
 describe('AnalyticsComponent — equity curve période', () => {
@@ -45,15 +46,24 @@ describe('AnalyticsComponent — equity curve période', () => {
     expect(range.from).toBeDefined();
     expect(range.to).toBeDefined();
 
-    // Un mois calendaire en arrière, jusqu'à maintenant.
-    expect(range).toEqual({ from: '2026-09-21T12:00:00.000Z', to: '2026-10-21T12:00:00.000Z' });
+    // Un mois calendaire en arrière à minuit local, jusqu'à la fin de la journée (#947 : plus
+    // « maintenant » figé à l'ouverture, même règle que le tableau de bord).
+    expect(range).toEqual({
+      from: new Date(2026, 8, 21).toISOString(),
+      to: new Date(2026, 9, 21, 23, 59, 59, 999).toISOString(),
+    });
   });
 
   it('equityDateRange "1m" à la fin mars : remonte au 28 février (28 jours, pas un bug)', () => {
     vi.setSystemTime(new Date('2027-03-28T00:55:00.000Z'));
     const c = makeComponent();
     const range = (c as unknown as { equityDateRange: () => { from?: string; to?: string } }).equityDateRange();
-    expect(range).toEqual({ from: '2027-02-28T00:55:00.000Z', to: '2027-03-28T00:55:00.000Z' });
+    const now = new Date('2027-03-28T00:55:00.000Z');
+    const day = now.getDate();
+    expect(range).toEqual({
+      from: new Date(2027, now.getMonth() - 1, Math.min(day, 28)).toISOString(),
+      to: new Date(2027, now.getMonth(), day, 23, 59, 59, 999).toISOString(),
+    });
   });
 
   it('equityDateRange retourne from=undefined pour "all"', () => {
@@ -84,6 +94,19 @@ describe('AnalyticsComponent — equity curve période', () => {
     expect(periods).toHaveLength(4);
     expect(periods.map((p) => p.key)).toContain('all');
   });
+  it('KPI, heures, actifs et setups suivent la période choisie (from/to, #947)', () => {
+    TestBed.overrideProvider(UserStore, { useValue: { isPremium: () => true, isDemo: () => false, user: () => null, startingCapital: () => 0 } });
+    makeComponent();
+    TestBed.tick();
+    const http = TestBed.inject(HttpTestingController);
+    const from = encodeURIComponent(new Date(2026, 8, 21).toISOString());
+    for (const ep of ['summary', 'by-hour', 'top-assets', 'by-setup']) {
+      const reqs = http.match((r) => r.url.includes(`/analytics/${ep}`));
+      expect(reqs.length, ep).toBeGreaterThan(0);
+      expect(reqs[0].request.urlWithParams, ep).toContain(`from=${from}`);
+      expect(reqs[0].request.urlWithParams, ep).toContain('to=');
+    }
+  });
 });
 
 describe('AnalyticsComponent — currentMonthLabel (dashboard)', () => {
@@ -95,4 +118,5 @@ describe('AnalyticsComponent — currentMonthLabel (dashboard)', () => {
     expect(label).toMatch(/\d{4}/); // contient une année
     expect(label.length).toBeGreaterThan(5);
   });
+
 });
