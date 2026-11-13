@@ -154,6 +154,14 @@ env $(grep -vE '^#|^$' ../../.env | xargs -d '\n') \
 > `/orderVersion/*`, `/orderStrategy/*` ou `/orderStrategyLink/*` qui n'est pas `list` ; les tests de
 > capture du stop (dont la liaison par stratégie, #955) exigent `forbidden` vide.
 >
+> Capture du stop à l'entrée, cas couverts en unitaire (`tradovate-entry-protection.spec.ts`) : SHORT,
+> trailing stop et trailing stop limite, entrée en plusieurs morceaux (même stop et même objectif pour
+> chaque morceau), ordres voisins sans lien de stratégie (`no-leg` : aucune inférence par id),
+> `entryOrderIdFor` (fill d'achat d'un LONG, de vente d'un SHORT, fill absent → `session-gone`).
+> L'int-spec vérifie aussi le R/R calculé sur le chemin par stratégie (10,06). Côté app,
+> `journal-rr-unknown.spec.ts` couvre le stop capturé sans objectif (« Objectif non renseigné »,
+> bouton « Ajouter l'objectif »).
+>
 > ⚠️ **Redis local protégé par mot de passe.** Sans `REDIS_PASSWORD`, chaque appel Redis échoue
 > en silence (les verrous et pauses retombent sur « pas de Redis ») : `tradovate-sync.int-spec`
 > échoue alors 10 fois sur 10 sur la pause de pénalité. Passer la variable du `.env` local, sans

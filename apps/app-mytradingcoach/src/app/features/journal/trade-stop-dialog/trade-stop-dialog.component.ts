@@ -17,7 +17,7 @@ function parsePrice(raw: string): number | null {
 
 /**
  * Saisie rapide du stop initial (et de l'objectif, facultatif) d'un trade depuis le Journal,
- * typiquement un trade synchronisé : la synchronisation ne récupère pas le stop. Aperçu en direct du
+ * typiquement un trade synchronisé : la synchronisation n'a pas pu relier le stop. Aperçu en direct du
  * risque (table de valeur du point) et du R/R, mêmes règles que l'API (@mtc/shared), qui revérifie.
  */
 @Component({

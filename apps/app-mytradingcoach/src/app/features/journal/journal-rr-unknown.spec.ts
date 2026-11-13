@@ -1,5 +1,5 @@
 /**
- * Journal — R/R inconnu (trade synchronisé : la synchronisation ne récupère ni stop ni objectif).
+ * Journal — R/R inconnu (trade synchronisé dont la synchronisation n'a pas pu relier le stop ou l'objectif).
  *
  * La ligne affichait « 0 » avec l'info-bulle « Pourquoi le R:R vaut 0 » alors que la valeur est
  * null : un 0 se lit comme un R/R mesuré nul. Elle affiche « — », une info-bulle honnête, et un
@@ -89,6 +89,8 @@ async function render(trades: Trade[]) {
 
 
 const rrCell = (el: HTMLElement) => el.querySelector('.td-rr') as HTMLElement;
+/** Texte de l'info-bulle : lié par `[text]`, donc propriété de l'élément (schéma sans composant). */
+const tipText = (cell: HTMLElement) => (cell.querySelector('mtc-info-tooltip') as unknown as { text?: string } | null)?.text;
 const text = (e: Element | null) => (e?.textContent ?? '').replace(/\s+/g, ' ').trim();
 
 describe('Journal — R/R inconnu', () => {
@@ -99,7 +101,7 @@ describe('Journal — R/R inconnu', () => {
     expect(text(cell)).not.toContain('0');
     const tip = cell.querySelector('mtc-info-tooltip');
     expect(tip?.getAttribute('label')).toBe('Pourquoi le R/R est inconnu');
-    expect(tip?.getAttribute('text')).toBe('Stop loss ou take profit non renseigné. Ajoute ton stop initial pour calculer le R/R.');
+    expect(tipText(cell)).toBe('Stop loss ou take profit non renseigné. Ajoute ton stop initial pour calculer le R/R.');
   });
 
   it('R/R absent du payload (undefined) : même rendu « — »', async () => {
@@ -121,9 +123,20 @@ describe('Journal — R/R inconnu', () => {
     expect(el.querySelector('mtc-trade-stop-dialog')).toBeNull();
     const btn = el.querySelector('[data-testid="trade-add-stop"]') as HTMLButtonElement;
     expect(btn.getAttribute('aria-label')).toBe('Ajouter le stop initial');
+    expect(btn.getAttribute('title')).toBe('Ajouter le stop initial');
     btn.click();
     fixture.detectChanges();
     expect(el.querySelector('mtc-trade-stop-dialog')).not.toBeNull();
     expect((fixture.componentInstance as unknown as { stopTrade: () => Trade | null }).stopTrade()?.id).toBe('sync-1');
+  });
+
+  it('stop capturé sans objectif : « — », info-bulle « Objectif non renseigné » et bouton « Ajouter l’objectif »', async () => {
+    const el = (await render([trade({ riskReward: null, stopLoss: 18590, takeProfit: null })])).nativeElement as HTMLElement;
+    const cell = rrCell(el);
+    expect(text(cell)).toBe('—');
+    expect(tipText(cell)).toBe('Objectif non renseigné. Ajoute ton objectif pour calculer le R/R.');
+    const btn = el.querySelector('[data-testid="trade-add-stop"]') as HTMLButtonElement;
+    expect(btn.getAttribute('aria-label')).toBe("Ajouter l'objectif");
+    expect(btn.getAttribute('title')).toBe("Ajouter l'objectif");
   });
 });
