@@ -637,14 +637,27 @@ describe('AuthService', () => {
     });
   });
 
-  describe('login d’un compte Google sans mot de passe', () => {
-    it('401 identique à un mauvais mot de passe, argon2 jamais appelé', async () => {
+  // #994 (S5) : sans hash à vérifier, la réponse partait tout de suite ; un e-mail connu passait par
+  // argon2 (~dizaines de ms). L'écart de temps révélait les comptes : vérification factice à la place.
+  describe('login sans mot de passe à vérifier : même coût qu’un mauvais mot de passe', () => {
+    it('compte Google sans mot de passe : 401 identique, argon2 vérifie un hash factice', async () => {
       const argon2 = await import('argon2');
+      vi.mocked(argon2.verify).mockClear();
       mockPrisma.user.findUnique.mockResolvedValue({ ...mockUser, password: null });
       await expect(service.login({ email: 'test@test.com', password: 'Password123' })).rejects.toThrow(
         new UnauthorizedException('Identifiants invalides'),
       );
-      expect(argon2.verify).not.toHaveBeenCalled();
+      expect(argon2.verify).toHaveBeenCalledTimes(1);
+    });
+
+    it('e-mail inconnu : 401 identique, argon2 vérifie un hash factice', async () => {
+      const argon2 = await import('argon2');
+      vi.mocked(argon2.verify).mockClear();
+      mockPrisma.user.findUnique.mockResolvedValue(null);
+      await expect(service.login({ email: 'inconnu@test.com', password: 'Password123' })).rejects.toThrow(
+        new UnauthorizedException('Identifiants invalides'),
+      );
+      expect(argon2.verify).toHaveBeenCalledTimes(1);
     });
   });
 

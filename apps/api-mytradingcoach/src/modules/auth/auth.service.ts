@@ -12,7 +12,7 @@ import { JwtService } from '@nestjs/jwt';
 import { AdminPushEvent, AuthProvider, Prisma, Role } from '@prisma/client';
 import { CGU_VERSION } from '@mtc/shared';
 import * as argon2 from 'argon2';
-import { hashPassword, needsPasswordRehash } from './password-hashing';
+import { dummyPasswordHash, hashPassword, needsPasswordRehash } from './password-hashing';
 import * as crypto from 'crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ResendService } from '../resend/resend.service';
@@ -271,10 +271,12 @@ export class AuthService {
     const user = await this.prisma.user.findUnique({
       where: { email: dto.email },
     });
-    if (!user) throw new UnauthorizedException('Identifiants invalides');
-
-    // Compte Google sans mot de passe : même réponse qu'un mauvais mot de passe (anti-énumération).
-    if (!user.password) throw new UnauthorizedException('Identifiants invalides');
+    // E-mail inconnu ou compte Google sans mot de passe : même réponse ET même coût qu'un mauvais
+    // mot de passe (anti-énumération, #994) — sinon l'absence d'argon2 se mesurait au temps de réponse.
+    if (!user?.password) {
+      await argon2.verify(await dummyPasswordHash(), dto.password).catch(() => false);
+      throw new UnauthorizedException('Identifiants invalides');
+    }
     const valid = await argon2.verify(user.password, dto.password);
     if (!valid) throw new UnauthorizedException('Identifiants invalides');
 

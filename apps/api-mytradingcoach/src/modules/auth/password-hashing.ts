@@ -28,3 +28,10 @@ export function needsPasswordRehash(hash: string): boolean {
     return false; // hash illisible : on ne touche à rien, la vérification l'a déjà traité
   }
 }
+
+let dummyHash: Promise<string> | undefined;
+/** Hash factice aux paramètres courants : vérifié quand il n'y a pas de vrai hash (coût égalisé). */
+export function dummyPasswordHash(): Promise<string> {
+  dummyHash ??= hashPassword('mtc-anti-enumeration-dummy');
+  return dummyHash;
+}
