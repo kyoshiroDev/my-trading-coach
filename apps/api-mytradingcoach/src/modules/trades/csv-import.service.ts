@@ -28,7 +28,7 @@ import { BrokerMappingService } from './broker-mapping.service';
 import { AI_MODELS } from '../infra/ai-pricing.const';
 import { redactForAi } from './csv-ai-redaction';
 import { RedisService } from '../infra/redis.service';
-import { todayParis } from '@mtc/shared';
+import { roundCents, todayParis } from '@mtc/shared';
 
 
 
@@ -330,7 +330,7 @@ export class CsvImportService {
       const feeCents = i === dtos.length - 1 ? left : Math.round((totalCents * qty) / totalQty);
       left -= feeCents;
       // On additionne aux frais éventuels déjà présents (CSV), sinon on pose.
-      const commission = +((d.commission ?? 0) + feeCents / 100).toFixed(2);
+      const commission = roundCents((d.commission ?? 0) + feeCents / 100);
       return { ...d, commission };
     });
   }

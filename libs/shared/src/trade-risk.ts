@@ -1,3 +1,5 @@
+import { roundCents } from './trade-stats';
+
 /**
  * Risque d'un trade à partir de son stop initial (et de son objectif) — fonctions PURES, partagées
  * par l'API (enregistrement) et l'app (aperçu en direct dans la saisie rapide du Journal).
@@ -21,7 +23,7 @@ export function plannedRiskReward(
   if (entry == null || stopLoss == null || takeProfit == null) return undefined;
   const reward = side === 'LONG' ? takeProfit - entry : entry - takeProfit;
   const risk = Math.abs(entry - stopLoss);
-  return risk > 0 && reward > 0 ? +(reward / risk).toFixed(2) : undefined;
+  return risk > 0 && reward > 0 ? roundCents(reward / risk) : undefined;
 }
 
 /**

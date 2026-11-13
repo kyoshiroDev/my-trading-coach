@@ -18,6 +18,7 @@ import { FreeLimitSyncService } from './free-limit-sync.service';
 import { TradovateReportingClient, type ReportWindow } from './tradovate-reporting.client';
 import { TradovateApiError, TradovateException, TradovatePenaltyError } from './tradovate.errors';
 import type { TradovateAccount, TradovateApiHosts, TradovateEnv } from './tradovate.types';
+import { roundCents } from '@mtc/shared';
 
 /**
  * Profondeur de l'import : **toute la vie du compte**, jusqu'à sa création.
@@ -258,9 +259,9 @@ export class TradovateHistoryService {
     if (!computed) return false;
     const { dtos } = computed;
     result.feesExpected += computed.feesExpected;
-    result.feesAssigned = +(
-      result.feesAssigned + dtos.reduce((sum, d) => sum + (d.commission ?? 0), 0)
-    ).toFixed(2);
+    result.feesAssigned = roundCents(
+      result.feesAssigned + dtos.reduce((sum, d) => sum + (d.commission ?? 0), 0),
+    );
 
     // Mêmes défauts que l'import CSV : compte cible, setup d'import, émotion non renseignée.
     for (const d of dtos) {
@@ -436,10 +437,10 @@ export class TradovateHistoryService {
     }
     const { assigned, consumed } = assignFeesOncePerFill(dtos, feeByFill);
     this.logger.log(
-      `Frais de la fenêtre (commission seule) : ${assigned} attribué(s) sur ${+expected.toFixed(2)} attendu(s) ` +
+      `Frais de la fenêtre (commission seule) : ${assigned} attribué(s) sur ${roundCents(expected)} attendu(s) ` +
         `(${feeByFill.size} fills, ${consumed} consommés).`,
     );
-    return { expected: +expected.toFixed(2), full: false };
+    return { expected: roundCents(expected), full: false };
   }
 
   /**

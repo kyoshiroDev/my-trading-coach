@@ -1,3 +1,5 @@
+import { roundCents } from '@mtc/shared';
+
 /**
  * Formulaire de trade en ÉDITION (#947). Le levier n'est pas stocké : sans le retrouver, il
  * repartait à 1 et la moindre retouche divisait le P&L d'un trade à levier par ce levier.
@@ -24,7 +26,7 @@ export function editLeverage(t: EditedTrade): number {
   const v = variation(t);
   const capital = t.capitalEngaged ?? 0;
   if (v == null || v === 0 || !(capital > 0) || t.pnl == null) return 1;
-  const lev = Math.round((t.pnl / (v * capital)) * 100) / 100;
+  const lev = roundCents(t.pnl / (v * capital));
   return Number.isFinite(lev) && lev >= 1 ? lev : 1;
 }
 
@@ -32,5 +34,5 @@ export function editLeverage(t: EditedTrade): number {
 export function editPnlPct(t: EditedTrade, leverage: number): number | undefined {
   const v = variation(t);
   if (v == null || !((t.capitalEngaged ?? 0) > 0)) return undefined;
-  return +(v * leverage * 100).toFixed(2);
+  return roundCents(v * leverage * 100);
 }

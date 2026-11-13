@@ -8,7 +8,7 @@ import {
   Optional,
 } from '@nestjs/common';
 import type { AccountPlanHint, PropFirmDrawdownKind, PropFirmPhaseRules } from '@mtc/shared';
-import { drawdownFloor, drawdownPeakProfit, planDrawdownRule } from '@mtc/shared';
+import { drawdownFloor, drawdownPeakProfit, planDrawdownRule, roundCents } from '@mtc/shared';
 import {
   AccountStatus,
   AccountType,
@@ -591,7 +591,7 @@ export class AccountsService {
     return {
       startingBalance,
       realizedPnl,
-      tradingPnl: agg.count === 0 ? 0 : Math.round((realizedPnl + (payouts?.total ?? 0)) * 100) / 100,
+      tradingPnl: agg.count === 0 ? 0 : roundCents(realizedPnl + (payouts?.total ?? 0)),
       currentBalance,
       tradesCount: agg.count,
       winRate,
@@ -1060,7 +1060,7 @@ export class AccountsService {
         accountId,
         transactionId: `${MANUAL_PAYOUT_TYPE}:${id}`,
         tradeDate: new Date(`${input.tradeDate}T00:00:00.000Z`),
-        amount: Math.round(input.amount * 100) / 100,
+        amount: roundCents(input.amount),
         changeType: MANUAL_PAYOUT_TYPE,
         confidence: 'certain',
       },

@@ -1,3 +1,5 @@
+import { roundCents } from './trade-stats';
+
 /**
  * Devise d'un compte de trading : SOURCE UNIQUE front + back.
  *
@@ -79,7 +81,7 @@ export function formatMoney(
   // (un arrondi qui grossit une perte), 0,49 $ « +$0.49 », jamais « +$0 ». Au-delà, arrondi au plus
   // proche, demi vers l'extérieur (`toLocaleString`) : 49 911,50 → « $49,912 », -1,50 → « -$2 ».
   // Un résidu flottant (5,5e-17) ou un montant sous le demi-centime reste « $0 », pas « $0.00 ».
-  const keepCents = abs < 1 && Number(abs.toFixed(2)) !== 0;
+  const keepCents = abs < 1 && roundCents(abs) !== 0;
   const decimals = keepCents ? Math.max(opts.decimals ?? 2, 2) : opts.decimals ?? 2;
   // Signe de la valeur AFFICHÉE : -0,004 $ s'affiche « +$0.00 », jamais « -$0.00 ».
   const shownAsZero = Number(abs.toFixed(decimals)) === 0;

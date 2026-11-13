@@ -6,6 +6,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { UsersService } from '../users/users.service';
 import { StripeSubscriptionService } from '../stripe/stripe-subscription.service';
 import {
+  roundCents,
   todayParis,
   type AdminAcquisitionData,
   type AdminFunnelData,
@@ -584,11 +585,10 @@ export class AdminService {
         email: a.email,
         referralCode: a.referralCode,
         totalReferrals: new Set(a.referrals.map((r) => r.referredUserId)).size,
-        totalCommissions: a.referrals.reduce((s, r) => s + r.amount, 0).toFixed(2),
-        pendingCommissions: a.referrals
-          .filter((r) => r.status === 'pending')
-          .reduce((s, r) => s + r.amount, 0)
-          .toFixed(2),
+        totalCommissions: roundCents(a.referrals.reduce((s, r) => s + r.amount, 0)).toFixed(2),
+        pendingCommissions: roundCents(
+          a.referrals.filter((r) => r.status === 'pending').reduce((s, r) => s + r.amount, 0),
+        ).toFixed(2),
         commissionsByMonth: a.referrals.reduce(
           (acc, r) => {
             acc[r.period] = (acc[r.period] ?? 0) + r.amount;

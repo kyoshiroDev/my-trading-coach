@@ -1308,6 +1308,11 @@ en plein contenu. Le refus « mode démo » (403 `DemoReadOnlyGuard`) ne fait **
     Colonne de présentation (975 px de haut naturels à ≥ 1280 px) : marges verticales 28/32 px au
     lieu de 40/44 (28/44 entre 1024 et 1279 px), palier `max-height: 1000px` (accord de Greg), via
     `:host-context(.signup)` dans `auth-pitch`.
+  - Lien de parrainage (#976) : `[class.with-referral]="!!referralCode()"` sur le gabarit. ≥ 1024 px :
+    encadré « Invitation » compact (12 px, padding 6/10, texte inchangé). `(min-width: 1024px) and
+    (max-height: 1199px)` : carte resserrée en plus (écarts 6 px, libellés 4 px, marges de page 12 px,
+    carte 18/16) ; sans code, rien ne change. Page = fenêtre de 960 à 1300 px de haut avec un code de
+    4 à 20 caractères.
   - `/forgot-password`, `/reset-password` et la finalisation Google gardent l'ancien gabarit carte
     seule (`auth-layout/card-page.css`, `card-page-signup.css`), à migrer si besoin.
 - **Écran de chargement** (`#mtc-boot`, `index.html`) : logo et « Chargement… » statiques, style

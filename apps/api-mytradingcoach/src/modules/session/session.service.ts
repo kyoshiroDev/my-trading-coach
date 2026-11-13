@@ -12,7 +12,7 @@ import { computeTradeStats, toParisDateStr } from '@mtc/shared';
 import type { LiveBrokerState, SessionHistoryItem } from '@mtc/shared';
 import { openPositionsKey, parseOpenPositions } from '../integrations/tradovate/tradovate-open-positions';
 import { parseWorkingOrders, protectionFor, workingOrdersKey } from '../integrations/tradovate/tradovate-orders';
-import { activeSessionWhere, tradingDayStart } from './active-session';
+import { activeSessionWhere, tradingDayEnd, tradingDayStart } from './active-session';
 import { autoCloseData, sessionTotalsFrom } from './session-totals';
 import { calculatePnl } from '../trades/trade-metrics.util';
 import { refreshClosedSessionTotals, sessionTradesFor } from './refresh-session-totals';
@@ -80,10 +80,9 @@ export class SessionService {
     const active = await this.getActiveSession(userId);
     if (active) return active;
 
-    const startOfDay = new Date();
-    startOfDay.setHours(0, 0, 0, 0);
+    // « Aujourd'hui » = journée de trading CME (17:00 Chicago), comme la session active.
     return this.prisma.tradeSession.findFirst({
-      where: { userId, status: SessionStatus.CLOSED, startedAt: { gte: startOfDay } },
+      where: { userId, status: SessionStatus.CLOSED, startedAt: { gte: tradingDayStart(new Date()) } },
       orderBy: { endedAt: 'desc' },
       include: {
         _count: { select: { trades: true } },
@@ -108,15 +107,13 @@ export class SessionService {
     // 1 session = 1 compte : les trades d'un autre compte n'y entrent pas (#457).
     const sameAccount = existing.accountId ? { accountId: existing.accountId } : {};
 
-    // Fenêtre du jour de la session (même base de date que getLiveStats / Débrief)
-    const dayStart = new Date(existing.startedAt);
-    dayStart.setHours(0, 0, 0, 0);
-    const dayEnd = new Date(existing.startedAt);
-    dayEnd.setHours(23, 59, 59, 999);
+    // Fenêtre = journée de trading CME de la session (même base que getTodayTrades et la session active)
+    const dayStart = tradingDayStart(existing.startedAt);
+    const dayEnd = tradingDayEnd(existing.startedAt);
 
     // Rattacher les trades du jour encore non liés à cette session
     await this.prisma.trade.updateMany({
-      where: { userId, sessionId: null, tradedAt: { gte: dayStart, lte: dayEnd }, ...sameAccount },
+      where: { userId, sessionId: null, tradedAt: { gte: dayStart, lt: dayEnd }, ...sameAccount },
       data: { sessionId },
     });
 
@@ -315,8 +312,8 @@ export class SessionService {
   }
 
   async getTodayTrades(userId: string) {
-    const startOfDay = new Date();
-    startOfDay.setHours(0, 0, 0, 0);
+    // Journée de trading CME (17:00 Chicago), pas minuit serveur : même borne que la session active.
+    const startOfDay = tradingDayStart(new Date());
 
     // 1 session = 1 compte : pendant une session, seuls les trades de son compte comptent
     // (un trade synchronisé sur un autre compte gonflait le P&L de la carte, #457).
@@ -329,7 +326,7 @@ export class SessionService {
       where: {
         userId,
         // Trades du jour, plus un trade ENCORE OUVERT rattaché à la session active même s'il a été
-        // ouvert avant minuit (position gardée) : sinon « Trade en cours » le perdait à 00:00.
+        // ouvert avant le début de la journée (position gardée) : sinon « Trade en cours » le perdait à la bascule.
         OR: [
           { tradedAt: { gte: startOfDay } },
           ...(active ? [{ sessionId: active.id, pnl: null }] : []),

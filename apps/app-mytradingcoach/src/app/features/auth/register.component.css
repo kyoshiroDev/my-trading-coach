@@ -161,3 +161,50 @@
     min-height: 40px;
   }
 }
+
+/* ─── Lien de parrainage (#976) : l'encadré « Invitation » ajoutait 43 à 64 px et la page défilait
+   de nouveau. Desktop seulement, texte inchangé ; `with-referral` est posé par le template quand un
+   code est présent, la page sans code reste telle quelle. ─── */
+@media (min-width: 1024px) {
+  .with-referral .referral-notice {
+    padding: 6px 10px;
+    font-size: 12px;
+    line-height: 1.4;
+    margin-bottom: 10px;
+  }
+}
+
+/* Carte resserrée avec l'encadré, jusqu'à 1199 px de haut (au-delà, la carte complète tient). */
+@media (min-width: 1024px) and (max-height: 1199px) {
+  .with-referral .auth-subtitle {
+    margin-bottom: 10px;
+  }
+
+  .with-referral .form-group {
+    gap: 4px;
+    margin-bottom: 6px;
+  }
+
+  .with-referral input {
+    min-height: 38px;
+    padding-top: 7px;
+    padding-bottom: 7px;
+  }
+
+  .with-referral .consent-check input {
+    min-height: 0;
+    padding: 0;
+  }
+
+  .with-referral .consent-check {
+    margin-bottom: 10px;
+  }
+
+  .with-referral .sep {
+    margin: 10px 0;
+  }
+
+  .with-referral .btn-demo {
+    min-height: 40px;
+  }
+}

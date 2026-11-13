@@ -12,6 +12,11 @@ describe('formulaire de trade en édition (#947)', () => {
     expect(editLeverage({ side: 'SHORT', entry: 100, exit: 101, pnl: -50, capitalEngaged: 1000 })).toBe(5);
   });
 
+  it('levier arrondi par roundCents (règle unique, audit des chiffres lot 3) : 64,225 → 64,23, pas 64,22', () => {
+    // 642,25 / (10 % × 100) = 64.225 : Math.round(x × 100) / 100 suivait la valeur binaire (64,22).
+    expect(editLeverage({ side: 'LONG', entry: 100, exit: 110, pnl: 642.25, capitalEngaged: 100 })).toBe(64.23);
+  });
+
   it('sans capital (futures, import) : levier 1, pas de %', () => {
     const mnq = { side: 'LONG', entry: 21000, exit: 21100, pnl: 200, capitalEngaged: null };
     expect(editLeverage(mnq)).toBe(1);

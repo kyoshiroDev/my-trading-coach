@@ -1,3 +1,5 @@
+import { roundCents } from '@mtc/shared';
+
 /**
  * Payouts d'un compte de trading : ceux détectés chez le broker (Tradovate) et ceux saisis à la
  * main pour un compte sans connexion. Les deux vivent dans `BrokerPayout` ; un payout saisi a le
@@ -52,8 +54,8 @@ export function summarizePayouts(rows: readonly PayoutRow[]): RulePayouts | null
     lastAmount: last.amount,
     lastConfidence: last.confidence === 'probable' ? 'probable' : 'certain',
     lastManual: isManualPayout(last.changeType),
-    manualTotal: Math.round(manualTotal * 100) / 100,
-    total: Math.round(rows.reduce((s, r) => s + r.amount, 0) * 100) / 100,
+    manualTotal: roundCents(manualTotal),
+    total: roundCents(rows.reduce((s, r) => s + r.amount, 0)),
   };
 }
 

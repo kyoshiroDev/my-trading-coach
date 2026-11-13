@@ -1,4 +1,5 @@
 import { dedupeKey } from '../../trades/trade-identity.util';
+import { roundCents } from '@mtc/shared';
 
 /**
  * Réparation des frais Tradovate (#783), partie pure : quels trades corriger, et de combien.
@@ -85,7 +86,7 @@ export function planFeeRepairs(computed: RecomputedTrade[], stored: StoredTrade[
       plan.noFees++;
       continue;
     }
-    const next = +c.commission.toFixed(2);
+    const next = roundCents(c.commission);
     const current = t.commission ?? 0;
     if (next > current + CENT) {
       plan.updates.push({ id: t.id, commission: next });
@@ -96,6 +97,6 @@ export function planFeeRepairs(computed: RecomputedTrade[], stored: StoredTrade[
       plan.unchanged++;
     }
   }
-  plan.feesAdded = +plan.feesAdded.toFixed(2);
+  plan.feesAdded = roundCents(plan.feesAdded);
   return plan;
 }

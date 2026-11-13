@@ -10,6 +10,8 @@ ok commence par les chiffres, vas-y
 
 OK pour relancer #943 après #950, attaque le lot 2
 
+ok fais le lot 3 et le relecteur doit valider a 100%
+
 ## Cadrage retenu (proposé par la session, accepté par Greg)
 
 - Périmètre : les chiffres d'abord (P&L, stats, totaux, montants, arrondis, cohérence entre vues). L'audit fonctionnel complet viendra plus tard.

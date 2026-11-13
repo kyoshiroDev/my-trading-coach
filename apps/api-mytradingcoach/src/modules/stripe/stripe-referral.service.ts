@@ -6,6 +6,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { STRIPE_CLIENT } from './stripe.client';
 import { extractId, invoicePeriod, isUniqueConstraintError } from './stripe.helpers';
 import { StripeCustomerService } from './stripe-customer.service';
+import { roundCents } from '@mtc/shared';
 
 /** Récompense du parrain au paiement d'un filleul (commission ou mois offert). */
 @Injectable()
@@ -90,7 +91,7 @@ export class StripeReferralService {
     period: string;
   }): Promise<void> {
     const { ambassadorId, filleul, subscriptionId, amountPaid, period } = args;
-    const commission = +(amountPaid * 0.2).toFixed(2);
+    const commission = roundCents(amountPaid * 0.2);
 
     await this.prisma.referralCommission.upsert({
       where: { subscriptionId_period: { subscriptionId, period } },
@@ -188,7 +189,7 @@ export class StripeReferralService {
 
     await this.prisma.referralReward.update({
       where: { id: reward.id },
-      data: { status: 'APPLIED', amountEur: +(monthCents / 100).toFixed(2) },
+      data: { status: 'APPLIED', amountEur: roundCents(monthCents / 100) },
     });
 
     this.logger.log(
