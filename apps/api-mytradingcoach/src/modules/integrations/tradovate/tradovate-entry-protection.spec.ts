@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { countOutcomes, entryProtection, firstVersions, strategyByOrder } from './tradovate-entry-protection';
+import { countOutcomes, entryOrderIdFor, entryProtection, firstVersions, strategyByOrder } from './tradovate-entry-protection';
 import type { TradovateOrderEntity, TradovateOrderVersionEntity } from './tradovate-orders';
 
 const ACC = 777;
@@ -49,6 +49,18 @@ describe('entryProtection — stop et objectif initiaux liés à l’ordre d’e
   it('trailing stop accepté, avec le prix de sa première version', () => {
     const vs = [v(1, 225, 'TrailingStop', null, 26900)];
     expect(run([entry, stop], vs)).toEqual({ outcome: 'linked', stopLoss: 26900 });
+  });
+
+  it('trailing stop limite accepté, prix de sa première version', () => {
+    const vs = [v(1, 225, 'TrailingStopLimit', 26890, 26900), v(2, 225, 'TrailingStopLimit', 26990, 27000)];
+    expect(run([entry, stop], vs)).toEqual({ outcome: 'linked', stopLoss: 26900 });
+  });
+
+  it('entrée exécutée en plusieurs morceaux (même ordre, prix différents) : même stop et même objectif', () => {
+    const part1 = run([entry, target, stop], versions, { entryPrice: 27092.25 });
+    const part2 = run([entry, target, stop], versions, { entryPrice: 27093.5 });
+    expect(part1).toEqual({ outcome: 'linked', stopLoss: 26862.5, takeProfit: 28000 });
+    expect(part2).toEqual(part1);
   });
 
   it('aucune jambe liée (pas de parentId, pas d’OCO) : rien', () => {
@@ -137,9 +149,41 @@ describe('entryProtection — jambes reliées par stratégie d’ordres (orderSt
     expect(go([E, sl, tp], wrong)).toEqual({ outcome: 'linked', takeProfit: 27300 });
   });
 
+  it('entrée sans lien de stratégie, ordres voisins (101/102) dans une stratégie : aucune inférence par id', () => {
+    const near = [
+      { id: 101, accountId: ACC, contractId: MNQ, action: 'Sell', ordStatus: 'Filled' },
+      { id: 102, accountId: ACC, contractId: MNQ, action: 'Sell', ordStatus: 'Canceled' },
+    ];
+    const nearVs = [...vs, v(20, 101, 'Stop', null, 26950), v(21, 102, 'Limit', 27200, null)];
+    const nearLinks = strategyByOrder([{ id: 1, orderId: 101, orderStrategyId: 9 }, { id: 2, orderId: 102, orderStrategyId: 9 }]);
+    expect(go([E, ...near], nearVs, nearLinks)).toEqual({ outcome: 'no-leg' });
+  });
+
   it('strategyByOrder ignore les liens incomplets', () => {
     expect([...strategyByOrder([{ id: 1, orderId: 5 }, { id: 2, orderStrategyId: 3 }, { id: 3, orderId: 6, orderStrategyId: 4 }])])
       .toEqual([[6, 4]]);
+  });
+});
+
+describe('entryOrderIdFor — ordre d’entrée selon le sens du trade', () => {
+  const fills = new Map<number, { orderId?: number | null }>([[11, { orderId: 216 }], [12, { orderId: 300 }], [13, { orderId: null }]]);
+
+  it('LONG : ordre du fill d’achat', () => {
+    expect(entryOrderIdFor({ side: 'LONG', _buyFillId: '11', _sellFillId: '12' }, fills)).toBe(216);
+  });
+
+  it('SHORT : ordre du fill de vente', () => {
+    expect(entryOrderIdFor({ side: 'SHORT', _buyFillId: '11', _sellFillId: '12' }, fills)).toBe(300);
+  });
+
+  it('fill absent, sans ordre ou sens inconnu : undefined (donne « séance passée »)', () => {
+    expect(entryOrderIdFor({ side: 'LONG', _buyFillId: '99' }, fills)).toBeUndefined();
+    expect(entryOrderIdFor({ side: 'LONG', _buyFillId: '13' }, fills)).toBeUndefined();
+    expect(entryOrderIdFor({ _buyFillId: '11', _sellFillId: '12' }, fills)).toBeUndefined();
+    expect(entryProtection({
+      entryOrderId: entryOrderIdFor({ side: 'LONG', _buyFillId: '99' }, fills),
+      side: 'LONG', entryPrice: 27092.25, orders: [entry, target, stop], first: firstVersions(versions),
+    })).toEqual({ outcome: 'session-gone' });
   });
 });
 

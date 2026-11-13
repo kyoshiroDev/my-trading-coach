@@ -554,7 +554,8 @@ describe('Tradovate — synchro', () => {
       await connect(token, account.id);
 
       const t = await prisma.trade.findFirstOrThrow({ where: { userId, entry: 30000 } });
-      expect(t).toMatchObject({ source: 'BROKER_SYNC', stopLoss: 29987.75, takeProfit: 30123.25, executionMethod: 'STOP_BASED' });
+      // R/R prévu calculé sur ce chemin aussi : 123,25 / 12,25 = 10,06.
+      expect(t).toMatchObject({ source: 'BROKER_SYNC', stopLoss: 29987.75, takeProfit: 30123.25, riskReward: 10.06, executionMethod: 'STOP_BASED' });
       expect(await prisma.trade.count({ where: { userId, stopLoss: { not: null } } })).toBe(1);
       // Trois listes en GET, jamais /orderStrategy/list (inutile à la liaison), rien d'autre.
       const orderCalls = calls.filter((c) => /\/(order|orderVersion|orderStrategy|orderStrategyLink)\//.test(new URL(c.url).pathname));

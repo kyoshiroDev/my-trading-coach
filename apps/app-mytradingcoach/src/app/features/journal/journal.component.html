@@ -193,7 +193,7 @@
         <span class="th-qty">Qté</span>
         <span class="th-rr">R/R
           <mtc-info-tooltip label="Comment le R/R est calculé"
-            text="Ratio risque/rendement prévu : objectif ÷ risque jusqu'au stop. « — » quand le stop loss ou le take profit n'est pas renseigné (cas des trades synchronisés : la synchronisation ne récupère pas le stop)." />
+            text="Ratio risque/rendement prévu : objectif ÷ risque jusqu'au stop. « — » quand le stop loss ou le take profit n'est pas renseigné. Trades synchronisés : le stop et l'objectif posés avec l'entrée sont repris quand ils lui sont reliés, sinon ajoute-les à la main." />
         </span>
         <span class="th-exec">Exécution
           <mtc-info-tooltip label="Comment la note d'exécution est calculée"
@@ -341,7 +341,9 @@
                     } @else {
                       <span class="rr-unknown" data-testid="trade-rr-unknown">—</span>
                       <mtc-info-tooltip label="Pourquoi le R/R est inconnu"
-                        text="Stop loss ou take profit non renseigné. Ajoute ton stop initial pour calculer le R/R." />
+                        [text]="(trade.stopLoss !== null && trade.stopLoss !== undefined)
+                          ? 'Objectif non renseigné. Ajoute ton objectif pour calculer le R/R.'
+                          : 'Stop loss ou take profit non renseigné. Ajoute ton stop initial pour calculer le R/R.'" />
                     }
                   </span>
                   <span class="td-exec">
@@ -366,8 +368,9 @@
                   <span class="td-setup"><span class="setup-badge"><span class="setup-badge-dot" [style.background]="trade.setup.color"></span>{{ trade.setup.title }}</span></span>
                   <span class="td-actions">
                     @if (trade.riskReward === null || trade.riskReward === undefined) {
-                      <button aria-label="Ajouter le stop initial" class="btn-stop" data-testid="trade-add-stop"
-                        (click)="stopTrade.set(trade)" title="Ajouter le stop initial">
+                      <button [attr.aria-label]="(trade.stopLoss !== null && trade.stopLoss !== undefined) ? 'Ajouter l\'objectif' : 'Ajouter le stop initial'"
+                        class="btn-stop" data-testid="trade-add-stop" (click)="stopTrade.set(trade)"
+                        [title]="(trade.stopLoss !== null && trade.stopLoss !== undefined) ? 'Ajouter l\'objectif' : 'Ajouter le stop initial'">
                         <svg [lucideIcon]="StopIcon" [size]="12"></svg>
                       </button>
                     }

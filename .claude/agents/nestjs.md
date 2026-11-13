@@ -192,8 +192,10 @@ POST   /api/test/upgrade-user          NODE_ENV=test uniquement
   `AnalyticsService` passe par son helper local `net(t)`. `SetupStat.avgRR` vaut `null` (pas 0)
   quand aucun trade du setup n'a de R:R ; idem `EmotionStat.avgRR` et le « R/R moyen » du PDF de
   débrief (`averageKnownRiskReward` de `@mtc/shared` : moyenne des R/R CONNUS, `null` sinon).
-- **R/R inconnu ≠ 0 (#916)** : la synchro broker n'écrit jamais `stopLoss` / `takeProfit` /
-  `riskReward` (elle ne les lit pas : le rapport Orders porte le Stop Price mais sans lien vers le trade, cf. `docs/tradovate-api-capabilities.md` §11). Un R/R
+- **R/R inconnu ≠ 0 (#916)** : l'import CSV et le rapport après coup (`BROKER_HISTORY`) n'écrivent
+  jamais `stopLoss` / `takeProfit` / `riskReward` (le rapport Orders porte le Stop Price mais sans
+  lien vers le trade, cf. `docs/tradovate-api-capabilities.md` §11) ; la synchro de séance les capture
+  à l'entrée quand ils sont reliés (voir « Capture du stop à l'entrée »). Un R/R
   absent reste `null` partout (API, PDF, IA). Le trader saisit son stop initial par
   **`PATCH /trades/:id/stop`** (`SetTradeStopDto` : `stopLoss`, `takeProfit` facultatif, `null` =
   retiré) : `TradesService.setStop` refuse un stop ou un objectif du mauvais côté de l'entrée (400,

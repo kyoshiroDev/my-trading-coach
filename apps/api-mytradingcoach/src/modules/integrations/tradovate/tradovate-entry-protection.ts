@@ -34,8 +34,9 @@ export interface EntryProtection {
   outcome: EntryProtectionOutcome;
 }
 
-/** Types acceptés : un trailing reste un stop (prix de la première version). */
-const STOP_TYPES = new Set(['Stop', 'StopLimit', 'TrailingStop']);
+/** Types acceptés : un trailing reste un stop (prix de la première version). Même liste que
+ *  `tradovate-orders.ts` (barre « Trade en cours »). */
+const STOP_TYPES = new Set(['Stop', 'StopLimit', 'TrailingStop', 'TrailingStopLimit']);
 const TARGET_TYPES = new Set(['Limit']);
 
 const finite = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
@@ -97,6 +98,19 @@ export function entryProtection(input: {
   if (stopLoss !== undefined) out.stopLoss = stopLoss;
   if (takeProfit !== undefined) out.takeProfit = takeProfit;
   return out;
+}
+
+/**
+ * Ordre d'entrée d'un trade : `orderId` du fill d'ENTRÉE, l'achat d'un LONG, la vente d'un SHORT.
+ * Fill absent de la séance (ou sens inconnu) → `undefined`, ce qui donne `session-gone`.
+ */
+export function entryOrderIdFor(
+  t: { side?: 'LONG' | 'SHORT'; _buyFillId?: string; _sellFillId?: string },
+  fills: ReadonlyMap<number, { orderId?: number | null }>,
+): number | undefined {
+  const fillId = t.side === 'LONG' ? t._buyFillId : t.side === 'SHORT' ? t._sellFillId : undefined;
+  const orderId = fillId ? fills.get(Number(fillId))?.orderId : undefined;
+  return finite(orderId) ? orderId : undefined;
 }
 
 /** Ordre → stratégie d'ordres, à partir des liens bruts (entrées invalides ignorées). */

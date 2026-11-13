@@ -662,6 +662,16 @@ faute de bracket existant — et ne servirait aucun utilisateur connu aujourd'hu
 > brackets (TradingView), si `parentId` est renseigné et si la synchro tourne encore pendant la
 > séance. Un trade déjà en base n'est jamais modifié. `BROKER_HISTORY` reste sans stop.
 
+> **Mise à jour 2026-11-12 (#955, #962) : liaison par stratégie d'ordres.** Constat prod (2 trades
+> stoppés MGC du fondateur, brackets TradingView) : `parentId`, `ocoId` et `linkedId` sont VIDES sur
+> les jambes ; l'entrée, le stop et l'objectif partagent une même stratégie d'ordres. La synchro lit
+> donc aussi `/orderStrategyLink/list` (GET, 3 listes au total) et relie une jambe à l'entrée quand
+> elle a le même `orderStrategyId` (en plus du `parentId` et de l'OCO). `/orderStrategy/list` n'est
+> pas lu (inutile à la liaison). Liens illisibles = liaison par `parentId` seule ; pénalité relancée.
+> L'inférence par id voisin (ordres créés juste après l'entrée) n'est PAS validée et n'est pas
+> utilisée : une entrée sans stratégie et sans `parentId` reste « sans jambe liée ». Le diagnostic
+> temporaire (`TRADOVATE_LINK_DIAGNOSTIC`) est retiré du code.
+
 ### Mesure du 2026-11-09 : des brackets existent (compte Lucid du fondateur, #916)
 
 Rapport `Orders` exporté à la main depuis l'interface Tradovate (même rapport, mêmes 32 colonnes),
