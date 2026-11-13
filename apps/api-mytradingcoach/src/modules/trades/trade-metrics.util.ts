@@ -1,5 +1,5 @@
 import type { CreateTradeDto } from './dto/create-trade.dto';
-import { plannedRiskReward } from '@mtc/shared';
+import { plannedRiskReward, roundCents } from '@mtc/shared';
 import { getTickSize, getTickValue } from './instruments.const';
 import { isNonUsdQuotedForex } from '@mtc/shared';
 
@@ -14,7 +14,7 @@ export function calculatePnl(dto: CreateTradeDto): number | undefined {
 
   // P&L réalisé fourni (import broker, ou édition sans changement de prix/qty) = source de vérité.
   // On NE recalcule PAS points × quantité : faux pour la crypto/contrats (qty MEXC en contrats, pas en coins).
-  if (dto.pnl != null) return +dto.pnl.toFixed(2);
+  if (dto.pnl != null) return roundCents(dto.pnl);
 
   if (dto.exit == null || dto.exit <= 0) return undefined;
   const effectiveExit = dto.exit;
@@ -42,7 +42,7 @@ export function calculatePnl(dto: CreateTradeDto): number | undefined {
     pnl = points * quantity;
   }
 
-  return +pnl.toFixed(2);
+  return roundCents(pnl);
 }
 
 export function calculateRiskReward(dto: CreateTradeDto): number | undefined {

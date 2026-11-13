@@ -71,7 +71,7 @@ export function stopRiskAmount(
   if (tickValue == null) return null;
   const points = Math.abs(entry - stopLoss);
   const ticks = tickSize && tickSize > 0 ? points / tickSize : points;
-  return +(ticks * tickValue * (quantity ?? 1)).toFixed(2);
+  return roundCents(ticks * tickValue * (quantity ?? 1));
 }
 
 /** Moyenne des R/R CONNUS (null et non finis ignorés). `null` si aucun n'est connu, jamais 0. */
