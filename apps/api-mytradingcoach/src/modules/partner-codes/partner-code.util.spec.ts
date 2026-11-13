@@ -59,6 +59,17 @@ describe('MRR sur le montant réellement payé', () => {
     expect(realMonthlyEur({ interval: 'year', founder: true, now })).toBeCloseTo(290 / 12);
   });
 
+  it('filleul −10 % (#954) : 44,10 € / 441/12 pendant 12 mois, puis prix normal', () => {
+    const since = new Date('2026-06-01T00:00:00Z');
+    expect(realMonthlyEur({ interval: 'month', referralSince: since, now })).toBeCloseTo(44.1);
+    expect(realMonthlyEur({ interval: 'year', referralSince: since, now })).toBeCloseTo(441 / 12);
+    const after = new Date('2027-06-01T00:00:01Z');
+    expect(realMonthlyEur({ interval: 'month', referralSince: since, now: after })).toBe(49);
+    expect(realMonthlyEur({ interval: 'month', referralSince: null, now })).toBe(49);
+    // Le fondateur prime (aucun cumul possible côté checkout).
+    expect(realMonthlyEur({ interval: 'month', founder: true, referralSince: since, now })).toBe(29);
+  });
+
   it('code partenaire : prix remisé tant que la remise court, puis prix normal', () => {
     const since = new Date('2026-10-01T00:00:00Z');
     expect(realMonthlyEur({ interval: 'month', partner: { ...TRADER10, since }, now })).toBe(29);

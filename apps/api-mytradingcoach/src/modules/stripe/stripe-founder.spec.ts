@@ -91,6 +91,7 @@ describe('checkout fondateur', () => {
     expect(params).not.toHaveProperty('allow_promotion_codes');
     expect(params.metadata).toMatchObject({ offer: 'founder', priceId: 'price_29', cta: 'carte', userId: 'u1' });
     expect(params.subscription_data.metadata).toMatchObject({ offer: 'founder', cta: 'carte' });
+    expect(params.subscription_data.metadata).not.toHaveProperty('referralDiscount'); // #954
     expect(params.custom_text.submit.message).toBe(
       'Satisfait ou remboursé 14 jours sur le 1er paiement. Si tu résilies, le prix fondateur est perdu.',
     );
@@ -170,6 +171,8 @@ describe('checkout Premium au prix normal : inchangé', () => {
     const params = create.mock.calls[0][0];
     expect(params.subscription_data.trial_period_days).toBe(30);
     expect(params.discounts).toBeDefined();
+    // #954 : la remise filleul est marquée sur l'abonnement, pour le MRR base.
+    expect(params.subscription_data.metadata.referralDiscount).toBe('1');
     expect(params).not.toHaveProperty('custom_text');
     expect(founders.reserve).not.toHaveBeenCalled();
   });
@@ -478,6 +481,7 @@ describe('checkout avec code partenaire', () => {
     expect(params.discounts).toEqual([{ coupon: 'cp_20' }]);
     expect(params.subscription_data.trial_period_days).toBe(30);
     expect(params).not.toHaveProperty('allow_promotion_codes');
+    expect(params.subscription_data.metadata).not.toHaveProperty('referralDiscount'); // #954
     expect(params.metadata).toMatchObject({ offer: 'partner', partnerCode: 'TRADER10', cta: 'promo' });
     expect(params.custom_text.submit.message).toContain('Code TRADER10 : tes conditions sont figées');
     expect(partners.reserve).toHaveBeenCalledWith('u1', 'TRADER10', 'month', 'promo');

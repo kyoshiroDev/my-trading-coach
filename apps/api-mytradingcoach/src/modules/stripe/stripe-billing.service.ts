@@ -22,7 +22,7 @@ import {
 import { StripeCustomerService } from './stripe-customer.service';
 import { CHECKOUT_TTL_MS, FounderOfferService } from '../founder-offer/founder-offer.service';
 import { founderFirstChargeAt } from '../founder-offer/founder-deferred';
-import { StripeCouponService } from './stripe-coupon.service';
+import { REFERRAL_DISCOUNT_METADATA, StripeCouponService } from './stripe-coupon.service';
 import { PartnerCodeService } from '../partner-codes/partner-code.service';
 import { partnerFirstYearCost, referralFirstYearCost } from '../partner-codes/partner-code.util';
 import { StripeStatusResponse, CachedStripeStatus } from './stripe.types';
@@ -286,9 +286,14 @@ export class StripeBillingService {
     const customerId = await this.customers.ensureStripeCustomer(userId, userEmail);
 
     const cta = opts.cta ?? null;
+    // Remise filleul : marquée dans les métadonnées de l'abonnement, que le webhook enregistre
+    // (`User.referralDiscountSince`) pour la compter dans le MRR base (#954).
+    const referralDiscountApplied =
+      !partnerCode && referralCoupon && (this.isAnnualPrice(priceId) || this.isMonthlyPrice(priceId));
     const metadata: Record<string, string> = {
       userId, offer, priceId, ui, ...(cta ? { cta } : {}), ...(partnerCode ? { partnerCode } : {}),
       ...(chargeKey ? { firstChargeAt: chargeKey } : {}),
+      ...(referralDiscountApplied ? { [REFERRAL_DISCOUNT_METADATA]: '1' } : {}),
     };
 
     const subscriptionData = trialGranted
@@ -304,7 +309,7 @@ export class StripeBillingService {
     // Stripe interdit discounts + allow_promotion_codes ensemble → si pas de coupon,
     // on garde les codes promo manuels ouverts (prix normal uniquement).
     let discounts: Stripe.Checkout.SessionCreateParams.Discount[] | undefined;
-    if (!partnerCode && referralCoupon) {
+    if (referralDiscountApplied) {
       if (this.isAnnualPrice(priceId)) {
         discounts = [{ coupon: await this.coupons.ensureReferralCoupon('annual') }];
       } else if (this.isMonthlyPrice(priceId)) {
