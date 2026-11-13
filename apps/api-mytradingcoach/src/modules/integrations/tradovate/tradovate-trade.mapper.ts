@@ -22,6 +22,12 @@ import { roundCents } from '@mtc/shared';
 export type TradovateTradeDto = Partial<CreateTradeDto> & {
   _buyFillId?: string;
   _sellFillId?: string;
+  /** Contrat brut (MGCZ6) : regroupement par position (#956). */
+  _contract?: string;
+  /** Position Tradovate de la paire (une par compte, contrat et séance). */
+  _positionId?: number;
+  /** Jambe d'ouverture de la paire, à la seconde comme `tradedAt`. */
+  _openedAt?: string;
 };
 
 export interface TradovateMapperInput {
@@ -113,6 +119,8 @@ export function mapTradovatePairs(input: TradovateMapperInput): TradovateMapperR
     });
     const closedAt = toSecond(tradedAt.toISOString());
     const iso = closedAt.toISOString();
+    // Jambe d'ouverture : l'achat d'un LONG, la vente d'un SHORT (même règle que `resolvePairDirection`).
+    const openedAt = toSecond(side === 'LONG' ? buy.timestamp : sell.timestamp);
 
     rows.push({
       closedAt: closedAt.getTime(),
@@ -129,6 +137,9 @@ export function mapTradovatePairs(input: TradovateMapperInput): TradovateMapperR
         tradedAt: iso,
         _buyFillId: normFillId(pair.buyFillId) ?? undefined,
         _sellFillId: normFillId(pair.sellFillId) ?? undefined,
+        _contract: contract.name,
+        _positionId: pair.positionId,
+        _openedAt: openedAt.toISOString(),
       },
     });
   }

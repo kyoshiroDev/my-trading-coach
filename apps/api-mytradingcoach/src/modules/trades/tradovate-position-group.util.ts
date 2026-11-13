@@ -1,5 +1,5 @@
 import { roundCents } from '@mtc/shared';
-import { detectTradingSession } from './tradovate-pair.util';
+import { detectTradingSession, normFillId } from './tradovate-pair.util';
 
 /**
  * Regroupement des paires Tradovate en POSITIONS (#956, décision de Greg du 13/11).
@@ -272,4 +272,117 @@ export function aggregateGroup<T extends GroupableTrade>(trades: T[]): T {
     tradedAt: last,
     session: last ? detectTradingSession(last) : trades[0].session,
   };
+}
+
+/**
+ * Trade par paire tel que le produisent la synchro (mapper) et l'export Performance (parseur CSV),
+ * avec les métadonnées internes du regroupement (jamais persistées).
+ */
+export interface PositionPairTrade extends GroupableTrade {
+  _buyFillId?: string;
+  _sellFillId?: string;
+  /** Contrat BRUT (MGCZ6), ou contrat + position Tradovate quand la séance en a plusieurs. */
+  _contract?: string;
+  /** Heure de la jambe d'ouverture de la paire (ISO), même précision que `tradedAt`. */
+  _openedAt?: string;
+  stopLoss?: number;
+  takeProfit?: number;
+}
+
+/** Trade d'une position, prêt pour `importTrades`. */
+export type PositionTrade<T> = T & {
+  /** Clé d'import stable `tv:<fill d'ouverture>` ; absente = trade par paire (ancien chemin). */
+  _positionKey?: string;
+  /** Fill d'ouverture de la position (capture du stop sur l'ordre d'entrée). */
+  _openFillId?: string;
+  /** Paires d'origine : importées une par une si l'une d'elles est déjà en base (ancien format). */
+  _pairs?: T[];
+};
+
+export interface GroupTradesResult<T> {
+  trades: PositionTrade<T>[];
+  /** Paires d'une position pas encore à plat (ou ouverte avant les données) : non importées. */
+  deferred: number;
+  /** Paires aux données incohérentes : non importées (`leftovers: 'skip'`) ou importées par paire. */
+  uncertain: number;
+}
+
+export interface GroupTradesOptions extends GroupOptions {
+  /**
+   * Paires différées ou incohérentes :
+   * - `skip` (synchro de la séance) : rien d'importé, le rattrapage Reporting les reprend ;
+   * - `pairs` (fichier, rapport mensuel : aucune autre source ne les reprendra) : importées
+   *   paire par paire, comme avant #956.
+   */
+  leftovers: 'skip' | 'pairs';
+}
+
+/**
+ * Regroupe des trades par paire en trades par position (#956). Une paire sans les métadonnées
+ * nécessaires (ancien export sans fill ids) passe telle quelle. Les frais doivent déjà être
+ * posés par paire (`assignFeesOncePerFill`) : ils sont ensuite additionnés.
+ *
+ * Stop et objectif : ceux de la paire qui contient le fill d'ouverture (première entrée).
+ */
+export function groupTradovateTrades<T extends PositionPairTrade>(
+  dtos: T[],
+  opts: GroupTradesOptions,
+): GroupTradesResult<T> {
+  const out: PositionTrade<T>[] = [];
+  const legs: PairLeg[] = [];
+  const legOf = new Map<number, T>();
+  dtos.forEach((t, i) => {
+    const buy = normFillId(t._buyFillId);
+    const sell = normFillId(t._sellFillId);
+    const openedAt = t._openedAt ? new Date(t._openedAt) : null;
+    const closedAt = t.tradedAt ? new Date(t.tradedAt) : null;
+    if (!buy || !sell || !t._contract || !t.side || !openedAt || !closedAt || Number.isNaN(openedAt.getTime()) || Number.isNaN(closedAt.getTime())) {
+      out.push({ ...t });
+      return;
+    }
+    const long = t.side === 'LONG';
+    legs.push({
+      idx: i,
+      contract: t._contract,
+      buyFillId: buy,
+      sellFillId: sell,
+      qty: t.quantity != null && t.quantity > 0 ? t.quantity : 1,
+      buyAt: long ? openedAt : closedAt,
+      sellAt: long ? closedAt : openedAt,
+    });
+    legOf.set(i, t);
+  });
+
+  const r = groupPositions(legs, opts);
+  for (const g of r.groups) {
+    const pairs = g.pairIdx.map((i) => legOf.get(i)!);
+    let trade: T;
+    try {
+      trade = aggregateGroup(pairs);
+    } catch {
+      // Sens différents dans une même position : impossible par construction, jamais un trade faux.
+      if (opts.leftovers === 'pairs') out.push(...pairs.map((p) => ({ ...p })));
+      continue;
+    }
+    const opening = pairs.find((p) => normFillId(p._buyFillId) === g.openFillId || normFillId(p._sellFillId) === g.openFillId) ?? pairs[0];
+    const grouped: PositionTrade<T> = {
+      ...trade,
+      _openedAt: opening._openedAt,
+      _positionKey: positionImportKey(g.openFillId),
+      _openFillId: g.openFillId,
+      _pairs: pairs,
+    };
+    // Protections de la PREMIÈRE entrée, jamais celles de la paire clôturée en premier.
+    delete grouped.stopLoss;
+    delete grouped.takeProfit;
+    if (opening.stopLoss !== undefined) grouped.stopLoss = opening.stopLoss;
+    if (opening.takeProfit !== undefined) grouped.takeProfit = opening.takeProfit;
+    out.push(grouped);
+  }
+  const leftover = [...r.deferred, ...r.uncertain].sort((a, b) => a - b);
+  if (opts.leftovers === 'pairs') for (const i of leftover) out.push({ ...legOf.get(i)! });
+  // Ordre de clôture (tri stable) : celui que suivait le lot par paire.
+  const closeMs = (t: GroupableTrade) => (t.tradedAt ? new Date(t.tradedAt).getTime() : 0) || 0;
+  out.sort((a, b) => closeMs(a) - closeMs(b));
+  return { trades: out, deferred: r.deferred.length, uncertain: r.uncertain.length };
 }

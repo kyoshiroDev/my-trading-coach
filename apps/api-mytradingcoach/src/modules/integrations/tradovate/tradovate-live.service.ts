@@ -66,6 +66,8 @@ export const liveLeaseKey = (userId: string) => `tradovate:live:${userId}`;
 export interface LiveTradesEvent {
   accountId: string;
   created: number;
+  /** Positions déjà importées qui ont grandi (#956) : à relire, sans nouveau trade. */
+  updated: number;
   duplicates: number;
   total: number;
   source: 'catch-up' | 'live';
@@ -292,9 +294,9 @@ export class TradovateLiveService implements OnModuleInit, OnModuleDestroy {
   ): Promise<void> {
     try {
       const r = await this.sync.sync(userId, accountId, options);
-      if (r.created > 0) {
+      if (r.created > 0 || r.updated > 0) {
         this.emitter(userId, 'tradovate:trades', {
-          accountId, created: r.created, duplicates: r.duplicates, total: r.total, source,
+          accountId, created: r.created, updated: r.updated, duplicates: r.duplicates, total: r.total, source,
         });
       }
       // La synchro vient de relire solde et equity chez le broker (instantané) : on les pousse.

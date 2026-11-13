@@ -2,6 +2,8 @@ import { describe, it, expect } from 'vitest';
 import {
   aggregateGroup,
   groupPositions,
+  groupTradovateTrades,
+  type PositionPairTrade,
   positionImportKey,
   type FillLeg,
   type GroupableTrade,
@@ -146,5 +148,47 @@ describe('aggregateGroup', () => {
 
   it('sens différents dans une position : erreur, jamais un trade incohérent', () => {
     expect(() => aggregateGroup([{ side: 'LONG' }, { side: 'SHORT' }])).toThrow(/sens/);
+  });
+});
+
+describe('groupTradovateTrades', () => {
+  // Short 2 MGC : deux ventes à l'ouverture, rachetées en deux fois.
+  const t = (buy: string, sell: string, openedAt: string, tradedAt: string, extra: Partial<PositionPairTrade> = {}): PositionPairTrade => ({
+    side: 'SHORT', entry: 4000, exit: 3990, quantity: 1, pnl: 100, commission: 1.24,
+    _buyFillId: buy, _sellFillId: sell, _contract: 'MGCZ6', _openedAt: openedAt, tradedAt, ...extra,
+  });
+  const a = t('20', '10', '2026-11-11T09:32:00.000Z', '2026-11-11T09:40:00.000Z', { stopLoss: 4010, takeProfit: 3980 });
+  const b = t('21', '11', '2026-11-11T09:32:05.000Z', '2026-11-11T09:35:00.000Z', { stopLoss: 4020 });
+
+  it('regroupe les paires d’une position : clé tv:, paires jointes, protections de la PREMIÈRE entrée', () => {
+    const r = groupTradovateTrades([a, b], { leftovers: 'skip' });
+    expect(r.trades).toHaveLength(1);
+    const [g] = r.trades;
+    expect(g).toMatchObject({ quantity: 2, pnl: 200, commission: 2.48, _positionKey: 'tv:10', _openFillId: '10', tradedAt: '2026-11-11T09:40:00.000Z' });
+    // b est clôturée en premier, mais l'entrée d'ouverture est celle de a (fill 10).
+    expect(g.stopLoss).toBe(4010);
+    expect(g.takeProfit).toBe(3980);
+    expect(g._openedAt).toBe('2026-11-11T09:32:00.000Z');
+    expect(g._pairs).toHaveLength(2);
+  });
+
+  it('ancien export sans fill ids : la paire passe telle quelle, sans clé', () => {
+    const r = groupTradovateTrades([{ ...a, _buyFillId: undefined }], { leftovers: 'skip' });
+    expect(r.trades).toEqual([{ ...a, _buyFillId: undefined }]);
+    expect(r.trades[0]._positionKey).toBeUndefined();
+  });
+
+  it('position différée : rien en synchro (skip), paire par paire depuis un fichier (pairs)', () => {
+    const startNet = new Map([['MGCZ6', -1]]);
+    expect(groupTradovateTrades([a], { startNet, leftovers: 'skip' })).toMatchObject({ trades: [], deferred: 1 });
+    const fromFile = groupTradovateTrades([a], { startNet, leftovers: 'pairs' });
+    expect(fromFile.trades).toHaveLength(1);
+    expect(fromFile.trades[0]._positionKey).toBeUndefined();
+  });
+
+  it('résultat dans l’ordre de clôture', () => {
+    const c = t('31', '30', '2026-11-11T08:00:00.000Z', '2026-11-11T08:05:00.000Z');
+    const r = groupTradovateTrades([a, b, c], { leftovers: 'skip' });
+    expect(r.trades.map((x) => x._positionKey)).toEqual(['tv:30', 'tv:10']);
   });
 });

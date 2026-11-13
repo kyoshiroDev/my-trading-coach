@@ -11,6 +11,8 @@ import {
   type ImportDto,
 } from '../../trades/csv-parsers';
 import { assignFeesOncePerFill } from '../../trades/tradovate-pair.util';
+import { groupTradovateTrades } from '../../trades/tradovate-position-group.util';
+import { withoutImportMeta } from '../../trades/trade-identity.util';
 import { cashHistoryFeesByFill, fillsReportStamps } from '../../trades/tradovate-fees.util';
 import { TradovateApiClient } from './tradovate-api.client';
 import { TradovateConnectionService } from './tradovate-connection.service';
@@ -269,8 +271,17 @@ export class TradovateHistoryService {
       d.emotion = null;
       if (setupId) d.setupId = setupId;
     }
+    // Un trade = une position (#956), comme la synchro et l'import CSV : même clé `tv:<fill
+    // d'ouverture>`, donc aucun doublon entre les trois. Aucune source ne reprendra ce mois :
+    // une position incohérente reste importée paire par paire. Limite connue : une position
+    // à cheval sur deux mois est vue en deux morceaux (deux fenêtres).
+    const grouped = groupTradovateTrades(dtos, { leftovers: 'pairs' });
     // Les ids de fill sont des métadonnées de rapprochement : jamais persistées.
-    const clean = dtos.map(({ _buyFillId: _b, _sellFillId: _s, ...rest }) => rest);
+    const clean = grouped.trades.map((t) => ({
+      ...withoutImportMeta(t),
+      _positionKey: t._positionKey,
+      _pairs: t._pairs?.map((p) => withoutImportMeta(p)),
+    }));
 
     const imported = await this.trades.importTrades(userId, clean, TradeSource.BROKER_HISTORY);
     result.created += imported.created;

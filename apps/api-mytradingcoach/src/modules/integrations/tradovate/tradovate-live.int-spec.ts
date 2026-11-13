@@ -253,7 +253,8 @@ describe('Tradovate live — app ouverte, puis fermée', () => {
     const live = await prisma.trade.findFirstOrThrow({ where: { userId, entry: 30200 } });
     // Même forme qu'un trade CSV / synchro manuelle (mapper réutilisé) : P&L, frais, empreinte.
     expect(live).toMatchObject({ accountId: account.id, asset: 'MNQ', side: 'LONG', exit: 30205, pnl: 10, commission: 1.04 });
-    expect(live.importHash).toBe('MNQ|LONG|2026-09-03T14:05:00.000Z|30200|30205|10');
+    // Clé stable de la position (#956) : son fill d'ouverture.
+    expect(live.importHash).toBe('tv:3001');
 
     // 4. App fermée → WebSocket Tradovate fermé (1000), plus rien ne tourne pour ce user.
     const liveService = app.get(TradovateLiveService);

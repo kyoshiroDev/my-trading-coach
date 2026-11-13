@@ -32,14 +32,15 @@ import { resolveTradeWhere } from './trade-filters.util';
 import { getTickValue } from './instruments.const';
 import { refreshClosedSessionTotals } from '../session/refresh-session-totals';
 import { calculatePnl, calculateRiskReward } from './trade-metrics.util';
-import { CentRoundingPool, dedupeKey, duplicateIdentity, LegacyNetPnlPool, occurrenceHash } from './trade-identity.util';
+import { CentRoundingPool, dedupeKey, duplicateIdentity, LegacyNetPnlPool, occurrenceHash, withoutImportMeta, type ImportTradeInput } from './trade-identity.util';
 import { journalStatsForFilters, type JournalStats } from './journal-stats.util';
 import { recomputeBehavioralGrades } from './behavioral-grades';
-import { roundCents, stopPlacementError } from '@mtc/shared';
+import { plannedRiskReward, roundCents, stopPlacementError } from '@mtc/shared';
 import { AccountIncidentsService } from '../accounts/incidents/account-incidents.service';
 
 // Réexports : les appelants existants importent ces types depuis le service.
 export type { JournalStats } from './journal-stats.util';
+export type { ImportTradeInput } from './trade-identity.util';
 export type { UserAssetItem } from './user-assets.service';
 
 /**
@@ -201,22 +202,37 @@ export class TradesService {
    */
   async importTrades(
     userId: string,
-    dtos: Partial<CreateTradeDto>[],
+    dtos: ImportTradeInput[],
     /** D'où vient ce lot : fichier de l'utilisateur, séance du broker, ou son historique. */
     source: TradeSource = TradeSource.CSV_IMPORT,
   ): Promise<{
     created: number;
+    /** Positions Tradovate déjà en base qui ont grandi depuis (#956) : champs du broker mis à jour. */
+    updated: number;
     duplicates: number;
     failed: number;
     total: number;
   }> {
     // Lot vide (synchro broker sans nouveau trade, le cas courant) : aucune requête (SCA-B1-01).
-    if (dtos.length === 0) return { created: 0, duplicates: 0, failed: 0, total: 0 };
+    if (dtos.length === 0) return { created: 0, updated: 0, duplicates: 0, failed: 0, total: 0 };
 
+    // Les paires d'une position entrent dans la fenêtre : ce sont elles qu'on compare à l'ancien format.
+    const flat = dtos.flatMap((d) => [d, ...(d._pairs ?? [])]);
     const existing = await this.prisma.trade.findMany({
-      where: { userId, ...importDedupeWindow(dtos) },
+      where: { userId, ...importDedupeWindow(flat) },
       select: { asset: true, side: true, tradedAt: true, entry: true, exit: true, pnl: true },
     });
+    // Positions déjà importées sous leur clé stable (#956), quelle que soit leur date.
+    const positionKeys = [...new Set(dtos.map((d) => d._positionKey).filter((k): k is string => !!k))];
+    const byPositionKey = new Map(
+      (positionKeys.length
+        ? await this.prisma.trade.findMany({
+            where: { userId, importHash: { in: positionKeys } },
+            select: { id: true, importHash: true, quantity: true, side: true, stopLoss: true, takeProfit: true, accountId: true },
+          })
+        : []
+      ).map((t) => [t.importHash as string, t]),
+    );
     // Même trade déjà en base mais daté dans un autre fuseau (export CSV sans fuseau ↔ API en
     // UTC) : doublon, un-pour-un. Vaut dans les deux sens : CSV avant OU après la synchro.
     const otherTimezone = new CrossSourcePool(existing);
@@ -235,6 +251,7 @@ export class TradesService {
     }
 
     let created = 0;
+    let updated = 0;
     let duplicates = 0;
     let failed = 0;
     // Comptes touchés → un seul recalcul comportemental par compte à la fin (pas de N+1).
@@ -243,24 +260,11 @@ export class TradesService {
     const inSource = new Map<string, number>();
     const batch = await this.importBatch(userId);
 
-    for (const dto of dtos) {
-      if (otherTimezone.take(dto)) {
-        duplicates++;
-        continue;
-      }
-      const key = dedupeKey(dto);
-      const n = (inSource.get(key) ?? 0) + 1;
-      inSource.set(key, n);
-      const hash = occurrenceHash(key, n);
-      if (seen.has(hash) || legacyNet.take(dto) || centRounding.take(dto)) {
-        duplicates++;
-        continue;
-      }
-      seen.add(hash);
+    const createOne = async (dto: Partial<CreateTradeDto>, importHash: string): Promise<void> => {
       try {
-        const t = await this.create(userId, dto as CreateTradeDto, {
+        const t = await this.create(userId, withoutImportMeta(dto) as CreateTradeDto, {
           deferBehavioral: true,
-          importHash: hash,
+          importHash,
           source,
           batch,
         });
@@ -272,6 +276,60 @@ export class TradesService {
         if (isUniqueConstraintError(err)) duplicates++;
         else failed++;
       }
+    };
+
+    // Trade par paire (ou d'un autre broker) : empreinte exacte numérotée + rapprochements.
+    const importPair = async (dto: Partial<CreateTradeDto>): Promise<void> => {
+      if (otherTimezone.take(dto)) {
+        duplicates++;
+        return;
+      }
+      const key = dedupeKey(dto);
+      const n = (inSource.get(key) ?? 0) + 1;
+      inSource.set(key, n);
+      const hash = occurrenceHash(key, n);
+      if (seen.has(hash) || legacyNet.take(dto) || centRounding.take(dto)) {
+        duplicates++;
+        return;
+      }
+      seen.add(hash);
+      await createOne(dto, hash);
+    };
+
+    // Une paire de la position est-elle déjà en base, importée avant #956 (trade par paire) ?
+    const pairInBase = (p: Partial<CreateTradeDto>) =>
+      inBase.has(dedupeKey(p)) || otherTimezone.has(p) || legacyNet.has(p) || centRounding.has(p);
+
+    for (const dto of dtos) {
+      const key = dto._positionKey;
+      if (!key) {
+        await importPair(dto);
+        continue;
+      }
+      const stored = byPositionKey.get(key);
+      if (stored) {
+        // Déjà importée. Plus de contrats qu'en base : la position avait été vue en partie
+        // (rapport mensuel coupé, fichier partiel) → champs du BROKER seulement, jamais une saisie.
+        if ((dto.quantity ?? 0) > (stored.quantity ?? 1) && (await this.growPosition(stored, dto))) {
+          if (stored.accountId) affectedAccounts.add(stored.accountId);
+          updated++;
+        } else {
+          duplicates++;
+        }
+        continue;
+      }
+      if (seen.has(key)) {
+        duplicates++;
+        continue;
+      }
+      // Ancien format déjà en base (une ligne par paire) : paire par paire, aucun doublon avant
+      // la réparation des trades existants.
+      if (dto._pairs?.length && dto._pairs.some(pairInBase)) {
+        for (const p of dto._pairs) await importPair(p);
+        continue;
+      }
+      seen.add(key);
+      await createOne(dto, key);
     }
 
     // Barème comportemental recalculé une fois par compte, sur l'ensemble de son historique.
@@ -281,9 +339,35 @@ export class TradesService {
       await this.incidents?.detectQuietly(userId, accountId, 'sync');
     }
     // Cache analytics invalidé une fois pour tout le lot (SCA-B1-03), pas à chaque ligne.
-    if (created > 0) await this.analyticsService.invalidateUserCache(userId);
+    if (created > 0 || updated > 0) await this.analyticsService.invalidateUserCache(userId);
 
-    return { created, duplicates, failed, total: dtos.length };
+    return { created, updated, duplicates, failed, total: dtos.length };
+  }
+
+  /**
+   * Position Tradovate déjà importée qui a grandi (#956) : prix moyens, quantité, P&L, frais et
+   * clôture repris du broker. Stop, objectif, émotion, setup et notes restent ceux du Journal ;
+   * le R/R est recalculé sur la nouvelle entrée moyenne. Faux si la ligne a disparu entre-temps.
+   */
+  private async growPosition(
+    stored: { id: string; side: string; stopLoss: number | null; takeProfit: number | null },
+    dto: Partial<CreateTradeDto>,
+  ): Promise<boolean> {
+    const rr = plannedRiskReward(stored.side as 'LONG' | 'SHORT', dto.entry, stored.stopLoss, stored.takeProfit);
+    const res = await this.prisma.trade.updateMany({
+      where: { id: stored.id },
+      data: {
+        entry: dto.entry ?? 0,
+        exit: dto.exit ?? null,
+        quantity: dto.quantity ?? 1,
+        pnl: dto.pnl != null ? roundCents(dto.pnl) : undefined,
+        commission: dto.commission != null ? Math.abs(dto.commission) : undefined,
+        tradedAt: dto.tradedAt ? new Date(dto.tradedAt) : undefined,
+        session: dto.session,
+        ...(rr !== undefined ? { riskReward: rr } : {}),
+      },
+    });
+    return res.count > 0;
   }
 
   private findActiveSession(userId: string) {

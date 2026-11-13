@@ -10,6 +10,7 @@ import {
   EmotionState,
   TradingSession,
 } from '@prisma/client';
+import type { ImportTradeInput } from './trade-identity.util';
 import { TradesService } from './trades.service';
 import { behavioralGradeUpdates, GRADE_UPDATE_CHUNK, writeGradeUpdates, type GradedTrade } from './behavioral-grades';
 import { importDedupeWindow } from './import-dedupe.util';
@@ -870,6 +871,78 @@ describe('TradesService', () => {
 
   });
 
+  describe('importTrades — positions Tradovate regroupées (#956)', () => {
+    const closeAt = '2026-11-11T09:40:00.000Z';
+    const pair = (sellAt: string, exit: number, pnl: number): Partial<CreateTradeDto> => ({
+      asset: 'MGC', side: TradeSide.SHORT, entry: 4000, exit, quantity: 1, pnl, commission: 1.24,
+      emotion: null as unknown as EmotionState, setupId: 'setup-1', session: TradingSession.LONDON, timeframe: '1h', tradedAt: sellAt,
+    });
+    const p1 = pair('2026-11-11T09:33:00.000Z', 3995, 50);
+    const p2 = pair(closeAt, 3990, 100);
+    const position = (): ImportTradeInput => ({
+      ...p2, quantity: 2, exit: 3992.5, pnl: 150, commission: 2.48, _positionKey: 'tv:111', _pairs: [p1, p2],
+    });
+    const created = () => mockPrisma.trade.create.mock.calls.map((c: unknown[]) => (c[0] as { data: Record<string, unknown> }).data);
+
+    beforeEach(() => {
+      mockPrisma.tradeSession.findFirst.mockResolvedValue(null);
+      mockPrisma.trade.create.mockResolvedValue(mockTrade);
+    });
+
+    it('position nouvelle : UN trade sous la clé stable tv:<fill d’ouverture>, métadonnées jamais persistées', async () => {
+      mockPrisma.trade.findMany.mockResolvedValueOnce([]).mockResolvedValueOnce([]);
+      const res = await service.importTrades('user-123', [position()], 'BROKER_SYNC' as never);
+      expect(res).toMatchObject({ created: 1, updated: 0, duplicates: 0, total: 1 });
+      const [data] = created();
+      expect(data).toMatchObject({ importHash: 'tv:111', quantity: 2, pnl: 150 });
+      expect(data).not.toHaveProperty('_positionKey');
+      expect(data).not.toHaveProperty('_pairs');
+      // Clés cherchées par importHash, quelle que soit la date du trade en base.
+      expect(mockPrisma.trade.findMany.mock.calls[1][0].where).toEqual({ userId: 'user-123', importHash: { in: ['tv:111'] } });
+    });
+
+    it('position déjà importée, même taille : doublon, rien d’écrit', async () => {
+      mockPrisma.trade.findMany
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([{ id: 't1', importHash: 'tv:111', quantity: 2, side: 'SHORT', stopLoss: null, takeProfit: null, accountId: 'acc-1' }]);
+      const res = await service.importTrades('user-123', [position()]);
+      expect(res).toMatchObject({ created: 0, updated: 0, duplicates: 1 });
+      expect(mockPrisma.trade.create).not.toHaveBeenCalled();
+      expect(mockPrisma.trade.updateMany).not.toHaveBeenCalled();
+    });
+
+    it('position qui a grandi depuis : champs du broker mis à jour, R/R recalculé sur l’entrée moyenne', async () => {
+      mockPrisma.trade.findMany
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([{ id: 't1', importHash: 'tv:111', quantity: 1, side: 'SHORT', stopLoss: 4010, takeProfit: 3980, accountId: 'acc-1' }]);
+      mockPrisma.trade.updateMany.mockResolvedValue({ count: 1 });
+      const res = await service.importTrades('user-123', [position()]);
+      expect(res).toMatchObject({ created: 0, updated: 1, duplicates: 0 });
+      const arg = mockPrisma.trade.updateMany.mock.calls.find((c: unknown[]) => (c[0] as { where: { id?: string } }).where.id === 't1')?.[0];
+      expect(arg.data).toMatchObject({ quantity: 2, exit: 3992.5, pnl: 150, commission: 2.48, riskReward: 2 });
+      // Saisies du Journal jamais réécrites.
+      expect(arg.data).not.toHaveProperty('stopLoss');
+      expect(arg.data).not.toHaveProperty('emotion');
+      expect(arg.data).not.toHaveProperty('setupId');
+    });
+
+    it('une paire déjà en base à l’ancien format : la position est importée paire par paire, sans doublon', async () => {
+      const inBase = { asset: p1.asset, side: p1.side, tradedAt: new Date(p1.tradedAt as string), entry: p1.entry, exit: p1.exit, pnl: p1.pnl };
+      mockPrisma.trade.findMany.mockResolvedValueOnce([inBase]).mockResolvedValueOnce([]);
+      const res = await service.importTrades('user-123', [position()]);
+      expect(res).toMatchObject({ created: 1, duplicates: 1 });
+      const [data] = created();
+      expect(data.importHash).not.toMatch(/^tv:/);
+      expect(data).toMatchObject({ quantity: 1, pnl: 100 });
+    });
+
+    it('même position deux fois dans le lot : un seul trade', async () => {
+      mockPrisma.trade.findMany.mockResolvedValueOnce([]).mockResolvedValueOnce([]);
+      const res = await service.importTrades('user-123', [position(), position()]);
+      expect(res).toMatchObject({ created: 1, duplicates: 1 });
+    });
+  });
+
   describe('importTrades — coût par lot (SCA-B1-01/02/03)', () => {
     const at = (iso: string): Partial<CreateTradeDto> => ({ ...createTradeDto, tradedAt: iso });
     const setups = () => (service as unknown as { setups: { assertOwnedActive: ReturnType<typeof vi.fn> } }).setups;
@@ -882,7 +955,7 @@ describe('TradesService', () => {
     });
 
     it('lot vide → aucune requête', async () => {
-      expect(await service.importTrades('user-123', [])).toEqual({ created: 0, duplicates: 0, failed: 0, total: 0 });
+      expect(await service.importTrades('user-123', [])).toEqual({ created: 0, updated: 0, duplicates: 0, failed: 0, total: 0 });
       expect(mockPrisma.trade.findMany).not.toHaveBeenCalled();
       expect(mockPrisma.tradeSession.findFirst).not.toHaveBeenCalled();
     });
