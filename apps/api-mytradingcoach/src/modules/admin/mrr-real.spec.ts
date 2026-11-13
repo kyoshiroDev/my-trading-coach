@@ -40,7 +40,8 @@ describe('MRR base : montant réellement payé', () => {
       partner: 29,
       referral: 0,
     });
-    expect(stats.mrr).toBe(stats.mrrBreakdown.normal + stats.mrrBreakdown.founder + stats.mrrBreakdown.partner);
+    const b = stats.mrrBreakdown;
+    expect(stats.mrr).toBe(b.normal + b.founder + b.partner + b.referral);
   });
 
   it('#954 : filleul −10 % compté 44,10 € (mensuel) et 441/12 (annuel), puis prix normal après 12 mois', async () => {

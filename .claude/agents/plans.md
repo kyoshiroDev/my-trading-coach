@@ -448,9 +448,12 @@ Constantes : `FOUNDER_OFFER = { priceMonthlyEur: 29, priceAnnualEur: 290, seats:
   (`expand: data.discounts`). Le −10 % filleul est compté dans le MRR base depuis #954 : le checkout
   pose la métadonnée d'abonnement `referralDiscount=1`, le webhook enregistre
   `User.referralDiscountSince` (`referralDiscountStart` : coupon développé, sinon métadonnée), et le
-  MRR base applique −10 % pendant 12 mois (44,10 € / 441/12), puis le prix normal. Les filleuls
-  abonnés AVANT #954 ne sont repris qu'au prochain webhook dont le payload montre le coupon ;
-  l'historique MRR déjà enregistré (`MetricsSnapshot`) n'est pas recalculé.
+  MRR base applique −10 % pendant 12 mois (44,10 € / 441/12), puis le prix normal. Filleuls abonnés
+  AVANT #954 : l'API Stripe épinglée en `2024-06-20` développe `discount` dans l'abonnement, donc les
+  **mensuels** sont repris au renouvellement suivant (`customer.subscription.updated` →
+  `syncSubscription`), sous un mois ; les **annuels** seulement à leur renouvellement, quand la remise
+  est déjà finie : leur MRR base reste à 490/12 au lieu de 441/12 d'ici là. Aucun rattrapage (il
+  faudrait lire Stripe live, jamais sans Greg). L'historique `MetricsSnapshot` n'est pas recalculé.
 - Commission ambassadeur : 20 % de `invoice.amount_paid`, donc déjà sur le montant remisé.
   Estimation mensuelle affichée à l'ambassadeur (`referralMonthlyCommission`, `ambassador-commission.util.ts`) :
   20 % de `realMonthlyEur` (fondateur, annuel ÷ 12, code partenaire), abonnements `active` seulement (#947).
