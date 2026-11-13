@@ -132,6 +132,20 @@
   }
 }
 
+/* Inscription avec lien de parrainage (#976) : l'encadré « Invitation » ajoute de la hauteur,
+   marges encore réduites jusqu'à 1199 px de haut. */
+@media (min-width: 1024px) and (max-height: 1199px) {
+  :host(.signup.with-referral) .form-side {
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
+
+  :host(.signup.with-referral) .auth-card {
+    padding-top: 18px;
+    padding-bottom: 16px;
+  }
+}
+
 /* Version complète. */
 @media (min-width: 1280px) {
   .form-side {
