@@ -427,6 +427,9 @@ input[type='date'] {
   color: var(--text-3);
   margin-top: 2px;
 }
+.field-hint.field-error {
+  color: var(--red);
+}
 .api-error {
   background: var(--red-dim);
   border: 1px solid rgba(239, 68, 68, 0.3);

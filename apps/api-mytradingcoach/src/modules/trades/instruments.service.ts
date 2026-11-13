@@ -5,7 +5,7 @@ import { INSTRUMENTS } from './instruments.const';
 import type { InstrumentSearchResult } from '@mtc/shared';
 
 
-/** Catalogue et recherche d'instruments (futures CME + crypto), indépendants des trades. */
+/** Catalogue et recherche d'instruments (futures CME, forex coté en dollars, crypto), indépendants des trades. */
 @Injectable()
 export class InstrumentsService {
   constructor(
@@ -13,11 +13,11 @@ export class InstrumentsService {
     private readonly marketData: MarketDataService,
   ) {}
 
-  /** Futures CME (ceux qui ont une tickValue utile) + crypto. */
+  /** Futures CME et forex coté en dollars (ceux qui ont une tickValue utile, #951) + crypto. */
   async list() {
     const crypto = await this.coinGecko.getCryptoInstruments();
-    const futuresOnly = INSTRUMENTS.filter((i) => i.category === 'FUTURES_US');
-    return [...futuresOnly, ...crypto];
+    const withTickValue = INSTRUMENTS.filter((i) => i.category === 'FUTURES_US' || i.category === 'FOREX');
+    return [...withTickValue, ...crypto];
   }
 
   /**

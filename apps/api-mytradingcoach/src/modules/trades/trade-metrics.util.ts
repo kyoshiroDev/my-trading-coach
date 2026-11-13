@@ -1,6 +1,7 @@
 import type { CreateTradeDto } from './dto/create-trade.dto';
 import { plannedRiskReward } from '@mtc/shared';
 import { getTickSize, getTickValue } from './instruments.const';
+import { isNonUsdQuotedForex } from '@mtc/shared';
 
 /**
  * P&L BRUT du trade (résultat des prix). Les frais restent dans `commission` : le net est
@@ -26,6 +27,10 @@ export function calculatePnl(dto: CreateTradeDto): number | undefined {
   const quantity = dto.quantity ?? 1;
   const tickValue = getTickValue(dto.asset);
   const tickSize = getTickSize(dto.asset);
+  // Forex hors dollar (USD/JPY, EUR/GBP…) sans capital engagé : `points × quantité` donnerait un P&L
+  // en devise de cotation (yens), sans taux de change pour le convertir (#951). Aucun P&L inventé.
+  const noCapital = dto.capitalEngaged == null || dto.capitalEngaged <= 0;
+  if (tickValue == null && noCapital && isNonUsdQuotedForex(dto.asset)) return undefined;
 
   let pnl: number;
   if (tickValue != null) {
