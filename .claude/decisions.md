@@ -1,5 +1,6 @@
 # Décisions de Greg (lues par l'agent relecteur)
 
+- 2026-11-13 : tout prompt passe par l'agent relecteur, qui valide, fait corriger et dirige. Aucun push tant qu'il n'a pas dit « OK à 100 % » ; à 100 %, push et PR vers `dev` sans « OK push » de Greg. Inchangé : seul Greg merge, PR `dev` → `main` sur sa demande, prod/VPS/Stripe live et décisions business à Greg. (Remplace le « après le OK push de Greg » du 2026-11-08 pour les PR vers `dev`.)
 - 2026-11-12 : inscription sans défilement (#970) : sur écran large et bas (`(min-width: 1024px) and (max-height: 1000px)`), la colonne de présentation de l'INSCRIPTION a ses marges verticales réduites (40/44 à ≥ 1280 px et 28/44 entre 1024 et 1279 px → 28/32 px), contenu inchangé, pour tenir en 960 px de haut. /login non concerné. Mention légale unique sous le bouton principal, celle de Google masquée seulement quand la mention commune est visible sans défiler avant le clic (≥ 760 px de haut).
 - 2026-11-12 : #955, liaison des brackets trouvée par le diagnostic en prod (2 SL MGC de Greg, #962) : `parentId` / `ocoId` / `linkedId` vides, entrée + stop + objectif dans la même stratégie d'ordres. Correctif : jambes reliées par `orderStrategyLink.orderStrategyId` (lien explicite de Tradovate, liaison stricte maintenue), diagnostic retiré. Inférence par id voisin toujours NON validée. (Délégué au relecteur par Greg le 11/11.)
 - 2026-11-12 : #943 (recalcul des anciens débriefs) : à relancer en prod APRÈS le script de réparation #950, pour que les stats recalculées partent des trades réparés. Lot 2 de l'audit des chiffres (#947, front) lancé dans une 2e PR.
@@ -27,6 +28,6 @@
 - `/prop-firm` : ne jamais la supprimer ni changer son URL avant fin novembre 2026 (lien de la newsletter NinjaTrader).
 - NinjaTrader : « Référencé dans l'écosystème NinjaTrader » (texte factuel), jamais « partenaire officiel », aucun autre courtier ou plateforme nommé, pas de « compatible NinjaTrader » avant un test réel sur un compte NinjaTrader live. Tradovate cité en texte seul, sans logo.
 - Le partage de résultats met la discipline en avant ; le montant est masquable ; aucune promesse de gain.
-- 2026-11-08 : les PR vers `dev` sont ouvertes par l'agent relecteur une fois tout validé et après le « OK push » de Greg ; la PR `dev` → `main` seulement sur demande de Greg. Greg lit et merge lui-même. Personne d'autre ne merge.
-- Branches : tout part de `dev` et revient sur `dev`, puis `dev` → `main`. Merge commit, jamais squash. Aucun push sans « OK push ».
+- 2026-11-08 : les PR vers `dev` sont ouvertes par l'agent relecteur une fois tout validé et après le « OK push » de Greg (remplacé le 2026-11-13 par le « OK à 100 % » du relecteur) ; la PR `dev` → `main` seulement sur demande de Greg. Greg lit et merge lui-même. Personne d'autre ne merge.
+- Branches : tout part de `dev` et revient sur `dev`, puis `dev` → `main`. Merge commit, jamais squash. Aucun push sans « OK à 100 % » du relecteur (depuis le 2026-11-13 ; avant : « OK push » de Greg).
 - Rien sur les VPS, la prod, Stripe live sans accord explicite de Greg. Les suppressions SQL en prod, Greg les lance lui-même.
