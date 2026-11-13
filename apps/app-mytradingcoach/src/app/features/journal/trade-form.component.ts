@@ -386,12 +386,12 @@ export class TradeFormComponent {
       if (calcMode === 'forex') {
         const pipSize = Math.pow(10, -(instr.pipDecimals ?? 4));
         const pips = rawPoints / pipSize;
-        pnl = +(pips * instr.tickValue * qty).toFixed(2);
+        pnl = roundCents(pips * instr.tickValue * qty);
       } else if (instr.tickSize && instr.tickSize > 0) {
         const ticks = rawPoints / instr.tickSize;
-        pnl = +(ticks * instr.tickValue * qty).toFixed(2);
+        pnl = roundCents(ticks * instr.tickValue * qty);
       } else {
-        pnl = +(rawPoints * instr.tickValue * qty).toFixed(2);
+        pnl = roundCents(rawPoints * instr.tickValue * qty);
       }
 
       this.autoPnl.set(pnl);
@@ -402,7 +402,7 @@ export class TradeFormComponent {
         ? (effectiveExit - entry) / entry
         : (entry - effectiveExit) / entry;
       if (capital > 0) {
-        const pnl = +(variation * capital * lev).toFixed(2);
+        const pnl = roundCents(variation * capital * lev);
         const pct = roundCents(variation * lev * 100);
         this.autoPnl.set(pnl);
         this.autoPnlPct.set(pct);

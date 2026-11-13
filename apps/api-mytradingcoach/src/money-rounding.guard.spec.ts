@@ -30,18 +30,11 @@ const PATTERNS = [
 ];
 
 /**
- * Exceptions assumées, chacune avec sa raison. Le `pnl` STOCKÉ d'un trade entre dans la clé de
- * dédoublonnage (`dedupeKey` : asset|side|date|entrée|sortie|pnl) : changer son arrondi changerait la
- * clé de trades déjà en base et recréerait des doublons à la resynchro. Bloqué tant que la réparation
- * #950 n'est pas passée en prod (point B1 de l'audit).
+ * Exceptions assumées, chacune avec sa raison. Le `pnl` stocké d'un trade passe lui aussi par
+ * `roundCents` depuis B1 (#981) : `dedupeKey` arrondit le P&L au centime, les trades importés avant
+ * (P&L brut) gardent donc la même clé et un ré-import ne les recrée pas.
  */
 const EXCEPTIONS: { file: string; match: string; reason: string }[] = [
-  { file: 'apps/api-mytradingcoach/src/modules/trades/trade-metrics.util.ts', match: 'dto.pnl.toFixed(2)', reason: 'pnl stocké, clé de dédoublonnage (B1)' },
-  { file: 'apps/api-mytradingcoach/src/modules/trades/trade-metrics.util.ts', match: '+pnl.toFixed(2)', reason: 'pnl stocké, clé de dédoublonnage (B1)' },
-  { file: 'apps/api-mytradingcoach/src/modules/integrations/tradovate/tradovate-trade.mapper.ts', match: 'pair.sellPrice - pair.buyPrice', reason: 'pnl stocké, clé de dédoublonnage (B1)' },
-  { file: 'libs/shared/src/trade-risk.ts', match: 'ticks * tickValue', reason: 'pnl stocké, clé de dédoublonnage (B1)' },
-  { file: 'apps/app-mytradingcoach/src/app/features/journal/trade-form.component.ts', match: 'instr.tickValue * qty', reason: 'pnl saisi, même arrondi que l’API (B1)' },
-  { file: 'apps/app-mytradingcoach/src/app/features/journal/trade-form.component.ts', match: 'variation * capital * lev', reason: 'pnl saisi, même arrondi que l’API (B1)' },
   { file: 'apps/api-mytradingcoach/src/test/analytics-legacy.service.ts', match: 'grossProfit / grossLoss', reason: 'étalon figé de l’équivalence SQL (copie historique, ne se modifie pas)' },
   { file: 'libs/shared/src/trade-stats.ts', match: 'Math.round(abs * 100) / 100', reason: 'roundCents lui-même (notation exponentielle)' },
 ];

@@ -79,8 +79,20 @@ export function planFeeRepairs(computed: RecomputedTrade[], stored: StoredTrade[
   };
   const hasFees = (c: RecomputedTrade) => typeof c.commission === 'number' && Number.isFinite(c.commission);
 
-  // 1. Rapprochement un pour un, dans l'ordre du lot.
+  // 1. Rapprochement un pour un, dans l'ordre du lot : clé exacte, puis (restés sans trade) même trade
+  // dont le P&L ne diffère que d'1 centime d'arrondi : trade stocké avec l'ancien `toFixed`, recalculé
+  // en `roundCents` (39,845 → 39,84 contre 39,85, B1 #981). Même règle que `CentRoundingPool`.
   const match = computed.map((c) => pool.get(dedupeKey(c))?.shift() ?? null);
+  const restants = [...pool.values()].flat();
+  computed.forEach((c, i) => {
+    if (match[i] || c.pnl == null) return;
+    const k = dedupeKey({ ...c, pnl: null });
+    const p = roundCents(c.pnl);
+    const j = restants.findIndex(
+      (t) => t.pnl != null && dedupeKey({ ...t, pnl: null }) === k && Math.abs(Math.abs(roundCents(t.pnl) - p) - 0.01) < 0.001,
+    );
+    if (j >= 0) match[i] = restants.splice(j, 1)[0];
+  });
   plan.notFound = match.filter((t) => !t).length;
   plan.matched = match.length - plan.notFound;
 

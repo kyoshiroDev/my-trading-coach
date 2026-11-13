@@ -32,10 +32,10 @@ import { resolveTradeWhere } from './trade-filters.util';
 import { getTickValue } from './instruments.const';
 import { refreshClosedSessionTotals } from '../session/refresh-session-totals';
 import { calculatePnl, calculateRiskReward } from './trade-metrics.util';
-import { dedupeKey, duplicateIdentity, LegacyNetPnlPool, occurrenceHash } from './trade-identity.util';
+import { CentRoundingPool, dedupeKey, duplicateIdentity, LegacyNetPnlPool, occurrenceHash } from './trade-identity.util';
 import { journalStatsForFilters, type JournalStats } from './journal-stats.util';
 import { recomputeBehavioralGrades } from './behavioral-grades';
-import { stopPlacementError } from '@mtc/shared';
+import { roundCents, stopPlacementError } from '@mtc/shared';
 import { AccountIncidentsService } from '../accounts/incidents/account-incidents.service';
 
 // Réexports : les appelants existants importent ces types depuis le service.
@@ -125,7 +125,8 @@ export class TradesService {
         // Provenance : MANUAL par défaut, les imports la passent explicitement.
         source: opts.source ?? TradeSource.MANUAL,
         entry: dto.entry ?? 0,
-        pnl: dto.pnl ?? pnl,
+        // Au centime par roundCents (B1, #981), même sans prix d'entrée (Binance Spot : entry 0).
+        pnl: dto.pnl != null ? roundCents(dto.pnl) : pnl,
         riskReward: rr,
         quantity: dto.quantity ?? 1,
         capitalEngaged: dto.capitalEngaged ?? null,
@@ -221,6 +222,8 @@ export class TradesService {
     const otherTimezone = new CrossSourcePool(existing);
     // Trade stocké à l'ancien format (P&L net, ancien parseur MEXC) : doublon, un-pour-un (#947).
     const legacyNet = new LegacyNetPnlPool(existing);
+    // Trade stocké avec l'ancien arrondi `toFixed` (1 centime d'écart sur un demi-centime) : doublon (B1, #981).
+    const centRounding = new CentRoundingPool(existing);
     // Empreintes déjà prises : la clé, puis `#2`, `#3`… autant de fois que la clé existe en base.
     const seen = new Set<string>();
     const inBase = new Map<string, number>();
@@ -249,7 +252,7 @@ export class TradesService {
       const n = (inSource.get(key) ?? 0) + 1;
       inSource.set(key, n);
       const hash = occurrenceHash(key, n);
-      if (seen.has(hash) || legacyNet.take(dto)) {
+      if (seen.has(hash) || legacyNet.take(dto) || centRounding.take(dto)) {
         duplicates++;
         continue;
       }
@@ -485,7 +488,8 @@ export class TradesService {
       data: {
         ...dto,
         tradedAt: dto.tradedAt ? new Date(dto.tradedAt) : undefined,
-        ...(newPnl !== undefined ? { pnl: newPnl } : {}),
+        // P&L fourni sans réponse de calculatePnl (entrée à 0) : au centime quand même (B1, #981).
+        ...(newPnl !== undefined ? { pnl: newPnl } : dto.pnl != null ? { pnl: roundCents(dto.pnl) } : {}),
         ...(newRR !== undefined ? { riskReward: newRR } : {}),
         ...execData,
       },
