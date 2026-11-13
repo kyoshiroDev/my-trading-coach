@@ -1197,8 +1197,8 @@ Premier broker synchronisé par **API** plutôt que par fichier. Module
     réutilisée par la capture du stop). Position ouverte la veille (`prevPos ≠ 0`) ou cumul ≠ `netPos`
     → paires mises de côté (`deferred` du résultat), reprises au retour à plat ou par le rattrapage.
   - **`importTrades`** : `_positionKey` déjà en base → doublon, ou mise à jour des champs du broker
-    (`growPosition` : prix, quantité, P&L, frais, clôture, R/R) si la position a grandi — jamais
-    stop, émotion, setup, notes. Une paire de la position déjà en base à l'ancien format (trade par
+    (`growPosition` : prix, quantité, P&L, frais, clôture, R/R, note d'exécution si stop, totaux de
+    la séance clôturée) si la position a grandi — jamais stop, émotion, setup, notes. Une paire de la position déjà en base à l'ancien format (trade par
     paire, avant #956) → la position est importée **paire par paire** (`_pairs`), sans doublon,
     jusqu'à la réparation des trades existants. Métadonnées `_…` retirées par `withoutImportMeta`.
   - Événement `tradovate:trades` : `updated` en plus de `created` ; anti-tilt sur `created` seul.

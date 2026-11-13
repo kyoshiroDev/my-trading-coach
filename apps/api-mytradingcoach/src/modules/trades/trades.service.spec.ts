@@ -901,6 +901,21 @@ describe('TradesService', () => {
       expect(mockPrisma.trade.findMany.mock.calls[1][0].where).toEqual({ userId: 'user-123', importHash: { in: ['tv:111'] } });
     });
 
+    it('position qui a grandi, SANS stop : note laissée au barème comportemental', async () => {
+      mockPrisma.trade.findMany
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([{
+          id: 't2', importHash: 'tv:111', quantity: 1, side: 'SHORT', stopLoss: null, takeProfit: null, accountId: 'acc-1',
+          sessionId: null, emotion: null, capitalEngaged: null,
+        }]);
+      mockPrisma.trade.updateMany.mockResolvedValue({ count: 1 });
+      const res = await service.importTrades('user-123', [position()]);
+      expect(res).toMatchObject({ updated: 1 });
+      const arg = mockPrisma.trade.updateMany.mock.calls.find((c: unknown[]) => (c[0] as { where: { id?: string } }).where.id === 't2')?.[0];
+      expect(arg.data).not.toHaveProperty('executionScore');
+      expect(arg.data).not.toHaveProperty('riskReward');
+    });
+
     it('position déjà importée, même taille : doublon, rien d’écrit', async () => {
       mockPrisma.trade.findMany
         .mockResolvedValueOnce([])
@@ -914,12 +929,23 @@ describe('TradesService', () => {
     it('position qui a grandi depuis : champs du broker mis à jour, R/R recalculé sur l’entrée moyenne', async () => {
       mockPrisma.trade.findMany
         .mockResolvedValueOnce([])
-        .mockResolvedValueOnce([{ id: 't1', importHash: 'tv:111', quantity: 1, side: 'SHORT', stopLoss: 4010, takeProfit: 3980, accountId: 'acc-1' }]);
+        .mockResolvedValueOnce([{
+          id: 't1', importHash: 'tv:111', quantity: 1, side: 'SHORT', stopLoss: 4010, takeProfit: 3980, accountId: 'acc-1',
+          sessionId: 'sess-1', emotion: null, capitalEngaged: null,
+        }]);
       mockPrisma.trade.updateMany.mockResolvedValue({ count: 1 });
+      mockPrisma.tradeSession.findMany.mockClear();
       const res = await service.importTrades('user-123', [position()]);
       expect(res).toMatchObject({ created: 0, updated: 1, duplicates: 0 });
       const arg = mockPrisma.trade.updateMany.mock.calls.find((c: unknown[]) => (c[0] as { where: { id?: string } }).where.id === 't1')?.[0];
       expect(arg.data).toMatchObject({ quantity: 2, exit: 3992.5, pnl: 150, commission: 2.48, riskReward: 2 });
+      // Stop présent : note d'exécution recalculée sur la nouvelle entrée moyenne et le nouveau R/R.
+      expect(arg.data.executionMethod).toBe('STOP_BASED');
+      expect(arg.data.executionScore).toEqual(expect.any(Number));
+      // Totaux de la séance clôturée rafraîchis (jamais figés, #947).
+      expect(mockPrisma.tradeSession.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: expect.objectContaining({ id: { in: ['sess-1'] } }) }),
+      );
       // Saisies du Journal jamais réécrites.
       expect(arg.data).not.toHaveProperty('stopLoss');
       expect(arg.data).not.toHaveProperty('emotion');

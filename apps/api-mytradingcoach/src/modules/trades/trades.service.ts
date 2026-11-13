@@ -228,7 +228,10 @@ export class TradesService {
       (positionKeys.length
         ? await this.prisma.trade.findMany({
             where: { userId, importHash: { in: positionKeys } },
-            select: { id: true, importHash: true, quantity: true, side: true, stopLoss: true, takeProfit: true, accountId: true },
+            select: {
+              id: true, importHash: true, quantity: true, side: true, stopLoss: true, takeProfit: true, accountId: true,
+              sessionId: true, emotion: true, capitalEngaged: true,
+            },
           })
         : []
       ).map((t) => [t.importHash as string, t]),
@@ -347,13 +350,34 @@ export class TradesService {
   /**
    * Position Tradovate déjà importée qui a grandi (#956) : prix moyens, quantité, P&L, frais et
    * clôture repris du broker. Stop, objectif, émotion, setup et notes restent ceux du Journal ;
-   * le R/R est recalculé sur la nouvelle entrée moyenne. Faux si la ligne a disparu entre-temps.
+   * le R/R et, si le trade a un stop, la note d'exécution sont recalculés sur la nouvelle entrée
+   * moyenne (comme `update()`). Totaux de la séance clôturée rafraîchis. Faux si la ligne a disparu.
    */
   private async growPosition(
-    stored: { id: string; side: string; stopLoss: number | null; takeProfit: number | null },
+    stored: {
+      id: string; side: string; stopLoss: number | null; takeProfit: number | null; accountId: string | null;
+      sessionId: string | null; emotion: string | null; capitalEngaged: number | null;
+    },
     dto: Partial<CreateTradeDto>,
   ): Promise<boolean> {
     const rr = plannedRiskReward(stored.side as 'LONG' | 'SHORT', dto.entry, stored.stopLoss, stored.takeProfit);
+    // Barème A (stop présent) : intrinsèque, recalculé ici. Sans stop : barème B comportemental,
+    // reposé par le recalcul par compte de fin de lot.
+    let execData: { executionScore?: number | null; executionGrade?: ExecutionGrade | null; executionMethod?: ExecutionMethod | null } = {};
+    if (stored.stopLoss != null) {
+      const moodStart = stored.sessionId
+        ? (await this.prisma.tradeSession.findUnique({ where: { id: stored.sessionId }, select: { moodStart: true } }))?.moodStart ?? null
+        : null;
+      const a = await this.computeExecution(stored.accountId ?? undefined, {
+        side: stored.side, entry: dto.entry, exit: dto.exit, stopLoss: stored.stopLoss, takeProfit: stored.takeProfit,
+        riskReward: rr ?? null, emotion: stored.emotion, capitalEngaged: stored.capitalEngaged, tradeSession: { moodStart },
+      });
+      execData = {
+        executionScore: a.score,
+        executionGrade: a.grade,
+        executionMethod: a.grade != null ? ExecutionMethod.STOP_BASED : null,
+      };
+    }
     const res = await this.prisma.trade.updateMany({
       where: { id: stored.id },
       data: {
@@ -365,9 +389,13 @@ export class TradesService {
         tradedAt: dto.tradedAt ? new Date(dto.tradedAt) : undefined,
         session: dto.session,
         ...(rr !== undefined ? { riskReward: rr } : {}),
+        ...execData,
       },
     });
-    return res.count > 0;
+    if (res.count === 0) return false;
+    // Totaux stockés de la séance clôturée (P&L, nombre de contrats) : jamais figés (#947).
+    await refreshClosedSessionTotals(this.prisma, [stored.sessionId]);
+    return true;
   }
 
   private findActiveSession(userId: string) {
