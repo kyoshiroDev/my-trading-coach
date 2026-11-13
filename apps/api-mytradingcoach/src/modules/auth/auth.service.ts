@@ -553,6 +553,8 @@ export class AuthService {
         password: hashedPassword,
         resetPasswordToken: null,
         resetPasswordExpires: null,
+        // Nouveau mot de passe = sessions ouvertes coupées (refresh refusé si `tv` ≠ tokenVersion), #994.
+        tokenVersion: { increment: 1 },
         // Le lien reçu par e-mail prouve la possession de l'adresse.
         emailVerifiedAt: user.emailVerifiedAt ?? new Date(),
       },

@@ -444,6 +444,17 @@ describe('AuthService', () => {
       );
     });
 
+    // Audit fonctionnel #994 : un nouveau mot de passe doit couper les sessions ouvertes (compte
+    // pré-créé par un tiers, session volée). `refresh` refuse un jeton dont `tv` ≠ tokenVersion.
+    it('révoque les sessions existantes (tokenVersion incrémenté)', async () => {
+      mockPrisma.user.findFirst.mockResolvedValue(mockUser);
+      mockPrisma.user.update.mockResolvedValue(mockUser);
+
+      await service.resetPassword('valid-raw-token', 'newpassword123');
+
+      expect(mockPrisma.user.update.mock.calls[0][0].data.tokenVersion).toEqual({ increment: 1 });
+    });
+
     it('cherche par le hash SHA256 du token brut, pas le token brut', async () => {
       mockPrisma.user.findFirst.mockResolvedValue(mockUser);
       mockPrisma.user.update.mockResolvedValue(mockUser);
