@@ -601,7 +601,8 @@ export class UsersService {
   }
 
   async deleteMe(userId: string, reason?: string): Promise<void> {
-    await this.archiveAndDelete(userId, 'self', reason);
+    // Corps non validé : une raison non textuelle est ignorée, la suppression passe (#994).
+    await this.archiveAndDelete(userId, 'self', typeof reason === 'string' ? reason : undefined);
   }
 
   async adminSubscriptions(page = 1, limit = 20) {

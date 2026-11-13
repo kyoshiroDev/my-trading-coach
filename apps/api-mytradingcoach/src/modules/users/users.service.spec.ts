@@ -212,5 +212,19 @@ describe('UsersService', () => {
       });
       expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);
     });
+
+    // #994 (N17) : le corps n'est pas validé ; un `reason` non textuel faisait planter `.trim()`
+    // et la suppression échouait (500). Raison ignorée, compte supprimé.
+    it('raison qui n’est pas du texte → ignorée, suppression faite', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({
+        ...mockUser, plan: 'FREE', referredBy: null, _count: { trades: 0 },
+      });
+      mockPrisma.user.delete.mockReturnValue({ __op: 'delete' });
+
+      await service.deleteMe('user-1', 42 as unknown as string);
+
+      expect(mockPrisma.deletedAccount.create.mock.calls[0][0].data.reason).toBeNull();
+      expect(mockPrisma.user.delete).toHaveBeenCalledWith({ where: { id: 'user-1' } });
+    });
   });
 });
