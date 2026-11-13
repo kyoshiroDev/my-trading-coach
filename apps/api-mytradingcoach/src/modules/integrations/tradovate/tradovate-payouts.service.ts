@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import type { BrokerConnection } from '@prisma/client';
+import { roundCents } from '@mtc/shared';
 import { PrismaService } from '@api/prisma/prisma.service';
 import { parseUsNumber, splitCsvLine } from '../../trades/csv-parsers';
 import { tradingDay } from '../../accounts/account-rules';
@@ -58,7 +59,7 @@ export function balanceDrops(closes: DailyCloseRow[]): DetectedPayout[] {
       drops.push({
         transactionId: `${BALANCE_DROP_TYPE}:${closes[i].tradeDate}`,
         tradeDate: closes[i].tradeDate,
-        amount: Math.round(-unexplained * 100) / 100,
+        amount: roundCents(-unexplained),
         changeType: BALANCE_DROP_TYPE,
         confidence: 'certain',
       });
