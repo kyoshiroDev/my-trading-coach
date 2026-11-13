@@ -1204,6 +1204,18 @@ Premier broker synchronisé par **API** plutôt que par fichier. Module
   - Événement `tradovate:trades` : `updated` en plus de `created` ; anti-tilt sur `created` seul.
   - Limite connue : une position à cheval sur deux mois est vue en deux morceaux par le rattrapage
     Reporting (une fenêtre par mois).
+  - **Réparation des anciens trades (PR 2)** : `POST /api/admin/tradovate/repair-positions` (ADMIN,
+    essai par défaut, `?apply=true` pour écrire, verrou Redis, réponse 202 et travail en arrière-plan),
+    `GET …/repair-positions` (dernier rapport), `GET …/repair-positions/backup` (JSONL des lignes AVANT
+    fusion, Redis 30 jours). Positions recalculées depuis la Reporting API (`recomputedWindows`, comme
+    #783), plan pur `tradovate-positions-repair.ts` : toutes les paires retrouvées en base, aucune
+    clé `tv:` déjà là, MÊMES saisies sur toutes les lignes (émotion, setup, stop, objectif, notes,
+    tags, capital, unité de temps, séance) — sinon comptée (`incomplete` / `alreadyGrouped` /
+    `conflicting`), jamais fusionnée. Ligne gardée = celle de la paire d'ouverture ; champs du broker
+    recalculés depuis les lignes EN BASE (total P&L et frais inchangés). `TradesService.mergeImportedPosition` :
+    transaction (alertes de comportement rattachées, lignes supprimées, R/R et note « stop » recalculés),
+    puis `refreshAfterFeesRepair` par compte. Périmètre : connexions actives, non démo, compte non
+    archivé ; lignes importées seulement (synchro, historique, CSV du compte connecté).
 - **Client HTTP en lecture seule** (`tradovate-api.client.ts`) : que des GET de données + les
   appels d'auth. Aucune méthode d'écriture (ordre, risque) — contrat NinjaTrader.
 - **Erreurs** : `TradovateException(code)` → message FR clair + `code` machine (relayé par

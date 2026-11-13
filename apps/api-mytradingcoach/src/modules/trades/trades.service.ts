@@ -10,6 +10,7 @@ import {
   ExecutionGrade,
   ExecutionMethod,
   TradeSource,
+  TradingSession,
 } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { effectiveEmotion } from '../../common/utils/effective-emotion.util';
@@ -732,6 +733,58 @@ export class TradesService {
    * Après une correction en masse des frais (réparation #783) : barème du compte recalculé et
    * cache analytics invalidé, comme après un import.
    */
+  /**
+   * Fusionne les lignes d'une même position Tradovate importées avant #956 (réparation lancée par
+   * l'admin) : la ligne gardée prend les champs du broker de la position (clé `tv:`), son R/R et sa
+   * note d'exécution « stop » sont recalculés comme dans `update()`, les alertes de comportement
+   * des lignes supprimées lui sont rattachées. Tout ou rien (transaction). Faux si une ligne a
+   * disparu ou changé de propriétaire entre-temps. Recalculs par compte : `refreshAfterFeesRepair`.
+   */
+  async mergeImportedPosition(
+    userId: string,
+    merge: {
+      keepId: string;
+      removeIds: string[];
+      data: {
+        entry: number; exit: number | null; quantity: number; pnl: number | null; commission: number | null;
+        tradedAt: Date; session: TradingSession; importHash: string;
+      };
+    },
+  ): Promise<boolean> {
+    const keep = await this.prisma.trade.findFirst({
+      where: { id: merge.keepId, userId },
+      select: { side: true, stopLoss: true, takeProfit: true, emotion: true, capitalEngaged: true, accountId: true, sessionId: true },
+    });
+    if (!keep) return false;
+    const rr = plannedRiskReward(keep.side, merge.data.entry, keep.stopLoss, keep.takeProfit);
+    let execData: { executionScore?: number | null; executionGrade?: ExecutionGrade | null; executionMethod?: ExecutionMethod | null } = {};
+    if (keep.stopLoss != null) {
+      const moodStart = keep.sessionId
+        ? (await this.prisma.tradeSession.findUnique({ where: { id: keep.sessionId }, select: { moodStart: true } }))?.moodStart ?? null
+        : null;
+      const a = await this.computeExecution(keep.accountId ?? undefined, {
+        side: keep.side, entry: merge.data.entry, exit: merge.data.exit, stopLoss: keep.stopLoss, takeProfit: keep.takeProfit,
+        riskReward: rr ?? null, emotion: keep.emotion, capitalEngaged: keep.capitalEngaged, tradeSession: { moodStart },
+      });
+      execData = { executionScore: a.score, executionGrade: a.grade, executionMethod: a.grade != null ? ExecutionMethod.STOP_BASED : null };
+    }
+    try {
+      await this.prisma.$transaction(async (tx) => {
+        await tx.behaviorAlert.updateMany({ where: { tradeId: { in: merge.removeIds } }, data: { tradeId: merge.keepId } });
+        const removed = await tx.trade.deleteMany({ where: { id: { in: merge.removeIds }, userId } });
+        if (removed.count !== merge.removeIds.length) throw new Error('lignes de la position introuvables');
+        await tx.trade.update({
+          where: { id: merge.keepId },
+          data: { ...merge.data, ...(rr !== undefined ? { riskReward: rr } : {}), ...execData },
+        });
+      });
+    } catch (err) {
+      if ((err as Error).message === 'lignes de la position introuvables' || isUniqueConstraintError(err)) return false;
+      throw err;
+    }
+    return true;
+  }
+
   async refreshAfterFeesRepair(userId: string, accountId: string): Promise<void> {
     await this.recomputeBehavioralGrades(accountId);
     const sessions = await this.prisma.trade.findMany({
