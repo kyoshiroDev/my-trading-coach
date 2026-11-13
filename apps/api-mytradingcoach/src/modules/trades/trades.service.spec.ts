@@ -2,7 +2,6 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Test, TestingModule } from '@nestjs/testing';
 import {
   BadRequestException,
-  ForbiddenException,
   NotFoundException,
 } from '@nestjs/common';
 import {
@@ -268,14 +267,15 @@ describe('TradesService', () => {
       );
     });
 
-    it('lance ForbiddenException si trade appartient à un autre utilisateur', async () => {
+    // #994 (S6) : 404 comme un trade inexistant, sans révéler qu'il existe (règle des comptes).
+    it('lance NotFoundException si trade appartient à un autre utilisateur', async () => {
       mockPrisma.trade.findUnique.mockResolvedValue({
         ...mockTrade,
         userId: 'other-user',
       });
 
       await expect(service.findOne('user-123', 'trade-123')).rejects.toThrow(
-        ForbiddenException,
+        NotFoundException,
       );
     });
 
@@ -669,7 +669,7 @@ describe('TradesService', () => {
 
     it('trade d’un autre utilisateur : refusé avant toute écriture', async () => {
       mockPrisma.trade.findUnique.mockResolvedValue({ ...synced, userId: 'other' });
-      await expect(service.setStop('user-123', 'trade-123', { stopLoss: 26862.5 })).rejects.toThrow(ForbiddenException);
+      await expect(service.setStop('user-123', 'trade-123', { stopLoss: 26862.5 })).rejects.toThrow(NotFoundException);
       expect(mockPrisma.trade.update).not.toHaveBeenCalled();
     });
   });

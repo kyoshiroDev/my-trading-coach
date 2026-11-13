@@ -1,6 +1,5 @@
 import {
   BadRequestException,
-  ForbiddenException,
   Injectable,
   NotFoundException,
   Optional,
@@ -387,7 +386,8 @@ export class TradesService {
       include: { setup: { select: { id: true, title: true, color: true } } },
     });
     if (!trade) throw new NotFoundException('Trade introuvable');
-    if (trade.userId !== userId) throw new ForbiddenException();
+    // 404 et non 403 : ne pas révéler qu'un trade d'un autre utilisateur existe (#994, S6).
+    if (trade.userId !== userId) throw new NotFoundException('Trade introuvable');
     return trade;
   }
 
