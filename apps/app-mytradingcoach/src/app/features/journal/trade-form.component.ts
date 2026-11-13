@@ -172,8 +172,17 @@ export class TradeFormComponent {
    * P&L calculé depuis les prix. Le P&L passe par le capital engagé (variation × capital).
    */
   protected readonly forexNonUsd = computed(() => isNonUsdQuotedForex(this.form().asset));
+  /** Sortie retenue par l'aperçu : prix de sortie, sinon stop ou objectif selon le mode choisi. */
+  private readonly effectiveExitPrice = computed(() => {
+    const f = this.form();
+    if ((f.exit ?? 0) > 0) return f.exit as number;
+    const mode = this.exitMode();
+    if (mode === 'SL' && (f.stopLoss ?? 0) > 0) return f.stopLoss as number;
+    if (mode === 'TP' && (f.takeProfit ?? 0) > 0) return f.takeProfit as number;
+    return 0;
+  });
   protected readonly forexCapitalMissing = computed(
-    () => this.forexNonUsd() && !!this.form().exit && !((this.form().capitalEngaged ?? 0) > 0),
+    () => this.forexNonUsd() && this.effectiveExitPrice() > 0 && !((this.form().capitalEngaged ?? 0) > 0),
   );
 
   protected readonly showCapital = computed(

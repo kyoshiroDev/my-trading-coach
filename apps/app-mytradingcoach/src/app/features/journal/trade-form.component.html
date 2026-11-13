@@ -126,7 +126,9 @@
                 />
               </div>
               <div class="price-field">
-                <label class="field-label-small" for="tf-qty">Quantité</label>
+                <label class="field-label-small" for="tf-qty" data-testid="trade-qty-label">{{
+                  calculationMode() === 'forex' ? 'Quantité (lots)' : 'Quantité'
+                }}</label>
                 <input
                   id="tf-qty"
                   type="text"
@@ -134,7 +136,11 @@
                   (input)="filterNumeric($event, 'quantity')"
                   name="quantity"
                   placeholder="1"
+                  [attr.aria-describedby]="calculationMode() === 'forex' ? 'tf-qty-lots' : null"
                 />
+                @if (calculationMode() === 'forex') {
+                  <p id="tf-qty-lots" class="field-hint">1 lot = 100 000 unités · 1 pip = 10 $ par lot</p>
+                }
               </div>
             </div>
           </div>
