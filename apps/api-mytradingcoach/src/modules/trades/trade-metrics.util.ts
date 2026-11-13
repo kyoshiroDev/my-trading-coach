@@ -1,7 +1,6 @@
 import type { CreateTradeDto } from './dto/create-trade.dto';
-import { plannedRiskReward, roundCents } from '@mtc/shared';
+import { isNonUsdQuotedForex, plannedRiskReward, roundCents } from '@mtc/shared';
 import { getTickSize, getTickValue } from './instruments.const';
-import { isNonUsdQuotedForex } from '@mtc/shared';
 
 /**
  * P&L BRUT du trade (résultat des prix). Les frais restent dans `commission` : le net est
