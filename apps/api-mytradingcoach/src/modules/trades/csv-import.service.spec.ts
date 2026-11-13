@@ -468,15 +468,20 @@ describe('CsvImportService — garde-fou des colonnes Tradovate Performance', ()
     return svc.parseCSV(buf, 'Performance.csv', 'user-1', PREMIUM_ACCESS);
   }
 
-  it('fichier valide → 20 trades, colonnes alignées', async () => {
+  it('fichier valide → 20 paires regroupées en 7 positions (#956), colonnes alignées', async () => {
     const dtos = await importer(variante((c) => c));
-    expect(dtos).toHaveLength(20);
-    expect(dtos[0]).toMatchObject({ asset: 'MNQ', quantity: 1, pnl: 23 });
+    expect(dtos).toHaveLength(7);
+    // Short 2 MNQ : deux ventes à 15:33:34, rachetées à 15:34:00 et 15:34:09 → UN trade.
+    expect(dtos[0]).toMatchObject({ asset: 'MNQ', side: 'SHORT', quantity: 2, entry: 29915.375, exit: 29901.75, pnl: 54.5 });
+    expect(dtos[0]._positionKey).toBe('tv:566569084424');
+    expect(dtos[0]._pairs).toHaveLength(2);
+    // Rien de perdu : même P&L total que les 20 paires.
+    expect(+dtos.reduce((s, d) => s + (d.pnl ?? 0), 0).toFixed(2)).toBe(466.5);
   });
 
   it('colonne en plus APRÈS la 12ᵉ → rien ne se décale, import accepté', async () => {
     const dtos = await importer(variante((c) => [...c, c[0] === 'symbol' ? 'nouvelle' : 'x']));
-    expect(dtos).toHaveLength(20);
+    expect(dtos).toHaveLength(7);
   });
 
   it.each([
@@ -524,7 +529,8 @@ describe('CsvImportService — frais Tradovate complets (#783, export réel du 2
 
   it('tous les frais du Cash History : 74,12 $ attribués, rapprochés au centime', async () => {
     const { dtos, report, total } = await importReal('tradovate-fees-2026-10-27-cash-history.csv');
-    expect(dtos).toHaveLength(17);
+    // 17 paires de l'export réel → 11 positions (#956) ; les frais restent tous attribués.
+    expect(dtos).toHaveLength(11);
     expect(total).toBe(74.12);
     expect(report.fees).toMatchObject({ assigned: 74.12, expected: 74.12, reconciled: true });
   });
@@ -562,9 +568,9 @@ describe('CsvImportService — Fusion Tradovate (Performance + Cash history)', (
     return { dtos, report };
   }
 
-  it('parse 20 trades, tous avec une commission', async () => {
+  it('7 positions (20 paires), toutes avec une commission', async () => {
     const { dtos } = await importWithFees();
-    expect(dtos).toHaveLength(20);
+    expect(dtos).toHaveLength(7);
     for (const d of dtos) expect((d.commission ?? 0)).toBeGreaterThan(0);
   });
 
@@ -582,7 +588,7 @@ describe('CsvImportService — Fusion Tradovate (Performance + Cash history)', (
     expect(report.fees?.expected).toBe(21.84);
     expect(total).toBe(report.fees?.expected);
     expect(report.fees?.reconciled).toBe(true);
-    expect(report.fees?.count).toBe(20);
+    expect(report.fees?.count).toBe(7); // trades créés (positions, #956), pas les 20 paires
   });
 
   it('compte chaque fill partagé une seule fois (3 fills partagés)', async () => {
@@ -611,7 +617,7 @@ describe('CsvImportService — Fusion Tradovate (Performance + Cash history)', (
     const dtos = await svc.parseCSV(
       perf(), 'Performance.csv', undefined, undefined, undefined, undefined, undefined, report,
     );
-    expect(dtos).toHaveLength(20);
+    expect(dtos).toHaveLength(7);
     expect(report.fees).toBeUndefined();
     expect(dtos.every((d) => d.commission == null)).toBe(true);
   });
@@ -627,7 +633,7 @@ describe('CsvImportService — Fusion Tradovate (Performance + Cash history)', (
     );
 
     // Non bloquant : les trades restent valides.
-    expect(dtos).toHaveLength(20);
+    expect(dtos).toHaveLength(7);
     expect(dtos.every((d) => d.commission == null)).toBe(true);
 
     // Mais l'échec est remonté, pour que le front affiche « P&L brut ».
@@ -635,7 +641,7 @@ describe('CsvImportService — Fusion Tradovate (Performance + Cash history)', (
     expect(report.fees?.merged).toBe(false);
     expect(report.fees?.reconciled).toBe(false);
     expect(report.fees?.assigned).toBe(0);
-    expect(report.fees?.count).toBe(20);
+    expect(report.fees?.count).toBe(7);
   });
 
   it('Cash history illisible (vide) → même signalement, import non bloqué', async () => {
@@ -645,7 +651,7 @@ describe('CsvImportService — Fusion Tradovate (Performance + Cash history)', (
       { buffer: Buffer.from(''), filename: 'CashHistory.csv' }, report,
     );
 
-    expect(dtos).toHaveLength(20);
+    expect(dtos).toHaveLength(7);
     expect(report.fees?.merged).toBe(false);
   });
 
@@ -655,11 +661,21 @@ describe('CsvImportService — Fusion Tradovate (Performance + Cash history)', (
     expect(report.fees?.assigned).toBe(21.84);
   });
 
-  it('métadonnées internes de fill id retirées avant persistance', async () => {
+  it('métadonnées internes de fill id retirées avant persistance (positions ET paires jointes)', async () => {
     const { dtos } = await importWithFees();
-    for (const d of dtos) {
+    for (const d of [...dtos, ...dtos.flatMap((t) => t._pairs ?? [])]) {
       expect(d).not.toHaveProperty('_buyFillId');
       expect(d).not.toHaveProperty('_sellFillId');
+      expect(d).not.toHaveProperty('_contract');
+      expect(d).not.toHaveProperty('_openedAt');
+    }
+  });
+
+  it('frais par paire puis additionnés par position : total inchangé (21,84 $)', async () => {
+    const { dtos } = await importWithFees();
+    for (const d of dtos) {
+      const pairs = d._pairs ?? [];
+      expect(+(d.commission ?? 0).toFixed(2)).toBe(+pairs.reduce((s, p) => s + (p.commission ?? 0), 0).toFixed(2));
     }
   });
 });

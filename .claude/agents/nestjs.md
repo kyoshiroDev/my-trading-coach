@@ -1180,6 +1180,30 @@ Premier broker synchronisé par **API** plutôt que par fichier. Module
   étaient écartées comme doublons. Un trade API doit avoir
   EXACTEMENT la forme d'un trade CSV du même broker (règles partagées dans
   `trades/tradovate-pair.util.ts`, utilisées par les DEUX chemins).
+- **Un trade Tradovate = une POSITION (#956, décision du 13/11)**, de l'ouverture au retour à plat,
+  plus une paire de fills. `trades/tradovate-position-group.util.ts` (pur) regroupe les paires par
+  le cumul net des exécutions, contrat par contrat, dans les TROIS chemins : synchro (mapper puis
+  `groupTradovateTrades`, `leftovers: 'skip'`), rattrapage Reporting et import CSV de l'export
+  Performance (`leftovers: 'pairs'`). Règles : quantité = somme des contrats, entrée et sortie
+  moyennes pondérées, P&L et frais additionnés (frais posés par paire AVANT, fill de retournement au
+  prorata), `tradedAt` = dernière clôture, stop/objectif de la première entrée (capture sur l'ordre
+  du fill d'ouverture, `_openFillId`), R/R sur l'entrée moyenne. Retournement par une seule
+  exécution = deux trades.
+  - **Clé stable** `importHash = tv:<fill d'ouverture>` (`positionImportKey`), identique dans les
+    trois sources : aucun doublon synchro ↔ CSV ↔ rapport, quel que soit le fuseau.
+  - **Synchro** : aucun trade avant le retour à plat (anti-tilt et journal de risque réagissent à la
+    clôture). Données de séance (`tradovate-position-input.ts`) : `prevPos`/`netPos` de la position,
+    exécutions non appariées rattachées au compte par `order.accountId` (`/order/list` lue une fois,
+    réutilisée par la capture du stop). Position ouverte la veille (`prevPos ≠ 0`) ou cumul ≠ `netPos`
+    → paires mises de côté (`deferred` du résultat), reprises au retour à plat ou par le rattrapage.
+  - **`importTrades`** : `_positionKey` déjà en base → doublon, ou mise à jour des champs du broker
+    (`growPosition` : prix, quantité, P&L, frais, clôture, R/R, note d'exécution si stop, totaux de
+    la séance clôturée) si la position a grandi — jamais stop, émotion, setup, notes. Une paire de la position déjà en base à l'ancien format (trade par
+    paire, avant #956) → la position est importée **paire par paire** (`_pairs`), sans doublon,
+    jusqu'à la réparation des trades existants. Métadonnées `_…` retirées par `withoutImportMeta`.
+  - Événement `tradovate:trades` : `updated` en plus de `created` ; anti-tilt sur `created` seul.
+  - Limite connue : une position à cheval sur deux mois est vue en deux morceaux par le rattrapage
+    Reporting (une fenêtre par mois).
 - **Client HTTP en lecture seule** (`tradovate-api.client.ts`) : que des GET de données + les
   appels d'auth. Aucune méthode d'écriture (ordre, risque) — contrat NinjaTrader.
 - **Erreurs** : `TradovateException(code)` → message FR clair + `code` machine (relayé par

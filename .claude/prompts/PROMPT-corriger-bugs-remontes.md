@@ -4,3 +4,5 @@ je veux que tu corrige correctement et proprement tous les bugs remontés et bug
 Compléments de Greg :
 - « que dit le relecteur »
 - « suit les recommandations du relecteur »
+- « conflis sur #990 »
+- « c'est mergé, reprends #956 »

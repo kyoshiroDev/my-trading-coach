@@ -213,6 +213,11 @@ compterait le fill deux fois. Chaque trade du groupe prend sa part recalculée (
 `redistributed`), le **total du groupe ne baisse jamais** ; groupe incomplet (trade absent, frais
 indisponibles) ou total plus élevé en base (frais saisis à la main) → ignoré (`skippedShared`).
 
+**Positions (#956)** : les frais sont d'abord posés **par paire** (règle ci-dessus), puis
+**additionnés** dans le trade de la position (`aggregateGroup`). Le rapport de frais (`FeesReport.count`,
+« Frais importés : … sur N trade(s) ») compte les trades créés, donc les positions. La réparation des frais #783 compare des trades par paire : un trade de
+position (`importHash` `tv:…`) n'y est jamais retrouvé (`notFound`), donc jamais modifié.
+
 **Script #950** (`scripts/repair-chiffres-950.ts`, règles dans `trades/repair-950.util.ts`) : répare
 en prod les données faussées avant l'audit #947 : MEXC stocké au P&L net (signature : frais avec des
 fractions de centime, symbole `…USDT`/`…USDC`/`X/USD` même exotique, import d'avant `LOT1_EN_PROD`),
