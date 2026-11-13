@@ -68,7 +68,7 @@ un sous-composant. Fichiers encore au-dessus, à découper quand on y retouche :
 
 `beta` n'est plus utilisée pour les fonctionnalités. Jamais de push direct sur `main`.
 
-Relecture et PR : à chaque arrêt, Claude Code passe par l'agent `relecteur` (`.claude/agents/relecteur.md`), qui s'appuie sur le journal des décisions `.claude/decisions.md` ; les prompts collés par Greg sont enregistrés dans `.claude/prompts/PROMPT-<nom>.md` et commités avec le travail ; il ouvre la PR vers `dev` après le « OK push » de Greg, la PR `dev` → `main` seulement sur demande, et seul Greg merge (merge commit).
+Relecture et PR : à chaque arrêt, Claude Code passe par l'agent `relecteur` (`.claude/agents/relecteur.md`), qui s'appuie sur le journal des décisions `.claude/decisions.md` ; les prompts collés par Greg sont enregistrés dans `.claude/prompts/PROMPT-<nom>.md` et commités avec le travail ; aucun push tant qu'il n'a pas rendu « OK à 100 % », puis push et PR vers `dev` sans attendre de « OK push » de Greg, la PR `dev` → `main` seulement sur demande, et seul Greg merge (merge commit).
 
 ## Commits
 
