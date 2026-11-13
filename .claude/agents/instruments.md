@@ -198,9 +198,19 @@ naïf 24,96 $ vs exact 21,84 $). Elle est **répartie au prorata de la quantité
 qui utilisent ce fill (`assignFeesOncePerFill`, #947), au centime, le dernier trade prend le reste.
 Ne jamais revenir à « tout au premier trade, 0 aux suivants » : total juste mais net par trade faux
 (achat 2 ES vendu en 2 fois : 6,54 $ / 2,18 $ au lieu de 4,36 $ / 4,36 $, un trade perdant affiché gagnant).
-La réparation des frais #783 (`planFeeRepairs`) ne monte JAMAIS un trade dont un fill sert à un autre
-trade (`skippedShared`) : en base, l'ancienne règle a tout posé sur le premier ; ne monter que les
-suivants compterait le fill deux fois. Ces trades sont repris par le script #950.
+La réparation des frais #783 (`planFeeRepairs`) traite les trades reliés par un fill commun **en
+groupe** (#950) : en base, l'ancienne règle a tout posé sur le premier ; ne monter que les suivants
+compterait le fill deux fois. Chaque trade du groupe prend sa part recalculée (un trade peut baisser,
+`redistributed`), le **total du groupe ne baisse jamais** ; groupe incomplet (trade absent, frais
+indisponibles) ou total plus élevé en base (frais saisis à la main) → ignoré (`skippedShared`).
+
+**Script #950** (`scripts/repair-chiffres-950.ts`, règles dans `trades/repair-950.util.ts`) : répare
+en prod les données faussées avant l'audit #947 : MEXC stocké au P&L net (signature : frais avec des
+fractions de centime, symbole `…USDT`/`…USDC`/`X/USD` même exotique, import d'avant `LOT1_EN_PROD`),
+clôture en séance stockée en écart de prix (créée avant `LOT1_EN_PROD`),
+totaux de séances clôturées figés. Simulation par défaut, `--apply --backup`. Les fills partagés
+Tradovate passent par la réparation des frais de l'admin, AVANT le script (elle ne touche que
+`commission` ; le script recalcule ensuite séances, récaps et barèmes).
 
 **Checksum** : `Σ commission(trade) == Σ |Delta| des frais` (à 0,01 près) → `reconciled`. En cas
 d'écart : warning + `reconciled=false` (non bloquant, « frais partiellement rapprochés »), jamais de
