@@ -363,6 +363,12 @@ prix). CORS : origines globales (`CORS_ORIGINS` doit inclure `https://www.mytrad
   ça, un tiers ayant pré-créé un compte sur l'adresse garderait son mot de passe et sa session.
 - **Refresh token** : porte `tv` (version) ; `refresh` refuse une version ≠ `User.tokenVersion`
   (jeton sans `tv` = version 0). Incrémenter `tokenVersion` = déconnecter toutes les sessions.
+  Incrémenté aussi à la réinitialisation du mot de passe (#994). Chaque refresh porte un `jti` :
+  `POST /auth/logout` met le refresh présenté en liste noire Redis (`auth:revoked-refresh:<jti>`,
+  TTL = expiration du jeton) ; les autres appareils restent connectés. Redis en panne : refresh
+  accepté (fail-open voulu). L'ancien refresh reste valide après rotation : ticket #1002.
+  Connexion : e-mail inconnu ou compte sans mot de passe → argon2 vérifie un hash factice
+  (`dummyPasswordHash`), même coût qu'un mauvais mot de passe (anti-énumération par le temps).
 - **Exclus** : comptes `isDemo` et `ADMIN` (403 `GOOGLE_NOT_ALLOWED`), en connexion comme en liaison.
   Une liaison existante n'est jamais remplacée par un autre `sub` (409 `GOOGLE_ALREADY_LINKED`).
 - **Délier** (`DELETE /auth/google`) refusé sans mot de passe (400 `PASSWORD_REQUIRED`).
