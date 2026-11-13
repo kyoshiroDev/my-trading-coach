@@ -10,6 +10,32 @@ const REFERRAL_COUPON_MONTHLY_ID = 'REFERRAL_FILLEUL_MONTHLY_10PCT';
 
 export type ReferralCouponKind = 'annual' | 'monthly';
 
+/** Métadonnée posée sur l'abonnement quand le checkout applique la remise filleul (#954). */
+export const REFERRAL_DISCOUNT_METADATA = 'referralDiscount';
+const REFERRAL_COUPON_IDS = new Set([REFERRAL_COUPON_ID, REFERRAL_COUPON_MONTHLY_ID]);
+
+/**
+ * Début de la remise filleul d'un abonnement, ou null (#954). Lit d'abord le coupon quand le
+ * payload le développe (`discount` en API 2024-06-20, `discounts[]` sinon : couvre les abonnements
+ * antérieurs au marquage), puis la métadonnée posée au checkout, qui reste après la fin du coupon.
+ */
+export function referralDiscountStart(sub: Stripe.Subscription): Date | null {
+  const legacy = (sub as unknown as { discount?: unknown }).discount;
+  for (const d of [legacy, ...(sub.discounts ?? [])]) {
+    if (!d || typeof d === 'string') continue;
+    const x = d as {
+      coupon?: { id?: string } | null;
+      source?: { coupon?: { id?: string } | string | null } | null;
+      start?: number | null;
+    };
+    const src = x.source?.coupon;
+    const id = x.coupon?.id ?? (typeof src === 'string' ? src : src?.id);
+    if (id && REFERRAL_COUPON_IDS.has(id)) return new Date((x.start ?? sub.start_date) * 1000);
+  }
+  if (sub.metadata?.[REFERRAL_DISCOUNT_METADATA] === '1') return new Date(sub.start_date * 1000);
+  return null;
+}
+
 /** Coupons -10% du filleul (parrainage classique), créés à la demande chez Stripe. */
 @Injectable()
 export class StripeCouponService {

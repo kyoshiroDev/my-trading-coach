@@ -122,7 +122,7 @@ export function mapTradovatePairs(input: TradovateMapperInput): TradovateMapperR
         entry,
         exit,
         quantity: pair.qty,
-        pnl: +((pair.sellPrice - pair.buyPrice) * pair.qty * vpp).toFixed(2),
+        pnl: roundCents((pair.sellPrice - pair.buyPrice) * pair.qty * vpp),
         emotion: null, // override optionnel, comme l'import CSV
         session: detectTradingSession(iso),
         timeframe: '1h',

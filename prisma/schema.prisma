@@ -109,6 +109,9 @@ model User {
   // ── Parrainage ambassadeur ────────────────────────────────────────────────
   referralCode String? @unique // code de parrainage unique
   referredBy   String? // code de l'ambassadeur qui a référé cet user
+  /// Début de la remise filleul −10 % (coupon Stripe du parrainage classique), posé par le webhook
+  /// d'abonnement. Le MRR base la compte 12 mois à partir de cette date (#954). null = pas de remise.
+  referralDiscountSince DateTime?
 
   // ── Acquisition (UTM du lien d'inscription) ──────────────────────────────
   // Capturés à l'inscription (landing → /register → POST /auth/register), normalisés

@@ -444,8 +444,16 @@ Constantes : `FOUNDER_OFFER = { priceMonthlyEur: 29, priceAnnualEur: 290, seats:
 - Changement d'intervalle (`POST /billing/interval`) : coupon de l'autre intervalle aux conditions
   figées, pour les mois de remise restants.
 - **MRR** (base et Stripe) sur le montant **réellement payé** : découpé `mrrBreakdown`
-  normal / fondateur / partenaires (`realMonthlyEur`). Le MRR Stripe déduit les remises
-  (`expand: data.discounts`). Reste : le −10 % filleul n'est pas déduit du MRR base (écart connu).
+  normal / fondateur / partenaires / filleuls (`realMonthlyEur`). Le MRR Stripe déduit les remises
+  (`expand: data.discounts`). Le −10 % filleul est compté dans le MRR base depuis #954 : le checkout
+  pose la métadonnée d'abonnement `referralDiscount=1`, le webhook enregistre
+  `User.referralDiscountSince` (`referralDiscountStart` : coupon développé, sinon métadonnée), et le
+  MRR base applique −10 % pendant 12 mois (44,10 € / 441/12), puis le prix normal. Filleuls abonnés
+  AVANT #954 : l'API Stripe épinglée en `2024-06-20` développe `discount` dans l'abonnement, donc les
+  **mensuels** sont repris au renouvellement suivant (`customer.subscription.updated` →
+  `syncSubscription`), sous un mois ; les **annuels** seulement à leur renouvellement, quand la remise
+  est déjà finie : leur MRR base reste à 490/12 au lieu de 441/12 d'ici là. Aucun rattrapage (il
+  faudrait lire Stripe live, jamais sans Greg). L'historique `MetricsSnapshot` n'est pas recalculé.
 - Commission ambassadeur : 20 % de `invoice.amount_paid`, donc déjà sur le montant remisé.
   Estimation mensuelle affichée à l'ambassadeur (`referralMonthlyCommission`, `ambassador-commission.util.ts`) :
   20 % de `realMonthlyEur` (fondateur, annuel ÷ 12, code partenaire), abonnements `active` seulement (#947).

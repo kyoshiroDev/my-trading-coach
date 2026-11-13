@@ -1,5 +1,5 @@
 import type { CreateTradeDto } from './dto/create-trade.dto';
-import { plannedRiskReward } from '@mtc/shared';
+import { isNonUsdQuotedForex, plannedRiskReward, roundCents } from '@mtc/shared';
 import { getTickSize, getTickValue } from './instruments.const';
 
 /**
@@ -13,7 +13,7 @@ export function calculatePnl(dto: CreateTradeDto): number | undefined {
 
   // P&L réalisé fourni (import broker, ou édition sans changement de prix/qty) = source de vérité.
   // On NE recalcule PAS points × quantité : faux pour la crypto/contrats (qty MEXC en contrats, pas en coins).
-  if (dto.pnl != null) return +dto.pnl.toFixed(2);
+  if (dto.pnl != null) return roundCents(dto.pnl);
 
   if (dto.exit == null || dto.exit <= 0) return undefined;
   const effectiveExit = dto.exit;
@@ -26,6 +26,10 @@ export function calculatePnl(dto: CreateTradeDto): number | undefined {
   const quantity = dto.quantity ?? 1;
   const tickValue = getTickValue(dto.asset);
   const tickSize = getTickSize(dto.asset);
+  // Forex hors dollar (USD/JPY, EUR/GBP…) sans capital engagé : `points × quantité` donnerait un P&L
+  // en devise de cotation (yens), sans taux de change pour le convertir (#951). Aucun P&L inventé.
+  const noCapital = dto.capitalEngaged == null || dto.capitalEngaged <= 0;
+  if (tickValue == null && noCapital && isNonUsdQuotedForex(dto.asset)) return undefined;
 
   let pnl: number;
   if (tickValue != null) {
@@ -37,7 +41,7 @@ export function calculatePnl(dto: CreateTradeDto): number | undefined {
     pnl = points * quantity;
   }
 
-  return +pnl.toFixed(2);
+  return roundCents(pnl);
 }
 
 export function calculateRiskReward(dto: CreateTradeDto): number | undefined {

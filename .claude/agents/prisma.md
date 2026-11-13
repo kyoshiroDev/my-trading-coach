@@ -397,6 +397,10 @@ Migration `20261027120000_founder_first_paid` (#769, B1, additive) : `FounderSea
 (premier paiement réel ; null = place réservée pendant le Premium offert, pas encore payée).
 Rattrapage : `firstPaidAt = takenAt` pour les places existantes (toutes payées à la prise de place).
 
+Migration `20261113150000_referral_discount_since` (#954, additive, nullable, compatible N-1) :
+`User.referralDiscountSince` = début de la remise filleul −10 %, écrit par le webhook d'abonnement,
+lu par le MRR base (12 mois). Pas de rattrapage SQL : la base ne sait pas quels abonnés l'ont eue.
+
 ## Migrations — bonnes pratiques
 
 - Toujours nommer clairement : `add_stripe_customer_id`, `add_trade_tags`

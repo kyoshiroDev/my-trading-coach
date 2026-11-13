@@ -28,7 +28,7 @@ import { CreateTradeSchema } from '../../core/schemas/trade.schema';
 import { SetupsStore } from '../../core/stores/setups.store';
 import { PnlFormatPipe } from '../../shared/pipes';
 import type { TradeSide } from '@mtc/shared';
-import { currencyAffix, plannedRiskReward, roundCents } from '@mtc/shared';
+import { currencyAffix, isNonUsdQuotedForex, plannedRiskReward, roundCents } from '@mtc/shared';
 import { SelectedAccountStore } from '../../core/stores/selected-account.store';
 import { editLeverage, editPnlPct } from './trade-form-edit.util';
 import { DialogDirective } from '@mtc/front-ui';
@@ -166,6 +166,24 @@ export class TradeFormComponent {
     if (instr.category === 'FOREX') return 'forex';
     return this.leverage() > 1 ? 'crypto-leverage' : 'crypto-spot';
   });
+
+  /**
+   * Paire forex non cotée en dollars (USD/JPY, EUR/GBP…, #951) : aucun taux de change, donc pas de
+   * P&L calculé depuis les prix. Le P&L passe par le capital engagé (variation × capital).
+   */
+  protected readonly forexNonUsd = computed(() => isNonUsdQuotedForex(this.form().asset));
+  /** Sortie retenue par l'aperçu : prix de sortie, sinon stop ou objectif selon le mode choisi. */
+  private readonly effectiveExitPrice = computed(() => {
+    const f = this.form();
+    if ((f.exit ?? 0) > 0) return f.exit as number;
+    const mode = this.exitMode();
+    if (mode === 'SL' && (f.stopLoss ?? 0) > 0) return f.stopLoss as number;
+    if (mode === 'TP' && (f.takeProfit ?? 0) > 0) return f.takeProfit as number;
+    return 0;
+  });
+  protected readonly forexCapitalMissing = computed(
+    () => this.forexNonUsd() && this.effectiveExitPrice() > 0 && !((this.form().capitalEngaged ?? 0) > 0),
+  );
 
   protected readonly showCapital = computed(
     () =>
@@ -386,12 +404,12 @@ export class TradeFormComponent {
       if (calcMode === 'forex') {
         const pipSize = Math.pow(10, -(instr.pipDecimals ?? 4));
         const pips = rawPoints / pipSize;
-        pnl = +(pips * instr.tickValue * qty).toFixed(2);
+        pnl = roundCents(pips * instr.tickValue * qty);
       } else if (instr.tickSize && instr.tickSize > 0) {
         const ticks = rawPoints / instr.tickSize;
-        pnl = +(ticks * instr.tickValue * qty).toFixed(2);
+        pnl = roundCents(ticks * instr.tickValue * qty);
       } else {
-        pnl = +(rawPoints * instr.tickValue * qty).toFixed(2);
+        pnl = roundCents(rawPoints * instr.tickValue * qty);
       }
 
       this.autoPnl.set(pnl);
@@ -402,7 +420,7 @@ export class TradeFormComponent {
         ? (effectiveExit - entry) / entry
         : (entry - effectiveExit) / entry;
       if (capital > 0) {
-        const pnl = +(variation * capital * lev).toFixed(2);
+        const pnl = roundCents(variation * capital * lev);
         const pct = roundCents(variation * lev * 100);
         this.autoPnl.set(pnl);
         this.autoPnlPct.set(pct);
@@ -447,6 +465,10 @@ export class TradeFormComponent {
         if (!errors[field]) errors[field] = e.message;
       });
       this.zodErrors.set(errors);
+      return;
+    }
+    if (this.forexCapitalMissing()) {
+      this.zodErrors.set({ capitalEngaged: 'Indique le capital engagé : cette paire n’est pas cotée en dollars.' });
       return;
     }
     this.zodErrors.set({});

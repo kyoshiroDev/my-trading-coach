@@ -106,6 +106,15 @@ un chiffre plausible mais tout aussi faux). Le pipe `pnlFormat` prend le trade
 |------|-----------|---------|
 | `futures` | `category === 'FUTURES_US'` | `(rawPoints / tickSize) × tickValue × qty` |
 | `forex` | `category === 'FOREX'` | `(rawPoints / pipSize) × tickValue × qty` où `pipSize = 10^-pipDecimals` |
+
+**Forex en saisie manuelle (#951, décision du 13/11).** Seules les paires **cotées en dollars** sont au
+catalogue (`GET /instruments`) : EUR/USD, GBP/USD, AUD/USD, NZD/USD, `tickSize = 0,0001` (1 pip),
+`tickValue = 10 $` (1 pip × 1 lot standard de 100 000), quantité = lots. Le back (`calculatePnl`), le
+formulaire et le risque du stop (`stopRiskAmount`) passent par la formule générique ticks × valeur :
+EUR/USD 1,0800 → 1,0850, 1 lot = +500 $. Les autres paires (USD/JPY, EUR/GBP…, `isNonUsdQuotedForex`
+de `@mtc/shared`) donneraient un P&L en devise de cotation, sans taux de change dans l'app
+(PROMPT-214) : jamais `points × quantité` (le back renvoie « P&L inconnu »), le P&L passe par le
+capital engagé (variation × capital), exigé par le formulaire. Aucune conversion de devise nulle part.
 | `crypto-spot` | `CRYPTO`, levier = 1 | capital > 0 → `variation% × capital` ; sinon back : `points × quantity` |
 | `crypto-leverage` | `CRYPTO`, levier > 1 | `variation% × capital × levier` |
 | `null` (CFD/Actions) | `tickValue === null` | `variation% × capital` |

@@ -38,8 +38,26 @@ describe('MRR base : montant réellement payé', () => {
       normal: Math.round(49 + 490 / 12 + 49),
       founder: Math.round(29 + 290 / 12),
       partner: 29,
+      referral: 0,
     });
-    expect(stats.mrr).toBe(stats.mrrBreakdown.normal + stats.mrrBreakdown.founder + stats.mrrBreakdown.partner);
+    const b = stats.mrrBreakdown;
+    expect(stats.mrr).toBe(b.normal + b.founder + b.partner + b.referral);
+  });
+
+  it('#954 : filleul −10 % compté 44,10 € (mensuel) et 441/12 (annuel), puis prix normal après 12 mois', async () => {
+    const referral = [
+      { stripeInterval: 'month', referralDiscountSince: monthsAgo(2), founderSeat: null, partnerRedemption: null },
+      { stripeInterval: 'year', referralDiscountSince: monthsAgo(1), founderSeat: null, partnerRedemption: null },
+      { stripeInterval: 'month', referralDiscountSince: monthsAgo(13), founderSeat: null, partnerRedemption: null }, // remise finie
+    ];
+    const prisma = {
+      user: { count: vi.fn().mockResolvedValue(0), findMany: vi.fn().mockResolvedValue(referral) },
+      deletedAccount: { count: vi.fn().mockResolvedValue(0) },
+    };
+    const stats = await new UsersService(prisma as never, {} as never, {} as never).adminStats();
+    expect(stats.mrrBreakdown).toEqual({ normal: 49, founder: 0, partner: 0, referral: Math.round(44.1 + 441 / 12) });
+    expect(stats.mrr).toBe(49 + Math.round(44.1 + 441 / 12));
+    expect(stats.arr).toBe(stats.mrr * 12);
   });
 });
 
