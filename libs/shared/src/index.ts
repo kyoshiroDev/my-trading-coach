@@ -14,6 +14,7 @@ export * from './plan-benefits';
 export * from './signup-pitch';
 export * from './trade-stats';
 export * from './trade-risk';
+export * from './forex';
 export * from './max-drawdown';
 export * from './drawdown-labels';
 export * from './contracts';

@@ -126,7 +126,9 @@
                 />
               </div>
               <div class="price-field">
-                <label class="field-label-small" for="tf-qty">Quantité</label>
+                <label class="field-label-small" for="tf-qty" data-testid="trade-qty-label">{{
+                  calculationMode() === 'forex' ? 'Quantité (lots)' : 'Quantité'
+                }}</label>
                 <input
                   id="tf-qty"
                   type="text"
@@ -134,7 +136,11 @@
                   (input)="filterNumeric($event, 'quantity')"
                   name="quantity"
                   placeholder="1"
+                  [attr.aria-describedby]="calculationMode() === 'forex' ? 'tf-qty-lots' : null"
                 />
+                @if (calculationMode() === 'forex') {
+                  <p id="tf-qty-lots" class="field-hint">1 lot = 100 000 unités · 1 pip = 10 $ par lot</p>
+                }
               </div>
             </div>
           </div>
@@ -213,6 +219,8 @@
                     (input)="filterNumeric($event, 'capitalEngaged')"
                     name="capitalEngaged"
                     placeholder="0"
+                    [class.input-error]="submitted() && zodErrors()['capitalEngaged']"
+                    [attr.aria-describedby]="forexNonUsd() ? 'tf-forex-hint' : null"
                   />
                 </div>
               </div>
@@ -233,6 +241,14 @@
                 </div>
               </div>
             </div>
+            @if (forexNonUsd()) {
+              <p id="tf-forex-hint" class="field-hint" data-testid="forex-non-usd-hint">
+                Paire non cotée en dollars : le P&amp;L se calcule sur le capital engagé (variation du prix × capital), sans conversion de devise.
+              </p>
+            }
+            @if (submitted() && zodErrors()['capitalEngaged']; as err) {
+              <p class="field-hint field-error" role="alert">{{ err }}</p>
+            }
             @if (liquidationPrice(); as liq) {
               <div class="liquidation-warning">
                 ⚠ Liquidation
