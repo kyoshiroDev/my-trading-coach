@@ -1,4 +1,4 @@
-import { ConflictException, Controller, Get, HttpCode, Post, Query, StreamableFile, UseGuards } from '@nestjs/common';
+import { ConflictException, Controller, Get, HttpCode, NotFoundException, Post, Query, StreamableFile, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { AdminGuard } from '../../../common/guards/admin.guard';
 import { TradovateFeesRepairService } from './tradovate-fees-repair.service';
@@ -49,13 +49,17 @@ export class TradovateAdminController {
     return (await this.positions.lastReport()) ?? { status: 'none' };
   }
 
-  /** Lignes avant fusion de la dernière réparation appliquée (JSONL, une ligne par trade). */
+  /**
+   * Lignes avant fusion (JSONL, une ligne par trade) : sauvegarde du dernier rapport appliqué, ou
+   * celle de `?at=AAAAMMJJ-HHMM`. 404 si absente ou expirée (30 jours).
+   */
   @Get('repair-positions/backup')
-  async repairPositionsBackup(): Promise<StreamableFile> {
-    const jsonl = (await this.positions.lastBackup()) ?? '';
-    return new StreamableFile(Buffer.from(jsonl, 'utf-8'), {
+  async repairPositionsBackup(@Query('at') at?: string): Promise<StreamableFile> {
+    const b = await this.positions.backup(at);
+    if (!b) throw new NotFoundException('Aucune sauvegarde pour cette date (absente ou expirée).');
+    return new StreamableFile(Buffer.from(b.jsonl, 'utf-8'), {
       type: 'application/x-ndjson; charset=utf-8',
-      disposition: 'attachment; filename="repair-positions-956.jsonl"',
+      disposition: `attachment; filename="repair-positions-956-${b.at}.jsonl"`,
     });
   }
 }

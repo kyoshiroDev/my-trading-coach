@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { BrokerConnection } from '@prisma/client';
 import { planPositionMerges, type StoredPairTrade } from './tradovate-positions-repair';
-import { TradovatePositionsRepairService } from './tradovate-positions-repair.service';
+import { backupStamp, TradovatePositionsRepairService } from './tradovate-positions-repair.service';
 import { TradovateAdminController } from './tradovate-admin.controller';
 import type { RecomputedWindow } from './tradovate-history.service';
 import type { ImportDto } from '../../trades/csv-parsers';
@@ -119,29 +119,51 @@ describe('TradovatePositionsRepairService', () => {
 
   it('mode essai : rapport complet, AUCUNE écriture ni sauvegarde', async () => {
     const { service, trades, store } = setup([row('t1', p1), row('t2', p2)]);
-    const r = await service.repairConnection(conn, false);
-    expect(r).toMatchObject({ windows: 2, failedWindows: 1, positions: 1, merged: 1, rowsRemoved: 1 });
+    const report = await service.run(false);
+    expect(report).toMatchObject({ merged: 1, rowsRemoved: 1, backedUp: 0 });
+    expect(report.backupAt).toBeUndefined();
+    expect(report.perConnection[0]).toMatchObject({ windows: 2, failedWindows: 1, positions: 1, merged: 1, rowsRemoved: 1 });
     expect(trades.mergeImportedPosition).not.toHaveBeenCalled();
     expect(trades.refreshAfterFeesRepair).not.toHaveBeenCalled();
-    expect(store.has('tradovate:positions-repair:backup')).toBe(false);
+    expect([...store.keys()].some((k) => k.startsWith('tradovate:positions-repair:backup:'))).toBe(false);
   });
 
-  it('apply : lignes sauvegardées AVANT la fusion, puis barème, séances et cache recalculés', async () => {
-    const { service, trades, store } = setup([row('t1', p1), row('t2', p2)]);
+  it('apply : sauvegarde DATÉE avant la fusion, backedUp = lignes du fichier = merged + rowsRemoved', async () => {
+    const { service, trades } = setup([row('t1', p1), row('t2', p2)]);
     const report = await service.run(true);
-    expect(report).toMatchObject({ status: 'done', apply: true, merged: 1, rowsRemoved: 1 });
+    expect(report).toMatchObject({ status: 'done', apply: true, merged: 1, rowsRemoved: 1, backedUp: 2 });
+    expect(report.backupAt).toMatch(/^\d{8}-\d{4}$/);
     expect(trades.mergeImportedPosition).toHaveBeenCalledWith('u1', expect.objectContaining({ keepId: 't1', removeIds: ['t2'] }));
     expect(trades.refreshAfterFeesRepair).toHaveBeenCalledWith('u1', 'a1');
-    const backup = (await service.lastBackup())!.trim().split('\n').map((l) => JSON.parse(l) as { id: string });
-    expect(backup.map((t) => t.id).sort()).toEqual(['t1', 't2']);
-    expect(store.get('tradovate:positions-repair:report')).toContain('"merged":1');
+    const b = (await service.backup())!;
+    expect(b.at).toBe(report.backupAt);
+    const lines = b.jsonl.trim().split('\n').map((l) => JSON.parse(l) as { id: string });
+    expect(lines).toHaveLength(report.backedUp);
+    expect(lines.map((t) => t.id).sort()).toEqual(['t1', 't2']);
+    expect(await service.backup(report.backupAt)).toEqual(b);
   });
 
-  it('fusion refusée à l’écriture (ligne disparue) : comptée, pas de recalcul inutile', async () => {
+  it('deuxième apply dans la même minute : refusé, la sauvegarde existante n’est JAMAIS réécrite', async () => {
+    const { service, trades, store } = setup([row('t1', p1), row('t2', p2)]);
+    const key = `tradovate:positions-repair:backup:${backupStamp(new Date())}`;
+    store.set(key, 'ancienne sauvegarde\n');
+    const report = await service.run(true);
+    expect(report).toMatchObject({ status: 'failed', merged: 0 });
+    expect(report.error).toMatch(/déjà existante/);
+    expect(store.get(key)).toBe('ancienne sauvegarde\n');
+    expect(trades.mergeImportedPosition).not.toHaveBeenCalled();
+  });
+
+  it('fusion refusée à l’écriture (ligne disparue) : comptée, lignes sauvegardées quand même, pas de recalcul', async () => {
     const { service, trades } = setup([row('t1', p1), row('t2', p2)], false);
-    const r = await service.repairConnection(conn, true);
-    expect(r).toMatchObject({ merged: 0, failed: 1 });
+    const r = await service.repairConnection(conn, true, 'tradovate:positions-repair:backup:20261114-0900');
+    expect(r).toMatchObject({ merged: 0, failed: 1, backedUp: 2 });
     expect(trades.refreshAfterFeesRepair).not.toHaveBeenCalled();
+  });
+
+  it('écrire sans sauvegarde est impossible', async () => {
+    const { service } = setup([row('t1', p1), row('t2', p2)]);
+    await expect(service.repairConnection(conn, true)).rejects.toThrow(/sans sauvegarde/);
   });
 
   it('run : connexions actives, non démo, compte non archivé ; lignes importées seulement', async () => {
@@ -161,7 +183,18 @@ describe('TradovatePositionsRepairService', () => {
   });
 });
 
+describe('backupStamp', () => {
+  it('AAAAMMJJ-HHMM en UTC', () => {
+    expect(backupStamp(new Date('2026-11-14T07:05:59Z'))).toBe('20261114-0705');
+  });
+});
+
 describe('TradovateAdminController — réparation des positions (#956)', () => {
+  it('sauvegarde absente ou expirée : 404', async () => {
+    const ctrl = new TradovateAdminController({} as never, { backup: vi.fn().mockResolvedValue(null) } as never);
+    await expect(ctrl.repairPositionsBackup('20261114-0705')).rejects.toMatchObject({ status: 404 });
+  });
+
   it('essai par défaut, écriture seulement avec apply=true ; 409 si déjà en cours', async () => {
     const positions = { start: vi.fn().mockResolvedValueOnce(true).mockResolvedValueOnce(true).mockResolvedValueOnce(false) };
     const ctrl = new TradovateAdminController({} as never, positions as never);

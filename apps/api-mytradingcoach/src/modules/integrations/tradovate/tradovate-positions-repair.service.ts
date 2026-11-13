@@ -12,7 +12,8 @@ import { planPositionMerges, type StoredPairTrade } from './tradovate-positions-
  *
  * Tourne dans l'API : mêmes jetons, mêmes verrous et même débit de la Reporting API que la synchro.
  * Mode essai par défaut : rien n'est écrit, le rapport dit ce qui le serait. `apply` : avant toute
- * écriture, les lignes concernées sont sauvegardées en JSONL (Redis, 30 jours, `GET …/backup`).
+ * écriture, les lignes concernées sont sauvegardées en JSONL (Redis, 30 jours, une clé datée
+ * `AAAAMMJJ-HHMM` par exécution, `GET …/backup`). `backedUp` = lignes sauvegardées.
  *
  * Périmètre : connexions Tradovate actives, comptes non démo, compte MTC non archivé. Les imports
  * CSV d'un compte sans connexion et les comptes archivés restent paire par paire. Seules les lignes
@@ -24,7 +25,8 @@ const LOCK_KEY = 'tradovate:positions-repair:lock';
 const LOCK_TTL_S = 2 * 3600;
 const REPORT_KEY = 'tradovate:positions-repair:report';
 const REPORT_TTL_S = 14 * 24 * 3600;
-const BACKUP_KEY = 'tradovate:positions-repair:backup';
+/** Une sauvegarde par exécution appliquée, datée à la minute : jamais réécrite. */
+const BACKUP_PREFIX = 'tradovate:positions-repair:backup:';
 const BACKUP_TTL_S = 30 * 24 * 3600;
 
 export interface PositionsRepairConnectionReport {
@@ -45,6 +47,8 @@ export interface PositionsRepairConnectionReport {
   conflicting: number;
   /** Fusion refusée à l'écriture (ligne disparue entre-temps). */
   failed: number;
+  /** Lignes sauvegardées avant fusion (= lignes du fichier JSONL pour cette connexion). */
+  backedUp: number;
   error?: string;
 }
 
@@ -57,6 +61,10 @@ export interface PositionsRepairReport {
   merged: number;
   rowsRemoved: number;
   conflicting: number;
+  /** Lignes sauvegardées avant fusion : nombre de lignes du fichier JSONL. */
+  backedUp: number;
+  /** Date de la sauvegarde de cette exécution (`AAAAMMJJ-HHMM`), apply seulement. */
+  backupAt?: string;
   perConnection: PositionsRepairConnectionReport[];
   error?: string;
 }
@@ -93,19 +101,38 @@ export class TradovatePositionsRepairService {
     return raw ? (JSON.parse(raw) as PositionsRepairReport) : null;
   }
 
-  /** Sauvegarde JSONL de la dernière réparation appliquée (une ligne par trade avant fusion). */
-  async lastBackup(): Promise<string | null> {
-    return this.redis.client.get(BACKUP_KEY);
+  /**
+   * Sauvegarde JSONL (une ligne par trade avant fusion) : celle de `at` (`AAAAMMJJ-HHMM`), sinon
+   * celle du dernier rapport appliqué. null si absente ou expirée.
+   */
+  async backup(at?: string): Promise<{ at: string; jsonl: string } | null> {
+    const stamp = at ?? (await this.lastReport())?.backupAt;
+    if (!stamp || !/^\d{8}-\d{4}$/.test(stamp)) return null;
+    const jsonl = await this.redis.client.get(BACKUP_PREFIX + stamp);
+    return jsonl == null ? null : { at: stamp, jsonl };
   }
 
   async run(apply: boolean): Promise<PositionsRepairReport> {
     const report: PositionsRepairReport = {
       apply, status: 'running', startedAt: new Date().toISOString(),
-      connections: 0, merged: 0, rowsRemoved: 0, conflicting: 0, perConnection: [],
+      connections: 0, merged: 0, rowsRemoved: 0, conflicting: 0, backedUp: 0, perConnection: [],
     };
+    let backupKey: string | null = null;
+    if (apply) {
+      // Une clé par exécution, datée à la minute ; une clé déjà prise n'est JAMAIS réutilisée.
+      const stamp = backupStamp(new Date());
+      if ((await this.redis.client.set(BACKUP_PREFIX + stamp, '', 'EX', BACKUP_TTL_S, 'NX')) !== 'OK') {
+        // Rien écrit : le rapport le dit, la sauvegarde existante reste intacte.
+        report.status = 'failed';
+        report.error = `sauvegarde ${stamp} déjà existante : relancer dans une minute`;
+        report.finishedAt = new Date().toISOString();
+        await this.save(report);
+        return report;
+      }
+      report.backupAt = stamp;
+      backupKey = BACKUP_PREFIX + stamp;
+    }
     await this.save(report);
-    // Nouvelle sauvegarde pour cette exécution : jamais mélangée avec la précédente.
-    if (apply) await this.redis.client.set(BACKUP_KEY, '', 'EX', BACKUP_TTL_S);
     try {
       const connections = await this.prisma.brokerConnection.findMany({
         where: {
@@ -119,11 +146,12 @@ export class TradovatePositionsRepairService {
       });
       report.connections = connections.length;
       for (const conn of connections) {
-        const r = await this.repairConnection(conn, apply);
+        const r = await this.repairConnection(conn, apply, backupKey);
         report.perConnection.push(r);
         report.merged += r.merged;
         report.rowsRemoved += r.rowsRemoved;
         report.conflicting += r.conflicting;
+        report.backedUp += r.backedUp;
         await this.save(report);
       }
       report.status = 'done';
@@ -141,11 +169,17 @@ export class TradovatePositionsRepairService {
     return report;
   }
 
-  async repairConnection(conn: BrokerConnection, apply: boolean): Promise<PositionsRepairConnectionReport> {
+  async repairConnection(
+    conn: BrokerConnection,
+    apply: boolean,
+    /** Clé de la sauvegarde de l'exécution : obligatoire pour écrire. */
+    backupKey: string | null = null,
+  ): Promise<PositionsRepairConnectionReport> {
     const r: PositionsRepairConnectionReport = {
       connectionId: conn.id, windows: 0, failedWindows: 0, positions: 0, merged: 0, rowsRemoved: 0,
-      incomplete: 0, alreadyGrouped: 0, conflicting: 0, failed: 0,
+      incomplete: 0, alreadyGrouped: 0, conflicting: 0, failed: 0, backedUp: 0,
     };
+    if (apply && !backupKey) throw new Error('réparation appliquée sans sauvegarde');
     try {
       for await (const w of this.history.recomputedWindows(conn)) {
         r.windows++;
@@ -175,13 +209,13 @@ export class TradovatePositionsRepairService {
         r.incomplete += plan.incomplete;
         r.alreadyGrouped += plan.alreadyGrouped;
         r.conflicting += plan.conflicting;
-        if (!apply) {
+        if (!apply || !backupKey) {
           r.merged += plan.merges.length;
           r.rowsRemoved += plan.merges.reduce((n, m) => n + m.removeIds.length, 0);
           continue;
         }
         for (const m of plan.merges) {
-          await this.backup(conn.userId, [m.keepId, ...m.removeIds]);
+          r.backedUp += await this.saveRows(backupKey, conn.userId, [m.keepId, ...m.removeIds]);
           if (await this.trades.mergeImportedPosition(conn.userId, m)) {
             r.merged++;
             r.rowsRemoved += m.removeIds.length;
@@ -203,15 +237,22 @@ export class TradovatePositionsRepairService {
     return r;
   }
 
-  /** Lignes complètes, AVANT écriture, ajoutées à la sauvegarde JSONL de l'exécution. */
-  private async backup(userId: string, ids: string[]): Promise<void> {
+  /** Lignes complètes, AVANT écriture, ajoutées à la sauvegarde JSONL de l'exécution ; rend leur nombre. */
+  private async saveRows(key: string, userId: string, ids: string[]): Promise<number> {
     const rows = await this.prisma.trade.findMany({ where: { id: { in: ids }, userId } });
-    if (rows.length === 0) return;
-    await this.redis.client.append(BACKUP_KEY, rows.map((t) => JSON.stringify(t)).join('\n') + '\n');
-    await this.redis.client.expire(BACKUP_KEY, BACKUP_TTL_S);
+    if (rows.length === 0) return 0;
+    await this.redis.client.append(key, rows.map((t) => JSON.stringify(t)).join('\n') + '\n');
+    await this.redis.client.expire(key, BACKUP_TTL_S);
+    return rows.length;
   }
 
   private async save(report: PositionsRepairReport): Promise<void> {
     await this.redis.client.set(REPORT_KEY, JSON.stringify(report), 'EX', REPORT_TTL_S);
   }
+}
+
+/** `AAAAMMJJ-HHMM` (UTC) : nom de la sauvegarde d'une exécution. */
+export function backupStamp(d: Date): string {
+  const p = (n: number) => String(n).padStart(2, '0');
+  return `${d.getUTCFullYear()}${p(d.getUTCMonth() + 1)}${p(d.getUTCDate())}-${p(d.getUTCHours())}${p(d.getUTCMinutes())}`;
 }

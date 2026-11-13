@@ -1206,8 +1206,9 @@ Premier broker synchronisé par **API** plutôt que par fichier. Module
     Reporting (une fenêtre par mois).
   - **Réparation des anciens trades (PR 2)** : `POST /api/admin/tradovate/repair-positions` (ADMIN,
     essai par défaut, `?apply=true` pour écrire, verrou Redis, réponse 202 et travail en arrière-plan),
-    `GET …/repair-positions` (dernier rapport), `GET …/repair-positions/backup` (JSONL des lignes AVANT
-    fusion, Redis 30 jours). Positions recalculées depuis la Reporting API (`recomputedWindows`, comme
+    `GET …/repair-positions` (dernier rapport), `GET …/repair-positions/backup[?at=AAAAMMJJ-HHMM]`
+    (JSONL des lignes AVANT fusion, une clé Redis datée par exécution appliquée, jamais réécrite,
+    30 jours ; `backedUp` du rapport = nombre de lignes du fichier). Positions recalculées depuis la Reporting API (`recomputedWindows`, comme
     #783), plan pur `tradovate-positions-repair.ts` : toutes les paires retrouvées en base, aucune
     clé `tv:` déjà là, MÊMES saisies sur toutes les lignes (émotion, setup, stop, objectif, notes,
     tags, capital, unité de temps, séance) — sinon comptée (`incomplete` / `alreadyGrouped` /

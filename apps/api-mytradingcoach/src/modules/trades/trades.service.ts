@@ -730,10 +730,6 @@ export class TradesService {
   }
 
   /**
-   * Après une correction en masse des frais (réparation #783) : barème du compte recalculé et
-   * cache analytics invalidé, comme après un import.
-   */
-  /**
    * Fusionne les lignes d'une même position Tradovate importées avant #956 (réparation lancée par
    * l'admin) : la ligne gardée prend les champs du broker de la position (clé `tv:`), son R/R et sa
    * note d'exécution « stop » sont recalculés comme dans `update()`, les alertes de comportement
@@ -785,6 +781,10 @@ export class TradesService {
     return true;
   }
 
+  /**
+   * Après une correction en masse des frais (réparation #783) : barème du compte recalculé et
+   * cache analytics invalidé, comme après un import.
+   */
   async refreshAfterFeesRepair(userId: string, accountId: string): Promise<void> {
     await this.recomputeBehavioralGrades(accountId);
     const sessions = await this.prisma.trade.findMany({
