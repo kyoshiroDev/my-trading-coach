@@ -25,7 +25,8 @@ const PATTERNS = [
   /\+\(\s*[^;]{0,300}?\)\s*\.toFixed\(2\)/g,
   /\+[A-Za-z_][^;]{0,300}?\.toFixed\(2\)/g,
   /(?:Number|parseFloat)\([^;]{0,300}?\.toFixed\(2\)\)/g,
-  /Math\.round\([^;()]*(?:\([^()]*\)[^;()]*)*\*\s*100\)\s*\/\s*100/g,
+  // Indépendant de l'imbrication des parenthèses : la fin « * 100) / 100 » précédée d'un Math.round( dans l'instruction.
+  /Math\.round\([^;]{0,300}?\*\s*100\s*\)\s*\/\s*100\b/g,
 ];
 
 /**
@@ -55,6 +56,26 @@ function sources(dir: string): string[] {
 }
 
 describe('arrondi au centime : roundCents partout', () => {
+  it('les motifs repèrent les formes connues, et pas le formatage d’un texte', () => {
+    const hit = (code: string) => PATTERNS.some((re) => new RegExp(re.source).test(code));
+    for (const code of [
+      'total: Math.round(rows.reduce((s, r) => s + r.amount, 0) * 100) / 100,',
+      'tradingPnl: n === 0 ? 0 : Math.round((realizedPnl + (payouts?.total ?? 0)) * 100) / 100,',
+      'const lev = Math.round((t.pnl / (v * capital)) * 100) / 100;',
+      'const a = Math.round(x * 100) / 100;',
+      'const b = +(a + b).toFixed(2);',
+      'const c = Number(x.toFixed(2));',
+      'const d = parseFloat((t10 - t2).toFixed(2));',
+      'const e = +xs.reduce((s, l) => s + l.amount, 0).toFixed(2);',
+      'const f = +x.toFixed(2);',
+    ]) expect(hit(code), code).toBe(true);
+    for (const code of [
+      'text(`${x.toFixed(2)} EUR`, 440, 11);',
+      "return `${value.toFixed(2)} ${code}`;",
+      'const pct = Math.round(x * 100);',
+    ]) expect(hit(code), code).toBe(false);
+  });
+
   it('aucun toFixed(2) ni Math.round(x * 100) / 100 numérique hors exceptions documentées', () => {
     const hits: string[] = [];
     for (const dir of DIRS) {

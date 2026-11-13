@@ -26,7 +26,7 @@ export function editLeverage(t: EditedTrade): number {
   const v = variation(t);
   const capital = t.capitalEngaged ?? 0;
   if (v == null || v === 0 || !(capital > 0) || t.pnl == null) return 1;
-  const lev = Math.round((t.pnl / (v * capital)) * 100) / 100;
+  const lev = roundCents(t.pnl / (v * capital));
   return Number.isFinite(lev) && lev >= 1 ? lev : 1;
 }
 

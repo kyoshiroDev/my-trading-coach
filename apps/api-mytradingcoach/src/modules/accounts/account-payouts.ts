@@ -55,7 +55,7 @@ export function summarizePayouts(rows: readonly PayoutRow[]): RulePayouts | null
     lastConfidence: last.confidence === 'probable' ? 'probable' : 'certain',
     lastManual: isManualPayout(last.changeType),
     manualTotal: roundCents(manualTotal),
-    total: Math.round(rows.reduce((s, r) => s + r.amount, 0) * 100) / 100,
+    total: roundCents(rows.reduce((s, r) => s + r.amount, 0)),
   };
 }
 

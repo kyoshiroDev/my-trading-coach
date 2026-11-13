@@ -591,7 +591,7 @@ export class AccountsService {
     return {
       startingBalance,
       realizedPnl,
-      tradingPnl: agg.count === 0 ? 0 : Math.round((realizedPnl + (payouts?.total ?? 0)) * 100) / 100,
+      tradingPnl: agg.count === 0 ? 0 : roundCents(realizedPnl + (payouts?.total ?? 0)),
       currentBalance,
       tradesCount: agg.count,
       winRate,
