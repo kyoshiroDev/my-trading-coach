@@ -122,6 +122,20 @@ describe('SessionService', () => {
       expect(query.orderBy).toEqual({ endedAt: 'desc' });
       expect(query.include.trades).toBeDefined();
     });
+
+    it('compte démo le week-end (#977) : séance clôturée depuis le vendredi 00:00', async () => {
+      mockPrisma.tradeSession.findFirst.mockResolvedValueOnce(null).mockResolvedValueOnce(null);
+      await service.getTodaySession('demo', true, new Date('2026-11-15T15:00:00')); // dimanche
+      const from = mockPrisma.tradeSession.findFirst.mock.calls[1][0].where.startedAt.gte as Date;
+      expect(from.getTime()).toBe(new Date('2026-11-13T00:00:00').getTime()); // vendredi
+    });
+
+    it('vrai compte le week-end : seulement la séance clôturée du jour (inchangé)', async () => {
+      mockPrisma.tradeSession.findFirst.mockResolvedValueOnce(null).mockResolvedValueOnce(null);
+      await service.getTodaySession('user-1', false, new Date('2026-11-15T15:00:00'));
+      const from = mockPrisma.tradeSession.findFirst.mock.calls[1][0].where.startedAt.gte as Date;
+      expect(from.getTime()).toBe(new Date('2026-11-15T00:00:00').getTime());
+    });
   });
 
   describe('getTodayTrades', () => {

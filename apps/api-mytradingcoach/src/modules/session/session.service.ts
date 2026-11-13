@@ -75,13 +75,19 @@ export class SessionService {
    * Sans ça, une session clôturée disparaissait au rechargement de la page (onglet mis en
    * arrière-plan sur mobile, choix d'image pour « Publier ») : retour sur la Pré-session,
    * « Démarrer » et session vide parasite (#456).
+   * Compte démo le week-end (#977) : marché fermé, la fenêtre recule au vendredi 00:00 et la
+   * vitrine sert la séance du vendredi, clôturée (onglet Débrief), au lieu d'un écran « Démarrer
+   * la session » que la démo ne peut pas lancer. Les vrais comptes ne changent pas.
    */
-  async getTodaySession(userId: string) {
+  async getTodaySession(userId: string, isDemo = false, now = new Date()) {
     const active = await this.getActiveSession(userId);
     if (active) return active;
 
-    const startOfDay = new Date();
+    const startOfDay = new Date(now);
     startOfDay.setHours(0, 0, 0, 0);
+    if (isDemo) {
+      while (startOfDay.getDay() === 0 || startOfDay.getDay() === 6) startOfDay.setDate(startOfDay.getDate() - 1);
+    }
     return this.prisma.tradeSession.findFirst({
       where: { userId, status: SessionStatus.CLOSED, startedAt: { gte: startOfDay } },
       orderBy: { endedAt: 'desc' },
