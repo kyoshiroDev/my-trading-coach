@@ -19,6 +19,7 @@ import { mapTradovatePairs } from './tradovate-trade.mapper';
 import { describeTradovateSnapshot } from './tradovate-sync-diagnostics';
 import {
   countOutcomes,
+  entryOrderIdFor,
   entryProtection,
   firstVersions,
   strategyByOrder,
@@ -398,11 +399,9 @@ export class TradovateSyncService {
     const first = firstVersions(Array.isArray(versions) ? versions : []);
     const strategyOf = strategyByOrder(Array.isArray(links) ? links : []);
     return trades.map((t) => {
-      const entryFillId = t.side === 'LONG' ? t._buyFillId : t._sellFillId;
-      const fill = entryFillId ? fills.get(Number(entryFillId)) : undefined;
       if (t.entry == null || t.side == null) return { outcome: 'session-gone' as const };
       return entryProtection({
-        entryOrderId: fill?.orderId, side: t.side, entryPrice: t.entry, orders: list, first, strategyOf,
+        entryOrderId: entryOrderIdFor(t, fills), side: t.side, entryPrice: t.entry, orders: list, first, strategyOf,
       });
     });
   }
