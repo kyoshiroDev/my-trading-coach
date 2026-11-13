@@ -217,8 +217,9 @@ export class SessionService {
     const rows = await this.prisma.tradeSession.findMany({
       where,
       orderBy: { startedAt: 'desc' },
-      skip: offset,
-      take: limit,
+      // Bornes (#994) : un `skip` négatif faisait un 500, un `limit` sans plafond chargeait tout.
+      skip: Math.max(0, offset),
+      take: Math.min(Math.max(1, limit), 200),
       select: {
         id: true,
         accountId: true,
