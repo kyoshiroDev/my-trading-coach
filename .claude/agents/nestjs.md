@@ -924,7 +924,11 @@ Filets posés par `DemoSeedCron` (`modules/admin/demo-seed.cron.ts`) :
   position datée du vendredi 21:40 (le front affiche « Marché fermé » le week-end CME). `isStale`
   re-seede aussi si aucune session n'est active pour la journée de trading en cours
   (`activeSessionWhere`) ou si le dernier trade CLÔTURÉ est antérieur à la séance attendue.
-- **Trade encore ouvert gardé après minuit** : `getTodayTrades` = trades du jour **ou** trade sans
+- **« Aujourd'hui » = journée de trading CME**, jamais minuit serveur : `getTodayTrades`,
+  `getTodaySession` et le rattachement des trades à la clôture (`closeSession`, fenêtre
+  `[tradingDayStart, tradingDayEnd[`) utilisent les mêmes bornes que la session active (audit des
+  chiffres, lot 3 : pendant les semaines de décalage d'heure, un trade à 23:30 Paris sortait de la carte live).
+- **Trade encore ouvert gardé après la bascule** : `getTodayTrades` = trades du jour **ou** trade sans
   P&L rattaché à la session active (`sessionId`, `pnl: null`). Vaut pour tous les comptes (position
   ouverte à 23:50) et sert la position de la vitrine.
 - **Les deux comptes prop firm de la démo sont « connectés »** (vitrine, faux jeton, une connexion
@@ -2342,6 +2346,14 @@ flottante). SQL : `round((pnl - abs(coalesce(commission,0)))::text::numeric, 2)`
 flottant). Vérifié identique sur 200 000 paires aléatoires. L'ancien `toFixed(2)` arrondissait selon
 la valeur binaire (10,575 → 10,57) : 7 trades sur 979 en prod changent d'1 centime.
 Les tests d'équivalence SQL doivent contenir des montants à **3 décimales** (demi-centimes).
+**Garde-fou (audit des chiffres, lot 3)** : `src/money-rounding.guard.spec.ts` interdit tout arrondi
+numérique « à la main » (`+(x).toFixed(2)`, `Number(x.toFixed(2))`, `Math.round(x * 100) / 100`) dans
+l'API, les deux fronts et les libs : montants, frais, commissions, totaux, ratios passent par
+`roundCents`. Le formatage d'un texte (`${x.toFixed(2)} EUR`) reste permis. Seules exceptions,
+listées dans le spec avec leur raison : le `pnl` STOCKÉ d'un trade (mapper Tradovate,
+`trade-metrics.util`, `trade-risk`, formulaire de saisie), qui entre dans `dedupeKey` (changer son
+arrondi recréerait des doublons à la resynchro, B1 bloqué par #950), et l'étalon figé
+`src/test/analytics-legacy.service.ts`.
 
 ### Présence et activité : écritures bornées (SCA-B3-02, 2026-10-03)
 

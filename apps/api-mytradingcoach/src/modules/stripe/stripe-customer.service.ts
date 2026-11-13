@@ -2,6 +2,7 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import Stripe from 'stripe';
 import { PrismaService } from '../../prisma/prisma.service';
 import { STRIPE_CLIENT } from './stripe.client';
+import { roundCents } from '@mtc/shared';
 
 /** Customer Stripe d'un user : création sans doublon, lecture de son avoir. */
 @Injectable()
@@ -62,6 +63,6 @@ export class StripeCustomerService {
       .catch(() => null);
     if (!customer || (customer as Stripe.DeletedCustomer).deleted) return 0;
     const balance = (customer as Stripe.Customer).balance ?? 0; // négatif = avoir
-    return balance < 0 ? +(-balance / 100).toFixed(2) : 0;
+    return balance < 0 ? roundCents(-balance / 100) : 0;
   }
 }

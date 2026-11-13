@@ -11,6 +11,7 @@ import { fetchWithTimeout } from '../../common/utils/fetch-timeout';
 import { singleFlight } from '../../common/utils/single-flight';
 import { isBreakingNews, isCryptoNews } from './market-news.breaking';
 import { MACRO_NEWS_SYMBOL, NEWS_DISPLAY_COUNT, NEWS_FEEDS, newsSymbolsFor, parseFmpNewsDate, selectNewsForDisplay } from './market-news.sources';
+import { roundCents } from '@mtc/shared';
 
 export interface MarketContextItem { value: number | null; changePct: number | null; source: 'fmp' | 'yahoo' | 'binance'; }
 export interface TreasuryRates {
@@ -339,7 +340,7 @@ export class MarketDataService {
       const prev = meta?.previousClose ?? meta?.chartPreviousClose ?? null;
       const changePct =
         price != null && prev != null && prev !== 0
-          ? Number((((price - prev) / prev) * 100).toFixed(2))
+          ? roundCents(((price - prev) / prev) * 100)
           : null;
       return { price, changePct };
     } catch { return { price: null, changePct: null }; }
@@ -371,7 +372,7 @@ export class MarketDataService {
       const pct = row?.changePercentage ?? row?.changesPercentage ?? null;
       return {
         price: row?.price ?? null,
-        changePct: pct != null ? Number(pct.toFixed(2)) : null,
+        changePct: pct != null ? roundCents(pct) : null,
       };
     } catch { return { price: null, changePct: null }; }
   }
@@ -414,7 +415,7 @@ export class MarketDataService {
       const K10 = ['year10', 'tenYear', '10Year'];
       const K30 = ['year30', 'thirtyYear', '30Year'];
       const chg = (cur: number | null, old: number | null): number | null =>
-        cur != null && old != null ? Number((cur - old).toFixed(2)) : null;
+        cur != null && old != null ? roundCents(cur - old) : null;
       const t2y = pick(latest, K2), t5y = pick(latest, K5), t10y = pick(latest, K10), t30y = pick(latest, K30);
       return {
         t2y,  t2yChg:  chg(t2y,  pick(prev, K2)),

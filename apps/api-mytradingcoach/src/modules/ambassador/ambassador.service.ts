@@ -8,6 +8,7 @@ import { Prisma, Role } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuthUserCacheService } from '../infra/auth-user-cache.service';
 import { referralMonthlyCommission } from './ambassador-commission.util';
+import { roundCents } from '@mtc/shared';
 
 // Lien de parrainage : même format que celui affiché par le dashboard ambassadeur.
 const REFERRAL_BASE = 'https://mytradingcoach.app';
@@ -222,8 +223,8 @@ export class AmbassadorService {
         referralCode: a.referralCode!,
         totalReferrals:   totalMap[a.referralCode!]   ?? 0,
         premiumReferrals: premiumMap[a.referralCode!]  ?? 0,
-        totalEarned: +totalEarned.toFixed(2),
-        pendingPayout: +pendingPayout.toFixed(2),
+        totalEarned: roundCents(totalEarned),
+        pendingPayout: roundCents(pendingPayout),
       };
     });
   }
@@ -300,11 +301,10 @@ export class AmbassadorService {
       earningsByMonth[c.period] = (earningsByMonth[c.period] ?? 0) + c.amount;
     }
 
-    const totalEarned = +commissions.reduce((s, c) => s + c.amount, 0).toFixed(2);
-    const pendingPayout = +commissions
+    const totalEarned = roundCents(commissions.reduce((s, c) => s + c.amount, 0));
+    const pendingPayout = roundCents(commissions
       .filter(c => c.status === 'pending')
-      .reduce((s, c) => s + c.amount, 0)
-      .toFixed(2);
+      .reduce((s, c) => s + c.amount, 0));
 
     return {
       referralCode: ambassador.referralCode,

@@ -4,6 +4,7 @@ import { AdminNotifier } from '../admin-push/admin-notifier.service';
 import { ADMIN_PUSH_MESSAGES } from '../admin-push/push-messages';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
+import { roundCents } from '@mtc/shared';
 import { ResendService } from '../resend/resend.service';
 import { StripeCustomerService } from '../stripe/stripe-customer.service';
 import { buildStatementPdf } from './referral-statement.pdf';
@@ -262,7 +263,7 @@ export class ReferralService {
       filleul: nameById.get(c.referredUserId) ?? 'Filleul',
       amount: c.amount,
     }));
-    const total = +lines.reduce((s, l) => s + l.amount, 0).toFixed(2);
+    const total = roundCents(lines.reduce((s, l) => s + l.amount, 0));
 
     const pdf = await buildStatementPdf({
       ambassadorName: amb.name ?? amb.email,
