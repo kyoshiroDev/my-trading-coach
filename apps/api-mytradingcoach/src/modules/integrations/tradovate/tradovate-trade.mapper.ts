@@ -16,6 +16,7 @@ import type {
   TradovateFillPair,
   TradovateProduct,
 } from './tradovate.types';
+import { roundCents } from '@mtc/shared';
 
 /** DTO d'import + fill ids (métadonnée interne, retirée avant persistance). */
 export type TradovateTradeDto = Partial<CreateTradeDto> & {
@@ -46,7 +47,7 @@ export function totalFillFee(f: TradovateFillFee): number {
     f.commission, f.clearingFee, f.exchangeFee, f.nfaFee,
     f.brokerageFee, f.ipFee, f.orderRoutingFee,
   ];
-  return +parts.reduce<number>((s, v) => s + Math.abs(v ?? 0), 0).toFixed(2);
+  return roundCents(parts.reduce<number>((s, v) => s + Math.abs(v ?? 0), 0));
 }
 
 /**
@@ -167,7 +168,7 @@ function assignFees(
     feeByFill.set(id, amount);
     expected += amount;
   }
-  expected = +expected.toFixed(2);
+  expected = roundCents(expected);
 
   const { assigned } = assignFeesOncePerFill(trades, feeByFill);
   return {

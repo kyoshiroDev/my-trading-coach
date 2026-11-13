@@ -22,6 +22,10 @@ describe('summarizePayouts', () => {
       .toMatchObject({ lastManual: false, manualTotal: 0, lastConfidence: 'probable' });
   });
 
+  it('total arrondi par roundCents (comme Postgres) : 1 231,495 → 1 231,50, pas 1 231,49', () => {
+    expect(summarizePayouts([row('b1', '2026-10-01', 1_231.495)])?.total).toBe(1_231.5);
+  });
+
   it('aucun payout → null', () => {
     expect(summarizePayouts([])).toBeNull();
   });

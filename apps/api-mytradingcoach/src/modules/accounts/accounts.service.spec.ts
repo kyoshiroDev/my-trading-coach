@@ -897,6 +897,13 @@ describe('AccountsService', () => {
       expect(m.tradingPnl).toBe(5000); // ce qu'affiche Mes comptes, comme le tableau de bord
     });
 
+    it('tradingPnl arrondi par roundCents : un demi-centime part loin de zéro (1 231,495 → 1 231,50)', () => {
+      // 1 000 + 1 231,495 − 1 000 vaut exactement 1231.495 en flottant : Math.round(x × 100) donnait 1 231,49.
+      const acc = { startingBalance: 1000, accountSize: null, profitTarget: null, maxDrawdown: null, drawdownType: 'STATIC' as const };
+      const m = svc.ruleMetricsFromAgg(acc as never, aggregateRuleTrades([t(1_231.495, 1)]), null, null, null, null, new Date(), [], null);
+      expect(m.tradingPnl).toBe(1_231.5);
+    });
+
     it('sans règles (maxDrawdown null) → drawdown null, startingBalance via accountSize', () => {
       const m = svc.computeRuleMetrics(
         { startingBalance: null, accountSize: 10000, profitTarget: null, maxDrawdown: null, drawdownType: 'STATIC' },

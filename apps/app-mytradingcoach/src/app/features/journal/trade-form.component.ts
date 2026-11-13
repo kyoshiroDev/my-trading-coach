@@ -28,7 +28,7 @@ import { CreateTradeSchema } from '../../core/schemas/trade.schema';
 import { SetupsStore } from '../../core/stores/setups.store';
 import { PnlFormatPipe } from '../../shared/pipes';
 import type { TradeSide } from '@mtc/shared';
-import { currencyAffix, plannedRiskReward } from '@mtc/shared';
+import { currencyAffix, plannedRiskReward, roundCents } from '@mtc/shared';
 import { SelectedAccountStore } from '../../core/stores/selected-account.store';
 import { editLeverage, editPnlPct } from './trade-form-edit.util';
 import { DialogDirective } from '@mtc/front-ui';
@@ -403,7 +403,7 @@ export class TradeFormComponent {
         : (entry - effectiveExit) / entry;
       if (capital > 0) {
         const pnl = +(variation * capital * lev).toFixed(2);
-        const pct = +(variation * lev * 100).toFixed(2);
+        const pct = roundCents(variation * lev * 100);
         this.autoPnl.set(pnl);
         this.autoPnlPct.set(pct);
         this.form.update((ff) => ({ ...ff, pnl }));
