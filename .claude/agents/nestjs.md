@@ -2504,6 +2504,10 @@ global à la file ; Resend = 10 req/s par équipe, clé partagée entre environn
   jours où une annonce chiffrée passée est restée sans résultat (la veille ; le vendredi soir le lundi).
   Dimanche 17 h : today + lundi (annonces du dimanche soir). 18 h 30 : filet + purge `eco:calendar:<jour>:*`
   (calendriers par user reconstruits à la demande ; ne touche ni `eco:analysis:*` ni les verrous).
+- Purge aussi (#982) : à chaque résultat relevé par le tick de 20 s, `eco:calendar:<jour>:*` est vidé
+  **avant** le broadcast (le tableau de bord démo, où `refresh-today` est refusé, relit un cache frais au
+  polling de secours) ; à 6 h, today, demain et les jours rattrapés. Une panne Redis au vidage est
+  journalisée et ne bloque ni le broadcast ni le relevé suivant.
 - Coût FMP : avant ~603 requêtes/jour ouvré ; après = 3 à 5 fixes + 1 par tick de 20 s pendant les
   fenêtres (au plus 45 par créneau horaire si FMP ne publie jamais le chiffre).
 - **Observable en prod seulement** : relevé du soir, `🔔 … nouveaux résultats`, `✨ … analyse(s)` (analyse

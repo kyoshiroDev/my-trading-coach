@@ -28,6 +28,9 @@ export class EcoCalendarCron {
     ]);
     const caught = await this.ecoCalendarService.catchUpMissingResults([today, tomorrow]);
     if (caught.length) this.logger.log(`🔁 Rattrapage des résultats manquants : ${caught.join(', ')}`);
+    // Les calendriers déjà mis en cache (TTL 1 h) ne voient ni les heures révisées ni les résultats
+    // rattrapés : on vide les jours resynchronisés (#982).
+    for (const day of [today, tomorrow, ...caught]) await this.clearDayCacheSafely(day);
   }
 
   // Dimanche 17h00 Paris : les annonces du dimanche soir (Pacifique, Asie) et du lundi, à jour
@@ -57,6 +60,9 @@ export class EcoCalendarCron {
         const { hasNew, newEvents } = await this.ecoCalendarService.checkNewReleases(day);
         if (hasNew) {
           this.logger.log(`🔔 ${newEvents.length} nouveaux résultats détectés (${day}) : broadcast WebSocket`);
+          // Vidé AVANT la diffusion : le tableau de bord qui relit GET /eco-calendar/today après
+          // l'événement WebSocket doit voir le résultat, même sans refresh-today (refusé en démo, #982).
+          await this.clearDayCacheSafely(day);
           this.gateway.notifyNewReleases(newEvents);
           // Analyse des annonces fortes chiffrées, côté serveur, sans attendre un clic. Pas
           // attendue ici : les appels modèle ne doivent pas retarder le relevé suivant.
@@ -70,6 +76,15 @@ export class EcoCalendarCron {
       this.logger.warn(`Relevé des résultats éco en échec : ${(err as Error).message}`);
     } finally {
       this.polling = false;
+    }
+  }
+
+  /** Vide le cache du jour ; une panne Redis ne doit bloquer ni la diffusion ni le relevé suivant. */
+  private async clearDayCacheSafely(day: string): Promise<void> {
+    try {
+      await this.ecoCalendarService.clearDayCache(day);
+    } catch (err) {
+      this.logger.warn(`Cache du calendrier ${day} non vidé : ${(err as Error).message}`);
     }
   }
 
