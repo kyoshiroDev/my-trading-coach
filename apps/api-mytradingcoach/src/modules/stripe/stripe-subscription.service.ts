@@ -6,6 +6,7 @@ import { RedisService } from '../infra/redis.service';
 import { STRIPE_CLIENT } from './stripe.client';
 import { ACTIVE_STATUSES, billingCacheKey, extractId } from './stripe.helpers';
 import { AuthUserCacheService } from '../infra/auth-user-cache.service';
+import { referralDiscountStart } from './stripe-coupon.service';
 
 /** État d'abonnement : synchro DB ← Stripe et invalidation du cache de facturation. */
 /** Résultat d'une synchro : l'utilisateur et l'abonnement tel que Stripe le décrit. */
@@ -114,10 +115,18 @@ export class StripeSubscriptionService {
         ? periodEnd
         : null;
 
+    // Remise filleul (#954) : enregistrée pour le MRR base. Un AUTRE abonnement sans remise efface
+    // celle de l'ancien ; le même abonnement dont le payload ne la montre plus la garde (la fenêtre
+    // de 12 mois est appliquée au calcul du MRR).
+    const referralStart = referralDiscountStart(subscription);
+    const referralDiscountSince =
+      referralStart ?? (subscription.id !== user.stripeSubscriptionId ? null : undefined);
+
     await this.prisma.user.update({
       where: { id: user.id },
       data: {
         plan: newPlan,
+        referralDiscountSince,
         stripeSubscriptionId: subscription.id,
         stripePriceId: priceId,
         stripeInterval: interval,

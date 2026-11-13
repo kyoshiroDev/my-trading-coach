@@ -72,23 +72,35 @@ export function referralFirstYearCost(interval: BillingInterval): number {
   return interval === 'year' ? PREMIUM_PRICE_EUR.annual * 0.9 : PREMIUM_PRICE_EUR.monthly * 12 * 0.9;
 }
 
+/** Durée de la remise filleul : 12 paiements en mensuel, le 1er paiement (= 1 an) en annuel. */
+export const REFERRAL_DISCOUNT_MONTHS = 12;
+export const REFERRAL_DISCOUNT_RATE = 0.1;
+
 /**
  * Montant MENSUEL réellement payé (MRR) : fondateur 29 € ou 290/12 ; code partenaire = son prix
- * remisé tant que la remise court, puis le prix normal ; sinon le prix catalogue.
+ * remisé tant que la remise court, puis le prix normal ; remise filleul −10 % pendant 12 mois à
+ * partir de `referralSince` (#954) ; sinon le prix catalogue.
  */
 export function realMonthlyEur(args: {
   interval: BillingInterval | null;
   founder?: boolean;
   partner?: (PartnerConditions & { since: Date }) | null;
+  referralSince?: Date | null;
   now?: Date;
 }): number {
   const yearly = args.interval === 'year';
+  const now = args.now ?? new Date();
   if (args.founder) return yearly ? FOUNDER_OFFER.priceAnnualEur / 12 : FOUNDER_OFFER.priceMonthlyEur;
   if (args.partner) {
     const end = discountEndsAt(args.partner.since, args.partner.durationMonths);
-    if (!end || end > (args.now ?? new Date())) {
+    if (!end || end > now) {
       return yearly ? args.partner.priceAnnualEur / 12 : args.partner.priceMonthlyEur;
     }
   }
-  return yearly ? PREMIUM_PRICE_EUR.annual / 12 : PREMIUM_PRICE_EUR.monthly;
+  const catalog = yearly ? PREMIUM_PRICE_EUR.annual / 12 : PREMIUM_PRICE_EUR.monthly;
+  if (args.referralSince) {
+    const end = discountEndsAt(args.referralSince, REFERRAL_DISCOUNT_MONTHS);
+    if (end && args.referralSince <= now && end > now) return catalog * (1 - REFERRAL_DISCOUNT_RATE);
+  }
+  return catalog;
 }

@@ -346,9 +346,10 @@ export class UsersService {
     ]);
 
     // MRR/ARR sur le montant RÉELLEMENT payé (#525) : 49 € / 490/12 au prix normal, 29 € / 290/12
-    // en fondateur, prix remisé d'un code partenaire tant que la remise court (puis prix normal).
+    // en fondateur, prix remisé d'un code partenaire tant que la remise court (puis prix normal),
+    // −10 % filleul pendant 12 mois (#954).
     const mrrBreakdown = await this.realMrr(REAL_USERS, now);
-    const mrr = mrrBreakdown.normal + mrrBreakdown.founder + mrrBreakdown.partner;
+    const mrr = mrrBreakdown.normal + mrrBreakdown.founder + mrrBreakdown.partner + mrrBreakdown.referral;
     const arr = mrr * 12;
 
     const monthly = premiumMonthly;
@@ -367,33 +368,46 @@ export class UsersService {
     };
   }
 
-  /** MRR découpé normal / fondateur / partenaires, abonnements `active` uniquement (arrondi à l'euro). */
+  /**
+   * MRR découpé normal / fondateur / partenaires / filleuls, abonnements `active` uniquement (arrondi
+   * à l'euro). Un filleul dont la remise est terminée repasse en « normal ».
+   */
   private async realMrr(where: Prisma.UserWhereInput, now: Date) {
     const paying = await this.prisma.user.findMany({
       where: { ...where, plan: 'PREMIUM', stripeSubscriptionStatus: 'active', stripeInterval: { in: ['month', 'year'] } },
       select: {
         stripeInterval: true,
+        referralDiscountSince: true,
         founderSeat: { select: { status: true } },
         partnerRedemption: {
           select: { status: true, priceMonthlyEur: true, priceAnnualEur: true, durationMonths: true, createdAt: true },
         },
       },
     });
-    const sums = { normal: 0, founder: 0, partner: 0 };
+    const sums = { normal: 0, founder: 0, partner: 0, referral: 0 };
     for (const u of paying) {
       const interval = u.stripeInterval === 'year' ? 'year' : 'month';
       const founder = u.founderSeat?.status === 'ACTIVE';
       const r = u.partnerRedemption?.status === 'ACTIVE' ? u.partnerRedemption : null;
       const partner = r ? { ...r, since: r.createdAt } : null;
-      const amount = realMonthlyEur({ interval, founder, partner, now });
+      const referralSince = u.referralDiscountSince ?? null;
+      const amount = realMonthlyEur({ interval, founder, partner, referralSince, now });
       const normal = realMonthlyEur({ interval, now });
-      const bucket = founder ? 'founder' : partner && amount !== normal ? 'partner' : 'normal';
+      const withPartner = partner ? realMonthlyEur({ interval, partner, now }) : normal;
+      const bucket = founder
+        ? 'founder'
+        : partner && withPartner !== normal
+          ? 'partner'
+          : amount !== normal
+            ? 'referral'
+            : 'normal';
       sums[bucket] += amount;
     }
     return {
       normal: Math.round(sums.normal),
       founder: Math.round(sums.founder),
       partner: Math.round(sums.partner),
+      referral: Math.round(sums.referral),
     };
   }
 
