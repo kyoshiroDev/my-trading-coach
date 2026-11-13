@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { Test } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
 import { SessionService } from './session.service';
@@ -308,7 +308,7 @@ describe('SessionService', () => {
             sessionId: null,
             tradedAt: expect.objectContaining({
               gte: expect.any(Date),
-              lte: expect.any(Date),
+              lt: expect.any(Date),
             }),
           }),
           data: { sessionId: 'session-1' },
@@ -497,6 +497,42 @@ describe('SessionService', () => {
       mockPrisma.trade.findMany.mockResolvedValue([]);
       await service.getTodayTrades('user-1');
       expect(mockPrisma.tradeSession.findFirst.mock.calls[0][0].where.startedAt).toEqual({ gte: expect.any(Date) });
+    });
+  });
+
+  describe('« aujourd’hui » = journée de trading CME, pas minuit serveur (audit des chiffres, lot 3)', () => {
+    // Semaine de décalage : Paris en heure d'hiver, Chicago encore en été. 23:30 à Paris = 17:30 à
+    // Chicago : la journée CME du 29/10 a commencé à 22:00 UTC, minuit serveur (Paris) est à 23:00 UTC la veille.
+    const NOW = new Date('2026-10-28T22:30:00.000Z');
+    const CME_START = new Date('2026-10-28T22:00:00.000Z');
+    const CME_END = new Date('2026-10-29T22:00:00.000Z');
+
+    beforeEach(() => {
+      vi.useFakeTimers({ toFake: ['Date'] });
+      vi.setSystemTime(NOW);
+    });
+    afterEach(() => vi.useRealTimers());
+
+    it('getTodayTrades part du début de la journée CME', async () => {
+      mockPrisma.tradeSession.findFirst.mockResolvedValue(null);
+      mockPrisma.trade.findMany.mockResolvedValue([]);
+      await service.getTodayTrades('user-1');
+      expect(mockPrisma.trade.findMany.mock.calls[0][0].where.OR).toEqual([{ tradedAt: { gte: CME_START } }]);
+    });
+
+    it('getTodaySession : la session clôturée du jour est cherchée depuis le début de la journée CME', async () => {
+      mockPrisma.tradeSession.findFirst.mockResolvedValueOnce(null).mockResolvedValueOnce(null);
+      await service.getTodaySession('user-1');
+      expect(mockPrisma.tradeSession.findFirst.mock.calls[1][0].where.startedAt).toEqual({ gte: CME_START });
+    });
+
+    it('closeSession rattache les trades de la journée CME de la session, borne haute exclue', async () => {
+      mockPrisma.tradeSession.findFirst.mockResolvedValue({ startedAt: NOW, accountId: null });
+      mockPrisma.trade.updateMany.mockResolvedValue({ count: 0 });
+      mockPrisma.trade.findMany.mockResolvedValue([]);
+      mockPrisma.tradeSession.update.mockResolvedValue({ id: 'session-1' });
+      await service.closeSession('user-1', 'session-1', 'CONFIDENT');
+      expect(mockPrisma.trade.updateMany.mock.calls[0][0].where.tradedAt).toEqual({ gte: CME_START, lt: CME_END });
     });
   });
 
