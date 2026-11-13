@@ -16,6 +16,8 @@ regarde si #950 est en prod si oui fait B1 pour finir totalement l'audit des chi
 
 ok fais le script #950
 
+ok fais B1
+
 ## Cadrage retenu (proposé par la session, accepté par Greg)
 
 - Périmètre : les chiffres d'abord (P&L, stats, totaux, montants, arrondis, cohérence entre vues). L'audit fonctionnel complet viendra plus tard.

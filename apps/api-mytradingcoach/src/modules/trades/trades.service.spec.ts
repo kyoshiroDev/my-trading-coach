@@ -408,8 +408,22 @@ describe('TradesService', () => {
         timeframe: '5m',
       });
 
-      expect(result.pnl).toBe(5.136);
+      // P&L stocké arrondi au centime par roundCents (B1, #981) : 5,136 → 5,14. Le point clé : PAS 51360.
+      expect(result.pnl).toBe(5.14);
       expect(result.pnl).not.toBe(51360);
+    });
+
+    it('P&L fourni stocké au centime par roundCents, même règle que les agrégats SQL (B1, #981)', async () => {
+      mockPrisma.trade.count.mockResolvedValue(0);
+      mockPrisma.trade.create.mockImplementation(({ data }) => Promise.resolve({ ...mockTrade, ...data }));
+      const base = {
+        asset: 'BTC/USDT', side: TradeSide.LONG, exit: 2, quantity: 1, emotion: EmotionState.NEUTRAL,
+        setupId: 'setup-1', session: TradingSession.NEW_YORK, timeframe: '5m',
+      };
+      // Demi-centime : toFixed(2) arrondit la valeur binaire (1231,49), roundCents la décimale (1231,50).
+      expect((await service.create('user-123', { ...base, entry: 1, pnl: 1231.495 })).pnl).toBe(1231.5);
+      // Entrée à 0 (Binance Spot) : calculatePnl ne répond pas, le P&L fourni est quand même arrondi.
+      expect((await service.create('user-123', { ...base, entry: 0, pnl: 3.1415926 })).pnl).toBe(3.14);
     });
 
     it('édition d\'un trade MEXC importé (le form renvoie le pnl) → P&L inchangé, pas de recalcul ×contrat', async () => {
@@ -437,6 +451,15 @@ describe('TradesService', () => {
       // calculatePnl arrondit à 2 décimales (toFixed) → 5.14. Le point clé : PAS 51360.
       expect(result.pnl).toBe(5.14);
       expect(result.pnl).not.toBe(51360);
+    });
+
+    it('édition avec un P&L fourni sur un trade à entrée 0 (Binance Spot) : stocké au centime (B1, #981)', async () => {
+      // calculatePnl ne répond pas sans prix d'entrée : `...dto` recopiait alors le P&L brut.
+      const existingTrade = { ...mockTrade, asset: 'BTC/USDT', side: TradeSide.LONG, entry: 0, exit: 2, quantity: 1, pnl: 10, commission: 0 };
+      mockPrisma.trade.findUnique.mockResolvedValue(existingTrade);
+      mockPrisma.trade.update.mockImplementation(({ data }) => Promise.resolve({ ...existingTrade, ...data }));
+      const result = await service.update('user-123', 'trade-123', { pnl: 1231.495 });
+      expect(result.pnl).toBe(1231.5);
     });
 
     it('régression futures : le pnl fourni par le form (NQ) est stocké tel quel, comme avant le patch', async () => {
@@ -766,6 +789,20 @@ describe('TradesService', () => {
       const res = await service.importTrades('user-123', [{
         asset: 'BTC/USDT', side: TradeSide.SHORT, entry: 73602.51, exit: 73692.56, pnl: -4.95, commission: 1.62,
         tradedAt: mexcAt.toISOString(), setupId: 'setup-1', emotion: EmotionState.NEUTRAL,
+        session: TradingSession.LONDON, timeframe: '1h',
+      }]);
+      expect(res).toMatchObject({ created: 0, duplicates: 1 });
+    });
+
+    it('trade en base au P&L non arrondi (avant B1) face au même trade arrondi : doublon, pas recréé (#981)', async () => {
+      const at = new Date('2026-06-01T10:00:00.000Z');
+      const trade = { asset: 'EURUSD', side: TradeSide.LONG, tradedAt: at, entry: 1.1, exit: 1.2 };
+      // En base : P&L brut du fichier (3 décimales et plus, stocké tel quel avant B1) ; dans le lot :
+      // le même trade déjà arrondi (édité depuis, ou relu par un parseur qui arrondit).
+      mockPrisma.trade.findMany.mockResolvedValue([{ ...trade, pnl: 12.3456789 }]);
+      mockPrisma.trade.create.mockResolvedValue(mockTrade);
+      const res = await service.importTrades('user-123', [{
+        ...trade, tradedAt: at.toISOString(), pnl: 12.35, setupId: 'setup-1', emotion: EmotionState.NEUTRAL,
         session: TradingSession.LONDON, timeframe: '1h',
       }]);
       expect(res).toMatchObject({ created: 0, duplicates: 1 });

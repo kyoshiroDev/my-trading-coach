@@ -88,6 +88,21 @@ describe('planFeeRepairs', () => {
     });
   });
 
+  it('trade stocké avec l’ancien arrondi toFixed (39,84) face au recalcul roundCents (39,845 → 39,85) : retrouvé (B1, #981)', () => {
+    const plan = planFeeRepairs(
+      [trade({ pnl: 39.85, commission: 4.36 })],
+      [{ id: 't1', ...trade({ pnl: 39.84, commission: 1.18 }) }],
+    );
+    expect(plan.matched).toBe(1);
+    expect(plan.notFound).toBe(0);
+    expect(plan.updates).toEqual([{ id: 't1', commission: 4.36 }]);
+  });
+
+  it('contre-épreuve : 2 centimes d’écart → non retrouvé', () => {
+    const plan = planFeeRepairs([trade({ pnl: 39.86, commission: 4.36 })], [{ id: 't1', ...trade({ pnl: 39.84, commission: 1.18 }) }]);
+    expect(plan.notFound).toBe(1);
+  });
+
   it('contre-épreuve : frais déjà justes → aucune mise à jour', () => {
     const plan = planFeeRepairs([trade({ commission: 4.36 })], [{ id: 't1', ...trade({ commission: 4.36 }) }]);
     expect(plan.updates).toEqual([]);

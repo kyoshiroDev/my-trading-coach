@@ -1239,7 +1239,8 @@ Conséquences à connaître :
   rapport (Redis, 14 j). `TradovateFeesRepairService` relit chaque connexion CONNECTED non démo via
   `TradovateHistoryService.recomputedWindows` (mêmes calculs que l'import, rien d'écrit), rapproche
   par `dedupeKey` (`planFeeRepairs`, un pour un) les trades `BROKER_HISTORY` / `CSV_IMPORT` du compte,
-  et ne change QUE `commission`, toujours à la hausse ; puis barème + cache analytics
+  et ne change QUE `commission`, à la hausse (trades reliés par un fill partagé : remis au prorata en
+  groupe, total du groupe jamais baissé, #950) ; puis barème + cache analytics
   (`TradesService.refreshAfterFeesRepair`). Pas de détection d'incident relancée. Dans l'API et non en
   script : un script renouvellerait les jetons hors des verrous de connexion.
 
@@ -2351,11 +2352,17 @@ Les tests d'équivalence SQL doivent contenir des montants à **3 décimales** (
 **Garde-fou (audit des chiffres, lot 3)** : `src/money-rounding.guard.spec.ts` interdit tout arrondi
 numérique « à la main » (`+(x).toFixed(2)`, `Number(x.toFixed(2))`, `Math.round(x * 100) / 100`) dans
 l'API, les deux fronts et les libs : montants, frais, commissions, totaux, ratios passent par
-`roundCents`. Le formatage d'un texte (`${x.toFixed(2)} EUR`) reste permis. Seules exceptions,
-listées dans le spec avec leur raison : le `pnl` STOCKÉ d'un trade (mapper Tradovate,
-`trade-metrics.util`, `trade-risk`, formulaire de saisie), qui entre dans `dedupeKey` (changer son
-arrondi recréerait des doublons à la resynchro, B1 bloqué par #950), et l'étalon figé
-`src/test/analytics-legacy.service.ts`.
+`roundCents`. Le formatage d'un texte (`${x.toFixed(2)} EUR`) reste permis. Seule exception, listée
+dans le spec : l'étalon figé `src/test/analytics-legacy.service.ts`.
+**P&L stocké au centime (B1, #981)** : `create` stocke `roundCents(dto.pnl)` (même avec une entrée à 0),
+`calculatePnl`, le mapper Tradovate et le formulaire arrondissent par `roundCents`. Les trades importés
+avant gardent leur P&L brut ou arrondi par l'ancien `toFixed` : `dedupeKey` arrondit le P&L au centime
+(un P&L déjà au centime garde sa clé d'avant), et `CentRoundingPool` (dans `importTrades`) rapproche un
+pour un un trade identique dont le P&L ne diffère que d'1 centime d'arrondi (39,845 : `toFixed` 39,84,
+`roundCents` 39,85) ; `planFeeRepairs` applique la même tolérance aux trades restés sans clé exacte.
+Test d'intégration : `trades/import-pnl-arrondi.int-spec.ts`. Les P&L déjà en base ne sont pas réécrits
+(décision de Greg à prendre) : chaque ligne s'affiche au centime, mais les sommes SQL additionnent les
+P&L bruts des trades d'avant B1, un total peut donc différer d'1 centime de la somme des lignes affichées.
 
 ### Présence et activité : écritures bornées (SCA-B3-02, 2026-10-03)
 
