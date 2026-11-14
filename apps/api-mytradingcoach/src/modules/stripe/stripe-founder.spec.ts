@@ -238,7 +238,7 @@ function makeWebhook(sub: { id: string; price: string; interval?: string; metada
     partners as never,
     { add: vi.fn() } as never, stripe, undefined, undefined, mailOnce as never,
   );
-  return { svc, founders, partners, cancel, resend, prisma, invoicesList };
+  return { svc, founders, partners, cancel, resend, prisma, invoicesList, list };
 }
 
 const invoice = (subId: string, billing_reason: string) => ({
@@ -256,6 +256,36 @@ describe('webhooks fondateur', () => {
     });
     expect(cancel).toHaveBeenCalledWith('sub_trial');
     expect(cancel).not.toHaveBeenCalledWith('sub_f');
+  });
+
+  it('essai au prix normal non annulé → alerte admin une fois et tâche rejouée (jamais deux abonnements)', async () => {
+    const w = makeWebhook({ id: 'sub_f', price: 'price_29' });
+    w.cancel.mockRejectedValue(new Error('stripe down'));
+    const evt = event('invoice.payment_succeeded', invoice('sub_f', 'subscription_create'));
+    await expect(w.svc.processWebhookEvent(evt)).rejects.toThrow(/non annulé/);
+    // Place et garantie traitées AVANT : un échec de l'annulation ne prive pas l'abonné du reste.
+    expect(w.founders.claimSeat).toHaveBeenCalled();
+    expect(w.founders.markFirstPaid).toHaveBeenCalled();
+    await expect(w.svc.processWebhookEvent(evt)).rejects.toThrow(/non annulé/);
+    const alerts = w.resend.sendAdminAlert.mock.calls.filter(([subject]) => String(subject).includes('essai au prix normal'));
+    expect(alerts).toHaveLength(1);
+  });
+
+  it('liste des essais indisponible → même alerte et tâche rejouée', async () => {
+    const w = makeWebhook({ id: 'sub_f', price: 'price_29' });
+    w.list.mockRejectedValue(new Error('timeout'));
+    await expect(
+      w.svc.processWebhookEvent(event('invoice.payment_succeeded', invoice('sub_f', 'subscription_create'))),
+    ).rejects.toThrow(/non annulé/);
+    expect(w.resend.sendAdminAlert).toHaveBeenCalledWith('Offre fondateur : essai au prix normal non annulé', expect.any(String));
+  });
+
+  it('paiement fondateur sans place : l\'essai au prix normal est GARDÉ', async () => {
+    const w = makeWebhook({ id: 'sub_f', price: 'price_29' });
+    w.founders.claimSeat.mockResolvedValue(null);
+    await w.svc.processWebhookEvent(event('invoice.payment_succeeded', invoice('sub_f', 'subscription_create')));
+    expect(w.cancel).toHaveBeenCalledWith('sub_f');
+    expect(w.cancel).not.toHaveBeenCalledWith('sub_trial');
   });
 
   it('renouvellement fondateur → aucune nouvelle place', async () => {
