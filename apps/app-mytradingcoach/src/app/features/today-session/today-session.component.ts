@@ -317,7 +317,10 @@ export class TodaySessionComponent implements OnInit, OnDestroy {
     this.journalText.set(value);
     this.journalSaved.set(false);
     if (this.journalSaveTimer) clearTimeout(this.journalSaveTimer);
-    this.journalSaveTimer = setTimeout(() => this.patch({ notes: this.journalText() }), 1200);
+    this.journalSaveTimer = setTimeout(() => {
+      this.journalSaveTimer = null; // partie : rien à renvoyer au départ de la page
+      this.patch({ notes: this.journalText() });
+    }, 1200);
   }
 
   constructor() {
@@ -359,7 +362,13 @@ export class TodaySessionComponent implements OnInit, OnDestroy {
     this.selectedAccount.load(); // Premium-only en interne ; alimente le sélecteur
   }
   ngOnDestroy(): void {
-    if (this.journalSaveTimer)  clearTimeout(this.journalSaveTimer);
+    // Sauvegarde différée en attente : envoyée maintenant, sinon la fin du journal était perdue
+    // quand on quittait la page dans la seconde (#994).
+    if (this.journalSaveTimer) {
+      clearTimeout(this.journalSaveTimer);
+      this.journalSaveTimer = null;
+      this.patch({ notes: this.journalText() });
+    }
   }
 
   protected selectTab(tab: 'morning' | 'live' | 'debrief'): void { this.activeTab.set(tab); }
