@@ -66,3 +66,21 @@ describe('Connexion — message d’erreur', () => {
     expect(mountLogin(500).apiError()).toBe('Une erreur est survenue, réessaie dans un instant');
   });
 });
+
+describe('Mot de passe oublié — succès seulement si l’API a répondu', () => {
+  it('204 → succès', () => {
+    expect(mountForgot(of(undefined)).success()).toBe(true);
+  });
+
+  it.each([0, 500, 503])('panne (%s) → message d’erreur, pas de succès', (status) => {
+    const c = mountForgot(fail(status));
+    expect(c.success()).toBe(false);
+    expect(c.error()).toBe('Le service ne répond pas. Réessaie dans un instant.');
+  });
+
+  it('429 → trop de demandes', () => {
+    const c = mountForgot(fail(429));
+    expect(c.success()).toBe(false);
+    expect(c.error()).toBe('Trop de demandes. Réessaie dans quelques minutes.');
+  });
+});
