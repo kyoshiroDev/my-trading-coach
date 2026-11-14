@@ -2,7 +2,6 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Test, TestingModule } from '@nestjs/testing';
 import {
   BadRequestException,
-  ForbiddenException,
   NotFoundException,
 } from '@nestjs/common';
 import {
@@ -269,14 +268,15 @@ describe('TradesService', () => {
       );
     });
 
-    it('lance ForbiddenException si trade appartient à un autre utilisateur', async () => {
+    // #994 (S6) : 404 comme un trade inexistant, sans révéler qu'il existe (règle des comptes).
+    it('lance NotFoundException si trade appartient à un autre utilisateur', async () => {
       mockPrisma.trade.findUnique.mockResolvedValue({
         ...mockTrade,
         userId: 'other-user',
       });
 
       await expect(service.findOne('user-123', 'trade-123')).rejects.toThrow(
-        ForbiddenException,
+        NotFoundException,
       );
     });
 
@@ -670,7 +670,7 @@ describe('TradesService', () => {
 
     it('trade d’un autre utilisateur : refusé avant toute écriture', async () => {
       mockPrisma.trade.findUnique.mockResolvedValue({ ...synced, userId: 'other' });
-      await expect(service.setStop('user-123', 'trade-123', { stopLoss: 26862.5 })).rejects.toThrow(ForbiddenException);
+      await expect(service.setStop('user-123', 'trade-123', { stopLoss: 26862.5 })).rejects.toThrow(NotFoundException);
       expect(mockPrisma.trade.update).not.toHaveBeenCalled();
     });
   });
@@ -747,6 +747,49 @@ describe('TradesService', () => {
       await service.update('user-123', 'trade-123', { notes: 'juste une note' });
 
       expect(setups.assertOwnedActive).not.toHaveBeenCalled();
+    });
+  });
+
+  // Audit fonctionnel #994 : `UpdateTradeDto` porte `accountId`. Sans contrôle, un utilisateur rattachait
+  // son trade au compte d'un autre (fuite du libellé, notes et autopsie du compte de la victime faussées).
+  describe('update — compte du trade', () => {
+    beforeEach(() => {
+      mockPrisma.trade.findUnique.mockResolvedValue({ ...mockTrade, accountId: 'acc-1' });
+      mockPrisma.trade.update.mockImplementation(({ data }: { data: object }) =>
+        Promise.resolve({ ...mockTrade, ...data }),
+      );
+      mockAccounts.accountWhere.mockReset();
+    });
+
+    it('compte d’un autre utilisateur → 404, rien n’est écrit', async () => {
+      mockAccounts.accountWhere.mockRejectedValue(new NotFoundException('Compte introuvable.'));
+
+      await expect(
+        service.update('user-123', 'trade-123', { accountId: 'acc-victime' }),
+      ).rejects.toThrow(NotFoundException);
+      expect(mockAccounts.accountWhere).toHaveBeenCalledWith('user-123', 'acc-victime');
+      expect(mockPrisma.trade.update).not.toHaveBeenCalled();
+    });
+
+    it('changement vers un de ses comptes → vérifié puis écrit', async () => {
+      mockAccounts.accountWhere.mockResolvedValue({ accountId: 'acc-2' });
+
+      await service.update('user-123', 'trade-123', { accountId: 'acc-2' });
+
+      expect(mockAccounts.accountWhere).toHaveBeenCalledWith('user-123', 'acc-2');
+      expect(mockPrisma.trade.update.mock.calls[0][0].data.accountId).toBe('acc-2');
+    });
+
+    it('accountId inchangé (DTO complet renvoyé par le front) → pas de requête de plus', async () => {
+      await service.update('user-123', 'trade-123', { accountId: 'acc-1', notes: 'note' });
+
+      expect(mockAccounts.accountWhere).not.toHaveBeenCalled();
+    });
+
+    it('accountId « all » (filtre « Tous les comptes ») → compte inchangé, pas de 500', async () => {
+      await service.update('user-123', 'trade-123', { accountId: 'all', notes: 'note' });
+
+      expect(mockPrisma.trade.update.mock.calls[0][0].data.accountId).toBeUndefined(); // Prisma ignore undefined
     });
   });
 

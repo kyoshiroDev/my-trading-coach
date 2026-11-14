@@ -12,9 +12,10 @@ import { JwtService } from '@nestjs/jwt';
 import { AdminPushEvent, AuthProvider, Prisma, Role } from '@prisma/client';
 import { CGU_VERSION } from '@mtc/shared';
 import * as argon2 from 'argon2';
-import { hashPassword, needsPasswordRehash } from './password-hashing';
+import { dummyPasswordHash, hashPassword, needsPasswordRehash } from './password-hashing';
 import * as crypto from 'crypto';
 import { PrismaService } from '../../prisma/prisma.service';
+import { RedisService } from '../infra/redis.service';
 import { ResendService } from '../resend/resend.service';
 import { DemoSeedService } from '../admin/demo-seed.service';
 import { ProductEventsService } from '../product-events/product-events.service';
@@ -146,6 +147,7 @@ export class AuthService {
     private demoSeed: DemoSeedService,
     private productEvents: ProductEventsService,
     private googleVerifier: GoogleIdTokenVerifier,
+    private redis: RedisService,
     @Optional() private adminNotifier?: AdminNotifier,
   ) {}
 
@@ -271,10 +273,12 @@ export class AuthService {
     const user = await this.prisma.user.findUnique({
       where: { email: dto.email },
     });
-    if (!user) throw new UnauthorizedException('Identifiants invalides');
-
-    // Compte Google sans mot de passe : même réponse qu'un mauvais mot de passe (anti-énumération).
-    if (!user.password) throw new UnauthorizedException('Identifiants invalides');
+    // E-mail inconnu ou compte Google sans mot de passe : même réponse ET même coût qu'un mauvais
+    // mot de passe (anti-énumération, #994) — sinon l'absence d'argon2 se mesurait au temps de réponse.
+    if (!user?.password) {
+      await argon2.verify(await dummyPasswordHash(), dto.password).catch(() => false);
+      throw new UnauthorizedException('Identifiants invalides');
+    }
     const valid = await argon2.verify(user.password, dto.password);
     if (!valid) throw new UnauthorizedException('Identifiants invalides');
 
@@ -468,7 +472,7 @@ export class AuthService {
   }
 
   async refresh(refreshToken: string) {
-    let payload: { sub: string; email: string; tv?: number };
+    let payload: { sub: string; email: string; tv?: number; jti?: string };
     try {
       payload = await this.jwtService.verifyAsync(refreshToken, {
         secret: process.env['JWT_REFRESH_SECRET'],
@@ -484,6 +488,9 @@ export class AuthService {
     if (!user) throw new UnauthorizedException('Utilisateur introuvable');
     // Sessions révoquées (liaison Google sur un compte non vérifié) ; jeton d'avant #618 = version 0.
     if ((payload.tv ?? 0) !== user.tokenVersion) {
+      throw new UnauthorizedException('Refresh token invalide ou expiré');
+    }
+    if (payload.jti && (await this.isRefreshRevoked(payload.jti))) {
       throw new UnauthorizedException('Refresh token invalide ou expiré');
     }
 
@@ -553,6 +560,8 @@ export class AuthService {
         password: hashedPassword,
         resetPasswordToken: null,
         resetPasswordExpires: null,
+        // Nouveau mot de passe = sessions ouvertes coupées (refresh refusé si `tv` ≠ tokenVersion), #994.
+        tokenVersion: { increment: 1 },
         // Le lien reçu par e-mail prouve la possession de l'adresse.
         emailVerifiedAt: user.emailVerifiedAt ?? new Date(),
       },
@@ -585,6 +594,34 @@ export class AuthService {
     return { access_token, user: toMe(user) };
   }
 
+  /**
+   * Déconnexion (#994, S2) : le refresh présenté est mis en liste noire jusqu'à son expiration, pour
+   * qu'une copie du cookie ne serve plus. Les autres appareils restent connectés. Ne lève jamais :
+   * la déconnexion efface le cookie quoi qu'il arrive (jeton absent, illisible, Redis en panne).
+   */
+  async revokeRefreshToken(refreshToken: string | undefined): Promise<void> {
+    if (!refreshToken) return;
+    try {
+      const { jti, exp } = await this.jwtService.verifyAsync<{ jti?: string; exp?: number }>(refreshToken, {
+        secret: process.env['JWT_REFRESH_SECRET'],
+      });
+      const ttl = (exp ?? 0) - Math.floor(Date.now() / 1000);
+      if (jti && ttl > 0) await this.redis.client.set(revokedRefreshKey(jti), '1', 'EX', ttl);
+    } catch (err) {
+      this.logger.warn(`Révocation du refresh à la déconnexion impossible : ${(err as Error).message}`);
+    }
+  }
+
+  /** Redis en panne : jeton accepté (une panne ne doit déconnecter personne), comme avant #994. */
+  private async isRefreshRevoked(jti: string): Promise<boolean> {
+    try {
+      return (await this.redis.client.exists(revokedRefreshKey(jti))) === 1;
+    } catch (err) {
+      this.logger.warn(`Liste noire des refresh illisible : ${(err as Error).message}`);
+      return false;
+    }
+  }
+
   /** `tv` (version) dans le refresh token seulement : l'incrémenter révoque toutes les sessions. */
   private async generateTokens(user: { id: string; email: string; tokenVersion?: number }) {
     const payload = { sub: user.id, email: user.email };
@@ -595,9 +632,12 @@ export class AuthService {
         {
           secret: process.env['JWT_REFRESH_SECRET'],
           expiresIn: '7d',
+          jwtid: crypto.randomUUID(), // identifiant du jeton : liste noire à la déconnexion (#994)
         },
       ),
     ]);
     return { access_token, refresh_token };
   }
 }
+
+const revokedRefreshKey = (jti: string) => `auth:revoked-refresh:${jti}`;

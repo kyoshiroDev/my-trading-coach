@@ -11,6 +11,7 @@ import {
 import { Prisma } from '@prisma/client';
 import { JwtService } from '@nestjs/jwt';
 import { AuthService } from './auth.service';
+import { RedisService } from '../infra/redis.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ResendService } from '../resend/resend.service';
 import { SetupsService } from '../setups/setups.service';
@@ -73,6 +74,7 @@ const mockDemoSeed = { ensureFresh: vi.fn().mockResolvedValue(false) };
 const mockProductEvents = { record: vi.fn().mockResolvedValue(undefined) };
 
 const mockNotifier = { notify: vi.fn() };
+const mockRedis = { client: { set: vi.fn().mockResolvedValue('OK'), exists: vi.fn().mockResolvedValue(0) } };
 
 const GOOGLE_IDENTITY = { googleId: 'g-sub-1', email: 'trader@gmail.com', name: 'Trader' };
 const mockVerifier = { verify: vi.fn() };
@@ -104,6 +106,7 @@ describe('AuthService', () => {
         { provide: ProductEventsService, useValue: mockProductEvents },
         { provide: AdminNotifier, useValue: mockNotifier },
         { provide: GoogleIdTokenVerifier, useValue: mockVerifier },
+        { provide: RedisService, useValue: mockRedis },
       ],
     }).compile();
 
@@ -444,6 +447,17 @@ describe('AuthService', () => {
       );
     });
 
+    // Audit fonctionnel #994 : un nouveau mot de passe doit couper les sessions ouvertes (compte
+    // pré-créé par un tiers, session volée). `refresh` refuse un jeton dont `tv` ≠ tokenVersion.
+    it('révoque les sessions existantes (tokenVersion incrémenté)', async () => {
+      mockPrisma.user.findFirst.mockResolvedValue(mockUser);
+      mockPrisma.user.update.mockResolvedValue(mockUser);
+
+      await service.resetPassword('valid-raw-token', 'newpassword123');
+
+      expect(mockPrisma.user.update.mock.calls[0][0].data.tokenVersion).toEqual({ increment: 1 });
+    });
+
     it('cherche par le hash SHA256 du token brut, pas le token brut', async () => {
       mockPrisma.user.findFirst.mockResolvedValue(mockUser);
       mockPrisma.user.update.mockResolvedValue(mockUser);
@@ -626,14 +640,27 @@ describe('AuthService', () => {
     });
   });
 
-  describe('login d’un compte Google sans mot de passe', () => {
-    it('401 identique à un mauvais mot de passe, argon2 jamais appelé', async () => {
+  // #994 (S5) : sans hash à vérifier, la réponse partait tout de suite ; un e-mail connu passait par
+  // argon2 (~dizaines de ms). L'écart de temps révélait les comptes : vérification factice à la place.
+  describe('login sans mot de passe à vérifier : même coût qu’un mauvais mot de passe', () => {
+    it('compte Google sans mot de passe : 401 identique, argon2 vérifie un hash factice', async () => {
       const argon2 = await import('argon2');
+      vi.mocked(argon2.verify).mockClear();
       mockPrisma.user.findUnique.mockResolvedValue({ ...mockUser, password: null });
       await expect(service.login({ email: 'test@test.com', password: 'Password123' })).rejects.toThrow(
         new UnauthorizedException('Identifiants invalides'),
       );
-      expect(argon2.verify).not.toHaveBeenCalled();
+      expect(argon2.verify).toHaveBeenCalledTimes(1);
+    });
+
+    it('e-mail inconnu : 401 identique, argon2 vérifie un hash factice', async () => {
+      const argon2 = await import('argon2');
+      vi.mocked(argon2.verify).mockClear();
+      mockPrisma.user.findUnique.mockResolvedValue(null);
+      await expect(service.login({ email: 'inconnu@test.com', password: 'Password123' })).rejects.toThrow(
+        new UnauthorizedException('Identifiants invalides'),
+      );
+      expect(argon2.verify).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -686,6 +713,54 @@ describe('AuthService', () => {
     it('refresh token d’avant #618 (sans version) = version 0 → accepté', async () => {
       (mockJwt as Record<string, unknown>)['verifyAsync'] = vi.fn().mockResolvedValue({ sub: 'user-123', email: 'a@b.c' });
       mockPrisma.user.findUnique.mockResolvedValue({ ...mockSafeUser, password: 'h', googleId: null, tokenVersion: 0 });
+      await expect(service.refresh('t')).resolves.toMatchObject({ access_token: 'mock_token' });
+    });
+  });
+
+  // #994 (S2) : la déconnexion effaçait seulement le cookie ; un refresh copié restait valide 7 jours.
+  describe('déconnexion : refresh présenté mis en liste noire', () => {
+    const verify = (payload: object) => {
+      (mockJwt as Record<string, unknown>)['verifyAsync'] = vi.fn().mockResolvedValue(payload);
+    };
+
+    it('chaque refresh token porte un identifiant unique (jwtid)', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
+      await service.login({ email: 'test@test.com', password: 'password123' });
+      const refreshCall = mockJwt.signAsync.mock.calls.find((c) => (c[1] as { expiresIn?: string })?.expiresIn === '7d');
+      expect((refreshCall?.[1] as { jwtid?: string }).jwtid).toMatch(/^[0-9a-f-]{36}$/);
+    });
+
+    it('logout : jti mis en liste noire jusqu’à l’expiration du jeton', async () => {
+      const exp = Math.floor(Date.now() / 1000) + 3600;
+      verify({ sub: 'user-123', jti: 'jti-1', exp });
+      await service.revokeRefreshToken('t');
+      const [key, , mode, ttl] = mockRedis.client.set.mock.calls[0];
+      expect(key).toBe('auth:revoked-refresh:jti-1');
+      expect(mode).toBe('EX');
+      expect(ttl).toBeGreaterThan(3590);
+      expect(ttl).toBeLessThanOrEqual(3600);
+    });
+
+    it('logout sans cookie, jeton illisible ou Redis en panne : jamais d’erreur', async () => {
+      await expect(service.revokeRefreshToken(undefined)).resolves.toBeUndefined();
+      (mockJwt as Record<string, unknown>)['verifyAsync'] = vi.fn().mockRejectedValue(new Error('bad'));
+      await expect(service.revokeRefreshToken('x')).resolves.toBeUndefined();
+      verify({ sub: 'user-123', jti: 'jti-1', exp: Math.floor(Date.now() / 1000) + 60 });
+      mockRedis.client.set.mockRejectedValueOnce(new Error('redis down'));
+      await expect(service.revokeRefreshToken('t')).resolves.toBeUndefined();
+    });
+
+    it('refresh d’un jeton mis en liste noire → 401', async () => {
+      verify({ sub: 'user-123', email: 'a@b.c', tv: 0, jti: 'jti-1' });
+      mockPrisma.user.findUnique.mockResolvedValue({ ...mockSafeUser, password: 'h', googleId: null, tokenVersion: 0 });
+      mockRedis.client.exists.mockResolvedValueOnce(1);
+      await expect(service.refresh('t')).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('Redis en panne au refresh : accepté (une panne ne déconnecte personne)', async () => {
+      verify({ sub: 'user-123', email: 'a@b.c', tv: 0, jti: 'jti-1' });
+      mockPrisma.user.findUnique.mockResolvedValue({ ...mockSafeUser, password: 'h', googleId: null, tokenVersion: 0 });
+      mockRedis.client.exists.mockRejectedValueOnce(new Error('redis down'));
       await expect(service.refresh('t')).resolves.toMatchObject({ access_token: 'mock_token' });
     });
   });

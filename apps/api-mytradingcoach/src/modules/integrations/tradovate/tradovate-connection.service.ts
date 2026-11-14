@@ -114,6 +114,9 @@ export class TradovateConnectionService {
     // Sans state lisible, on ne sait pas d'où il vient : les réglages, jamais une page morte.
     if (!payload) return { status: 'error', reason: 'session_expired', origin: 'settings' };
     const { userId, accountId, origin } = payload;
+    // #994 (S4) : la doc ne dit pas si Tradovate renvoie `state`. Constat avant de l'exiger : un
+    // `state` absent laisse passer un code tiers tant qu'un cookie d'une tentative abandonnée vit.
+    this.logger.log(`Callback Tradovate : state renvoyé = ${query.state ? 'oui' : 'non'}`);
     if (query.state && query.state !== cookieState) {
       return { status: 'error', reason: 'state_mismatch', accountId, origin };
     }

@@ -1,6 +1,5 @@
 import {
   BadRequestException,
-  ForbiddenException,
   Injectable,
   NotFoundException,
   Optional,
@@ -500,7 +499,8 @@ export class TradesService {
       include: { setup: { select: { id: true, title: true, color: true } } },
     });
     if (!trade) throw new NotFoundException('Trade introuvable');
-    if (trade.userId !== userId) throw new ForbiddenException();
+    // 404 et non 403 : ne pas révéler qu'un trade d'un autre utilisateur existe (#994, S6).
+    if (trade.userId !== userId) throw new NotFoundException('Trade introuvable');
     return trade;
   }
 
@@ -515,6 +515,10 @@ export class TradesService {
     if (dto.setupId && dto.setupId !== existing.setupId) {
       await this.setups.assertOwnedActive(userId, dto.setupId);
     }
+    // Compte, même règle (#994) : « all » = filtre « Tous les comptes », jamais un compte (retiré) ;
+    // un compte qui change est vérifié comme à la création (404 s'il n'est pas à l'utilisateur).
+    if (dto.accountId === 'all') dto = { ...dto, accountId: undefined };
+    else if (dto.accountId && dto.accountId !== existing.accountId) await this.accounts.accountWhere(userId, dto.accountId);
 
     if (dto.commission != null) dto = { ...dto, commission: Math.abs(dto.commission) }; // cf. create
     const merged = { ...existing, ...dto } as CreateTradeDto;
