@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -32,10 +33,7 @@ export class SessionService {
   ) {}
 
   async startSession(userId: string, mood: MoodState, accountId?: string) {
-    await this.prisma.tradeSession.updateMany({
-      where: { userId, status: SessionStatus.ACTIVE },
-      data: { status: SessionStatus.CLOSED, endedAt: new Date() },
-    });
+    await this.closeOpenSessions(userId);
 
     // accountId fourni et valide (appartient au user) → on l'utilise ; sinon compte
     // par défaut (anti-NULL : jamais de session sans compte).
@@ -101,9 +99,11 @@ export class SessionService {
   ) {
     const existing = await this.prisma.tradeSession.findFirst({
       where: { id: sessionId, userId },
-      select: { startedAt: true, accountId: true },
+      select: { startedAt: true, accountId: true, status: true, endedAt: true },
     });
     if (!existing) throw new NotFoundException('Session introuvable');
+    // Déjà clôturée (double clic, cron passé avant) : fin d'origine gardée, humeur et notes enregistrées (#994).
+    const endedAt = existing.status === SessionStatus.CLOSED && existing.endedAt ? existing.endedAt : new Date();
     // 1 session = 1 compte : les trades d'un autre compte n'y entrent pas (#457).
     const sameAccount = existing.accountId ? { accountId: existing.accountId } : {};
 
@@ -123,7 +123,7 @@ export class SessionService {
       where: { id: sessionId, userId },
       data: {
         status: SessionStatus.CLOSED,
-        endedAt: new Date(),
+        endedAt,
         moodEnd: mood,
         ...totals,
         notes,
@@ -143,6 +143,26 @@ export class SessionService {
 
   private sessionTrades(userId: string, sessionId: string, sameAccount: { accountId?: string }) {
     return sessionTradesFor(this.prisma, userId, sessionId, sameAccount.accountId ?? null);
+  }
+
+  /**
+   * Séances encore ouvertes au démarrage d'une nouvelle (#994) : clôturées AVEC leurs totaux, sinon
+   * `totalTrades` restait à 0 et la séance disparaissait de l'historique. Séance d'une journée
+   * précédente = comme le cron (fin de SA journée) ; séance du jour (autre appareil) = maintenant.
+   */
+  private async closeOpenSessions(userId: string, now = new Date()): Promise<void> {
+    const open = await this.prisma.tradeSession.findMany({
+      where: { userId, status: SessionStatus.ACTIVE },
+      select: { id: true, accountId: true, startedAt: true },
+    });
+    for (const s of open) {
+      const trades = await this.sessionTrades(userId, s.id, s.accountId ? { accountId: s.accountId } : {});
+      const data =
+        s.startedAt < tradingDayStart(now)
+          ? autoCloseData(s.startedAt, trades)
+          : { status: SessionStatus.CLOSED, endedAt: now, ...sessionTotalsFrom(trades) };
+      await this.prisma.tradeSession.updateMany({ where: { id: s.id, status: SessionStatus.ACTIVE }, data });
+    }
   }
 
   /**
@@ -402,6 +422,13 @@ export class SessionService {
       where: { id: tradeId, userId },
     });
     if (!trade) throw new NotFoundException('Trade introuvable');
+    // `exitPrice` vient de @Body('exitPrice') : ni validé ni converti par le ValidationPipe (#994).
+    if (typeof exitPrice !== 'number' || !Number.isFinite(exitPrice) || exitPrice <= 0) {
+      throw new BadRequestException('Prix de sortie invalide.');
+    }
+    // Déjà clôturé (P&L réalisé du broker, prix de sortie sans P&L calculable, double clic) : jamais
+    // réécrit, ni étiquette poussée deux fois.
+    if (trade.exit != null || trade.pnl != null) return trade;
 
     let closeType: 'SL' | 'TP' | 'MANUAL' = 'MANUAL';
 
@@ -432,14 +459,14 @@ export class SessionService {
       capitalEngaged: trade.capitalEngaged ?? undefined,
     } as CreateTradeDto);
 
-    const closed = await this.prisma.trade.update({
-      where: { id: tradeId },
-      data: {
-        exit: exitPrice,
-        pnl: pnl ?? null,
-        tags: { push: closeType },
-      },
+    // Écriture conditionnelle : deux clics simultanés lisent tous deux un trade ouvert ; seul le
+    // premier écrit, le second renvoie le trade clôturé par l'autre.
+    const { count } = await this.prisma.trade.updateMany({
+      where: { id: tradeId, userId, exit: null, pnl: null },
+      data: { exit: exitPrice, pnl: pnl ?? null, tags: { push: closeType } },
     });
+    const closed = await this.prisma.trade.findUniqueOrThrow({ where: { id: tradeId } });
+    if (count === 0) return closed;
     // Le P&L change : totaux de sa séance si elle est déjà clôturée, et statistiques en cache.
     await refreshClosedSessionTotals(this.prisma, [trade.sessionId]);
     await this.analytics.invalidateUserCache(userId);
