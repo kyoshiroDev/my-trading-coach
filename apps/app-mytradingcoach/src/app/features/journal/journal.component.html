@@ -386,7 +386,7 @@
                     <button aria-label="Modifier" class="btn-edit" (click)="openEditModal(trade)" title="Modifier">
                       <svg [lucideIcon]="PencilIcon" [size]="12"></svg>
                     </button>
-                    <button aria-label="Supprimer" class="btn-delete" data-testid="trade-delete" (click)="deleteTrade(trade.id)" title="Supprimer">
+                    <button aria-label="Supprimer" class="btn-delete" data-testid="trade-delete" (click)="askDeleteTrade(trade)" title="Supprimer">
                       <svg [lucideIcon]="XIcon" [size]="12"></svg>
                     </button>
                   </span>

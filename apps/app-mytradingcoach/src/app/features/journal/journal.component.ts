@@ -34,7 +34,7 @@ import { MoneyService } from '../../core/services/money.service';
 import { ToastService } from '../../core/services/toast.service';
 import { TradovateLiveSocketService } from '../../core/services/tradovate-live-socket.service';
 import { apiErrorMessage } from '../../core/utils/api-error';
-import { DialogDirective, ErrorStateComponent, PctPipe } from '@mtc/front-ui';
+import { ConfirmService, DialogDirective, ErrorStateComponent, PctPipe } from '@mtc/front-ui';
 import { InactiveAccountsToggleComponent } from '../../shared/components/inactive-accounts-toggle/inactive-accounts-toggle.component';
 import { isInactiveStatus, statusBadgeClass, statusLabel } from '../../core/utils/account-status.util';
 import {
@@ -59,6 +59,7 @@ import {
 export class JournalComponent {
   protected readonly tradesStore = inject(TradesStore);
   private readonly tradesApi     = inject(TradesApi);
+  private readonly confirm = inject(ConfirmService);
   private readonly destroyRef    = inject(DestroyRef);
   private readonly selectedAccount = inject(SelectedAccountStore);
   protected readonly setupsStore = inject(SetupsStore);
@@ -431,6 +432,21 @@ export class JournalComponent {
   private forgetTrade(id: string): void {
     this.tradesStore.removeTrade(id);
     this.refreshStats();
+  }
+
+  /**
+   * Croix d'une ligne (#994) : confirmation avant de supprimer, comme la suppression d'une journée.
+   * La suppression est irréversible et une croix se lit comme « fermer ».
+   */
+  protected async askDeleteTrade(trade: Trade): Promise<void> {
+    const day = new Date(trade.tradedAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
+    const ok = await this.confirm.ask({
+      title: 'Supprimer ce trade ?',
+      message: `${trade.asset} ${trade.side === 'LONG' ? 'long' : 'short'} du ${day}. La suppression est définitive.`,
+      confirmLabel: 'Supprimer',
+      danger: true,
+    });
+    if (ok) this.deleteTrade(trade.id);
   }
 
   deleteTrade(id: string): void {
