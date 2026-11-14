@@ -77,7 +77,9 @@ export class LoginComponent {
         next: () => this.postSignup.afterLogin(),
         error: (err) => {
           const status = err.status;
-          if (status === 401)
+          // 400 : mot de passe sous la longueur du DTO, ou adresse refusée par @IsEmail. Pour
+          // l'utilisateur, ce sont des identifiants incorrects, pas une panne (#994).
+          if (status === 401 || status === 400)
             // Même 401 pour un compte Google sans mot de passe (anti-énumération) : on le rappelle.
             this.apiError.set(
               this.googleEnabled()
