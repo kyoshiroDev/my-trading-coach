@@ -365,6 +365,20 @@ export class TradovateConnectionService {
         // prop firm), donc l'écrire ici écraserait le bon login par un identifiant partagé.
         // Efface la raison d'un rechoix (« ce compte n'existe plus… ») : le nouveau compte est posé.
         lastSyncError: null,
+        // AUTRE compte broker (#994) : l'état de l'ancien ne vaut rien pour lui. Historique remis à
+        // zéro (le contrôleur relance l'import complet), payouts relus depuis le début, solde vidé.
+        ...(conn.externalAccountId && conn.externalAccountId !== target.id
+          ? {
+              historyImportedAt: null,
+              payoutsCheckedThrough: null,
+              brokerCashBalance: null,
+              brokerCashBalanceAt: null,
+              brokerNetLiq: null,
+              brokerOpenPnl: null,
+              brokerEquityAt: null,
+              brokerOpenPositions: 0,
+            }
+          : {}),
       },
       include: { account: { select: SYNC_PAUSE_ACCOUNT_SELECT } },
     });

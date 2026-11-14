@@ -102,6 +102,8 @@ GET    /api/session/today/stats        JWT → stats live (totalPnl, winRate, tr
 # 1 session = 1 compte (#457) : un trade n'est rattaché à la session active (création, synchro
 # broker, rattachement à la clôture) que s'il est sur SON compte ; la clôture ne compte que ces
 # trades. Le débrief et la carte « Publier » lisent les totaux de la session clôturée.
+# Et seulement s'il est daté de la journée CME de la session (#994) : un import d'historique ou une
+# synchro complète pendant une séance ouverte n'y rattache pas les trades passés.
 POST   /api/session/trades/:id/close   JWT → clôturer un trade (exitPrice → détection SL/TP/Manuel)
 
 GET    /api/eco-calendar/today         PREMIUM → events du jour + analyse IA (cache Redis 1h)

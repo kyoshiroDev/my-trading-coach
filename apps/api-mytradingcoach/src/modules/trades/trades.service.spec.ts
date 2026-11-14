@@ -179,7 +179,7 @@ describe('TradesService', () => {
       beforeEach(() => {
         mockPrisma.trade.count.mockResolvedValue(0);
         mockPrisma.trade.create.mockResolvedValue(mockTrade);
-        mockPrisma.tradeSession.findFirst.mockResolvedValue({ id: 's1', accountId: 'acc-session' });
+        mockPrisma.tradeSession.findFirst.mockResolvedValue({ id: 's1', accountId: 'acc-session', startedAt: new Date() });
       });
 
       it('trade du compte de la session → rattaché à la session', async () => {
@@ -195,9 +195,25 @@ describe('TradesService', () => {
       });
 
       it('session sans compte (ancienne donnée) → rattaché quel que soit le compte', async () => {
-        mockPrisma.tradeSession.findFirst.mockResolvedValue({ id: 's1', accountId: null });
+        mockPrisma.tradeSession.findFirst.mockResolvedValue({ id: 's1', accountId: null, startedAt: new Date() });
         mockAccounts.accountWhere.mockResolvedValue({ accountId: 'acc-autre' });
         await service.create('user-123', { ...createTradeDto, accountId: 'acc-autre' });
+        expect(mockPrisma.trade.create.mock.calls[0][0].data.sessionId).toBe('s1');
+      });
+
+      // #994 (N1) : un import d'historique ou une synchro complète rattachait tous les trades passés
+      // à la séance ouverte (totaux de séance et émotion effective faussés). Journée CME de la séance.
+      it('trade d’une autre journée (historique importé) → hors session', async () => {
+        mockAccounts.accountWhere.mockResolvedValue({ accountId: 'acc-session' });
+        const ilYaDixJours = new Date(Date.now() - 10 * 86_400_000).toISOString();
+        await service.create('user-123', { ...createTradeDto, accountId: 'acc-session', tradedAt: ilYaDixJours });
+        expect(mockPrisma.trade.create.mock.calls[0][0].data.sessionId).toBeNull();
+      });
+
+      it('trade sans date (maintenant), même compte → rattaché', async () => {
+        mockAccounts.accountWhere.mockResolvedValue({ accountId: 'acc-session' });
+        const { tradedAt: _sansDate, ...sansDate } = createTradeDto as typeof createTradeDto & { tradedAt?: string };
+        await service.create('user-123', { ...sansDate, accountId: 'acc-session' });
         expect(mockPrisma.trade.create.mock.calls[0][0].data.sessionId).toBe('s1');
       });
     });
