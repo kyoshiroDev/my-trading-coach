@@ -1331,6 +1331,19 @@ en plein contenu. Le refus « mode démo » (403 `DemoReadOnlyGuard`) ne fait **
   `SetupsStore`, qui partaient au démarrage avec leurs API (−9,4 kB, 497,8 → 488,4 kB). Nouveau store
   propre à l'utilisateur → s'inscrire là, pas l'injecter dans `AuthService`. Reste au démarrage ~4,5 kB
   de `@mtc/shared` (règles prop firm, stats) via un morceau partagé d'esbuild, sans import direct.
+  Inscrits (audit #994) : trades, setups, comptes, push, **séance** (`SessionStore` : `activeSession`
+  à null coupe aussi ses pollings) et **Tradovate** (`TradovateStore`, `loaded` repasse à false).
+- **Store qui recharge une liste filtrée** : génération incrémentée à chaque `loadTrades`, réponse
+  d'une génération passée ignorée (`TradesStore`, #994) — sinon « Win » puis « Loss » rapides ou
+  « Charger plus » puis un filtre affichent la réponse arrivée en dernier. Supprimer le trade qui
+  sert de curseur recale `nextCursor` sur le dernier restant.
+- **Suppression irréversible d'une ligne** : `ConfirmService.ask({ danger: true })` avant l'appel
+  (croix du journal, #994), comme la suppression d'une journée.
+- **Liste vide** : distinguer erreur (`mtc-error-state`), filtre sans résultat (« Tout afficher ») et
+  vraie absence de données (`JournalComponent.emptyKind`, #994).
+- **Schéma zod d'un formulaire** : il retire les clés qu'il ne connaît pas ; tout champ saisi doit y
+  figurer (les frais du formulaire de trade ne partaient pas, #994). Ne jamais réécrire l'état du
+  formulaire avec la valeur transformée pour l'envoi (le 2e envoi plantait).
 - Dans les libs, sorties en `@Output() … = new EventEmitter()` : leurs tests tournent en JIT, qui
   ne voit pas `output()`.
 - **Toute donnée chargée affiche son échec** : `@if (loadError()) { <mtc-error-state (retry)="reload()" /> }`
