@@ -3,20 +3,19 @@
  * premier trade » aussi quand le chargement échouait (TradesStore.error lu nulle part) et quand un
  * filtre ne trouvait rien sur un compte qui a des centaines de trades.
  */
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { signal, NO_ERRORS_SCHEMA } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { HttpClient, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { of, throwError } from 'rxjs';
+import { of } from 'rxjs';
 import { JournalComponent } from './journal.component';
 import { TradesStore, Trade } from '../../core/stores/trades.store';
 import { UserStore } from '../../core/stores/user.store';
 import { SetupsStore } from '../../core/stores/setups.store';
 import { SelectedAccountStore } from '../../core/stores/selected-account.store';
 import { TradesApi } from '../../core/api/trades.api';
-import { ToastService } from '../../core/services/toast.service';
 import { environment } from '@app/environments/environment';
 import { statsScopeStub } from '../../core/stores/selected-account.store.stub';
 
