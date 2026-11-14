@@ -93,4 +93,15 @@ describe('Formulaire de trade — envoi', () => {
     cmp.onSubmit();
     expect(saved).toHaveLength(0);
   });
+
+  it('premier envoi refusé (actif vide), puis corrigé : le 2e envoi part, sans exception', async () => {
+    const { cmp, fill, saved } = await render();
+    fill({ asset: '', side: 'LONG', entry: 100, exit: 110, tradedAt: '2026-06-01' });
+    cmp.onSubmit();
+    expect(saved).toHaveLength(0);
+    fill({ asset: 'BTC/USDT' });
+    expect(() => cmp.onSubmit()).not.toThrow();
+    expect(saved).toHaveLength(1);
+    expect(saved[0].tradedAt).toBe(new Date('2026-06-01T12:00:00').toISOString());
+  });
 });
