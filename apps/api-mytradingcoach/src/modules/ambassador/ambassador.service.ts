@@ -248,6 +248,8 @@ export class AmbassadorService {
     if (!ambassador?.referralCode) return { count: 0 };
 
     const sinceDate = since ? new Date(since) : new Date(0);
+    // Date illisible : 400, au lieu d'une erreur Prisma en 500 (#993).
+    if (Number.isNaN(sinceDate.getTime())) throw new BadRequestException('Paramètre `since` invalide (date ISO attendue).');
 
     const count = await this.prisma.user.count({
       where: {

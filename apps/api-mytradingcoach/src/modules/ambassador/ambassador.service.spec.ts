@@ -190,4 +190,13 @@ describe('AmbassadorService', () => {
       expect(prisma.user.update).not.toHaveBeenCalled();
     });
   });
+
+  // Audit fonctionnel #993 (lot 2, A15) : une date invalide partait dans Prisma → 500.
+  describe('getNewCount — date invalide', () => {
+    it('`since=abc` → 400, aucune requête de comptage', async () => {
+      prisma.user.findUnique.mockResolvedValueOnce({ referralCode: 'VAL' });
+      (prisma.user as unknown as { count: ReturnType<typeof vi.fn> }).count = vi.fn();
+      await expect(service.getNewCount('u1', 'abc')).rejects.toThrow(BadRequestException);
+    });
+  });
 });
