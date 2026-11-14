@@ -369,6 +369,11 @@ prix). CORS : origines globales (`CORS_ORIGINS` doit inclure `https://www.mytrad
   accepté (fail-open voulu). L'ancien refresh reste valide après rotation : ticket #1002.
   Connexion : e-mail inconnu ou compte sans mot de passe → argon2 vérifie un hash factice
   (`dummyPasswordHash`), même coût qu'un mauvais mot de passe (anti-énumération par le temps).
+- **Retour après connexion** (front, `core/auth/return-url.ts`, #994) : liste blanche — chemin
+  interne seulement (`/…`), jamais `//hote`, `\`, URL absolue ni page d'auth (login, register,
+  forgot / reset-password) : pas de redirection ouverte. Stocké en `sessionStorage`.
+- **Mot de passe oublié** : l'API répond 204 pour toute adresse ; le front n'affiche le succès que
+  sur 204 et un message sur 429 / 400 / panne (#994) — aucune réponse ne révèle un compte.
 - **Exclus** : comptes `isDemo` et `ADMIN` (403 `GOOGLE_NOT_ALLOWED`), en connexion comme en liaison.
   Une liaison existante n'est jamais remplacée par un autre `sub` (409 `GOOGLE_ALREADY_LINKED`).
 - **Délier** (`DELETE /auth/google`) refusé sans mot de passe (400 `PASSWORD_REQUIRED`).

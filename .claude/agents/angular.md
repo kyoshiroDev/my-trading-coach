@@ -1344,6 +1344,28 @@ en plein contenu. Le refus « mode démo » (403 `DemoReadOnlyGuard`) ne fait **
 - **Schéma zod d'un formulaire** : il retire les clés qu'il ne connaît pas ; tout champ saisi doit y
   figurer (les frais du formulaire de trade ne partaient pas, #994). Ne jamais réécrire l'état du
   formulaire avec la valeur transformée pour l'envoi (le 2e envoi plantait).
+- **Retour à la page demandée après connexion** (`core/auth/return-url.ts`, #994) : `authGuard`
+  mémorise `state.url` dans `sessionStorage` (`mtc.returnUrl`), `PostSignupService.afterLogin()`
+  (e-mail ET Google) y revient par `navigateByUrl`, sinon `/dashboard`. Liste blanche dans
+  `isSafeReturnUrl` (cf. security.md). Spec d'un garde : routeur de test AVEC la route `login`,
+  sinon rejet non géré qui fait sortir la suite en erreur.
+- **Séance du jour** (#994) : l'onglet suit le statut de la séance (effet du constructeur), jamais
+  posé à la main après `startSession` / `closeSessionThenDebrief` (sinon « Live » même en échec) ;
+  pré-remplissage humeur / notes UNE fois par séance, lectures `untracked` ; la sauvegarde différée
+  du journal part au `ngOnDestroy` si elle est en attente. `SessionStore.starting` verrouille
+  « Démarrer » jusqu'à la réponse (double clic = 2 séances).
+- **`SelectedAccountStore.loadError`** (#994) : une erreur de chargement garde les comptes déjà
+  connus (plus de `accounts.set([])`) ; Mes comptes montre `mtc-error-state` s'il n'en connaît aucun.
+- **Mes comptes** (#994) : suppression = toast « supprimé » / « archivé » selon la réponse, puis
+  `refreshAfterImport()` (comptes + trades), 404 = succès ; Tradovate « À reconnecter » propose
+  Déconnecter, et la branche de confirmation passe AVANT le statut dans le template ; la modale de
+  connexion écoute `window:pageshow` (page restaurée du cache après « Précédent » → plus bloquée).
+- **Auth** (#994) : login 400 (DTO) = « Email ou mot de passe incorrect » ; mot de passe oublié :
+  succès seulement sur 204, sinon message (429, 400, panne).
+- **Profil** (#994) : refus de l'API affichés (setups, nom, mot de passe, actifs) ; « SUPPRIMER »
+  comparé sans casse ni espaces, champ en `autocapitalize="off"` / `autocorrect="off"`.
+- **Historique des séances** (#994) : groupes par lundi de la semaine (avec l'année, jamais le seul
+  n° ISO), 200 séances par mois (plafond de l'API).
 - Dans les libs, sorties en `@Output() … = new EventEmitter()` : leurs tests tournent en JIT, qui
   ne voit pas `output()`.
 - **Toute donnée chargée affiche son échec** : `@if (loadError()) { <mtc-error-state (retry)="reload()" /> }`
