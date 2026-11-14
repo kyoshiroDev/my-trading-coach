@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { Test } from '@nestjs/testing';
-import { NotFoundException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { SessionService } from './session.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../infra/redis.service';
@@ -409,6 +409,21 @@ describe('SessionService', () => {
   });
 
   describe('closeTrade', () => {
+    // #994 (N6) : `exitPrice` lu par @Body('exitPrice') n'est ni validé ni converti ; un trade déjà
+    // clôturé (P&L réalisé du broker) était réécrit au tick, et un double clic poussait deux étiquettes.
+    it.each([undefined, null, 0, -5, Number.NaN, '102'])('prix de sortie invalide (%s) → 400, rien n’est écrit', async (prix) => {
+      mockPrisma.trade.findFirst.mockResolvedValue(makeTrade());
+      await expect(service.closeTrade('user-1', 'trade-1', prix as unknown as number)).rejects.toThrow(BadRequestException);
+      expect(mockPrisma.trade.update).not.toHaveBeenCalled();
+    });
+
+    it('trade déjà clôturé (P&L broker, double clic) : renvoyé tel quel, jamais réécrit', async () => {
+      const deja = makeTrade({ exit: 102, pnl: 50, tags: ['TP'] });
+      mockPrisma.trade.findFirst.mockResolvedValue(deja);
+      await expect(service.closeTrade('user-1', 'trade-1', 104)).resolves.toEqual(deja);
+      expect(mockPrisma.trade.update).not.toHaveBeenCalled();
+    });
+
     it('vide le cache des statistiques de l’utilisateur (le P&L change)', async () => {
       const trade = makeTrade({ entry: 100, stopLoss: 95, takeProfit: 110, side: 'LONG' });
       mockPrisma.trade.findFirst.mockResolvedValue(trade);

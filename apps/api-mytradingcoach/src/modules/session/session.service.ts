@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -421,6 +422,12 @@ export class SessionService {
       where: { id: tradeId, userId },
     });
     if (!trade) throw new NotFoundException('Trade introuvable');
+    // `exitPrice` vient de @Body('exitPrice') : ni validé ni converti par le ValidationPipe (#994).
+    if (typeof exitPrice !== 'number' || !Number.isFinite(exitPrice) || exitPrice <= 0) {
+      throw new BadRequestException('Prix de sortie invalide.');
+    }
+    // Déjà clôturé (P&L réalisé du broker, double clic) : jamais réécrit, ni étiquette poussée deux fois.
+    if (trade.exit != null && trade.pnl != null) return trade;
 
     let closeType: 'SL' | 'TP' | 'MANUAL' = 'MANUAL';
 
