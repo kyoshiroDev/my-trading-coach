@@ -98,6 +98,9 @@ describe('AuthService', () => {
     // Les tests startTrial/forgotPassword/resetPassword surchargent ce mock au besoin.
     mockPrisma.user.update.mockResolvedValue(mockSafeUser);
     mockPrisma.deletedAccount.findFirst.mockResolvedValue(null);
+    // Les recherches par e-mail passent par findFirst (#999) : pas d'implémentation héritée d'un test précédent.
+    mockPrisma.user.findFirst.mockReset();
+    mockPrisma.user.findUnique.mockReset();
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -140,7 +143,7 @@ describe('AuthService', () => {
 
   describe('register', () => {
     it('crée un utilisateur avec plan FREE par défaut', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue(null);
+      mockPrisma.user.findFirst.mockResolvedValue(null);
       mockPrisma.user.create.mockResolvedValue({
         id: mockUser.id,
         email: mockUser.email,
@@ -162,7 +165,7 @@ describe('AuthService', () => {
     });
 
     it('enregistre l’acceptation des CGU : date et version (#745, F2)', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue(null);
+      mockPrisma.user.findFirst.mockResolvedValue(null);
       mockPrisma.user.create.mockResolvedValue({ ...mockSafeUser });
       await service.register({ email: 'cgu@test.com', password: 'password123' });
       const { data } = mockPrisma.user.create.mock.calls[0][0];
@@ -176,7 +179,7 @@ describe('AuthService', () => {
       beforeEach(() => {
         vi.useFakeTimers({ toFake: ['Date'] });
         vi.setSystemTime(NOW);
-        mockPrisma.user.findUnique.mockResolvedValue(null);
+        mockPrisma.user.findFirst.mockResolvedValue(null);
         mockPrisma.user.create.mockResolvedValue({ ...mockSafeUser });
       });
       afterEach(() => vi.useRealTimers());
@@ -200,7 +203,7 @@ describe('AuthService', () => {
         expect(data).not.toHaveProperty('signupTrialEndsAt');
         // Casse ignorée, traces anonymisées exclues, fenêtre de 90 jours.
         expect(mockPrisma.deletedAccount.findFirst.mock.calls[0][0].where).toEqual({
-          email: { equals: 'Revenu@Test.com', mode: 'insensitive' },
+          email: { equals: 'revenu@test.com', mode: 'insensitive' },
           anonymizedAt: null,
           deletedAt: { gte: new Date(NOW.getTime() - 90 * DAY) },
         });
@@ -223,7 +226,7 @@ describe('AuthService', () => {
     });
 
     it('une inscription = un seul e-mail (bienvenue), plus d’alerte admin par inscription', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue(null);
+      mockPrisma.user.findFirst.mockResolvedValue(null);
       mockPrisma.user.create.mockResolvedValue({ id: mockUser.id, email: mockUser.email, name: 'Thomas', plan: 'FREE', createdAt: mockUser.createdAt });
 
       await service.register({ email: 'test@test.com', password: 'password123', name: 'Thomas' });
@@ -233,7 +236,7 @@ describe('AuthService', () => {
     });
 
     it('inscription → un push admin SIGNUP, sans e-mail dans le message', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue(null);
+      mockPrisma.user.findFirst.mockResolvedValue(null);
       mockPrisma.user.create.mockResolvedValue({ id: mockUser.id, email: mockUser.email, name: 'Thomas', plan: 'FREE', role: 'USER', createdAt: mockUser.createdAt });
 
       await service.register({ email: 'test@test.com', password: 'password123', name: 'Thomas' });
@@ -246,7 +249,7 @@ describe('AuthService', () => {
     });
 
     it('compte ADMIN créé → pas de push', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue(null);
+      mockPrisma.user.findFirst.mockResolvedValue(null);
       mockPrisma.user.create.mockResolvedValue({ id: mockUser.id, email: mockUser.email, name: 'A', plan: 'FREE', role: 'ADMIN', createdAt: mockUser.createdAt });
 
       await service.register({ email: 'test@test.com', password: 'password123', name: 'A' });
@@ -255,7 +258,7 @@ describe('AuthService', () => {
     });
 
     it('persiste les UTM d’acquisition, et null quand ils sont absents', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue(null);
+      mockPrisma.user.findFirst.mockResolvedValue(null);
       mockPrisma.user.create.mockResolvedValue({ id: mockUser.id, email: mockUser.email, name: null, plan: 'FREE', createdAt: mockUser.createdAt });
 
       await service.register({
@@ -281,7 +284,7 @@ describe('AuthService', () => {
     });
 
     it('lance ConflictException si email déjà utilisé', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
+      mockPrisma.user.findFirst.mockResolvedValue(mockUser);
 
       await expect(
         service.register({ email: 'test@test.com', password: 'password123' }),
@@ -289,7 +292,7 @@ describe('AuthService', () => {
     });
 
     it('ne retourne jamais le hash du mot de passe', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue(null);
+      mockPrisma.user.findFirst.mockResolvedValue(null);
       mockPrisma.user.create.mockResolvedValue({
         id: mockUser.id,
         email: mockUser.email,
@@ -309,7 +312,7 @@ describe('AuthService', () => {
 
   describe('login', () => {
     it("retourne les tokens et l'utilisateur si identifiants corrects", async () => {
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
+      mockPrisma.user.findFirst.mockResolvedValue(mockUser);
 
       const result = await service.login({
         email: 'test@test.com',
@@ -321,7 +324,7 @@ describe('AuthService', () => {
     });
 
     it('hash aux anciens paramètres : remplacé dans la même écriture que lastLoginAt', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
+      mockPrisma.user.findFirst.mockResolvedValue(mockUser);
       const argon2 = await import('argon2');
       vi.mocked(argon2.needsRehash).mockReturnValueOnce(true);
       vi.mocked(argon2.hash).mockResolvedValueOnce('nouveau_hash');
@@ -335,7 +338,7 @@ describe('AuthService', () => {
     });
 
     it('hash déjà aux bons paramètres : le mot de passe n’est pas réécrit', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
+      mockPrisma.user.findFirst.mockResolvedValue(mockUser);
 
       await service.login({ email: 'test@test.com', password: 'password123' });
 
@@ -343,7 +346,7 @@ describe('AuthService', () => {
     });
 
     it('lance UnauthorizedException si email introuvable', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue(null);
+      mockPrisma.user.findFirst.mockResolvedValue(null);
 
       await expect(
         service.login({ email: 'unknown@test.com', password: 'password123' }),
@@ -351,7 +354,7 @@ describe('AuthService', () => {
     });
 
     it('lance UnauthorizedException si mot de passe incorrect', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
+      mockPrisma.user.findFirst.mockResolvedValue(mockUser);
       const argon2 = await import('argon2');
       vi.mocked(argon2.verify).mockResolvedValueOnce(false);
 
@@ -361,7 +364,7 @@ describe('AuthService', () => {
     });
 
     it('ne retourne jamais le hash du mot de passe', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
+      mockPrisma.user.findFirst.mockResolvedValue(mockUser);
 
       const result = await service.login({
         email: 'test@test.com',
@@ -375,7 +378,7 @@ describe('AuthService', () => {
 
   describe('forgotPassword', () => {
     it("ne fait rien si l'email n'existe pas (anti-énumération)", async () => {
-      mockPrisma.user.findUnique.mockResolvedValue(null);
+      mockPrisma.user.findFirst.mockResolvedValue(null);
 
       await expect(
         service.forgotPassword('unknown@test.com'),
@@ -385,7 +388,7 @@ describe('AuthService', () => {
     });
 
     it("stocke un token hashé SHA256 et envoie l'email", async () => {
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
+      mockPrisma.user.findFirst.mockResolvedValue(mockUser);
       mockPrisma.user.update.mockResolvedValue(mockUser);
 
       await service.forgotPassword('test@test.com');
@@ -409,7 +412,7 @@ describe('AuthService', () => {
     });
 
     it("l'expiration est dans ~1 heure", async () => {
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
+      mockPrisma.user.findFirst.mockResolvedValue(mockUser);
       mockPrisma.user.update.mockResolvedValue(mockUser);
 
       const before = Date.now();
@@ -650,7 +653,7 @@ describe('AuthService', () => {
     it('compte Google sans mot de passe : 401 identique, argon2 vérifie un hash factice', async () => {
       const argon2 = await import('argon2');
       vi.mocked(argon2.verify).mockClear();
-      mockPrisma.user.findUnique.mockResolvedValue({ ...mockUser, password: null });
+      mockPrisma.user.findFirst.mockResolvedValue({ ...mockUser, password: null });
       await expect(service.login({ email: 'test@test.com', password: 'Password123' })).rejects.toThrow(
         new UnauthorizedException('Identifiants invalides'),
       );
@@ -660,7 +663,7 @@ describe('AuthService', () => {
     it('e-mail inconnu : 401 identique, argon2 vérifie un hash factice', async () => {
       const argon2 = await import('argon2');
       vi.mocked(argon2.verify).mockClear();
-      mockPrisma.user.findUnique.mockResolvedValue(null);
+      mockPrisma.user.findFirst.mockResolvedValue(null);
       await expect(service.login({ email: 'inconnu@test.com', password: 'Password123' })).rejects.toThrow(
         new UnauthorizedException('Identifiants invalides'),
       );
@@ -733,7 +736,7 @@ describe('AuthService', () => {
       mockPrisma.user.findUnique.mockResolvedValue({ ...mockSafeUser, password: 'h', googleId: null, tokenVersion: 0 });
 
     it('connexion : refresh avec un jti et une famille neufs, 7 jours', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
+      mockPrisma.user.findFirst.mockResolvedValue(mockUser);
       await service.login({ email: 'test@test.com', password: 'password123' });
       const [payload, opts] = refreshSign() as [{ fid: string }, { jwtid: string; expiresIn: number }];
       expect(opts.jwtid).toMatch(/^[0-9a-f-]{36}$/);
@@ -807,9 +810,34 @@ describe('AuthService', () => {
     });
   });
 
+  // #999 (S7) : casse ignorée, sans joker. Prisma traduit `mode: 'insensitive'` en ILIKE sans échapper
+  // `_` ni `%` : sans échappement, « a_b@x.com » retrouvait le compte « axb@x.com ».
+  describe('recherche par e-mail : casse ignorée, sans joker (#999)', () => {
+    const where = () => mockPrisma.user.findFirst.mock.calls[0][0].where;
+
+    it('connexion : adresse en minuscules, sans espaces, `_` et `%` échappés', async () => {
+      mockPrisma.user.findFirst.mockResolvedValue(null);
+      await expect(service.login({ email: '  A_B%c@Test.com ', password: 'password123' })).rejects.toThrow(UnauthorizedException);
+      expect(where()).toEqual({ email: { equals: 'a\\_b\\%c@test.com', mode: 'insensitive' } });
+    });
+
+    it('inscription : un compte d’avant le correctif avec des majuscules bloque la même adresse', async () => {
+      mockPrisma.user.findFirst.mockResolvedValue({ id: 'ancien' });
+      await expect(service.register({ email: 'alice@test.com', password: 'password123' })).rejects.toThrow(ConflictException);
+      expect(where()).toEqual({ email: { equals: 'alice@test.com', mode: 'insensitive' } });
+      expect(mockPrisma.user.create).not.toHaveBeenCalled();
+    });
+
+    it('mot de passe oublié : même recherche', async () => {
+      mockPrisma.user.findFirst.mockResolvedValue(null);
+      await service.forgotPassword('Alice@Test.com');
+      expect(where()).toEqual({ email: { equals: 'alice@test.com', mode: 'insensitive' } });
+    });
+  });
+
   describe('forgotPassword d’un compte Google sans mot de passe', () => {
     it('même traitement (204) mais e-mail « définir un mot de passe »', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue({ ...mockUser, password: null });
+      mockPrisma.user.findFirst.mockResolvedValue({ ...mockUser, password: null });
       mockPrisma.user.update.mockResolvedValue(mockUser);
       await service.forgotPassword('test@test.com');
       expect(mockResend.sendResetPassword).toHaveBeenCalledWith(expect.objectContaining({ googleOnly: true }));

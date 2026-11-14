@@ -29,6 +29,7 @@ import { GoogleIdTokenVerifier, GoogleTokenRefusedException } from './google-id-
 import { resolveGoogleAuthConfig } from '../../config/google-auth-config';
 import { redeleteCutoff, signupTrialData } from '../trial/signup-trial';
 import { REFRESH_TTL_S, familyOf, revokeFamily, rotateRefresh } from './refresh-rotation';
+import { emailEquals } from '../../common/utils/email.util';
 
 const RESET_TOKEN_TTL_MS = 60 * 60 * 1000; // 1 heure
 
@@ -153,8 +154,9 @@ export class AuthService {
   ) {}
 
   async register(dto: RegisterDto) {
-    const existing = await this.prisma.user.findUnique({
-      where: { email: dto.email },
+    const existing = await this.prisma.user.findFirst({
+      where: { email: emailEquals(dto.email) },
+      select: { id: true },
     });
     if (existing) throw new ConflictException('Cet email est déjà utilisé');
 
@@ -203,7 +205,7 @@ export class AuthService {
     const now = new Date();
     const recentlyDeleted = await this.prisma.deletedAccount.findFirst({
       where: {
-        email: { equals: data.email, mode: 'insensitive' },
+        email: emailEquals(data.email),
         anonymizedAt: null,
         deletedAt: { gte: redeleteCutoff(now) },
       },
@@ -271,8 +273,9 @@ export class AuthService {
   }
 
   async login(dto: LoginDto) {
-    const user = await this.prisma.user.findUnique({
-      where: { email: dto.email },
+    const user = await this.prisma.user.findFirst({
+      where: { email: emailEquals(dto.email) },
+      orderBy: { createdAt: 'asc' },
     });
     // E-mail inconnu ou compte Google sans mot de passe : même réponse ET même coût qu'un mauvais
     // mot de passe (anti-énumération, #994) — sinon l'absence d'argon2 se mesurait au temps de réponse.
@@ -336,7 +339,7 @@ export class AuthService {
     }
 
     const byEmail = await this.prisma.user.findFirst({
-      where: { email: { equals: identity.email, mode: 'insensitive' } },
+      where: { email: emailEquals(identity.email) },
       orderBy: { createdAt: 'asc' },
       select: {
         id: true,
@@ -531,7 +534,10 @@ export class AuthService {
   }
 
   async forgotPassword(email: string): Promise<void> {
-    const user = await this.prisma.user.findUnique({ where: { email } });
+    const user = await this.prisma.user.findFirst({
+      where: { email: emailEquals(email) },
+      orderBy: { createdAt: 'asc' },
+    });
     // Réponse identique que l'utilisateur existe ou non (anti-énumération)
     if (!user) return;
 

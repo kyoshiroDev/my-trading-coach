@@ -22,6 +22,7 @@ import { StripeAccountClosureService } from '../stripe/stripe-account-closure.se
 import { DiscordGuildClient } from '../discord/discord-guild.client';
 import { REAL_USERS_WHERE } from '../../common/stats/real-users';
 import { premiumAccessWhere, subscriptionStateWhere, subscriptionStatesWhere } from '../../common/stats/subscription-state-where';
+import { emailEquals } from '../../common/utils/email.util';
 
 /** Résiliation Stripe impossible : rien n'est supprimé, l'utilisateur peut réessayer. */
 export const BILLING_CLOSURE_FAILED_MESSAGE =
@@ -108,7 +109,7 @@ export class UsersService {
   }
 
   async findByEmail(email: string) {
-    return this.prisma.user.findUnique({ where: { email } });
+    return this.prisma.user.findFirst({ where: { email: emailEquals(email) }, orderBy: { createdAt: 'asc' } });
   }
 
   async findActivePremium() {

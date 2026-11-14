@@ -14,6 +14,7 @@ describe('AmbassadorService', () => {
   let prisma: {
     user: {
       findUnique: ReturnType<typeof vi.fn>;
+      findFirst: ReturnType<typeof vi.fn>;
       findMany: ReturnType<typeof vi.fn>;
       update: ReturnType<typeof vi.fn>;
       groupBy: ReturnType<typeof vi.fn>;
@@ -26,6 +27,7 @@ describe('AmbassadorService', () => {
     prisma = {
       user: {
         findUnique: vi.fn(),
+        findFirst: vi.fn(),
         findMany: vi.fn().mockResolvedValue([]),
         update: vi.fn(),
         groupBy: vi.fn().mockResolvedValue([]),
@@ -103,11 +105,10 @@ describe('AmbassadorService', () => {
 
   describe('promote — un ambassadeur a TOUJOURS un code', () => {
     it('génère un code quand l\'utilisateur n\'en a pas (cas VAL)', async () => {
-      prisma.user.findUnique
-        // 1) lookup de l'utilisateur à promouvoir : pas de code
-        .mockResolvedValueOnce({ id: 'u1', name: 'Val', email: 'val@x.com', referralCode: null })
-        // 2) generateUniqueCode : le candidat est libre
-        .mockResolvedValueOnce(null);
+      // 1) lookup de l'utilisateur à promouvoir (par e-mail, #999) : pas de code
+      prisma.user.findFirst.mockResolvedValueOnce({ id: 'u1', name: 'Val', email: 'val@x.com', referralCode: null });
+      // 2) generateUniqueCode : le candidat est libre
+      prisma.user.findUnique.mockResolvedValueOnce(null);
       prisma.user.update.mockResolvedValue({
         email: 'val@x.com',
         name: 'Val',
@@ -127,7 +128,7 @@ describe('AmbassadorService', () => {
     });
 
     it('réutilise le code existant plutôt que d\'en générer un nouveau', async () => {
-      prisma.user.findUnique.mockResolvedValueOnce({
+      prisma.user.findFirst.mockResolvedValueOnce({
         id: 'u1',
         name: 'Greg',
         email: 'g@x.com',
@@ -151,9 +152,8 @@ describe('AmbassadorService', () => {
     });
 
     it('refuse un code déjà pris par quelqu\'un d\'autre', async () => {
-      prisma.user.findUnique
-        .mockResolvedValueOnce({ id: 'u1', name: 'A', email: 'a@x.com', referralCode: null })
-        .mockResolvedValueOnce({ id: 'autre' }); // le code demandé appartient à un autre
+      prisma.user.findFirst.mockResolvedValueOnce({ id: 'u1', name: 'A', email: 'a@x.com', referralCode: null });
+      prisma.user.findUnique.mockResolvedValueOnce({ id: 'autre' }); // le code demandé appartient à un autre
 
       await expect(service.promote('a@x.com', 'PRIS')).rejects.toThrow(/déjà utilisé/);
       expect(prisma.user.update).not.toHaveBeenCalled();
@@ -162,10 +162,13 @@ describe('AmbassadorService', () => {
 
   describe('revoke — la rétrogradation vide le code', () => {
     it('repasse en USER et met le code à null', async () => {
-      prisma.user.findUnique.mockResolvedValue({ id: 'u1' });
+      prisma.user.findFirst.mockResolvedValue({ id: 'u1' });
       prisma.user.update.mockResolvedValue({ email: 'a@x.com', name: 'A', role: 'USER' });
 
-      await service.revoke('a@x.com');
+      await service.revoke('A@X.com');
+
+      // Casse ignorée (#999) : un compte d'avant le correctif garde ses majuscules en base.
+      expect(prisma.user.findFirst.mock.calls[0][0].where).toEqual({ email: { equals: 'a@x.com', mode: 'insensitive' } });
 
       expect(prisma.user.update).toHaveBeenCalledWith(
         expect.objectContaining({ data: { role: 'USER', referralCode: null } }),
