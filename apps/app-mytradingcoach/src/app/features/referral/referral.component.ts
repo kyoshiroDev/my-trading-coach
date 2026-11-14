@@ -45,10 +45,14 @@ const GOAL = 12; // 12 filleuls payants = 1 an offert
         <div class="hero mtc-cards">
           <div class="link-card">
             <div class="link-lbl">Ton lien de parrainage</div>
-            <div class="link-row">
-              <input class="link-input" type="text" readonly [value]="d.link" aria-label="Ton lien de parrainage" />
-              <button class="btn btn-blue" data-testid="referral-copy" (click)="copy(d.link)">Copier</button>
-            </div>
+            @if (d.link; as link) {
+              <div class="link-row">
+                <input class="link-input" type="text" readonly [value]="link" aria-label="Ton lien de parrainage" />
+                <button class="btn btn-blue" data-testid="referral-copy" (click)="copy(link)">Copier</button>
+              </div>
+            } @else {
+              <div class="hero-note">Lien de parrainage indisponible en mode démo. Crée ton compte pour obtenir le tien.</div>
+            }
             <div class="hero-note">Ton filleul démarre avec <b>-10&nbsp;%</b> sur sa première année, et tu gagnes <b>1 mois offert</b> dès qu'il s'abonne.</div>
           </div>
 

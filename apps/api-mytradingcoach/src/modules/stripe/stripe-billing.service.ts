@@ -18,6 +18,7 @@ import {
   ACTIVE_STATUSES,
   BILLING_CACHE_TTL_SECONDS,
   billingCacheKey,
+  extractId,
 } from './stripe.helpers';
 import { StripeCustomerService } from './stripe-customer.service';
 import { CHECKOUT_TTL_MS, FounderOfferService } from '../founder-offer/founder-offer.service';
@@ -362,6 +363,12 @@ export class StripeBillingService {
             ...customText,
           };
 
+    // Clé d'idempotence = mêmes paramètres : `expires_at` en fait partie. Avant, la clé tenait sur un
+    // créneau de 30 min alors que `expires_at` changeait à chaque appel : une 2e création dans le
+    // créneau (session précédente expirée, changement d'offre puis retour) renvoyait une
+    // `idempotency_error` de Stripe, donc une 500. Le double clic reste couvert (même seconde ici,
+    // sinon la session encore ouverte est reprise plus haut).
+    const expiresAt = Math.floor((Date.now() + CHECKOUT_TTL_MS) / 1000);
     let session: Stripe.Checkout.Session;
     try {
       session = await this.stripe.checkout.sessions.create(
@@ -374,12 +381,12 @@ export class StripeBillingService {
           ...uiParams,
           metadata,
           client_reference_id: userId,
-          expires_at: Math.floor((Date.now() + CHECKOUT_TTL_MS) / 1000),
+          expires_at: expiresAt,
         },
         {
           idempotencyKey: reservation
             ? `checkout-${userId}-${offer}-${ui}-${reservation.id}`
-            : `checkout-${userId}-${offer}-${ui}-${priceId}-${Math.floor(Date.now() / (30 * 60 * 1000))}`,
+            : `checkout-${userId}-${offer}-${ui}-${priceId}-${expiresAt}`,
           ...(ui === 'elements' ? { apiVersion: ELEMENTS_API_VERSION } : {}),
         },
       );
@@ -531,12 +538,20 @@ export class StripeBillingService {
     if (!user?.stripeSubscriptionId) throw new BadRequestException("Aucun abonnement à modifier.");
     const sub = await this.stripe.subscriptions.retrieve(user.stripeSubscriptionId);
     if (!ACTIVE_STATUSES.has(sub.status)) throw new BadRequestException("L'abonnement n'est pas actif.");
-    if (sub.status === 'trialing' && interval === 'year') {
-      throw new BadRequestException("Pendant l'essai, l'annuel n'est pas disponible : il est facturé sans essai.");
-    }
     const item = sub.items.data[0];
     const current = item?.price.id ?? '';
     const founder = this.founderPriceIds().includes(current);
+    if (sub.status === 'trialing' && interval === 'year') {
+      // Réservation fondateur (prélèvement à la fin de l'essai d'inscription) : ce n'est pas un essai
+      // au prix normal, l'ancien message (« l'annuel est facturé sans essai ») était faux.
+      const firstCharge = sub.trial_end ? new Date(sub.trial_end * 1000) : null;
+      if (founder && firstCharge) {
+        throw new BadRequestException(
+          `Changement impossible pendant ta réservation fondateur : tu pourras le faire après ton premier prélèvement, le ${frDate(firstCharge)}.`,
+        );
+      }
+      throw new BadRequestException("Pendant l'essai, l'annuel n'est pas disponible : il est facturé sans essai.");
+    }
     const target = this.config.getOrThrow<string>(
       founder
         ? interval === 'year' ? 'STRIPE_PREMIUM_PRICE_YEARLY_FOUNDER' : 'STRIPE_PREMIUM_PRICE_MONTHLY_FOUNDER'
@@ -554,7 +569,9 @@ export class StripeBillingService {
         proration_behavior: 'always_invoice',
         ...(redemption ? { discounts: coupon ? [{ coupon }] : [] } : {}),
       },
-      { idempotencyKey: `interval-${sub.id}-${target}` },
+      // Clé liée à l'état de l'abonnement (dernière facture) : un double clic garde la même clé, mais
+      // un aller-retour mensuel ↔ annuel dans les 24 h n'est plus rejoué à l'identique par Stripe.
+      { idempotencyKey: `interval-${sub.id}-${target}-${extractId(sub.latest_invoice) ?? 'none'}` },
     );
     await this.redis.del(billingCacheKey(userId)).catch(() => undefined);
     this.logger.log(`Intervalle changé | user: ${userId}, ${current} → ${target}${founder ? ' (fondateur)' : ''}`);
@@ -569,9 +586,10 @@ export class StripeBillingService {
     if (!referredBy) return false;
     const parrain = await this.prisma.user.findFirst({
       where: { referralCode: referredBy },
-      select: { role: true },
+      select: { role: true, isDemo: true },
     });
-    return !!parrain && parrain.role !== Role.AMBASSADOR;
+    // Filleul inscrit avec le code de la démo (avant #993) : pas de remise.
+    return !!parrain && parrain.role !== Role.AMBASSADOR && !parrain.isDemo;
   }
 
   /** Prix fondateur (mensuel et annuel) de la config. */

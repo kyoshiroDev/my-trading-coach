@@ -44,6 +44,18 @@ describe('ReferralService', () => {
     });
   });
 
+  // Audit fonctionnel #993 (lot 2, A16) : la démo est en lecture seule ; un GET lui écrivait un code
+  // (DemoReadOnlyGuard laisse passer les GET) et la page distribuait un vrai lien à −10 %.
+  describe('getMyReferral — compte démo', () => {
+    it('aucun code écrit ni lien renvoyé', async () => {
+      prisma.user.findUnique.mockResolvedValue({ referralCode: null, name: 'Démo', email: 'demo@x.com', isDemo: true });
+      const r = await service.getMyReferral('demo');
+      expect(prisma.user.update).not.toHaveBeenCalled();
+      expect(r.referralCode).toBeNull();
+      expect(r.link).toBeNull();
+    });
+  });
+
   describe('getMyReferral', () => {
     it('compte les filleuls payants actifs et marque les récompensés', async () => {
       prisma.user.findUnique.mockResolvedValue({ referralCode: 'GREG', name: 'Greg', email: 'g@x.com' });

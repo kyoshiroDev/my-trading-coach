@@ -194,9 +194,10 @@ export class AuthService {
     if (data.referralCode) {
       const ambassador = await this.prisma.user.findUnique({
         where: { referralCode: data.referralCode.toUpperCase() },
-        select: { referralCode: true },
+        select: { referralCode: true, isDemo: true },
       });
-      if (ambassador?.referralCode) referredBy = ambassador.referralCode;
+      // Jamais la démo comme parrain : son lien circulait depuis la démo publique (#993).
+      if (ambassador?.referralCode && !ambassador.isDemo) referredBy = ambassador.referralCode;
     }
 
     // Essai Premium d'inscription (#769), refusé si l'e-mail vient de supprimer un compte.

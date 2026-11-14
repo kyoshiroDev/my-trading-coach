@@ -92,6 +92,27 @@ export class StripeSubscriptionService {
       return null;
     }
 
+    // Bascule fondateur dont l'essai au prix normal n'a pas (encore) été annulé : un événement de cet
+    // essai, encore ACTIF, ne remplace jamais la place fondateur payée (sinon le profil, la facturation
+    // et le prochain prélèvement suivraient l'essai à 49 €). L'annulation est rejouée côté webhook.
+    if (
+      isActive &&
+      user.stripeSubscriptionId &&
+      user.stripeSubscriptionId !== subscription.id &&
+      ACTIVE_STATUSES.has((user.stripeSubscriptionStatus ?? '') as Stripe.Subscription['status'])
+    ) {
+      const seat = await this.prisma.founderSeat.findUnique({
+        where: { userId: user.id },
+        select: { status: true, stripeSubscriptionId: true },
+      });
+      if (seat?.status === 'ACTIVE' && seat.stripeSubscriptionId === user.stripeSubscriptionId) {
+        this.logger.error(
+          `Sync ignorée | user: ${user.id}, sub ${subscription.id} (${status}) active à côté de la place fondateur ${user.stripeSubscriptionId}`,
+        );
+        return null;
+      }
+    }
+
     const firstItem = subscription.items.data[0];
     const priceId = firstItem?.price.id ?? null;
     const interval = firstItem?.price.recurring?.interval ?? null; // 'month' | 'year'

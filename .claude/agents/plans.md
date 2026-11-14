@@ -381,7 +381,8 @@ Constantes : `FOUNDER_OFFER = { priceMonthlyEur: 29, priceAnnualEur: 290, seats:
   `REFUNDED` (rendue), tarif perdu, abonnement annulé. Partiel ou renouvellement remboursé : rien.
   La charge est rapprochée de la 1re facture payée (> 0 €) par facture ou PaymentIntent.
 - **Bascule** : un essai Stripe à 49 € ou un mois offert peut passer fondateur (prélèvement immédiat,
-  l'essai est annulé au 1er paiement fondateur ; jamais de prolongation ni de cumul).
+  l'essai est annulé au 1er paiement fondateur ; jamais de prolongation ni de cumul). Annulation ratée :
+  alerte admin et nouvel essai automatique, jamais deux abonnements actifs (#1013 A7).
 - **Lancement contrôlé** : `FounderOfferConfig.open` (fermé par défaut), `endsAt` optionnel. Fermé =
   personne d'éligible, `open: false` sur `GET /pricing/founder`, rien d'affiché.
 - **Places** : prise au 1er paiement réussi (numéro 1 à 200, jamais réattribué). Rendue seulement si

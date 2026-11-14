@@ -87,5 +87,6 @@ export const FOUNDER_INELIGIBLE_MESSAGES: Record<FounderIneligibility, string> =
 export const FOUNDER_MILESTONES = [50, 100, 150, 190, 200] as const;
 
 /** Points de clic suivis jusqu'au checkout (`cta`). */
-export const OFFER_CTAS = ['bandeau', 'carte', 'faq', 'modale', 'cadenas', 'profil', 'email'] as const;
+// `notifications` et `autopsie` : boutons de l'app absents de la liste, le checkout répondait 400 (#993).
+export const OFFER_CTAS = ['bandeau', 'carte', 'faq', 'modale', 'cadenas', 'profil', 'email', 'notifications', 'autopsie'] as const;
 export type OfferCta = (typeof OFFER_CTAS)[number];

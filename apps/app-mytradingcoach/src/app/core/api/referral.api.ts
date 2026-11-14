@@ -13,8 +13,9 @@ export interface ReferralFilleul {
 }
 
 export interface MyReferral {
-  referralCode: string;
-  link: string;
+  /** `null` pour le compte démo : jamais parrain (audit #993, A16). */
+  referralCode: string | null;
+  link: string | null;
   invited: number;
   subscribed: number;
   freeMonthsEarned: number;
