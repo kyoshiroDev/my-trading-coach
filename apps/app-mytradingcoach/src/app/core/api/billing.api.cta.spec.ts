@@ -23,7 +23,7 @@ describe('BillingApi.checkout — point de clic (cta)', () => {
 
   it.each(['notifications', 'autopsie'])('« %s » (boutons de l’app) est une valeur acceptée par l’API', (cta) => {
     expect(OFFER_CTAS as readonly string[]).toContain(cta);
-    expect(body(cta).cta).toBe(cta);
+    expect(body(cta)['cta']).toBe(cta);
   });
 
   it('valeur inconnue (lien ?cta=newsletter) : jamais envoyée, le paiement part quand même', () => {
