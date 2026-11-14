@@ -8,6 +8,7 @@
  * Ce module n'avait aucun spec, c'est pour ça que le bug est passé.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { BadRequestException } from '@nestjs/common';
 import { AmbassadorService } from './ambassador.service';
 
 describe('AmbassadorService', () => {
@@ -162,7 +163,7 @@ describe('AmbassadorService', () => {
 
   describe('revoke — la rétrogradation vide le code', () => {
     it('repasse en USER et met le code à null', async () => {
-      prisma.user.findUnique.mockResolvedValue({ id: 'u1' });
+      prisma.user.findUnique.mockResolvedValue({ id: 'u1', role: 'AMBASSADOR' });
       prisma.user.update.mockResolvedValue({ email: 'a@x.com', name: 'A', role: 'USER' });
 
       await service.revoke('a@x.com');
@@ -170,6 +171,23 @@ describe('AmbassadorService', () => {
       expect(prisma.user.update).toHaveBeenCalledWith(
         expect.objectContaining({ data: { role: 'USER', referralCode: null } }),
       );
+    });
+  });
+
+  // Audit fonctionnel #993 (lot 2, A6) : les deux routes admin passaient à côté des gardes de setRole.
+  // Révoquer un ADMIN ou un BETA_TESTER le repassait USER (perte d'accès) ; promouvoir un ADMIN le
+  // rétrogradait ; révoquer un USER effaçait son code de parrainage grand public.
+  describe('promote / revoke — rôle actuel vérifié', () => {
+    it.each(['ADMIN', 'BETA_TESTER'])('promouvoir un %s → 400, rien n’est écrit', async (role) => {
+      prisma.user.findUnique.mockResolvedValueOnce({ id: 'u1', name: 'A', email: 'a@x.com', referralCode: null, role });
+      await expect(service.promote('a@x.com')).rejects.toThrow(BadRequestException);
+      expect(prisma.user.update).not.toHaveBeenCalled();
+    });
+
+    it.each(['ADMIN', 'BETA_TESTER', 'USER'])('révoquer un %s (pas ambassadeur) → 400, rien n’est écrit', async (role) => {
+      prisma.user.findUnique.mockResolvedValueOnce({ id: 'u1', role });
+      await expect(service.revoke('a@x.com')).rejects.toThrow(BadRequestException);
+      expect(prisma.user.update).not.toHaveBeenCalled();
     });
   });
 });

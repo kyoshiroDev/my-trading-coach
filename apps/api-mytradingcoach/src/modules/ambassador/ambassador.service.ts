@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
@@ -77,10 +78,14 @@ export class AmbassadorService {
   async promote(email: string, referralCode?: string): Promise<PromoteResult> {
     const user = await this.prisma.user.findUnique({
       where: { email },
-      select: { id: true, name: true, email: true, referralCode: true },
+      select: { id: true, name: true, email: true, referralCode: true, role: true },
     });
     if (!user) {
       throw new NotFoundException('Aucun utilisateur avec cet email');
+    }
+    // Même garde que setRole (#993) : promouvoir un ADMIN ou un BETA_TESTER le rétrogradait.
+    if (user.role === Role.ADMIN || user.role === Role.BETA_TESTER) {
+      throw new BadRequestException('Ce compte est ADMIN ou BETA_TESTER : change son rôle d’abord depuis sa fiche.');
     }
 
     let code: string;
@@ -130,10 +135,15 @@ export class AmbassadorService {
   async revoke(email: string): Promise<{ email: string; name: string | null; role: Role }> {
     const user = await this.prisma.user.findUnique({
       where: { email },
-      select: { id: true },
+      select: { id: true, role: true },
     });
     if (!user) {
       throw new NotFoundException('Aucun utilisateur avec cet email');
+    }
+    // Seul un ambassadeur se révoque (#993) : un ADMIN / BETA_TESTER repassait USER (perte d'accès),
+    // un USER perdait son code de parrainage grand public (ses filleuls ne rapportaient plus rien).
+    if (user.role !== Role.AMBASSADOR) {
+      throw new BadRequestException('Ce compte n’est pas ambassadeur.');
     }
     const updated = await this.prisma.user.update({
       where: { id: user.id },
