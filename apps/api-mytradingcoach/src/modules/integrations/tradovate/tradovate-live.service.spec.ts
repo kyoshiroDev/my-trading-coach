@@ -469,7 +469,7 @@ describe('Tradovate live — ordres actifs SL / TP (#601)', () => {
       "orderVersions":[{"id":100,"orderId":10,"orderType":"Stop","stopPrice":21480}]}}]`);
     await vi.advanceTimersByTimeAsync(LIVE_ORDERS_DEBOUNCE_MS);
     expect(stored(redis).orders).toEqual([
-      { id: 10, contractId: 7, action: 'Sell', orderType: 'Stop', price: null, stopPrice: 21480, parentId: null, ocoId: 11 },
+      { id: 10, contractId: 7, action: 'Sell', orderType: 'Stop', price: null, stopPrice: 21480, parentId: null, ocoId: 11, strategyId: null },
     ]);
     expect(emitted).toContainEqual({ userId: 'u1', event: 'tradovate:orders', payload: { accountId: 'acc-1' } });
 
@@ -483,6 +483,22 @@ describe('Tradovate live — ordres actifs SL / TP (#601)', () => {
     await vi.advanceTimersByTimeAsync(LIVE_ORDERS_DEBOUNCE_MS);
     expect(stored(redis).orders).toEqual([]);
     expect(sync.sync).not.toHaveBeenCalled(); // un ordre n'est pas un trade
+    await service.onModuleDestroy();
+  });
+
+  it('liens de stratégie (#963) : instantané puis événement en direct → strategyId dans Redis', async () => {
+    const { s, redis, service } = await opened();
+    s.server(`a[{"s":200,"i":1,"d":{"orders":[
+      {"id":20,"accountId":777,"contractId":7,"action":"Sell","ordStatus":"Working"},
+      {"id":21,"accountId":777,"contractId":7,"action":"Sell","ordStatus":"Working"}],
+      "orderVersions":[{"id":200,"orderId":20,"orderType":"Stop","stopPrice":21480},{"id":210,"orderId":21,"orderType":"Limit","price":21560}],
+      "orderStrategyLinks":[{"id":1,"orderId":20,"orderStrategyId":50}]}}]`);
+    await vi.advanceTimersByTimeAsync(LIVE_ORDERS_DEBOUNCE_MS);
+    expect(stored(redis).orders.map((o: { id: number; strategyId: number | null }) => [o.id, o.strategyId])).toEqual([[20, 50], [21, null]]);
+
+    s.server('a[{"e":"props","d":{"entityType":"orderStrategyLink","eventType":"Created","entity":{"id":2,"orderId":21,"orderStrategyId":50}}}]');
+    await vi.advanceTimersByTimeAsync(LIVE_ORDERS_DEBOUNCE_MS);
+    expect(stored(redis).orders.map((o: { id: number; strategyId: number | null }) => [o.id, o.strategyId])).toEqual([[20, 50], [21, 50]]);
     await service.onModuleDestroy();
   });
 

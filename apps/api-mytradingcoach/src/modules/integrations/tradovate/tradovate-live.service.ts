@@ -13,6 +13,7 @@ import type { InitialAccountState, OrderEvent } from './tradovate-live.protocol'
 import { OPEN_POSITIONS_TTL_S } from './tradovate-open-positions';
 import {
   applyOrder,
+  applyOrderStrategyLink,
   applyOrderVersion,
   emptyOrderBook,
   workingOrders,
@@ -121,6 +122,8 @@ const RELEASE_LUA = "if redis.call('get', KEYS[1]) == ARGV[1] then return redis.
 @Injectable()
 export class TradovateLiveService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(TradovateLiveService.name);
+  /** Connexions dont le premier lien de stratégie en direct a déjà été journalisé (mesure #963). */
+  private readonly strategyLinkSeen = new Set<string>();
   private readonly instanceId = randomUUID();
   /** Clients connectés SUR CE WORKER, par user. */
   private readonly clients = new Map<string, Set<string>>();
@@ -399,7 +402,13 @@ export class TradovateLiveService implements OnModuleInit, OnModuleDestroy {
     const ext = Number(c.externalAccountId);
     for (const o of s.orders) applyOrder(book, o, ext);
     for (const v of s.orderVersions) applyOrderVersion(book, v);
+    for (const l of s.orderStrategyLinks) applyOrderStrategyLink(book, l);
     u.books.set(c.id, book);
+    // Mesure #963 (une ligne par instantané, sans montant ni compte) : le WebSocket pousse-t-il les
+    // liens de stratégie, et sous quelle clé (non documentée) ?
+    this.logger.log(
+      `Liens de stratégie Tradovate WS ${c.id} : ${s.orderStrategyLinks.length} à l'instantané, clés reçues [${s.snapshotKeys.join(',')}]`,
+    );
     this.scheduleOrdersFlush(userId, c, u);
   }
 
@@ -407,7 +416,15 @@ export class TradovateLiveService implements OnModuleInit, OnModuleDestroy {
     const book = u.books.get(c.id);
     if (!book) return; // avant l'instantané initial : il contiendra cet ordre
     if (e.entityType === 'order') applyOrder(book, e.entity, Number(c.externalAccountId), e.eventType);
-    else applyOrderVersion(book, e.entity);
+    else if (e.entityType === 'orderVersion') applyOrderVersion(book, e.entity);
+    else {
+      applyOrderStrategyLink(book, e.entity, e.eventType);
+      // Mesure #963 : un seul log par connexion, au premier lien reçu en direct.
+      if (!this.strategyLinkSeen.has(c.id)) {
+        this.strategyLinkSeen.add(c.id);
+        this.logger.log(`Liens de stratégie Tradovate WS ${c.id} : premier événement orderStrategyLink reçu en direct.`);
+      }
+    }
     this.scheduleOrdersFlush(userId, c, u);
   }
 
