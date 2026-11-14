@@ -490,8 +490,11 @@
   .trade-row { grid-template-columns: 70px 56px 1fr auto; grid-template-rows: auto auto; padding: 10px 12px 10px 16px; gap: 4px 8px; }
   .td-asset  { grid-column: 1; grid-row: 1; font-size: 12px; }
   .td-side   { grid-column: 2; grid-row: 1; }
-  .td-price:first-of-type { grid-column: 3; grid-row: 1; font-size: 11px; }
-  .td-price:last-of-type, .td-qty, .td-rr, .td-exec, .td-emotion, .td-setup { display: none; }
+  /* Classes explicites : toutes les cellules sont des <span>, un sélecteur « premier / dernier
+     du type » ne visait jamais l'entrée (première = l'heure), cellules placées au hasard (#994). */
+  .td-time   { grid-column: 1; grid-row: 2; font-size: 11px; }
+  .td-entry  { grid-column: 3; grid-row: 1; font-size: 11px; }
+  .td-exit, .td-qty, .td-rr, .td-exec, .td-emotion, .td-setup { display: none; }
   .td-pnl    { grid-column: 3; grid-row: 2; font-size: 12px; }
   .td-actions { grid-column: 4; grid-row: 1 / 3; }
   .day-label { font-size: 12px; }

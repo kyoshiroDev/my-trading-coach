@@ -337,8 +337,8 @@
                   <span class="td-side">
                     <span class="trade-side" [class]="trade.side === 'LONG' ? 'long' : 'short'">{{ trade.side }}</span>
                   </span>
-                  <span class="td-price mono">{{ trade.entry }}</span>
-                  <span class="td-price mono">{{ trade.exit ?? '-' }}</span>
+                  <span class="td-price td-entry mono">{{ trade.entry }}</span>
+                  <span class="td-price td-exit mono">{{ trade.exit ?? '-' }}</span>
                   @let net = netPnl(trade);
                   <span class="td-pnl mono" data-testid="trade-pnl" [style.color]="net | pnlColor">
                     {{ net | pnlFormat: trade : trade.accountId }}
