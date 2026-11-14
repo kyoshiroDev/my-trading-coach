@@ -8,6 +8,7 @@ import {
   effect,
   inject,
   signal,
+  untracked,
 } from '@angular/core';
 import { DatePipe, registerLocaleData } from '@angular/common';
 import { computeTradeStats, formatPercent, netPnl } from '@mtc/shared';
@@ -337,12 +338,17 @@ export class TodaySessionComponent implements OnInit, OnDestroy {
       }
     });
 
-    // Pré-remplir depuis la session
+    // Pré-remplir depuis la session, UNE fois par séance (#994) : l'effet relisait `closeMood()` et
+    // `journalText()`, donc choisir « Neutre » ou vider le journal remettait aussitôt l'ancien choix.
+    let prefilledFor: string | null = null;
     effect(() => {
       const session = this.store.activeSession();
-      if (!session) return;
-      if (session.notes && this.journalText() === '')        this.journalText.set(session.notes);
-      if (session.moodEnd && this.closeMood() === 'NEUTRAL') this.closeMood.set(session.moodEnd as MoodState);
+      if (!session || session.id === prefilledFor) return;
+      prefilledFor = session.id;
+      untracked(() => {
+        if (session.notes && this.journalText() === '')        this.journalText.set(session.notes);
+        if (session.moodEnd && this.closeMood() === 'NEUTRAL') this.closeMood.set(session.moodEnd as MoodState);
+      });
     });
 
     effect(() => {

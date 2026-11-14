@@ -64,4 +64,22 @@ describe('Séance du jour — journal et humeur de fin', () => {
     expect(updateSession).toHaveBeenCalledTimes(1);
     vi.useRealTimers();
   });
+
+  it('F16 : « Neutre » choisi sur une séance close FOCUSED reste « Neutre »', () => {
+    const { fixture, cmp } = mount({ id: 's1', status: 'CLOSED', moodEnd: 'FOCUSED', notes: 'notes' });
+    expect(cmp.closeMood()).toBe('FOCUSED');
+    cmp.selectCloseMood('NEUTRAL'); // la séance du store garde moodEnd FOCUSED
+    fixture.detectChanges();
+    expect(cmp.closeMood()).toBe('NEUTRAL');
+  });
+
+  it('F16 : journal vidé volontairement → les anciennes notes ne reviennent pas', () => {
+    vi.useFakeTimers();
+    const { fixture, cmp } = mount({ id: 's1', status: 'CLOSED', notes: 'anciennes notes' });
+    expect(cmp.journalText()).toBe('anciennes notes');
+    cmp.onJournalInput('');
+    fixture.detectChanges();
+    expect(cmp.journalText()).toBe('');
+    vi.useRealTimers();
+  });
 });
