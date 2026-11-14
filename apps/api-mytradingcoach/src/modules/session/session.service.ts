@@ -426,8 +426,9 @@ export class SessionService {
     if (typeof exitPrice !== 'number' || !Number.isFinite(exitPrice) || exitPrice <= 0) {
       throw new BadRequestException('Prix de sortie invalide.');
     }
-    // Déjà clôturé (P&L réalisé du broker, double clic) : jamais réécrit, ni étiquette poussée deux fois.
-    if (trade.exit != null && trade.pnl != null) return trade;
+    // Déjà clôturé (P&L réalisé du broker, prix de sortie sans P&L calculable, double clic) : jamais
+    // réécrit, ni étiquette poussée deux fois.
+    if (trade.exit != null || trade.pnl != null) return trade;
 
     let closeType: 'SL' | 'TP' | 'MANUAL' = 'MANUAL';
 
@@ -458,14 +459,14 @@ export class SessionService {
       capitalEngaged: trade.capitalEngaged ?? undefined,
     } as CreateTradeDto);
 
-    const closed = await this.prisma.trade.update({
-      where: { id: tradeId },
-      data: {
-        exit: exitPrice,
-        pnl: pnl ?? null,
-        tags: { push: closeType },
-      },
+    // Écriture conditionnelle : deux clics simultanés lisent tous deux un trade ouvert ; seul le
+    // premier écrit, le second renvoie le trade clôturé par l'autre.
+    const { count } = await this.prisma.trade.updateMany({
+      where: { id: tradeId, userId, exit: null, pnl: null },
+      data: { exit: exitPrice, pnl: pnl ?? null, tags: { push: closeType } },
     });
+    const closed = await this.prisma.trade.findUniqueOrThrow({ where: { id: tradeId } });
+    if (count === 0) return closed;
     // Le P&L change : totaux de sa séance si elle est déjà clôturée, et statistiques en cache.
     await refreshClosedSessionTotals(this.prisma, [trade.sessionId]);
     await this.analytics.invalidateUserCache(userId);
