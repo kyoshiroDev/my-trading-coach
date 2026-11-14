@@ -521,8 +521,8 @@ export class JournalComponent {
 
   loadMore(): void { this.tradesStore.loadMore(); }
 
+  /** La modale reste ouverte sur son récap (doublons, lignes rejetées, frais) ; on rafraîchit derrière (#994). */
   onImported(): void {
-    this.showImport.set(false);
     this.refreshJournal();
   }
 }
