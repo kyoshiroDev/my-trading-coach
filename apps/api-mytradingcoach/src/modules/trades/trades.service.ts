@@ -22,7 +22,7 @@ import { AccountsService } from '../accounts/accounts.service';
 import { SetupsService } from '../setups/setups.service';
 import { CrossSourcePool, importDedupeWindow } from './import-dedupe.util';
 import { ACTIVE_SESSION_SELECT, createImportBatch, type ImportBatch } from './import-batch';
-import { activeSessionWhere } from '../session/active-session';
+import { activeSessionWhere, tradingDayEnd, tradingDayStart } from '../session/active-session';
 import { CreateTradeDto } from './dto/create-trade.dto';
 import { UpdateTradeDto } from './dto/update-trade.dto';
 import type { SetTradeStopDto } from './dto/set-trade-stop.dto';
@@ -136,8 +136,12 @@ export class TradesService {
         // 1 session = 1 compte : un trade d'un autre compte (synchro broker) n'entre pas
         // dans la session active, sinon il gonfle son P&L (#457). Session sans compte
         // (ancienne donnée) : tous les comptes, comme à la clôture et dans les stats du jour.
+        // Et seulement un trade de la journée CME de la session : un import d'historique ou une synchro
+        // complète y rattachait tous les trades passés (totaux de séance et émotion faussés, #994).
         sessionId:
-          activeSession && (!activeSession.accountId || activeSession.accountId === accountId)
+          activeSession &&
+          (!activeSession.accountId || activeSession.accountId === accountId) &&
+          inSessionDay(activeSession.startedAt, dto.tradedAt ? new Date(dto.tradedAt) : new Date())
             ? activeSession.id
             : null,
         accountId,
@@ -634,4 +638,9 @@ export class TradesService {
     await refreshClosedSessionTotals(this.prisma, sessions.map((s) => s.sessionId));
     await this.analyticsService.invalidateUserCache(userId);
   }
+}
+
+/** `at` tombe dans la journée de trading CME de la session (même règle que la clôture). */
+function inSessionDay(sessionStart: Date, at: Date): boolean {
+  return at >= tradingDayStart(sessionStart) && at < tradingDayEnd(sessionStart);
 }
