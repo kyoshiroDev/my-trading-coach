@@ -363,6 +363,12 @@ export class StripeBillingService {
             ...customText,
           };
 
+    // Clé d'idempotence = mêmes paramètres : `expires_at` en fait partie. Avant, la clé tenait sur un
+    // créneau de 30 min alors que `expires_at` changeait à chaque appel : une 2e création dans le
+    // créneau (session précédente expirée, changement d'offre puis retour) renvoyait une
+    // `idempotency_error` de Stripe, donc une 500. Le double clic reste couvert (même seconde ici,
+    // sinon la session encore ouverte est reprise plus haut).
+    const expiresAt = Math.floor((Date.now() + CHECKOUT_TTL_MS) / 1000);
     let session: Stripe.Checkout.Session;
     try {
       session = await this.stripe.checkout.sessions.create(
@@ -375,12 +381,12 @@ export class StripeBillingService {
           ...uiParams,
           metadata,
           client_reference_id: userId,
-          expires_at: Math.floor((Date.now() + CHECKOUT_TTL_MS) / 1000),
+          expires_at: expiresAt,
         },
         {
           idempotencyKey: reservation
             ? `checkout-${userId}-${offer}-${ui}-${reservation.id}`
-            : `checkout-${userId}-${offer}-${ui}-${priceId}-${Math.floor(Date.now() / (30 * 60 * 1000))}`,
+            : `checkout-${userId}-${offer}-${ui}-${priceId}-${expiresAt}`,
           ...(ui === 'elements' ? { apiVersion: ELEMENTS_API_VERSION } : {}),
         },
       );
