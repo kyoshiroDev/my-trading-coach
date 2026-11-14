@@ -15,11 +15,15 @@ const base = {
 
 const prisma = { user: { findUnique: vi.fn(), update: vi.fn() } };
 const cache = { invalidate: vi.fn() };
+const discord = { setPlanRole: vi.fn() };
+const redis = { client: { del: vi.fn() } };
 const service = new UsersService(
   prisma as unknown as PrismaService,
   {} as AmbassadorService,
   {} as never, // résiliation Stripe : non sollicitée
   cache as never,
+  discord as never,
+  redis as never,
 );
 
 beforeEach(() => {
@@ -27,10 +31,30 @@ beforeEach(() => {
   vi.useFakeTimers();
   vi.setSystemTime(NOW);
   prisma.user.update.mockResolvedValue({});
+  discord.setPlanRole.mockResolvedValue(undefined);
+  redis.client.del.mockResolvedValue(1);
 });
 afterEach(() => vi.useRealTimers());
 
 describe('UsersService.offerPremium', () => {
+  // Audit fonctionnel #993 (lot 2, A13) : rôle Discord non synchronisé et statut de facturation
+  // périmé 5 min (cache) après un Premium offert.
+  it('pose le rôle Discord Premium et vide le cache du statut de facturation', async () => {
+    prisma.user.findUnique.mockResolvedValue({ ...base, discordId: 'd-1' });
+    await service.offerPremium('u1', 30);
+    expect(discord.setPlanRole).toHaveBeenCalledWith('d-1', true);
+    expect(redis.client.del).toHaveBeenCalledWith('billing:status:u1');
+  });
+
+  it('sans Discord lié : aucun appel Discord ; une panne Discord ne bloque pas l’offre', async () => {
+    prisma.user.findUnique.mockResolvedValue({ ...base });
+    await service.offerPremium('u1', 30);
+    expect(discord.setPlanRole).not.toHaveBeenCalled();
+    prisma.user.findUnique.mockResolvedValue({ ...base, discordId: 'd-1' });
+    discord.setPlanRole.mockRejectedValue(new Error('discord down'));
+    await expect(service.offerPremium('u1', 30)).resolves.toHaveProperty('trialEndsAt');
+  });
+
   it('accorde 30 jours par défaut : trialEndsAt = now + 30 j, trialUsed, plan inchangé', async () => {
     prisma.user.findUnique.mockResolvedValue({ ...base });
     const res = await service.offerPremium('u1', undefined, 'admin-1');

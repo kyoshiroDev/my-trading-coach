@@ -20,6 +20,8 @@ import { AuthUserCacheService } from '../infra/auth-user-cache.service';
 import { OFFER_PREMIUM_DEFAULT_DAYS, hasActiveStripeSubscription } from './premium-offer.util';
 import { StripeAccountClosureService } from '../stripe/stripe-account-closure.service';
 import { DiscordGuildClient } from '../discord/discord-guild.client';
+import { RedisService } from '../infra/redis.service';
+import { billingCacheKey } from '../stripe/stripe.helpers';
 import { REAL_USERS_WHERE } from '../../common/stats/real-users';
 import { premiumAccessWhere, subscriptionStateWhere, subscriptionStatesWhere } from '../../common/stats/subscription-state-where';
 
@@ -101,6 +103,7 @@ export class UsersService {
     private readonly billingClosure: StripeAccountClosureService,
     @Optional() private readonly userCache?: AuthUserCacheService,
     @Optional() private readonly discordGuild?: DiscordGuildClient,
+    @Optional() private readonly redisService?: RedisService,
   ) {}
 
   async findById(id: string) {
@@ -473,7 +476,7 @@ export class UsersService {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       select: {
-        plan: true, role: true, isDemo: true, trialEndsAt: true,
+        plan: true, role: true, isDemo: true, trialEndsAt: true, discordId: true,
         stripeSubscriptionId: true, stripeSubscriptionStatus: true,
       },
     });
@@ -505,6 +508,14 @@ export class UsersService {
       data: { trialEndsAt, trialUsed: true, trialSource: TrialSource.ADMIN },
     });
     await this.userCache?.invalidate(userId); // le Premium doit s'ouvrir immédiatement
+    // Statut de facturation (profil, bandeaux) relu tout de suite, pas après les 5 min du cache, et
+    // rôle Discord Premium posé comme pour un abonnement payé. Un échec ne bloque pas l'offre.
+    await this.redisService?.client.del(billingCacheKey(userId)).catch(() => undefined);
+    if (user.discordId) {
+      await this.discordGuild?.setPlanRole(user.discordId, true).catch((err: Error) =>
+        this.logger.warn(`Rôle Discord Premium non posé après l'offre (user ${userId}) : ${err.message}`),
+      );
+    }
     this.logger.log(
       `Premium offert | admin: ${adminId ?? 'inconnu'}, user: ${userId}, fin: ${trialEndsAt.toISOString()}`,
     );
