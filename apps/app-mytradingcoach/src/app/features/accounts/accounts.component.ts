@@ -945,11 +945,21 @@ export class AccountsComponent implements OnInit {
       .remove(a.id)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: () => this.store.load(),
+        // Retour visible (#994) : avant, rien ne disait si le compte était supprimé ou archivé, et le
+        // journal gardait des trades rattachés à un compte disparu.
+        next: (res) => {
+          this.toast.success(
+            res?.data?.archived ? `« ${a.label} » archivé : il sort de tes statistiques.` : `« ${a.label} » supprimé.`,
+          );
+          this.refreshAfterImport();
+        },
         // Le back refuse d'archiver le dernier compte actif porteur d'historique. Son
         // message est déjà clair et actionnable : on l'affiche tel quel.
-        error: (err) =>
-          this.deleteError.set(err?.error?.message ?? 'Suppression impossible.'),
+        error: (err) => {
+          // 404 : déjà supprimé (autre onglet, double clic) — l'objectif est atteint.
+          if (err?.status === 404) { this.refreshAfterImport(); return; }
+          this.deleteError.set(err?.error?.message ?? 'Suppression impossible.');
+        },
       });
   }
 

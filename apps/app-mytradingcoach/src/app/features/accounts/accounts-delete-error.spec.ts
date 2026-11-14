@@ -13,6 +13,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { signal, NO_ERRORS_SCHEMA } from '@angular/core';
 import { of, throwError } from 'rxjs';
+import { ToastService } from '../../core/services/toast.service';
+import { TradesStore } from '../../core/stores/trades.store';
 import { AccountsComponent } from './accounts.component';
 import { AccountsApi, TradingAccount } from '../../core/api/accounts.api';
 import { SelectedAccountStore } from '../../core/stores/selected-account.store';
@@ -100,6 +102,32 @@ describe('Comptes — un refus de suppression est désormais expliqué', () => {
 
     await cmp.confirmDelete(acct('a', 0));
 
+    expect(cmp.deleteError()).toBeNull();
+    expect(store.load).toHaveBeenCalled();
+  });
+
+  // Audit fonctionnel #994 (lot 1d, F24) : aucun retour à l'écran, journal non rechargé (les trades
+  // perdent leur compte), et un 404 (déjà supprimé ailleurs) s'affichait comme une erreur.
+  it('supprimé → toast « supprimé », journal rechargé', async () => {
+    const { cmp } = setup([acct('a', 0), acct('b', 5)], () => of({ data: { deleted: true } }));
+    const toast = TestBed.inject(ToastService);
+    const success = vi.spyOn(toast, 'success');
+    const reset = vi.spyOn(TestBed.inject(TradesStore), 'reset');
+    await cmp.confirmDelete(acct('a', 0));
+    expect(success).toHaveBeenCalledWith('« Compte a » supprimé.');
+    expect(reset).toHaveBeenCalled();
+  });
+
+  it('archivé (compte avec historique) → toast « archivé »', async () => {
+    const { cmp } = setup([acct('a', 3), acct('b', 5)], () => of({ data: { archived: true } }));
+    const success = vi.spyOn(TestBed.inject(ToastService), 'success');
+    await cmp.confirmDelete(acct('a', 3));
+    expect(success).toHaveBeenCalledWith('« Compte a » archivé : il sort de tes statistiques.');
+  });
+
+  it('404 (déjà supprimé ailleurs) → traité comme un succès', async () => {
+    const { cmp, store } = setup([acct('a', 0), acct('b', 5)], () => throwError(() => ({ status: 404, error: { message: 'Compte introuvable.' } })));
+    await cmp.confirmDelete(acct('a', 0));
     expect(cmp.deleteError()).toBeNull();
     expect(store.load).toHaveBeenCalled();
   });
