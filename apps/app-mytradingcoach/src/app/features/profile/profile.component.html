@@ -457,7 +457,8 @@
                     <option value="Autre">Autre</option>
                   </select>
                   <input class="delete-input" type="text" [value]="deleteInput()"
-                    (input)="deleteInput.set($any($event.target).value)" placeholder="SUPPRIMER" />
+                    (input)="deleteInput.set($any($event.target).value)" placeholder="SUPPRIMER"
+                    autocapitalize="off" autocorrect="off" spellcheck="false" autocomplete="off" />
                   @if (deleteError()) {
                     <p class="delete-error" role="alert" data-testid="account-delete-error">
                       {{ deleteError() }}
@@ -467,7 +468,7 @@
                     <button class="btn btn-secondary"
                       (click)="showDeleteConfirm.set(false); deleteInput.set(''); deleteError.set(null)">Annuler</button>
                     <button class="btn btn-danger" (click)="confirmDelete()"
-                      [disabled]="deleteInput() !== 'SUPPRIMER' || isDeleting()">
+                      [disabled]="!deleteConfirmed() || isDeleting()">
                       {{ isDeleting() ? 'Suppression…' : 'Supprimer définitivement' }}
                     </button>
                   </div>

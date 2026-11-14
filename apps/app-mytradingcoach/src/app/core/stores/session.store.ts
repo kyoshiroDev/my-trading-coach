@@ -138,6 +138,7 @@ export class SessionStore {
     this.currentDebriefId.set(null);
     this.triggerCloseModal.set(false);
     this.sessionLoadError.set(false);
+    this.starting.set(false);
   }
 
   loadSessionData(): void {
@@ -184,17 +185,27 @@ export class SessionStore {
     this.selectedMood.set(mood);
   }
 
+  /** Démarrage en cours : un 2e clic avant la réponse ne relance rien (#994). */
+  readonly starting = signal(false);
+
   startSession(accountId?: string): void {
+    // Double clic : le 2e POST clôturait la 1re séance (vide) côté API, restée dans l'historique.
+    if (this.starting()) return;
+    this.starting.set(true);
     this.sessionApi
       .startSession(this.selectedMood(), accountId)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (res) => {
+          this.starting.set(false);
           this.activeSession.set(res.data);
           this.refreshLiveStats();
         },
         // AVANT : échec muet, le bouton « Démarrer » semblait ne rien faire.
-        error: (err) => this.toast.error(apiErrorMessage(err, 'La session n’a pas pu démarrer. Réessaie.')),
+        error: (err) => {
+          this.starting.set(false);
+          this.toast.error(apiErrorMessage(err, 'La session n’a pas pu démarrer. Réessaie.'));
+        },
       });
   }
 
