@@ -569,9 +569,10 @@ export class StripeBillingService {
     if (!referredBy) return false;
     const parrain = await this.prisma.user.findFirst({
       where: { referralCode: referredBy },
-      select: { role: true },
+      select: { role: true, isDemo: true },
     });
-    return !!parrain && parrain.role !== Role.AMBASSADOR;
+    // Filleul inscrit avec le code de la démo (avant #993) : pas de remise.
+    return !!parrain && parrain.role !== Role.AMBASSADOR && !parrain.isDemo;
   }
 
   /** Prix fondateur (mensuel et annuel) de la config. */
