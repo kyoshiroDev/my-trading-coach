@@ -18,6 +18,7 @@ import {
   ACTIVE_STATUSES,
   BILLING_CACHE_TTL_SECONDS,
   billingCacheKey,
+  extractId,
 } from './stripe.helpers';
 import { StripeCustomerService } from './stripe-customer.service';
 import { CHECKOUT_TTL_MS, FounderOfferService } from '../founder-offer/founder-offer.service';
@@ -554,7 +555,9 @@ export class StripeBillingService {
         proration_behavior: 'always_invoice',
         ...(redemption ? { discounts: coupon ? [{ coupon }] : [] } : {}),
       },
-      { idempotencyKey: `interval-${sub.id}-${target}` },
+      // Clé liée à l'état de l'abonnement (dernière facture) : un double clic garde la même clé, mais
+      // un aller-retour mensuel ↔ annuel dans les 24 h n'est plus rejoué à l'identique par Stripe.
+      { idempotencyKey: `interval-${sub.id}-${target}-${extractId(sub.latest_invoice) ?? 'none'}` },
     );
     await this.redis.del(billingCacheKey(userId)).catch(() => undefined);
     this.logger.log(`Intervalle changé | user: ${userId}, ${current} → ${target}${founder ? ' (fondateur)' : ''}`);
