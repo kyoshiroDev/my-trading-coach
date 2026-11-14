@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { AccountStatus, BrokerConnection, BrokerConnectionStatus, BrokerProvider, TradeSource } from '@prisma/client';
 import { PrismaService } from '@api/prisma/prisma.service';
 import { RedisService } from '../../infra/redis.service';
+import { backupStamp } from '../../../common/utils/backup-stamp';
 import { TradesService } from '../../trades/trades.service';
 import { TradovateHistoryService } from './tradovate-history.service';
 import { planPositionMerges, type StoredPairTrade } from './tradovate-positions-repair';
@@ -249,10 +250,4 @@ export class TradovatePositionsRepairService {
   private async save(report: PositionsRepairReport): Promise<void> {
     await this.redis.client.set(REPORT_KEY, JSON.stringify(report), 'EX', REPORT_TTL_S);
   }
-}
-
-/** `AAAAMMJJ-HHMM` (UTC) : nom de la sauvegarde d'une exécution. */
-export function backupStamp(d: Date): string {
-  const p = (n: number) => String(n).padStart(2, '0');
-  return `${d.getUTCFullYear()}${p(d.getUTCMonth() + 1)}${p(d.getUTCDate())}-${p(d.getUTCHours())}${p(d.getUTCMinutes())}`;
 }

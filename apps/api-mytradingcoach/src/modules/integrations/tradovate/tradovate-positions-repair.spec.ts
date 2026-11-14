@@ -1,7 +1,8 @@
 import { describe, it, expect, vi } from 'vitest';
 import { BrokerConnection } from '@prisma/client';
 import { planPositionMerges, type StoredPairTrade } from './tradovate-positions-repair';
-import { backupStamp, TradovatePositionsRepairService } from './tradovate-positions-repair.service';
+import { TradovatePositionsRepairService } from './tradovate-positions-repair.service';
+import { backupStamp } from '../../../common/utils/backup-stamp';
 import { TradovateAdminController } from './tradovate-admin.controller';
 import type { RecomputedWindow } from './tradovate-history.service';
 import type { ImportDto } from '../../trades/csv-parsers';
@@ -180,12 +181,6 @@ describe('TradovatePositionsRepairService', () => {
     const { service, store } = setup([]);
     store.set('tradovate:positions-repair:lock', '1');
     expect(await service.start(false)).toBe(false);
-  });
-});
-
-describe('backupStamp', () => {
-  it('AAAAMMJJ-HHMM en UTC', () => {
-    expect(backupStamp(new Date('2026-11-14T07:05:59Z'))).toBe('20261114-0705');
   });
 });
 
