@@ -70,7 +70,7 @@ import {
   AccountsApi,
   type AccountDeletionPreview,
 } from '../../core/api/accounts.api';
-import { ConfirmService, DialogDirective } from '@mtc/front-ui';
+import { ConfirmService, DialogDirective, ErrorStateComponent } from '@mtc/front-ui';
 import { PropFirmsApi, type PropFirmCatalogFirm, type PropFirmPlanDetail } from '../../core/api/prop-firms.api';
 import { PropFirmRulesComponent } from './prop-firm-rules/prop-firm-rules.component';
 import type { PropFirmPlanSummary } from '@mtc/shared';
@@ -158,7 +158,7 @@ export function menuPositionFor(rect: Pick<DOMRect, 'top' | 'bottom' | 'right'>,
   },
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    DialogDirective,
+    DialogDirective, ErrorStateComponent,
     FormsModule, LucideDynamicIcon, TopbarComponent, PlanModalComponent, InfoTooltipComponent,
     TradovateConnectModalComponent, TradovateAccountPickerComponent, PropFirmPlanPickerComponent,
     PropFirmRulesComponent, AccountPlanWizardComponent, NgTemplateOutlet, FloorReachedBannerComponent, KeptAccountPanelComponent, AccountPayoutsComponent,

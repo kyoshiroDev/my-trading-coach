@@ -71,7 +71,7 @@ function setup(opts: {
   const store = {
     accounts: signal(opts.accounts),
     selectedAccountId: signal<string | 'all'>('all'),
-    isLoading: signal(false), loaded: signal(true), load: vi.fn(),
+    isLoading: signal(false), loadError: signal(false), loaded: signal(true), load: vi.fn(),
   };
   const tradesStore = { reset: vi.fn() };
   const tvApi = { refreshBalance: vi.fn(() => of({ data: {} })) };

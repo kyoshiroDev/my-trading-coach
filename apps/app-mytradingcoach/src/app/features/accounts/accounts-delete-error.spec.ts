@@ -40,7 +40,7 @@ function setup(comptes: TradingAccount[], removeImpl: () => unknown) {
   const store = {
     accounts: signal(comptes),
     selectedAccountId: signal<string | 'all'>('all'),
-    isLoading: signal(false), loaded: signal(true), load: vi.fn(),
+    isLoading: signal(false), loadError: signal(false), loaded: signal(true), load: vi.fn(),
   };
   const api = { remove: vi.fn(removeImpl), create: vi.fn(() => of({ data: {} })) };
 

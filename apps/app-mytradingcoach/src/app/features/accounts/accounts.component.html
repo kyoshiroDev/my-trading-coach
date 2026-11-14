@@ -65,6 +65,9 @@
 
     @if (store.isLoading() && store.accounts().length === 0) {
       <div class="acct-empty">Chargement des comptes…</div>
+    } @else if (store.loadError() && store.accounts().length === 0) {
+      <!-- Échec sans compte connu : « Réessayer » plutôt qu'une page vide (#994). -->
+      <mtc-error-state message="Tes comptes n’ont pas pu être chargés. Vérifie ta connexion puis réessaie." (retry)="store.load()" />
     }
 
     <!-- Échec de suppression : le message du back est déjà clair et actionnable, on
