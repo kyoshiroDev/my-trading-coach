@@ -29,6 +29,8 @@ import { AI_MODELS } from '../infra/ai-pricing.const';
 import { redactForAi } from './csv-ai-redaction';
 import { RedisService } from '../infra/redis.service';
 import { roundCents, todayParis } from '@mtc/shared';
+import { groupTradovateTrades } from './tradovate-position-group.util';
+import { withoutImportMeta, type ImportTradeInput } from './trade-identity.util';
 
 
 
@@ -137,7 +139,7 @@ export class CsvImportService {
     feesFile?: { buffer: Buffer; filename: string },
     // Rapport de rapprochement des frais (out-param, non-bloquant) : lu par le controller.
     report?: { fees?: FeesReport },
-  ): Promise<Partial<CreateTradeDto>[]> {
+  ): Promise<ImportTradeInput[]> {
     // 1. Obtenir du texte CSV (Excel converti localement, sinon UTF-8)
     const content = await this.toCsvText(buffer, filename);
     // Vide, 2 octets (CRLF, BOM UTF-16, `""`) ou en-tête seul : c'est un export sans trade
@@ -290,13 +292,23 @@ export class CsvImportService {
       if (setupId) d.setupId = setupId;
     }
 
+    // Export Performance Tradovate : un trade = une position, de l'ouverture au retour à plat
+    // (#956), frais déjà posés par paire puis additionnés. Les paires restent jointes : importées
+    // une par une si la position est déjà en base à l'ancien format. Rien d'autre à reprendre
+    // derrière un fichier : une position incohérente reste importée paire par paire.
+    if (broker === 'tradovate') {
+      const grouped = groupTradovateTrades(dtos, { leftovers: 'pairs' });
+      // « Frais importés : … sur N trade(s) » : N = trades créés (positions), pas les paires.
+      if (report?.fees) report.fees = { ...report.fees, count: grouped.trades.length };
+      return grouped.trades.map((t) => ({
+        ...withoutImportMeta(t),
+        _positionKey: t._positionKey,
+        _pairs: t._pairs?.map((p) => withoutImportMeta(p)),
+      }));
+    }
+
     // Retirer les métadonnées internes (fill ids) avant persistance.
-    return dtos.map((d) => {
-      const clean: ImportDto = { ...d };
-      delete clean._buyFillId;
-      delete clean._sellFillId;
-      return clean;
-    });
+    return dtos.map((d) => withoutImportMeta(d));
   }
 
   /**

@@ -129,7 +129,9 @@ export class AuthController {
 
   @Public()
   @Post('logout')
-  logout(@Res({ passthrough: true }) res: Response) {
+  async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
+    // Le refresh présenté ne sert plus, même copié (#994) ; le cookie est effacé dans tous les cas.
+    await this.authService.revokeRefreshToken((req.cookies as Record<string, string> | undefined)?.[REFRESH_COOKIE]);
     res.clearCookie(REFRESH_COOKIE, { path: '/' });
     return { message: 'Déconnecté' };
   }

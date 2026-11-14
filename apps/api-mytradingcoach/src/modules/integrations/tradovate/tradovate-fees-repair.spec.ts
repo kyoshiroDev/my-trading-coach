@@ -245,14 +245,14 @@ describe('TradovateFeesRepairService', () => {
 describe('TradovateAdminController', () => {
   it('essai par défaut, écriture seulement avec apply=true', async () => {
     const repair = { start: vi.fn().mockResolvedValue(true), lastReport: vi.fn() };
-    const ctrl = new TradovateAdminController(repair as never);
+    const ctrl = new TradovateAdminController(repair as never, {} as never);
     expect(await ctrl.repairFees()).toEqual({ started: true, apply: false });
     expect(await ctrl.repairFees('1')).toEqual({ started: true, apply: false });
     expect(await ctrl.repairFees('true')).toEqual({ started: true, apply: true });
   });
 
   it('réparation déjà en cours → 409', async () => {
-    const ctrl = new TradovateAdminController({ start: vi.fn().mockResolvedValue(false) } as never);
+    const ctrl = new TradovateAdminController({ start: vi.fn().mockResolvedValue(false) } as never, {} as never);
     await expect(ctrl.repairFees()).rejects.toMatchObject({ status: 409 });
   });
 

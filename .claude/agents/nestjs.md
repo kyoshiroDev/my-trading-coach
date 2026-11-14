@@ -1180,6 +1180,43 @@ Premier broker synchronisé par **API** plutôt que par fichier. Module
   étaient écartées comme doublons. Un trade API doit avoir
   EXACTEMENT la forme d'un trade CSV du même broker (règles partagées dans
   `trades/tradovate-pair.util.ts`, utilisées par les DEUX chemins).
+- **Un trade Tradovate = une POSITION (#956, décision du 13/11)**, de l'ouverture au retour à plat,
+  plus une paire de fills. `trades/tradovate-position-group.util.ts` (pur) regroupe les paires par
+  le cumul net des exécutions, contrat par contrat, dans les TROIS chemins : synchro (mapper puis
+  `groupTradovateTrades`, `leftovers: 'skip'`), rattrapage Reporting et import CSV de l'export
+  Performance (`leftovers: 'pairs'`). Règles : quantité = somme des contrats, entrée et sortie
+  moyennes pondérées, P&L et frais additionnés (frais posés par paire AVANT, fill de retournement au
+  prorata), `tradedAt` = dernière clôture, stop/objectif de la première entrée (capture sur l'ordre
+  du fill d'ouverture, `_openFillId`), R/R sur l'entrée moyenne. Retournement par une seule
+  exécution = deux trades.
+  - **Clé stable** `importHash = tv:<fill d'ouverture>` (`positionImportKey`), identique dans les
+    trois sources : aucun doublon synchro ↔ CSV ↔ rapport, quel que soit le fuseau.
+  - **Synchro** : aucun trade avant le retour à plat (anti-tilt et journal de risque réagissent à la
+    clôture). Données de séance (`tradovate-position-input.ts`) : `prevPos`/`netPos` de la position,
+    exécutions non appariées rattachées au compte par `order.accountId` (`/order/list` lue une fois,
+    réutilisée par la capture du stop). Position ouverte la veille (`prevPos ≠ 0`) ou cumul ≠ `netPos`
+    → paires mises de côté (`deferred` du résultat), reprises au retour à plat ou par le rattrapage.
+  - **`importTrades`** : `_positionKey` déjà en base → doublon, ou mise à jour des champs du broker
+    (`growPosition` : prix, quantité, P&L, frais, clôture, R/R, note d'exécution si stop, totaux de
+    la séance clôturée) si la position a grandi — jamais stop, émotion, setup, notes. Une paire de la position déjà en base à l'ancien format (trade par
+    paire, avant #956) → la position est importée **paire par paire** (`_pairs`), sans doublon,
+    jusqu'à la réparation des trades existants. Métadonnées `_…` retirées par `withoutImportMeta`.
+  - Événement `tradovate:trades` : `updated` en plus de `created` ; anti-tilt sur `created` seul.
+  - Limite connue : une position à cheval sur deux mois est vue en deux morceaux par le rattrapage
+    Reporting (une fenêtre par mois).
+  - **Réparation des anciens trades (PR 2)** : `POST /api/admin/tradovate/repair-positions` (ADMIN,
+    essai par défaut, `?apply=true` pour écrire, verrou Redis, réponse 202 et travail en arrière-plan),
+    `GET …/repair-positions` (dernier rapport), `GET …/repair-positions/backup[?at=AAAAMMJJ-HHMM]`
+    (JSONL des lignes AVANT fusion, une clé Redis datée par exécution appliquée, jamais réécrite,
+    30 jours ; `backedUp` du rapport = nombre de lignes du fichier). Positions recalculées depuis la Reporting API (`recomputedWindows`, comme
+    #783), plan pur `tradovate-positions-repair.ts` : toutes les paires retrouvées en base, aucune
+    clé `tv:` déjà là, MÊMES saisies sur toutes les lignes (émotion, setup, stop, objectif, notes,
+    tags, capital, unité de temps, séance) — sinon comptée (`incomplete` / `alreadyGrouped` /
+    `conflicting`), jamais fusionnée. Ligne gardée = celle de la paire d'ouverture ; champs du broker
+    recalculés depuis les lignes EN BASE (total P&L et frais inchangés). `TradesService.mergeImportedPosition` :
+    transaction (alertes de comportement rattachées, lignes supprimées, R/R et note « stop » recalculés),
+    puis `refreshAfterFeesRepair` par compte. Périmètre : connexions actives, non démo, compte non
+    archivé ; lignes importées seulement (synchro, historique, CSV du compte connecté).
 - **Client HTTP en lecture seule** (`tradovate-api.client.ts`) : que des GET de données + les
   appels d'auth. Aucune méthode d'écriture (ordre, risque) — contrat NinjaTrader.
 - **Erreurs** : `TradovateException(code)` → message FR clair + `code` machine (relayé par
@@ -1385,7 +1422,7 @@ sont en direct.
 - **`state` signé + cookie httpOnly** (`mtc_tradovate_oauth`, SameSite=Lax, path du callback).
   Le cookie est **obligatoire** au callback : sans lui, un tiers pourrait faire consentir une
   victime avec SON lien et recevoir les trades de la victime. La doc ne dit pas si Tradovate
-  renvoie `state` : s'il le renvoie, il doit égaler le cookie. Côté front, l'appel `authorize`
+  renvoie `state` : s'il le renvoie, il doit égaler le cookie. Le callback journalise « state renvoyé = oui/non » (#1004) : quand la prod montre « oui », exiger `state` (un cookie d'une tentative abandonnée vit 10 min et laisse passer un code tiers sans `state`). Côté front, l'appel `authorize`
   doit partir **avec credentials** pour que le cookie soit posé.
 - **Jamais de choix d'office à la première connexion** (#332, 2026-10-03) : même avec UN seul
   compte, `saveConnection` laisse `externalAccountId` vide → `select_account`, et rien n'est

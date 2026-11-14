@@ -57,3 +57,16 @@ describe('SessionService.getSessionHistory — gains / pertes par séance (#947)
     expect(h.accountId).toBe('acc-eur');
   });
 });
+
+// #994 (N16) : `offset` négatif → Prisma refusait un `skip` négatif (500) ; `limit` sans plafond.
+describe('SessionService.getSessionHistory — pagination bornée', () => {
+  it('offset négatif → 0, limit plafonné à 200 et au moins 1', async () => {
+    const findMany = vi.fn().mockResolvedValue([]);
+    const prisma = { tradeSession: { findMany }, dailyRecap: { findMany: vi.fn() } };
+    const service = new SessionService(prisma as never, {} as never, {} as never, {} as never);
+    await service.getSessionHistory('u1', 100000, -1);
+    expect(findMany.mock.calls[0][0]).toMatchObject({ skip: 0, take: 200 });
+    await service.getSessionHistory('u1', 0, 0);
+    expect(findMany.mock.calls[1][0]).toMatchObject({ take: 1 });
+  });
+});

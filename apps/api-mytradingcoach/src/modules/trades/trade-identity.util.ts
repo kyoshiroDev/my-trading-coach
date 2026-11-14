@@ -1,5 +1,15 @@
 /** Identité d'un trade pour l'import et la détection de doublons (fonctions pures). */
 import { roundCents } from '@mtc/shared';
+import type { CreateTradeDto } from './dto/create-trade.dto';
+
+/**
+ * Trade d'un lot d'import. Une position Tradovate regroupée (#956) porte sa clé stable
+ * `_positionKey` (`tv:<fill d'ouverture>`) et ses paires d'origine `_pairs`.
+ */
+export type ImportTradeInput = Partial<CreateTradeDto> & {
+  _positionKey?: string;
+  _pairs?: Partial<CreateTradeDto>[];
+};
 
 
 /**
@@ -71,13 +81,22 @@ export class LegacyNetPnlPool {
 
   /** Vrai (et consommé) si le trade importé correspond à un trade stocké à l'ancien format. */
   take(dto: { asset?: string | null; side?: string | null; tradedAt?: string | Date | null; entry?: number | null; exit?: number | null; pnl?: number | null; commission?: number | null }): boolean {
-    const fee = Math.abs(dto.commission ?? 0);
-    if (dto.pnl == null || fee === 0) return false;
-    const list = this.byKey.get(LegacyNetPnlPool.key(dto));
-    const i = list?.findIndex((p) => Math.abs(p - (dto.pnl! - fee)) < 0.01) ?? -1;
+    const { list, i } = this.find(dto);
     if (!list || i < 0) return false;
     list.splice(i, 1);
     return true;
+  }
+
+  /** Comme `take`, sans rien consommer (regroupement par position, #956). */
+  has(dto: { asset?: string | null; side?: string | null; tradedAt?: string | Date | null; entry?: number | null; exit?: number | null; pnl?: number | null; commission?: number | null }): boolean {
+    return this.find(dto).i >= 0;
+  }
+
+  private find(dto: { asset?: string | null; side?: string | null; tradedAt?: string | Date | null; entry?: number | null; exit?: number | null; pnl?: number | null; commission?: number | null }): { list?: number[]; i: number } {
+    const fee = Math.abs(dto.commission ?? 0);
+    if (dto.pnl == null || fee === 0) return { i: -1 };
+    const list = this.byKey.get(LegacyNetPnlPool.key(dto));
+    return { list, i: list?.findIndex((p) => Math.abs(p - (dto.pnl! - fee)) < 0.01) ?? -1 };
   }
 }
 
@@ -103,12 +122,29 @@ export class CentRoundingPool {
 
   /** Vrai (et consommé) si un trade en base ne diffère du trade importé que d'1 centime d'arrondi. */
   take(dto: { asset?: string | null; side?: string | null; tradedAt?: string | Date | null; entry?: number | null; exit?: number | null; pnl?: number | null }): boolean {
-    if (dto.pnl == null || !Number.isFinite(dto.pnl)) return false;
-    const list = this.byKey.get(dedupeKey({ ...dto, pnl: null }));
-    const p = roundCents(dto.pnl);
-    const i = list?.findIndex((x) => Math.abs(Math.abs(x - p) - 0.01) < 0.001) ?? -1;
+    const { list, i } = this.find(dto);
     if (!list || i < 0) return false;
     list.splice(i, 1);
     return true;
   }
+
+  /** Comme `take`, sans rien consommer (regroupement par position, #956). */
+  has(dto: { asset?: string | null; side?: string | null; tradedAt?: string | Date | null; entry?: number | null; exit?: number | null; pnl?: number | null }): boolean {
+    return this.find(dto).i >= 0;
+  }
+
+  private find(dto: { asset?: string | null; side?: string | null; tradedAt?: string | Date | null; entry?: number | null; exit?: number | null; pnl?: number | null }): { list?: number[]; i: number } {
+    if (dto.pnl == null || !Number.isFinite(dto.pnl)) return { i: -1 };
+    const list = this.byKey.get(dedupeKey({ ...dto, pnl: null }));
+    const p = roundCents(dto.pnl);
+    return { list, i: list?.findIndex((x) => Math.abs(Math.abs(x - p) - 0.01) < 0.001) ?? -1 };
+  }
+}
+
+/**
+ * Retire les métadonnées internes d'un trade importé (`_buyFillId`, `_positionKey`, `_pairs`…) :
+ * jamais persistées (Prisma refuserait un champ inconnu).
+ */
+export function withoutImportMeta<T extends object>(dto: T): T {
+  return Object.fromEntries(Object.entries(dto).filter(([k]) => !k.startsWith('_'))) as T;
 }

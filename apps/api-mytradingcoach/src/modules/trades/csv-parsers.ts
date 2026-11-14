@@ -23,6 +23,10 @@ export type BrokerType =
 export type ImportDto = Partial<CreateTradeDto> & {
   _buyFillId?: string;
   _sellFillId?: string;
+  /** Contrat brut Tradovate (MGCZ6) : regroupement par position (#956). */
+  _contract?: string;
+  /** Jambe d'ouverture de la paire (ISO), même horloge que `tradedAt`. */
+  _openedAt?: string;
 };
 
 /**
@@ -331,7 +335,7 @@ export function parseTradovate(lines: string[]): string {
   const iBuyFill = header.indexOf('buyfillid');
   const iSellFill = header.indexOf('sellfillid');
 
-  const result: string[] = ['symbol,side,entry,exit,qty,pnl,tradedAt,buyFillId,sellFillId'];
+  const result: string[] = ['symbol,side,entry,exit,qty,pnl,tradedAt,buyFillId,sellFillId,contract,openedAt'];
 
   for (let i = 1; i < lines.length; i++) {
     const line = lines[i].trim();
@@ -362,9 +366,12 @@ export function parseTradovate(lines: string[]): string {
       boughtAt: new Date(boughtAt),
       soldAt: new Date(soldAt),
     });
+    // Jambe d'ouverture (regroupement par position, #956) : l'achat d'un LONG, la vente d'un SHORT.
+    const openedAt = new Date(side === 'LONG' ? boughtAt : soldAt);
+    const opened = Number.isNaN(openedAt.getTime()) ? '' : openedAt.toISOString();
 
     result.push(
-      `${symbol},${side},${entry},${exit},${qty},${pnl},${tradedAt.toISOString()},${buyFillId},${sellFillId}`,
+      `${symbol},${side},${entry},${exit},${qty},${pnl},${tradedAt.toISOString()},${buyFillId},${sellFillId},${rawSymbol},${opened}`,
     );
   }
   return result.join('\n');
@@ -754,6 +761,8 @@ export function mapNormalizedCsvToDto(csv: string): ImportDto[] {
   // Fill ids Tradovate (métadonnée interne pour la fusion des frais) : absents des autres brokers.
   const iBuyFill = at('buyfillid');
   const iSellFill = at('sellfillid');
+  const iContract = at('contract');
+  const iOpenedAt = at('openedat');
 
   const out: ImportDto[] = [];
   for (let i = 1; i < lines.length; i++) {
@@ -795,6 +804,8 @@ export function mapNormalizedCsvToDto(csv: string): ImportDto[] {
       // Métadonnées internes (jointure frais Tradovate), retirées avant persistance.
       _buyFillId: iBuyFill >= 0 ? (c[iBuyFill] ?? '').trim() || undefined : undefined,
       _sellFillId: iSellFill >= 0 ? (c[iSellFill] ?? '').trim() || undefined : undefined,
+      _contract: iContract >= 0 ? (c[iContract] ?? '').trim() || undefined : undefined,
+      _openedAt: iOpenedAt >= 0 ? (c[iOpenedAt] ?? '').trim() || undefined : undefined,
     });
   }
   return out;
