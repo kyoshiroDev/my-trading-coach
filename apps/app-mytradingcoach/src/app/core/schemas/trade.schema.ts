@@ -38,7 +38,7 @@ const optPositive = z.preprocess(nullToUndef, z.number().positive().optional());
 const optNumber = z.preprocess(nullToUndef, z.number().optional());
 
 export const CreateTradeSchema = z.object({
-  asset: z.string().min(1, 'Asset requis'),
+  asset: z.string().min(1, 'Choisis un actif.'),
   side: z.enum(['LONG', 'SHORT']),
   entry: z.preprocess(nullToUndef, z.number().positive('Entry requis (> 0)')),
   exit: optPositive,
@@ -50,7 +50,7 @@ export const CreateTradeSchema = z.object({
   emotion: z
     .enum(['CONFIDENT', 'STRESSED', 'REVENGE', 'FEAR', 'FOCUSED', 'NEUTRAL'])
     .nullish(),
-  setupId: z.string().min(1, 'Setup requis'),
+  setupId: z.string().min(1, 'Choisis un setup.'),
   session: z.enum(['LONDON', 'NEW_YORK', 'ASIAN']),
   timeframe: z.string().min(1),
   quantity: z.preprocess(nullToUndef, z.number().positive().optional()),

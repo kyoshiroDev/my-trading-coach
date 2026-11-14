@@ -76,6 +76,8 @@ async function render() {
   return { fixture, cmp, saved, fill, el: fixture.nativeElement as HTMLElement };
 }
 
+const text = (e: Element | null) => (e?.textContent ?? '').replace(/\s+/g, ' ').trim();
+
 describe('Formulaire de trade — envoi', () => {
   it('frais saisis : envoyés avec le trade (création comme édition)', async () => {
     const { cmp, fill, saved } = await render();
@@ -103,5 +105,23 @@ describe('Formulaire de trade — envoi', () => {
     expect(() => cmp.onSubmit()).not.toThrow();
     expect(saved).toHaveLength(1);
     expect(saved[0].tradedAt).toBe(new Date('2026-06-01T12:00:00').toISOString());
+  });
+
+  // F4 : seules les erreurs d'entrée et de capital étaient affichées ; actif ou setup manquant =
+  // clic sans effet visible.
+  it('actif manquant : message affiché sous le champ', async () => {
+    const { cmp, fill, el, fixture } = await render();
+    fill({ asset: '', side: 'LONG', entry: 100, exit: 110 });
+    cmp.onSubmit();
+    fixture.detectChanges();
+    expect(text(el.querySelector('[data-testid="trade-asset-error"]'))).toBe('Choisis un actif.');
+  });
+
+  it('setup manquant : message affiché sous les setups', async () => {
+    const { cmp, fill, el, fixture } = await render();
+    fill({ asset: 'BTC/USDT', side: 'LONG', entry: 100, exit: 110, setupId: '' });
+    cmp.onSubmit();
+    fixture.detectChanges();
+    expect(text(el.querySelector('[data-testid="trade-setup-error"]'))).toBe('Choisis un setup.');
   });
 });
