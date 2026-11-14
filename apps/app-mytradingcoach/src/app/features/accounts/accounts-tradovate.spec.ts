@@ -71,7 +71,7 @@ function setup(opts: {
   const store = {
     accounts: signal(opts.accounts),
     selectedAccountId: signal<string | 'all'>('all'),
-    isLoading: signal(false), loaded: signal(true), load: vi.fn(),
+    isLoading: signal(false), loadError: signal(false), loaded: signal(true), load: vi.fn(),
   };
   const tradesStore = { reset: vi.fn() };
   const tvApi = { refreshBalance: vi.fn(() => of({ data: {} })) };
@@ -281,6 +281,19 @@ describe('Mes comptes — connexion Tradovate par compte', () => {
     click('tradovate-disconnect-cancel-a');
     expect(q('tradovate-disconnect-choice-a')).toBeNull();
     expect(tv.disconnect).not.toHaveBeenCalled();
+  });
+
+  // Audit fonctionnel #994 (lot 1d, F15) : « À reconnecter » n'avait pas de « Déconnecter », et sur un
+  // compte échoué ou archivé « Reconnecter » est masqué aussi : la connexion restait sans aucune action.
+  it('à reconnecter : « Déconnecter » proposé, confirmation puis révocation', () => {
+    const { q, click, tv } = setup({
+      accounts: [acct('a', 'A')],
+      connections: [conn('a', { status: 'NEEDS_RECONNECT' })],
+    });
+    click('tradovate-disconnect-a');
+    expect(q('tradovate-row-a')!.textContent).toContain('Déconnecter Tradovate de ce compte\u00a0?');
+    click('tradovate-disconnect-confirm-a');
+    expect(tv.disconnect).toHaveBeenCalledWith('a', { deleteTrades: false }, expect.any(Function));
   });
 
   it('connexion expirée : « À reconnecter » + message du back + bouton qui rouvre la réassurance', () => {

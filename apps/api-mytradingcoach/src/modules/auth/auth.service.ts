@@ -28,6 +28,7 @@ import { GoogleAuthDto } from './dto/google-auth.dto';
 import { GoogleIdTokenVerifier, GoogleTokenRefusedException } from './google-id-token.verifier';
 import { resolveGoogleAuthConfig } from '../../config/google-auth-config';
 import { redeleteCutoff, signupTrialData } from '../trial/signup-trial';
+import { REFRESH_TTL_S, familyOf, revokeFamily, rotateRefresh } from './refresh-rotation';
 
 const RESET_TOKEN_TTL_MS = 60 * 60 * 1000; // 1 heure
 
@@ -472,7 +473,7 @@ export class AuthService {
   }
 
   async refresh(refreshToken: string) {
-    let payload: { sub: string; email: string; tv?: number; jti?: string };
+    let payload: { sub: string; email: string; tv?: number; jti?: string; fid?: string };
     try {
       payload = await this.jwtService.verifyAsync(refreshToken, {
         secret: process.env['JWT_REFRESH_SECRET'],
@@ -490,13 +491,34 @@ export class AuthService {
     if ((payload.tv ?? 0) !== user.tokenVersion) {
       throw new UnauthorizedException('Refresh token invalide ou expiré');
     }
-    if (payload.jti && (await this.isRefreshRevoked(payload.jti))) {
-      throw new UnauthorizedException('Refresh token invalide ou expiré');
-    }
+
+    // Jeton sans `jti` (d'avant #994, 7 j au plus) : aucun suivi possible, une nouvelle famille démarre.
+    const fid = familyOf(payload) ?? crypto.randomUUID();
+    const nextJti = crypto.randomUUID();
+    if (payload.jti) await this.checkRotation(user.id, fid, payload.jti, nextJti);
 
     const { tokenVersion, ...me } = user;
-    const tokens = await this.generateTokens({ id: user.id, email: user.email, tokenVersion });
+    const tokens = await this.generateTokens({ id: user.id, email: user.email, tokenVersion }, { fid, jti: nextJti });
     return { ...tokens, user: toMe(me) };
+  }
+
+  /**
+   * Rotation suivie en Redis (#1002) : un jeton déjà renouvelé et rejoué hors tolérance coupe sa famille.
+   * Redis en panne : jeton accepté (une panne ne doit déconnecter personne), comme avant #994.
+   */
+  private async checkRotation(userId: string, fid: string, jti: string, nextJti: string): Promise<void> {
+    let outcome: Awaited<ReturnType<typeof rotateRefresh>>;
+    try {
+      outcome = await rotateRefresh(this.redis.client, { fid, jti, nextJti });
+    } catch (err) {
+      this.logger.warn(`Suivi des refresh illisible : ${(err as Error).message}`);
+      return;
+    }
+    if (outcome === 'ok') return;
+    if (outcome === 'reused') {
+      this.logger.warn(`Refresh déjà renouvelé puis rejoué : session coupée (user ${userId})`);
+    }
+    throw new UnauthorizedException('Refresh token invalide ou expiré');
   }
 
   async getMe(userId: string) {
@@ -595,44 +617,41 @@ export class AuthService {
   }
 
   /**
-   * Déconnexion (#994, S2) : le refresh présenté est mis en liste noire jusqu'à son expiration, pour
-   * qu'une copie du cookie ne serve plus. Les autres appareils restent connectés. Ne lève jamais :
-   * la déconnexion efface le cookie quoi qu'il arrive (jeton absent, illisible, Redis en panne).
+   * Déconnexion (#994, S2 ; #1002) : la famille du refresh présenté est coupée jusqu'à son expiration,
+   * jetons émis après lui compris, pour qu'aucune copie du cookie ne serve plus. Les autres appareils
+   * restent connectés. Ne lève jamais : la déconnexion efface le cookie quoi qu'il arrive (jeton
+   * absent, illisible, Redis en panne).
    */
   async revokeRefreshToken(refreshToken: string | undefined): Promise<void> {
     if (!refreshToken) return;
     try {
-      const { jti, exp } = await this.jwtService.verifyAsync<{ jti?: string; exp?: number }>(refreshToken, {
+      const payload = await this.jwtService.verifyAsync<{ jti?: string; fid?: string }>(refreshToken, {
         secret: process.env['JWT_REFRESH_SECRET'],
       });
-      const ttl = (exp ?? 0) - Math.floor(Date.now() / 1000);
-      if (jti && ttl > 0) await this.redis.client.set(revokedRefreshKey(jti), '1', 'EX', ttl);
+      const fid = familyOf(payload);
+      if (fid) await revokeFamily(this.redis.client, fid);
     } catch (err) {
       this.logger.warn(`Révocation du refresh à la déconnexion impossible : ${(err as Error).message}`);
     }
   }
 
-  /** Redis en panne : jeton accepté (une panne ne doit déconnecter personne), comme avant #994. */
-  private async isRefreshRevoked(jti: string): Promise<boolean> {
-    try {
-      return (await this.redis.client.exists(revokedRefreshKey(jti))) === 1;
-    } catch (err) {
-      this.logger.warn(`Liste noire des refresh illisible : ${(err as Error).message}`);
-      return false;
-    }
-  }
-
-  /** `tv` (version) dans le refresh token seulement : l'incrémenter révoque toutes les sessions. */
-  private async generateTokens(user: { id: string; email: string; tokenVersion?: number }) {
+  /**
+   * `tv` (version) dans le refresh token seulement : l'incrémenter révoque toutes les sessions.
+   * `fid` = famille de la connexion, nouvelle à chaque login (#1002) ; `jti` = identifiant du jeton.
+   */
+  private async generateTokens(
+    user: { id: string; email: string; tokenVersion?: number },
+    chain: { fid: string; jti: string } = { fid: crypto.randomUUID(), jti: crypto.randomUUID() },
+  ) {
     const payload = { sub: user.id, email: user.email };
     const [access_token, refresh_token] = await Promise.all([
       this.jwtService.signAsync(payload, { expiresIn: '15m' }),
       this.jwtService.signAsync(
-        { ...payload, tv: user.tokenVersion ?? 0 },
+        { ...payload, tv: user.tokenVersion ?? 0, fid: chain.fid },
         {
           secret: process.env['JWT_REFRESH_SECRET'],
-          expiresIn: '7d',
-          jwtid: crypto.randomUUID(), // identifiant du jeton : liste noire à la déconnexion (#994)
+          expiresIn: REFRESH_TTL_S,
+          jwtid: chain.jti,
         },
       ),
     ]);
@@ -640,4 +659,3 @@ export class AuthService {
   }
 }
 
-const revokedRefreshKey = (jti: string) => `auth:revoked-refresh:${jti}`;

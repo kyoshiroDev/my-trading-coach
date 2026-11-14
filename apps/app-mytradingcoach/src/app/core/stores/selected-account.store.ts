@@ -109,6 +109,9 @@ export class SelectedAccountStore {
     this.accounts().filter((a) => a.status === 'ACTIVE'),
   );
 
+  /** Dernier chargement en échec : l'écran propose « Réessayer » au lieu d'une liste vide (#994). */
+  readonly loadError = signal(false);
+
   /** Charge les comptes de l'utilisateur (FREE : 1 compte · Premium : illimité). */
   load(): void {
     this.isLoading.set(true);
@@ -118,6 +121,7 @@ export class SelectedAccountStore {
       .subscribe({
         next: (res) => {
           const list = res.data ?? [];
+          this.loadError.set(false);
           this.accounts.set(list);
           this.loaded.set(true);
           // Compte sélectionné disparu → retour à l'agrégé. Un compte échoué ou archivé reste
@@ -125,8 +129,11 @@ export class SelectedAccountStore {
           const id = this.selectedAccountId();
           if (id !== 'all' && !list.some((a) => a.id === id)) this.select('all');
         },
+        // AVANT : `accounts.set([])` — une erreur réseau (même au rechargement déclenché par le
+        // socket Tradovate) vidait tableau, KPI et sélecteur en silence. Les comptes déjà connus
+        // restent ; l'échec est signalé.
         error: () => {
-          this.accounts.set([]);
+          this.loadError.set(true);
           this.loaded.set(true);
         },
       });
@@ -158,6 +165,7 @@ export class SelectedAccountStore {
    * (« Compte introuvable »). On purge aussi la clé persistée.
    */
   reset(): void {
+    this.loadError.set(false);
     this.accounts.set([]);
     this.loaded.set(false);
     this.isLoading.set(false);

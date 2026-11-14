@@ -43,7 +43,7 @@ function setup(accounts: TradingAccount[], selected: string | 'all' = 'all', con
   const store = {
     accounts: signal(accounts),
     selectedAccountId: signal<string | 'all'>(selected),
-    isLoading: signal(false), loaded: signal(true), load: vi.fn(), select: vi.fn(),
+    isLoading: signal(false), loadError: signal(false), loaded: signal(true), load: vi.fn(), select: vi.fn(),
   };
   const flow = {
     busy: signal(false), openRetry: vi.fn(), archive: vi.fn(), openChoice: vi.fn(), openAttempt: vi.fn(),

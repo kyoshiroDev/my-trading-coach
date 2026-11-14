@@ -61,7 +61,7 @@ function setup(nbComptes: number, limite: number | null, vue: string | 'all') {
   const store = {
     accounts: signal(Array.from({ length: nbComptes }, (_, i) => acct(`a${i}`))),
     selectedAccountId: signal<string | 'all'>(vue),
-    isLoading: signal(false), loaded: signal(true), load: vi.fn(),
+    isLoading: signal(false), loadError: signal(false), loaded: signal(true), load: vi.fn(),
   };
   const userStore = { isDemo: () => false, isPremium: () => limite === null, maxAccounts: signal(limite) };
 

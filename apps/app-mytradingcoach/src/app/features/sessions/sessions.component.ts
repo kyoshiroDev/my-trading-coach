@@ -102,13 +102,17 @@ export class SessionsComponent {
     const sessions = this.sessions();
     if (!sessions.length) return [];
 
+    // Clé = lundi de la semaine (avec l'année) : le n° ISO seul rangeait mal janvier et décembre
+    // (semaine 53 du 1er janvier avant les semaines 1-5, 29-31 décembre « semaine 1 » en bas, #994).
     const groups = new Map<number, WeekGroup>();
+    const keys = new Map<WeekGroup, number>();
 
     for (const s of sessions) {
       const date = new Date(s.startedAt);
       const weekNum = this.getWeekNumber(date);
-      if (!groups.has(weekNum)) {
-        groups.set(weekNum, {
+      const key = this.weekStart(date);
+      if (!groups.has(key)) {
+        groups.set(key, {
           weekNumber: weekNum,
           label: this.getWeekLabel(date),
           sessions: [],
@@ -117,14 +121,15 @@ export class SessionsComponent {
           sessionCount: 0,
         });
       }
-      const group = groups.get(weekNum)!;
+      const group = groups.get(key)!;
+      keys.set(group, key);
       group.sessions.push(s);
       group.totalPnl += s.totalPnl ?? 0;
       group.totalTrades += s.totalTrades ?? 0;
       group.sessionCount++;
     }
 
-    return [...groups.values()].sort((a, b) => b.weekNumber - a.weekNumber);
+    return [...groups.values()].sort((a, b) => keys.get(b)! - keys.get(a)!);
   });
 
   constructor() {
@@ -160,7 +165,8 @@ export class SessionsComponent {
   private loadSessions(year: number, month: number, accountId?: string, includeInactive = false): void {
     this.isLoading.set(true);
     this.loadError.set(false);
-    this.sessionApi.getSessionsByMonth(year, month, accountId, 50, includeInactive)
+    // 200 = plafond de l'API : 50 tronquait un mois chargé d'un trader multi-comptes (#994).
+    this.sessionApi.getSessionsByMonth(year, month, accountId, 200, includeInactive)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (res) => {
@@ -196,6 +202,14 @@ export class SessionsComponent {
   private durationSeconds(start: string, end?: string | null): number {
     if (!end) return 0;
     return Math.floor((new Date(end).getTime() - new Date(start).getTime()) / 1000);
+  }
+
+  /** Minuit du lundi de la semaine de `date` (heure locale, comme le libellé). */
+  private weekStart(date: Date): number {
+    const monday = new Date(date);
+    monday.setHours(0, 0, 0, 0);
+    monday.setDate(monday.getDate() - ((monday.getDay() || 7) - 1));
+    return monday.getTime();
   }
 
   private getWeekNumber(date: Date): number {

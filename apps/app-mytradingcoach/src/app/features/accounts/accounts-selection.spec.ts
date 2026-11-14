@@ -36,7 +36,7 @@ function setup(selectedId: string | 'all') {
   const store = {
     accounts: signal([acct('a', 'Compte principal'), acct('b', 'Lucide 50k')]),
     selectedAccountId: signal<string | 'all'>(selectedId),
-    isLoading: signal(false), loaded: signal(true), load: vi.fn(),
+    isLoading: signal(false), loadError: signal(false), loaded: signal(true), load: vi.fn(),
   };
   const userStore = { isDemo: () => false, isPremium: () => true, maxAccounts: signal(null) };
 

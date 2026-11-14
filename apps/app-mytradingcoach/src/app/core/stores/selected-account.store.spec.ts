@@ -145,3 +145,35 @@ describe('SelectedAccountStore', () => {
   });
 
 });
+
+// Audit fonctionnel #994 (lot 1d, F13) : une erreur de chargement (y compris le rechargement déclenché
+// par le socket Tradovate) vidait tous les comptes en silence : tableau vide, KPI à 0, sélecteur vide.
+describe('SelectedAccountStore — échec de chargement', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    TestBed.resetTestingModule();
+  });
+
+  it('rechargement en échec : les comptes déjà chargés restent, l’erreur est signalée', async () => {
+    const { store, api } = setup({ accounts: [acc('a1'), acc('a2')] });
+    store.load();
+    store.select('a2');
+    const { throwError } = await import('rxjs');
+    api.getAll.mockReturnValueOnce(throwError(() => new Error('réseau')) as never);
+    store.load();
+    expect(store.accounts().map((a) => a.id)).toEqual(['a1', 'a2']);
+    expect(store.selectedAccountId()).toBe('a2');
+    expect(store.loadError()).toBe(true);
+  });
+
+  it('chargement réussi ensuite : erreur effacée', async () => {
+    const { store, api } = setup({ accounts: [acc('a1')] });
+    const { throwError } = await import('rxjs');
+    api.getAll.mockReturnValueOnce(throwError(() => new Error('réseau')) as never);
+    store.load();
+    expect(store.loadError()).toBe(true);
+    store.load();
+    expect(store.loadError()).toBe(false);
+    expect(store.accounts().map((a) => a.id)).toEqual(['a1']);
+  });
+});
