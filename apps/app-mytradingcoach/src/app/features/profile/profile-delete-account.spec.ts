@@ -120,7 +120,7 @@ describe('Profil — un échec de suppression de compte est désormais expliqué
   it('sans le mot SUPPRIMER, rien ne part et rien ne s\'affiche', () => {
     const { cmp, usersApi } = mount(() => of(undefined));
 
-    cmp.deleteInput.set('supprimer'); // minuscules : refusé
+    cmp.deleteInput.set('oui'); // pas le mot demandé : refusé (casse et espaces tolérés depuis #994)
     cmp.confirmDelete();
 
     expect(usersApi.deleteMe).not.toHaveBeenCalled();

@@ -102,3 +102,17 @@ describe('Profil — échecs expliqués', () => {
     expect(toast.error).toHaveBeenCalled();
   });
 });
+
+describe('Profil — confirmation « SUPPRIMER » tolérante (F23)', () => {
+  it.each(['SUPPRIMER', 'Supprimer', 'supprimer ', '  SUPPRIMER'])('« %s » accepté', (saisie) => {
+    const { cmp } = mount();
+    cmp.deleteInput.set(saisie);
+    expect(cmp.deleteConfirmed()).toBe(true);
+  });
+
+  it.each(['', 'SUPPRIME', 'oui'])('« %s » refusé', (saisie) => {
+    const { cmp } = mount();
+    cmp.deleteInput.set(saisie);
+    expect(cmp.deleteConfirmed()).toBe(false);
+  });
+});

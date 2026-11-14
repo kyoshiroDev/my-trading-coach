@@ -779,8 +779,15 @@ export class ProfileComponent implements OnInit {
       });
   }
 
+  /**
+   * Mot de confirmation, sans tenir compte de la casse ni des espaces (#994) : la majuscule
+   * automatique d'iPhone (« Supprimer ») laissait le bouton désactivé. Taper le mot suffit à montrer
+   * l'intention ; la casse n'ajoute aucune sécurité.
+   */
+  protected readonly deleteConfirmed = computed(() => this.deleteInput().trim().toUpperCase() === 'SUPPRIMER');
+
   protected confirmDelete() {
-    if (this.deleteInput() !== 'SUPPRIMER') return;
+    if (!this.deleteConfirmed()) return;
     this.isDeleting.set(true);
     this.deleteError.set(null);
     this.usersApi
