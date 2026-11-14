@@ -378,6 +378,40 @@ describe('synchro : bascule sans écraser l’abonnement fondateur', () => {
     expect(await sync.syncSubscription('sub_trial')).toBeNull();
     expect(prisma.user.update).not.toHaveBeenCalled();
   });
+
+  const activeTrial = (seat: object | null) => {
+    const prisma = {
+      user: {
+        findUnique: vi.fn().mockResolvedValue({ id: 'u1', stripeSubscriptionId: 'sub_f', stripeSubscriptionStatus: 'active', trialUsed: true }),
+        update: vi.fn(),
+      },
+      founderSeat: { findUnique: vi.fn().mockResolvedValue(seat) },
+    };
+    const stripe = {
+      subscriptions: {
+        retrieve: vi.fn().mockResolvedValue({
+          id: 'sub_trial', status: 'trialing', customer: 'cus_1', trial_end: 1, metadata: {},
+          items: { data: [{ price: { id: 'price_49', recurring: { interval: 'month' } } }] },
+        }),
+      },
+    };
+    const sync = new StripeSubscriptionService(prisma as never, { client: { del: vi.fn().mockResolvedValue(1) } } as never, stripe as never);
+    return { sync, prisma };
+  };
+
+  it('l’essai encore ACTIF (annulation ratée) ne remplace pas la place fondateur payée', async () => {
+    const { sync, prisma } = activeTrial({ status: 'ACTIVE', stripeSubscriptionId: 'sub_f' });
+    expect(await sync.syncSubscription('sub_trial')).toBeNull();
+    expect(prisma.user.update).not.toHaveBeenCalled();
+  });
+
+  it('sans place fondateur active, un nouvel abonnement actif est bien suivi', async () => {
+    const { sync, prisma } = activeTrial(null);
+    expect(await sync.syncSubscription('sub_trial')).not.toBeNull();
+    expect(prisma.user.update).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({ stripeSubscriptionId: 'sub_trial' }),
+    }));
+  });
 });
 
 describe('abonnement en pause : pas de nouveau checkout (#813)', () => {
