@@ -14,6 +14,7 @@ import { DailyRecapApi, DailyRecap } from '../api/daily-recap.api';
 import { DebriefApi, DebriefObjective } from '../api/debrief.api';
 import { EcoCalendarApi, EcoCalendarData } from '../api/eco-calendar.api';
 import { UserStore } from './user.store';
+import { UserScopedReset } from '../auth/user-scoped-reset';
 import { POLLING_MS } from '../constants/polling.const';
 import { ToastService } from '../services/toast.service';
 import { EcoSocketService } from '../services/eco-socket.service';
@@ -81,6 +82,10 @@ export class SessionStore {
   });
 
   constructor() {
+    // Logout (#994) : la séance de l'utilisateur précédent ne survit pas. `activeSession` à null
+    // coupe aussi tous les pollings (switchMap ci-dessous) : plus de 401 en boucle sans jeton.
+    inject(UserScopedReset).register(() => this.reset());
+
     // Horloge 1 s pour le timer de session
     interval(1000)
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -121,6 +126,19 @@ export class SessionStore {
   }
 
   // ── Public API ────────────────────────────────────────────────────────────
+
+  /** Vide l'état propre à l'utilisateur (logout). */
+  reset(): void {
+    this.activeSession.set(null);
+    this.todayStats.set(null);
+    this.todayTrades.set([]);
+    this.selectedMood.set('CONFIDENT');
+    this.yesterdayRecap.set(null);
+    this.currentObjectives.set([]);
+    this.currentDebriefId.set(null);
+    this.triggerCloseModal.set(false);
+    this.sessionLoadError.set(false);
+  }
 
   loadSessionData(): void {
     this.sessionLoadError.set(false);
