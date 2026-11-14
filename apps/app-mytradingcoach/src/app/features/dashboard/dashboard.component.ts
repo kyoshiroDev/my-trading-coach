@@ -568,8 +568,8 @@ export class DashboardComponent {
 
   protected openCsvImport(): void { this.showCsvImport.set(true); }
 
+  /** La modale reste ouverte sur son récap (doublons, lignes rejetées, frais) ; on recharge derrière (#994). */
   protected onCsvImported(): void {
-    this.showCsvImport.set(false);
     this.reloadAfterImport();
   }
 

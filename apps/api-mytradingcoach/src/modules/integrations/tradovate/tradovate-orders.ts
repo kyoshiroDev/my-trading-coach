@@ -52,6 +52,8 @@ export interface WorkingOrder {
   stopPrice: number | null;
   parentId: number | null;
   ocoId: number | null;
+  /** Stratégie d'ordres (`orderStrategyLink`, #963) : bracket TradingView sans `parentId`. */
+  strategyId: number | null;
 }
 
 export interface WorkingOrdersState {
@@ -66,7 +68,16 @@ export interface WorkingOrdersState {
 export interface OrderBook {
   orders: Map<number, TradovateOrderEntity>;
   versions: Map<number, TradovateOrderVersionEntity>;
+  /** Ordre → stratégie d'ordres (#963). Un lien arrivé avant son ordre est gardé jusqu'à lui. */
+  strategies: Map<number, number>;
+  /** Id du lien → ordre : un `Deleted` peut n'arriver qu'avec l'id du lien. */
+  links: Map<number, number>;
+  /** Ordres sortis du carnet (récents) : un lien qui arrive après eux n'est pas gardé. */
+  closed: Set<number>;
 }
+
+/** Mémoire bornée des ordres sortis : au-delà, les plus anciens sont oubliés. */
+const CLOSED_MEMORY = 1_000;
 
 export const workingOrdersKey = (connectionId: string) => `tradovate:orders:${connectionId}`;
 
@@ -82,7 +93,16 @@ const finite = (v: unknown): v is number => typeof v === 'number' && Number.isFi
 const idOrNull = (v: unknown): number | null => (finite(v) ? v : null);
 
 export function emptyOrderBook(): OrderBook {
-  return { orders: new Map(), versions: new Map() };
+  return { orders: new Map(), versions: new Map(), strategies: new Map(), links: new Map(), closed: new Set() };
+}
+
+function closeOrder(book: OrderBook, id: number): void {
+  book.orders.delete(id);
+  book.versions.delete(id);
+  book.strategies.delete(id);
+  for (const [linkId, orderId] of book.links) if (orderId === id) book.links.delete(linkId);
+  book.closed.add(id);
+  if (book.closed.size > CLOSED_MEMORY) book.closed.delete(book.closed.values().next().value as number);
 }
 
 /** Ordre créé / modifié / supprimé. Un ordre qui n'est plus actif (rempli, annulé…) sort du carnet. */
@@ -96,11 +116,29 @@ export function applyOrder(
   // Suppression : l'entité peut n'arriver qu'avec son id.
   if (eventType !== 'Deleted' && entity.accountId !== externalAccountId) return;
   if (eventType === 'Deleted' || !entity.ordStatus || !ACTIVE_STATUSES.has(entity.ordStatus)) {
-    book.orders.delete(entity.id);
-    book.versions.delete(entity.id);
+    closeOrder(book, entity.id);
     return;
   }
+  book.closed.delete(entity.id);
   book.orders.set(entity.id, entity);
+}
+
+/**
+ * Lien ordre → stratégie d'ordres (#963). Gardé même si l'ordre n'est pas encore dans le carnet
+ * (il sera appliqué à son arrivée) ; ignoré pour un ordre déjà sorti ; supprimé avec son ordre.
+ */
+export function applyOrderStrategyLink(book: OrderBook, entity: TradovateOrderStrategyLinkEntity, eventType?: string): void {
+  // Suppression : l'entité peut n'arriver qu'avec l'id du lien (comme pour `order`).
+  const orderId = finite(entity.orderId) ? entity.orderId : finite(entity.id) ? book.links.get(entity.id) : undefined;
+  if (!finite(orderId)) return;
+  if (eventType === 'Deleted' || !finite(entity.orderStrategyId)) {
+    book.strategies.delete(orderId);
+    if (finite(entity.id)) book.links.delete(entity.id);
+    return;
+  }
+  if (book.closed.has(orderId)) return;
+  book.strategies.set(orderId, entity.orderStrategyId);
+  if (finite(entity.id)) book.links.set(entity.id, orderId);
 }
 
 /** Nouvelle version d'un ordre : seule la plus récente (id le plus grand) est gardée. */
@@ -131,6 +169,7 @@ export function workingOrders(book: OrderBook): WorkingOrder[] {
       stopPrice: idOrNull(v.stopPrice),
       parentId: idOrNull(o.parentId),
       ocoId: idOrNull(o.ocoId),
+      strategyId: idOrNull(book.strategies.get(o.id as number)),
     });
   }
   return out.sort((a, b) => a.id - b.id);
@@ -141,7 +180,9 @@ export function parseWorkingOrders(raw: string | null): WorkingOrdersState | nul
   if (!raw) return null;
   try {
     const v = JSON.parse(raw) as WorkingOrdersState;
-    return v && Array.isArray(v.orders) && typeof v.at === 'string' ? v : null;
+    if (!v || !Array.isArray(v.orders) || typeof v.at !== 'string') return null;
+    // Valeur écrite avant #963 : pas de `strategyId`, lu comme « aucune stratégie ».
+    return { ...v, orders: v.orders.map((o) => ({ ...o, strategyId: idOrNull(o.strategyId) })) };
   } catch {
     return null;
   }
@@ -152,9 +193,13 @@ export interface PositionProtection {
   targetPrice: number | null;
 }
 
-/** Deux ordres d'un même bracket : même ordre d'entrée (`parentId`) ou liés en OCO. */
+/**
+ * Deux ordres d'un même bracket : même ordre d'entrée (`parentId`), liés en OCO, ou même stratégie
+ * d'ordres (bracket TradingView sans `parentId`, #963). Jamais null comparé à null.
+ */
 function sameBracket(a: WorkingOrder, b: WorkingOrder): boolean {
   if (a.parentId !== null && a.parentId === b.parentId) return true;
+  if (a.strategyId !== null && a.strategyId === b.strategyId) return true;
   if (a.ocoId !== null && (a.ocoId === b.id || a.ocoId === b.ocoId)) return true;
   return b.ocoId !== null && b.ocoId === a.id;
 }
@@ -172,6 +217,11 @@ function pick(list: WorkingOrder[], others: WorkingOrder[]): WorkingOrder | null
  * - SL = stop (prix `stopPrice`) sous l'entrée d'un LONG, TP = limite (prix `price`) au-dessus ;
  * - plusieurs candidats sans lien de bracket → `null` (jamais une association devinée).
  * Entrée ou contrat inconnus → rien : impossible de vérifier le côté.
+ *
+ * Lien de bracket = `parentId`, OCO ou stratégie d'ordres (#963). La stratégie règle les cas
+ * MIXTES (un bracket complet + un ordre isolé ou une jambe orpheline d'un autre bracket). Deux
+ * brackets COMPLETS sur la même position restent `null` : chacun est lié, rien ne dit lequel
+ * protège la position (règle stricte, décision du 12/11).
  */
 export function protectionFor(
   position: { contractId?: number | null; side: 'LONG' | 'SHORT'; entryPrice: number | null },

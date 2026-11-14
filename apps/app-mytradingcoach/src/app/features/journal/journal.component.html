@@ -169,7 +169,16 @@
   <!-- ── Corps du journal ── -->
   @if (tradesStore.isLoading()) {
     <div class="loading-state">Chargement des trades...</div>
-  } @else if (tradesByDay().length === 0) {
+  } @else if (emptyKind() === 'error') {
+    <mtc-error-state (retry)="retryLoad()" />
+  } @else if (emptyKind() === 'filtered') {
+    <div class="empty-state" data-testid="empty-state-filtered">
+      <div class="empty-state-icon">🔍</div>
+      <h3 class="empty-state-title">Aucun trade pour ces filtres</h3>
+      <p class="empty-state-desc">Change la période ou les filtres pour retrouver tes trades.</p>
+      <button class="btn-primary" (click)="showAllTrades()">Tout afficher</button>
+    </div>
+  } @else if (emptyKind() === 'none') {
     <div class="empty-state" data-testid="empty-state">
       <div class="empty-state-icon">📖</div>
       <h3 class="empty-state-title">Aucun trade enregistré</h3>
@@ -328,8 +337,8 @@
                   <span class="td-side">
                     <span class="trade-side" [class]="trade.side === 'LONG' ? 'long' : 'short'">{{ trade.side }}</span>
                   </span>
-                  <span class="td-price mono">{{ trade.entry }}</span>
-                  <span class="td-price mono">{{ trade.exit ?? '-' }}</span>
+                  <span class="td-price td-entry mono">{{ trade.entry }}</span>
+                  <span class="td-price td-exit mono">{{ trade.exit ?? '-' }}</span>
                   @let net = netPnl(trade);
                   <span class="td-pnl mono" data-testid="trade-pnl" [style.color]="net | pnlColor">
                     {{ net | pnlFormat: trade : trade.accountId }}
@@ -377,7 +386,7 @@
                     <button aria-label="Modifier" class="btn-edit" (click)="openEditModal(trade)" title="Modifier">
                       <svg [lucideIcon]="PencilIcon" [size]="12"></svg>
                     </button>
-                    <button aria-label="Supprimer" class="btn-delete" data-testid="trade-delete" (click)="deleteTrade(trade.id)" title="Supprimer">
+                    <button aria-label="Supprimer" class="btn-delete" data-testid="trade-delete" (click)="askDeleteTrade(trade)" title="Supprimer">
                       <svg [lucideIcon]="XIcon" [size]="12"></svg>
                     </button>
                   </span>

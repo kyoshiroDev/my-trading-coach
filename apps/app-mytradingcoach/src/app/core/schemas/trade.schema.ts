@@ -14,7 +14,7 @@ import { z } from 'zod';
  *    comportement — comparaison faite le 2026-09-27 :
  *
  *      entry        DTO optionnel ≥ 0   │ ici OBLIGATOIRE et > 0   → un trade sans entry refusé
- *      commission   DTO présent         │ ici ABSENT               → les frais seraient perdus
+ *      commission   DTO présent         │ ici ≥ 0 (absent avant #994 : les frais saisis étaient perdus)
  *      accountId    DTO présent         │ ici ABSENT               → le compte serait perdu
  *      exit/SL/TP   DTO ≥ 0             │ ici > 0                  → 0 refusé
  *      asset        DTO max 40          │ ici sans borne           → plus permissif
@@ -38,7 +38,7 @@ const optPositive = z.preprocess(nullToUndef, z.number().positive().optional());
 const optNumber = z.preprocess(nullToUndef, z.number().optional());
 
 export const CreateTradeSchema = z.object({
-  asset: z.string().min(1, 'Asset requis'),
+  asset: z.string().min(1, 'Choisis un actif.'),
   side: z.enum(['LONG', 'SHORT']),
   entry: z.preprocess(nullToUndef, z.number().positive('Entry requis (> 0)')),
   exit: optPositive,
@@ -50,11 +50,13 @@ export const CreateTradeSchema = z.object({
   emotion: z
     .enum(['CONFIDENT', 'STRESSED', 'REVENGE', 'FEAR', 'FOCUSED', 'NEUTRAL'])
     .nullish(),
-  setupId: z.string().min(1, 'Setup requis'),
+  setupId: z.string().min(1, 'Choisis un setup.'),
   session: z.enum(['LONDON', 'NEW_YORK', 'ASIAN']),
   timeframe: z.string().min(1),
   quantity: z.preprocess(nullToUndef, z.number().positive().optional()),
   capitalEngaged: z.preprocess(nullToUndef, z.number().positive().optional()),
+  // Frais saisis à la main : zod retire les clés inconnues, sans ce champ ils ne partaient jamais (#994).
+  commission: z.preprocess(nullToUndef, z.number().min(0).optional()),
   notes: z.preprocess(nullToUndef, z.string().optional()),
   tags: z.array(z.string()).optional(),
   tradedAt: z.string().optional(),

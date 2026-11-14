@@ -44,6 +44,13 @@ export class TradesStore {
 
   /** Derniers filtres de loadTrades (ex. accountId) : réappliqués par loadMore. */
   private lastFilters: Record<string, string> = {};
+  /**
+   * Génération de la liste (#994) : chaque loadTrades l'incrémente, et une réponse d'une génération
+   * passée est ignorée. Sans ça, cliquer « Win » puis « Loss » affichait la réponse arrivée en dernier,
+   * et une page de « Charger plus » de l'ancien filtre s'ajoutait à la nouvelle liste.
+   */
+  private generation = 0;
+  private statsGeneration = 0;
 
   // Stats locales via le helper unique (BE exclus du win rate).
   private readonly localStats = computed(() => computeTradeStats(this.trades()));
@@ -53,7 +60,9 @@ export class TradesStore {
 
   // Charge une première page (remplace les trades existants)
   loadTrades(filters?: Record<string, string>) {
+    const gen = ++this.generation;
     this.isLoading.set(true);
+    this.isLoadingMore.set(false); // un « Charger plus » en vol devient périmé
     this.error.set(null);
 
     this.lastFilters = filters ?? {};
@@ -62,6 +71,7 @@ export class TradesStore {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (res) => {
+          if (gen !== this.generation) return;
           this.trades.set(res.data.data);
           this.nextCursor.set(res.data.nextCursor);
           this.hasNextPage.set(res.data.hasNextPage);
@@ -69,6 +79,7 @@ export class TradesStore {
           this.isLoading.set(false);
         },
         error: (err) => {
+          if (gen !== this.generation) return;
           this.error.set(err.message);
           this.isLoading.set(false);
         },
@@ -80,18 +91,21 @@ export class TradesStore {
     const cursor = this.nextCursor();
     if (!cursor || this.isLoadingMore()) return;
 
+    const gen = this.generation;
     this.isLoadingMore.set(true);
     this.tradesApi
       .getAll({ ...this.lastFilters, cursor })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (res) => {
+          if (gen !== this.generation) return;
           this.trades.update((existing) => [...existing, ...res.data.data]);
           this.nextCursor.set(res.data.nextCursor);
           this.hasNextPage.set(res.data.hasNextPage);
           this.isLoadingMore.set(false);
         },
         error: (err) => {
+          if (gen !== this.generation) return;
           this.error.set(err.message);
           this.isLoadingMore.set(false);
         },
@@ -100,13 +114,18 @@ export class TradesStore {
 
   // Charge les KPIs agrégés sur l'ensemble filtré complet (mêmes filtres que loadTrades).
   loadStats(filters?: Record<string, string>) {
+    const gen = ++this.statsGeneration;
     this.isLoadingStats.set(true);
     this.tradesApi
       .getStats(filters ?? {})
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: (res) => { this.stats.set(res.data); this.isLoadingStats.set(false); },
-        error: () => { this.isLoadingStats.set(false); },
+        next: (res) => {
+          if (gen !== this.statsGeneration) return;
+          this.stats.set(res.data);
+          this.isLoadingStats.set(false);
+        },
+        error: () => { if (gen === this.statsGeneration) this.isLoadingStats.set(false); },
       });
   }
 
@@ -122,6 +141,12 @@ export class TradesStore {
 
   removeTrade(id: string) {
     this.trades.update((trades) => trades.filter((t) => t.id !== id));
+    // Le curseur de pagination est l'id du dernier trade chargé : supprimé, la page suivante
+    // revenait vide et le reste du journal disparaissait (#994). Il passe au dernier restant.
+    if (this.nextCursor() === id) this.nextCursor.set(this.trades().at(-1)?.id ?? null);
+    // Plus rien de chargé mais le serveur en a d'autres : relire la 1re page, sinon le journal
+    // affichait « Aucun trade enregistré » et « Charger plus » n'avait plus de curseur.
+    if (this.trades().length === 0 && this.hasNextPage()) this.loadTrades(this.lastFilters);
   }
 
   /**
@@ -130,6 +155,9 @@ export class TradesStore {
    * fenêtre pendant laquelle le dashboard affichait « premier pas » à tort.
    */
   reset() {
+    this.generation++; // une réponse en vol d'avant le reset (autre compte, autre user) est ignorée
+    this.isLoading.set(false);
+    this.isLoadingMore.set(false);
     this.trades.set([]);
     this.loaded.set(false);
     this.nextCursor.set(null);

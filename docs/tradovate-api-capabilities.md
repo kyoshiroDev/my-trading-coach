@@ -695,6 +695,15 @@ d'ordre consécutifs, même compte, même contrat, côté opposé, quantité 1. 
 Le tableau « personne ne pose de bracket » ci-dessus reste vrai pour ces deux traders, pas en général.
 L'inférence a posteriori reste **non codée** tant que le fondateur ne l'a pas validée.
 
+> **Mise à jour 2026-11-14 (#963) : liaison par stratégie aussi pour les positions ouvertes.** Le
+> WebSocket souscrit `orderStrategyLink` en plus de `order` / `orderVersion`. La doc de
+> `user/syncrequest` ne liste pas les types de façon exhaustive et précise qu'un type inconnu est
+> accepté sans erreur ; la clé de l'instantané (`orderStrategyLinks`) n'est pas documentée : à
+> confirmer par le log « Liens de stratégie Tradovate WS … clés reçues [...] ». `protectionFor`
+> relie une jambe par `parentId`, OCO ou même stratégie. Cas résolus : un bracket complet plus un
+> ordre isolé ou une jambe orpheline. Deux brackets complets sur la même position restent sans
+> SL / TP affichés (règle stricte : rien ne dit lequel protège la position).
+
 ## 12. `account.userId` n'est pas le trader
 
 Piège coûteux, mesuré le 2026-09-27. L'entité compte porte un `userId` qu'il est tentant de prendre

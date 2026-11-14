@@ -1154,6 +1154,16 @@ export class CreateTradeDto {
   sens opposé, SL = stop sous l'entrée d'un LONG (`stopPrice`), TP = `Limit` au-dessus (`price`) ;
   **plusieurs candidats sans lien de bracket → `null`** (jamais une association devinée). Mapping
   jamais validé sur un vrai bracket : trames `order` / `orderVersion` brutes en `logger.debug`.
+  **#963** : le WebSocket souscrit aussi `orderStrategyLink` (type inconnu = ignoré sans erreur, doc
+  user/syncrequest). Liens lus dans l'instantané sous `orderStrategyLinks` (clé NON documentée,
+  absente = vide) et en direct ; carnet `strategies` (un lien arrivé avant son ordre est gardé,
+  purgé avec l'ordre, ignoré après sa sortie, mémoire `closed` bornée à 1 000 ; `Deleted` par id
+  seul du lien retrouvé via l'index `links`). `WorkingOrder.strategyId`
+  (ancienne valeur Redis sans le champ = null) ; `sameBracket` relie aussi par même stratégie, jamais
+  null = null. Effet : cas MIXTES résolus (bracket complet + ordre isolé ou jambe orpheline) ; deux
+  brackets COMPLETS restent `null` (règle stricte). Mesure : log « Liens de stratégie Tradovate WS
+  <conn> : n à l'instantané, clés reçues [...] » à chaque instantané, et un log au premier lien reçu
+  en direct par connexion.
 
 ## Synchro broker par API — pattern (PROMPT-207, Tradovate / NinjaTrader)
 
