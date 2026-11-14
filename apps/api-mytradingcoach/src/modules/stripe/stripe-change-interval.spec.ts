@@ -58,3 +58,42 @@ describe('StripeBillingService.changeInterval — clé d’idempotence', () => {
     expect(key(1).idempotencyKey).toBe(key(0).idempotencyKey);
   });
 });
+
+/**
+ * Audit fonctionnel #993 (lot 2, A14) : pendant une réservation fondateur mensuelle (abonnement en
+ * essai jusqu'au premier prélèvement), le refus du passage à l'annuel disait « l'annuel est facturé
+ * sans essai », faux pour un fondateur.
+ */
+describe('StripeBillingService.changeInterval — refus pendant la réservation fondateur (A14)', () => {
+  const make = (price: string) => {
+    const prices: Record<string, string> = {
+      STRIPE_PREMIUM_PRICE_MONTHLY_FOUNDER: 'price_29', STRIPE_PREMIUM_PRICE_YEARLY_FOUNDER: 'price_290',
+      STRIPE_PREMIUM_PRICE_MONTHLY_V2: 'price_49', STRIPE_PREMIUM_PRICE_YEARLY_V2: 'price_490',
+    };
+    const stripe = {
+      subscriptions: {
+        retrieve: vi.fn().mockResolvedValue({
+          id: 'sub_1', status: 'trialing', trial_end: Math.floor(Date.parse('2026-11-24T09:00:00Z') / 1000),
+          items: { data: [{ id: 'si_1', price: { id: price } }] },
+        }),
+        update: vi.fn(),
+      },
+    };
+    return new StripeBillingService(
+      { get: (k: string) => prices[k], getOrThrow: (k: string) => prices[k] } as never,
+      { user: { findUnique: vi.fn().mockResolvedValue({ id: 'u1', stripeSubscriptionId: 'sub_1' }) } } as never,
+      { client: { del: vi.fn() } } as never, {} as never, {} as never, {} as never, {} as never,
+      stripe as never,
+    );
+  };
+
+  it('fondateur : message de réservation avec la date du premier prélèvement', async () => {
+    await expect(make('price_29').changeInterval('u1', 'year')).rejects.toThrow(
+      'Changement impossible pendant ta réservation fondateur : tu pourras le faire après ton premier prélèvement, le 24/11.',
+    );
+  });
+
+  it('essai au prix normal : message inchangé', async () => {
+    await expect(make('price_49').changeInterval('u1', 'year')).rejects.toThrow("l'annuel n'est pas disponible");
+  });
+});

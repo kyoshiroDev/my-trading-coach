@@ -538,12 +538,20 @@ export class StripeBillingService {
     if (!user?.stripeSubscriptionId) throw new BadRequestException("Aucun abonnement à modifier.");
     const sub = await this.stripe.subscriptions.retrieve(user.stripeSubscriptionId);
     if (!ACTIVE_STATUSES.has(sub.status)) throw new BadRequestException("L'abonnement n'est pas actif.");
-    if (sub.status === 'trialing' && interval === 'year') {
-      throw new BadRequestException("Pendant l'essai, l'annuel n'est pas disponible : il est facturé sans essai.");
-    }
     const item = sub.items.data[0];
     const current = item?.price.id ?? '';
     const founder = this.founderPriceIds().includes(current);
+    if (sub.status === 'trialing' && interval === 'year') {
+      // Réservation fondateur (prélèvement à la fin de l'essai d'inscription) : ce n'est pas un essai
+      // au prix normal, l'ancien message (« l'annuel est facturé sans essai ») était faux.
+      const firstCharge = sub.trial_end ? new Date(sub.trial_end * 1000) : null;
+      if (founder && firstCharge) {
+        throw new BadRequestException(
+          `Changement impossible pendant ta réservation fondateur : tu pourras le faire après ton premier prélèvement, le ${frDate(firstCharge)}.`,
+        );
+      }
+      throw new BadRequestException("Pendant l'essai, l'annuel n'est pas disponible : il est facturé sans essai.");
+    }
     const target = this.config.getOrThrow<string>(
       founder
         ? interval === 'year' ? 'STRIPE_PREMIUM_PRICE_YEARLY_FOUNDER' : 'STRIPE_PREMIUM_PRICE_MONTHLY_FOUNDER'
