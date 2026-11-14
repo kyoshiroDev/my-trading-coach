@@ -288,6 +288,15 @@ describe('webhooks fondateur', () => {
     expect(w.cancel).not.toHaveBeenCalledWith('sub_trial');
   });
 
+  it('bienvenue partenaire envoyée une seule fois même si la tâche est rejouée (A12)', async () => {
+    const w = makeWebhook({ id: 'sub_p', price: 'price_49', metadata: { partnerCode: 'val20' } });
+    w.partners.claim.mockResolvedValue({ priceMonthlyEur: 39, priceAnnualEur: 390, durationMonths: 12 });
+    const evt = event('invoice.payment_succeeded', invoice('sub_p', 'subscription_create'));
+    await w.svc.processWebhookEvent(evt);
+    await w.svc.processWebhookEvent(evt);
+    expect(w.resend.sendPartnerWelcome).toHaveBeenCalledTimes(1);
+  });
+
   it('renouvellement fondateur → aucune nouvelle place', async () => {
     const { svc, founders } = makeWebhook({ id: 'sub_f', price: 'price_29' });
     await svc.processWebhookEvent(event('invoice.payment_succeeded', invoice('sub_f', 'subscription_cycle')));

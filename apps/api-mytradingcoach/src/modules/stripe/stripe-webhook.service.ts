@@ -633,8 +633,10 @@ export class StripeWebhookService {
     redemption: { priceMonthlyEur: number; priceAnnualEur: number; durationMonths: number | null },
   ): Promise<void> {
     const yearly = synced.interval === 'year';
-    await this.resend
-      .sendPartnerWelcome({
+    // Une seule fois par abonnement : `claim` rend l'utilisation existante quand la tâche est rejouée
+    // (BullMQ, redélivrance Stripe), ce qui renvoyait la confirmation à chaque fois.
+    await this.sendOnce(`partner-welcome:${synced.subscriptionId}`, () =>
+      this.resend.sendPartnerWelcome({
         to: synced.email,
         userName: synced.name ?? '',
         code: synced.metadata['partnerCode'].toUpperCase(),
@@ -642,8 +644,8 @@ export class StripeWebhookService {
         normalPriceLabel: priceLabel(yearly ? PREMIUM_PRICE_EUR.annual : PREMIUM_PRICE_EUR.monthly, synced.interval),
         durationMonths: redemption.durationMonths,
         trialEndsAt: synced.stripeSubscriptionStatus === 'trialing' ? synced.currentPeriodEnd : null,
-      })
-      .catch((err: Error) => this.logger.warn(`Confirmation partenaire non envoyée (user ${synced.id}) : ${err.message}`));
+      }),
+    ).catch((err: Error) => this.logger.warn(`Confirmation partenaire non envoyée (user ${synced.id}) : ${err.message}`));
   }
 
   /** Tarif conservé par l'abonné (place fondateur ou code partenaire actifs), sinon null. */
