@@ -54,7 +54,11 @@
                 (blur)="onAssetBlur()"
                 placeholder="BTC/USDT, MNQ..."
                 autocomplete="off"
+                [class.input-error]="submitted() && zodErrors()['asset']"
               />
+              @if (submitted() && zodErrors()['asset']; as err) {
+                <p class="field-hint field-error" role="alert" data-testid="trade-asset-error">{{ err }}</p>
+              }
               @if (filteredInstruments().length > 0 && showDropdown()) {
                 <div class="asset-dropdown">
                   @for (inst of filteredInstruments(); track inst.symbol) {
@@ -361,6 +365,9 @@
                 </button>
               }
             </div>
+            @if (submitted() && zodErrors()['setupId']; as err) {
+              <p class="field-hint field-error" role="alert" data-testid="trade-setup-error">{{ err }}</p>
+            }
           </div>
 
           <!-- 9. Session -->

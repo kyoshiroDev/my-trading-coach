@@ -449,15 +449,16 @@ export class TradeFormComponent {
     } else {
       tradedAtIso = new Date(tradedAt + 'T12:00:00').toISOString();
     }
-    this.form.update((f) => ({
-      ...f,
+    // Le formulaire garde sa date au format jour : l'ISO n'existe que dans ce qui part. Avant, il
+    // remplaçait `tradedAt` et le 2e envoi après un refus levait `RangeError` (formulaire bloqué, #994).
+    const result = CreateTradeSchema.safeParse({
+      ...this.form(),
       // P&L BRUT : les frais partent dans `commission` et le net est calculé à la lecture.
       // Envoyer le net ici faisait déduire les frais deux fois.
       pnl: this.form().pnl ?? this.autoPnl(),
       riskReward: this.autoRR(),
       tradedAt: tradedAtIso,
-    }));
-    const result = CreateTradeSchema.safeParse(this.form());
+    });
     if (!result.success) {
       const errors: Record<string, string> = {};
       result.error.issues.forEach((e) => {
