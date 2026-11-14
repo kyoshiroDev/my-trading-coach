@@ -1,3 +1,4 @@
+import { Transform } from 'class-transformer';
 import { IsIn, IsOptional, IsString, Length } from 'class-validator';
 import { OFFER_CTAS, type OfferCta } from '@mtc/shared';
 
@@ -11,7 +12,12 @@ export class CreateCheckoutDto {
   })
   plan!: CheckoutPlan;
 
-  /** Point de clic d'origine (#525), conservé jusqu'au checkout et en base. */
+  /**
+   * Point de clic d'origine (#525), conservé jusqu'au checkout et en base. Simple mesure : une
+   * valeur inconnue (vieille app en cache, lien `?cta=…`) est ignorée au lieu de faire échouer tout
+   * le paiement en 400 (#993).
+   */
+  @Transform(({ value }) => ((OFFER_CTAS as readonly unknown[]).includes(value) ? value : undefined))
   @IsOptional()
   @IsIn(OFFER_CTAS)
   cta?: OfferCta;
