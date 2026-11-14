@@ -98,9 +98,11 @@ export class SessionService {
   ) {
     const existing = await this.prisma.tradeSession.findFirst({
       where: { id: sessionId, userId },
-      select: { startedAt: true, accountId: true },
+      select: { startedAt: true, accountId: true, status: true, endedAt: true },
     });
     if (!existing) throw new NotFoundException('Session introuvable');
+    // Déjà clôturée (double clic, cron passé avant) : fin d'origine gardée, humeur et notes enregistrées (#994).
+    const endedAt = existing.status === SessionStatus.CLOSED && existing.endedAt ? existing.endedAt : new Date();
     // 1 session = 1 compte : les trades d'un autre compte n'y entrent pas (#457).
     const sameAccount = existing.accountId ? { accountId: existing.accountId } : {};
 
@@ -120,7 +122,7 @@ export class SessionService {
       where: { id: sessionId, userId },
       data: {
         status: SessionStatus.CLOSED,
-        endedAt: new Date(),
+        endedAt,
         moodEnd: mood,
         ...totals,
         notes,

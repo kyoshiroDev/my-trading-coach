@@ -317,6 +317,25 @@ describe('SessionService', () => {
   });
 
   describe('closeSession', () => {
+    // #994 (N13) : double clic, ou onglet resté ouvert sur une séance que le cron a déjà fermée :
+    // `endedAt` devenait « maintenant » (durée de 20 h et plus). On garde la fin d'origine ; l'humeur
+    // et les notes saisies sont enregistrées quand même (refuser les ferait perdre).
+    it('séance déjà clôturée : heure de fin d’origine gardée, humeur enregistrée', async () => {
+      const finOrigine = new Date('2026-06-01T22:00:00.000Z');
+      mockPrisma.tradeSession.findFirst.mockResolvedValue({
+        startedAt: new Date('2026-06-01T08:00:00.000Z'), status: 'CLOSED', endedAt: finOrigine,
+      });
+      mockPrisma.trade.updateMany.mockResolvedValue({ count: 0 });
+      mockPrisma.trade.findMany.mockResolvedValue([]);
+      mockPrisma.tradeSession.update.mockResolvedValue({ id: 'session-1' });
+
+      await service.closeSession('user-1', 'session-1', 'CONFIDENT');
+
+      const { data } = mockPrisma.tradeSession.update.mock.calls[0][0];
+      expect(data.endedAt).toEqual(finOrigine);
+      expect(data.moodEnd).toBe('CONFIDENT');
+    });
+
     it('rattache les trades du jour non liés puis recalcule les stats', async () => {
       mockPrisma.tradeSession.findFirst.mockResolvedValue({
         startedAt: new Date('2026-06-01T08:00:00.000Z'),
