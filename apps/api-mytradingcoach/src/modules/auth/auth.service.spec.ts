@@ -74,7 +74,11 @@ const mockDemoSeed = { ensureFresh: vi.fn().mockResolvedValue(false) };
 const mockProductEvents = { record: vi.fn().mockResolvedValue(undefined) };
 
 const mockNotifier = { notify: vi.fn() };
-const mockRedis = { client: { set: vi.fn().mockResolvedValue('OK'), exists: vi.fn().mockResolvedValue(0) } };
+const mockMulti = { hset: vi.fn(), expire: vi.fn(), exec: vi.fn().mockResolvedValue([]) };
+mockMulti.hset.mockReturnValue(mockMulti);
+mockMulti.expire.mockReturnValue(mockMulti);
+// eval = script de rotation (#1002) : 1 ok · 0 révoqué · 2 réutilisation détectée.
+const mockRedis = { client: { eval: vi.fn().mockResolvedValue(1), multi: vi.fn(() => mockMulti) } };
 
 const GOOGLE_IDENTITY = { googleId: 'g-sub-1', email: 'trader@gmail.com', name: 'Trader' };
 const mockVerifier = { verify: vi.fn() };
@@ -728,50 +732,88 @@ describe('AuthService', () => {
   });
 
   // #994 (S2) : la déconnexion effaçait seulement le cookie ; un refresh copié restait valide 7 jours.
-  describe('déconnexion : refresh présenté mis en liste noire', () => {
+  // #1002 : l'ancien refresh restait valide après rotation. Suivi par famille (une par connexion).
+  describe('refresh : familles, rotation et déconnexion', () => {
     const verify = (payload: object) => {
       (mockJwt as Record<string, unknown>)['verifyAsync'] = vi.fn().mockResolvedValue(payload);
     };
+    const refreshSign = () =>
+      mockJwt.signAsync.mock.calls.find((c) => (c[1] as { secret?: string })?.secret === process.env['JWT_REFRESH_SECRET'] && (c[0] as { tv?: number }).tv !== undefined);
+    const knownUser = () =>
+      mockPrisma.user.findUnique.mockResolvedValue({ ...mockSafeUser, password: 'h', googleId: null, tokenVersion: 0 });
 
-    it('chaque refresh token porte un identifiant unique (jwtid)', async () => {
+    it('connexion : refresh avec un jti et une famille neufs, 7 jours', async () => {
       mockPrisma.user.findUnique.mockResolvedValue(mockUser);
       await service.login({ email: 'test@test.com', password: 'password123' });
-      const refreshCall = mockJwt.signAsync.mock.calls.find((c) => (c[1] as { expiresIn?: string })?.expiresIn === '7d');
-      expect((refreshCall?.[1] as { jwtid?: string }).jwtid).toMatch(/^[0-9a-f-]{36}$/);
+      const [payload, opts] = refreshSign() as [{ fid: string }, { jwtid: string; expiresIn: number }];
+      expect(opts.jwtid).toMatch(/^[0-9a-f-]{36}$/);
+      expect(payload.fid).toMatch(/^[0-9a-f-]{36}$/);
+      expect(payload.fid).not.toBe(opts.jwtid);
+      expect(opts.expiresIn).toBe(7 * 24 * 3600);
     });
 
-    it('logout : jti mis en liste noire jusqu’à l’expiration du jeton', async () => {
-      const exp = Math.floor(Date.now() / 1000) + 3600;
-      verify({ sub: 'user-123', jti: 'jti-1', exp });
+    it('refresh : la famille est gardée, le jti change, la rotation passe par Redis', async () => {
+      verify({ sub: 'user-123', email: 'a@b.c', tv: 0, jti: 'jti-1', fid: 'fam-1' });
+      knownUser();
+      await expect(service.refresh('t')).resolves.toMatchObject({ access_token: 'mock_token' });
+      const [payload, opts] = refreshSign() as [{ fid: string }, { jwtid: string }];
+      expect(payload.fid).toBe('fam-1');
+      expect(opts.jwtid).not.toBe('jti-1');
+      const [, nKeys, famKey, legacyKey, jti, nextJti] = mockRedis.client.eval.mock.calls[0];
+      expect([nKeys, famKey, legacyKey, jti, nextJti]).toEqual([2, 'auth:refresh-family:fam-1', 'auth:revoked-refresh:jti-1', 'jti-1', opts.jwtid]);
+    });
+
+    it('jeton d’avant #1002 (jti sans famille) : famille dérivée du jti, gardée ensuite', async () => {
+      verify({ sub: 'user-123', email: 'a@b.c', tv: 0, jti: 'jti-old' });
+      knownUser();
+      await service.refresh('t');
+      expect(mockRedis.client.eval.mock.calls[0][2]).toBe('auth:refresh-family:j:jti-old');
+      expect((refreshSign() as [{ fid: string }])[0].fid).toBe('j:jti-old');
+    });
+
+    it('jeton d’avant #994 (sans jti) : accepté sans suivi, nouvelle famille', async () => {
+      verify({ sub: 'user-123', email: 'a@b.c', tv: 0 });
+      knownUser();
+      await expect(service.refresh('t')).resolves.toMatchObject({ access_token: 'mock_token' });
+      expect(mockRedis.client.eval).not.toHaveBeenCalled();
+      expect((refreshSign() as [{ fid: string }])[0].fid).toMatch(/^[0-9a-f-]{36}$/);
+    });
+
+    it('famille ou jeton révoqué → 401', async () => {
+      verify({ sub: 'user-123', email: 'a@b.c', tv: 0, jti: 'jti-1', fid: 'fam-1' });
+      knownUser();
+      mockRedis.client.eval.mockResolvedValueOnce(0);
+      await expect(service.refresh('t')).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('réutilisation d’un jeton déjà renouvelé → 401', async () => {
+      verify({ sub: 'user-123', email: 'a@b.c', tv: 0, jti: 'jti-1', fid: 'fam-1' });
+      knownUser();
+      mockRedis.client.eval.mockResolvedValueOnce(2);
+      await expect(service.refresh('t')).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('Redis en panne au refresh : accepté (une panne ne déconnecte personne)', async () => {
+      verify({ sub: 'user-123', email: 'a@b.c', tv: 0, jti: 'jti-1', fid: 'fam-1' });
+      knownUser();
+      mockRedis.client.eval.mockRejectedValueOnce(new Error('redis down'));
+      await expect(service.refresh('t')).resolves.toMatchObject({ access_token: 'mock_token' });
+    });
+
+    it('logout : la famille du jeton présenté est coupée pour 7 jours', async () => {
+      verify({ sub: 'user-123', jti: 'jti-1', fid: 'fam-1' });
       await service.revokeRefreshToken('t');
-      const [key, , mode, ttl] = mockRedis.client.set.mock.calls[0];
-      expect(key).toBe('auth:revoked-refresh:jti-1');
-      expect(mode).toBe('EX');
-      expect(ttl).toBeGreaterThan(3590);
-      expect(ttl).toBeLessThanOrEqual(3600);
+      expect(mockMulti.hset).toHaveBeenCalledWith('auth:refresh-family:fam-1', 'revoked', '1');
+      expect(mockMulti.expire).toHaveBeenCalledWith('auth:refresh-family:fam-1', 7 * 24 * 3600);
     });
 
     it('logout sans cookie, jeton illisible ou Redis en panne : jamais d’erreur', async () => {
       await expect(service.revokeRefreshToken(undefined)).resolves.toBeUndefined();
       (mockJwt as Record<string, unknown>)['verifyAsync'] = vi.fn().mockRejectedValue(new Error('bad'));
       await expect(service.revokeRefreshToken('x')).resolves.toBeUndefined();
-      verify({ sub: 'user-123', jti: 'jti-1', exp: Math.floor(Date.now() / 1000) + 60 });
-      mockRedis.client.set.mockRejectedValueOnce(new Error('redis down'));
+      verify({ sub: 'user-123', jti: 'jti-1', fid: 'fam-1' });
+      mockMulti.exec.mockRejectedValueOnce(new Error('redis down'));
       await expect(service.revokeRefreshToken('t')).resolves.toBeUndefined();
-    });
-
-    it('refresh d’un jeton mis en liste noire → 401', async () => {
-      verify({ sub: 'user-123', email: 'a@b.c', tv: 0, jti: 'jti-1' });
-      mockPrisma.user.findUnique.mockResolvedValue({ ...mockSafeUser, password: 'h', googleId: null, tokenVersion: 0 });
-      mockRedis.client.exists.mockResolvedValueOnce(1);
-      await expect(service.refresh('t')).rejects.toThrow(UnauthorizedException);
-    });
-
-    it('Redis en panne au refresh : accepté (une panne ne déconnecte personne)', async () => {
-      verify({ sub: 'user-123', email: 'a@b.c', tv: 0, jti: 'jti-1' });
-      mockPrisma.user.findUnique.mockResolvedValue({ ...mockSafeUser, password: 'h', googleId: null, tokenVersion: 0 });
-      mockRedis.client.exists.mockRejectedValueOnce(new Error('redis down'));
-      await expect(service.refresh('t')).resolves.toMatchObject({ access_token: 'mock_token' });
     });
   });
 

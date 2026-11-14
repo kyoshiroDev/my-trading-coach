@@ -887,6 +887,17 @@ puis RECALCULÉS par `refreshClosedSessionTotals` (`session/refresh-session-tota
 `removeBrokerImported`, `reassignAccount`, `refreshAfterFeesRepair`, et `SessionService.closeTrade`.
 Toute nouvelle écriture sur un trade rattaché à une séance passe par lui.
 
+### Réparation des séances : trades d'autres journées (#1000)
+Avant N1 (#994, lot 1b), un import d'historique pendant une séance y rattachait tous les trades passés.
+`POST /api/admin/sessions/repair-days` (ADMIN, `session/admin-sessions.controller.ts`, synchrone, la
+réponse est le rapport) : essai par défaut, `?apply=true` écrit. Règle (`session/session-days-repair.ts`,
+pures) : trade hors de la journée CME de sa séance → séance de SA journée si une seule compatible (même
+utilisateur, même compte ou séance sans compte), sinon `sessionId` null (rapport : `detachedNoSession` / `detachedAmbiguous`) ; trade d'un autre compte que sa
+séance (#457) non traité. Avant écriture : sauvegarde JSONL (rattachements + totaux d'avant) en Redis
+30 j, `GET …/repair-days/backup?at=AAAAMMJJ-HHMM` ; déplacements conditionnels, puis
+`refreshClosedSessionTotals` et invalidation du cache analytics. Verrou Redis, comptes démo exclus.
+Effet voulu : un trade sans émotion saisie prend l'humeur de sa nouvelle séance (`inheritedEmotion`).
+
 ### Filtre Gagnants / Perdants / BE du journal (#947)
 Classé sur le NET arrondi (`TRADE_NET_SQL` = `round(pnl − |commission|, 2)`), comme les stats. Prisma ne
 sait pas comparer `pnl − |commission|` : la liste passe par `resolveTradeWhere` (ids sélectionnés par
