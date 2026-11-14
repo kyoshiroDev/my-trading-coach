@@ -89,4 +89,17 @@ describe('TradesStore — réponses périmées et curseur', () => {
     store.removeTrade('b');
     expect(store.nextCursor()).toBe('a');
   });
+
+  it('tous les trades chargés supprimés alors qu’il en reste au serveur : la 1re page est relue', () => {
+    const { store, http } = setup();
+    store.loadTrades({ accountId: 'acc1' });
+    http.expectOne((r) => isTrades(r.url)).flush({ data: { data: [t('a'), t('b')], nextCursor: 'b', hasNextPage: true } });
+    store.removeTrade('a');
+    store.removeTrade('b');
+    const reload = http.expectOne((r) => isTrades(r.url));
+    expect(reload.request.urlWithParams).toContain('accountId=acc1');
+    expect(reload.request.urlWithParams).not.toContain('cursor=');
+    reload.flush({ data: { data: [t('c')], nextCursor: null, hasNextPage: false } });
+    expect(store.trades().map((x) => x.id)).toEqual(['c']);
+  });
 });

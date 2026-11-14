@@ -144,6 +144,9 @@ export class TradesStore {
     // Le curseur de pagination est l'id du dernier trade chargé : supprimé, la page suivante
     // revenait vide et le reste du journal disparaissait (#994). Il passe au dernier restant.
     if (this.nextCursor() === id) this.nextCursor.set(this.trades().at(-1)?.id ?? null);
+    // Plus rien de chargé mais le serveur en a d'autres : relire la 1re page, sinon le journal
+    // affichait « Aucun trade enregistré » et « Charger plus » n'avait plus de curseur.
+    if (this.trades().length === 0 && this.hasNextPage()) this.loadTrades(this.lastFilters);
   }
 
   /**
