@@ -83,3 +83,26 @@ describe('Séance du jour — journal et humeur de fin', () => {
     vi.useRealTimers();
   });
 });
+
+describe('Séance du jour — onglet suivi seulement si l’action réussit (F25)', () => {
+  it('Démarrer : reste sur le matin tant que la séance n’est pas active', () => {
+    const { fixture, cmp, store, activeSession } = mount(null);
+    cmp.startSession();
+    fixture.detectChanges();
+    expect(store.startSession).toHaveBeenCalled();
+    expect(cmp.activeTab()).not.toBe('live');
+    activeSession.set({ id: 's1', status: 'ACTIVE' } as TradingSession); // le serveur a répondu
+    fixture.detectChanges();
+    expect(cmp.activeTab()).toBe('live');
+  });
+
+  it('Clôturer : reste sur Live tant que la séance n’est pas close', () => {
+    const { fixture, cmp, activeSession } = mount({ id: 's1', status: 'ACTIVE' });
+    cmp.closeAndGoToDebrief();
+    fixture.detectChanges();
+    expect(cmp.activeTab()).toBe('live');
+    activeSession.set({ id: 's1', status: 'CLOSED' } as TradingSession);
+    fixture.detectChanges();
+    expect(cmp.activeTab()).toBe('debrief');
+  });
+});

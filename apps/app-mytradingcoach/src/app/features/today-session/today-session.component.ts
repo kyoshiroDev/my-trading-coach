@@ -331,6 +331,7 @@ export class TodaySessionComponent implements OnInit, OnDestroy {
     effect(() => {
       const status = this.store.activeSession()?.status;
       if (status === 'ACTIVE') {
+        closedShown = false; // la clôture de CETTE séance basculera sur le Débrief (#994)
         this.activeTab.set('live');
       } else if (status === 'CLOSED' && !closedShown) {
         closedShown = true;
@@ -382,13 +383,13 @@ export class TodaySessionComponent implements OnInit, OnDestroy {
     // 1 session = 1 compte : sécurité serveur/UX même si les boutons sont déjà désactivés
     // (accountChoiceRequired) quand aucun compte précis n'est choisi.
     if (this.accountChoiceRequired()) return;
+    // L'onglet suit la séance (effet du constructeur) : jamais « Live » si le démarrage échoue (#994).
     this.store.startSession(this.selectedAccount.accountParam());
-    this.activeTab.set('live');
   }
 
   protected closeAndGoToDebrief(): void {
     this.confirmCloseOpen.set(false);
+    // L'onglet suit la séance : Débrief seulement une fois la clôture faite (#994).
     this.store.closeSessionThenDebrief();
-    this.activeTab.set('debrief');
   }
 }
