@@ -275,6 +275,10 @@ POST   /api/test/upgrade-user          NODE_ENV=test uniquement
   la liste admin). Corollaire : un `AMBASSADOR` doit **toujours** avoir un code — les
   changements de rôle passent par `AmbassadorService.promote()` / `revoke()`, jamais par
   un `user.update({ data: { role } })` direct. `UsersService.setRole` y délègue.
+  `promote` refuse ADMIN / BETA_TESTER (400, jamais rétrogradés) ; `revoke` refuse tout rôle autre
+  qu'AMBASSADOR (#1013 A6). `GET /ambassador/new-count?since=` invalide → 400.
+  Compte démo : jamais parrain. `GET /referral/me` ne lui écrit pas de code (réponse vide), l'inscription
+  ignore un code démo et `referralApplies` refuse un parrain `isDemo`.
   Backfill : `tools/scripts/backfill/ambassador-codes.ts` (idempotent).
 - **Règle de coexistence du parrainage** : c'est le **rôle du parrain** qui décide, dans
   `processReferral` (`stripe-referral.service.ts`). Parrain `AMBASSADOR` → commission cash 20 %
@@ -788,8 +792,23 @@ canActivate(ctx: ExecutionContext): boolean {
   mode test le 27/10 : il arrive juste avant `payment_action_required` ; un refus de carte compte 1
   tentative) → pas d'e-mail d'échec. E-mails réservation et 3D Secure « une seule fois »
   (`sendOnce`, marque Redis `stripe:mail-once:*` 30 j, retirée si l'envoi échoue) : une tâche BullMQ
-  rejouée ne les renvoie pas. Journaux : nom de l'erreur seulement.
-  Premium offert par l'admin (`offerPremium`) : 409 si abonnement `active` / `trialing` (une réservation
+  rejouée ne les renvoie pas. Journaux : nom de l'erreur seulement. Bienvenue partenaire aussi
+  derrière `sendOnce` (`partner-welcome:<sub>`) : `claim` rend l'utilisation existante au rejeu.
+  **Bascule essai 49 € → fondateur** (#1013 A7) : `cancelSupersededTrials` passe EN DERNIER (après place,
+  garantie, parrainage) et seulement si une place a été prise ; échec de la liste ou d'une annulation →
+  alerte admin une fois (`sendOnce`) puis erreur (BullMQ rejoue). Paiement fondateur sans place : l'essai
+  est gardé. `syncSubscription` ignore un AUTRE abonnement encore actif tant qu'une place fondateur
+  `ACTIVE` pointe sur l'abonnement en cours (jamais l'essai à 49 € suivi à la place du fondateur).
+  **Clés d'idempotence Stripe = mêmes paramètres** : checkout sans réservation
+  `checkout-<user>-<offer>-<ui>-<price>-<expires_at>` (un créneau de 30 min avec un `expires_at` qui change
+  → `idempotency_error` → 500) ; changement d'intervalle `interval-<sub>-<prix cible>-<latest_invoice>`
+  (double clic = même clé, aller-retour dans les 24 h = nouvelle clé). Refus du passage à l'annuel pendant
+  une réservation fondateur : « Changement impossible pendant ta réservation fondateur : tu pourras le
+  faire après ton premier prélèvement, le JJ/MM. »
+  `cta` du checkout (`CreateCheckoutDto`) : une valeur hors `OFFER_CTAS` est IGNORÉE (`@Transform` →
+  `undefined`), jamais un 400 qui bloque le paiement.
+  Premium offert par l'admin (`offerPremium`) : pose le rôle Discord Premium (si Discord lié, panne non
+  bloquante) et vide `billing:status:<id>`. 409 si abonnement `active` / `trialing` (une réservation
   est en `trialing`) ou `past_due` / `unpaid` (« Paiement Stripe en attente : régler d'abord
   l'abonnement »). La fiche admin (`GET /admin/users/:id`) expose `offer.founder.reserved` et
   `firstChargeAt` ; l'admin affiche la raison sous le bouton désactivé (réservation : date du premier
