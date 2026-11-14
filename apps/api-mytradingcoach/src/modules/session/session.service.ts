@@ -32,10 +32,7 @@ export class SessionService {
   ) {}
 
   async startSession(userId: string, mood: MoodState, accountId?: string) {
-    await this.prisma.tradeSession.updateMany({
-      where: { userId, status: SessionStatus.ACTIVE },
-      data: { status: SessionStatus.CLOSED, endedAt: new Date() },
-    });
+    await this.closeOpenSessions(userId);
 
     // accountId fourni et valide (appartient au user) → on l'utilise ; sinon compte
     // par défaut (anti-NULL : jamais de session sans compte).
@@ -143,6 +140,26 @@ export class SessionService {
 
   private sessionTrades(userId: string, sessionId: string, sameAccount: { accountId?: string }) {
     return sessionTradesFor(this.prisma, userId, sessionId, sameAccount.accountId ?? null);
+  }
+
+  /**
+   * Séances encore ouvertes au démarrage d'une nouvelle (#994) : clôturées AVEC leurs totaux, sinon
+   * `totalTrades` restait à 0 et la séance disparaissait de l'historique. Séance d'une journée
+   * précédente = comme le cron (fin de SA journée) ; séance du jour (autre appareil) = maintenant.
+   */
+  private async closeOpenSessions(userId: string, now = new Date()): Promise<void> {
+    const open = await this.prisma.tradeSession.findMany({
+      where: { userId, status: SessionStatus.ACTIVE },
+      select: { id: true, accountId: true, startedAt: true },
+    });
+    for (const s of open) {
+      const trades = await this.sessionTrades(userId, s.id, s.accountId ? { accountId: s.accountId } : {});
+      const data =
+        s.startedAt < tradingDayStart(now)
+          ? autoCloseData(s.startedAt, trades)
+          : { status: SessionStatus.CLOSED, endedAt: now, ...sessionTotalsFrom(trades) };
+      await this.prisma.tradeSession.updateMany({ where: { id: s.id, status: SessionStatus.ACTIVE }, data });
+    }
   }
 
   /**
