@@ -40,3 +40,10 @@ describe('Journal — téléphone', () => {
     expect(mobile).toMatch(/\.td-time\s*\{[^}]*grid-column: 1/);
   });
 });
+
+describe('Journal — écran tactile', () => {
+  it('boutons de journée visibles sans survol', () => {
+    const touch = block('@media (pointer: coarse)', '.day-delete-btn');
+    expect(touch).toMatch(/\.day-delete-btn, \.day-reassign-btn \{ opacity: 1; \}/);
+  });
+});

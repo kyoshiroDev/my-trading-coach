@@ -522,6 +522,9 @@
 
 /* Écran tactile : zone de clic portée vers 44 px sans changer le visuel (#638). */
 @media (pointer: coarse) {
+  /* Pas de survol au doigt : boutons de journée visibles d'emblée, sinon invisibles mais
+     cliquables (#994). */
+  .day-delete-btn, .day-reassign-btn { opacity: 1; }
   .date-preset { position: relative; }
   .date-preset::before { content: ''; position: absolute; inset: -11px 0; }
 }
