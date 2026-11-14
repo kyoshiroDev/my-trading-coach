@@ -360,9 +360,12 @@ export class ProfileComponent implements OnInit {
     this.editingSetup.set(null);
   }
 
-  protected archiveSetup(id: string): void { this.setupsStore.archive(id); }
-  protected restoreSetup(id: string): void { this.setupsStore.restore(id); }
-  protected deleteSetup(id: string): void { this.setupsStore.remove(id); }
+  // Refus de l'API affiché (#994) : avant, le setup réapparaissait sans explication (ex. « jamais
+  // utilisé » périmé → 400 « archive-le plutôt »).
+  private readonly setupError = (msg: string) => this.toast.error(msg);
+  protected archiveSetup(id: string): void { this.setupsStore.archive(id, this.setupError); }
+  protected restoreSetup(id: string): void { this.setupsStore.restore(id, this.setupError); }
+  protected deleteSetup(id: string): void { this.setupsStore.remove(id, this.setupError); }
 
   // ── Onglets ───────────────────────────────────────────────────────────────
   protected setProfileTab(tab: ProfileTab): void {
@@ -516,7 +519,10 @@ export class ProfileComponent implements OnInit {
           done();
           loadingSig.set(false);
         },
-        error: () => loadingSig.set(false),
+        error: (err) => {
+          loadingSig.set(false);
+          this.toast.error(apiErrorMessage(err, 'La modification n’a pas pu être enregistrée. Réessaie.'));
+        },
       });
   }
 
@@ -531,9 +537,7 @@ export class ProfileComponent implements OnInit {
           this.passwordResetSent.set(true);
           setTimeout(() => this.passwordResetSent.set(false), 4000);
         },
-        error: () => {
-          /* silently ignore : user stays on page */
-        },
+        error: () => this.toast.error('L’e-mail de réinitialisation n’a pas pu partir. Réessaie dans un instant.'),
       });
   }
 
@@ -768,7 +772,10 @@ export class ProfileComponent implements OnInit {
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe({
-        error: () => this.tradingAssets.set(prev), // rollback optimiste
+        error: () => {
+          this.tradingAssets.set(prev); // rollback optimiste
+          this.toast.error('Tes actifs n’ont pas pu être enregistrés. Réessaie.');
+        },
       });
   }
 
