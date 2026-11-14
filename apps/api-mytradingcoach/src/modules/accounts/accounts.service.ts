@@ -666,9 +666,18 @@ export class AccountsService {
     ctx?: PlanContext,
   ): Promise<TradingAccount> {
     // Un compte créé est ACTIVE par défaut → il consomme un slot.
-    await this.assertActiveSlotAvailable(userId, ctx);
-    if (dto.propFirmPlanId) await this.assertCatalogPlan(dto.propFirmPlanId);
-    return this.prisma.tradingAccount.create({ data: { userId, ...withDates(dto) } });
+    if (this.resolveAccountLimit(ctx) === null) {
+      if (dto.propFirmPlanId) await this.assertCatalogPlan(dto.propFirmPlanId);
+      return this.prisma.tradingAccount.create({ data: { userId, ...withDates(dto) } });
+    }
+    // Plan à quota : comptage et création sous verrou par utilisateur, sinon deux créations
+    // simultanées (double clic) passaient toutes les deux le comptage (#994). Même verrou que retry.
+    return this.prisma.$transaction(async (tx) => {
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`account-retry:${userId}`}, 0))`;
+      await this.assertActiveSlotAvailable(userId, ctx, tx);
+      if (dto.propFirmPlanId) await this.assertCatalogPlan(dto.propFirmPlanId);
+      return tx.tradingAccount.create({ data: { userId, ...withDates(dto) } });
+    });
   }
 
   async update(
