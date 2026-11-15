@@ -1,3 +1,6 @@
+<!-- Réserve sous le contenu pour le « + » flottant du téléphone, montrée par styles.css seulement
+     quand la page a ce bouton (le bandeau le remonte au-dessus de lui). -->
+<div class="demo-cta-fab-space" aria-hidden="true"></div>
 @if (collapsed()) {
   <div class="demo-cta is-collapsed" data-testid="demo-cta-pill-row">
     <a class="demo-cta-pill" data-testid="demo-cta-pill" [href]="registerUrl" (click)="go($event, 'pill')">Créer mon compte</a>
