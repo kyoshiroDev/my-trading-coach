@@ -107,6 +107,8 @@
             source: o.source,
             medium: o.medium,
             campaign: o.campaign,
+            // Bouton de la démo (#1029) : SIGNUP_FUNNEL_ORIGINS de @mtc/shared.
+            detail: params.get('source') === 'demo' ? 'demo' : undefined,
             inApp: new RegExp(IN_APP, 'i').test(navigator.userAgent || ''),
           });
           var sent = false;

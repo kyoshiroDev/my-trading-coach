@@ -21,6 +21,7 @@ import { GoogleAuthButtonComponent } from '../../shared/components/google-auth-b
 import { AuthLayoutComponent } from './auth-layout/auth-layout.component';
 import { SignupTermsNoteComponent } from './auth-layout/signup-terms-note.component';
 import { PREMIUM_SIGNUP_TRIAL_DAYS } from '../../core/constants/pricing.const';
+import { DEMO_SIGNUP_SOURCE } from '@mtc/shared';
 
 /** Hôte d'un referrer externe (sans `www.`), ou '' pour nos domaines / localhost / absent. */
 export function referrerHost(referrer: string): string {
@@ -100,6 +101,8 @@ export class RegisterComponent {
       source: this.acquisition.acquisitionSource,
       medium: this.acquisition.acquisitionMedium,
       campaign: this.acquisition.acquisitionCampaign,
+      // Bouton « Créer mon compte » de la démo (#1029) : étapes comptées avec detail `demo`.
+      ...(this.route.snapshot.queryParamMap.get('source') === DEMO_SIGNUP_SOURCE ? { entry: DEMO_SIGNUP_SOURCE } : {}),
     });
   }
 

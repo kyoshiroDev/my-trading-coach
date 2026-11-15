@@ -240,7 +240,7 @@
    --demo-banner-h (0 hors démo) retranche le bandeau « Mode démo » posé au-dessus. */
 @container (min-width: 981px) {
   .session-debrief {
-    max-height: calc(100vh - 103px - var(--demo-banner-h, 0px));
+    max-height: calc(100vh - 103px - var(--demo-banner-h, 0px) - var(--demo-cta-h, 0px));
     overflow-y: auto;
     min-height: 0;
   }

@@ -1,0 +1,49 @@
+@if (collapsed()) {
+  <div class="demo-cta is-collapsed" data-testid="demo-cta-pill-row">
+    <a class="demo-cta-pill" data-testid="demo-cta-pill" [href]="registerUrl" (click)="go($event, 'pill')">Créer mon compte</a>
+  </div>
+} @else {
+  <aside class="demo-cta" data-testid="demo-cta-banner" aria-label="Créer ton compte">
+    <p class="demo-cta-text">
+      Ça te parle ? Crée ton compte : <strong>{{ trialDays }} jours de Premium offerts</strong>, sans carte
+    </p>
+    <a class="demo-cta-btn" data-testid="demo-cta-banner-btn" [href]="registerUrl" (click)="go($event, 'banner')">Créer mon compte</a>
+    <button type="button" class="demo-cta-close" data-testid="demo-cta-close" aria-label="Réduire le bandeau" (click)="collapse()">
+      <span aria-hidden="true">×</span>
+    </button>
+  </aside>
+}
+
+@if (relanceOpen()) {
+  <div class="demo-relance-overlay" role="button" tabindex="-1" (click)="closeRelance()" (keydown.escape)="closeRelance()">
+    <div class="demo-relance" role="dialog" aria-modal="true" mtcDialog (mtcDialogClose)="closeRelance()"
+         aria-labelledby="demo-relance-title" data-testid="demo-relance"
+         (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
+      <h2 id="demo-relance-title" class="demo-relance-title">Tu as vu l'essentiel.</h2>
+      <p class="demo-relance-text">
+        Avec ton compte, tu connectes ton Tradovate en lecture seule et tu suis ta marge en direct.
+      </p>
+      <a class="demo-relance-cta" data-testid="demo-relance-cta" [href]="registerUrl" (click)="go($event, 'modal')">Créer mon compte</a>
+      <button #continueBtn type="button" class="demo-relance-dismiss" data-testid="demo-relance-dismiss" (click)="closeRelance()">Continuer la démo</button>
+    </div>
+  </div>
+}
+
+<!-- Action bloquée en démo (403 « mode démo », demoInterceptor → DemoService) : invite à créer un
+     compte, comptée `action` ; ce n'est pas la relance unique. -->
+@if (demo.showSignupPrompt()) {
+  <div class="demo-relance-overlay" role="button" tabindex="-1" (click)="demo.dismiss()" (keydown.escape)="demo.dismiss()">
+    <div class="demo-relance" role="dialog" aria-modal="true" mtcDialog (mtcDialogClose)="demo.dismiss()"
+         aria-labelledby="demo-action-title" data-testid="demo-action-prompt"
+         (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
+      <div class="demo-relance-emoji" aria-hidden="true">🚀</div>
+      <h2 id="demo-action-title" class="demo-relance-title">Crée ton compte pour aller plus loin</h2>
+      <p class="demo-relance-text">
+        En mode démo, les données sont en lecture seule. Crée ton compte pour logger tes vrais
+        trades : {{ trialDays }} jours de Premium offerts, sans carte.
+      </p>
+      <a class="demo-relance-cta" data-testid="demo-action-cta" [href]="registerUrl" (click)="go($event, 'action')">Créer mon compte</a>
+      <button type="button" class="demo-relance-dismiss" (click)="demo.dismiss()">Continuer la démo</button>
+    </div>
+  </div>
+}

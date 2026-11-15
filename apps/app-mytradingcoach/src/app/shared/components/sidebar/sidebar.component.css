@@ -376,6 +376,10 @@
    parasite de 52 px sur des écrans conçus pour tenir dans la fenêtre. 0 hors démo. */
 .main-content { --demo-banner-h: 0px; }
 .main-content.has-demo-banner { --demo-banner-h: 44px; }
+/* Bandeau d'inscription collé en bas (#1029, mtc-demo-cta) : même principe, zone sûre du bas de
+   l'iPhone comprise. 0 hors démo. */
+.main-content { --demo-cta-h: 0px; }
+.main-content.has-demo-cta { --demo-cta-h: calc(var(--demo-cta-h-desktop) + env(safe-area-inset-bottom, 0px)); }
 
 .demo-banner {
   position: sticky;
@@ -405,89 +409,21 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.demo-banner-cta {
-  background: var(--primary);
-  color: #fff;
-  text-decoration: none;
-  font-weight: 600;
-  font-size: 12px;
-  padding: 6px 14px;
-  border-radius: 8px;
-  white-space: nowrap;
-  transition: opacity .15s;
-}
-.demo-banner-cta:hover { opacity: .88; }
 
 /* Mobile : bandeau ras du sol (la phrase longue tombe, le CTA reste). Il doit rester
    une ligne d'information, jamais un demi-écran mangé sur un téléphone. */
 @media (max-width: 768px) {
   /* 52 px : le burger fixe tient DANS le bandeau, centré. À 40 px de bandeau, l'ancien burger
-     de 40 px débordait de 14 px sur le contenu de la page. Marge droite pour le CTA. */
+     de 40 px débordait de 14 px sur le contenu de la page. Marge droite pour le burger. */
   .main-content.has-demo-banner { --demo-banner-h: var(--demo-banner-h-mobile); }
+  .main-content.has-demo-cta { --demo-cta-h: calc(var(--demo-cta-h-mobile) + env(safe-area-inset-bottom, 0px)); }
   .demo-banner { gap: 10px; padding: 0 68px 0 12px; font-size: 12px; }
   .burger.in-demo-banner {
     top: calc(env(safe-area-inset-top) + (var(--demo-banner-h-mobile) - var(--topbar-border-w) - var(--topbar-btn-h)) / 2);
   }
   .demo-banner-long { display: none; }
-  .demo-banner-cta { font-size: 11px; padding: 5px 10px; }
 }
 
-.demo-modal-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 1000;
-  background: rgba(0,0,0,.6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 16px;
-  border: none;
-}
-.demo-modal {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  max-width: 380px;
-  width: 100%;
-  padding: 28px 24px;
-  text-align: center;
-}
-.demo-modal-emoji { font-size: 34px; margin-bottom: 8px; }
-.demo-modal-title {
-  font-family: var(--font-display);
-  font-size: 17px;
-  font-weight: 700;
-  color: var(--text);
-  margin: 0 0 8px;
-}
-.demo-modal-text {
-  font-size: 13px;
-  color: var(--text-2);
-  line-height: 1.55;
-  margin: 0 0 18px;
-}
-.demo-modal-cta {
-  display: block;
-  background: var(--primary);
-  color: #fff;
-  text-decoration: none;
-  font-weight: 700;
-  font-size: 14px;
-  padding: 12px;
-  border-radius: 10px;
-  transition: opacity .15s;
-}
-.demo-modal-cta:hover { opacity: .88; }
-.demo-modal-dismiss {
-  background: none;
-  border: none;
-  color: var(--text-3);
-  font-size: 12px;
-  cursor: pointer;
-  margin-top: 12px;
-  padding: 4px;
-}
-.demo-modal-dismiss:hover { color: var(--text); }
 
 /* ─── Sidebar repliée (mode icônes) — desktop uniquement ─── */
 @media (min-width: 769px) {

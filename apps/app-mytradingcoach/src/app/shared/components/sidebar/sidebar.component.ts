@@ -1,4 +1,3 @@
-import { ProductEventsService } from '@app/core/services/product-events.service';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -39,13 +38,13 @@ import { AuthService } from '@app/core/auth/auth.service';
 import { UsersApi } from '@app/core/api/users.api';
 import { AmbassadorNotifService } from '@app/core/services/ambassador-notif.service';
 import { LiveModeService } from '@app/core/services/live-mode.service';
-import { DemoService } from '@app/core/services/demo.service';
 import { OnboardingComponent } from '@app/features/onboarding/onboarding.component';
 import { environment } from '@app/environments/environment';
-import { DialogDirective, ScrollMemoryDirective } from '@mtc/front-ui';
+import { ScrollMemoryDirective } from '@mtc/front-ui';
 
 import { OfferIntentHostComponent } from '../offer-intent-host/offer-intent-host.component';
 import { TrialEndedModalComponent } from '../trial-ended/trial-ended-modal.component';
+import { DemoCtaComponent } from '../demo-cta/demo-cta.component';
 import { LostAccountSheetsComponent } from '@app/features/accounts/lost-account/lost-account-sheets.component';
 
 @Component({
@@ -53,9 +52,9 @@ import { LostAccountSheetsComponent } from '@app/features/accounts/lost-account/
   imports: [
     OfferIntentHostComponent,
     TrialEndedModalComponent,
+    DemoCtaComponent,
     LostAccountSheetsComponent,
     ScrollMemoryDirective,
-    DialogDirective,
     RouterModule,
     RouterLink,
     RouterLinkActive,
@@ -69,13 +68,11 @@ import { LostAccountSheetsComponent } from '@app/features/accounts/lost-account/
 })
 export class SidebarComponent {
   protected readonly userStore = inject(UserStore);
-  protected readonly events = inject(ProductEventsService);
   private readonly auth = inject(AuthService);
   private readonly usersApi = inject(UsersApi);
   private readonly destroyRef = inject(DestroyRef);
   protected readonly ambassadorNotif = inject(AmbassadorNotifService);
   protected readonly liveModeService = inject(LiveModeService);
-  protected readonly demo = inject(DemoService);
   private readonly tradovateLive = inject(TradovateLiveSocketService);
   protected readonly landingUrl = environment.landingUrl;
 
