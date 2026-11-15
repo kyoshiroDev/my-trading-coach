@@ -132,7 +132,7 @@ GET    /api/market/live-price?symbol=  JWT (FREE) → trade rapide
 
 GET    /api/debrief/current            PREMIUM
 GET    /api/debrief/:year/:week        PREMIUM
-GET    /api/debrief/:year/:week/pdf    PREMIUM → export PDF via puppeteer
+GET    /api/debrief/:year/:week/pdf    PREMIUM → export PDF via puppeteer ; @Throttle 5/min, file par process ≤ 10 rendus (`PDF_QUEUE_MAX`) sinon 503 (S3 #1045)
 GET    /api/debrief/history            PREMIUM
 POST   /api/debrief/generate           PREMIUM → 1/jour par user
 
