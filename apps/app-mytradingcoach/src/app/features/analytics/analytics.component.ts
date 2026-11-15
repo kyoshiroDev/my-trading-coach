@@ -250,6 +250,8 @@ export class AnalyticsComponent {
     this.topAssetsResource.reload();
     this.setupResource.reload();
     this.loadEquityCurve();
+    // F8 (#1047) : le calendrier aussi (compte devenu échoué ou archivé, « Réessayer »).
+    if (this.userStore.isPremium()) this.loadCalendar(this.calYear(), this.calMonth());
   }
 
   protected readonly isLoading = computed(

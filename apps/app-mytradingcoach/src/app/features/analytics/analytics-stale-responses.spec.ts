@@ -14,6 +14,7 @@ import { AnalyticsComponent } from './analytics.component';
 import { UserStore } from '../../core/stores/user.store';
 
 type Cmp = {
+  reload(): void;
   onMonthChange(e: { year: number; month: number }): void;
   selectPeriod(p: '1m' | '3m' | '6m' | 'all'): void;
   calData(): unknown;
@@ -73,5 +74,27 @@ describe('Statistiques : réponses en retard ignorées (F7 #1047)', () => {
     for (const r of first) if (!r.cancelled) r.flush({ data: { period: '3m' } });
 
     expect(c.equityData()).toEqual({ period: 'all' });
+  });
+});
+
+// F8 (#1047) : reload() (compte passé échoué ou archivé en « Tous les comptes », bouton
+// « Réessayer ») ne rechargeait pas le calendrier : ses trades y restaient.
+describe('Statistiques : reload() recharge aussi le calendrier (F8 #1047)', () => {
+  it('le mois affiché est redemandé', () => {
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [
+        provideRouter([]), provideHttpClient(), provideHttpClientTesting(),
+        { provide: UserStore, useValue: { isPremium: signal(true), isDemo: signal(false), user: signal({ id: 'u1' }), startingCapital: () => 0 } },
+      ],
+    });
+    const cmp = TestBed.runInInjectionContext(() => new AnalyticsComponent()) as unknown as Cmp;
+    TestBed.tick();
+    const http = TestBed.inject(HttpTestingController);
+    for (const r of http.match((x) => x.url.includes('/activity/'))) if (!r.cancelled) r.flush({ data: null });
+
+    cmp.reload();
+
+    expect(http.match((x) => x.url.includes('/activity/')).filter((r) => !r.cancelled)).toHaveLength(1);
   });
 });
