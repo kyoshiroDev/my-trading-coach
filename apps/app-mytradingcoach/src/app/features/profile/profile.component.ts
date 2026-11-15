@@ -178,6 +178,8 @@ export class ProfileComponent implements OnInit {
   protected readonly prefMarketing = signal(false);
   protected readonly isSavingPrefs = signal(false);
   protected readonly prefSaved = signal(false);
+  /** Dernières préférences reçues du serveur (`notifications|débrief|marketing`), F14 #1047. */
+  private syncedPrefs: string | null = null;
 
   // Stratégie de trading (résumé en lecture + modale d'édition)
   protected readonly TRADING_STYLES   = TRADING_STYLES;
@@ -233,13 +235,24 @@ export class ProfileComponent implements OnInit {
   protected readonly dedupeRemoved = signal<number | null>(null);
 
   constructor() {
-    // Sync prefs uniquement : les signaux stratégie sont gérés dans ngOnInit + saveStrategy
+    // Sync prefs uniquement : les signaux stratégie sont gérés dans ngOnInit + saveStrategy.
+    // F14 (#1047) : seulement quand les valeurs du serveur CHANGENT. La relecture de /auth/me
+    // (toutes les 5 min) renvoie un nouvel objet identique : elle écrasait une case modifiée et pas
+    // encore enregistrée, et c'est l'ancienne valeur qui partait à « Sauvegarder ».
     effect(() => {
       const user = this.userStore.user();
       if (!user) return;
-      this.prefNotifications.set(user.notificationsEmail ?? true);
-      this.prefDebrief.set(user.debriefAutomatic ?? true);
-      this.prefMarketing.set(user.marketingConsent ?? false);
+      const server = {
+        notifications: user.notificationsEmail ?? true,
+        debrief: user.debriefAutomatic ?? true,
+        marketing: user.marketingConsent ?? false,
+      };
+      const key = `${server.notifications}|${server.debrief}|${server.marketing}`;
+      if (key === this.syncedPrefs) return;
+      this.syncedPrefs = key;
+      this.prefNotifications.set(server.notifications);
+      this.prefDebrief.set(server.debrief);
+      this.prefMarketing.set(server.marketing);
     });
   }
 
