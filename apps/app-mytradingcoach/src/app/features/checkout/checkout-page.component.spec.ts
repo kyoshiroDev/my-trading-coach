@@ -8,6 +8,7 @@ import { BillingService } from '@app/core/services/billing.service';
 import { UserStore } from '@app/core/stores/user.store';
 import type { CheckoutSummary } from '@app/core/api/billing.api';
 import TEMPLATE from './checkout-page.component.html?raw';
+import { PLAN_BENEFITS } from '@mtc/shared';
 
 // Isolé (NEEDS_ISOLATION) : Stripe.js est remplacé. Les boutons express arrivent après le
 // formulaire carte : leur place doit être réservée dès le chargement (#818). Le formulaire, le total
@@ -219,5 +220,21 @@ describe('Page de paiement : confirmation robuste (B16)', () => {
     expect(e.paymentFailed).toHaveBeenCalled();
     release({ type: 'error', error: { message: 'Carte refusée' } });
     await first;
+  });
+});
+
+/**
+ * B9 (#1013, décision du 14/11) : avantages de la page de paiement écrits en dur, sans « app ouverte,
+ * compte Tradovate connecté » (règle d'or plans.md). Lus dans PLAN_BENEFITS, comme la modale.
+ */
+describe('Page de paiement : avantages depuis PLAN_BENEFITS (B9)', () => {
+  beforeEach(reset);
+  afterEach(() => TestBed.resetTestingModule());
+
+  it('liste = PLAN_BENEFITS.premium, conditions comprises', async () => {
+    const { fixture } = await mount();
+    const features = (fixture.componentInstance as unknown as { features: readonly string[] }).features;
+    expect(features).toEqual(PLAN_BENEFITS.premium.map((b) => b.text));
+    expect(features.join(' ')).toContain('compte Tradovate connecté');
   });
 });
