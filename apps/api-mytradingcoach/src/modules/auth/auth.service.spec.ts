@@ -588,6 +588,16 @@ describe('AuthService', () => {
       expect(mockPrisma.user.update).not.toHaveBeenCalled();
     });
 
+    // Audit fonctionnel #993 (lot 2, B6) : le code de parrainage du compte démo (copié depuis la démo
+    // publique) était accepté : −10 % au filleul et la démo devenait parrain.
+    it('code de parrainage du compte démo → ignoré, aucun parrain', async () => {
+      mockPrisma.user.findUnique
+        .mockResolvedValueOnce(null) // googleId
+        .mockResolvedValueOnce({ referralCode: 'DEMO', isDemo: true }); // « parrain » = la démo
+      await service.googleAuth({ ...dto, referralCode: 'demo' });
+      expect(mockPrisma.user.create.mock.calls[0][0].data.referredBy).toBeNull();
+    });
+
     it('nouvel e-mail → création avec parrain, UTM conservés, e-mail vérifié, sans mot de passe', async () => {
       mockPrisma.user.findUnique
         .mockResolvedValueOnce(null) // googleId

@@ -447,8 +447,9 @@ export class StripeWebhookService {
         `Paiement réussi | subscription: ${subscriptionId} synchronisée`,
       );
     }
+    let founderSwitch = false;
     if (synced && invoice.billing_reason === 'subscription_create') {
-      if (this.isFounderPrice(synced.priceId)) await this.onFounderFirstPayment(synced, invoice);
+      if (this.isFounderPrice(synced.priceId)) founderSwitch = await this.onFounderFirstPayment(synced, invoice);
       // Code partenaire : utilisation comptée dès la 1re facture (0 € pendant l'essai compris).
       else if (synced.metadata['partnerCode']) {
         const redemption = await this.partners.claim({
@@ -469,6 +470,7 @@ export class StripeWebhookService {
       if (seat?.firstPaidAt) await this.sendFounderWelcome(synced, seat.number, seat.firstPaidAt);
     }
     await this.referrals.processReferral(invoice);
+    if (synced && founderSwitch) await this.cancelSupersededTrials(synced);
 
     // Reçu de renouvellement. La souscription initiale (subscription_create) est déjà
     // couverte par le mail de bienvenue Premium ; une facture à 0 (essai, avoir) n'est pas un paiement.
@@ -504,7 +506,7 @@ export class StripeWebhookService {
    * Sans place (cas théorique : réservation expirée ET offre complète), l'abonnement est annulé et
    * l'admin alerté pour rembourser : personne ne garde un tarif fondateur sans place.
    */
-  private async onFounderFirstPayment(synced: SyncedSubscription, invoice: Stripe.Invoice): Promise<void> {
+  private async onFounderFirstPayment(synced: SyncedSubscription, invoice: Stripe.Invoice): Promise<boolean> {
     const interval: FounderInterval = synced.interval === 'year' ? 'year' : 'month';
     // Abonnement déjà terminé (fin reçue avant cette facture : annulation immédiate, ou tâche rejouée
     // en retard, #769) : une réservation jamais payée ne prend pas de place ; un paiement réel la prend
@@ -512,7 +514,7 @@ export class StripeWebhookService {
     const ended = ENDED_STATUSES.has(synced.stripeSubscriptionStatus ?? '');
     if (ended && (invoice.amount_paid ?? 0) <= 0) {
       this.logger.log('Réservation fondateur ignorée : abonnement déjà terminé');
-      return;
+      return false;
     }
     const seat = await this.founders.claimSeat({
       userId: synced.id,
@@ -531,11 +533,11 @@ export class StripeWebhookService {
           `Abonnement ${synced.subscriptionId} (user ${synced.id}) payé sans place disponible : annulé, remboursement manuel requis.`,
         )
         .catch(() => undefined);
-      return;
+      return false;
     }
     if (ended) {
       await this.founders.markLost(synced.subscriptionId);
-      return;
+      return false;
     }
     // Réservation pendant un Premium offert (facture d'essai à 0 €, #769) : place prise, prélèvement à
     // la fin de l'essai. Paiement immédiat : la bienvenue part du bloc « premier paiement réel ».
@@ -551,17 +553,39 @@ export class StripeWebhookService {
         }),
       ).catch((err: Error) => this.logger.warn(`Réservation fondateur non confirmée par e-mail : ${err.name}`));
     }
-    // Bascule depuis un essai au prix normal : l'essai s'arrête, sans prolongation ni cumul.
+    return true;
+  }
+
+  /**
+   * Bascule depuis un essai au prix normal : l'essai s'arrête, sans prolongation ni cumul. Jamais deux
+   * abonnements actifs : un essai laissé en place serait prélevé à 49 € en plus du tarif fondateur.
+   * Échec (liste ou annulation) : alerte admin une fois, puis erreur pour que BullMQ rejoue la tâche
+   * (tout ce qui précède est idempotent). Appelé en DERNIER, après place, garantie et parrainage, pour
+   * qu'un échec ici ne prive pas l'abonné du reste.
+   */
+  private async cancelSupersededTrials(synced: SyncedSubscription): Promise<void> {
+    const failed: string[] = [];
     const trials = await this.stripe.subscriptions
       .list({ customer: synced.customerId, status: 'trialing', limit: 10 })
-      .catch(() => null);
+      .catch((err: Error) => {
+        failed.push(`liste des essais (${err.message})`);
+        return null;
+      });
     for (const t of trials?.data ?? []) {
-      if (t.id !== synced.subscriptionId) {
-        await this.stripe.subscriptions.cancel(t.id).catch((err: Error) =>
-          this.logger.warn(`Essai ${t.id} non annulé après bascule fondateur : ${err.message}`),
-        );
-      }
+      if (t.id === synced.subscriptionId) continue;
+      await this.stripe.subscriptions.cancel(t.id).catch((err: Error) => {
+        failed.push(`${t.id} (${err.message})`);
+      });
     }
+    if (failed.length === 0) return;
+    this.logger.error(`[FONDATEUR] Essai non annulé après bascule | sub: ${synced.subscriptionId} : ${failed.join(', ')}`);
+    await this.sendOnce(`founder-trial-cancel:${synced.subscriptionId}`, () =>
+      this.resend.sendAdminAlert(
+        'Offre fondateur : essai au prix normal non annulé',
+        `Abonnement fondateur ${synced.subscriptionId} (user ${synced.id}) payé, mais l'essai au prix normal n'a pas pu être annulé : ${failed.join(', ')}. Nouvel essai automatique ; sinon annuler l'essai à la main dans Stripe avant sa fin (double prélèvement).`,
+      ),
+    ).catch(() => undefined);
+    throw new Error(`Essai au prix normal non annulé après bascule fondateur (${synced.subscriptionId})`);
   }
 
   private founderPriceLabel(interval: FounderInterval): string {
@@ -609,8 +633,10 @@ export class StripeWebhookService {
     redemption: { priceMonthlyEur: number; priceAnnualEur: number; durationMonths: number | null },
   ): Promise<void> {
     const yearly = synced.interval === 'year';
-    await this.resend
-      .sendPartnerWelcome({
+    // Une seule fois par abonnement : `claim` rend l'utilisation existante quand la tâche est rejouée
+    // (BullMQ, redélivrance Stripe), ce qui renvoyait la confirmation à chaque fois.
+    await this.sendOnce(`partner-welcome:${synced.subscriptionId}`, () =>
+      this.resend.sendPartnerWelcome({
         to: synced.email,
         userName: synced.name ?? '',
         code: synced.metadata['partnerCode'].toUpperCase(),
@@ -618,8 +644,8 @@ export class StripeWebhookService {
         normalPriceLabel: priceLabel(yearly ? PREMIUM_PRICE_EUR.annual : PREMIUM_PRICE_EUR.monthly, synced.interval),
         durationMonths: redemption.durationMonths,
         trialEndsAt: synced.stripeSubscriptionStatus === 'trialing' ? synced.currentPeriodEnd : null,
-      })
-      .catch((err: Error) => this.logger.warn(`Confirmation partenaire non envoyée (user ${synced.id}) : ${err.message}`));
+      }),
+    ).catch((err: Error) => this.logger.warn(`Confirmation partenaire non envoyée (user ${synced.id}) : ${err.message}`));
   }
 
   /** Tarif conservé par l'abonné (place fondateur ou code partenaire actifs), sinon null. */
