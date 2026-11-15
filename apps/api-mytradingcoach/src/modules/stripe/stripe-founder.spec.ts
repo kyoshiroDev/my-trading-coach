@@ -643,6 +643,39 @@ describe('webhooks code partenaire', () => {
 });
 
 describe('GET /billing/offers', () => {
+  it('B14 : prix du passage à l’autre intervalle, remise des mois restants comprise (filleul)', async () => {
+    vi.useFakeTimers({ now: new Date('2026-11-15T00:00:00Z'), toFake: ['Date'] });
+    try {
+      const b = makeBilling();
+      Object.assign(b.founders, {
+        publicState: vi.fn().mockResolvedValue({ open: false, ended: false, seatsLeft: 0, seatsTotal: 200 }),
+        statusFor: vi.fn().mockResolvedValue({ isFounder: false, founderEligible: false, founderIneligibleReason: 'closed' }),
+      });
+      Object.assign(b.partners, { statusFor: vi.fn().mockResolvedValue({ partnerCode: null }) });
+      const prisma = (b.svc as unknown as { prisma: { user: { findUnique: ReturnType<typeof vi.fn> } } }).prisma;
+      prisma.user.findUnique.mockResolvedValueOnce({
+        stripeInterval: 'month', stripeSubscriptionStatus: 'active', referralDiscountSince: new Date('2026-07-15T00:00:00Z'),
+      });
+      const res = await b.svc.offers('u1');
+      expect(res.intervalSwitch).toMatchObject({ to: 'year', firstEur: 457.33, normalEur: 490 });
+      expect(res.intervalSwitch?.discountEndsAt?.toISOString().slice(0, 10)).toBe('2027-07-15');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('B14 : pas d’abonnement actif → aucun passage proposé', async () => {
+    const b = makeBilling();
+    Object.assign(b.founders, {
+      publicState: vi.fn().mockResolvedValue({ open: false, ended: false, seatsLeft: 0, seatsTotal: 200 }),
+      statusFor: vi.fn().mockResolvedValue({ isFounder: false, founderEligible: false }),
+    });
+    Object.assign(b.partners, { statusFor: vi.fn().mockResolvedValue({ partnerCode: null }) });
+    const prisma = (b.svc as unknown as { prisma: { user: { findUnique: ReturnType<typeof vi.fn> } } }).prisma;
+    prisma.user.findUnique.mockResolvedValueOnce({ stripeInterval: 'month', stripeSubscriptionStatus: 'past_due' });
+    expect((await b.svc.offers('u1')).intervalSwitch).toBeNull();
+  });
+
   it('fondateur depuis 3 jours : place, intervalle, remboursement possible jusqu’à J+14', async () => {
     const b = makeBilling();
     const since = new Date(Date.now() - 3 * 86_400_000);

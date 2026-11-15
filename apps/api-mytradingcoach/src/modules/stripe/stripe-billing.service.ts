@@ -25,7 +25,7 @@ import { CHECKOUT_TTL_MS, FounderOfferService } from '../founder-offer/founder-o
 import { founderFirstChargeAt } from '../founder-offer/founder-deferred';
 import { REFERRAL_DISCOUNT_METADATA, StripeCouponService } from './stripe-coupon.service';
 import { PartnerCodeService } from '../partner-codes/partner-code.service';
-import { partnerFirstYearCost, referralFirstYearCost } from '../partner-codes/partner-code.util';
+import { intervalSwitchTerms, partnerFirstYearCost, referralFirstYearCost } from '../partner-codes/partner-code.util';
 import { StripeStatusResponse, CachedStripeStatus } from './stripe.types';
 
 /** Offre achetée au checkout. */
@@ -488,7 +488,9 @@ export class StripeBillingService {
       this.partners.statusFor(userId),
       this.prisma.user.findUnique({
         where: { id: userId },
-        select: { stripeInterval: true, stripeSubscriptionStatus: true, trialEndsAt: true, trialSource: true },
+        select: {
+          stripeInterval: true, stripeSubscriptionStatus: true, trialEndsAt: true, trialSource: true, referralDiscountSince: true,
+        },
       }),
     ]);
     const since = founder?.isFounder ? founder.founderSince : null;
@@ -520,6 +522,7 @@ export class StripeBillingService {
         interval: user?.stripeInterval === 'year' ? 'year' : user?.stripeInterval === 'month' ? 'month' : null,
         status: user?.stripeSubscriptionStatus ?? null,
       },
+      intervalSwitch: this.intervalSwitchPreview(user, !!founder?.isFounder, partner.partnerCode),
     };
   }
 
@@ -561,13 +564,24 @@ export class StripeBillingService {
     // Code partenaire : coupon de l'AUTRE intervalle, aux conditions figées de l'abonné et pour les
     // mois de remise restants (aucune remise perdue par le changement).
     const redemption = founder ? null : await this.partners.activeForSubscription(sub.id);
-    const coupon = redemption ? await this.partners.couponForIntervalChange(redemption, interval) : null;
+    let discounts: { coupon: string }[] | undefined;
+    if (redemption) {
+      const coupon = await this.partners.couponForIntervalChange(redemption, interval);
+      discounts = coupon ? [{ coupon }] : [];
+    } else if (!founder && user.referralDiscountSince) {
+      // −10 % filleul pour les mois restants seulement (B14 #1013) : sans ça, le coupon mensuel
+      // (12 mois) restait sur l'annuel et remisait toute l'année.
+      const { discount } = intervalSwitchTerms({
+        target: interval, founder: false, partner: null, referralSince: user.referralDiscountSince,
+      });
+      discounts = discount ? [{ coupon: await this.coupons.ensureReferralSwitchCoupon(discount) }] : [];
+    }
     await this.stripe.subscriptions.update(
       sub.id,
       {
         items: [{ id: item.id, price: target }],
         proration_behavior: 'always_invoice',
-        ...(redemption ? { discounts: coupon ? [{ coupon }] : [] } : {}),
+        ...(discounts ? { discounts } : {}),
       },
       // Clé liée à l'état de l'abonnement (dernière facture) : un double clic garde la même clé, mais
       // un aller-retour mensuel ↔ annuel dans les 24 h n'est plus rejoué à l'identique par Stripe.
@@ -576,6 +590,24 @@ export class StripeBillingService {
     await this.redis.del(billingCacheKey(userId)).catch(() => undefined);
     this.logger.log(`Intervalle changé | user: ${userId}, ${current} → ${target}${founder ? ' (fondateur)' : ''}`);
     return { changed: true };
+  }
+
+  /**
+   * Prix du passage mensuel ↔ annuel annoncé dans le Profil (B14 #1013) : même calcul que
+   * `changeInterval` (mois de remise restants). `null` sans abonnement actif.
+   */
+  private intervalSwitchPreview(
+    user: { stripeInterval: string | null; stripeSubscriptionStatus: string | null; referralDiscountSince?: Date | null } | null,
+    founder: boolean,
+    partner: { priceMonthlyEur: number; priceAnnualEur: number; durationMonths: number | null; since: Date } | null,
+  ) {
+    if (user?.stripeSubscriptionStatus !== 'active') return null;
+    const to = user.stripeInterval === 'month' ? 'year' : user.stripeInterval === 'year' ? 'month' : null;
+    if (!to) return null;
+    const { firstEur, normalEur, discountEndsAt } = intervalSwitchTerms({
+      target: to, founder, partner, referralSince: user.referralDiscountSince ?? null,
+    });
+    return { to, firstEur, normalEur, discountEndsAt };
   }
 
   /**

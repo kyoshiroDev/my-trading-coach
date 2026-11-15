@@ -136,6 +136,7 @@ describe('Profil > Abonnement', () => {
           eligible: false, ineligibleReason: 'already_founder', refundUntil: IN_5_DAYS,
         },
         subscription: { interval: 'month', status: 'active' },
+        intervalSwitch: { to: 'year', firstEur: 290, normalEur: 290, discountEndsAt: null },
       }),
     });
     const text = el.textContent ?? '';
@@ -158,6 +159,7 @@ describe('Profil > Abonnement', () => {
           since: new Date().toISOString(), endsAt: null,
         },
         subscription: { interval: 'month', status: 'active' },
+        intervalSwitch: { to: 'year', firstEur: 290, normalEur: 490, discountEndsAt: null },
       }),
     }).textContent ?? '';
     expect(text).toContain('Tarif partenaire TRADER10 : 29 €/mois tant que ton abonnement reste actif');
@@ -182,10 +184,41 @@ describe('Profil > Abonnement', () => {
   it('abonné au prix normal : changement d’intervalle au prix normal, aucun rappel de tarif', () => {
     const text = render({
       offered: false, paying: true,
-      offers: offers({ subscription: { interval: 'year', status: 'active' } }),
+      offers: offers({
+        subscription: { interval: 'year', status: 'active' },
+        intervalSwitch: { to: 'month', firstEur: 49, normalEur: 49, discountEndsAt: null },
+      }),
     }).textContent ?? '';
     expect(text).toContain('Passer au mensuel (49 €/mois)');
     expect(text).not.toContain('met fin à ton tarif');
+  });
+
+  // B14 (#1013) : le prix annoncé suit les mois de remise RESTANTS (calculé par l'API, même calcul
+  // que le changement). Avant : durée totale du code, et 49 / 490 € sans la remise du filleul.
+  it('filleul −10 % vers l’annuel : montant de la 1re année au prorata, puis prix normal', () => {
+    const text = render({
+      offered: false, paying: true,
+      offers: offers({
+        subscription: { interval: 'month', status: 'active' },
+        intervalSwitch: { to: 'year', firstEur: 457.33, normalEur: 490, discountEndsAt: '2027-07-15T00:00:00.000Z' },
+      }),
+    }).textContent ?? '';
+    expect(text).toContain("Passer à l'annuel (457,33 € la 1re année, puis 490 €/an)");
+  });
+
+  it('code partenaire limité vers le mensuel : prix partenaire jusqu’à la fin, puis prix normal', () => {
+    const text = render({
+      offered: false, paying: true,
+      offers: offers({
+        partner: {
+          code: 'TRADER10', priceMonthlyEur: 29, priceAnnualEur: 290, durationMonths: 6, label: '',
+          since: '2026-08-15T00:00:00.000Z', endsAt: '2027-02-15T12:00:00.000Z',
+        },
+        subscription: { interval: 'year', status: 'active' },
+        intervalSwitch: { to: 'month', firstEur: 29, normalEur: 49, discountEndsAt: '2027-02-15T12:00:00.000Z' },
+      }),
+    }).textContent ?? '';
+    expect(text).toContain("Passer au mensuel (29 €/mois jusqu'au 15/02/2027, puis 49 €/mois)");
   });
 });
 
