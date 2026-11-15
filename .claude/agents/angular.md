@@ -1467,6 +1467,11 @@ teaser Premium → `once('premium_seen')`. Admin : bloc « Entonnoir Premium » 
   en fin de page, donc jamais par-dessus un bouton. Texte « Ça te parle ? Crée ton compte :
   **{N} jours de Premium offerts**, sans carte », N = `PREMIUM_SIGNUP_TRIAL_DAYS`. Aucun prix,
   aucune promesse de gain.
+- **Téléphone + bouton « + » flottant** (journal… ; `styles.css`, #631 : `padding-bottom: 92px` sur
+  `.main-content`) : en démo ce padding passe à 0 (sinon le sticky s'accroche 92 px au-dessus du bas),
+  le « + » remonte à `var(--demo-cta-h) + 16px`, et `.demo-cta-fab-space` (80 px, juste avant le
+  bandeau) garde la fin de page visible. Mesuré à 390 px : bandeau à 772 px, « + » 700-756, fin du
+  contenu 692. Texte du bandeau sur 3 lignes à 390 px, 4 à 320 px (12 px), dans les 72 px.
 - **Croix** → pastille « Créer mon compte » à droite (rangée transparente, clics laissés au contenu) ;
   le bandeau revient en grand au `NavigationEnd` suivant.
 - **Relance unique** (`demo-cta.util.ts`, `relanceDue`) : après 60 s depuis l'arrivée (horodatage en
