@@ -1,12 +1,11 @@
 /**
  * Filtre des campagnes de test (#1029) sur une vraie base : le SQL de `notTestAcquisitionSql`
- * (LIKE ANY, jokers échappés) donne le même résultat que `isTestAcquisition` (@mtc/shared).
+ * (LIKE ANY, jokers échappés) : exact ou préfixe, sans casse, jamais « contient ».
  * Lignes en `VALUES` : rien n'est écrit en base.
  */
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import type { INestApplication } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
-import { isTestAcquisition } from '@mtc/shared';
 import { createIntegrationApp } from '../../test/integration-app.helper';
 import { PrismaService } from '../../prisma/prisma.service';
 import { anonymousAcquisitionSql } from './test-acquisition';
@@ -51,7 +50,14 @@ afterAll(async () => {
 describe('Campagnes de test exclues de l’admin Acquisition (#1029)', () => {
   it('SQL = règle partagée : exact ou préfixe, jamais « contient »', async () => {
     const real = await kept(false);
-    expect(real).toEqual(ROWS.filter(([source, medium, campaign]) => !isTestAcquisition({ source, medium, campaign })));
+    expect(real).toEqual([
+      ['ninjatrader', 'newsletter', 'newsletter-novembre-2026'],
+      ['instagram', 'paid', 'gratuit-reel'],
+      ['contest', 'latest-promo', 'testament'],
+      ['amis-trading', 'miami', ''],
+      ['', '', ''],
+      ['test_greg', 'ami%', 'a_b'],
+    ]);
     expect(real).toContainEqual(['ninjatrader', 'newsletter', 'newsletter-novembre-2026']);
     expect(real).not.toContainEqual(['ninjatrader', 'newsletter', 'test-prod-essai']);
     expect(real).toContainEqual(['contest', 'latest-promo', 'testament']);
