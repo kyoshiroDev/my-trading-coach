@@ -448,7 +448,10 @@ Constantes : `FOUNDER_OFFER = { priceMonthlyEur: 29, priceAnnualEur: 290, seats:
   mensuel, la remise mensuelle pendant ces mois ; vers l'annuel, la remise d'une année au prorata des
   mois restants (12 au plus ; à vie = entière). Même règle pour le −10 % filleul (coupon
   `mtc-referral-…`, remplace le coupon de 12 mois). Le Profil affiche le prix calculé par l'API
-  (`/billing/offers` → `intervalSwitch`), jamais un prix recalculé côté front.
+  (`/billing/offers` → `intervalSwitch`), jamais un prix recalculé côté front. Limite connue : un code
+  de plus de 12 mois non multiple de 12 (ex. 18) remise aussi en entier la 2e facture annuelle
+  (coupon `repeating` de 18 mois), alors que le Profil annonce « puis 490 €/an » : en faveur du trader,
+  et déjà le cas avant.
 - **MRR** (base et Stripe) sur le montant **réellement payé** : découpé `mrrBreakdown`
   normal / fondateur / partenaires / filleuls (`realMonthlyEur`). Le MRR Stripe déduit les remises
   (`expand: data.discounts`). Le −10 % filleul est compté dans le MRR base depuis #954 : le checkout
@@ -465,8 +468,10 @@ Constantes : `FOUNDER_OFFER = { priceMonthlyEur: 29, priceAnnualEur: 290, seats:
   rejeu, une ligne `paid` reste intacte. Remboursement intégral du 1er paiement du filleul (A4) :
   commission `pending` → `canceled` (ne compte plus nulle part, jamais marquable payée) ; `paid`
   gardée + alerte admin ; mois offert du parrain jamais repris + alerte admin.
-- Code ambassadeur (A5) : changé → les filleuls suivent (même transaction) ; un code déjà porté par
-  des filleuls (révoqué ou changé) n'est jamais redonné, ni choisi ni généré.
+- Code ambassadeur (A5) : changé → les filleuls suivent (même transaction) ; un code changé ou
+  révoqué va dans `RetiredReferralCode` et n'est jamais redonné à un autre compte, ni choisi ni généré
+  (un vieux lien créditerait le nouveau porteur) ; seul son ancien porteur peut le reprendre. Un code
+  porté par des filleuls est refusé de même.
   Estimation mensuelle affichée à l'ambassadeur (`referralMonthlyCommission`, `ambassador-commission.util.ts`) :
   20 % de `realMonthlyEur` (fondateur, annuel ÷ 12, code partenaire), abonnements `active` seulement (#947).
 - **Satisfait ou remboursé (choix #525)** : demande par e-mail à support@ depuis Profil > Abonnement et depuis l'écran de suppression

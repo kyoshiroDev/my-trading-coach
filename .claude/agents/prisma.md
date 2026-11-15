@@ -531,6 +531,14 @@ peut plus faire son upsert `(subscriptionId, period)` (index unique retiré) : l
 est rejoué par la nouvelle version (5 tentatives) ; prod au 14/11 : 0 commission. Lignes antérieures :
 `invoiceId` null (aucune en prod).
 
+## Codes de parrainage retirés (`RetiredReferralCode`, A5 #1013, 2026-11-15)
+
+Migration `20261115130000_retired_referral_code` (additive, table seule). Écrite dans la transaction
+d'un changement de code ambassadeur et à la révocation (`upsert`, `update: {}`) ; lue par `promote` et
+les deux générateurs de code (ambassadeur, parrainage). Clé = le code ; `userId` sans clé étrangère
+(la trace survit à la suppression du compte) ; seul ce `userId` peut reprendre le code (la ligne est
+alors supprimée).
+
 ## Index des requêtes chaudes (SCA-B2-05, 2026-10-03)
 
 Migration `20261003160000_b2_index_cleanup` :
