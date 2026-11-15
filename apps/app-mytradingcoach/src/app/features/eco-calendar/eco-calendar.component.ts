@@ -10,7 +10,7 @@ import {
   untracked,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { finalize } from 'rxjs';
+import { finalize, Subscription } from 'rxjs';
 import { ECO_GAP_LABEL, EcoCalendarApi, EcoResultAnalysis } from '../../core/api/eco-calendar.api';
 import { translateEcoEvent } from '../../core/data/eco-event-translations';
 
@@ -481,7 +481,12 @@ export class EcoCalendarComponent implements OnInit {
     this.loadWeek(this.currentWeekStart());
   }
 
+  /** Chargement de semaine en cours : annulé par le suivant (F9 #1047). */
+  private weekSub?: Subscription;
+
   private loadWeek(monday: Date): void {
+    // Semaine précédemment demandée : sa réponse ne s'affiche plus sous le titre de la nouvelle.
+    this.weekSub?.unsubscribe();
     this.isLoading.set(true);
     this.loadError.set(false);
     const from = toParisDateStr(monday);
@@ -489,7 +494,7 @@ export class EcoCalendarComponent implements OnInit {
     friday.setDate(friday.getDate() + 4);
     const to = toParisDateStr(friday);
 
-    this.api.getEventsRange(from, to)
+    this.weekSub = this.api.getEventsRange(from, to)
       .pipe(
         takeUntilDestroyed(this.destroyRef),
         finalize(() => this.isLoading.set(false)),
