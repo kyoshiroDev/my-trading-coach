@@ -251,7 +251,7 @@ export class ReferralService {
 
     const period = new Date().toISOString().slice(0, 7); // YYYY-MM
     const commissions = await this.prisma.referralCommission.findMany({
-      where: { ambassadorId: userId, period },
+      where: { ambassadorId: userId, period, status: { not: 'canceled' } },
       select: { amount: true, referredUserId: true },
     });
 

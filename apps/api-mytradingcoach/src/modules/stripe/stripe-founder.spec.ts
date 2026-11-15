@@ -192,6 +192,8 @@ function makeWebhook(sub: { id: string; price: string; interval?: string; metada
     },
     founderSeat: { findUnique: vi.fn().mockResolvedValue(null) },
     partnerRedemption: { findFirst: vi.fn().mockResolvedValue(null) },
+    referralCommission: { findMany: vi.fn().mockResolvedValue([]), updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
+    referralReward: { findUnique: vi.fn().mockResolvedValue(null) },
   };
   const stripeSub = {
     id: sub.id, status: sub.status ?? 'active', customer: 'cus_1', trial_end: sub.trialEnd ?? null, metadata: sub.metadata ?? {},
@@ -1070,3 +1072,54 @@ describe('réservation fondateur pendant le Premium offert (#769)', () => {
   });
 });
 
+/**
+ * A4 (#1013) : remboursement intégral du 1er paiement d'un filleul. Commission `pending` annulée ;
+ * commission déjà `paid` gardée avec une alerte admin ; mois offert du parrain jamais repris
+ * (alerte admin). Un renouvellement remboursé ne touche à rien.
+ */
+describe('remboursement du 1er paiement : récompenses de parrainage (A4)', () => {
+  const FIRST = { id: 'in_first', amount_paid: 4900, created: 1_000, payment_intent: 'pi_1' };
+  const RENEW = { id: 'in_renew', amount_paid: 4900, created: 2_000, payment_intent: 'pi_2' };
+  const commission = (status: string, invoiceId = 'in_first') =>
+    ({ id: `c_${status}`, status, amount: 9.8, subscriptionId: 'sub_n', invoiceId, period: '2026-11' });
+
+  it('commission en attente → annulée, aucune alerte', async () => {
+    const w = makeWebhook({ id: 'sub_n', price: 'price_49' });
+    w.prisma.referralCommission.findMany.mockResolvedValue([commission('pending')]);
+    w.invoicesList.mockResolvedValue({ data: [FIRST] });
+    await w.svc.processWebhookEvent(event('charge.refunded', { refunded: true, customer: 'cus_1', invoice: 'in_first' }));
+    expect(w.prisma.referralCommission.updateMany).toHaveBeenCalledWith({
+      where: { id: 'c_pending', status: 'pending' }, data: { status: 'canceled' },
+    });
+    expect(w.resend.sendAdminAlert).not.toHaveBeenCalled();
+  });
+
+  it('commission déjà payée → gardée, alerte admin', async () => {
+    const w = makeWebhook({ id: 'sub_n', price: 'price_49' });
+    w.prisma.referralCommission.findMany.mockResolvedValue([commission('paid')]);
+    w.invoicesList.mockResolvedValue({ data: [FIRST] });
+    await w.svc.processWebhookEvent(event('charge.refunded', { refunded: true, customer: 'cus_1', invoice: 'in_first' }));
+    expect(w.prisma.referralCommission.updateMany).not.toHaveBeenCalled();
+    expect(w.resend.sendAdminAlert).toHaveBeenCalledWith(
+      expect.stringContaining('commission ambassadeur déjà payée'), expect.stringContaining('9.8'),
+    );
+  });
+
+  it('mois offert déjà appliqué au parrain → jamais repris, alerte admin', async () => {
+    const w = makeWebhook({ id: 'sub_n', price: 'price_49' });
+    w.prisma.referralReward.findUnique.mockResolvedValue({ id: 'r1', status: 'APPLIED', subscriptionId: 'sub_n', parrainId: 'p1' });
+    w.invoicesList.mockResolvedValue({ data: [FIRST] });
+    await w.svc.processWebhookEvent(event('charge.refunded', { refunded: true, customer: 'cus_1', invoice: 'in_first' }));
+    expect(w.resend.sendAdminAlert).toHaveBeenCalledWith(expect.stringContaining('mois offert'), expect.any(String));
+  });
+
+  it('renouvellement remboursé → commission et mois offert intacts, aucune alerte', async () => {
+    const w = makeWebhook({ id: 'sub_n', price: 'price_49' });
+    w.prisma.referralCommission.findMany.mockResolvedValue([commission('pending'), commission('pending', 'in_renew')]);
+    w.prisma.referralReward.findUnique.mockResolvedValue({ id: 'r1', status: 'APPLIED', subscriptionId: 'sub_n', parrainId: 'p1' });
+    w.invoicesList.mockResolvedValue({ data: [RENEW, FIRST] });
+    await w.svc.processWebhookEvent(event('charge.refunded', { refunded: true, customer: 'cus_1', invoice: 'in_renew' }));
+    expect(w.prisma.referralCommission.updateMany).not.toHaveBeenCalled();
+    expect(w.resend.sendAdminAlert).not.toHaveBeenCalled();
+  });
+});

@@ -198,7 +198,9 @@ export class AmbassadorService {
         name: true,
         email: true,
         referralCode: true,
+        // Commission annulée (1er paiement remboursé, A4 #1013) : ne compte nulle part.
         referrals: {
+          where: { status: { not: 'canceled' } },
           select: { amount: true, status: true, referredUserId: true },
         },
       },
@@ -307,7 +309,7 @@ export class AmbassadorService {
     const premium = referredUsers.filter(u => u.plan === 'PREMIUM').length;
 
     const commissions = await this.prisma.referralCommission.findMany({
-      where: { ambassadorId: userId },
+      where: { ambassadorId: userId, status: { not: 'canceled' } },
       select: { amount: true, period: true, status: true },
     });
 

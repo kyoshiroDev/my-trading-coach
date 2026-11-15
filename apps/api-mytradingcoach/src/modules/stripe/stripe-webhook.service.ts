@@ -715,9 +715,10 @@ export class StripeWebhookService {
     if (!customerId) return;
     const user = await this.prisma.user.findUnique({
       where: { stripeCustomerId: customerId },
-      select: { id: true },
+      select: { id: true, email: true },
     });
     if (!user) return;
+    await this.settleReferralRewardsOnRefund(user, charge);
     const [seat, redemption] = await Promise.all([
       this.prisma.founderSeat.findUnique({ where: { userId: user.id } }),
       this.prisma.partnerRedemption.findFirst({ where: { userId: user.id, status: 'ACTIVE' } }),
@@ -734,23 +735,81 @@ export class StripeWebhookService {
   }
 
   /**
+   * Remboursement intégral du 1er paiement d'un filleul (A4 #1013, décision du 14/11) : commission
+   * ambassadeur `pending` → `canceled` ; commission déjà `paid` gardée, alerte admin ; mois offert
+   * déjà appliqué au parrain jamais repris, alerte admin. Tous abonnements (pas seulement fondateur
+   * ou code) : c'est le paiement du filleul qui disparaît. Un renouvellement remboursé : rien.
+   */
+  private async settleReferralRewardsOnRefund(
+    user: { id: string; email: string },
+    charge: Stripe.Charge,
+  ): Promise<void> {
+    const [commissions, reward] = await Promise.all([
+      this.prisma.referralCommission.findMany({
+        where: { referredUserId: user.id },
+        select: { id: true, status: true, amount: true, subscriptionId: true, invoiceId: true, period: true },
+      }),
+      this.prisma.referralReward.findUnique({
+        where: { filleulId: user.id },
+        select: { id: true, status: true, subscriptionId: true, parrainId: true },
+      }),
+    ]);
+    const subscriptionIds = new Set([...commissions.map((c) => c.subscriptionId), ...(reward ? [reward.subscriptionId] : [])]);
+    for (const subscriptionId of subscriptionIds) {
+      const first = await this.firstPaymentInvoiceOf(subscriptionId, charge);
+      if (!first) continue;
+      for (const c of commissions.filter((x) => x.subscriptionId === subscriptionId && x.invoiceId === first.id)) {
+        if (c.status === 'pending') {
+          await this.prisma.referralCommission.updateMany({
+            where: { id: c.id, status: 'pending' },
+            data: { status: 'canceled' },
+          });
+          this.logger.log(`Commission ${c.id} annulée : 1er paiement du filleul ${user.id} remboursé`);
+        } else if (c.status === 'paid') {
+          await this.sendOnce(`refund-commission:${c.id}`, () =>
+            this.resend.sendAdminAlert(
+              'Remboursement : commission ambassadeur déjà payée',
+              `Filleul : ${user.email}\nCommission : ${c.amount} € (${c.period}), déjà versée, gardée.\n` +
+                `Abonnement : ${subscriptionId}\nÀ régulariser à la main si besoin.`,
+            ),
+          );
+        }
+      }
+      if (reward?.subscriptionId === subscriptionId && reward.status === 'APPLIED') {
+        await this.sendOnce(`refund-reward:${reward.id}`, () =>
+          this.resend.sendAdminAlert(
+            'Remboursement : mois offert du parrain gardé',
+            `Filleul : ${user.email}\nParrain : ${reward.parrainId}\nLe mois offert déjà crédité n'est pas repris (règle du 14/11).`,
+          ),
+        );
+      }
+    }
+  }
+
+  /**
    * La charge remboursée est-elle le PREMIER paiement réel (> 0 €) de l'abonnement ? Comparaison
    * par facture ou par PaymentIntent (l'essai à 0 € d'un code partenaire n'est pas un paiement).
    */
   private async isFirstPaymentCharge(subscriptionId: string, charge: Stripe.Charge): Promise<boolean> {
+    return (await this.firstPaymentInvoiceOf(subscriptionId, charge)) !== null;
+  }
+
+  /** 1re facture réellement payée de l'abonnement, si c'est elle que la charge rembourse ; sinon `null`. */
+  private async firstPaymentInvoiceOf(subscriptionId: string, charge: Stripe.Charge): Promise<Stripe.Invoice | null> {
     const paid = await this.stripe.invoices
       .list({ subscription: subscriptionId, status: 'paid', limit: 100 })
       .catch(() => null);
     const first = (paid?.data ?? [])
       .filter((i) => (i.amount_paid ?? 0) > 0)
       .sort((a, b) => a.created - b.created)[0];
-    if (!first) return false;
+    if (!first) return null;
     // Champs de l'API épinglée 2024-06-20 (absents des types du SDK récent).
     const c = charge as unknown as { invoice?: string | { id: string } | null; payment_intent?: string | { id: string } | null };
     const i = first as unknown as { payment_intent?: string | { id: string } | null };
     const chargeInvoice = extractId(c.invoice ?? null);
     const chargePi = extractId(c.payment_intent ?? null);
-    return (!!chargeInvoice && chargeInvoice === first.id) || (!!chargePi && chargePi === extractId(i.payment_intent ?? null));
+    const matches = (!!chargeInvoice && chargeInvoice === first.id) || (!!chargePi && chargePi === extractId(i.payment_intent ?? null));
+    return matches ? first : null;
   }
 
   /** Au moins une facture réellement payée (> 0 €) sur l'abonnement. */
