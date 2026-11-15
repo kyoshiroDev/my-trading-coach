@@ -3,7 +3,7 @@ import { ReferralService } from './referral.service';
 
 describe('ReferralService', () => {
   let prisma: {
-    user: { findUnique: ReturnType<typeof vi.fn>; update: ReturnType<typeof vi.fn>; findMany: ReturnType<typeof vi.fn>; groupBy: ReturnType<typeof vi.fn> };
+    user: { findUnique: ReturnType<typeof vi.fn>; findFirst: ReturnType<typeof vi.fn>; update: ReturnType<typeof vi.fn>; findMany: ReturnType<typeof vi.fn>; groupBy: ReturnType<typeof vi.fn> };
     referralReward: { findMany: ReturnType<typeof vi.fn>; groupBy: ReturnType<typeof vi.fn> };
     referralCommission: { findMany: ReturnType<typeof vi.fn> };
   };
@@ -13,7 +13,7 @@ describe('ReferralService', () => {
 
   beforeEach(() => {
     prisma = {
-      user: { findUnique: vi.fn(), update: vi.fn(), findMany: vi.fn(), groupBy: vi.fn() },
+      user: { findUnique: vi.fn(), findFirst: vi.fn().mockResolvedValue(null), update: vi.fn(), findMany: vi.fn(), groupBy: vi.fn() },
       referralReward: { findMany: vi.fn().mockResolvedValue([]), groupBy: vi.fn().mockResolvedValue([]) },
       referralCommission: { findMany: vi.fn().mockResolvedValue([]) },
     };
@@ -33,11 +33,12 @@ describe('ReferralService', () => {
     it('génère et persiste un code si absent', async () => {
       prisma.user.findUnique.mockResolvedValue({ referralCode: null, name: 'Maxime', email: 'm@x.com' });
       prisma.user.findUnique.mockResolvedValueOnce({ referralCode: null, name: 'Maxime', email: 'm@x.com' });
-      // generateUniqueCode : findUnique({ where: { referralCode }}) → libre
-      prisma.user.findUnique.mockResolvedValue(null);
+      // generateUniqueCode : ni porté ni déjà utilisé par un filleul (A5) → libre
+      prisma.user.findFirst.mockResolvedValue(null);
       prisma.user.update.mockResolvedValue({});
       const code = await service.ensureReferralCode('u1');
       expect(code).toMatch(/^[A-Z0-9]{3,20}$/);
+      expect(prisma.user.findFirst.mock.calls[0][0].where).toEqual({ OR: [{ referralCode: code }, { referredBy: code }] });
       expect(prisma.user.update).toHaveBeenCalledWith(
         expect.objectContaining({ data: { referralCode: code } }),
       );

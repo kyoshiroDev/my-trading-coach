@@ -99,17 +99,32 @@ export class AmbassadorService {
       if (owner && owner.id !== user.id) {
         throw new ConflictException('Ce code est déjà utilisé, choisis-en un autre');
       }
+      // Code sans propriétaire mais déjà porté par des filleuls (code révoqué ou changé) : le donner
+      // à un autre lui ferait hériter de ces filleuls (A5 #1013).
+      if (!owner && (await this.prisma.user.findFirst({ where: { referredBy: referralCode }, select: { id: true } }))) {
+        throw new ConflictException('Ce code est déjà utilisé, choisis-en un autre');
+      }
       code = referralCode;
     } else {
       code = user.referralCode ?? (await this.generateUniqueCode(user.name, user.email));
     }
 
     try {
-      const updated = await this.prisma.user.update({
-        where: { id: user.id },
-        data: { role: Role.AMBASSADOR, referralCode: code },
-        select: { email: true, name: true, role: true, referralCode: true },
-      });
+      const select = { email: true, name: true, role: true, referralCode: true } as const;
+      const previous = user.referralCode;
+      // Changement de code : les filleuls suivent, dans la même transaction (A5 #1013). Avant, leur
+      // `referredBy` gardait l'ancien code : plus de commission ni de lien avec l'ambassadeur.
+      const updated = previous && previous !== code
+        ? await this.prisma.$transaction(async (tx) => {
+            const u = await tx.user.update({ where: { id: user.id }, data: { role: Role.AMBASSADOR, referralCode: code }, select });
+            await tx.user.updateMany({ where: { referredBy: previous }, data: { referredBy: code } });
+            return u;
+          })
+        : await this.prisma.user.update({
+            where: { id: user.id },
+            data: { role: Role.AMBASSADOR, referralCode: code },
+            select,
+          });
       await this.userCache?.invalidate(user.id); // rôle relu par le JWT (SCA-B3-01)
       return {
         email: updated.email,
@@ -169,8 +184,9 @@ export class AmbassadorService {
     for (let attempt = 0; attempt < 10; attempt++) {
       const candidate =
         attempt === 0 ? base : `${base.slice(0, 12)}${randomSuffix(4)}`.slice(0, 20);
-      const exists = await this.prisma.user.findUnique({
-        where: { referralCode: candidate },
+      // Libre = porté par personne ET jamais utilisé par un filleul (code révoqué ou changé, A5).
+      const exists = await this.prisma.user.findFirst({
+        where: { OR: [{ referralCode: candidate }, { referredBy: candidate }] },
         select: { id: true },
       });
       if (!exists) return candidate;
