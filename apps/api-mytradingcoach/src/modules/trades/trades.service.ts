@@ -21,7 +21,8 @@ import {
 import { AnalyticsService } from '../analytics/analytics.service';
 import { AccountsService } from '../accounts/accounts.service';
 import { SetupsService } from '../setups/setups.service';
-import { CrossSourcePool, importDedupeWindow } from './import-dedupe.util';
+import { importDedupeWindow } from './import-dedupe.util';
+import { AccountDedupeStates } from './account-dedupe-state';
 import { ACTIVE_SESSION_SELECT, createImportBatch, type ImportBatch } from './import-batch';
 import { activeSessionWhere, tradingDayEnd, tradingDayStart } from '../session/active-session';
 import { CreateTradeDto } from './dto/create-trade.dto';
@@ -32,7 +33,7 @@ import { resolveTradeWhere } from './trade-filters.util';
 import { getTickValue } from './instruments.const';
 import { refreshClosedSessionTotals } from '../session/refresh-session-totals';
 import { calculatePnl, calculateRiskReward } from './trade-metrics.util';
-import { CentRoundingPool, dedupeKey, duplicateIdentity, LegacyNetPnlPool, occurrenceHash, withoutImportMeta, type ImportTradeInput } from './trade-identity.util';
+import { accountDuplicateIdentity, accountImportHash, dedupeKey, occurrenceHash, withoutImportMeta, type ImportTradeInput } from './trade-identity.util';
 import { journalStatsForFilters, type JournalStats } from './journal-stats.util';
 import { recomputeBehavioralGrades } from './behavioral-grades';
 import { plannedRiskReward, roundCents, stopPlacementError } from '@mtc/shared';
@@ -91,16 +92,7 @@ export class TradesService {
 
     const activeSession = batch ? batch.activeSession : await this.findActiveSession(userId);
 
-    // accountId : fourni (validé) → sinon hérité de la session active → sinon compte
-    // par défaut (anti-NULL : jamais de trade sans compte).
-    let accountId: string | undefined;
-    if (dto.accountId && dto.accountId !== 'all') {
-      accountId = batch
-        ? await batch.account(dto.accountId)
-        : (await this.accounts.accountWhere(userId, dto.accountId)).accountId;
-    }
-    if (!accountId) accountId = activeSession?.accountId ?? undefined;
-    if (!accountId) accountId = await (batch ? batch.defaultAccount() : this.accounts.ensureDefaultAccountId(userId));
+    const accountId = await this.targetAccountId(userId, dto, activeSession, batch);
 
     const rr = dto.riskReward ?? riskReward;
     // Barème A (stop présent) : intrinsèque, calculé ici. Trade SANS stop → barème B
@@ -216,15 +208,17 @@ export class TradesService {
     duplicates: number;
     failed: number;
     total: number;
+    /** Trades créés ici qui existaient déjà dans un autre compte (copy trading, #1001). */
+    alsoInOtherAccounts: { accountId: string; name: string; count: number }[];
   }> {
     // Lot vide (synchro broker sans nouveau trade, le cas courant) : aucune requête (SCA-B1-01).
-    if (dtos.length === 0) return { created: 0, updated: 0, duplicates: 0, failed: 0, total: 0 };
+    if (dtos.length === 0) return { created: 0, updated: 0, duplicates: 0, failed: 0, total: 0, alsoInOtherAccounts: [] };
 
     // Les paires d'une position entrent dans la fenêtre : ce sont elles qu'on compare à l'ancien format.
     const flat = dtos.flatMap((d) => [d, ...(d._pairs ?? [])]);
     const existing = await this.prisma.trade.findMany({
       where: { userId, ...importDedupeWindow(flat) },
-      select: { asset: true, side: true, tradedAt: true, entry: true, exit: true, pnl: true },
+      select: { asset: true, side: true, tradedAt: true, entry: true, exit: true, pnl: true, accountId: true },
     });
     // Positions déjà importées sous leur clé stable (#956), quelle que soit leur date.
     const positionKeys = [...new Set(dtos.map((d) => d._positionKey).filter((k): k is string => !!k))];
@@ -240,22 +234,23 @@ export class TradesService {
         : []
       ).map((t) => [t.importHash as string, t]),
     );
-    // Même trade déjà en base mais daté dans un autre fuseau (export CSV sans fuseau ↔ API en
-    // UTC) : doublon, un-pour-un. Vaut dans les deux sens : CSV avant OU après la synchro.
-    const otherTimezone = new CrossSourcePool(existing);
-    // Trade stocké à l'ancien format (P&L net, ancien parseur MEXC) : doublon, un-pour-un (#947).
-    const legacyNet = new LegacyNetPnlPool(existing);
-    // Trade stocké avec l'ancien arrondi `toFixed` (1 centime d'écart sur un demi-centime) : doublon (B1, #981).
-    const centRounding = new CentRoundingPool(existing);
-    // Empreintes déjà prises : la clé, puis `#2`, `#3`… autant de fois que la clé existe en base.
-    const seen = new Set<string>();
-    const inBase = new Map<string, number>();
-    for (const t of existing) {
-      const key = dedupeKey(t);
-      const n = (inBase.get(key) ?? 0) + 1;
-      inBase.set(key, n);
-      seen.add(occurrenceHash(key, n));
-    }
+    // Dédoublonnage PAR COMPTE (#1001) : un trade n'est un doublon que s'il existe déjà dans le compte
+    // où il va. Le même trade copié sur deux comptes (copy trading) est importé dans chacun. Dans
+    // chaque compte, mêmes rapprochements qu'avant : autre fuseau (CSV sans fuseau ↔ API en UTC),
+    // ancien P&L net MEXC (#947), ancien arrondi `toFixed` (B1, #981), répétitions numérotées.
+    // Empreintes d'avant #1001 (sans préfixe de compte) déjà en base pour ces clés, quelle que soit la
+    // date : un trade importé puis MODIFIÉ (prix, P&L, date) ne se reconnaît plus à ses champs, et
+    // l'index ne le protège plus puisque la nouvelle empreinte est préfixée. Reprises compte par compte.
+    const sourceCounts = new Map<string, number>();
+    for (const d of flat) sourceCounts.set(dedupeKey(d), (sourceCounts.get(dedupeKey(d)) ?? 0) + 1);
+    const candidates = [...sourceCounts].flatMap(([k, c]) => Array.from({ length: c }, (_, i) => occurrenceHash(k, i + 1)));
+    const legacyHashes = candidates.length
+      ? ((await this.prisma.trade.findMany({
+          where: { userId, importHash: { in: candidates } },
+          select: { importHash: true, accountId: true },
+        })) ?? [])
+      : [];
+    const states = new AccountDedupeStates(existing, legacyHashes);
 
     let created = 0;
     let updated = 0;
@@ -263,11 +258,11 @@ export class TradesService {
     let failed = 0;
     // Comptes touchés → un seul recalcul comportemental par compte à la fin (pas de N+1).
     const affectedAccounts = new Set<string>();
-    // Rang de chaque clé DANS la source : deux lignes identiques sont deux trades (cf. occurrenceHash).
-    const inSource = new Map<string, number>();
+    // Trades créés qui existaient déjà dans un autre compte, par compte : dit dans le résultat.
+    const alsoIn = new Map<string, number>();
     const batch = await this.importBatch(userId);
 
-    const createOne = async (dto: Partial<CreateTradeDto>, importHash: string): Promise<void> => {
+    const createOne = async (dto: Partial<CreateTradeDto>, importHash: string): Promise<boolean> => {
       try {
         const t = await this.create(userId, withoutImportMeta(dto) as CreateTradeDto, {
           deferBehavioral: true,
@@ -277,40 +272,44 @@ export class TradesService {
         });
         if (t.accountId) affectedAccounts.add(t.accountId);
         created++;
+        return true;
       } catch (err) {
         // P2002 = un import concurrent (double-clic) a déjà écrit ce trade : doublon,
         // pas échec. Toute autre erreur reste un échec de ligne.
         if (isUniqueConstraintError(err)) duplicates++;
         else failed++;
+        return false;
       }
     };
 
-    // Trade par paire (ou d'un autre broker) : empreinte exacte numérotée + rapprochements.
-    const importPair = async (dto: Partial<CreateTradeDto>): Promise<void> => {
-      if (otherTimezone.take(dto)) {
+    // Trade par paire (ou d'un autre broker) : empreinte exacte numérotée + rapprochements, dans son compte.
+    const importPair = async (dto: Partial<CreateTradeDto>, accountId: string | null): Promise<void> => {
+      const st = states.for(accountId);
+      if (st.otherTimezone.take(dto)) {
         duplicates++;
         return;
       }
       const key = dedupeKey(dto);
-      const n = (inSource.get(key) ?? 0) + 1;
-      inSource.set(key, n);
+      const n = (st.inSource.get(key) ?? 0) + 1;
+      st.inSource.set(key, n);
       const hash = occurrenceHash(key, n);
-      if (seen.has(hash) || legacyNet.take(dto) || centRounding.take(dto)) {
+      if (st.seen.has(hash) || st.legacyNet.take(dto) || st.centRounding.take(dto)) {
         duplicates++;
         return;
       }
-      seen.add(hash);
-      await createOne(dto, hash);
+      st.seen.add(hash);
+      const other = states.otherAccountWith(accountId, dto);
+      if ((await createOne(dto, accountImportHash(accountId, hash))) && other) {
+        alsoIn.set(other, (alsoIn.get(other) ?? 0) + 1);
+      }
     };
 
-    // Une paire de la position est-elle déjà en base, importée avant #956 (trade par paire) ?
-    const pairInBase = (p: Partial<CreateTradeDto>) =>
-      inBase.has(dedupeKey(p)) || otherTimezone.has(p) || legacyNet.has(p) || centRounding.has(p);
-
     for (const dto of dtos) {
+      // Compte où ira le trade, résolu comme à la création. Compte invalide → null : la création échouera.
+      const accountId = await this.targetAccountId(userId, dto, batch.activeSession, batch).catch(() => null);
       const key = dto._positionKey;
       if (!key) {
-        await importPair(dto);
+        await importPair(dto, accountId);
         continue;
       }
       const stored = byPositionKey.get(key);
@@ -325,17 +324,20 @@ export class TradesService {
         }
         continue;
       }
-      if (seen.has(key)) {
+      const st = states.for(accountId);
+      if (st.seen.has(key)) {
         duplicates++;
         continue;
       }
-      // Ancien format déjà en base (une ligne par paire) : paire par paire, aucun doublon avant
-      // la réparation des trades existants.
+      // Ancien format déjà en base dans ce compte (une ligne par paire) : paire par paire, aucun
+      // doublon avant la réparation des trades existants.
+      const pairInBase = (p: Partial<CreateTradeDto>) =>
+        st.inBase.has(dedupeKey(p)) || st.otherTimezone.has(p) || st.legacyNet.has(p) || st.centRounding.has(p);
       if (dto._pairs?.length && dto._pairs.some(pairInBase)) {
-        for (const p of dto._pairs) await importPair(p);
+        for (const p of dto._pairs) await importPair(p, accountId);
         continue;
       }
-      seen.add(key);
+      st.seen.add(key);
       await createOne(dto, key);
     }
 
@@ -348,7 +350,20 @@ export class TradesService {
     // Cache analytics invalidé une fois pour tout le lot (SCA-B1-03), pas à chaque ligne.
     if (created > 0 || updated > 0) await this.analyticsService.invalidateUserCache(userId);
 
-    return { created, updated, duplicates, failed, total: dtos.length };
+    return { created, updated, duplicates, failed, total: dtos.length, alsoInOtherAccounts: await this.accountNames(userId, alsoIn) };
+  }
+
+  /** `{ compte: nombre }` → `[{ accountId, name, count }]`, noms lus en une requête (jamais d'un autre trader). */
+  private async accountNames(
+    userId: string,
+    counts: Map<string, number>,
+  ): Promise<{ accountId: string; name: string; count: number }[]> {
+    if (counts.size === 0) return [];
+    const rows = await this.prisma.tradingAccount.findMany({
+      where: { userId, id: { in: [...counts.keys()] } },
+      select: { id: true, label: true },
+    });
+    return rows.map((r) => ({ accountId: r.id, name: r.label, count: counts.get(r.id) ?? 0 }));
   }
 
   /**
@@ -402,6 +417,28 @@ export class TradesService {
     return true;
   }
 
+  /**
+   * Compte d'un nouveau trade : fourni (validé) → sinon hérité de la séance active → sinon compte par
+   * défaut (anti-NULL : jamais de trade sans compte). Partagé par la création et le dédoublonnage de
+   * l'import, qui doit savoir dans quel compte ira chaque ligne (#1001).
+   */
+  private async targetAccountId(
+    userId: string,
+    dto: Partial<CreateTradeDto>,
+    activeSession: { accountId: string | null } | null,
+    batch?: ImportBatch,
+  ): Promise<string> {
+    let accountId: string | undefined;
+    if (dto.accountId && dto.accountId !== 'all') {
+      accountId = batch
+        ? await batch.account(dto.accountId)
+        : (await this.accounts.accountWhere(userId, dto.accountId)).accountId;
+    }
+    if (!accountId) accountId = activeSession?.accountId ?? undefined;
+    if (!accountId) accountId = await (batch ? batch.defaultAccount() : this.accounts.ensureDefaultAccountId(userId));
+    return accountId;
+  }
+
   private findActiveSession(userId: string) {
     return this.prisma.tradeSession.findFirst({
       where: activeSessionWhere(userId),
@@ -419,29 +456,32 @@ export class TradesService {
 
 
 
-  /** Compte les doublons existants pour un user (lignes en trop par rapport aux uniques). */
+  /**
+   * Compte les doublons existants pour un user (lignes en trop par rapport aux uniques). Un doublon
+   * est dans le MÊME compte (#1001) : le même trade sur deux comptes (copy trading) n'en est pas un.
+   */
   async countDuplicates(
     userId: string,
   ): Promise<{ total: number; unique: number; duplicates: number }> {
     const trades = await this.prisma.trade.findMany({
       where: { userId },
-      select: { asset: true, side: true, tradedAt: true, entry: true, exit: true, pnl: true, importHash: true },
+      select: { asset: true, side: true, tradedAt: true, entry: true, exit: true, pnl: true, importHash: true, accountId: true },
     });
-    const keys = new Set(trades.map((t) => duplicateIdentity(t)));
+    const keys = new Set(trades.map((t) => accountDuplicateIdentity(t)));
     return { total: trades.length, unique: keys.size, duplicates: trades.length - keys.size };
   }
 
-  /** Supprime les doublons en gardant la plus ancienne occurrence de chaque clé. */
+  /** Supprime les doublons en gardant la plus ancienne occurrence de chaque clé, compte par compte (#1001). */
   async removeDuplicates(userId: string): Promise<{ removed: number; kept: number }> {
     const trades = await this.prisma.trade.findMany({
       where: { userId },
-      select: { id: true, asset: true, side: true, tradedAt: true, entry: true, exit: true, pnl: true, importHash: true },
+      select: { id: true, asset: true, side: true, tradedAt: true, entry: true, exit: true, pnl: true, importHash: true, accountId: true },
       orderBy: { createdAt: 'asc' }, // garder la 1ʳᵉ occurrence créée
     });
     const seen = new Set<string>();
     const toDelete: string[] = [];
     for (const t of trades) {
-      const key = duplicateIdentity(t);
+      const key = accountDuplicateIdentity(t);
       if (seen.has(key)) toDelete.push(t.id);
       else seen.add(key);
     }

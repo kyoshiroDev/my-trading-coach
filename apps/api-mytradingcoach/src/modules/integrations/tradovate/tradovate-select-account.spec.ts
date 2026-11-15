@@ -15,13 +15,16 @@ describe('Choix d’un autre compte Tradovate sur une connexion existante', () =
     get: (k: string) => ({ BROKER_TOKEN_ENCRYPTION_KEY: key.toString('base64'), JWT_SECRET: 's' })[k],
   };
 
-  function setup(externalAccountId: string | null) {
+  function setup(
+    externalAccountId: string | null,
+    opts: { elsewhere?: { account: { label: string } } | null; syncedTrades?: number; externalAccountName?: string } = {},
+  ) {
     const conn = {
       id: 'c1', userId: 'u1', accountId: 'a1',
       provider: BrokerProvider.TRADOVATE, status: BrokerConnectionStatus.CONNECTED,
       accessTokenEnc: encryptToken('AT-1', key), refreshTokenEnc: encryptToken('RT-1', key),
       accessTokenExpiresAt: new Date(Date.now() + 3_600_000), refreshTokenExpiresAt: null,
-      externalUserId: '9100001', externalAccountId,
+      externalUserId: '9100001', externalAccountId, externalAccountName: opts.externalAccountName ?? null,
       historyImportedAt: new Date('2026-10-01'), payoutsCheckedThrough: new Date('2026-10-31'),
       brokerCashBalance: 50_000, brokerNetLiq: 50_100, brokerOpenPnl: 100, brokerOpenPositions: 1,
       availableAccounts: [
@@ -30,9 +33,14 @@ describe('Choix d’un autre compte Tradovate sur une connexion existante', () =
       ],
     } as unknown as BrokerConnection;
     const prisma = {
-      trade: { groupBy: vi.fn().mockResolvedValue([]) },
+      trade: {
+        groupBy: vi.fn().mockResolvedValue(opts.syncedTrades ? [{ accountId: 'a1', _count: { _all: opts.syncedTrades } }] : []),
+      },
       brokerConnection: {
-        findFirst: vi.fn().mockResolvedValue(conn),
+        // La connexion de ce compte, ou (`accountId: { not }`) celle d'un AUTRE compte MTC relié au même compte broker.
+        findFirst: vi.fn((args: { where: { accountId?: unknown } }) =>
+          Promise.resolve(typeof args.where.accountId === 'object' ? (opts.elsewhere ?? null) : conn),
+        ),
         findMany: vi.fn().mockResolvedValue([]),
         update: vi.fn().mockResolvedValue({ ...conn }),
       },
@@ -45,7 +53,7 @@ describe('Choix d’un autre compte Tradovate sur une connexion existante', () =
       { client: { set: vi.fn().mockResolvedValue('OK'), del: vi.fn() } } as never,
     );
     const data = () => prisma.brokerConnection.update.mock.calls[0][0].data as Record<string, unknown>;
-    return { service, data };
+    return { service, data, prisma };
   }
 
   it('autre compte broker → historique, payouts et solde de l’ancien effacés (import complet relancé)', async () => {
@@ -72,5 +80,30 @@ describe('Choix d’un autre compte Tradovate sur une connexion existante', () =
     const { service, data } = setup(null);
     await service.selectAccount('u1', 'a1', '90000011');
     expect(data()).not.toHaveProperty('historyImportedAt');
+  });
+
+  // #1001 : dédoublonnage par compte → deux comptes ne se mélangent jamais.
+  it('N8 : compte Tradovate déjà relié à un autre compte MTC du trader → 409 avec son nom, rien n’est écrit', async () => {
+    const { service, prisma } = setup(null, { elsewhere: { account: { label: 'Apex 50k #1' } } });
+    await expect(service.selectAccount('u1', 'a1', '90000011')).rejects.toMatchObject({
+      code: 'TRADOVATE_ACCOUNT_LINKED_ELSEWHERE',
+      response: { message: 'Ce compte Tradovate est déjà relié à « Apex 50k #1 ».' },
+    });
+    expect(prisma.brokerConnection.update).not.toHaveBeenCalled();
+  });
+
+  it('N7 : autre compte broker alors que le compte contient déjà des trades synchronisés → 409, rien n’est écrit', async () => {
+    const { service, prisma } = setup('90000010', { syncedTrades: 12, externalAccountName: 'ANCIEN' });
+    await expect(service.selectAccount('u1', 'a1', '90000011')).rejects.toMatchObject({
+      code: 'TRADOVATE_ACCOUNT_HAS_OTHER_TRADES',
+      response: { message: 'Ce compte contient déjà les trades de ANCIEN. Crée un compte pour NOUVEAU.' },
+    });
+    expect(prisma.brokerConnection.update).not.toHaveBeenCalled();
+  });
+
+  it('N7 : même compte re-choisi avec des trades synchronisés → accepté', async () => {
+    const { service, data } = setup('90000011', { syncedTrades: 12 });
+    await service.selectAccount('u1', 'a1', '90000011');
+    expect(data()).toMatchObject({ externalAccountId: '90000011' });
   });
 });
