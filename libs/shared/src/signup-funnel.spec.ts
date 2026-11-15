@@ -25,6 +25,8 @@ describe('signupFunnelDetail (liste blanche de detail)', () => {
 
   it('ignore detail pour les étapes qui n’en ont pas', () => {
     expect(signupFunnelDetail('register_view', 'founder')).toBe('');
+    expect(signupFunnelDetail('register_view', 'Demo')).toBe('demo');
+    expect(signupFunnelDetail('register_success', 'demo')).toBe('demo');
     expect(signupFunnelDetail('register_submit', 'x')).toBe('');
     expect(signupFunnelDetail('register_success', 'founder')).toBe('');
     expect(signupFunnelDetail('rules_use', 'x')).toBe('');

@@ -32,6 +32,8 @@ export * from './prop-firm-rules/alert-levels';
 export * from './signup-funnel';
 export * from './landing-engagement';
 export * from './acquisition-filter';
+export * from './test-acquisition';
+export * from './demo-cta';
 export * from './attempt-label';
 export * from './terms';
 export * from './subscription-state';
