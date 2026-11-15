@@ -393,7 +393,8 @@ Constantes : `FOUNDER_OFFER = { priceMonthlyEur: 29, priceAnnualEur: 290, seats:
   `past_due` = rien perdu (e-mail « ton tarif est en jeu ») ; perdu à `customer.subscription.deleted`
   (place `LOST`, reste comptée) ou au remboursement. Retour = prix normal.
 - **Non-cumul** : fondateur, code partenaire et coupon de parrainage s'excluent ; le fondateur ne
-  reçoit jamais le −10 % filleul (toujours moins cher sur la 1re année). Le mois offert au PARRAIN
+  reçoit jamais le −10 % filleul (toujours moins cher sur la 1re année). Le −10 % filleul seulement
+  au **premier** abonnement (A8 #1013) : aucun abonnement passé chez Stripe, aucune remise déjà notée. Le mois offert au PARRAIN
   reste accordé (pas une remise pour l'acheteur). Commission ambassadeur : 20 % du montant payé.
 - **Gating** : un fondateur est PREMIUM comme tout abonné Stripe actif (aucun guard à part).
 - **Compteur de places** : TOUJOURS `founderSeatsLabel(seatsLeft, seatsTotal)` de `@mtc/shared`
@@ -444,7 +445,14 @@ Constantes : `FOUNDER_OFFER = { priceMonthlyEur: 29, priceAnnualEur: 290, seats:
   remboursement intégral du 1er paiement réel (quel que soit le délai) ou fin d'essai impayée (`cancellation_details.reason =
   payment_failed` sans paiement). Abonnement terminé → remise perdue (`LOST`, reste comptée).
 - Changement d'intervalle (`POST /billing/interval`) : coupon de l'autre intervalle aux conditions
-  figées, pour les mois de remise restants.
+  figées, pour les mois de remise **restants** seulement (B14 #1013, `intervalSwitchTerms`) : vers le
+  mensuel, la remise mensuelle pendant ces mois ; vers l'annuel, la remise d'une année au prorata des
+  mois restants (12 au plus ; à vie = entière). Même règle pour le −10 % filleul (coupon
+  `mtc-referral-…`, remplace le coupon de 12 mois). Le Profil affiche le prix calculé par l'API
+  (`/billing/offers` → `intervalSwitch`), jamais un prix recalculé côté front. Limite connue : un code
+  de plus de 12 mois non multiple de 12 (ex. 18) remise aussi en entier la 2e facture annuelle
+  (coupon `repeating` de 18 mois), alors que le Profil annonce « puis 490 €/an » : en faveur du trader,
+  et déjà le cas avant.
 - **MRR** (base et Stripe) sur le montant **réellement payé** : découpé `mrrBreakdown`
   normal / fondateur / partenaires / filleuls (`realMonthlyEur`). Le MRR Stripe déduit les remises
   (`expand: data.discounts`). Le −10 % filleul est compté dans le MRR base depuis #954 : le checkout
@@ -456,7 +464,15 @@ Constantes : `FOUNDER_OFFER = { priceMonthlyEur: 29, priceAnnualEur: 290, seats:
   `syncSubscription`), sous un mois ; les **annuels** seulement à leur renouvellement, quand la remise
   est déjà finie : leur MRR base reste à 490/12 au lieu de 441/12 d'ici là. Aucun rattrapage (il
   faudrait lire Stripe live, jamais sans Greg). L'historique `MetricsSnapshot` n'est pas recalculé.
-- Commission ambassadeur : 20 % de `invoice.amount_paid`, donc déjà sur le montant remisé.
+- Commission ambassadeur : 20 % de `invoice.amount_paid`, donc déjà sur le montant remisé. **Une
+  commission par facture** (`ReferralCommission.invoiceId`, unique, A1 #1013) : jamais réécrite au
+  rejeu, une ligne `paid` reste intacte. Remboursement intégral du 1er paiement du filleul (A4) :
+  commission `pending` → `canceled` (ne compte plus nulle part, jamais marquable payée) ; `paid`
+  gardée + alerte admin ; mois offert du parrain jamais repris + alerte admin.
+- Code ambassadeur (A5) : changé → les filleuls suivent (même transaction) ; un code changé ou
+  révoqué va dans `RetiredReferralCode` et n'est jamais redonné à un autre compte, ni choisi ni généré
+  (un vieux lien créditerait le nouveau porteur) ; seul son ancien porteur peut le reprendre. Un code
+  porté par des filleuls est refusé de même.
   Estimation mensuelle affichée à l'ambassadeur (`referralMonthlyCommission`, `ambassador-commission.util.ts`) :
   20 % de `realMonthlyEur` (fondateur, annuel ÷ 12, code partenaire), abonnements `active` seulement (#947).
   Filleul « Payant » sur la page Ambassadeur = même règle (`isPayingReferral`, champ `paying` de

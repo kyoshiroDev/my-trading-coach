@@ -573,7 +573,9 @@ export class AdminService {
         name: true,
         email: true,
         referralCode: true,
+        // Commission annulée (1er paiement remboursé, A4 #1013) : ne compte nulle part.
         referrals: {
+          where: { status: { not: 'canceled' } },
           select: { amount: true, status: true, period: true, referredUserId: true },
         },
       },
@@ -600,10 +602,10 @@ export class AdminService {
     };
   }
 
-  /** Marque une commission de parrainage comme payée. */
+  /** Marque une commission de parrainage comme payée (jamais une commission annulée, A4 #1013). */
   markCommissionPaid(id: string) {
     return this.prisma.referralCommission.update({
-      where: { id },
+      where: { id, status: { not: 'canceled' } },
       data: { status: 'paid' },
     });
   }

@@ -282,7 +282,9 @@ POST   /api/test/upgrade-user          NODE_ENV=test uniquement
   Backfill : `tools/scripts/backfill/ambassador-codes.ts` (idempotent).
 - **Règle de coexistence du parrainage** : c'est le **rôle du parrain** qui décide, dans
   `processReferral` (`stripe-referral.service.ts`). Parrain `AMBASSADOR` → commission cash 20 %
-  (`ReferralCommission`), **jamais** de mois offert. Parrain `USER` → mois offert
+  (`ReferralCommission`, une ligne par facture `invoiceId`, A1 #1013), **jamais** de mois offert.
+  Remboursement intégral du 1er paiement du filleul : `settleReferralRewardsOnRefund` (webhook
+  `charge.refunded`, A4). Parrain `USER` → mois offert
   (`ReferralReward`) + coupon filleul au checkout, **jamais** les 20 %. Auto-parrainage
   ignoré. Couvert par `stripe-referral.service.spec.ts` (unitaire) et
   `referral-coexistence.int-spec.ts` (intégration, vraie stack).
