@@ -66,3 +66,28 @@ describe('AnalyticsController — par setup / émotion / heure / actif bornés �
     expect((to as Date).getTime()).toBeGreaterThan(new Date('2026-11-11T00:00:00.000Z').getTime());
   });
 });
+
+/**
+ * E1 (#1013, décision du 14/11) : le camembert « Répartition stratégies » du FREE était calculé sur
+ * les 6 derniers trades chargés, quelle que soit la période (plans.md : FREE = camembert, « ne jamais
+ * verrouiller ses propres données »). Répartition sur la période, sans win rate ni P&L (Premium).
+ */
+describe('AnalyticsController — répartition des setups en FREE (E1)', () => {
+  it('setup-shares n’est pas gardé par PremiumGuard', () => {
+    expect(guardsOf('getSetupShares')).not.toContain(PremiumGuard);
+  });
+
+  it('renvoie seulement setup, titre, couleur et nombre de trades de la période (aucune profondeur)', async () => {
+    const service = {
+      getBySetup: vi.fn().mockResolvedValue([
+        { setupId: 's1', title: 'Breakout', color: '#f00', count: 3, winRate: 66, totalPnl: 120, avgPnl: 40 },
+        { setupId: 's2', title: 'Pullback', color: '#0f0', count: 0, winRate: null, totalPnl: 0, avgPnl: 0 },
+      ]),
+    };
+    const accounts = { accountWhere: vi.fn().mockResolvedValue({ accountId: undefined }) };
+    const ctrl = new AnalyticsController(service as never, {} as never, accounts as never);
+    const res = await ctrl.getSetupShares({ id: 'u1' }, undefined, undefined, '2026-11-01', '2026-11-15');
+    expect(service.getBySetup).toHaveBeenCalledWith('u1', undefined, false, new Date('2026-11-01'), expect.any(Date));
+    expect(res).toEqual([{ setupId: 's1', title: 'Breakout', color: '#f00', count: 3 }]);
+  });
+});

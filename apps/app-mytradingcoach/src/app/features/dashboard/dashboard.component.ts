@@ -61,7 +61,7 @@ import {
   plTitleFor,
   plTooltipFor,
   setupsDonutFromStats,
-  setupsDonutFromTrades,
+  setupsDonutFromShares,
   tradeCountBars,
   topAssetBars,
 } from './dashboard-charts.util';
@@ -222,6 +222,10 @@ export class DashboardComponent {
   // top-assets portaient sur tout l'historique et le donut des émotions sur les 6 derniers trades.
   private readonly bySetupResource = httpResource<{ data: SetupStat[] }>(() =>
     this.userStore.isPremium() ? `${environment.apiUrl}/analytics/by-setup${this.rangeQuery()}` : undefined,
+  );
+  // Répartition des setups sur la période = vue de base FREE (E1 #1013) : nombres seulement.
+  private readonly setupSharesResource = httpResource<{ data: { setupId: string; title: string; color: string; count: number }[] }>(() =>
+    this.userStore.isPremium() ? undefined : `${environment.apiUrl}/analytics/setup-shares${this.rangeQuery()}`,
   );
   // by-emotion = vue de base FREE : chargée pour tous les plans (donut des états émotionnels).
   private readonly byEmotionResource = httpResource<{ data: EmotionStat[] }>(
@@ -516,6 +520,7 @@ export class DashboardComponent {
     this.activityResource.reload();
     this.topAssetsResource.reload();
     this.bySetupResource.reload();
+    this.setupSharesResource.reload();
     this.byEmotionResource.reload();
   }
 
@@ -525,7 +530,7 @@ export class DashboardComponent {
   protected readonly setupsDonutView = computed(() =>
     this.userStore.isPremium()
       ? setupsDonutFromStats(this.bySetup())
-      : setupsDonutFromTrades(this.tradesStore.trades()),
+      : setupsDonutFromShares(this.setupSharesResource.value()?.data ?? []),
   );
 
   protected readonly emotionStats = computed(() => emotionSharesFromStats(this.byEmotion()));
