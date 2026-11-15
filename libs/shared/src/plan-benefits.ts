@@ -25,8 +25,9 @@ export const PLAN_BENEFITS: { free: readonly PlanBenefit[]; premium: readonly Pl
     { id: 'session', text: 'Préparation et débrief de chaque séance' },
     { id: 'market', text: 'Calendrier éco, news et contexte marché' },
   ],
-  // Alertes et anti-tilt : évalués sur la synchro Tradovate EN DIRECT, qui ne tourne que tant que
-  // l'app est ouverte (canal /tradovate-live) ; rien sur une saisie manuelle, ni e-mail ni push.
+  // Alertes et anti-tilt : évalués sur la synchro Tradovate EN DIRECT (canal /tradovate-live app
+  // ouverte ; veille serveur #770 app fermée pendant la séance, relayée en notification push) ; rien
+  // sur une saisie manuelle, pas d'e-mail.
   premium: [
     {
       id: 'loss_alerts',

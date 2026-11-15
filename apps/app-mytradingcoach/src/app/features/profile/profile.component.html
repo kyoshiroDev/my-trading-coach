@@ -2,13 +2,6 @@
 
 <div class="settings-content">
 
-  @if (checkoutParam() === 'success') {
-    <div class="alert alert-success">✓ Abonnement activé, bienvenue !</div>
-  }
-  @if (checkoutParam() === 'canceled') {
-    <div class="alert alert-cancel">Paiement annulé. Tu peux réessayer quand tu veux.</div>
-  }
-
   <!-- ════ ONGLETS ════ -->
   <div class="profile-tabs">
     <button class="ptab" [class.active]="activeProfileTab() === 'trader'"
@@ -231,27 +224,13 @@
           <div class="settings-section-label">Compte</div>
           <div class="settings-card">
 
-            <!-- Email -->
-            <div class="settings-row">
+            <!-- Email : lecture seule (#1020). Changer d'adresse demande une confirmation sur la
+                 nouvelle adresse : fonctionnalité à part, pas encore construite. -->
+            <div class="settings-row" data-testid="profile-email">
               <div class="settings-row-left">
                 <span class="settings-row-label">Email</span>
-                @if (editingEmail()) {
-                  <div class="inline-edit">
-                    <input class="settings-input" type="email" [value]="emailInput()"
-                      (input)="emailInput.set($any($event.target).value)" placeholder="Nouvel email" />
-                    <button class="btn-inline-save" (click)="saveEmail()"
-                      [disabled]="isSavingEmail() || !emailInput().trim()">
-                      {{ isSavingEmail() ? '…' : 'Sauvegarder' }}
-                    </button>
-                    <button class="btn-inline-cancel" (click)="editingEmail.set(false)">Annuler</button>
-                  </div>
-                } @else {
-                  <span class="settings-row-value">{{ userStore.user()?.email }}</span>
-                }
+                <span class="settings-row-value">{{ userStore.user()?.email }}</span>
               </div>
-              @if (!editingEmail()) {
-                <button class="settings-edit-btn" (click)="startEditEmail()">Modifier</button>
-              }
             </div>
 
             <!-- Nom -->
@@ -518,7 +497,7 @@
                 }
                 @if (freePremium()) {
                   <div class="trial-status" data-testid="offered-premium">
-                    <p class="trial-status-title"><svg [lucideIcon]="GiftIcon" [size]="15"></svg>Premium offert&nbsp;: il te reste {{ trialDaysLeft() }} jour{{ trialDaysLeft() > 1 ? 's' : '' }}</p>
+                    <p class="trial-status-title"><svg [lucideIcon]="GiftIcon" [size]="15"></svg>Premium offert&nbsp;: {{ trialLeftLabel() }}</p>
                     <p class="trial-status-sub">
                       Jusqu'au {{ trialEndsAt() | date:'dd/MM/yyyy' }}. Aucun prélèvement, tu repasses en gratuit automatiquement.
                     </p>
@@ -536,7 +515,7 @@
                   </div>
                 } @else if (isInTrial()) {
                   <div class="trial-status" data-testid="subscription-trial">
-                    <p class="trial-status-title"><svg [lucideIcon]="GiftIcon" [size]="15"></svg>Essai gratuit&nbsp;: il te reste {{ trialDaysLeft() }} jour{{ trialDaysLeft() > 1 ? 's' : '' }}</p>
+                    <p class="trial-status-title"><svg [lucideIcon]="GiftIcon" [size]="15"></svg>Essai gratuit&nbsp;: {{ trialLeftLabel() }}</p>
                     <p class="trial-status-sub">
                       Premier prélèvement le {{ trialEndsAt() | date:'dd/MM/yyyy' }}. Annulable en un clic, aucun prélèvement si tu annules avant.
                     </p>
@@ -563,9 +542,11 @@
                         {{ sw.label }} ({{ sw.price }}) →
                       </button>
                     }
-                    <button class="btn btn-secondary" (click)="openPortal()">
-                      {{ isInTrial() ? 'Gérer / annuler mon essai →' : 'Gérer mon abonnement →' }}
-                    </button>
+                    @if (hasBillingPortal()) {
+                      <button class="btn btn-secondary" (click)="openPortal()">
+                        {{ isInTrial() ? 'Gérer / annuler mon essai →' : 'Gérer mon abonnement →' }}
+                      </button>
+                    }
                   </div>
                   @if ((offersStore.isFounder() || offersStore.partner()) && !canceledAt()) {
                     <!-- Rappel neutre, sans freiner : le portail garde son bouton de résiliation. -->

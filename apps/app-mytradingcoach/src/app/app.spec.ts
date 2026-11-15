@@ -5,6 +5,7 @@ import { App } from './app';
 import { provideRouter, Router } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { ToastsComponent } from './shared/components/toasts/toasts.component';
+import { CheckoutReturnService } from './core/services/checkout-return.service';
 
 // Le conteneur de toasts a un templateUrl/styleUrl : en JIT sous vitest, ses ressources
 // doivent être résolues avant que le composant racine ne le référence (même parade que les
@@ -69,5 +70,14 @@ describe('App', () => {
     await fixture.whenStable();
     fixture.detectChanges();
     expect(el.querySelectorAll('mtc-confirm-dialog')).toHaveLength(1);
+  });
+
+  it('retour de Stripe (?checkout=success, sur /dashboard) : traité au niveau de l’app (B2 #1013)', async () => {
+    const handle = vi.spyOn(TestBed.inject(CheckoutReturnService), 'handle').mockImplementation(() => undefined);
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    await TestBed.inject(Router).navigateByUrl('/?checkout=success&session_id=cs_1');
+    await fixture.whenStable();
+    expect(handle).toHaveBeenCalledWith('success');
   });
 });

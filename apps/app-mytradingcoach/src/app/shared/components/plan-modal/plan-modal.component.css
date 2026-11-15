@@ -144,7 +144,8 @@
 }
 
 /* Une seule colonne (fondateur / code / Premium empilés) : la carte reste étroite. */
-.plan-modal-card { max-width: 440px; max-height: calc(100vh - 32px); overflow-y: auto; }
+/* `100vh` d'abord : repli pour un navigateur sans `dvh` (Safari < 15.4), qui ignorerait la déclaration. */
+.plan-modal-card { max-width: 440px; max-height: calc(100vh - 32px); max-height: calc(100dvh - 32px); overflow-y: auto; }
 
 /* Toggle d'intervalle global */
 .plan-interval-toggle {

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { referralMonthlyCommission } from './ambassador-commission.util';
+import { isPayingReferral, referralMonthlyCommission } from './ambassador-commission.util';
 
 describe('referralMonthlyCommission — 20 % du montant réellement payé (#947)', () => {
   const base = {
@@ -30,5 +30,17 @@ describe('referralMonthlyCommission — 20 % du montant réellement payé (#947)
   it('essai ou abonnement non actif : 0', () => {
     expect(referralMonthlyCommission({ ...base, stripeSubscriptionStatus: 'trialing' }, now)).toBe(0);
     expect(referralMonthlyCommission({ ...base, plan: 'FREE', stripeSubscriptionStatus: null }, now)).toBe(0);
+  });
+});
+
+describe('isPayingReferral — filleul « Payant » sur la page Ambassadeur (B12 #1013)', () => {
+  it('Premium avec abonnement actif : payant', () => {
+    expect(isPayingReferral({ plan: 'PREMIUM', stripeSubscriptionStatus: 'active' })).toBe(true);
+  });
+  it.each(['trialing', 'past_due', 'unpaid', null])('Premium en %s : pas payant (aucune commission)', (status) => {
+    expect(isPayingReferral({ plan: 'PREMIUM', stripeSubscriptionStatus: status })).toBe(false);
+  });
+  it('gratuit : pas payant', () => {
+    expect(isPayingReferral({ plan: 'FREE', stripeSubscriptionStatus: null })).toBe(false);
   });
 });

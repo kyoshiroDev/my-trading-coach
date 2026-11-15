@@ -18,6 +18,7 @@ import { ERROR_NOTIFIER, errorInterceptor } from '@mtc/front-ui';
 import { AuthService } from './core/auth/auth.service';
 import { AuthenticatedPreloading } from './core/auth/authenticated-preloading';
 import { demoInterceptor } from './core/auth/demo.interceptor';
+import { premiumInterceptor } from './core/auth/premium.interceptor';
 import { ToastService } from './core/services/toast.service';
 
 // Locale française pour tous les DatePipe/DecimalPipe (dates en français)
@@ -41,7 +42,7 @@ export const appConfig: ApplicationConfig = {
     // précédents n'ont pas rattrapées — un 401 suivi d'un refresh réussi n'est pas une panne.
     provideHttpClient(
       withFetch(),
-      withInterceptors([jwtRefreshInterceptor, demoInterceptor, errorInterceptor]),
+      withInterceptors([jwtRefreshInterceptor, demoInterceptor, premiumInterceptor, errorInterceptor]),
     ),
     // Source du JWT pour l'intercepteur partagé (@mtc/front-auth).
     { provide: AUTH_TOKEN_SOURCE, useExisting: AuthService },

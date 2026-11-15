@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { apiErrorMessage } from './api-error';
+import { apiErrorMessage, PREMIUM_REQUIRED_MESSAGE } from './api-error';
 
 describe('apiErrorMessage', () => {
   it('reprend le message du back pour une erreur 4xx', () => {
@@ -26,5 +26,10 @@ describe('apiErrorMessage', () => {
     expect(apiErrorMessage({ status: 503, error: { message: "Tradovate n'est pas encore disponible." } }, 'repli')).toBe(
       "Tradovate n'est pas encore disponible.",
     );
+  });
+
+  it('PREMIUM_REQUIRED (garde Premium, aucun message) : dit que c’est réservé au Premium, pas le repli générique (B17 #1013)', () => {
+    expect(apiErrorMessage({ status: 403, error: { code: 'PREMIUM_REQUIRED', trialAvailable: false } }, 'Chargement impossible.'))
+      .toBe(PREMIUM_REQUIRED_MESSAGE);
   });
 });

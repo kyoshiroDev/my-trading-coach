@@ -84,4 +84,16 @@ describe('AmbassadorComponent', () => {
     const { cmp } = setup();
     expect(cmp.referralLink()).toContain('ref=VAL');
   });
+
+  it('filleul Premium en essai : « Inscrit », pas compté payant ; seul l’abonnement actif compte (B12 #1013)', () => {
+    const { cmp } = setup();
+    const ref = (paying: boolean) => ({
+      id: 'r', name: null, email: 'r@t.com', plan: 'PREMIUM' as const, createdAt: '2026-11-01',
+      isActive: true, monthlyCommission: paying ? 9.8 : 0, paying,
+    });
+    cmp.stats.set(makeStats({ premium: 2, referrals: [ref(true), ref(false)] }));
+    expect(cmp.isPaid(ref(false))).toBe(false);
+    expect(cmp.isPaid(ref(true))).toBe(true);
+    expect(cmp.paidCount()).toBe(1);
+  });
 });
