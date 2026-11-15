@@ -1477,6 +1477,9 @@ teaser Premium → `once('premium_seen')`. Admin : bloc « Entonnoir Premium » 
   64 px sur ordinateur (texte 53 px), 72 px sur téléphone (texte 12 px, 45-47 px de 320 à 768 px) ;
   sous 400 px le bouton « Créer mon compte » passe sur 2 lignes (84 px), sinon la 1re phrase
   repasse à la ligne dès 375 px ; 11,5 px sous 340 px. Mesuré en prod avec les vraies polices.
+- Bandeau « Mode démo » du haut : teinte posée sur `var(--bg)` (fond plein, #1041), le contenu ne
+  se voit plus à travers. Badge « interne » (`?internal=1`) : remonté au-dessus du bandeau du bas
+  en démo (`styles.css`, `body:has(.main-content.has-demo-cta) .internal-badge`).
 - **Croix** → pastille « Créer mon compte » à droite (rangée transparente, clics laissés au contenu) ;
   le bandeau revient en grand au `NavigationEnd` suivant.
 - **Relance unique** (`demo-cta.util.ts`, `relanceDue`) : après 60 s depuis l'arrivée (horodatage en
