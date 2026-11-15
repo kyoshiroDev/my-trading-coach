@@ -1,4 +1,4 @@
-import { FOUNDER_OFFER, PREMIUM_PRICE_EUR } from '@mtc/shared';
+import { FOUNDER_OFFER, PREMIUM_PRICE_EUR, roundCents } from '@mtc/shared';
 
 /**
  * Codes partenaires (#525) — fonctions PURES : normalisation, coupons Stripe, conditions,
@@ -168,7 +168,7 @@ export function intervalSwitchTerms(args: {
       return withOff(Math.round((cents(normalEur) * REFERRAL_DISCOUNT_RATE * remaining) / 12), remaining, endsAt);
     }
     return {
-      firstEur: Math.round(normalEur * (1 - REFERRAL_DISCOUNT_RATE) * 100) / 100,
+      firstEur: roundCents(normalEur * (1 - REFERRAL_DISCOUNT_RATE)),
       normalEur,
       discount: { percentOff: REFERRAL_DISCOUNT_RATE * 100, months: remaining },
       discountEndsAt: endsAt,
