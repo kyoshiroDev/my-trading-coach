@@ -251,6 +251,16 @@ describe('AiService', () => {
   });
 
   describe('chat', () => {
+    it('C10 (#1045) : l’IA échoue → le message du jour est rendu (même clé que la limite)', async () => {
+      mockMessagesCreate.mockRejectedValueOnce(new Error('IA en panne'));
+
+      await expect(service.chat('user-123', Role.USER, 'Question', [])).rejects.toThrow();
+
+      const key = mockRedisIncr.mock.calls.map((c) => c[0] as string).find((k) => k.includes(':chat:'));
+      expect(key).toMatch(/^ai:limit:user-123:chat:/);
+      expect(mockRedisDecr).toHaveBeenCalledWith(key);
+    });
+
     it('retourne une réponse string depuis l IA', async () => {
       const result = await service.chat(
         'user-123',

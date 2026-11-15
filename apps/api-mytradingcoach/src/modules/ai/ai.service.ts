@@ -100,7 +100,13 @@ export class AiService {
     if (userRole === Role.ADMIN) return this.chatCall(userId, message, history, accountId);
     return this.metered(userId, async () => {
       await this.checkDailyLimit(userId, 'chat', 50);
-      return this.chatCall(userId, message, history, accountId);
+      try {
+        return await this.chatCall(userId, message, history, accountId);
+      } catch (err) {
+        // C10 (#1045) : pas de réponse → le message du jour est rendu, comme le quota mensuel.
+        await this.releaseDailyLimit(userId, 'chat');
+        throw err;
+      }
     });
   }
 
