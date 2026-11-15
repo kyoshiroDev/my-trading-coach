@@ -119,7 +119,7 @@ GET    /api/eco-calendar/range?from&to JWT → vue semaine ; AAAA-MM-JJ, from �
        Écrites au clic ET par la génération automatique (`ensureReleasedAnalysis`, même `assetsSignature`
        dédoublonnée que la clé Redis).
 
-POST   /api/ai/insights                PREMIUM → cooldown 4h par user
+POST   /api/ai/insights                PREMIUM → cooldown 4h par user (posé atomiquement, retiré si l'analyse échoue)
 POST   /api/ai/chat                    PREMIUM → 50 messages/jour par user
 
 POST   /api/trades/import              PREMIUM → CSV parsing via Claude SDK
@@ -601,18 +601,17 @@ private clean(text: string): string {
 ## Limites IA via Redis
 
 ```typescript
-// Cooldown 4h — insights
+// Cooldown 4h — insights : réservé en UNE opération (SET NX EX, S4 #1045), retiré si
+// l'analyse échoue ou si le quota mensuel est atteint (C3 #1045, releaseInsightsCooldown).
 async checkInsightsCooldown(userId: string) {
   const key = `ai:cooldown:insights:${userId}`;
-  const exists = await this.redis.get(key);
-  if (exists) {
+  const reserved = await this.redis.set(key, '1', 'EX', 60 * 60 * 4, 'NX');
+  if (reserved !== 'OK') {
     const ttl = await this.redis.ttl(key);
-    const minutes = Math.ceil(ttl / 60);
     throw new HttpException(
-      `Analyse déjà effectuée. Réessaie dans ${minutes} minute(s).`, 429
+      `Analyse déjà effectuée. Réessaie dans ${Math.ceil(ttl / 60)} minute(s).`, 429
     );
   }
-  await this.redis.set(key, '1', 'EX', 60 * 60 * 4);
 }
 
 // Limite journalière — chat (50/jour) et debrief (1/jour)

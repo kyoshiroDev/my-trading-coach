@@ -184,7 +184,7 @@ describe('AiService', () => {
     });
 
     it('cooldown 4h actif → HttpException 429', async () => {
-      mockRedisGet.mockResolvedValueOnce('1'); // cooldown → fenêtre 4h en cours
+      mockRedisSet.mockResolvedValueOnce(null); // SET NX refusé : fenêtre de 4 h en cours
       mockRedisTtl.mockResolvedValueOnce(14000);
 
       await expect(
@@ -192,6 +192,34 @@ describe('AiService', () => {
       ).rejects.toMatchObject({
         status: 429,
       });
+      expect(mockOrchestrator.runInsightsFlow).not.toHaveBeenCalled();
+    });
+
+    it('C3 (#1045) : l’analyse échoue → le délai de 4 h est retiré, on peut réessayer', async () => {
+      mockOrchestrator.runInsightsFlow.mockRejectedValueOnce(new Error('IA en panne'));
+
+      await expect(service.getInsights('user-123', Role.USER)).rejects.toThrow('IA en panne');
+      expect(mockRedisService.client.del).toHaveBeenCalledWith('ai:cooldown:insights:user-123');
+    });
+
+    it('C3 (#1045) : quota mensuel épuisé → le délai de 4 h n’est pas posé pour rien', async () => {
+      mockRedisIncr.mockResolvedValueOnce(101);
+
+      await expect(service.getInsights('user-123', Role.USER)).rejects.toMatchObject({ status: 429 });
+      expect(mockRedisService.client.del).toHaveBeenCalledWith('ai:cooldown:insights:user-123');
+    });
+
+    it('S4 (#1045) : délai réservé en une opération atomique (SET NX EX), deux clics simultanés = une analyse', async () => {
+      mockRedisSet.mockResolvedValueOnce('OK').mockResolvedValueOnce(null);
+
+      const results = await Promise.allSettled([
+        service.getInsights('user-123', Role.USER),
+        service.getInsights('user-123', Role.USER),
+      ]);
+
+      expect(mockRedisSet).toHaveBeenCalledWith('ai:cooldown:insights:user-123', '1', 'EX', 14400, 'NX');
+      expect(results.filter((r) => r.status === 'fulfilled')).toHaveLength(1);
+      expect(mockOrchestrator.runInsightsFlow).toHaveBeenCalledOnce();
     });
 
     it('ADMIN → bypass cooldown et quota', async () => {
