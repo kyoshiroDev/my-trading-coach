@@ -40,7 +40,7 @@ function makeBilling(over: { user?: object; existingSub?: object | null; openSes
   const retrieve = vi.fn().mockResolvedValue({ id: 'cs_open', client_secret: 'cs_open_secret' });
   const expire = vi.fn().mockResolvedValue({});
   const stripe = {
-    subscriptions: { retrieve: vi.fn().mockResolvedValue(over.existingSub ?? null) },
+    subscriptions: { retrieve: vi.fn().mockResolvedValue(over.existingSub ?? null), list: vi.fn().mockResolvedValue({ data: [] }) },
     checkout: { sessions: { list: vi.fn().mockResolvedValue({ data: over.openSessions ?? [] }), create, expire, retrieve } },
     coupons: { retrieve: vi.fn().mockResolvedValue({}), create: vi.fn() },
     customers: { search: vi.fn(), create: vi.fn() },

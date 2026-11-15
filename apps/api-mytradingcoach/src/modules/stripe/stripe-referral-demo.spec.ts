@@ -11,13 +11,15 @@ describe('StripeBillingService.referralApplies — parrain démo', () => {
       {} as never,
       { user: { findFirst: vi.fn().mockResolvedValue(parrain) } } as never,
       {} as never, {} as never, {} as never, {} as never, {} as never, {} as never,
-    ) as unknown as { referralApplies: (code: string | null) => Promise<boolean> };
+    ) as unknown as { referralApplies: (u: object) => Promise<boolean> };
+  // Filleul jamais abonné (A8) : sans client Stripe ni remise déjà notée.
+  const filleul = (referredBy: string) => ({ referredBy, stripeCustomerId: null, referralDiscountSince: null });
 
   it('parrain = compte démo → pas de remise', async () => {
-    await expect(svc({ role: 'USER', isDemo: true }).referralApplies('DEMO')).resolves.toBe(false);
+    await expect(svc({ role: 'USER', isDemo: true }).referralApplies(filleul('DEMO'))).resolves.toBe(false);
   });
 
   it('parrain USER réel → remise (inchangé)', async () => {
-    await expect(svc({ role: 'USER', isDemo: false }).referralApplies('VAL')).resolves.toBe(true);
+    await expect(svc({ role: 'USER', isDemo: false }).referralApplies(filleul('VAL'))).resolves.toBe(true);
   });
 });

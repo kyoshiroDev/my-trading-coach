@@ -221,7 +221,7 @@ export class StripeBillingService {
     // ── Code partenaire : validé avant tout (raison précise du refus) ──────────
     // Non-cumul avec le parrainage : on garde le plus avantageux sur la 1re année. Si le −10 %
     // filleul coûte moins cher que le code, le code n'est pas consommé.
-    const referralCoupon = isFounder ? false : await this.referralApplies(user.referredBy);
+    const referralCoupon = isFounder ? false : await this.referralApplies(user);
     let partnerCode: string | null = null;
     let partnerTerms: { recurringEur: number; durationMonths: number | null } | null = null;
     if (opts.promo && !isFounder) {
@@ -582,14 +582,34 @@ export class StripeBillingService {
    * Le −10 % filleul s'applique-t-il ? RÉSERVÉ au parrainage classique : jamais pour les filleuls
    * d'ambassadeur (l'ambassadeur touche déjà ses 20 % via le webhook : sinon double coût).
    */
-  private async referralApplies(referredBy: string | null): Promise<boolean> {
-    if (!referredBy) return false;
+  private async referralApplies(user: {
+    referredBy: string | null;
+    stripeCustomerId: string | null;
+    referralDiscountSince: Date | null;
+  }): Promise<boolean> {
+    if (!user.referredBy) return false;
     const parrain = await this.prisma.user.findFirst({
-      where: { referralCode: referredBy },
+      where: { referralCode: user.referredBy },
       select: { role: true, isDemo: true },
     });
     // Filleul inscrit avec le code de la démo (avant #993) : pas de remise.
-    return !!parrain && parrain.role !== Role.AMBASSADOR && !parrain.isDemo;
+    if (!parrain || parrain.role === Role.AMBASSADOR || parrain.isDemo) return false;
+    return this.neverSubscribed(user);
+  }
+
+  /**
+   * Remise filleul « 1re année » (plans.md) : seulement au PREMIER abonnement (A8 #1013, décision du
+   * 14/11). Avant, elle revenait à chaque nouvel abonnement après une résiliation. Stripe fait foi
+   * (`stripeSubscriptionId` est vidé à la résiliation) ; une remise déjà notée suffit aussi.
+   */
+  private async neverSubscribed(user: { stripeCustomerId: string | null; referralDiscountSince: Date | null }): Promise<boolean> {
+    if (user.referralDiscountSince) return false;
+    if (!user.stripeCustomerId) return true;
+    const past = await this.stripe.subscriptions
+      .list({ customer: user.stripeCustomerId, status: 'all', limit: 1 })
+      .catch(() => null);
+    // Stripe injoignable : pas de remise plutôt qu'une remise indue (le paiement reste possible).
+    return past !== null && past.data.length === 0;
   }
 
   /** Prix fondateur (mensuel et annuel) de la config. */
