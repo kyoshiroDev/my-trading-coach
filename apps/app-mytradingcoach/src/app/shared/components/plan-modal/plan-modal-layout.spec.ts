@@ -97,7 +97,7 @@ describe('PlanModalComponent — hauteur sur mobile', () => {
   it('carte bornée par la hauteur visible (dvh), jamais vh', () => {
     const css = readFileSync(join(__dirname, 'plan-modal.component.css'), 'utf-8').replace(/\/\*[\s\S]*?\*\//g, '');
     const rule = (css.match(/\.plan-modal-card\s*\{[^}]*\}/g) ?? []).join('\n');
-    expect(rule).toMatch(/max-height:\s*calc\(100dvh/);
-    expect(css).not.toMatch(/\b100vh\b/);
+    // `dvh` en dernier (il gagne), `vh` juste avant en repli pour un navigateur qui ne le connaît pas.
+    expect(rule).toMatch(/max-height:\s*calc\(100vh[^;]*;\s*max-height:\s*calc\(100dvh/);
   });
 });
