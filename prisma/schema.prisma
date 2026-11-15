@@ -174,6 +174,9 @@ model ReferralCommission {
   referredUserId String
   amount         Float
   subscriptionId String
+  /// Facture Stripe payée : UNE commission par facture (A1 #1013). Null sur les lignes antérieures.
+  invoiceId      String?  @unique
+  /// Mois de rattachement (period_start de la facture), pour l'affichage et le relevé.
   period         String
   status         String   @default("pending")
   createdAt      DateTime @default(now())
@@ -183,8 +186,19 @@ model ReferralCommission {
   // compte — la transaction de `archiveAndDelete` echoue, et le front n'en disait rien.
   ambassador User @relation("AmbassadorCommissions", fields: [ambassadorId], references: [id], onDelete: Cascade)
 
-  @@unique([subscriptionId, period])
+  @@index([subscriptionId, period])
   @@index([ambassadorId])
+}
+
+/// Code de parrainage retiré (A5 #1013) : changé ou révoqué. Jamais redonné à un autre compte (un vieux
+/// lien créditerait le nouveau porteur) ; seul `userId` peut le reprendre. Pas de clé étrangère : la
+/// trace survit à la suppression du compte.
+model RetiredReferralCode {
+  code      String   @id
+  userId    String
+  retiredAt DateTime @default(now())
+
+  @@index([userId])
 }
 
 // Parrainage grand public : mois offert au parrain (user normal) pour chaque

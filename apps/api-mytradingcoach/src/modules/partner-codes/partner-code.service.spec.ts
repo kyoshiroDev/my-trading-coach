@@ -153,10 +153,12 @@ describe('changement d’intervalle : conditions figées de l’abonné', () => 
     expect(await service.couponForIntervalChange(r as never, 'year', now)).toBe('mtc-partner-20000-forever');
   });
 
-  it('3 mois, dont 2 écoulés : coupon de 1 mois restant ; durée écoulée : plus de remise', async () => {
+  it('3 mois, dont 2 écoulés : coupon du mois restant (annuel au prorata, B14) ; durée écoulée : plus de remise', async () => {
     const { service } = setup();
     const r = { id: 'r1', createdAt: new Date('2026-08-01'), priceMonthlyEur: 29, priceAnnualEur: 290, durationMonths: 3 };
-    expect(await service.couponForIntervalChange(r as never, 'year', now)).toBe('mtc-partner-20000-1');
+    // Avant B14 : −200 € (toute l'année) pour 1 mois de code restant. Maintenant 200 € × 1/12.
+    expect(await service.couponForIntervalChange(r as never, 'year', now)).toBe('mtc-partner-1667-1');
+    expect(await service.couponForIntervalChange(r as never, 'month', now)).toBe('mtc-partner-2000-1');
     const old = { ...r, createdAt: new Date('2026-05-01') };
     expect(await service.couponForIntervalChange(old as never, 'year', now)).toBeNull();
   });

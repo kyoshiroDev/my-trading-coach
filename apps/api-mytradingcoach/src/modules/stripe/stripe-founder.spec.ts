@@ -40,7 +40,7 @@ function makeBilling(over: { user?: object; existingSub?: object | null; openSes
   const retrieve = vi.fn().mockResolvedValue({ id: 'cs_open', client_secret: 'cs_open_secret' });
   const expire = vi.fn().mockResolvedValue({});
   const stripe = {
-    subscriptions: { retrieve: vi.fn().mockResolvedValue(over.existingSub ?? null) },
+    subscriptions: { retrieve: vi.fn().mockResolvedValue(over.existingSub ?? null), list: vi.fn().mockResolvedValue({ data: [] }) },
     checkout: { sessions: { list: vi.fn().mockResolvedValue({ data: over.openSessions ?? [] }), create, expire, retrieve } },
     coupons: { retrieve: vi.fn().mockResolvedValue({}), create: vi.fn() },
     customers: { search: vi.fn(), create: vi.fn() },
@@ -192,6 +192,8 @@ function makeWebhook(sub: { id: string; price: string; interval?: string; metada
     },
     founderSeat: { findUnique: vi.fn().mockResolvedValue(null) },
     partnerRedemption: { findFirst: vi.fn().mockResolvedValue(null) },
+    referralCommission: { findMany: vi.fn().mockResolvedValue([]), updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
+    referralReward: { findUnique: vi.fn().mockResolvedValue(null) },
   };
   const stripeSub = {
     id: sub.id, status: sub.status ?? 'active', customer: 'cus_1', trial_end: sub.trialEnd ?? null, metadata: sub.metadata ?? {},
@@ -641,6 +643,39 @@ describe('webhooks code partenaire', () => {
 });
 
 describe('GET /billing/offers', () => {
+  it('B14 : prix du passage à l’autre intervalle, remise des mois restants comprise (filleul)', async () => {
+    vi.useFakeTimers({ now: new Date('2026-11-15T00:00:00Z'), toFake: ['Date'] });
+    try {
+      const b = makeBilling();
+      Object.assign(b.founders, {
+        publicState: vi.fn().mockResolvedValue({ open: false, ended: false, seatsLeft: 0, seatsTotal: 200 }),
+        statusFor: vi.fn().mockResolvedValue({ isFounder: false, founderEligible: false, founderIneligibleReason: 'closed' }),
+      });
+      Object.assign(b.partners, { statusFor: vi.fn().mockResolvedValue({ partnerCode: null }) });
+      const prisma = (b.svc as unknown as { prisma: { user: { findUnique: ReturnType<typeof vi.fn> } } }).prisma;
+      prisma.user.findUnique.mockResolvedValueOnce({
+        stripeInterval: 'month', stripeSubscriptionStatus: 'active', referralDiscountSince: new Date('2026-07-15T00:00:00Z'),
+      });
+      const res = await b.svc.offers('u1');
+      expect(res.intervalSwitch).toMatchObject({ to: 'year', firstEur: 457.33, normalEur: 490 });
+      expect(res.intervalSwitch?.discountEndsAt?.toISOString().slice(0, 10)).toBe('2027-07-15');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('B14 : pas d’abonnement actif → aucun passage proposé', async () => {
+    const b = makeBilling();
+    Object.assign(b.founders, {
+      publicState: vi.fn().mockResolvedValue({ open: false, ended: false, seatsLeft: 0, seatsTotal: 200 }),
+      statusFor: vi.fn().mockResolvedValue({ isFounder: false, founderEligible: false }),
+    });
+    Object.assign(b.partners, { statusFor: vi.fn().mockResolvedValue({ partnerCode: null }) });
+    const prisma = (b.svc as unknown as { prisma: { user: { findUnique: ReturnType<typeof vi.fn> } } }).prisma;
+    prisma.user.findUnique.mockResolvedValueOnce({ stripeInterval: 'month', stripeSubscriptionStatus: 'past_due' });
+    expect((await b.svc.offers('u1')).intervalSwitch).toBeNull();
+  });
+
   it('fondateur depuis 3 jours : place, intervalle, remboursement possible jusqu’à J+14', async () => {
     const b = makeBilling();
     const since = new Date(Date.now() - 3 * 86_400_000);
@@ -1070,3 +1105,64 @@ describe('réservation fondateur pendant le Premium offert (#769)', () => {
   });
 });
 
+/**
+ * A4 (#1013) : remboursement intégral du 1er paiement d'un filleul. Commission `pending` annulée ;
+ * commission déjà `paid` gardée avec une alerte admin ; mois offert du parrain jamais repris
+ * (alerte admin). Un renouvellement remboursé ne touche à rien.
+ */
+describe('remboursement du 1er paiement : récompenses de parrainage (A4)', () => {
+  const FIRST = { id: 'in_first', amount_paid: 4900, created: 1_000, payment_intent: 'pi_1' };
+  const RENEW = { id: 'in_renew', amount_paid: 4900, created: 2_000, payment_intent: 'pi_2' };
+  const commission = (status: string, invoiceId = 'in_first') =>
+    ({ id: `c_${status}`, status, amount: 9.8, subscriptionId: 'sub_n', invoiceId, period: '2026-11' });
+
+  it('commission en attente → annulée, aucune alerte', async () => {
+    const w = makeWebhook({ id: 'sub_n', price: 'price_49' });
+    w.prisma.referralCommission.findMany.mockResolvedValue([commission('pending')]);
+    w.invoicesList.mockResolvedValue({ data: [FIRST] });
+    await w.svc.processWebhookEvent(event('charge.refunded', { refunded: true, customer: 'cus_1', invoice: 'in_first' }));
+    expect(w.prisma.referralCommission.updateMany).toHaveBeenCalledWith({
+      where: { id: 'c_pending', status: 'pending' }, data: { status: 'canceled' },
+    });
+    expect(w.resend.sendAdminAlert).not.toHaveBeenCalled();
+  });
+
+  it('commission déjà payée → gardée, alerte admin', async () => {
+    const w = makeWebhook({ id: 'sub_n', price: 'price_49' });
+    w.prisma.referralCommission.findMany.mockResolvedValue([commission('paid')]);
+    w.invoicesList.mockResolvedValue({ data: [FIRST] });
+    await w.svc.processWebhookEvent(event('charge.refunded', { refunded: true, customer: 'cus_1', invoice: 'in_first' }));
+    expect(w.prisma.referralCommission.updateMany).not.toHaveBeenCalled();
+    expect(w.resend.sendAdminAlert).toHaveBeenCalledWith(
+      expect.stringContaining('commission ambassadeur déjà payée'), expect.stringContaining('9.8'),
+    );
+  });
+
+  it('mois offert déjà appliqué au parrain → jamais repris, alerte admin', async () => {
+    const w = makeWebhook({ id: 'sub_n', price: 'price_49' });
+    w.prisma.referralReward.findUnique.mockResolvedValue({ id: 'r1', status: 'APPLIED', subscriptionId: 'sub_n', parrainId: 'p1' });
+    w.invoicesList.mockResolvedValue({ data: [FIRST] });
+    await w.svc.processWebhookEvent(event('charge.refunded', { refunded: true, customer: 'cus_1', invoice: 'in_first' }));
+    expect(w.resend.sendAdminAlert).toHaveBeenCalledWith(expect.stringContaining('mois offert'), expect.any(String));
+  });
+
+  it('Stripe injoignable pour lire les factures → l’erreur remonte (événement rejoué), rien n’est annulé', async () => {
+    const w = makeWebhook({ id: 'sub_n', price: 'price_49' });
+    w.prisma.referralCommission.findMany.mockResolvedValue([commission('pending')]);
+    w.invoicesList.mockRejectedValue(new Error('Stripe indisponible'));
+    await expect(
+      w.svc.processWebhookEvent(event('charge.refunded', { refunded: true, customer: 'cus_1', invoice: 'in_first' })),
+    ).rejects.toThrow('Stripe indisponible');
+    expect(w.prisma.referralCommission.updateMany).not.toHaveBeenCalled();
+  });
+
+  it('renouvellement remboursé → commission et mois offert intacts, aucune alerte', async () => {
+    const w = makeWebhook({ id: 'sub_n', price: 'price_49' });
+    w.prisma.referralCommission.findMany.mockResolvedValue([commission('pending'), commission('pending', 'in_renew')]);
+    w.prisma.referralReward.findUnique.mockResolvedValue({ id: 'r1', status: 'APPLIED', subscriptionId: 'sub_n', parrainId: 'p1' });
+    w.invoicesList.mockResolvedValue({ data: [RENEW, FIRST] });
+    await w.svc.processWebhookEvent(event('charge.refunded', { refunded: true, customer: 'cus_1', invoice: 'in_renew' }));
+    expect(w.prisma.referralCommission.updateMany).not.toHaveBeenCalled();
+    expect(w.resend.sendAdminAlert).not.toHaveBeenCalled();
+  });
+});

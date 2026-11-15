@@ -66,6 +66,12 @@ export interface BillingOffers {
   };
   partner: (PartnerConditions & { since: string; endsAt: string | null }) | null;
   subscription: { interval: BillingInterval | null; status: string | null };
+  /**
+   * Passage mensuel ↔ annuel (B14 #1013), calculé par l'API comme le changement lui-même : montant
+   * de la 1re période remise comprise (mois de remise restants), prix normal ensuite, fin de la
+   * remise (`null` : à vie ou sans remise). `null` sans abonnement actif.
+   */
+  intervalSwitch?: { to: BillingInterval; firstEur: number; normalEur: number; discountEndsAt: string | null } | null;
 }
 
 @Injectable({ providedIn: 'root' })
