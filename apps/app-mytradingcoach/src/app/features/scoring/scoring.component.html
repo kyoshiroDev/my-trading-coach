@@ -11,7 +11,7 @@
         risque.
       </p>
       <button class="btn-primary" (click)="showPlanModal.set(true)">
-        {{ userStore.trialAvailable() ? 'Essayer Premium · 1 mois offert →' : 'Passer à Premium →' }}
+        {{ paywall.label() }}
       </button>
       <p class="paywall-hint">{{ userStore.trialAvailable() ? 'Carte requise · annulable en un clic' : 'Sans engagement · annulable en un clic' }}</p>
     </div>

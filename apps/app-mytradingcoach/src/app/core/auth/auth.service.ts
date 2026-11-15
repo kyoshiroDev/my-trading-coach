@@ -26,6 +26,8 @@ export interface AuthUser {
   trialSource?: 'SIGNUP' | 'ADMIN' | null;
   /** Fin de l'essai d'inscription, fixe (un Premium offert ensuite ne la déplace pas). */
   signupTrialEndsAt?: string | null;
+  /** Fin d'un abonnement payant passé (B5 #1013) : ancien abonné, pas de fenêtre « Premium offert terminé ». */
+  subscriptionCanceledAt?: string | null;
   /** Statut de l'abonnement Stripe (`active`, `trialing`, `canceled`…), jamais d'identifiant. */
   stripeSubscriptionStatus?: string | null;
   stripeCurrentPeriodEnd?: string | null;

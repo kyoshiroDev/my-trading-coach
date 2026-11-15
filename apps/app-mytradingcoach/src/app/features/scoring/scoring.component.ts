@@ -26,6 +26,7 @@ import { computeTradeStats, netPnl, todayParis } from '@mtc/shared';
 import type { Trade as ApiTrade } from '@mtc/shared';
 import { ErrorStateComponent } from '@mtc/front-ui';
 import { calculerStreak, decalerJour, joursOuvres } from './streak';
+import { PaywallCtaService } from '@app/core/services/paywall-cta.service';
 
 /** Champs du trade utilisés par le calcul du score. */
 type Trade = Pick<ApiTrade, 'pnl' | 'commission' | 'riskReward' | 'emotion' | 'effectiveEmotion' | 'setupId' | 'tradedAt'>;
@@ -181,6 +182,8 @@ const JOURS_SERIE = 260;
   styleUrl: './scoring.component.css',
 })
 export class ScoringComponent {
+  /** Libellé unique des boutons de paywall (E3 #1013). */
+  protected readonly paywall = inject(PaywallCtaService);
   protected readonly MedalIcon = Medal;
   protected readonly CalendarDaysIcon = CalendarDays;
   protected readonly userStore = inject(UserStore);

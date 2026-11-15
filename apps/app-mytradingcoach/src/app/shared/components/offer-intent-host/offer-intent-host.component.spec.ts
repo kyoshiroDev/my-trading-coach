@@ -11,12 +11,16 @@ import { OffersStore } from '@app/core/stores/offers.store';
 
 type User = { isDemo?: boolean; stripeSubscriptionStatus?: string | null };
 
-function setup(opts: { user: User; premium: boolean; founderAvailable: boolean | null }) {
-  const pending = signal<OfferIntent | null>({ plan: 'founder', promo: null, cta: 'email' });
+function setup(opts: { user: User; premium: boolean; founderAvailable: boolean | null; intent?: OfferIntent }) {
+  const pending = signal<OfferIntent | null>(opts.intent ?? { plan: 'founder', promo: null, cta: 'email' });
   const intent = {
     pending,
     requested: signal<{ cta: string } | null>(null),
     clear: vi.fn(() => pending.set(null)),
+    keepPromoOnly: vi.fn(() => {
+      const p = pending();
+      pending.set(p?.promo ? { ...p, plan: null } : null);
+    }),
   };
   // null = offres pas encore chargées.
   const offersSig = signal<object | null>(opts.founderAvailable === null ? null : {});
@@ -55,7 +59,7 @@ describe('OfferIntentHostComponent : lien vers l’offre fondateur', () => {
   it('déjà Premium, fondateur inaccessible (admin, ancien fondateur…) → rien, intention oubliée', () => {
     const { show, intent } = setup({ user: {}, premium: true, founderAvailable: false });
     expect(show()).toBe(false);
-    expect(intent.clear).toHaveBeenCalled();
+    expect(intent.pending()).toBeNull(); // sans code partenaire, l'intention est effacée
   });
 
   it('déjà Premium, offres pas encore chargées → rien ne s’ouvre en attendant', () => {
@@ -67,5 +71,41 @@ describe('OfferIntentHostComponent : lien vers l’offre fondateur', () => {
   it('abonné qui paie déjà → rien', () => {
     const { show } = setup({ user: { stripeSubscriptionStatus: 'active' }, premium: true, founderAvailable: true });
     expect(show()).toBe(false);
+  });
+});
+
+/**
+ * B3 (#1013, décision du 14/11) : tout nouvel inscrit a 14 jours de Premium offert. Offre fondateur
+ * fermée ou complète, le lien d'offre était effacé en entier, code partenaire compris : plus aucun
+ * code partenaire ne marchait après les 200 places. Seul `plan=founder` est oublié.
+ */
+describe('OfferIntentHostComponent : code partenaire gardé quand le fondateur est fermé (B3)', () => {
+  it('lien fondateur + code, fondateur fermé, en essai → modale ouverte avec le code, plan fondateur oublié', () => {
+    const { show, intent } = setup({
+      user: {}, premium: true, founderAvailable: false, intent: { plan: 'founder', promo: 'TRADER10', cta: 'email' },
+    });
+    expect(intent.clear).not.toHaveBeenCalled();
+    expect(intent.keepPromoOnly).toHaveBeenCalled();
+    expect(intent.pending()).toEqual({ plan: null, promo: 'TRADER10', cta: 'email' });
+    expect(show()).toBe(true);
+  });
+
+  it('lien avec un code seul, fondateur fermé, en essai → modale ouverte', () => {
+    const { show, intent } = setup({
+      user: {}, premium: true, founderAvailable: false, intent: { plan: null, promo: 'TRADER10', cta: null },
+    });
+    expect(intent.clear).not.toHaveBeenCalled();
+    expect(show()).toBe(true);
+  });
+});
+
+/** B4 (#1013) : en pause, le cadenas était un bouton mort (modale jamais ouverte). */
+describe('OfferIntentHostComponent : abonnement en pause (B4)', () => {
+  it.each(['past_due', 'unpaid'])('%s : la modale s’ouvre (elle propose « Confirmer mon paiement »)', (status) => {
+    const { show } = setup({
+      user: { stripeSubscriptionStatus: status }, premium: false, founderAvailable: false,
+      intent: { plan: null, promo: null, cta: null },
+    });
+    expect(show()).toBe(true);
   });
 });

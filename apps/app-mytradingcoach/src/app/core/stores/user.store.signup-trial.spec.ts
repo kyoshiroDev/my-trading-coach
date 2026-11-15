@@ -85,4 +85,11 @@ describe('UserStore : essai d’inscription (#769)', () => {
     set({ trialSource: 'SIGNUP', trialEndsAt: inDays(-1), signupTrialEndsAt: inDays(-1), isDemo: true });
     expect(store.signupTrialEnded()).toBe(false);
   });
+
+  // B5 (#1013, décision du 14/11) : un ancien abonné payant (abonné pendant l'essai, puis résilié)
+  // voyait « Ton Premium offert est terminé » : `trialSource` SIGNUP n'est jamais effacé.
+  it('fin d’essai : jamais pour un ancien abonné payant (subscriptionCanceledAt)', () => {
+    set({ trialSource: 'SIGNUP', trialEndsAt: inDays(-20), signupTrialEndsAt: inDays(-20), subscriptionCanceledAt: inDays(-2) });
+    expect(store.signupTrialEnded()).toBe(false);
+  });
 });

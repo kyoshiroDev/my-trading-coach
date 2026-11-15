@@ -359,7 +359,7 @@
             data-testid="upgrade-cta"
             (click)="showPlanModal.set(true)"
           >
-            {{ userStore.trialAvailable() ? 'Essayer Premium · 1 mois offert →' : 'Passer à Premium →' }}
+            {{ paywall.label() }}
           </button>
         </div>
       </div>
@@ -391,7 +391,7 @@
             data-testid="upgrade-cta"
             (click)="showPlanModal.set(true)"
           >
-            {{ userStore.trialAvailable() ? 'Essayer Premium · 1 mois offert →' : 'Passer à Premium →' }}
+            {{ paywall.label() }}
           </button>
         </div>
       </div>
@@ -422,7 +422,7 @@
             data-testid="upgrade-cta"
             (click)="showPlanModal.set(true)"
           >
-            {{ userStore.trialAvailable() ? 'Essayer Premium · 1 mois offert →' : 'Passer à Premium →' }}
+            {{ paywall.label() }}
           </button>
         </div>
       </div>

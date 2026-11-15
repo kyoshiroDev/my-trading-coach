@@ -300,3 +300,18 @@ describe('débrief hebdo : aucune campagne « débrief prêt » (#833)', () => {
     expect(CAMPAIGNS_BY_KEY.has('debrief_reminder')).toBe(false);
   });
 });
+
+/**
+ * E6 (#1013, décision du 14/11) : un BETA_TESTER au plan FREE (accès Premium par son rôle) recevait
+ * les e-mails d'essai et les relances « passe Premium ». ADMIN est déjà exclu de tous les segments.
+ */
+describe('E6 : BETA_TESTER exclus des e-mails d’essai, d’upsell et fondateur', () => {
+  const now = new Date('2026-11-15T10:00:00Z');
+  const json = (key: string) => JSON.stringify(CAMPAIGNS_BY_KEY.get(key)!.segment(now));
+  it.each(['trial_ending', 'trial_ended', 'first_week_recap', 'premium_upsell', 'founder_followup', 'founder_launch'])(
+    '%s : BETA_TESTER exclu',
+    (key) => {
+      expect(json(key)).toContain('"role":{"not":"BETA_TESTER"}');
+    },
+  );
+});

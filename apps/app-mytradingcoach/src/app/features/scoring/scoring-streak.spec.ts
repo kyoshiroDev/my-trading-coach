@@ -116,6 +116,8 @@ describe('Score : Streak réel, Badges masqués', () => {
     const { el } = await rendre(FREE);
     expect(el.querySelector('.premium-paywall')).not.toBeNull();
     http.expectNone((r) => r.url.includes('/analytics/activity/range'));
+    // Libellé du paywall (E3 #1013) : les offres sont chargées une fois pour un compte gratuit.
+    http.match((r) => r.url.includes('/billing/offers')).forEach((r) => r.flush({ data: null }));
   });
 
   it.each(COMPTES)('compte %s, moins de 10 trades : le conseil reste affiché', async (_, user) => {

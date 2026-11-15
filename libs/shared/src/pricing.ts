@@ -12,6 +12,9 @@
 /** Prix PREMIUM en euros. */
 export const PREMIUM_PRICE_EUR = { monthly: 49, annual: 490 } as const;
 
+/** Remise filleul (parrainage classique) : −10 % sur 12 paiements mensuels, ou le 1er paiement annuel. */
+export const REFERRAL_DISCOUNT = { rate: 0.1, months: 12 } as const;
+
 /** Économie de l'annuel face à 12 mensualités (49 × 12 − 490 = 98 €, soit 2 mois offerts). */
 export const PREMIUM_ANNUAL_SAVINGS_EUR = PREMIUM_PRICE_EUR.monthly * 12 - PREMIUM_PRICE_EUR.annual;
 

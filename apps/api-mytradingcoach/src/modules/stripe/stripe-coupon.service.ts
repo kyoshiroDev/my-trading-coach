@@ -1,5 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import Stripe from 'stripe';
+import { REFERRAL_DISCOUNT } from '@mtc/shared';
 import { STRIPE_CLIENT } from './stripe.client';
 
 // Coupons réduc filleul : -10% sur la première année, selon l'intervalle choisi.
@@ -61,8 +62,8 @@ export class StripeCouponService {
     } catch {
       const params: Stripe.CouponCreateParams =
         kind === 'annual'
-          ? { id, percent_off: 10, duration: 'once', name: 'Parrainage -10% (1ère année)' }
-          : { id, percent_off: 10, duration: 'repeating', duration_in_months: 12, name: 'Parrainage -10% (12 mois)' };
+          ? { id, percent_off: REFERRAL_DISCOUNT.rate * 100, duration: 'once', name: 'Parrainage -10% (1ère année)' }
+          : { id, percent_off: REFERRAL_DISCOUNT.rate * 100, duration: 'repeating', duration_in_months: REFERRAL_DISCOUNT.months, name: 'Parrainage -10% (12 mois)' };
       try {
         await this.stripe.coupons.create(params);
       } catch (err) {

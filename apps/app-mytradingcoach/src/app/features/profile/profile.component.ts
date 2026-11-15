@@ -56,6 +56,7 @@ import { OffersStore } from '../../core/stores/offers.store';
 import { PRICING } from '../../core/constants/pricing.const';
 import { PARTNER_FOREVER_LABEL } from '../../shared/components/plan-modal/plan-modal.component';
 import { searchLocalInstruments, sessionLabel, styleEmoji, styleLabel, withAsset, withoutAsset } from './profile.helpers';
+import { PaywallCtaService } from '@app/core/services/paywall-cta.service';
 
 type ProfileTab = 'trader' | 'params';
 
@@ -67,6 +68,8 @@ type ProfileTab = 'trader' | 'params';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProfileComponent implements OnInit {
+  /** Libellé unique des boutons de paywall (E3 #1013). */
+  protected readonly paywall = inject(PaywallCtaService);
   protected readonly GiftIcon = Gift;
   protected readonly userStore = inject(UserStore);
   private readonly accountsStore = inject(SelectedAccountStore);

@@ -57,13 +57,13 @@ describe('checkoutCopy : une page, des textes par offre', () => {
 
   it('Premium mensuel avec essai : 0 € aujourd’hui, date de fin d’essai partout', () => {
     const c = checkoutCopy({ ...base, trialDays: 30 }, NOW);
-    expect(c.eyebrow).toBe('Premium · 1 mois offert');
+    expect(c.eyebrow).toBe("Premium · 30 jours d'essai"); // Q1 #1013
     expect(c.was).toBeNull();
     expect(c.note).toBe('30 jours offerts. Aucun prélèvement avant le 7 novembre.');
     expect(c.assurances[0]).toMatchObject({ icon: 'trial', strong: 'Annule avant le 7 novembre' });
     expect(c.thenLabel).toBe('À partir du 7 novembre');
     expect(c.thenAmount).toBe('49,00 € / mois');
-    expect(c.cta).toBe('Commencer mon mois offert');
+    expect(c.cta).toBe('Commencer mon essai');
     expect(c.legal).toBe('prélever 49,00 € par mois à partir du 7 novembre');
   });
 
@@ -90,5 +90,23 @@ describe('checkoutCopy : une page, des textes par offre', () => {
   it('parrainage : −10 % la première année signalé', () => {
     const c = checkoutCopy({ ...base, trialDays: 30, referralDiscount: true }, NOW);
     expect(c.note).toContain('−10 % la première année grâce à ton parrainage.');
+  });
+
+  // B8 (#1013, décision du 14/11) : le filleul mensuel lisait « Puis chaque mois 49,00 € » et la
+  // mention « prélever 49,00 € par mois » alors qu'il paie 44,10 € pendant 12 mois.
+  it('parrainage mensuel : 44,10 € pendant 12 mois puis 49 €, jusque dans la mention de prélèvement', () => {
+    const c = checkoutCopy({ ...base, referralDiscount: true }, NOW);
+    expect(c.price).toBe('44,10');
+    expect(c.was).toBe('49 €');
+    expect(c.thenLabel).toBe('Puis chaque mois');
+    expect(c.thenAmount).toBe('44,10 € pendant 12 mois, puis 49,00 €');
+    expect(c.legal).toBe('prélever 44,10 € par mois pendant 12 mois, puis 49,00 € par mois');
+  });
+
+  it('parrainage annuel : 441 € la première année puis 490 €', () => {
+    const c = checkoutCopy({ ...base, interval: 'year', recurringEur: 490, normalEur: 490, referralDiscount: true }, NOW);
+    expect(c.price).toBe('441');
+    expect(c.thenAmount).toBe('441,00 € la première année, puis 490,00 €');
+    expect(c.legal).toBe('prélever 441,00 € la première année, puis 490,00 € par an');
   });
 });
