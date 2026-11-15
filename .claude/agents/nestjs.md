@@ -107,7 +107,8 @@ GET    /api/session/today/stats        JWT → stats live (totalPnl, winRate, tr
 POST   /api/session/trades/:id/close   JWT → clôturer un trade (exitPrice → détection SL/TP/Manuel)
 
 GET    /api/eco-calendar/today         PREMIUM → events du jour + analyse IA (cache Redis 1h)
-POST   /api/eco-calendar/analyze-result PREMIUM → analyse d'un résultat tombé en temps réel
+POST   /api/eco-calendar/analyze-result PREMIUM → analyse d'un résultat tombé en temps réel ; @Throttle 20/min (S2 #1045)
+POST   /api/eco-calendar/refresh-today JWT → vide le cache du jour du trader ; @Throttle 5/min ; résumé du matin mutualisé : au plus 5 générations distinctes par trader et par jour (`eco:morning-gen:<date>:<userId>`, au-delà « Données IA indisponibles ») (S2 #1045)
 GET    /api/eco-calendar/release-analyses?date=YYYY-MM-DD JWT → analyses déjà produites d'un jour PASSÉ
 GET    /api/eco-calendar/range?from&to JWT → vue semaine ; AAAA-MM-JJ, from ≤ to, ≤ 31 jours sinon 400 ; FMP seulement à ±90 j d'aujourd'hui, jour vide marqué 6 h (`eco:range-empty:<date>`) (S1 #1045)
        (EcoReleaseAnalysis, aucun appel IA, donc ouverte à la démo ; vide pour aujourd'hui et après) ;

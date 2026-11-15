@@ -568,6 +568,40 @@ describe('EcoCalendarService', () => {
       expect(mockAi.analyzeEcoEvents).toHaveBeenCalledOnce();
       expect(mockPrisma.ecoAnalysisCache.upsert).toHaveBeenCalledOnce();
     });
+
+    it('S2 (#1045) : au-delà de 5 résumés distincts dans la journée, plus d’appel IA pour ce trader', async () => {
+      const today = todayParis();
+      mockPrisma.ecoEvent.findMany.mockResolvedValue([{
+        time: '15:30', name: 'NFP', country: 'US', currency: 'USD',
+        impact: 'high', actual: null, estimate: 180000, previous: 150000,
+        isReleased: false, unit: 'K',
+      }]);
+      mockPrisma.trade.findMany.mockResolvedValue([{ asset: 'ZZZ-ALEATOIRE' }]);
+      const incr = vi.spyOn(service['redis'], 'incr').mockResolvedValue(6);
+
+      const result = await service.getTodayEvents('user-1');
+
+      expect(incr).toHaveBeenCalledWith(`eco:morning-gen:${today}:user-1`);
+      expect(mockAi.analyzeEcoEvents).not.toHaveBeenCalled();
+      expect(result.analysis.summary).toBe('Données IA indisponibles.');
+    });
+
+    it('S2 (#1045) : un résumé déjà en cache ne compte pas dans le plafond du trader', async () => {
+      mockPrisma.ecoEvent.findMany.mockResolvedValue([{
+        time: '15:30', name: 'NFP', country: 'US', currency: 'USD',
+        impact: 'high', actual: null, estimate: 180000, previous: 150000,
+        isReleased: false, unit: 'K',
+      }]);
+      mockPrisma.trade.findMany.mockResolvedValue([{ asset: 'NQ' }]);
+      mockPrisma.ecoAnalysisCache.findUnique.mockResolvedValueOnce({
+        analysisJson: JSON.stringify({ summary: 'NFP attendu.', recommendation: '', assetImpacts: [] }),
+      });
+      const incr = vi.spyOn(service['redis'], 'incr');
+
+      await service.getTodayEvents('user-1');
+
+      expect(incr).not.toHaveBeenCalled();
+    });
   });
 
   describe('assetsKey', () => {

@@ -34,6 +34,8 @@ const TRANSLATION_RETRY_TTL_S = 12 * 60 * 60;
 const translationLockKey = (name: string) => `eco:label-tr:${name}`;
 /** Un jour relevé vide chez FMP (week-end, férié) n'est pas redemandé avant 6 h (S1 #1045). */
 const RANGE_EMPTY_TTL_S = 6 * 60 * 60;
+/** Résumés du matin distincts (signatures d'actifs) qu'un trader peut faire générer par jour (S2 #1045). */
+const MORNING_GENERATIONS_PER_USER_DAY = 5;
 
 /**
  * État affiché d'une annonce : « passée » se distingue de « publiée » (une intervention sans chiffre
@@ -440,17 +442,19 @@ export class EcoCalendarService {
    * 1 appel IA par (date, signature) au lieu d'un par user. Persisté en BDD.
    */
   private async getSharedMorningAnalysis(
+    userId: string,
     date: string,
     events: EcoEvent[],
     userAssets: string[],
   ): Promise<EcoAnalysis> {
     // Conformité (#920) : seul le résumé vient du modèle. Le point d'attention est calculé en code
     // et aucun sentiment par actif n'est renvoyé, même depuis une ligne de cache plus ancienne.
-    const a = await this.morningSummary(date, events, userAssets);
+    const a = await this.morningSummary(userId, date, events, userAssets);
     return { summary: a.summary, recommendation: morningFocus(events), assetImpacts: [] };
   }
 
   private async morningSummary(
+    userId: string,
     date: string,
     events: EcoEvent[],
     userAssets: string[],
@@ -477,6 +481,10 @@ export class EcoCalendarService {
       }
     }
 
+    // S2 (#1045) : les actifs sont un texte libre du trader ; sans plafond, changer d'actif puis
+    // « refresh-today » en boucle lançait un appel IA mutualisé (hors quota) à chaque tour.
+    if (await this.morningGenerationCapped(userId, date)) return fallback;
+
     try {
       // userId null = job mutualisé : 'shared' violait la clé étrangère d'AiUsageLog, et ces
       // appels n'étaient jamais comptés (« AiUsageLog skipped »).
@@ -492,6 +500,21 @@ export class EcoCalendarService {
     } catch (err) {
       this.logger.warn(`Eco AI analysis skipped: ${(err as Error).message}`);
       return fallback;
+    }
+  }
+
+  /**
+   * Compte une génération de résumé du matin pour ce trader et ce jour ; vrai au-delà de
+   * `MORNING_GENERATIONS_PER_USER_DAY` (S2 #1045). Redis indisponible : pas de blocage.
+   */
+  private async morningGenerationCapped(userId: string, date: string): Promise<boolean> {
+    const key = `eco:morning-gen:${date}:${userId}`;
+    try {
+      const count = await this.redis.incr(key);
+      if (count === 1) await this.redis.expire(key, 26 * 60 * 60);
+      return count > MORNING_GENERATIONS_PER_USER_DAY;
+    } catch {
+      return false;
     }
   }
 
@@ -515,7 +538,7 @@ export class EcoCalendarService {
       this.getUserPins(userId),
     ]);
 
-    const analysis = await this.getSharedMorningAnalysis(today, events, userAssets);
+    const analysis = await this.getSharedMorningAnalysis(userId, today, events, userAssets);
     if (!isDemo) await this.rememberSignature(today, userAssets);
 
     // Épinglés en premier, puis tri par heure
@@ -562,7 +585,7 @@ export class EcoCalendarService {
       this.getUserPins(userId),
     ]);
 
-    const analysis = await this.getSharedMorningAnalysis(dateStr, events, userAssets);
+    const analysis = await this.getSharedMorningAnalysis(userId, dateStr, events, userAssets);
 
     const sortedEvents = this.sortWithPins(events, userPins);
     const result: EcoCalendarData = { events: sortedEvents, analysis, userAssets, pinnedEvents: userPins };

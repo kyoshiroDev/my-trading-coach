@@ -9,6 +9,7 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { AdminGuard } from '../../common/guards/admin.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
@@ -34,6 +35,7 @@ export class EcoCalendarController {
   }
 
   @Post('analyze-result')
+  @Throttle({ default: { ttl: 60_000, limit: 20 } })
   analyzeResult(
     @CurrentUser() user: { id: string; isDemo?: boolean },
     @Body('eventName') eventName: string,
@@ -43,6 +45,7 @@ export class EcoCalendarController {
 
   // Vide le cache Redis user + retourne analyse fraîche (après nouveaux actual WebSocket)
   @Post('refresh-today')
+  @Throttle({ default: { ttl: 60_000, limit: 5 } })
   async refreshToday(@CurrentUser() user: { id: string; isDemo?: boolean }) {
     const today = todayParis();
     await this.service.redis.del(`eco:calendar:${today}:${user.id}`);

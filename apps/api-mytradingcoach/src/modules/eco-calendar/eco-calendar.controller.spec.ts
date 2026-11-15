@@ -1,3 +1,4 @@
+import 'reflect-metadata';
 import { describe, it, expect, vi } from 'vitest';
 import { BadRequestException } from '@nestjs/common';
 import { EcoCalendarController } from './eco-calendar.controller';
@@ -24,6 +25,20 @@ describe('EcoCalendarController', () => {
       expect(service.getEventsRange).toHaveBeenCalledWith([
         '2026-11-16', '2026-11-17', '2026-11-18', '2026-11-19', '2026-11-20',
       ]);
+    });
+  });
+
+  describe('@Throttle des routes qui déclenchent l’IA mutualisée (S2 #1045)', () => {
+    it('refresh-today : 5 par minute', () => {
+      const handler = EcoCalendarController.prototype.refreshToday;
+      expect(Reflect.getMetadata('THROTTLER:LIMITdefault', handler)).toBe(5);
+      expect(Reflect.getMetadata('THROTTLER:TTLdefault', handler)).toBe(60_000);
+    });
+
+    it('analyze-result : 20 par minute', () => {
+      const handler = EcoCalendarController.prototype.analyzeResult;
+      expect(Reflect.getMetadata('THROTTLER:LIMITdefault', handler)).toBe(20);
+      expect(Reflect.getMetadata('THROTTLER:TTLdefault', handler)).toBe(60_000);
     });
   });
 });
