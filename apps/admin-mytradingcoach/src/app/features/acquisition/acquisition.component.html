@@ -4,6 +4,21 @@
     <span class="page-meta">visites landing sans cookie · source = utm_source, sinon site d'origine</span>
   </div>
 
+  <div class="tests-filter" data-testid="tests-filter">
+    <button type="button" role="switch" class="tests-switch" data-testid="tests-toggle"
+            [attr.aria-checked]="includeTests()" aria-labelledby="tests-filter-label" (click)="toggleTests()">
+      <span class="tests-switch-knob"></span>
+    </button>
+    <span id="tests-filter-label" class="tests-label">Inclure les tests</span>
+    <span class="tests-hint">
+      @if (includeTests()) {
+        chiffres bruts : campagnes de test, comptes internes et admin compris (la démo reste à part)
+      } @else {
+        exclus : source, medium ou campagne <span class="td-mono">{{ testPatterns }}</span> · comptes internes et admin
+      }
+    </span>
+  </div>
+
   <div class="card signup-card" data-testid="signup-funnel">
     <div class="card-head">
       <span class="card-label">Parcours d'inscription · {{ signupDays() }} jours</span>
@@ -53,6 +68,14 @@
       </table>
     } @else {
       <div class="empty">{{ signupLoading() ? 'Chargement…' : 'Aucun parcours enregistré sur la période' }}</div>
+    }
+    <!-- Les « Inscrits » du tableau sont des événements anonymes : un compte de test supprimé y reste
+         compté. Le nombre de comptes existants permet de voir l'écart (#1029). -->
+    @if (funnel(); as f) {
+      <p class="signup-accounts" data-testid="signup-real-accounts">
+        Comptes {{ includeTests() ? '' : 'réels ' }}créés sur 30 jours : <span class="td-mono">{{ f.signups }}</span>
+        <span class="muted">· {{ includeTests() ? 'tests compris' : 'hors démo, admin, comptes internes et campagnes de test' }} ; les inscrits ci-dessus sont des événements anonymes (un compte supprimé y reste compté)</span>
+      </p>
     }
 
     <div class="card-head signup-errors-head">
@@ -164,6 +187,9 @@
         </ol>
         <p class="funnel-foot">
           Démo : {{ f.demo.opens }} ouverture(s) · {{ f.demo.signupClicks }} clic(s) « Créer mon compte »
+          @if (demo(); as d) {
+            <span data-testid="demo-detail">(bandeau vu {{ d.views }} · relance {{ d.modalShown }} · {{ d.placements }})</span>
+          }
           · Stripe aujourd'hui&nbsp;: {{ f.current.trialing }} essai(s) en cours, {{ f.current.paying }} payant(s)
           @if (f.steps[4].users) { · {{ f.steps[4].users }} retour(s) Stripe annulé(s) }
         </p>

@@ -271,6 +271,9 @@ export type SignupFunnelData = AdminSignupFunnelData;
 export type SignupMethodsData = AdminSignupMethodsData;
 export type LandingEngagementData = AdminLandingEngagementData;
 
+/** `?includeTests=true` seulement quand l'interrupteur est mis : l'URL par défaut ne change pas. */
+const testsParam = (includeTests: boolean): Record<string, string> => (includeTests ? { includeTests: 'true' } : {});
+
 @Injectable({ providedIn: 'root' })
 export class AdminApi {
   private readonly http = inject(HttpClient);
@@ -332,11 +335,13 @@ export class AdminApi {
   deletedAccounts() {
     return this.http.get<{ data: DeletedAccountsData }>(`${this.adminBase}/deleted-accounts`);
   }
-  acquisition()         { return this.http.get<{ data: AcquisitionData }>(`${this.adminBase}/acquisition`); }
-  funnel()              { return this.http.get<{ data: FunnelData }>(`${this.adminBase}/funnel`); }
-  signupMethods()       { return this.http.get<{ data: SignupMethodsData }>(`${this.adminBase}/signup-methods`); }
-  signupFunnel(days: 7 | 30) { return this.http.get<{ data: SignupFunnelData }>(`${this.adminBase}/signup-funnel`, { params: { days } }); }
-  landingEngagement(days: 7 | 30) { return this.http.get<{ data: LandingEngagementData }>(`${this.adminBase}/landing-engagement`, { params: { days } }); }
+  // Page Acquisition : `includeTests` = « Inclure les tests » (campagnes de test, comptes internes
+  // et ADMIN remis, #1029) ; absent = chiffres sans les tests.
+  acquisition(includeTests = false)   { return this.http.get<{ data: AcquisitionData }>(`${this.adminBase}/acquisition`, { params: testsParam(includeTests) }); }
+  funnel(includeTests = false)        { return this.http.get<{ data: FunnelData }>(`${this.adminBase}/funnel`, { params: testsParam(includeTests) }); }
+  signupMethods(includeTests = false) { return this.http.get<{ data: SignupMethodsData }>(`${this.adminBase}/signup-methods`, { params: testsParam(includeTests) }); }
+  signupFunnel(days: 7 | 30, includeTests = false) { return this.http.get<{ data: SignupFunnelData }>(`${this.adminBase}/signup-funnel`, { params: { days, ...testsParam(includeTests) } }); }
+  landingEngagement(days: 7 | 30, includeTests = false) { return this.http.get<{ data: LandingEngagementData }>(`${this.adminBase}/landing-engagement`, { params: { days, ...testsParam(includeTests) } }); }
   stripeReconcile()     { return this.http.get<{ data: StripeReconcileData }>(`${this.adminBase}/stripe/reconcile`); }
   referralOverview()    { return this.http.get<{ data: ReferralAdminOverview }>(`${this.adminBase}/referral/overview`); }
 
