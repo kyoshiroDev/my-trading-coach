@@ -16,6 +16,7 @@ import { translateEcoEvent } from '../../core/data/eco-event-translations';
 
 import { UserStore } from '../../core/stores/user.store';
 import { ToastService } from '../../core/services/toast.service';
+import { parisWeekMonday } from './eco-week';
 import { apiErrorMessage } from '../../core/utils/api-error';
 import { toParisDateStr, todayParis } from '@mtc/shared';
 import type { EcoEvent } from '@mtc/shared';
@@ -645,16 +646,6 @@ export class EcoCalendarComponent implements OnInit {
   }
 
   private getMonday(d: Date): Date {
-    const parisStr = d.toLocaleDateString('en-US', { timeZone: 'Europe/Paris', weekday: 'short' });
-    const map: Record<string, number> = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
-    const day = map[parisStr] ?? d.getDay();
-    let diff: number;
-    if (day === 0) diff = 1;
-    else if (day === 6) diff = 2;
-    else diff = 1 - day;
-    const monday = new Date(d);
-    monday.setDate(d.getDate() + diff);
-    monday.setHours(0, 0, 0, 0);
-    return monday;
+    return parisWeekMonday(d);
   }
 }
