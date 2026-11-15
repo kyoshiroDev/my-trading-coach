@@ -109,7 +109,6 @@ export class ProfileComponent implements OnInit {
    * terminé en avance) n'est plus « en essai » même si l'essai d'inscription court encore.
    */
   protected readonly subState = computed(() => subscriptionState(this.userStore.user() ?? { plan: 'FREE' }));
-  /** Essai d'abonnement en cours, non annulé : premier prélèvement à venir. */
   /**
    * Abonnement Stripe en cours (payant ou en essai) : seul cas avec un portail de facturation à
    * ouvrir. ADMIN / BETA / Premium manuel sans abonnement n'ont pas de client Stripe (B10 #1013).
@@ -118,6 +117,7 @@ export class ProfileComponent implements OnInit {
     const kind = this.subState().kind;
     return kind === 'paying' || kind === 'subscription_trial';
   });
+  /** Essai d'abonnement en cours, non annulé : premier prélèvement à venir. */
   protected readonly isInTrial = computed(() => this.subState().kind === 'subscription_trial' && !this.subState().cancelAt);
   /** Fin programmée d'un essai annulé ou d'un abonnement résilié : plus aucun prélèvement. */
   protected readonly canceledAt = computed(() => {
