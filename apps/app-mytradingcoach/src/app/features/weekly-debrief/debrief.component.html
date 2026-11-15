@@ -2,7 +2,7 @@
   title="Débrief hebdo"
   [globalScopeNote]="true"
   [showAddButton]="userStore.isPremium()"
-  [addLabel]="isGenerating() ? 'Analyse en cours...' : 'Générer le débrief'"
+  [addLabel]="isGenerating() ? 'Analyse en cours...' : 'Générer le débrief de cette semaine'"
   [addLoading]="isGenerating()"
   addTestId="debrief-generate-btn"
   (addClick)="generateDebrief()"
@@ -46,7 +46,7 @@
           color="var(--text-3)"
           style="margin-bottom:16px"></svg>
         <p>Aucun débrief pour cette semaine</p>
-        <small>Clique sur "Générer le débrief" pour créer ton rapport IA</small>
+        <small>Clique sur « Générer le débrief de cette semaine » pour créer ton rapport IA</small>
         <small>Les debriefs sont générés automatiquement chaque dimanche à 23h</small>
       </div>
     } @else {
