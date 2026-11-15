@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Injectable,
   HttpException,
   HttpStatus,
@@ -70,6 +71,13 @@ export class AiService {
 
   async getInsights(userId: string, role: Role, isDemo = false) {
     if (isDemo) return DEMO_INSIGHTS; // données figées, zéro appel modèle
+    // C9 (#1046) : sans trade clôturé, deux appels IA sur un résumé vide et 4 h de délai pour rien.
+    const closed = await this.prisma.trade.count({
+      where: { userId, pnl: { not: null }, ...inactiveAccountsTradeWhere() },
+    });
+    if (closed === 0) {
+      throw new BadRequestException('Ajoute au moins un trade clôturé pour lancer l’analyse.');
+    }
     const flow = () => guardAiText('insights', () => this.orchestrator.runInsightsFlow(userId), this.logger);
     if (role === Role.ADMIN) return flow();
     await this.checkInsightsCooldown(userId);
