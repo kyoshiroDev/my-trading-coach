@@ -4,8 +4,12 @@ import { fetchWithTimeout } from '../../common/utils/fetch-timeout';
 /**
  * Rôles Membre / Premium d'un membre du serveur Discord, par l'API REST du bot. Sans dépendance :
  * `UsersModule` l'importe pour retirer le rôle à la suppression du compte (`DiscordModule`
- * importe déjà `UsersModule`, l'inverse ferait un cycle). Ne lève jamais : un échec Discord ne
- * doit bloquer ni une liaison, ni une suppression de compte.
+ * importe déjà `UsersModule`, l'inverse ferait un cycle).
+ *
+ * `setPlanRole` LÈVE sur une réponse en erreur (hors 404) ou une panne réseau (N2 #1046) : avant,
+ * tout était avalé, la fin d'essai comptait « rôle Discord en échec : 0 » et le rôle Premium
+ * restait. Les appelants qui ne doivent pas être bloqués (liaison, webhooks Stripe) attrapent.
+ * `removePlanRoles` ne lève jamais (suppression de compte) mais renvoie `false` en cas d'échec.
  */
 @Injectable()
 export class DiscordGuildClient {
@@ -20,12 +24,20 @@ export class DiscordGuildClient {
     await this.call(env, discordId, add, 'PUT');
   }
 
-  /** Retire les deux rôles (Discord détaché d'un compte, compte supprimé). */
-  async removePlanRoles(discordId: string): Promise<void> {
+  /**
+   * Retire les deux rôles (Discord détaché d'un compte, compte supprimé). Ne lève jamais ; `false`
+   * si un retrait a échoué (l'appelant peut le signaler pour un retrait à la main).
+   */
+  async removePlanRoles(discordId: string): Promise<boolean> {
     const env = this.env();
-    if (!env) return;
-    await this.call(env, discordId, env.membre, 'DELETE');
-    await this.call(env, discordId, env.premium, 'DELETE');
+    if (!env) return true;
+    let ok = true;
+    for (const roleId of [env.membre, env.premium]) {
+      await this.call(env, discordId, roleId, 'DELETE').catch(() => {
+        ok = false;
+      });
+    }
+    return ok;
   }
 
   /**
@@ -73,10 +85,19 @@ export class DiscordGuildClient {
     method: 'PUT' | 'DELETE',
   ): Promise<void> {
     const url = `https://discord.com/api/v10/guilds/${env.guildId}/members/${discordId}/roles/${roleId}`;
-    await fetchWithTimeout(url, { method, headers: { Authorization: `Bot ${env.botToken}` } }).catch(
-      (err: unknown) => {
-        this.logger.error(`Discord ${method} rôle échoué : ${err instanceof Error ? err.message : String(err)}`);
-      },
-    );
+    let res: Response;
+    try {
+      res = await fetchWithTimeout(url, { method, headers: { Authorization: `Bot ${env.botToken}` } });
+    } catch (err: unknown) {
+      // Nom de l'erreur seulement : jamais l'URL (identifiant Discord).
+      const name = err instanceof Error ? err.name : 'inconnue';
+      this.logger.error(`Discord ${method} rôle échoué : ${name}`);
+      throw new Error(`Discord ${method} rôle échoué : ${name}`);
+    }
+    // 404 : le membre a quitté le serveur, il n'a plus aucun rôle.
+    if (!res.ok && res.status !== 404) {
+      this.logger.error(`Discord ${method} rôle refusé : HTTP ${res.status}`);
+      throw new Error(`Discord ${method} rôle refusé : HTTP ${res.status}`);
+    }
   }
 }

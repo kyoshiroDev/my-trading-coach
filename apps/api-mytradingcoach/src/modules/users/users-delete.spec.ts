@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Test } from '@nestjs/testing';
-import { ForbiddenException, ServiceUnavailableException } from '@nestjs/common';
+import { ForbiddenException, Logger, ServiceUnavailableException } from '@nestjs/common';
 import { BILLING_CLOSURE_FAILED_MESSAGE, UsersService } from './users.service';
 import { AmbassadorService } from '../ambassador/ambassador.service';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -29,7 +29,7 @@ const mockRedis = { client: { get: vi.fn(), set: vi.fn(), del: vi.fn() } };
 
 const billingClosure = { cancelAllSubscriptions: vi.fn() };
 
-const discordGuild = { removePlanRoles: vi.fn(async () => undefined) };
+const discordGuild = { removePlanRoles: vi.fn(async () => true) };
 
 describe('UsersService — suppression + trace DeletedAccount', () => {
   let service: UsersService;
@@ -81,6 +81,17 @@ describe('UsersService — suppression + trace DeletedAccount', () => {
     expect(mockPrisma.$transaction.mock.invocationCallOrder[0]).toBeLessThan(
       discordGuild.removePlanRoles.mock.invocationCallOrder[0],
     );
+  });
+
+  it('N2 (#1046) : rôles Discord pas retirés (Discord en panne) → avertissement avec le discordId pour un retrait à la main', async () => {
+    mockPrisma.user.findUnique.mockResolvedValue({ ...baseUser, discordId: '111111111111111111' });
+    discordGuild.removePlanRoles.mockResolvedValueOnce(false);
+    const warn = vi.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
+
+    await service.deleteMe('user-1');
+
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('111111111111111111'));
+    warn.mockRestore();
   });
 
   it('sans Discord relié : aucun appel Discord', async () => {
