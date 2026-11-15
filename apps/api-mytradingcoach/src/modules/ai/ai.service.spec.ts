@@ -233,6 +233,23 @@ describe('AiService', () => {
     });
   });
 
+  describe('releaseDailyLimit (C2 #1045)', () => {
+    it('rend la place du jour prise par checkDailyLimit (même clé)', async () => {
+      await service.checkDailyLimit('user-123', 'debrief', 1);
+      const key = mockRedisIncr.mock.calls[0][0] as string;
+
+      await service.releaseDailyLimit('user-123', 'debrief');
+
+      expect(key).toMatch(/^ai:limit:user-123:debrief:\d{4}-\d{2}-\d{2}$/);
+      expect(mockRedisDecr).toHaveBeenCalledWith(key);
+    });
+
+    it('Redis indisponible : pas d’erreur levée (l’erreur d’origine reste celle remontée)', async () => {
+      mockRedisDecr.mockRejectedValueOnce(new Error('redis down'));
+      await expect(service.releaseDailyLimit('user-123', 'debrief')).resolves.toBeUndefined();
+    });
+  });
+
   describe('chat', () => {
     it('retourne une réponse string depuis l IA', async () => {
       const result = await service.chat(

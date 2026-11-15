@@ -614,7 +614,8 @@ async checkInsightsCooldown(userId: string) {
   }
 }
 
-// Limite journalière — chat (50/jour) et debrief (1/jour)
+// Limite journalière — chat (50/jour) et debrief (1/jour). Appel IA en échec → place rendue
+// par `releaseDailyLimit(userId, action)` (C2, C10 #1045).
 async checkDailyLimit(userId: string, action: string, max: number) {
   const today = new Date().toISOString().slice(0, 10);
   const key = `ai:limit:${userId}:${action}:${today}`;

@@ -604,6 +604,18 @@ Génère un JSON strict (pas de markdown, pas de texte autour) :
     }
   }
 
+  /**
+   * Rend la place du jour prise par `checkDailyLimit` quand l'appel IA a échoué (C2 #1045) :
+   * sinon une panne du modèle valait « Limite atteinte, reviens demain ».
+   */
+  async releaseDailyLimit(userId: string, action: string): Promise<void> {
+    try {
+      await this.redisService.client.decr(`ai:limit:${userId}:${action}:${todayParis()}`);
+    } catch {
+      this.logger.warn('Redis unavailable, limite journalière non rendue');
+    }
+  }
+
   // ── Quota management ──────────────────────────────────────────────────────
 
   /**
