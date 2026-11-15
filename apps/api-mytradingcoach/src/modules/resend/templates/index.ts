@@ -504,7 +504,8 @@ export function paymentFailedTemplate(params: {
     <p style="${FONT}font-size:14px;color:#9db4ce;margin:0 0 12px 0;line-height:1.7;">
       Bonjour ${userName || 'Trader'}, nous n'avons pas pu traiter ton
       paiement${attemptCount > 1 ? ` (tentative ${attemptCount})` : ''}.
-      Ton accès Premium reste actif quelques jours le temps de mettre à jour ta carte.
+      Ton accès Premium est en pause tant que le paiement n'est pas passé : mets à jour ta carte
+      pour le retrouver tout de suite. En attendant, tes trades et ton journal restent accessibles.
     </p>
     ${cta('Mettre à jour mon paiement →', portalUrl)}
   `, 'rgba(239,68,68,.3)');
