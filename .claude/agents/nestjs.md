@@ -81,7 +81,7 @@ POST   /api/session/:id/close          JWT → clôturer, { mood: MoodState, not
 POST   /api/events                     JWT + @DemoAllowed → événements d'usage { event, place } (liste blanche
                                        `PRODUCT_EVENTS` : entonnoir Premium, place = 1er segment de route ;
                                        installation de l'app, place = plateforme), 204, best-effort
-GET    /api/admin/funnel               ADMIN → visites → inscrits → Premium vu → offres → clic essai → retour Stripe ; signupTrial (#769, B3)
+GET    /api/admin/funnel               ADMIN (?includeTests) → visites → inscrits → Premium vu → offres → clic essai → retour Stripe ; signupTrial (#769, B3) ; démo (ouvertures, bandeau vu, relance, clics par placement)
 POST   /api/public/funnel              PUBLIC (60/min/IP), 204 → étape du parcours d'inscription ou engagement landing { step, source?, medium?, campaign?, inApp?, detail?, path? }
 GET    /api/admin/signup-funnel        ADMIN (?days=7|30, défaut 30) → visites + étapes par source/medium/campagne × inApp, erreurs par code
 GET    /api/admin/landing-engagement   ADMIN (?days=7|30, défaut 30) → vues + défilement/temps/sélecteur de / et /prop-firm par page × source/medium/campagne
@@ -1982,6 +1982,30 @@ l'ancien front après le déploiement est refusé jusqu'au rechargement : il gar
   existants (`/admin/acquisition`, `/admin/funnel`) gardent leur exclusion `isDemo` / ADMIN.
 - Pas de donnée personnelle (exemption CNIL, comme les visites) : ne jamais ajouter UA brut, e-mail,
   IP ni identifiant de session à ces routes ou à la table.
+- `detail: 'demo'` (`SIGNUP_FUNNEL_ORIGINS`, #1029) accepté sur `register_view`, `register_submit` et
+  `register_success` : inscription partie du bandeau de la démo (`/register?source=demo`). Le parcours
+  admin additionne toujours les étapes quel que soit le `detail`.
+
+## Campagnes de test exclues de l'admin Acquisition (#1029, nov. 2026)
+
+- **Une seule liste** : `TEST_ACQUISITION_PATTERNS` (`libs/shared/src/test-acquisition.ts`) =
+  `test`, `test-*`, `ami`, appliquée à la source, au medium ET à la campagne, sans casse. Motif sans
+  `*` = valeur exacte, `*` final = préfixe ; jamais « contient » (`contest`, `latest-promo`, `miami`,
+  `amis-trading` restent). Ajouter une campagne de test = un motif ici + une ligne dans
+  `.claude/decisions.md`.
+- SQL : `common/stats/test-acquisition.ts`. `notTestAcquisitionSql` (`LOWER(COALESCE(col,'')) LIKE ANY
+  (ARRAY[…])`, motifs passés par `testPatternToLike` : `\`, `_`, `%` échappés) ;
+  `acquisitionUsersSql(includeTests)` = `realUsersSql` + hors campagne de test, ou `"isDemo" = false`
+  seul avec les tests (internes et ADMIN compris, **la démo toujours exclue**) ;
+  `anonymousAcquisitionSql(includeTests)` pour `LandingVisitDaily` / `FunnelEventDaily`.
+  Propre à Acquisition : les autres pages gardent `realUsersSql()`.
+- Les 5 routes de la page (`/admin/acquisition`, `/funnel`, `/signup-funnel`, `/landing-engagement`,
+  `/signup-methods`) prennent `?includeTests=true|1` (`AcquisitionQueryDto`,
+  `AcquisitionPeriodQueryDto` avec `days`) ; absent = tests exclus. Rien n'est supprimé en base.
+  Vérifié sur une vraie base : `common/stats/test-acquisition.int-spec.ts`.
+- **Limite** : les `register_success` anonymes envoyés sans UTM par des tests passés ne sont pas
+  filtrables (aucune jointure User). L'admin affiche à côté le nombre de comptes créés (`funnel.signups`).
+  Pour tester : ouvrir l'app avec `?internal=1` avant (plus rien n'est envoyé).
 
 ## Catalogue prop firm : synchro au démarrage (PROMPT-136, 2026-10-02)
 
@@ -2687,8 +2711,13 @@ global à la file ; Resend = 10 req/s par équipe, clé partagée entre environn
 `modules/product-events/` : `POST /api/events` (JWT, `@DemoAllowed`, 60/min) → `ProductEventsService.record`
 → `ProductEventDaily` (jour Paris × user × événement × écran, `INSERT … ON CONFLICT` +1, best-effort).
 Événements : `premium_seen`, `plan_modal_open`, `trial_click`, `checkout_return` (place `success` /
-`canceled`), `demo_signup_click` (front) et `demo_open` (enregistré par `AuthService.demoLogin`).
-`AdminService.getFunnel(30)` : étapes en users DISTINCTS hors démo et ADMIN, démo en occurrences,
+`canceled`), `demo_open` (enregistré par `AuthService.demoLogin`, **sauf** `{ internal: true }` dans le
+corps de `POST /auth/demo-login`, `DemoLoginDto`, #1029), bandeau de la démo (#1029) : `demo_cta_view`,
+`demo_cta_click` (place ramené par `productEventPlace` à `DEMO_CTA_PLACEMENTS` = `banner|pill|modal|action`,
+sinon `''`), `demo_modal_shown` ; `demo_signup_click` (ancien bouton, plus émis, gardé 13 mois et compté
+avec `demo_cta_click`). `DEMO_EVENTS` = les 5 de la démo.
+`AdminService.getFunnel(30, includeTests)` : étapes en users DISTINCTS hors démo et ADMIN, démo en occurrences
+(`demo` : `opens`, `signupClicks`, `ctaViews`, `modalShown`, `clicksByPlacement`),
 détail par écran, état Stripe actuel. But : savoir où le Premium donne envie, avant de toucher à la durée
 de l'essai (0 essai en prod au 2026-10-07, décision : garder 30 jours).
 Installation de l'app (2026-10-25) : 8 événements de plus (`INSTALL_EVENTS` : `install_shown`,
