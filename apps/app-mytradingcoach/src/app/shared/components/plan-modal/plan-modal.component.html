@@ -29,7 +29,7 @@
         } @else if (choice() === 'founder') {
           Paiement immédiat · satisfait ou remboursé {{ PRICING.founder.refundDays }} jours
         } @else if (choice()) {
-          {{ trialFor(choice()) ? '1 mois offert · carte requise · annulable en un clic' : 'Sans engagement · annulable en un clic' }}
+          {{ trialFor(choice()) ? TRIAL_LABEL + ' · carte requise · annulable en un clic' : 'Sans engagement · annulable en un clic' }}
         } @else {
           &nbsp;
         }
@@ -226,7 +226,7 @@
         @switch (choice()) {
           @case ('founder') { {{ founderChargeDate() ? 'Réserver ma place →' : 'Devenir fondateur →' }} }
           @default {
-            @if (interval() === 'monthly') { {{ trialAvailable() ? 'Essayer Premium · 1 mois offert →' : 'Passer à Premium mensuel →' }} }
+            @if (interval() === 'monthly') { {{ trialAvailable() ? 'Essayer Premium · ' + TRIAL_LABEL + ' →' : 'Passer à Premium mensuel →' }} }
             @else { Passer à Premium annuel → }
           }
         }

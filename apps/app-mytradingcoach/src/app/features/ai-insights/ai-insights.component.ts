@@ -30,6 +30,7 @@ import { map, startWith } from 'rxjs/operators';
 import { apiErrorMessage } from '../../core/utils/api-error';
 import { AiApi } from '../../core/api/ai.api';
 import { todayParis } from '@mtc/shared';
+import { PaywallCtaService } from '@app/core/services/paywall-cta.service';
 
 interface Insight {
   type: 'strength' | 'weakness' | 'pattern';
@@ -68,6 +69,8 @@ function insightVariant(type: string): InsightVariant {
   templateUrl: './ai-insights.component.html',
 })
 export class AiInsightsComponent implements AfterViewChecked {
+  /** Libellé unique des boutons de paywall (E3 #1013). */
+  protected readonly paywall = inject(PaywallCtaService);
   @ViewChild('chatContainer') chatContainer!: ElementRef<HTMLDivElement>;
 
   protected readonly userStore = inject(UserStore);

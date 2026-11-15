@@ -5,6 +5,8 @@ import AI_INSIGHTS from '../../../features/ai-insights/ai-insights.component.htm
 import DEBRIEF from '../../../features/weekly-debrief/debrief.component.html?raw';
 import DASHBOARD from '../../../features/dashboard/dashboard.component.html?raw';
 import PROFILE from '../../../features/profile/profile.component.html?raw';
+import AUTOPSY from '../../../features/accounts/autopsy/account-autopsy.component.html?raw';
+import PLAN_MODAL from './plan-modal.component.html?raw';
 
 /**
  * « 1 mois offert » n'est vrai que si l'essai Stripe reste disponible (`trialUsed` faux) : après un
@@ -34,4 +36,24 @@ describe('libellés d’essai des paywalls Premium (trialUsed)', () => {
   it('le garde-fou détecte bien un libellé en dur', () => {
     expect(unconditionalMentions('<button>\n  Essayer Premium · 1 mois offert →\n</button>')).toHaveLength(1);
   });
+});
+
+/**
+ * Q1 + E3 (#1013, décision du 14/11) : l'essai Stripe se dit « 30 jours d'essai · carte requise »
+ * (plus jamais « 1 mois offert », qui désigne le mois offert au PARRAIN) ; les boutons de paywall
+ * passent tous par `PaywallCtaService` (fondateur proposé partout où il est ouvert).
+ */
+describe('paywalls : un seul libellé, « 30 jours d’essai » (Q1, E3)', () => {
+  const ALL = { ...TEMPLATES, AUTOPSY, PLAN_MODAL };
+  for (const [name, html] of Object.entries(ALL)) {
+    it(`${name} : jamais « 1 mois offert »`, () => {
+      expect(html).not.toContain('1 mois offert');
+    });
+  }
+  const PAYWALLS = { ANALYTICS, SCORING, AI_INSIGHTS, DEBRIEF, PROFILE, AUTOPSY }; // cadenas : premium-lock.component.spec
+  for (const [name, html] of Object.entries(PAYWALLS)) {
+    it(`${name} : bouton de paywall = paywall.label()`, () => {
+      expect(html).toContain('paywall.label()');
+    });
+  }
 });

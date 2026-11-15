@@ -77,6 +77,7 @@ import { ErrorStateComponent } from '@mtc/front-ui';
 import { FloorReachedBannerComponent } from '../accounts/lost-account/floor-reached-banner.component';
 import { InactiveAccountsToggleComponent } from '../../shared/components/inactive-accounts-toggle/inactive-accounts-toggle.component';
 import { NO_AUTO_PERIOD, periodChosenByUser, periodOnSelection, type AutoPeriodState } from '../../core/utils/inactive-period.util';
+import { TRIAL_LABEL } from '@app/core/services/paywall-cta.service';
 
 /**
  * Dashboard : état (période, compte, resources analytics), cadre des panneaux et états
@@ -111,6 +112,8 @@ import { NO_AUTO_PERIOD, periodChosenByUser, periodOnSelection, type AutoPeriodS
   templateUrl: './dashboard.component.html',
 })
 export class DashboardComponent {
+  /** « 30 jours d'essai » (Q1 #1013). */
+  protected readonly TRIAL_LABEL = TRIAL_LABEL;
   protected readonly RocketIcon = Rocket;
   protected readonly userStore    = inject(UserStore);
   protected readonly money        = inject(MoneyService);

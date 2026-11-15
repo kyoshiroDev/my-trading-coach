@@ -17,6 +17,7 @@ import { statusBadgeClass, statusLabel } from '@app/core/utils/account-status.ut
 import { TopbarComponent } from '@app/shared/components/topbar/topbar.component';
 import { PlanModalComponent } from '@app/shared/components/plan-modal/plan-modal.component';
 import { aiParagraphs, autopsyKpis, autopsyRows, clock, distanceChart, frenchSpacing, headline, shortDay } from './autopsy.util';
+import { PaywallCtaService } from '@app/core/services/paywall-cta.service';
 
 /** Largeur du tracé avant la première mesure (carte d'un téléphone de 390 px). */
 const CHART_DEFAULT_WIDTH = 330;
@@ -38,6 +39,8 @@ export const AUTOPSY_TIMEOUT_MS = 15_000;
   styleUrl: './account-autopsy.component.css',
 })
 export class AccountAutopsyComponent implements OnInit {
+  /** Libellé unique des boutons de paywall (E3 #1013). */
+  protected readonly paywall = inject(PaywallCtaService);
   private readonly api = inject(AccountsApi);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);

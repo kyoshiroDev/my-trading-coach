@@ -30,7 +30,7 @@ function render(founderAvailable: boolean, trialAvailable = true) {
     imports: [PremiumLockComponent],
     providers: [
       { provide: OffersStore, useValue: { founderAvailable: signal(founderAvailable), load: vi.fn() } },
-      { provide: UserStore, useValue: { trialAvailable: signal(trialAvailable) } },
+      { provide: UserStore, useValue: { trialAvailable: signal(trialAvailable), user: signal({ id: 'u1' }), isPremium: signal(false) } },
       { provide: OfferIntentService, useValue: intent },
       { provide: ProductEventsService, useValue: { once: vi.fn(), track: vi.fn() } },
     ],
@@ -48,8 +48,8 @@ describe('PremiumLockComponent', () => {
     expect(render(true).button.textContent).toContain('dès 29 €/mois (offre fondateur)');
   });
 
-  it('sinon : essai d’un mois, ou passage direct si l’essai est consommé', () => {
-    expect(render(false).button.textContent).toContain('Essayer Premium · 1 mois offert');
+  it('sinon : « 30 jours d’essai » (Q1 #1013), ou passage direct si l’essai est consommé', () => {
+    expect(render(false).button.textContent).toContain("Essayer Premium · 30 jours d'essai");
     TestBed.resetTestingModule();
     expect(render(false, false).button.textContent).toContain('Passer à Premium');
   });

@@ -27,6 +27,7 @@ import { OffersStore } from '@app/core/stores/offers.store';
 import { UserStore } from '@app/core/stores/user.store';
 import { DialogDirective, ErrorStateComponent } from '@mtc/front-ui';
 import { FOUNDER_INELIGIBLE_MESSAGES, PLAN_BENEFITS, apiErrorMessage, founderSeatsLabel, type FounderIneligibility } from '@mtc/shared';
+import { TRIAL_LABEL } from '@app/core/services/paywall-cta.service';
 
 type Interval = 'monthly' | 'yearly';
 /** Offre choisie : jamais deux à la fois (fondateur, code partenaire ou prix normal). */
@@ -55,6 +56,8 @@ const PARIS_SHORT_DATE: Intl.DateTimeFormatOptions = { day: '2-digit', month: '2
   styleUrl: './plan-modal.component.css',
 })
 export class PlanModalComponent implements OnInit {
+  /** « 30 jours d'essai » (Q1 #1013). */
+  protected readonly TRIAL_LABEL = TRIAL_LABEL;
   closed = output<void>();
   /** Point de clic (#525) : `modale` par défaut, `cadenas`, `profil`, ou celui du lien d'arrivée. */
   readonly cta = input<string>('modale');

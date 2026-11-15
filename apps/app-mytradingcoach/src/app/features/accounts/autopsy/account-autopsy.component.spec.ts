@@ -72,7 +72,7 @@ describe('Autopsie — page', () => {
     expect(el.textContent).toContain("L'heure d'entrée n'est pas enregistrée\u00a0: la distance est une estimation calculée sur les trades clôturés.");
     // Espace insécable devant « : ; ! ? » partout sur la page (revue #712).
     expect(el.textContent).not.toMatch(/ [:;!?]/);
-    expect(q('autopsy-ai-locked')!.textContent).toContain('Essayer Premium · 1 mois offert');
+    expect(q('autopsy-ai-locked')!.textContent).toContain("Essayer Premium · 30 jours d'essai");
     expect(api.incidentAnalysis).not.toHaveBeenCalled();
   });
 

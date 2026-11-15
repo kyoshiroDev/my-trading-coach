@@ -57,13 +57,13 @@ describe('checkoutCopy : une page, des textes par offre', () => {
 
   it('Premium mensuel avec essai : 0 € aujourd’hui, date de fin d’essai partout', () => {
     const c = checkoutCopy({ ...base, trialDays: 30 }, NOW);
-    expect(c.eyebrow).toBe('Premium · 1 mois offert');
+    expect(c.eyebrow).toBe("Premium · 30 jours d'essai"); // Q1 #1013
     expect(c.was).toBeNull();
     expect(c.note).toBe('30 jours offerts. Aucun prélèvement avant le 7 novembre.');
     expect(c.assurances[0]).toMatchObject({ icon: 'trial', strong: 'Annule avant le 7 novembre' });
     expect(c.thenLabel).toBe('À partir du 7 novembre');
     expect(c.thenAmount).toBe('49,00 € / mois');
-    expect(c.cta).toBe('Commencer mon mois offert');
+    expect(c.cta).toBe('Commencer mon essai');
     expect(c.legal).toBe('prélever 49,00 € par mois à partir du 7 novembre');
   });
 

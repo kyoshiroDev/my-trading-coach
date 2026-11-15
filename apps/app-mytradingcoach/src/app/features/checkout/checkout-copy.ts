@@ -99,7 +99,7 @@ export function checkoutCopy(s: CheckoutSummary, now: Date = new Date()): Checko
         : `Tarif partenaire ${duration}.${monthlyEquivalent}`,
       assurances: [...(trial ? [trial] : []), cancel('le tarif partenaire'), SECURE],
       ...then,
-      cta: s.trialDays > 0 ? 'Commencer mon mois offert' : 'Passer à Premium',
+      cta: s.trialDays > 0 ? 'Commencer mon essai' : 'Passer à Premium',
       legal: `prélever ${eur(s.recurringEur)} ${perWord}${legalStart}`,
     };
   }
@@ -119,7 +119,8 @@ export function checkoutCopy(s: CheckoutSummary, now: Date = new Date()): Checko
       }
     : null;
   return {
-    eyebrow: s.trialDays > 0 ? 'Premium · 1 mois offert' : yearly ? 'Premium annuel · 2 mois offerts' : 'Premium',
+    // Essai Stripe des comptes antérieurs (Q1 #1013) : « N jours d'essai », jamais « 1 mois offert ».
+    eyebrow: s.trialDays > 0 ? `Premium · ${s.trialDays} jours d'essai` : yearly ? 'Premium annuel · 2 mois offerts' : 'Premium',
     title: 'Passe à Premium',
     lead: PREMIUM_LEAD,
     price: short(first), per,
@@ -129,7 +130,7 @@ export function checkoutCopy(s: CheckoutSummary, now: Date = new Date()): Checko
       : yearly ? `Soit ${eur(s.recurringEur / 12)} par mois, 10 mois payés pour 12.${referral}` : `Sans engagement.${referral}`,
     assurances: [...(trial ? [trial] : []), cancel(null), SECURE],
     ...then,
-    cta: s.trialDays > 0 ? 'Commencer mon mois offert' : 'Passer à Premium',
+    cta: s.trialDays > 0 ? 'Commencer mon essai' : 'Passer à Premium',
     legal: `prélever ${eur(s.recurringEur)} ${perWord}${legalStart}`,
     ...(referralThen ?? {}),
   };

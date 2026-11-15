@@ -27,7 +27,7 @@
         tes patterns comportementaux avec le coach IA.
       </p>
       <button class="paywall-cta" (click)="showPlanModal.set(true)">
-        {{ userStore.trialAvailable() ? 'Essayer Premium · 1 mois offert →' : 'Passer à Premium →' }}
+        {{ paywall.label() }}
       </button>
     </div>
     @if (showPlanModal()) {
