@@ -165,6 +165,18 @@ textarea {
   }
 }
 
+/* Démo (#1041) : le badge « interne » (mode ?internal=1, coin bas-gauche) passe au-dessus du bandeau
+   d'inscription du bas au lieu de cacher sa 3e ligne. Global : badge et bandeau vivent dans deux
+   composants différents. */
+body:has(.main-content.has-demo-cta) .internal-badge {
+  bottom: calc(var(--demo-cta-h-desktop) + env(safe-area-inset-bottom, 0px) + 8px);
+}
+@media (max-width: 768px) {
+  body:has(.main-content.has-demo-cta) .internal-badge {
+    bottom: calc(var(--demo-cta-h-mobile) + env(safe-area-inset-bottom, 0px) + 8px);
+  }
+}
+
 /* ─── Pages du shell sans topbar commune (Mes sessions, Calendrier éco, Parrainage, Ambassadeur,
    Devenir ambassadeur) ───
    .mtc-page : conteneur de la page, toute la largeur à droite de la barre latérale (aucun

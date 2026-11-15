@@ -7,8 +7,11 @@
   </div>
 } @else {
   <aside class="demo-cta" data-testid="demo-cta-banner" aria-label="Créer ton compte">
-    <p class="demo-cta-text">
-      Ça te parle ? Crée ton compte : <strong>{{ trialDays }} jours de Premium offerts</strong>, sans carte
+    <!-- Une phrase par ligne (demande de Greg, #1041). -->
+    <p class="demo-cta-text" data-testid="demo-cta-text">
+      <span class="demo-cta-line">Ça te parle ? Crée ton compte</span>
+      <strong class="demo-cta-line">{{ trialDays }} jours de Premium offerts</strong>
+      <span class="demo-cta-line">sans carte</span>
     </p>
     <a class="demo-cta-btn" data-testid="demo-cta-banner-btn" [href]="registerUrl" (click)="go($event, 'banner')">Créer mon compte</a>
     <button type="button" class="demo-cta-close" data-testid="demo-cta-close" aria-label="Réduire le bandeau" (click)="collapse()">
