@@ -28,3 +28,16 @@ L'audit des chiffres (#947, #950, #981) est terminé et en prod le 13/11. Cet au
 - Hors périmètre, parce que déjà suivi ailleurs ou déjà en cours dans une autre session : #916, #956, #963 (Tradovate R/R, découpage, stratégies), #977 (démo le week-end), #952 et #262 (fichiers réels manquants), #866 (désinscription beta : `API_URL` posée par Greg, reste la vérification), #817 (pages légales, hors code : à Greg), #860 (p-ticket Tradovate : à faire seulement après une pénalité réelle observée, carte « En attente »), les idées et enhancements ouverts. Les bugs qu'on trouve dans ces zones sont ajoutés à leur ticket, pas corrigés ici.
 - Limite : un correctif qui change un comportement visible lié au plan, à l'argent, aux textes légaux ou aux e-mails envoyés à de vrais utilisateurs remonte à Greg avant le commit.
 - Rappels : lot 2, les 4 points du gating (`plans.md`) ; lot 4, l'admin n'a pas d'environnement dev (tests et banc local seulement) ; dans chaque lot, crons et e-mails excluent `isDemo`.
+
+## Complément lot 2 (2026-11-14)
+
+Texte exact de Greg, après les recommandations du relecteur sur les constats du lot 2 (#1013) :
+
+> ok pour tout ce que recommande le relecteur
+
+Découpage du lot 2 en sous-lots, une sous-issue et une PR vers dev chacun :
+- 2a : API sans effet sur l'argent (#1018, PR #1019) ;
+- 2b : front sans effet sur l'argent (#1023) ;
+- 2c : argent (commissions, remboursement, remises, changement d'intervalle) ;
+- 2d : textes et e-mails (dont E3, boutons de paywall, avec le libellé d'essai de Q1).
+Le détail des décisions est en tête de `.claude/decisions.md` (entrée du 2026-11-14).
