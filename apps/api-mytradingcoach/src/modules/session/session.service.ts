@@ -218,7 +218,14 @@ export class SessionService {
     userId: string,
     limit = 50,
     offset = 0,
-    filter?: { year?: number; month?: number; accountId?: string; includeInactive?: boolean },
+    filter?: {
+      year?: number;
+      month?: number;
+      accountId?: string;
+      includeInactive?: boolean;
+      /** Séances commencées au plus tard à cet instant (débrief d'une semaine passée, C5 #1046). */
+      before?: Date;
+    },
   ): Promise<SessionHistoryItem[]> {
     const where: Prisma.TradeSessionWhereInput = {
       userId,
@@ -240,6 +247,11 @@ export class SessionService {
       const from = new Date(filter.year, filter.month - 1, 1);
       const to = new Date(filter.year, filter.month, 0, 23, 59, 59, 999);
       where.startedAt = { gte: from, lte: to };
+    }
+    if (filter?.before) {
+      const bounds = (where.startedAt ?? {}) as Prisma.DateTimeFilter;
+      const lte = bounds.lte instanceof Date && bounds.lte < filter.before ? bounds.lte : filter.before;
+      where.startedAt = { ...bounds, lte };
     }
 
     const rows = await this.prisma.tradeSession.findMany({

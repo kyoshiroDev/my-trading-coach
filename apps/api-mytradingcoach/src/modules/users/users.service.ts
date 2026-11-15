@@ -295,7 +295,11 @@ export class UsersService {
     ]);
     await this.userCache?.invalidate(userId); // jeton encore valide d'un compte supprimé : refusé immédiatement
     // Le Discord relié perd ses rôles : sans compte, plus d'accès aux salons réservés (#741).
-    if (user.discordId) await this.discordGuild?.removePlanRoles(user.discordId);
+    if (user.discordId && (await this.discordGuild?.removePlanRoles(user.discordId)) === false) {
+      // N2 (#1046) : le compte n'existe plus, rien ne retentera ; seul l'identifiant permet de
+      // retirer les rôles à la main sur le serveur Discord.
+      this.logger.warn(`Compte supprimé : rôles Discord non retirés, à retirer à la main (discordId ${user.discordId})`);
+    }
   }
 
   async adminStats() {

@@ -1,4 +1,4 @@
-import { Injectable, ForbiddenException, NotFoundException, Logger, Optional } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, Logger, NotFoundException, Optional } from '@nestjs/common';
 import { Plan, Prisma, Role, WeeklyDebrief } from '@prisma/client';
 import { effectiveEmotion } from '../../common/utils/effective-emotion.util';
 import { averageKnownRiskReward, computeTradeStats, netPnl } from '@mtc/shared';
@@ -136,6 +136,14 @@ export class DebriefService {
       // Émotion effective (override sinon humeur de session ; null = non renseignée).
     ).map((t) => ({ ...t, setup: t.setup?.title ?? null, emotion: effectiveEmotion(t) }));
 
+    // C8 (#1046) : semaine sans trade (lundi matin) → pas d'appel IA facturé ni de débrief vide qui
+    // remplacerait à l'écran le vrai débrief de la semaine passée.
+    if (trades.length === 0) {
+      throw new BadRequestException(
+        'Aucun trade cette semaine pour l’instant. Le débrief se génère dès ton premier trade de la semaine.',
+      );
+    }
+
     // Comptes actifs et validés (avec leurs règles prop firm) pour l'analyse par compte.
     const accounts = await this.prisma.tradingAccount.findMany({
       where: { userId, ...activeAccountsWhere() },
@@ -146,9 +154,13 @@ export class DebriefService {
       orderBy: [{ status: 'asc' }, { createdAt: 'asc' }],
     });
 
+    // Trades clôturés seulement pour les stats par compte et l'IA (C13 #1046, convention #947) :
+    // une position ouverte gonflait « N trades » sans résultat.
+    const closedTrades = trades.filter((t) => t.pnl !== null);
+
     // Trades groupés par compte (accountId null → bucket « unassigned »).
     const tradesByAccount: Record<string, typeof trades> = {};
-    for (const t of trades) {
+    for (const t of closedTrades) {
       const key = t.accountId ?? 'unassigned';
       (tradesByAccount[key] ??= []).push(t);
     }
@@ -158,9 +170,12 @@ export class DebriefService {
     // Format (`debriefStats`) partagé avec le script de recalcul des anciens débriefs (#943).
     const stats = debriefStats(await this.analyticsService.getSummary(userId, undefined, startDate, endDate));
 
+    // C5 (#1046) : le débrief immédiatement AVANT la semaine visée, à cheval sur l'année. Avant,
+    // `{ userId, year }` trié par semaine renvoyait le débrief de la semaine elle-même en
+    // régénération, une semaine plus récente pour une semaine passée, et rien en semaine 1.
     const previousDebrief = await this.prisma.weeklyDebrief.findFirst({
-      where: { userId, year },
-      orderBy: { weekNumber: 'desc' },
+      where: { userId, OR: [{ year: { lt: year } }, { year, weekNumber: { lt: weekNumber } }] },
+      orderBy: [{ year: 'desc' }, { weekNumber: 'desc' }],
     });
     const previousObjectives = previousDebrief
       ? (previousDebrief.objectives as unknown[])
@@ -181,7 +196,8 @@ export class DebriefService {
       },
     });
 
-    const recentSessions = await this.sessionService.getSessionHistory(userId, 5, 0);
+    // Séances jusqu'à la fin de la semaine visée seulement (C5 #1046).
+    const recentSessions = await this.sessionService.getSessionHistory(userId, 5, 0, { before: endDate });
 
     // Comptes désignés à l'IA par une clé courte (compte-1, compte-2…), jamais par leur id interne.
     const keys = accountKeys(accounts.map((a) => a.id));
@@ -209,7 +225,7 @@ export class DebriefService {
     try {
       aiResult = (await this.aiService.generateDebrief({
         propContext,
-        trades,
+        trades: closedTrades,
         stats,
         previousObjectives,
         weekNumber,
@@ -402,9 +418,12 @@ export class DebriefService {
       select: { name: true },
     });
 
+    // Trades clôturés seulement (C13 #1046, convention des agrégats #947 : `pnl IS NOT NULL`) : une
+    // position ouverte comptait dans le total et apparaissait « meilleur trade » à 0 $.
     const trades = await this.prisma.trade.findMany({
       where: {
         userId,
+        pnl: { not: null },
         tradedAt: { gte: debrief.startDate, lte: debrief.endDate }, ...inactiveAccountsTradeWhere(),
       },
       orderBy: { pnl: 'desc' },

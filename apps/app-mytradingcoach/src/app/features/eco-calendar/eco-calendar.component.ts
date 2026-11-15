@@ -206,7 +206,7 @@ export class EcoCalendarComponent implements OnInit {
         const state: EvState = passed
           ? (e.isReleased ? 'published' : 'past')
           : (isToday && m === nextM ? 'next' : 'upcoming');
-        rows.push({ kind: 'ev', key: `${e.name}-${e.currency}-${e.time}`, event: e, state });
+        rows.push({ kind: 'ev', key: `${e.name}-${e.currency}-${e.country}-${e.time}`, event: e, state });
       }
     };
 

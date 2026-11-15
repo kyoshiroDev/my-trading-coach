@@ -79,7 +79,7 @@ const mockInsightsResult = {
 };
 
 const mockPrisma = {
-  trade: { findMany: vi.fn().mockResolvedValue(mockTrades) },
+  trade: { findMany: vi.fn().mockResolvedValue(mockTrades), count: vi.fn().mockResolvedValue(2) },
   user: { findUnique: vi.fn().mockResolvedValue(null) },
   // Devise des montants du prompt = celle des comptes.
   tradingAccount: { findMany: vi.fn().mockResolvedValue([{ currency: 'USD' }]), count: vi.fn().mockResolvedValue(1) },
@@ -122,6 +122,7 @@ describe('AiService', () => {
     mockRedisExpire.mockResolvedValue(1);
     mockRedisQuit.mockResolvedValue('OK');
     mockPrisma.trade.findMany.mockResolvedValue(mockTrades);
+    mockPrisma.trade.count.mockResolvedValue(2);
     mockOrchestrator.runInsightsFlow.mockResolvedValue(mockInsightsResult);
     mockDebriefAgent.generate.mockResolvedValue({
       summary: 'Semaine correcte.',
@@ -150,6 +151,47 @@ describe('AiService', () => {
       expect(mockOrchestrator.runInsightsFlow).toHaveBeenCalledWith('user-123');
       expect(result).toHaveProperty('insights');
       expect(result).toHaveProperty('topPattern');
+    });
+
+    it('C4 (#1046) : analyse réussie gardée 4 h, relue par GET cooldown', async () => {
+      await service.getInsights('user-123', Role.USER);
+
+      expect(mockRedisService.client.setex).toHaveBeenCalledWith(
+        'ai:insights:last:user-123', 14400, JSON.stringify(mockInsightsResult),
+      );
+
+      mockRedisTtl.mockResolvedValueOnce(12000);
+      mockRedisGet.mockImplementationOnce(async (key: string) =>
+        key === 'ai:insights:last:user-123' ? JSON.stringify(mockInsightsResult) : null,
+      );
+      await expect(service.getInsightsCooldown('user-123')).resolves.toEqual({
+        cooldownSeconds: 12000,
+        insights: mockInsightsResult,
+      });
+    });
+
+    it('C4 (#1046) : rien de gardé (ou illisible) → insights null ; analyse en échec → rien d’écrit', async () => {
+      mockRedisGet.mockResolvedValueOnce('{pas du json');
+      await expect(service.getInsightsCooldown('user-123')).resolves.toMatchObject({ insights: null });
+
+      mockOrchestrator.runInsightsFlow.mockRejectedValueOnce(new Error('IA en panne'));
+      await expect(service.getInsights('user-123', Role.USER)).rejects.toThrow();
+      expect(mockRedisService.client.setex).not.toHaveBeenCalled();
+    });
+
+    it('C9 (#1046) : aucun trade clôturé → 400 clair, avant le délai de 4 h et le quota', async () => {
+      mockPrisma.trade.count.mockResolvedValueOnce(0);
+
+      await expect(service.getInsights('user-123', Role.USER)).rejects.toMatchObject({
+        status: 400,
+        message: 'Ajoute au moins un trade clôturé pour lancer l’analyse.',
+      });
+      expect(mockPrisma.trade.count).toHaveBeenCalledWith({
+        where: expect.objectContaining({ userId: 'user-123', pnl: { not: null } }),
+      });
+      expect(mockRedisSet).not.toHaveBeenCalled();
+      expect(mockRedisIncr).not.toHaveBeenCalled();
+      expect(mockOrchestrator.runInsightsFlow).not.toHaveBeenCalled();
     });
 
     it('quota mensuel épuisé → 429, place rendue, orchestrateur jamais appelé (SCA-B5-06)', async () => {

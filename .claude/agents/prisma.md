@@ -678,3 +678,10 @@ pour tout compte antérieur, lu comme « ancien » par la pause de synchro (règ
 journal d'observation, une ligne par connexion et par jour (`@@unique([connectionId, day])`, `day` en
 `@db.Date` Paris, index sur `day` pour la purge à 90 j). `onDelete: Cascade` depuis `BrokerConnection`.
 Aucun jeton, montant ni identifiant Tradovate. Règles dans `nestjs.md`, « Journal d'observation Tradovate ».
+
+`EcoEvent` : clé unique `(date, name, currency, country)` (migration `20261116090000_eco_event_country_key`,
+C6 #1046). Avant, `(date, name, currency)` fusionnait les PMI flash France / Allemagne / zone euro (même
+libellé, EUR). Sans perte (lignes existantes déjà uniques), historique fusionné gardé. Upsert par
+`date_name_currency_country` (service et seed démo). Pas compatible N-1 : pendant la bascule, l'ancienne
+version ne trouve plus l'unique à 3 colonnes et son upsert échoue ; le relevé suivant (20 s) repasse. Les
+épingles restent des clés `nom:devise` (une épingle couvre les annonces de ce nom dans cette devise).

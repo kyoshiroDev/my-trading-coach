@@ -119,7 +119,8 @@ GET    /api/eco-calendar/range?from&to JWT → vue semaine ; AAAA-MM-JJ, from �
        Écrites au clic ET par la génération automatique (`ensureReleasedAnalysis`, même `assetsSignature`
        dédoublonnée que la clé Redis).
 
-POST   /api/ai/insights                PREMIUM → cooldown 4h par user (posé atomiquement, retiré si l'analyse échoue)
+GET    /api/ai/cooldown                PREMIUM → { cooldownSeconds, insights } (dernière analyse réussie gardée 4 h, null sinon) (C4 #1046)
+POST   /api/ai/insights                PREMIUM → cooldown 4h par user (posé atomiquement, retiré si l'analyse échoue) ; 0 trade clôturé → 400 « Ajoute au moins un trade clôturé… » (C9 #1046)
 POST   /api/ai/chat                    PREMIUM → 50 messages/jour par user
 
 POST   /api/trades/import              PREMIUM → CSV parsing via Claude SDK
@@ -136,7 +137,7 @@ GET    /api/debrief/:year/:week        PREMIUM
 GET    /api/debrief/:year/:week/pdf    PREMIUM → export PDF via puppeteer ; @Throttle 5/min, file par process ≤ 10 rendus (`PDF_QUEUE_MAX`) sinon 503 (S3 #1045)
 PATCH  /api/debrief/:debriefId/objectives/:index/note PREMIUM → `ObjectiveNoteDto` (texte ≤ 1000, réinjecté dans le prompt suivant) (C11 #1045)
 GET    /api/debrief/history            PREMIUM
-POST   /api/debrief/generate           PREMIUM → 1/jour par user
+POST   /api/debrief/generate           PREMIUM → 1/jour par user (rendue si l IA échoue) ; semaine sans trade → 400 « Aucun trade cette semaine pour l’instant… » (C8 #1046)
 
 GET    /api/vps/servers                ADMIN → serveurs du sélecteur Surveillance [{id,label,readOnly}]
 GET    /api/vps/stats                  ADMIN → stats système SSH
@@ -461,7 +462,7 @@ async runInsightsFlow(userId: string) {
   const history = await this.debriefService.getHistory(userId);
   const summary = this.dataAgent.buildTradesSummary(trades);
 
-  // Étape 2 — Pattern (1 appel Anthropic, mis en cache 4h)
+  // Étape 2 — Pattern (1 appel Anthropic, résultat final gardé 4 h dans Redis `ai:insights:last:<userId>`, relu par GET /ai/cooldown (C4 #1046))
   const patterns = await this.patternAgent.analyze(summary);
 
   // Étape 3 — Coach (1 appel Anthropic)
@@ -916,7 +917,7 @@ sait pas comparer `pnl − |commission|` : la liste passe par `resolveTradeWhere
 | `DailyRecapCron` | `30 17 * * 1-5` Paris | Génère recap + envoie email aux users actifs du jour |
 | `EcoCalendarCron` | `0 7 * * 1-5` Paris | Pré-génère le calendrier pour tous les users Premium |
 | `SessionCloseCron` | `5 17 * * *` **America/Chicago** | Bascule CME : clôture les sessions `ACTIVE` d'une journée précédente (`startedAt < tradingDayStart(now)`, même fonction que `activeSessionWhere`), `endedAt` = fin de leur journée, totaux sur leurs propres trades (`autoCloseData`, `session-totals.ts`), `moodEnd` vide, hors démo (#595). Clôture ponctuelle par id : `scripts/close-sessions.ts` (même logique, dry-run sans `--apply`) |
-| `TrialEndService` | `30 0 * * *` Paris | Fins de `trialEndsAt` passées (essai d'inscription ou Premium offert, #769) : rôle Discord réaligné, `trialEndHandledAt` posé (retraité si `trialEndsAt` est repoussé ensuite), hors démo. Journal : des nombres seulement |
+| `TrialEndService` | `30 0 * * *` Paris | Fins de `trialEndsAt` passées (essai d'inscription ou Premium offert, #769) : rôle Discord réaligné, `trialEndHandledAt` posé (retraité si `trialEndsAt` est repoussé ensuite), hors démo. Journal : des nombres seulement. `DiscordGuildClient.setPlanRole` lève sur HTTP en erreur (hors 404) ou panne réseau : `discordFailed` compte vraiment, `trialEndHandledAt` reste posé (resynchronisation admin). `removePlanRoles` ne lève pas, renvoie `false` ; suppression de compte → `warn` avec le discordId pour un retrait à la main (N2 #1046) |
 | `DemoSeedCron` | `20 3 * * *` Paris | Re-seed le compte démo (dates relatives recalculées) |
 | `TradovateTokenRefreshCron` | `17 * * * *` Paris | Renouvelle les tokens Tradovate qui expirent sous 18 h + seconde chance des « à reconnecter » encore promises (aucun import de trades, hors démo) |
 | `TradovateObservationCron` | `40 6 * * *` Paris | Journal d'observation (#684, phase 2) : une lecture de `/account/list` par login, une ligne `TradovateAccountObservation` par connexion `CONNECTED` (comptes en pause compris), hors démo, purge à 90 j. N'agit sur rien |

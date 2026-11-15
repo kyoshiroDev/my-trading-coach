@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Injectable,
   HttpException,
   HttpStatus,
@@ -53,6 +54,8 @@ const DEMO_CHAT_REPLY =
 
 /** Fenêtre entre deux analyses d'insights (4 h). */
 const INSIGHTS_COOLDOWN_S = 60 * 60 * 4;
+/** Dernière analyse d'insights réussie, relue à l'ouverture de l'écran (C4 #1046). */
+const insightsKeptKey = (userId: string) => `ai:insights:last:${userId}`;
 
 @Injectable()
 export class AiService {
@@ -70,11 +73,20 @@ export class AiService {
 
   async getInsights(userId: string, role: Role, isDemo = false) {
     if (isDemo) return DEMO_INSIGHTS; // données figées, zéro appel modèle
+    // C9 (#1046) : sans trade clôturé, deux appels IA sur un résumé vide et 4 h de délai pour rien.
+    const closed = await this.prisma.trade.count({
+      where: { userId, pnl: { not: null }, ...inactiveAccountsTradeWhere() },
+    });
+    if (closed === 0) {
+      throw new BadRequestException('Ajoute au moins un trade clôturé pour lancer l’analyse.');
+    }
     const flow = () => guardAiText('insights', () => this.orchestrator.runInsightsFlow(userId), this.logger);
     if (role === Role.ADMIN) return flow();
     await this.checkInsightsCooldown(userId);
     try {
-      return await this.metered(userId, flow);
+      const result = await this.metered(userId, flow);
+      await this.keepInsights(userId, result);
+      return result;
     } catch (err) {
       // C3 (#1045) : aucune analyse produite (IA en panne, quota) → pas de délai de 4 h.
       await this.releaseInsightsCooldown(userId);
@@ -556,14 +568,38 @@ Génère un JSON strict (pas de markdown, pas de texte autour) :
 
   // ── Cooldown / Daily limits ───────────────────────────────────────────────
 
+  /**
+   * Délai restant et dernière analyse (C4 #1046) : sans elle, quitter la page perdait le résultat
+   * et laissait le bouton bloqué 4 h.
+   */
   async getInsightsCooldown(
     userId: string,
     isDemo = false,
-  ): Promise<{ cooldownSeconds: number }> {
-    if (isDemo) return { cooldownSeconds: 0 }; // pas de cooldown en démo
+  ): Promise<{ cooldownSeconds: number; insights: unknown }> {
+    if (isDemo) return { cooldownSeconds: 0, insights: null }; // pas de cooldown en démo
     const key = `ai:cooldown:insights:${userId}`;
-    const ttl = await this.redisService.client.ttl(key);
-    return { cooldownSeconds: Math.max(0, ttl) };
+    const [ttl, kept] = await Promise.all([
+      this.redisService.client.ttl(key),
+      this.redisService.client.get(insightsKeptKey(userId)),
+    ]);
+    let insights: unknown = null;
+    if (kept) {
+      try {
+        insights = JSON.parse(kept);
+      } catch {
+        insights = null;
+      }
+    }
+    return { cooldownSeconds: Math.max(0, ttl), insights };
+  }
+
+  /** Garde la dernière analyse réussie aussi longtemps que le délai (C4 #1046). */
+  private async keepInsights(userId: string, result: unknown): Promise<void> {
+    try {
+      await this.redisService.client.setex(insightsKeptKey(userId), INSIGHTS_COOLDOWN_S, JSON.stringify(result));
+    } catch {
+      this.logger.warn('Redis unavailable, analyse non gardée');
+    }
   }
 
   /**
