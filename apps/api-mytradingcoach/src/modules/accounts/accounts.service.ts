@@ -8,7 +8,7 @@ import {
   Optional,
 } from '@nestjs/common';
 import type { AccountPlanHint, PropFirmDrawdownKind, PropFirmPhaseRules } from '@mtc/shared';
-import { drawdownFloor, drawdownPeakProfit, planDrawdownRule, roundCents } from '@mtc/shared';
+import { ACCOUNT_LIMITS, drawdownFloor, drawdownPeakProfit, planDrawdownRule, roundCents } from '@mtc/shared';
 import {
   AccountStatus,
   AccountType,
@@ -132,10 +132,10 @@ const PLAN_SELECT = {
 /** Contexte plan du user pour le calcul du quota de comptes. */
 export type PlanContext = { plan: Plan; role: Role; trialEndsAt?: Date | null };
 
-// Quota de comptes par plan : aligné front `ACCOUNT_LIMITS` (pricing.const.ts).
-// Premium / trial / admin / beta = illimité. Seuls les comptes ACTIVE consomment un
-// slot (PASSED / FAILED / ARCHIVED le libèrent).
-const FREE_ACCOUNT_LIMIT = 1;
+// Quota de comptes par plan : `ACCOUNT_LIMITS` de `@mtc/shared` (même source que le front et la
+// liste des avantages). Premium / trial / admin / beta = illimité. Seuls les comptes ACTIVE
+// consomment un slot (PASSED / FAILED / ARCHIVED le libèrent).
+const FREE_ACCOUNT_LIMIT = ACCOUNT_LIMITS.free;
 
 const BROKER_DISCLAIMER =
   "Solde et positions ouvertes lus chez le broker ; seuil de drawdown calculé par MyTradingCoach, " +

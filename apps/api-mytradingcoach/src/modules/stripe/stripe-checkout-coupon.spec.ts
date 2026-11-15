@@ -108,3 +108,28 @@ describe('StripeBillingService.createCheckoutSession — coupon filleul -10%', (
     expect(params.allow_promotion_codes).toBe(true);
   });
 });
+
+/**
+ * Audit fonctionnel #993 (lot 2, A10) : la clé d'idempotence tenait sur un créneau de 30 min alors que
+ * `expires_at` changeait à chaque appel. Une 2e création dans le créneau (session précédente expirée)
+ * envoyait la même clé avec d'autres paramètres : `idempotency_error` de Stripe, donc une 500.
+ */
+describe('StripeBillingService.createCheckoutSession — clé d’idempotence (A10)', () => {
+  it('deux créations dans le même créneau de 30 min : clés différentes, chacune liée à son expires_at', async () => {
+    vi.useFakeTimers();
+    try {
+      const { svc, create } = makeSvc(null);
+      vi.setSystemTime(new Date('2026-11-14T10:01:00Z'));
+      await run(svc, MONTHLY);
+      vi.setSystemTime(new Date('2026-11-14T10:12:00Z'));
+      await run(svc, MONTHLY);
+      const [p1, o1] = create.mock.calls[0];
+      const [p2, o2] = create.mock.calls[1];
+      expect(o1.idempotencyKey).not.toBe(o2.idempotencyKey);
+      expect(o1.idempotencyKey).toContain(String(p1.expires_at));
+      expect(o2.idempotencyKey).toContain(String(p2.expires_at));
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});

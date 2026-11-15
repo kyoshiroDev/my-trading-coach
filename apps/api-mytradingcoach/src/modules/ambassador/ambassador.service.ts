@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
@@ -79,10 +80,14 @@ export class AmbassadorService {
     const user = await this.prisma.user.findFirst({
       where: { email: emailEquals(email) },
       orderBy: { createdAt: 'asc' },
-      select: { id: true, name: true, email: true, referralCode: true },
+      select: { id: true, name: true, email: true, referralCode: true, role: true },
     });
     if (!user) {
       throw new NotFoundException('Aucun utilisateur avec cet email');
+    }
+    // Même garde que setRole (#993) : promouvoir un ADMIN ou un BETA_TESTER le rétrogradait.
+    if (user.role === Role.ADMIN || user.role === Role.BETA_TESTER) {
+      throw new BadRequestException('Ce compte est ADMIN ou BETA_TESTER : change son rôle d’abord depuis sa fiche.');
     }
 
     let code: string;
@@ -133,10 +138,15 @@ export class AmbassadorService {
     const user = await this.prisma.user.findFirst({
       where: { email: emailEquals(email) },
       orderBy: { createdAt: 'asc' },
-      select: { id: true },
+      select: { id: true, role: true },
     });
     if (!user) {
       throw new NotFoundException('Aucun utilisateur avec cet email');
+    }
+    // Seul un ambassadeur se révoque (#993) : un ADMIN / BETA_TESTER repassait USER (perte d'accès),
+    // un USER perdait son code de parrainage grand public (ses filleuls ne rapportaient plus rien).
+    if (user.role !== Role.AMBASSADOR) {
+      throw new BadRequestException('Ce compte n’est pas ambassadeur.');
     }
     const updated = await this.prisma.user.update({
       where: { id: user.id },
@@ -241,6 +251,8 @@ export class AmbassadorService {
     if (!ambassador?.referralCode) return { count: 0 };
 
     const sinceDate = since ? new Date(since) : new Date(0);
+    // Date illisible : 400, au lieu d'une erreur Prisma en 500 (#993).
+    if (Number.isNaN(sinceDate.getTime())) throw new BadRequestException('Paramètre `since` invalide (date ISO attendue).');
 
     const count = await this.prisma.user.count({
       where: {

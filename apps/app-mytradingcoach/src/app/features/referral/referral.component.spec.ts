@@ -57,6 +57,15 @@ describe('ReferralComponent', () => {
     expect(fixture.nativeElement.textContent as string).toContain('Maxime S.');
   });
 
+  // Audit fonctionnel #993 (lot 2, A16) : l'API ne donne plus de lien au compte démo.
+  it('démo (lien null) : pas de champ ni de bouton Copier, message à la place', () => {
+    const { fixture } = setup({ getMyReferral: vi.fn(() => of({ data: makeData({ referralCode: null, link: null }) })) });
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('[data-testid="referral-copy"]')).toBeNull();
+    expect(el.querySelector('.link-input')).toBeNull();
+    expect(el.textContent).toContain('Lien de parrainage indisponible en mode démo. Crée ton compte pour obtenir le tien.');
+  });
+
   it('calcule la progression vers l’objectif des 12 filleuls payants', () => {
     const { cmp } = setup();
     expect(cmp.goalPercent()).toBe(25); // 3 / 12

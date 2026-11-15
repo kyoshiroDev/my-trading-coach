@@ -238,7 +238,7 @@ function makeWebhook(sub: { id: string; price: string; interval?: string; metada
     partners as never,
     { add: vi.fn() } as never, stripe, undefined, undefined, mailOnce as never,
   );
-  return { svc, founders, partners, cancel, resend, prisma, invoicesList };
+  return { svc, founders, partners, cancel, resend, prisma, invoicesList, list };
 }
 
 const invoice = (subId: string, billing_reason: string) => ({
@@ -256,6 +256,45 @@ describe('webhooks fondateur', () => {
     });
     expect(cancel).toHaveBeenCalledWith('sub_trial');
     expect(cancel).not.toHaveBeenCalledWith('sub_f');
+  });
+
+  it('essai au prix normal non annulé → alerte admin une fois et tâche rejouée (jamais deux abonnements)', async () => {
+    const w = makeWebhook({ id: 'sub_f', price: 'price_29' });
+    w.cancel.mockRejectedValue(new Error('stripe down'));
+    const evt = event('invoice.payment_succeeded', invoice('sub_f', 'subscription_create'));
+    await expect(w.svc.processWebhookEvent(evt)).rejects.toThrow(/non annulé/);
+    // Place et garantie traitées AVANT : un échec de l'annulation ne prive pas l'abonné du reste.
+    expect(w.founders.claimSeat).toHaveBeenCalled();
+    expect(w.founders.markFirstPaid).toHaveBeenCalled();
+    await expect(w.svc.processWebhookEvent(evt)).rejects.toThrow(/non annulé/);
+    const alerts = w.resend.sendAdminAlert.mock.calls.filter(([subject]) => String(subject).includes('essai au prix normal'));
+    expect(alerts).toHaveLength(1);
+  });
+
+  it('liste des essais indisponible → même alerte et tâche rejouée', async () => {
+    const w = makeWebhook({ id: 'sub_f', price: 'price_29' });
+    w.list.mockRejectedValue(new Error('timeout'));
+    await expect(
+      w.svc.processWebhookEvent(event('invoice.payment_succeeded', invoice('sub_f', 'subscription_create'))),
+    ).rejects.toThrow(/non annulé/);
+    expect(w.resend.sendAdminAlert).toHaveBeenCalledWith('Offre fondateur : essai au prix normal non annulé', expect.any(String));
+  });
+
+  it('paiement fondateur sans place : l\'essai au prix normal est GARDÉ', async () => {
+    const w = makeWebhook({ id: 'sub_f', price: 'price_29' });
+    w.founders.claimSeat.mockResolvedValue(null);
+    await w.svc.processWebhookEvent(event('invoice.payment_succeeded', invoice('sub_f', 'subscription_create')));
+    expect(w.cancel).toHaveBeenCalledWith('sub_f');
+    expect(w.cancel).not.toHaveBeenCalledWith('sub_trial');
+  });
+
+  it('bienvenue partenaire envoyée une seule fois même si la tâche est rejouée (A12)', async () => {
+    const w = makeWebhook({ id: 'sub_p', price: 'price_49', metadata: { partnerCode: 'val20' } });
+    w.partners.claim.mockResolvedValue({ priceMonthlyEur: 39, priceAnnualEur: 390, durationMonths: 12 });
+    const evt = event('invoice.payment_succeeded', invoice('sub_p', 'subscription_create'));
+    await w.svc.processWebhookEvent(evt);
+    await w.svc.processWebhookEvent(evt);
+    expect(w.resend.sendPartnerWelcome).toHaveBeenCalledTimes(1);
   });
 
   it('renouvellement fondateur → aucune nouvelle place', async () => {
@@ -347,6 +386,40 @@ describe('synchro : bascule sans écraser l’abonnement fondateur', () => {
     const sync = new StripeSubscriptionService(prisma as never, { client: { del: vi.fn() } } as never, stripe as never);
     expect(await sync.syncSubscription('sub_trial')).toBeNull();
     expect(prisma.user.update).not.toHaveBeenCalled();
+  });
+
+  const activeTrial = (seat: object | null) => {
+    const prisma = {
+      user: {
+        findUnique: vi.fn().mockResolvedValue({ id: 'u1', stripeSubscriptionId: 'sub_f', stripeSubscriptionStatus: 'active', trialUsed: true }),
+        update: vi.fn(),
+      },
+      founderSeat: { findUnique: vi.fn().mockResolvedValue(seat) },
+    };
+    const stripe = {
+      subscriptions: {
+        retrieve: vi.fn().mockResolvedValue({
+          id: 'sub_trial', status: 'trialing', customer: 'cus_1', trial_end: 1, metadata: {},
+          items: { data: [{ price: { id: 'price_49', recurring: { interval: 'month' } } }] },
+        }),
+      },
+    };
+    const sync = new StripeSubscriptionService(prisma as never, { client: { del: vi.fn().mockResolvedValue(1) } } as never, stripe as never);
+    return { sync, prisma };
+  };
+
+  it('l’essai encore ACTIF (annulation ratée) ne remplace pas la place fondateur payée', async () => {
+    const { sync, prisma } = activeTrial({ status: 'ACTIVE', stripeSubscriptionId: 'sub_f' });
+    expect(await sync.syncSubscription('sub_trial')).toBeNull();
+    expect(prisma.user.update).not.toHaveBeenCalled();
+  });
+
+  it('sans place fondateur active, un nouvel abonnement actif est bien suivi', async () => {
+    const { sync, prisma } = activeTrial(null);
+    expect(await sync.syncSubscription('sub_trial')).not.toBeNull();
+    expect(prisma.user.update).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({ stripeSubscriptionId: 'sub_trial' }),
+    }));
   });
 });
 
