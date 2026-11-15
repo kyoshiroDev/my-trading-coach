@@ -19,7 +19,7 @@ export class PaywallCtaService {
   private readonly userStore = inject(UserStore);
 
   readonly label = computed(() => {
-    if (this.offers.founderAvailable?.()) return `Passer Premium · dès ${PRICING.founder.monthly} €/mois (offre fondateur) →`;
+    if (this.offers.founderAvailable?.()) return `Passer à Premium · ${PRICING.founder.monthly} €/mois à vie (offre fondateur) →`;
     return this.userStore.trialAvailable?.() ? `Essayer Premium · ${TRIAL_LABEL} →` : 'Passer à Premium →';
   });
 

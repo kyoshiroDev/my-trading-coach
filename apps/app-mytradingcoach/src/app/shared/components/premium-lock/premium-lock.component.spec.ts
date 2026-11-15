@@ -44,8 +44,8 @@ function render(founderAvailable: boolean, trialAvailable = true) {
 describe('PremiumLockComponent', () => {
   beforeEach(() => TestBed.resetTestingModule());
 
-  it('offre fondateur accessible : « dès 29 €/mois (offre fondateur) »', () => {
-    expect(render(true).button.textContent).toContain('dès 29 €/mois (offre fondateur)');
+  it('offre fondateur accessible : « 29 €/mois à vie (offre fondateur) » (E3 #1013)', () => {
+    expect(render(true).button.textContent).toContain('Passer à Premium · 29 €/mois à vie (offre fondateur)');
   });
 
   it('sinon : « 30 jours d’essai » (Q1 #1013), ou passage direct si l’essai est consommé', () => {

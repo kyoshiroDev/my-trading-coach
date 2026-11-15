@@ -33,7 +33,7 @@ describe('PaywallCtaService', () => {
 
   it('fondateur accessible → prix fondateur', () => {
     founder.set(true);
-    expect(make().label()).toBe('Passer Premium · dès 29 €/mois (offre fondateur) →');
+    expect(make().label()).toBe('Passer à Premium · 29 €/mois à vie (offre fondateur) →');
   });
 
   it('essai Stripe disponible → « 30 jours d’essai », jamais « 1 mois offert »', () => {
