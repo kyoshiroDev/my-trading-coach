@@ -756,7 +756,9 @@ export class StripeWebhookService {
     ]);
     const subscriptionIds = new Set([...commissions.map((c) => c.subscriptionId), ...(reward ? [reward.subscriptionId] : [])]);
     for (const subscriptionId of subscriptionIds) {
-      const first = await this.firstPaymentInvoiceOf(subscriptionId, charge);
+      // Lecture stricte : Stripe injoignable → l'erreur remonte et l'événement est rejoué, sinon la
+      // commission restait `pending` (puis payable) sans aucun signal.
+      const first = await this.firstPaymentInvoiceOf(subscriptionId, charge, { strict: true });
       if (!first) continue;
       for (const c of commissions.filter((x) => x.subscriptionId === subscriptionId && x.invoiceId === first.id)) {
         if (c.status === 'pending') {
@@ -795,10 +797,13 @@ export class StripeWebhookService {
   }
 
   /** 1re facture réellement payée de l'abonnement, si c'est elle que la charge rembourse ; sinon `null`. */
-  private async firstPaymentInvoiceOf(subscriptionId: string, charge: Stripe.Charge): Promise<Stripe.Invoice | null> {
-    const paid = await this.stripe.invoices
-      .list({ subscription: subscriptionId, status: 'paid', limit: 100 })
-      .catch(() => null);
+  private async firstPaymentInvoiceOf(
+    subscriptionId: string,
+    charge: Stripe.Charge,
+    opts: { strict?: boolean } = {},
+  ): Promise<Stripe.Invoice | null> {
+    const list = this.stripe.invoices.list({ subscription: subscriptionId, status: 'paid', limit: 100 });
+    const paid = opts.strict ? await list : await list.catch(() => null);
     const first = (paid?.data ?? [])
       .filter((i) => (i.amount_paid ?? 0) > 0)
       .sort((a, b) => a.created - b.created)[0];

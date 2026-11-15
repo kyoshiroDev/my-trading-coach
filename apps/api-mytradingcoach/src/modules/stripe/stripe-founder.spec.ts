@@ -1146,6 +1146,16 @@ describe('remboursement du 1er paiement : récompenses de parrainage (A4)', () =
     expect(w.resend.sendAdminAlert).toHaveBeenCalledWith(expect.stringContaining('mois offert'), expect.any(String));
   });
 
+  it('Stripe injoignable pour lire les factures → l’erreur remonte (événement rejoué), rien n’est annulé', async () => {
+    const w = makeWebhook({ id: 'sub_n', price: 'price_49' });
+    w.prisma.referralCommission.findMany.mockResolvedValue([commission('pending')]);
+    w.invoicesList.mockRejectedValue(new Error('Stripe indisponible'));
+    await expect(
+      w.svc.processWebhookEvent(event('charge.refunded', { refunded: true, customer: 'cus_1', invoice: 'in_first' })),
+    ).rejects.toThrow('Stripe indisponible');
+    expect(w.prisma.referralCommission.updateMany).not.toHaveBeenCalled();
+  });
+
   it('renouvellement remboursé → commission et mois offert intacts, aucune alerte', async () => {
     const w = makeWebhook({ id: 'sub_n', price: 'price_49' });
     w.prisma.referralCommission.findMany.mockResolvedValue([commission('pending'), commission('pending', 'in_renew')]);
