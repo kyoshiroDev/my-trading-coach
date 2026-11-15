@@ -155,11 +155,6 @@ export class ProfileComponent implements OnInit {
   protected readonly nameInput = signal('');
   protected readonly isSavingName = signal(false);
 
-  // Compte : email
-  protected readonly editingEmail = signal(false);
-  protected readonly emailInput = signal('');
-  protected readonly isSavingEmail = signal(false);
-
   // Compte : mot de passe
   protected readonly passwordResetSent = signal(false);
   /** Compte Google sans mot de passe (#618) : `hasPassword` absent d'un ancien cache = vrai. */
@@ -481,19 +476,6 @@ export class ProfileComponent implements OnInit {
         },
         error: (err) => this.toast.error(apiErrorMessage(err, 'L’espace de facturation est indisponible pour le moment.')),
       });
-  }
-
-  protected startEditEmail() {
-    this.emailInput.set(this.userStore.user()?.email ?? '');
-    this.editingEmail.set(true);
-  }
-
-  protected saveEmail() {
-    const email = this.emailInput().trim();
-    if (!email) return;
-    this.saveUserField({ email }, this.isSavingEmail, () =>
-      this.editingEmail.set(false),
-    );
   }
 
   protected startEditName() {

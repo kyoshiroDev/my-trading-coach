@@ -1870,3 +1870,11 @@ textes (la déconnexion supprime nos jetons, elle ne révoque rien chez Tradovat
 - Dashboard matin (`session-morning`) : `ecoBriefing` = `ecoCalendar().briefing` filtré sur
   `status === 'upcoming'` (aujourd'hui seulement) ; une ligne factuelle calculée côté serveur, affichée telle
   quelle (`line.text`), aucune direction ni conseil.
+
+## Profil : e-mail en lecture seule (#1020, 2026-11-15)
+
+L'e-mail du Profil s'affiche sans bouton « Modifier ». Avant, il envoyait `{ email }` à `PATCH /users/me`,
+dont le DTO API n'accepte que `name` (`forbidNonWhitelisted` → 400 à chaque essai). `UpdateMeDto` du front
+= `name` seul, comme l'API. Changer d'adresse = fonctionnalité à part (lien de confirmation sur la
+nouvelle adresse, `emailTransform` / `emailEquals` côté API, 409 si l'adresse est prise), pas un champ
+à remettre ici. Test : `profile-email-lecture-seule.spec.ts`.
