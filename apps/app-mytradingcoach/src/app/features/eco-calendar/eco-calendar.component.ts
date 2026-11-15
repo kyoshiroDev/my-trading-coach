@@ -431,6 +431,9 @@ export class EcoCalendarComponent implements OnInit {
 
   private loadAnalysis(name: string, userAsked: boolean): void {
     if (this.analyses().has(name) || this.loadingAnalyses().has(name)) return; // déjà chargé ou en cours
+    // F17 (#1047) : en démo, POST analyze-result est refusé (lecture seule) ; le panneau déplié dit
+    // « indisponible », sans requête vouée au 403 ni double message.
+    if (this.userStore.user()?.isDemo === true) return;
     this.setLoading(name, true);
     this.api.analyzeResult(name)
       .pipe(takeUntilDestroyed(this.destroyRef))

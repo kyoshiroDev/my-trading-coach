@@ -66,3 +66,40 @@ describe('Calendrier éco : semaine affichée (F9 #1047)', () => {
     expect(cmp.dayGroups().map((g: { date: string }) => g.date)).toEqual(['S+2']);
   });
 });
+
+describe('Calendrier éco, compte démo (F17 #1047)', () => {
+  beforeEach(() => TestBed.resetTestingModule());
+
+  it('déplier une annonce publiée du jour : aucun appel d’analyse (refusé en démo), pas de message d’erreur', () => {
+    const analyzeResult = vi.fn(() => of({ data: null }));
+    TestBed.configureTestingModule({
+      providers: [
+        {
+          provide: EcoCalendarApi,
+          useValue: {
+            getPins: vi.fn(() => of({ data: [] })), getPinnedUpcoming: vi.fn(() => of({ data: [] })),
+            getEventsRange: vi.fn(() => of({ data: [] })), savePins: vi.fn(() => of({ data: [] })),
+            analyzeResult, getReleaseAnalyses: vi.fn(() => of({ data: {} })),
+          },
+        },
+        { provide: UserStore, useValue: { user: signal({ isDemo: true }) } },
+        { provide: ToastService, useValue: { error: vi.fn(), success: vi.fn() } },
+      ],
+    });
+    TestBed.overrideComponent(EcoCalendarComponent, {
+      set: { template: '<div></div>', styleUrls: [], styleUrl: undefined as unknown as string, imports: [], schemas: [NO_ERRORS_SCHEMA] },
+    });
+    const fixture = TestBed.createComponent(EcoCalendarComponent);
+    fixture.detectChanges();
+    const cmp = fixture.componentInstance as any;
+    const toast = TestBed.inject(ToastService) as unknown as { error: ReturnType<typeof vi.fn> };
+    const today = new Date().toLocaleDateString('fr-CA', { timeZone: 'Europe/Paris' });
+    const released = { ...ev(today, 'CPI'), time: '00:00', actual: 3.1, isReleased: true };
+
+    cmp.toggleAnalysis(released);
+
+    expect(analyzeResult).not.toHaveBeenCalled();
+    expect(toast.error).not.toHaveBeenCalled();
+    expect(cmp.isLoadingAnalysis(released)).toBe(false);
+  });
+});
