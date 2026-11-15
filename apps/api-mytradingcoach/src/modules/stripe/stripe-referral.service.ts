@@ -54,10 +54,15 @@ export class StripeReferralService {
       if (parrain.isDemo) return;
 
       if (parrain.role === Role.AMBASSADOR) {
+        if (!invoice.id) {
+          this.logger.error(`Commission ambassadeur : facture sans id (sub ${subscriptionId}), ignorée`);
+          return;
+        }
         await this.creditAmbassadorCommission({
           ambassadorId: parrain.id,
           filleul,
           subscriptionId,
+          invoiceId: invoice.id,
           amountPaid,
           period: invoicePeriod(invoice),
         });
@@ -75,8 +80,8 @@ export class StripeReferralService {
       // simple panne transitoire. Même comportement que `syncSubscription`, qui
       // laisse déjà remonter.
       //
-      // Rejouable sans double crédit : la commission passe par un `upsert` sur
-      // (subscriptionId, period), le mois offert par `@unique(filleulId)`, et le
+      // Rejouable sans double crédit : la commission passe par un `upsert` sur la
+      // facture (`invoiceId`), le mois offert par `@unique(filleulId)`, et le
       // crédit Stripe par une `idempotencyKey` dérivée du filleul.
       this.logger.error('Erreur traitement parrainage (retry BullMQ déclenché)', err);
       throw err;
@@ -88,24 +93,30 @@ export class StripeReferralService {
     ambassadorId: string;
     filleul: { id: string; referredBy: string | null; plan: Plan };
     subscriptionId: string;
+    /** Facture payée : clé d'unicité, une commission par facture (A1 #1013). */
+    invoiceId: string;
     amountPaid: number;
     /** Mois de RATTACHEMENT, dérivé de la facture (jamais de l'heure de traitement). */
     period: string;
   }): Promise<void> {
-    const { ambassadorId, filleul, subscriptionId, amountPaid, period } = args;
+    const { ambassadorId, filleul, subscriptionId, invoiceId, amountPaid, period } = args;
     const commission = roundCents(amountPaid * 0.2);
 
+    // Une ligne par facture. Avant (A1), la clé (abonnement, mois) faisait écraser la 1re facture
+    // par le renouvellement ou un prorata du même mois. Rejeu de la même facture : rien n'est
+    // réécrit (le montant d'une facture payée ne change pas, et une ligne `paid` reste intacte).
     await this.prisma.referralCommission.upsert({
-      where: { subscriptionId_period: { subscriptionId, period } },
+      where: { invoiceId },
       create: {
         ambassadorId,
         referredUserId: filleul.id,
         amount: commission,
         subscriptionId,
+        invoiceId,
         period,
         status: 'pending',
       },
-      update: { amount: commission },
+      update: {},
     });
 
     this.logger.log(

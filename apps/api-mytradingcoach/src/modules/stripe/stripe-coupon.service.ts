@@ -89,6 +89,31 @@ export class StripeCouponService {
     return { annual, monthly };
   }
 
+  /**
+   * Coupon filleul du changement d'intervalle (B14 #1013), pour les mois de remise restants :
+   * −10 % répété N mois (mensuel) ou montant fixe au prorata (annuel). Identifiant déterministe,
+   * créé une fois ; `REFERRAL_DISCOUNT_METADATA` reste sur l'abonnement (MRR, #954).
+   */
+  async ensureReferralSwitchCoupon(d: { amountOffCents: number; months: number | null } | { percentOff: number; months: number }): Promise<string> {
+    const months = d.months ?? 12;
+    const id = 'percentOff' in d ? `mtc-referral-pct${d.percentOff}-${months}m` : `mtc-referral-off${d.amountOffCents}-${months}m`;
+    const existing = await this.stripe.coupons.retrieve(id).catch(() => null);
+    if (existing && !existing.deleted) return id;
+    try {
+      await this.stripe.coupons.create({
+        id,
+        ...('percentOff' in d ? { percent_off: d.percentOff } : { amount_off: d.amountOffCents, currency: 'eur' }),
+        duration: 'repeating',
+        duration_in_months: months,
+        name: `Parrainage −10 % (${months} mois restants)`,
+        metadata: { kind: 'referral' },
+      });
+    } catch (err) {
+      if ((err as Stripe.errors.StripeError)?.code !== 'resource_already_exists') throw err;
+    }
+    return id;
+  }
+
   /** Lecture seule : retourne le coupon de parrainage (selon kind) s'il existe déjà, sinon null. */
   async findReferralCoupon(kind: ReferralCouponKind): Promise<Stripe.Coupon | null> {
     return this.stripe.coupons.retrieve(this.referralCouponId(kind)).catch(() => null);

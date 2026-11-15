@@ -24,9 +24,9 @@ import {
   amountOffCents,
   conditionsLabel,
   discountEndsAt,
+  intervalSwitchTerms,
   normalizeCode,
   partnerCouponId,
-  remainingMonths,
   type BillingInterval,
   type PartnerConditions,
 } from './partner-code.util';
@@ -381,13 +381,13 @@ export class PartnerCodeService {
    * (pas celles du code aujourd'hui), pour les mois de remise qui restent. `null` = plus de remise.
    */
   async couponForIntervalChange(r: PartnerRedemption, interval: BillingInterval, now = new Date()): Promise<string | null> {
-    const remaining = remainingMonths(r.createdAt, r.durationMonths, now);
-    if (remaining === 0) return null;
-    const conditions: PartnerConditions = {
-      priceMonthlyEur: r.priceMonthlyEur, priceAnnualEur: r.priceAnnualEur, durationMonths: remaining,
-    };
-    const amountOff = amountOffCents(conditions, interval);
-    const id = await this.ensureCoupon(amountOff, remaining);
+    // Mois restants seulement ; sur l'annuel, remise d'une année au prorata (B14 #1013).
+    const { discount } = intervalSwitchTerms({
+      target: interval, founder: false, referralSince: null, now,
+      partner: { priceMonthlyEur: r.priceMonthlyEur, priceAnnualEur: r.priceAnnualEur, durationMonths: r.durationMonths, since: r.createdAt },
+    });
+    if (!discount || !('amountOffCents' in discount)) return null;
+    const id = await this.ensureCoupon(discount.amountOffCents, discount.months);
     await this.prisma.partnerRedemption.update({ where: { id: r.id }, data: { stripeCouponId: id } });
     return id;
   }

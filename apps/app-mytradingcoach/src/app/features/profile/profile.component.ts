@@ -54,7 +54,7 @@ import {
 import { ConfirmService, DialogDirective } from '@mtc/front-ui';
 import { OffersStore } from '../../core/stores/offers.store';
 import { PRICING } from '../../core/constants/pricing.const';
-import { PARTNER_FOREVER_LABEL, partnerDurationLabel } from '../../shared/components/plan-modal/plan-modal.component';
+import { PARTNER_FOREVER_LABEL } from '../../shared/components/plan-modal/plan-modal.component';
 import { searchLocalInstruments, sessionLabel, styleEmoji, styleLabel, withAsset, withoutAsset } from './profile.helpers';
 
 type ProfileTab = 'trader' | 'params';
@@ -399,18 +399,22 @@ export class ProfileComponent implements OnInit {
   });
 
   /** Mensuel ↔ annuel par notre flux (le portail ne change pas de formule) : abonnement payant. */
+  // Prix calculé par l'API (`intervalSwitch`), même calcul que le changement : fondateur, code
+  // partenaire ou −10 % filleul pour les mois de remise RESTANTS seulement (B14 #1013).
   protected readonly intervalSwitch = computed(() => {
     const o = this.offersStore.offers();
-    if (!o || o.subscription.status !== 'active' || !o.subscription.interval) return null;
-    const toYear = o.subscription.interval === 'month';
+    const sw = o?.intervalSwitch;
+    if (!o || o.subscription.status !== 'active' || !sw) return null;
+    const toYear = sw.to === 'year';
+    const unit = toYear ? '€/an' : '€/mois';
+    const eur = (n: number) =>
+      Number.isInteger(n) ? `${n}` : n.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     let price: string;
-    if (o.founder.isFounder) price = toYear ? `${PRICING.founder.yearly} €/an` : `${PRICING.founder.monthly} €/mois`;
-    else if (o.partner) {
-      const p = o.partner;
-      price = `${toYear ? `${p.priceAnnualEur} €/an` : `${p.priceMonthlyEur} €/mois`} ${partnerDurationLabel(
-        p.durationMonths, toYear ? 'yearly' : 'monthly')}`;
-    } else price = toYear ? `${PRICING.premium.yearly} €/an` : `${PRICING.premium.monthly} €/mois`;
-    return { to: (toYear ? 'year' : 'month') as 'year' | 'month', label: toYear ? "Passer à l'annuel" : 'Passer au mensuel', price };
+    if (sw.firstEur === sw.normalEur) price = `${eur(sw.normalEur)} ${unit}`;
+    else if (!sw.discountEndsAt) price = `${eur(sw.firstEur)} ${unit} ${PARTNER_FOREVER_LABEL}`;
+    else if (toYear) price = `${eur(sw.firstEur)} € la 1re année, puis ${eur(sw.normalEur)} €/an`;
+    else price = `${eur(sw.firstEur)} €/mois jusqu'au ${new Date(sw.discountEndsAt).toLocaleDateString('fr-FR')}, puis ${eur(sw.normalEur)} €/mois`;
+    return { to: sw.to, label: toYear ? "Passer à l'annuel" : 'Passer au mensuel', price };
   });
   protected readonly changingInterval = signal(false);
 
