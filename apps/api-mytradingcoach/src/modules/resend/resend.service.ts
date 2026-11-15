@@ -334,7 +334,8 @@ export class ResendService {
         from: 'noreply@mytradingcoach.app',
         to: 'hello@mytradingcoach.app',
         subject,
-        html: `<pre style="font-family:monospace;font-size:14px">${body}</pre>`,
+        // Corps en texte : il contient des saisies d'utilisateurs (nom à l'inscription, N4 #1045).
+        html: `<pre style="font-family:monospace;font-size:14px">${escapeHtml(body)}</pre>`,
       });
     } catch (err) {
       this.logger.error('Erreur sendAdminAlert', err);
