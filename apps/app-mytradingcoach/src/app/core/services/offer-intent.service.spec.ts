@@ -55,4 +55,12 @@ describe('OfferIntentService', () => {
     s.clear();
     expect(s.requested()).toBeNull();
   });
+
+  it('page de paiement (/paiement?…&promo=) : aucune intention capturée, un rechargement ne rouvre pas la modale (B7 #1013)', () => {
+    const s = new OfferIntentService();
+    expect(s.capture('?plan=founder&promo=TRADER10&cta=carte', '/paiement')).toBeNull();
+    expect(s.pending()).toBeNull();
+    expect(new OfferIntentService().pending()).toBeNull();
+    expect(s.capture('?promo=TRADER10', '/dashboard')).not.toBeNull();
+  });
 });
