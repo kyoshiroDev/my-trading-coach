@@ -147,7 +147,62 @@ describe('DebriefService', () => {
     });
   });
 
+  describe('getPDFData : trades clôturés seulement (C13 #1046, convention #947)', () => {
+    it('semaine perdante avec une position ouverte : meilleur trade = la plus petite perte, ouvert hors du compte', async () => {
+      mockPrisma.weeklyDebrief.findUnique.mockResolvedValueOnce({
+        ...mockDebrief,
+        startDate: new Date('2026-11-09T00:00:00'),
+        endDate: new Date('2026-11-15T23:59:59.999'),
+        insights: null,
+        objectives: [],
+      });
+      const rows = [
+        { asset: 'NQ', side: 'LONG', pnl: -10, commission: 0, riskReward: null, tradedAt: new Date('2026-11-10T15:00:00Z') },
+        { asset: 'NQ', side: 'SHORT', pnl: -40, commission: 0, riskReward: null, tradedAt: new Date('2026-11-11T15:00:00Z') },
+        { asset: 'ES', side: 'LONG', pnl: null, commission: null, riskReward: null, tradedAt: new Date('2026-11-12T15:00:00Z') },
+      ];
+      // La base applique le filtre : une position ouverte (pnl null) n'est renvoyée que s'il manque.
+      mockPrisma.trade.findMany.mockImplementationOnce(async (args: { where: { pnl?: unknown } }) =>
+        args.where.pnl ? rows.filter((r) => r.pnl !== null) : rows,
+      );
+
+      const data = await service.getPDFData('user-123', 2026, 46);
+
+      expect(data.stats.totalTrades).toBe(2);
+      expect(data.stats.bestTrade).toBe(-10);
+      expect(data.stats.worstTrade).toBe(-40);
+      expect(data.stats.totalPnl).toBe(-50);
+      expect(data.topTrades.map((t) => t.pnl)).toEqual([-10, -40]);
+    });
+  });
+
   describe('generate', () => {
+    it('C13 (#1046) : position ouverte hors des stats par compte et des trades envoyés à l’IA', async () => {
+      mockPrisma.weeklyDebrief.findUnique.mockResolvedValue(null);
+      mockPrisma.weeklyDebrief.findFirst.mockResolvedValue(null);
+      mockPrisma.weeklyDebrief.upsert.mockImplementation((args: { create: unknown }) => Promise.resolve(args.create));
+      mockPrisma.tradingAccount.findMany.mockResolvedValueOnce([
+        { id: 'acc-perso', label: 'Perso', type: 'PERSONAL', status: 'ACTIVE', startingBalance: 0, profitTarget: null, maxDrawdown: null, drawdownType: null },
+      ]);
+      mockPrisma.trade.findMany.mockResolvedValueOnce([
+        { asset: 'NQ', side: 'LONG', pnl: 80, commission: 0, emotion: null, setup: null, session: null, tradedAt: new Date(), accountId: 'acc-perso' },
+        { asset: 'ES', side: 'LONG', pnl: null, commission: null, emotion: null, setup: null, session: null, tradedAt: new Date(), accountId: 'acc-perso' },
+      ]);
+
+      await service.generate('user-123', Role.USER, true);
+
+      const aiArg = mockAiService.generateDebrief.mock.calls[0][0] as {
+        trades: unknown[]; accounts: { tradesCount: number }[]; tradesByAccount: Record<string, unknown[]>;
+      };
+      expect(aiArg.trades).toHaveLength(1);
+      expect(aiArg.accounts[0].tradesCount).toBe(1);
+      expect(aiArg.tradesByAccount['compte-1']).toHaveLength(1);
+      const stored = (mockPrisma.weeklyDebrief.upsert.mock.calls[0][0] as { create: { insights: {
+        accounts: { stats: { totalTrades: number } }[];
+      } } }).create.insights;
+      expect(stored.accounts[0].stats.totalTrades).toBe(1);
+    });
+
     it("génère un débrief en appelant l'IA et le persiste", async () => {
       mockPrisma.weeklyDebrief.findFirst.mockResolvedValue(null);
       mockPrisma.weeklyDebrief.upsert.mockResolvedValue(mockDebrief);

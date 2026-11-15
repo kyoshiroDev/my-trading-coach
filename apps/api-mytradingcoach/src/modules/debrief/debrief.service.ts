@@ -154,9 +154,13 @@ export class DebriefService {
       orderBy: [{ status: 'asc' }, { createdAt: 'asc' }],
     });
 
+    // Trades clôturés seulement pour les stats par compte et l'IA (C13 #1046, convention #947) :
+    // une position ouverte gonflait « N trades » sans résultat.
+    const closedTrades = trades.filter((t) => t.pnl !== null);
+
     // Trades groupés par compte (accountId null → bucket « unassigned »).
     const tradesByAccount: Record<string, typeof trades> = {};
-    for (const t of trades) {
+    for (const t of closedTrades) {
       const key = t.accountId ?? 'unassigned';
       (tradesByAccount[key] ??= []).push(t);
     }
@@ -221,7 +225,7 @@ export class DebriefService {
     try {
       aiResult = (await this.aiService.generateDebrief({
         propContext,
-        trades,
+        trades: closedTrades,
         stats,
         previousObjectives,
         weekNumber,
@@ -414,9 +418,12 @@ export class DebriefService {
       select: { name: true },
     });
 
+    // Trades clôturés seulement (C13 #1046, convention des agrégats #947 : `pnl IS NOT NULL`) : une
+    // position ouverte comptait dans le total et apparaissait « meilleur trade » à 0 $.
     const trades = await this.prisma.trade.findMany({
       where: {
         userId,
+        pnl: { not: null },
         tradedAt: { gte: debrief.startDate, lte: debrief.endDate }, ...inactiveAccountsTradeWhere(),
       },
       orderBy: { pnl: 'desc' },
