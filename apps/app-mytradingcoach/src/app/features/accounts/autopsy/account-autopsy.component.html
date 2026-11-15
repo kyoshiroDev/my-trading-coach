@@ -100,7 +100,7 @@
                 <div class="top"><div class="lbl">ANALYSE IA</div><span class="badge-prem">Premium</span></div>
                 <p>Une lecture rédigée de cette séance, générée une seule fois et conservée.</p>
                 <button type="button" class="btn pri" (click)="showPlanModal.set(true)">
-                  {{ userStore.trialAvailable() ? 'Essayer Premium · 1 mois offert →' : 'Passer à Premium →' }}
+                  {{ paywall.label() }}
                 </button>
               </section>
             }

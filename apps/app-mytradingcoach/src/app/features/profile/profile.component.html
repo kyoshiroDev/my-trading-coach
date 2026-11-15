@@ -582,13 +582,7 @@
                 </p>
                 <div class="plan-actions">
                   <button class="btn btn-primary" (click)="showPlanModal.set(true)">
-                    @if (offersStore.founderAvailable()) {
-                      ⚡ Passer Premium · dès {{ PRICING.founder.monthly }} €/mois (offre fondateur) →
-                    } @else if (userStore.trialAvailable()) {
-                      ⚡ Essayer Premium · 1 mois offert →
-                    } @else {
-                      ⚡ Passer à Premium →
-                    }
+                    {{ paywall.label() }}
                   </button>
                 </div>
               }

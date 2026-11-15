@@ -29,6 +29,7 @@ import type { DebriefAccountSection as AccountSection, DebriefBadgeItem as Debri
 import { ErrorStateComponent, PctPipe } from '@mtc/front-ui';
 import { InfoTooltipComponent } from '@app/shared/components/info-tooltip/info-tooltip.component';
 import { DRAWDOWN_LABELS } from '@app/core/constants/drawdown-labels.const';
+import { PaywallCtaService } from '@app/core/services/paywall-cta.service';
 
 const TAB_KEY = 'mtc.debriefTab';
 
@@ -67,6 +68,8 @@ function typeBadge(type: string): { label: string; cls: string } | null {
   templateUrl: './debrief.component.html',
 })
 export class DebriefComponent {
+  /** Libellé unique des boutons de paywall (E3 #1013). */
+  protected readonly paywall = inject(PaywallCtaService);
   /** Vocabulaire du drawdown (règle / marge / drawdown max), commun à tous les écrans. */
   protected readonly ddLabels = DRAWDOWN_LABELS;
   private readonly debriefApi = inject(DebriefApi);

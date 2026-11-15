@@ -89,21 +89,15 @@ export function setupsDonutFromStats(bySetup: SetupStat[]): DonutView | null {
 }
 
 /**
- * Donut « répartition stratégies » vue de base FREE : % des trades par setup,
- * calculé client-side depuis les trades chargés (by-setup = profondeur Premium).
- * Centre = setup dominant. La profondeur (win rate/rentabilité) reste Premium.
+ * Donut « répartition stratégies » vue de base FREE : % des trades par setup sur la PÉRIODE du
+ * tableau de bord (route `setup-shares`, E1 #1013 ; avant, les 6 derniers trades chargés). Centre =
+ * setup dominant. La profondeur (win rate/rentabilité) reste Premium (by-setup).
  */
-export function setupsDonutFromTrades(
-  trades: (Pick<Trade, 'setupId'> & { setup?: { title: string; color: string } | null })[],
+export function setupsDonutFromShares(
+  shares: readonly { setupId: string; title: string; color: string; count: number }[],
 ): DonutView | null {
-  if (!trades.length) return null;
-  const map = new Map<string, { title: string; color: string; count: number }>();
-  for (const t of trades) {
-    const cur = map.get(t.setupId) ?? { title: t.setup?.title ?? '-', color: t.setup?.color ?? 'var(--text-3)', count: 0 };
-    cur.count++;
-    map.set(t.setupId, cur);
-  }
-  const setups = [...map.values()].sort((a, b) => b.count - a.count).slice(0, 6);
+  const setups = shares.filter((s) => s.count > 0).sort((a, b) => b.count - a.count).slice(0, 6);
+  if (!setups.length) return null;
   const { gradient, legend, total } = conicShares(setups.map((s) => ({ label: s.title, color: s.color, count: s.count })));
   const top = setups[0];
   return { gradient, legend, centerValue: `${Math.round((top.count / total) * 100)}%`, centerLabel: top.title };

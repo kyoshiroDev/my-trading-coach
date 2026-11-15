@@ -74,6 +74,9 @@ const ME_SELECT = {
   trialUsed: true,
   trialSource: true,
   signupTrialEndsAt: true,
+  // Fin d'un abonnement PAYANT (jamais une réservation jamais payée) : la fenêtre « Premium offert
+  // terminé » n'est pas pour un ancien abonné (B5 #1013).
+  subscriptionCanceledAt: true,
   stripeSubscriptionStatus: true,
   stripeCurrentPeriodEnd: true,
   stripeCancelAt: true,

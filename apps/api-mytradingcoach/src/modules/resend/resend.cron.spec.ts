@@ -36,8 +36,8 @@ describe('ResendCron', () => {
     expiresAt.setDate(expiresAt.getDate() + 7);
 
     mockPrisma.user.findMany.mockResolvedValue([
-      { email: 'a@test.com', name: 'Alice', stripeCurrentPeriodEnd: expiresAt },
-      { email: 'b@test.com', name: 'Bob', stripeCurrentPeriodEnd: expiresAt },
+      { email: 'a@test.com', name: 'Alice', stripeCancelAt: expiresAt },
+      { email: 'b@test.com', name: 'Bob', stripeCancelAt: expiresAt },
     ]);
 
     await cron.checkRenewalReminders();
@@ -48,13 +48,23 @@ describe('ResendCron', () => {
     );
   });
 
-  it('annuels exclus : leur rappel de reconduction part du webhook invoice.upcoming (montant réel)', async () => {
+  // A2 (#1013, décision du 14/11) : le rappel « tu passeras au gratuit » partait chaque mois à tout
+  // abonné mensuel qui se renouvelle (et aux réservations fondateur). Seulement une fin RÉELLE :
+  // résiliation programmée (`stripeCancelAt`), mensuel comme annuel.
+  it('cible la fin réelle (stripeCancelAt à J+7), plus la date de renouvellement', async () => {
     mockPrisma.user.findMany.mockResolvedValue([]);
     await cron.checkRenewalReminders();
-    expect(mockPrisma.user.findMany.mock.calls[0][0].where.OR).toEqual([
-      { stripeInterval: null },
-      { stripeInterval: { not: 'year' } },
-    ]);
+    const where = mockPrisma.user.findMany.mock.calls[0][0].where;
+    expect(where.stripeCancelAt).toEqual({ gte: expect.any(Date), lte: expect.any(Date) });
+    expect(where.stripeCurrentPeriodEnd).toBeUndefined();
+    expect(where.OR).toBeUndefined(); // annuels résiliés compris (aucun invoice.upcoming pour eux)
+  });
+
+  it('date de fin passée à l’e-mail = stripeCancelAt', async () => {
+    const end = new Date('2026-11-22T10:00:00Z');
+    mockPrisma.user.findMany.mockResolvedValue([{ email: 'a@test.com', name: 'A', stripeCancelAt: end }]);
+    await cron.checkRenewalReminders();
+    expect(mockSendRenewal).toHaveBeenCalledWith(expect.objectContaining({ expiresAt: end }));
   });
 
   it("ne fait rien si aucun user n'expire dans 7 jours", async () => {
@@ -63,13 +73,13 @@ describe('ResendCron', () => {
     expect(mockSendRenewal).not.toHaveBeenCalled();
   });
 
-  it('requête Prisma filtre uniquement PREMIUM + notifActivées + expiration J+7', async () => {
+  it('requête Prisma filtre uniquement PREMIUM + notifActivées + fin programmée à J+7', async () => {
     mockPrisma.user.findMany.mockResolvedValue([]);
     await cron.checkRenewalReminders();
 
     const call = mockPrisma.user.findMany.mock.calls[0][0];
     expect(call.where.plan).toBe('PREMIUM');
     expect(call.where.notificationsEmail).toBe(true);
-    expect(call.where.stripeCurrentPeriodEnd).toBeDefined();
+    expect(call.where.stripeCancelAt).toBeDefined();
   });
 });

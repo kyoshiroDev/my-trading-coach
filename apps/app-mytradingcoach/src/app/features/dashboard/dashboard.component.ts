@@ -61,7 +61,7 @@ import {
   plTitleFor,
   plTooltipFor,
   setupsDonutFromStats,
-  setupsDonutFromTrades,
+  setupsDonutFromShares,
   tradeCountBars,
   topAssetBars,
 } from './dashboard-charts.util';
@@ -77,6 +77,7 @@ import { ErrorStateComponent } from '@mtc/front-ui';
 import { FloorReachedBannerComponent } from '../accounts/lost-account/floor-reached-banner.component';
 import { InactiveAccountsToggleComponent } from '../../shared/components/inactive-accounts-toggle/inactive-accounts-toggle.component';
 import { NO_AUTO_PERIOD, periodChosenByUser, periodOnSelection, type AutoPeriodState } from '../../core/utils/inactive-period.util';
+import { TRIAL_LABEL } from '@app/core/services/paywall-cta.service';
 
 /**
  * Dashboard : état (période, compte, resources analytics), cadre des panneaux et états
@@ -111,6 +112,8 @@ import { NO_AUTO_PERIOD, periodChosenByUser, periodOnSelection, type AutoPeriodS
   templateUrl: './dashboard.component.html',
 })
 export class DashboardComponent {
+  /** « 30 jours d'essai » (Q1 #1013). */
+  protected readonly TRIAL_LABEL = TRIAL_LABEL;
   protected readonly RocketIcon = Rocket;
   protected readonly userStore    = inject(UserStore);
   protected readonly money        = inject(MoneyService);
@@ -222,6 +225,10 @@ export class DashboardComponent {
   // top-assets portaient sur tout l'historique et le donut des émotions sur les 6 derniers trades.
   private readonly bySetupResource = httpResource<{ data: SetupStat[] }>(() =>
     this.userStore.isPremium() ? `${environment.apiUrl}/analytics/by-setup${this.rangeQuery()}` : undefined,
+  );
+  // Répartition des setups sur la période = vue de base FREE (E1 #1013) : nombres seulement.
+  private readonly setupSharesResource = httpResource<{ data: { setupId: string; title: string; color: string; count: number }[] }>(() =>
+    this.userStore.isPremium() ? undefined : `${environment.apiUrl}/analytics/setup-shares${this.rangeQuery()}`,
   );
   // by-emotion = vue de base FREE : chargée pour tous les plans (donut des états émotionnels).
   private readonly byEmotionResource = httpResource<{ data: EmotionStat[] }>(
@@ -516,6 +523,7 @@ export class DashboardComponent {
     this.activityResource.reload();
     this.topAssetsResource.reload();
     this.bySetupResource.reload();
+    this.setupSharesResource.reload();
     this.byEmotionResource.reload();
   }
 
@@ -525,7 +533,7 @@ export class DashboardComponent {
   protected readonly setupsDonutView = computed(() =>
     this.userStore.isPremium()
       ? setupsDonutFromStats(this.bySetup())
-      : setupsDonutFromTrades(this.tradesStore.trades()),
+      : setupsDonutFromShares(this.setupSharesResource.value()?.data ?? []),
   );
 
   protected readonly emotionStats = computed(() => emotionSharesFromStats(this.byEmotion()));

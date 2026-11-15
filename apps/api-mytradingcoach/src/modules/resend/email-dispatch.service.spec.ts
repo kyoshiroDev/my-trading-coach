@@ -91,6 +91,15 @@ describe('EmailDispatchService', () => {
     expect(ok).toBe(false);
   });
 
+  // A11 (#1013, décision du 14/11) : J+11 (fin du Premium offert dans 3 jours) tombait souvent dans
+  // le plafond (un e-mail de service à J+10) et partait trop tard ou jamais.
+  it('trial_ending (J+11) passe hors plafond, même juste après un autre e-mail', async () => {
+    lastMarketing.mockResolvedValue({ sentAt: new Date(Date.now() - DAY) });
+    const user = { id: 'u1', marketingConsent: false, serviceEmailsOptOutAt: null };
+    expect(await service.canSend(CAMPAIGNS_BY_KEY.get('trial_ending')!, user)).toBe(true);
+    expect(await service.canSend(CAMPAIGNS_BY_KEY.get('trial_ended')!, user)).toBe(false); // lui reste plafonné
+  });
+
   it('transactionnel non plafonné', async () => {
     const campaign = baseCampaign({ kind: 'transactional', requiresConsent: false });
     lastForCampaign.mockResolvedValue(null);

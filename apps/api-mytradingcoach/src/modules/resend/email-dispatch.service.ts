@@ -218,5 +218,5 @@ export function oneClickUnsubHeaders(unsubUrl: string): Record<string, string> {
 }
 
 function isCapped(campaign: EmailCampaign): boolean {
-  return CAPPED_KINDS.includes(campaign.kind);
+  return CAPPED_KINDS.includes(campaign.kind) && !campaign.bypassCap;
 }

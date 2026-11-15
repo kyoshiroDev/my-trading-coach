@@ -504,7 +504,8 @@ export function paymentFailedTemplate(params: {
     <p style="${FONT}font-size:14px;color:#9db4ce;margin:0 0 12px 0;line-height:1.7;">
       Bonjour ${userName || 'Trader'}, nous n'avons pas pu traiter ton
       paiement${attemptCount > 1 ? ` (tentative ${attemptCount})` : ''}.
-      Ton accès Premium reste actif quelques jours le temps de mettre à jour ta carte.
+      Ton accès Premium est en pause tant que le paiement n'est pas passé : mets à jour ta carte
+      pour le retrouver tout de suite. En attendant, tes trades et ton journal restent accessibles.
     </p>
     ${cta('Mettre à jour mon paiement →', portalUrl)}
   `, 'rgba(239,68,68,.3)');
@@ -610,25 +611,26 @@ export function renewalReminderTemplate(params: {
 }): { subject: string; html: string } {
   const { userName, expiresAt, portalUrl } = params;
   const dateStr = expiresAt.toLocaleDateString('fr-FR', {
-    day: 'numeric', month: 'long', year: 'numeric',
+    day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Paris',
   });
 
+  // Envoyé seulement après une résiliation programmée (A2 #1013) : jamais à un abonné qui se renouvelle.
   const content = card(`
     <p style="${FONT}font-size:13px;color:#8fa3bf;margin:0 0 4px 0;text-transform:uppercase;letter-spacing:.8px;">Facturation</p>
     <h1 style="${FONT}font-size:22px;font-weight:700;color:#e2eaf5;margin:0 0 16px 0;letter-spacing:-.5px;">
-      Ton Premium expire dans 7 jours
+      Ton Premium se termine le ${dateStr}
     </h1>
     <p style="${FONT}font-size:14px;color:#9db4ce;margin:0 0 12px 0;line-height:1.7;">
-      Bonjour ${userName || 'Trader'}, ton abonnement Premium expire le
-      <strong style="color:#e2eaf5;">${dateStr}</strong>.
-      Sans renouvellement, tu passeras automatiquement sur le plan gratuit.
+      Bonjour ${userName || 'Trader'}, ton abonnement Premium est résilié : il se termine le
+      <strong style="color:#e2eaf5;">${dateStr}</strong>, puis tu passes sur le plan gratuit.
+      Aucun nouveau prélèvement. Tu peux le réactiver d'ici là depuis ton espace de facturation.
     </p>
     ${cta('Gérer mon abonnement →', portalUrl)}
   `, 'rgba(245,158,11,.3)');
 
   return {
-    subject: '⏳ Ton Premium expire dans 7 jours',
-    html: emailWrapper(content, `Expiration le ${dateStr}.`),
+    subject: `Ton Premium se termine le ${dateStr}`,
+    html: emailWrapper(content, `Fin le ${dateStr}, aucun nouveau prélèvement.`),
   };
 }
 // ── Offre fondateur et codes partenaires (#525) ─────────────────────────────────

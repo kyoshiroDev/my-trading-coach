@@ -7,7 +7,7 @@ import {
   emotionSharesFromStats,
   plGranularityFor,
   setupsDonutFromStats,
-  setupsDonutFromTrades,
+  setupsDonutFromShares,
   sparkPath,
   tradeCountBars,
   topAssetBars,
@@ -86,9 +86,12 @@ describe('P&L par période', () => {
 });
 
 describe('donuts', () => {
+  // E1 (#1013) : répartition FREE sur la PÉRIODE (route setup-shares), plus sur les 6 derniers trades.
   it('répartition FREE par setup : centre = setup dominant', () => {
-    const t = (setupId: string, title: string) => ({ setupId, setup: { title, color: '#fff' } });
-    const d = setupsDonutFromTrades([t('a', 'Breakout'), t('a', 'Breakout'), t('a', 'Breakout'), t('b', 'Range')]);
+    const d = setupsDonutFromShares([
+      { setupId: 'a', title: 'Breakout', color: '#fff', count: 3 },
+      { setupId: 'b', title: 'Range', color: '#fff', count: 1 },
+    ]);
     expect(d).toMatchObject({ centerValue: '75%', centerLabel: 'Breakout' });
     // Centre = part du setup dominant, comme la légende : pas de libellé « Win rate ».
     expect(d?.centerKicker).toBeUndefined();

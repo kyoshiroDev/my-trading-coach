@@ -69,6 +69,12 @@ describe('DemoCtaComponent (bandeau d’inscription de la démo, #1029)', () => 
     expect(banner?.textContent).toContain(`${PREMIUM_SIGNUP_TRIAL_DAYS} jours de Premium offerts`);
     expect(banner?.textContent).toContain('sans carte');
     expect(banner?.textContent).not.toMatch(/€|\$/);
+    // Une phrase par ligne (#1041).
+    expect([...document.querySelectorAll('[data-testid="demo-cta-text"] .demo-cta-line')].map((l) => l.textContent?.trim())).toEqual([
+      'Ça te parle ? Crée ton compte',
+      `${PREMIUM_SIGNUP_TRIAL_DAYS} jours de Premium offerts`,
+      'sans carte',
+    ]);
     expect(q('[data-testid="demo-cta-banner-btn"]')?.getAttribute('href')).toBe('/register?utm_source=demo&source=demo');
     expect(track).toHaveBeenCalledWith('demo_cta_view', 'banner');
   });

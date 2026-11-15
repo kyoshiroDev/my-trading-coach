@@ -41,6 +41,7 @@ import { TradesApi } from '../../core/api/trades.api';
 import { isInactiveStatus } from '../../core/utils/account-status.util';
 import { rollingRange } from '../../core/utils/rolling-period.util';
 import { NO_AUTO_PERIOD, periodChosenByUser, periodOnSelection, type AutoPeriodState } from '../../core/utils/inactive-period.util';
+import { PaywallCtaService } from '@app/core/services/paywall-cta.service';
 
 const MOCK_HEATMAP_CELLS = [
   0.75, 0.45, 0.8, 0.3, 0.65, 0.55, 0.2, 0.6, 0.7, 0.35, 0.85, 0.5, 0.4, 0.72,
@@ -69,6 +70,8 @@ const MOCK_SETUP_BARS = [88, 72, 65, 54, 38] as const;
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AnalyticsComponent {
+  /** Libellé unique des boutons de paywall (E3 #1013). */
+  protected readonly paywall = inject(PaywallCtaService);
   protected readonly userStore = inject(UserStore);
   private readonly analyticsApi = inject(AnalyticsApi);
   private readonly destroyRef = inject(DestroyRef);

@@ -41,6 +41,7 @@ const USER_SELECT = {
   trialUsed: true,
   trialSource: true,
   signupTrialEndsAt: true,
+  subscriptionCanceledAt: true, // B5 #1013 (même champ que /auth/me)
   onboardingCompleted: true,
   market: true,
   goal: true,

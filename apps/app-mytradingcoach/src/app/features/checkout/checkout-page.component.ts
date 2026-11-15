@@ -29,17 +29,16 @@ import type { CheckoutSummary } from '@app/core/api/billing.api';
 import { BillingService, CHECKOUT_PLANS, type CheckoutPlan } from '@app/core/services/billing.service';
 import { UserStore } from '@app/core/stores/user.store';
 import { apiErrorMessage } from '@app/core/utils/api-error';
+import { PLAN_BENEFITS } from '@mtc/shared';
 import { environment } from '@app/environments/environment';
 import { checkoutCopy, type AssuranceIcon } from './checkout-copy';
 
-const FEATURES = [
-  'Coach IA personnel et chat',
-  'Débrief de ta semaine, chaque dimanche',
-  'Analyses avancées et score trader',
-  'Alertes prop firm avant la casse',
-  'Anti-tilt en séance',
-  'Comptes de trading illimités',
-];
+/**
+ * Avantages Premium : liste officielle partagée (`PLAN_BENEFITS`, modale, landing, e-mails), avec ses
+ * conditions (« app ouverte ou en notification, compte Tradovate connecté »). B9 #1013 : avant, une
+ * liste écrite en dur sans ces conditions.
+ */
+const FEATURES: readonly string[] = PLAN_BENEFITS.premium.map((b) => b.text);
 
 /** Formulaire Stripe aux couleurs du panneau clair de la page (exception validée à « dark only »). */
 const APPEARANCE: Appearance = {

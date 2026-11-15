@@ -47,6 +47,11 @@ export interface EmailCampaign {
   automated: boolean; // true => envoyé par le cron
   priority: number; // plus haut = plus prioritaire
   recurringCooldownDays?: number; // si défini => recurring, sinon oneShot
+  /**
+   * Hors plafond de fréquence (A11 #1013) : e-mail de service daté qui n'a de sens qu'à son moment
+   * (fin du Premium offert dans 3 jours). Il compte quand même pour le plafond des suivants.
+   */
+  bypassCap?: boolean;
   // where Prisma calculé dynamiquement (bornes temporelles relatives à "now")
   segment: (now: Date) => Prisma.UserWhereInput;
   /**
@@ -103,10 +108,16 @@ const noTrade: Prisma.UserWhereInput = { trades: { none: {} } };
  */
 export const notInTrial = (now: Date): Prisma.UserWhereInput => noFreeAccessWhere(now);
 
+/**
+ * Hors BETA_TESTER (E6 #1013) : son rôle lui donne déjà l'accès Premium ; e-mails d'essai, d'upsell et
+ * fondateur sans objet pour lui. ADMIN est exclu de tous les segments (cron et admin).
+ */
+const notBetaTester: Prisma.UserWhereInput = { role: { not: Role.BETA_TESTER } };
+
 /** Mêmes exclusions que founder_launch : abonnés payants, fondateurs, codes partenaires, bêta. */
 const founderTargets: Prisma.UserWhereInput = {
   AND: [
-    { role: { not: Role.BETA_TESTER } },
+    notBetaTester,
     { OR: [{ stripeSubscriptionStatus: null }, { stripeSubscriptionStatus: { notIn: ['active', 'past_due'] } }] },
     { founderSeat: { is: null } },
     { NOT: { partnerRedemption: { is: { status: 'ACTIVE' } } } },
@@ -182,8 +193,8 @@ export const CAMPAIGNS: EmailCampaign[] = [
   // ── Automatisées (cron) : suite d'onboarding, 1 e-mail max / 4 jours (plafond) ─────────────────
   // Essai d'inscription (#769, B2) : priorités les plus hautes, fenêtres bornées par la fin de l'essai
   // (pas par l'inscription : un essai offert plus tard par le script de relance compte aussi). J+11
-  // part entre 3 jours avant la fin et la fin ; l'e-mail de fin part le lendemain de la fin au plus
-  // tôt, donc 4 jours après J+11 : le plafond est respecté sans exception.
+  // part entre 3 jours avant la fin et la fin, HORS plafond (A11 #1013 : un e-mail de service à J+10
+  // le repoussait après la fin) ; l'e-mail de fin part le lendemain de la fin au plus tôt, plafonné.
   {
     key: 'trial_ending',
     label: 'Fin du Premium offert dans 3 jours (J+11)',
@@ -192,8 +203,10 @@ export const CAMPAIGNS: EmailCampaign[] = [
     requiresConsent: false,
     automated: true,
     priority: 120,
+    bypassCap: true, // A11 : jamais retardé par le plafond (sinon il part après la fin de l'essai)
     segment: (now) => ({
       AND: [
+        notBetaTester,
         { trialSource: TrialSource.SIGNUP },
         { signupTrialEndsAt: { gt: now, lte: new Date(now.getTime() + 3 * DAY) } },
         { trialEndsAt: { lte: new Date(now.getTime() + 3 * DAY) } }, // pas prolongé par l'admin
@@ -213,6 +226,7 @@ export const CAMPAIGNS: EmailCampaign[] = [
     priority: 110,
     segment: (now) => ({
       AND: [
+        notBetaTester,
         { trialSource: TrialSource.SIGNUP },
         // Au plus tôt le lendemain de la fin (le cron passe à 10 h, la fin tombe à l'heure d'inscription).
         { signupTrialEndsAt: { gte: new Date(now.getTime() - 6 * DAY), lte: new Date(now.getTime() - 15 * 3600e3) } },
@@ -279,7 +293,7 @@ export const CAMPAIGNS: EmailCampaign[] = [
     automated: true,
     priority: 80,
     segment: (now) => ({
-      AND: [sinceOnboardingStart(), ageWindow(now, 7, 14), { plan: Plan.FREE }, notInTrial(now), { trades: { some: {} } }],
+      AND: [sinceOnboardingStart(), ageWindow(now, 7, 14), { plan: Plan.FREE }, notInTrial(now), notBetaTester, { trades: { some: {} } }],
     }),
     loadContext: loadFirstWeek,
     build: firstWeekRecapTemplate,
@@ -353,6 +367,7 @@ export const CAMPAIGNS: EmailCampaign[] = [
       AND: [
         { plan: Plan.FREE },
         notInTrial(now),
+        notBetaTester,
         { trades: { some: { tradedAt: { gte: new Date(now.getTime() - 14 * DAY) } } } },
       ],
     }),

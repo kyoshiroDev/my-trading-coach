@@ -20,12 +20,14 @@ import {
 import { PRICING } from '@app/core/constants/pricing.const';
 import { ProductEventsService } from '@app/core/services/product-events.service';
 import { BillingService } from '@app/core/services/billing.service';
+import { ToastService } from '@app/core/services/toast.service';
 import { OfferIntentService, type OfferIntent } from '@app/core/services/offer-intent.service';
 import { BillingApi, type CheckoutPlan, type PartnerValidation } from '@app/core/api/billing.api';
 import { OffersStore } from '@app/core/stores/offers.store';
 import { UserStore } from '@app/core/stores/user.store';
 import { DialogDirective, ErrorStateComponent } from '@mtc/front-ui';
-import { FOUNDER_INELIGIBLE_MESSAGES, PLAN_BENEFITS, founderSeatsLabel, type FounderIneligibility } from '@mtc/shared';
+import { FOUNDER_INELIGIBLE_MESSAGES, PLAN_BENEFITS, apiErrorMessage, founderSeatsLabel, type FounderIneligibility } from '@mtc/shared';
+import { TRIAL_LABEL } from '@app/core/services/paywall-cta.service';
 
 type Interval = 'monthly' | 'yearly';
 /** Offre choisie : jamais deux à la fois (fondateur, code partenaire ou prix normal). */
@@ -54,6 +56,8 @@ const PARIS_SHORT_DATE: Intl.DateTimeFormatOptions = { day: '2-digit', month: '2
   styleUrl: './plan-modal.component.css',
 })
 export class PlanModalComponent implements OnInit {
+  /** « 30 jours d'essai » (Q1 #1013). */
+  protected readonly TRIAL_LABEL = TRIAL_LABEL;
   closed = output<void>();
   /** Point de clic (#525) : `modale` par défaut, `cadenas`, `profil`, ou celui du lien d'arrivée. */
   readonly cta = input<string>('modale');
@@ -75,6 +79,7 @@ export class PlanModalComponent implements OnInit {
   protected interval = signal<Interval>('monthly');
   private readonly billing = inject(BillingService);
   private readonly billingApi = inject(BillingApi);
+  private readonly toast = inject(ToastService);
   private readonly events = inject(ProductEventsService);
   private readonly intent = inject(OfferIntentService);
   private readonly destroyRef = inject(DestroyRef);
@@ -281,6 +286,24 @@ export class PlanModalComponent implements OnInit {
 
   protected close() {
     this.closed.emit();
+  }
+
+  /** Abonnement en pause (past_due / unpaid) : la modale propose seulement de confirmer le paiement (B4). */
+  protected readonly paymentPending = computed(() => {
+    const status = this.userStore.user()?.stripeSubscriptionStatus;
+    return status === 'past_due' || status === 'unpaid';
+  });
+
+  protected openPortal(): void {
+    this.billingApi
+      .portal()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => {
+          window.location.href = res.data.url;
+        },
+        error: (err) => this.toast.error(apiErrorMessage(err, 'L’espace de facturation est indisponible pour le moment.')),
+      });
   }
 
   protected onOverlayClick(event: MouseEvent) {

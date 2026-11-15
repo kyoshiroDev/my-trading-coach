@@ -66,6 +66,25 @@ export class OfferIntentService {
     return !!intent && (intent.plan === 'founder' || !!intent.promo);
   }
 
+  /**
+   * Offre fondateur fermée ou inaccessible (B3 #1013) : seul `plan=founder` est oublié ; un code
+   * partenaire du même lien reste proposé. Sans code, l'intention est effacée.
+   */
+  keepPromoOnly(): void {
+    const p = this.pending();
+    if (!p?.promo) {
+      this.clear();
+      return;
+    }
+    const intent: OfferIntent = { ...p, plan: null };
+    try {
+      sessionStorage.setItem(KEY, JSON.stringify(intent));
+    } catch {
+      /* stockage indisponible : l'intention vit le temps de la page */
+    }
+    this.pending.set(intent);
+  }
+
   clear(): void {
     this.requested.set(null);
     try {

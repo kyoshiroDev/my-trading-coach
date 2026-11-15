@@ -1,4 +1,4 @@
-import { FOUNDER_REFUND_DAYS, founderSeatsLabel } from '@mtc/shared';
+import { FOUNDER_REFUND_DAYS, REFERRAL_DISCOUNT, founderSeatsLabel, roundCents } from '@mtc/shared';
 import type { CheckoutSummary } from '@app/core/api/billing.api';
 
 /** Icône d'une garantie (rendue par la page avec @lucide/angular). */
@@ -99,24 +99,39 @@ export function checkoutCopy(s: CheckoutSummary, now: Date = new Date()): Checko
         : `Tarif partenaire ${duration}.${monthlyEquivalent}`,
       assurances: [...(trial ? [trial] : []), cancel('le tarif partenaire'), SECURE],
       ...then,
-      cta: s.trialDays > 0 ? 'Commencer mon mois offert' : 'Passer à Premium',
+      cta: s.trialDays > 0 ? 'Commencer mon essai' : 'Passer à Premium',
       legal: `prélever ${eur(s.recurringEur)} ${perWord}${legalStart}`,
     };
   }
 
   const referral = s.referralDiscount ? ' −10 % la première année grâce à ton parrainage.' : '';
+  // Montant RÉELLEMENT prélevé la 1re année par un filleul (B8 #1013) : 44,10 € × 12 puis 49 €, ou
+  // 441 € puis 490 €, jusque dans la mention de prélèvement (avant : 49 € partout).
+  const first = s.referralDiscount ? roundCents(s.recurringEur * (1 - REFERRAL_DISCOUNT.rate)) : s.recurringEur;
+  const referralThen = s.referralDiscount
+    ? {
+        thenAmount: yearly
+          ? `${eur(first)} la première année, puis ${eur(s.recurringEur)}`
+          : `${eur(first)} pendant ${REFERRAL_DISCOUNT.months} mois, puis ${eur(s.recurringEur)}`,
+        legal: yearly
+          ? `prélever ${eur(first)} la première année${legalStart}, puis ${eur(s.recurringEur)} par an`
+          : `prélever ${eur(first)} ${perWord}${legalStart} pendant ${REFERRAL_DISCOUNT.months} mois, puis ${eur(s.recurringEur)} ${perWord}`,
+      }
+    : null;
   return {
-    eyebrow: s.trialDays > 0 ? 'Premium · 1 mois offert' : yearly ? 'Premium annuel · 2 mois offerts' : 'Premium',
+    // Essai Stripe des comptes antérieurs (Q1 #1013) : « N jours d'essai », jamais « 1 mois offert ».
+    eyebrow: s.trialDays > 0 ? `Premium · ${s.trialDays} jours d'essai` : yearly ? 'Premium annuel · 2 mois offerts' : 'Premium',
     title: 'Passe à Premium',
     lead: PREMIUM_LEAD,
-    price: short(s.recurringEur), per,
-    was: yearly ? `${short(s.normalEur / 10 * 12)} €` : discounted ? `${short(s.normalEur)} €` : null,
+    price: short(first), per,
+    was: yearly ? `${short(s.normalEur / 10 * 12)} €` : discounted || s.referralDiscount ? `${short(s.normalEur)} €` : null,
     note: s.trialDays > 0
       ? `${s.trialDays} jours offerts. Aucun prélèvement avant le ${trialEnd}.${referral}`
       : yearly ? `Soit ${eur(s.recurringEur / 12)} par mois, 10 mois payés pour 12.${referral}` : `Sans engagement.${referral}`,
     assurances: [...(trial ? [trial] : []), cancel(null), SECURE],
     ...then,
-    cta: s.trialDays > 0 ? 'Commencer mon mois offert' : 'Passer à Premium',
+    cta: s.trialDays > 0 ? 'Commencer mon essai' : 'Passer à Premium',
     legal: `prélever ${eur(s.recurringEur)} ${perWord}${legalStart}`,
+    ...(referralThen ?? {}),
   };
 }

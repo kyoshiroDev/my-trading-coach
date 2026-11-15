@@ -10,7 +10,7 @@ description: "Source de vérité des plans FREE/PREMIUM : prix, essai, features 
 Toute feature gated DOIT être cohérente aux **4 endroits** (voir Règle d'or). En cas de doute sur « qui a accès à quoi, à quel prix, gated comment » → c'est ici, pas éparpillé dans les autres agents.
 
 > **Bascule PROMPT-169** : le palier **STARTER a été supprimé**. Il ne reste que **FREE** et **PREMIUM**.
-> Ce qui était « Starter » se répartit désormais : l'**IA mutualisée** (contexte marché, calendrier éco, news) descend en **FREE** ; la **profondeur d'analyse** (analytics avancés, Weekly Debrief, Score trader, export, multi-comptes) monte en **PREMIUM**. Aucun abonné payant au moment de la bascule → pas de grandfathering.
+> Ce qui était « Starter » se répartit désormais : l'**IA mutualisée** (contexte marché, calendrier éco, news) descend en **FREE** ; la **profondeur d'analyse** (analytics avancés, Weekly Debrief, Score trader, multi-comptes) monte en **PREMIUM**. Aucun abonné payant au moment de la bascule → pas de grandfathering.
 
 ---
 
@@ -47,7 +47,7 @@ Toute feature gated DOIT être cohérente aux **4 endroits** (voir Règle d'or).
 > **On ne verrouille JAMAIS la vue de ses propres données. On verrouille la PROFONDEUR d'analyse.**
 
 - **FREE = le *quoi* (+ IA mutualisée)** : voir ses chiffres et ses vues de base (courbe d'équité simple, P&L/jour, répartition setups/actifs en %, émotions, KPIs), le compagnon de session complet, ET l'IA **mutualisée** (contexte marché, calendrier éco IA, news filtrées) dont le coût est indépendant du nombre d'users. Voir ce qu'on a fait est gratuit — c'est le moteur d'activation.
-- **PREMIUM = le *comment* et le *pourquoi*** : la profondeur d'analyse par-dessus les mêmes données (win rate par setup/actif, heatmaps jour/heure, drawdown détaillé, filtres croisés, multi-comptes, export) **ET** la couche IA **personnelle** (Weekly Debrief, IA Insights sur les patterns, Chat coach).
+- **PREMIUM = le *comment* et le *pourquoi*** : la profondeur d'analyse par-dessus les mêmes données (win rate par setup/actif, heatmaps jour/heure, drawdown détaillé, filtres croisés, multi-comptes) **ET** la couche IA **personnelle** (Weekly Debrief, IA Insights sur les patterns, Chat coach).
 
 **Corollaire design** : on ne verrouille pas une **carte**, on verrouille la **couche de profondeur** dedans (vue de base visible en Free · analyse avancée / IA personnelle en Premium). Un teaser flouté + cadenas est réservé aux couches réellement payantes, jamais aux données de base ni à l'IA mutualisée (désormais FREE).
 
@@ -64,7 +64,8 @@ Toute feature gated DOIT être cohérente aux **4 endroits** (voir Règle d'or).
 - 📋 **Weekly Debrief IA** (auto, 1/user/semaine)
 - ✨ **IA Insights à la demande** (analyse de tes patterns)
 - 💬 **Chat coach IA**¹
-- 🏆 **Score trader /100** hebdomadaire
+- 🏆 **Score trader /100**, calculé sur les 100 derniers trades (E2 #1013 : pas hebdomadaire ;
+  aucun export de données n'existe, retiré de cette liste, Q3)
 - 📈 **Analytics avancés** (heatmap heure, equity/drawdown détaillé, by-setup)
 - 📄 **PDF du débrief de la semaine** (aucun rapport mensuel n'existe)
 - 🌙 **Recap journalier email 17h30**
@@ -299,6 +300,24 @@ Toute feature gated doit être alignée **partout**, sinon on vend une chose qu'
   l'accès offert), jamais « Essai » ; l'accès Premium, lui, continue jusqu'à `trialEndsAt`. Annulation
   programmée (`stripeCancelAt`, dans `ADMIN_USER_SELECT`) : badge « Essai annulé » ou « Résilié » dans la
   liste, comme la fiche. Équivalence ancienne règle / `premiumAccess` : `subscription-state.equivalence.spec.ts`.
+- **Audit fonctionnel lot 2d (#1013, 2026-11-15)** :
+  - Rappel J-7 (`ResendCron`) seulement avant une fin réelle (`stripeCancelAt` à J+7), objet « Ton
+    Premium se termine le {date} » ; jamais à un abonné qui se renouvelle (A2).
+  - E-mail d'échec de paiement : « accès Premium en pause », aucun délai promis (A3) ; `past_due` = gratuit.
+  - `trial_ending` (J+11) hors plafond de fréquence (`bypassCap`, A11). BETA_TESTER exclus des e-mails
+    d'essai, d'upsell (`first_week_recap`, `premium_upsell`) et fondateur ; ADMIN l'est partout (E6).
+  - Lien d'offre, fondateur fermé ou inaccessible : seul `plan=founder` est oublié, un `promo` reste
+    proposé (`keepPromoOnly`, B3).
+  - En pause (`past_due` / `unpaid`) : la modale de plans ne montre que « Confirmer mon paiement »
+    (portail) ; le cadenas l'ouvre aussi (B4).
+  - Fenêtre « Premium offert terminé » jamais pour un ancien abonné payant (`subscriptionCanceledAt`
+    exposé par `/auth/me`, B5).
+  - Page de paiement : montant réel du filleul (44,10 € × 12 puis 49 €, 441 € puis 490 €) jusque dans la
+    mention de prélèvement (`REFERRAL_DISCOUNT`, B8) ; avantages = `PLAN_BENEFITS.premium` (B9).
+  - Camembert des setups du FREE sur la période (`GET /analytics/setup-shares`, nombres seulement, E1).
+  - Paywalls : un seul libellé (`PaywallCtaService`, E3) ; essai Stripe = « 30 jours d'essai · carte
+    requise » (`TRIAL_LABEL`, Q1), jamais « 1 mois offert » (réservé au mois offert du parrain). Essai
+    gardé pour les comptes antérieurs jamais essayés (`trialUsed` faux), ligne dans les CGU.
 - **État d'abonnement unique (#813, 2026-11-01)** : `subscriptionState` (`libs/shared/src/subscription-state.ts`,
   fonction pure partagée API / app / admin). Ordre : statut Stripe (`active` = payant, `trialing` = essai
   d'abonnement, `past_due` / `unpaid` = en pause), puis `trialEndsAt` futur (SIGNUP = essai d'inscription,

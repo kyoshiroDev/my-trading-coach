@@ -56,6 +56,25 @@ export class AnalyticsController {
     );
   }
 
+  // Répartition des setups (camembert du FREE, E1 #1013) : nombre de trades par setup sur la
+  // période, sans win rate ni P&L (profondeur = by-setup, Premium). Même calcul et même cache.
+  @Get('setup-shares')
+  async getSetupShares(
+    @CurrentUser() user: { id: string },
+    @Query('accountId') accountId?: string,
+    @Query('includeInactive') includeInactive?: string,
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+  ) {
+    const stats = await this.analyticsService.getBySetup(
+      user.id, await this.accountId(user.id, accountId), parseIncludeInactive(includeInactive),
+      from ? new Date(from) : undefined, to ? this.endBound(to) : undefined,
+    );
+    return stats
+      .filter((s) => s.count > 0)
+      .map(({ setupId, title, color, count }) => ({ setupId, title, color, count }));
+  }
+
   // Vue de base (États émotionnels) = socle FREE.
   @Get('by-emotion')
   async getByEmotion(
