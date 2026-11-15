@@ -16,6 +16,7 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { EcoCalendarService } from './eco-calendar.service';
 import { todayParis } from '@mtc/shared';
 import { ECO_RANGE_MAX_DAYS, rangeDates } from './eco-calendar.range';
+import { AnalyzeResultDto, SavePinsDto } from './dto/eco-calendar.dto';
 
 // Calendrier économique = IA mutualisée (coût O(actifs), pas O(users)) → FREE.
 // Affichage ET analyse IA (bull/bear) accessibles à tous les utilisateurs connectés.
@@ -38,9 +39,9 @@ export class EcoCalendarController {
   @Throttle({ default: { ttl: 60_000, limit: 20 } })
   analyzeResult(
     @CurrentUser() user: { id: string; isDemo?: boolean },
-    @Body('eventName') eventName: string,
+    @Body() body: AnalyzeResultDto,
   ) {
-    return this.service.analyzeReleasedEvent(user.id, eventName, user.isDemo === true);
+    return this.service.analyzeReleasedEvent(user.id, body.eventName, user.isDemo === true);
   }
 
   // Vide le cache Redis user + retourne analyse fraîche (après nouveaux actual WebSocket)
@@ -85,9 +86,9 @@ export class EcoCalendarController {
   @Patch('pins')
   async savePins(
     @CurrentUser() user: { id: string },
-    @Body('pins') pins: string[],
+    @Body() body: SavePinsDto,
   ) {
-    return this.service.updateUserPins(user.id, pins ?? []);
+    return this.service.updateUserPins(user.id, body.pins ?? []);
   }
 
   // Admin : forcer un fetch sans attendre 6h00

@@ -109,6 +109,7 @@ POST   /api/session/trades/:id/close   JWT → clôturer un trade (exitPrice →
 GET    /api/eco-calendar/today         PREMIUM → events du jour + analyse IA (cache Redis 1h)
 POST   /api/eco-calendar/analyze-result PREMIUM → analyse d'un résultat tombé en temps réel ; @Throttle 20/min (S2 #1045)
 POST   /api/eco-calendar/refresh-today JWT → vide le cache du jour du trader ; @Throttle 5/min ; résumé du matin mutualisé : au plus 5 générations distinctes par trader et par jour (`eco:morning-gen:<date>:<userId>`, au-delà « Données IA indisponibles ») (S2 #1045)
+PATCH  /api/eco-calendar/pins     JWT → `SavePinsDto` (≤ 50 clés « nom:devise » de ≤ 120) ; analyze-result → `AnalyzeResultDto` (eventName ≤ 200) ; analytics : from/to illisibles et mois hors 1-12 = 400 (C11 #1045)
 GET    /api/eco-calendar/release-analyses?date=YYYY-MM-DD JWT → analyses déjà produites d'un jour PASSÉ
 GET    /api/eco-calendar/range?from&to JWT → vue semaine ; AAAA-MM-JJ, from ≤ to, ≤ 31 jours sinon 400 ; FMP seulement à ±90 j d'aujourd'hui, jour vide marqué 6 h (`eco:range-empty:<date>`) (S1 #1045)
        (EcoReleaseAnalysis, aucun appel IA, donc ouverte à la démo ; vide pour aujourd'hui et après) ;
@@ -133,6 +134,7 @@ GET    /api/market/live-price?symbol=  JWT (FREE) → trade rapide
 GET    /api/debrief/current            PREMIUM
 GET    /api/debrief/:year/:week        PREMIUM
 GET    /api/debrief/:year/:week/pdf    PREMIUM → export PDF via puppeteer ; @Throttle 5/min, file par process ≤ 10 rendus (`PDF_QUEUE_MAX`) sinon 503 (S3 #1045)
+PATCH  /api/debrief/:debriefId/objectives/:index/note PREMIUM → `ObjectiveNoteDto` (texte ≤ 1000, réinjecté dans le prompt suivant) (C11 #1045)
 GET    /api/debrief/history            PREMIUM
 POST   /api/debrief/generate           PREMIUM → 1/jour par user
 

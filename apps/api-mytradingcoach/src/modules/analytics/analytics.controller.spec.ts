@@ -1,4 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
+import { BadRequestException } from '@nestjs/common';
 import { AnalyticsController } from './analytics.controller';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { PremiumGuard } from '../../common/guards/premium.guard';
@@ -89,5 +90,37 @@ describe('AnalyticsController — répartition des setups en FREE (E1)', () => {
     const res = await ctrl.getSetupShares({ id: 'u1' }, undefined, undefined, '2026-11-01', '2026-11-15');
     expect(service.getBySetup).toHaveBeenCalledWith('u1', undefined, false, new Date('2026-11-01'), expect.any(Date));
     expect(res).toEqual([{ setupId: 's1', title: 'Breakout', color: '#f00', count: 3 }]);
+  });
+});
+
+// C11 (#1045) : `new Date('abc')` partait en SQL (500) ; `activity/:year/13` était accepté.
+describe('AnalyticsController : paramètres de période validés', () => {
+  const analytics = {
+    getSummary: vi.fn().mockResolvedValue({}),
+    getMonthlyActivity: vi.fn().mockResolvedValue([]),
+  };
+  const accounts = { accountWhere: vi.fn().mockResolvedValue({ accountId: undefined }) };
+  const controller = new AnalyticsController(analytics as never, {} as never, accounts as never);
+  const user = { id: 'u1' };
+
+  it('from ou to illisible : 400, aucune requête', async () => {
+    analytics.getSummary.mockClear();
+    await expect(controller.getSummary(user, undefined, 'abc')).rejects.toBeInstanceOf(BadRequestException);
+    await expect(controller.getSummary(user, undefined, undefined, '2026-13-45')).rejects.toBeInstanceOf(BadRequestException);
+    expect(analytics.getSummary).not.toHaveBeenCalled();
+  });
+
+  it('dates valides (jour ou ISO) : transmises, la fin de jour couvre toute la journée', async () => {
+    analytics.getSummary.mockClear();
+    await controller.getSummary(user, undefined, '2026-11-01T00:00:00.000Z', '2026-11-15');
+    const [, , from, to] = analytics.getSummary.mock.calls[0];
+    expect((from as Date).toISOString()).toBe('2026-11-01T00:00:00.000Z');
+    expect((to as Date).getHours()).toBe(23);
+  });
+
+  it('mois hors 1-12 : 400', async () => {
+    await expect(controller.getMonthActivity(user, 2026, 13)).rejects.toBeInstanceOf(BadRequestException);
+    await expect(controller.getMonthActivity(user, 2026, 0)).rejects.toBeInstanceOf(BadRequestException);
+    await expect(controller.getMonthActivity(user, 2026, 11)).resolves.toEqual([]);
   });
 });

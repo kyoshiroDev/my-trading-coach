@@ -16,6 +16,7 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { PremiumGuard } from '../../common/guards/premium.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { DebriefService } from './debrief.service';
+import { ObjectiveNoteDto } from './dto/objective-note.dto';
 import { PdfService } from '../pdf/pdf.service';
 
 @UseGuards(JwtAuthGuard, PremiumGuard)
@@ -78,8 +79,8 @@ export class DebriefController {
     @CurrentUser() user: { id: string },
     @Param('debriefId') debriefId: string,
     @Param('index', ParseIntPipe) index: number,
-    @Body('note') note: string,
+    @Body() body: ObjectiveNoteDto,
   ) {
-    return this.debriefService.addNoteToObjective(user.id, debriefId, index, note);
+    return this.debriefService.addNoteToObjective(user.id, debriefId, index, body.note);
   }
 }
