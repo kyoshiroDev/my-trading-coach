@@ -17,6 +17,8 @@ export type TradovateErrorCode =
   | 'TRADOVATE_ACCOUNT_NOT_FOUND'
   | 'TRADOVATE_ACCOUNT_TEMPORARILY_MISSING'
   | 'TRADOVATE_ACCOUNT_ALREADY_LINKED'
+  | 'TRADOVATE_ACCOUNT_LINKED_ELSEWHERE'
+  | 'TRADOVATE_ACCOUNT_HAS_OTHER_TRADES'
   | 'TRADOVATE_REFRESH_DEFERRED'
   | 'TRADOVATE_ACCOUNT_SUSPENDED'
   | 'TRADOVATE_RATE_LIMITED'
@@ -54,6 +56,18 @@ const MESSAGES: Record<TradovateErrorCode, [HttpStatus, string]> = {
   TRADOVATE_ACCOUNT_ALREADY_LINKED: [
     HttpStatus.CONFLICT,
     'Ce compte Tradovate est déjà relié à un autre compte MyTradingCoach. Délie-le là-bas avant de le relier ici : deux liaisons simultanées se déconnecteraient mutuellement.',
+  ],
+  // Même compte Tradovate relié à DEUX comptes MTC du même trader (#1001, N8) : ses trades
+  // arriveraient deux fois. Message complété du nom du compte MTC (cf. TradovateException).
+  TRADOVATE_ACCOUNT_LINKED_ELSEWHERE: [
+    HttpStatus.CONFLICT,
+    'Ce compte Tradovate est déjà relié à un autre de tes comptes.',
+  ],
+  // Autre compte broker choisi pour un compte MTC qui contient déjà les trades synchronisés de
+  // l'ancien (#1001, N7) : les deux historiques se mélangeraient. Message complété des deux noms.
+  TRADOVATE_ACCOUNT_HAS_OTHER_TRADES: [
+    HttpStatus.CONFLICT,
+    "Ce compte contient déjà les trades d'un autre compte Tradovate. Crée un compte pour le nouveau.",
   ],
   TRADOVATE_ACCOUNT_TEMPORARILY_MISSING: [
     HttpStatus.SERVICE_UNAVAILABLE,
@@ -95,9 +109,10 @@ const MESSAGES: Record<TradovateErrorCode, [HttpStatus, string]> = {
 };
 
 export class TradovateException extends HttpException {
-  constructor(readonly code: TradovateErrorCode) {
-    const [status, message] = MESSAGES[code];
-    super({ code, message }, status);
+  /** `message` : texte précis (noms de comptes), à la place du texte générique du code. */
+  constructor(readonly code: TradovateErrorCode, message?: string) {
+    const [status, fallback] = MESSAGES[code];
+    super({ code, message: message ?? fallback }, status);
   }
 }
 

@@ -45,8 +45,8 @@ export class SessionController {
   }
 
   @Get('today')
-  getToday(@CurrentUser() user: { id: string }) {
-    return this.sessionService.getTodaySession(user.id);
+  getToday(@CurrentUser() user: { id: string; isDemo?: boolean }) {
+    return this.sessionService.getTodaySession(user.id, user.isDemo === true);
   }
 
   @Post(':id/close')
