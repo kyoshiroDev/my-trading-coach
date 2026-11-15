@@ -91,4 +91,22 @@ describe('checkoutCopy : une page, des textes par offre', () => {
     const c = checkoutCopy({ ...base, trialDays: 30, referralDiscount: true }, NOW);
     expect(c.note).toContain('−10 % la première année grâce à ton parrainage.');
   });
+
+  // B8 (#1013, décision du 14/11) : le filleul mensuel lisait « Puis chaque mois 49,00 € » et la
+  // mention « prélever 49,00 € par mois » alors qu'il paie 44,10 € pendant 12 mois.
+  it('parrainage mensuel : 44,10 € pendant 12 mois puis 49 €, jusque dans la mention de prélèvement', () => {
+    const c = checkoutCopy({ ...base, referralDiscount: true }, NOW);
+    expect(c.price).toBe('44,10');
+    expect(c.was).toBe('49 €');
+    expect(c.thenLabel).toBe('Puis chaque mois');
+    expect(c.thenAmount).toBe('44,10 € pendant 12 mois, puis 49,00 €');
+    expect(c.legal).toBe('prélever 44,10 € par mois pendant 12 mois, puis 49,00 € par mois');
+  });
+
+  it('parrainage annuel : 441 € la première année puis 490 €', () => {
+    const c = checkoutCopy({ ...base, interval: 'year', recurringEur: 490, normalEur: 490, referralDiscount: true }, NOW);
+    expect(c.price).toBe('441');
+    expect(c.thenAmount).toBe('441,00 € la première année, puis 490,00 €');
+    expect(c.legal).toBe('prélever 441,00 € la première année, puis 490,00 € par an');
+  });
 });
