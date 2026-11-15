@@ -42,11 +42,16 @@ export class UserStore {
 
   /**
    * Essai d'inscription en cours (#769) : jours de CALENDRIER (heure locale) jusqu'au jour de fin,
-   * 0 le jour de fin, sinon `null`. Démo, abonné Stripe et Premium offert par l'admin : `null`.
+   * 0 le jour de fin, sinon `null`. Démo, abonné Stripe, abonnement en pause et Premium offert par
+   * l'admin : `null`.
    */
   readonly signupTrialDaysLeft = computed<number | null>(() => {
     const user = this.user();
     if (!this.freePremium() || user?.trialSource !== 'SIGNUP' || !user.trialEndsAt) return null;
+    // Abonnement en pause : le Profil montre « Paiement en attente » ; le bouton du bandeau ouvrirait
+    // les offres, refusées par l'API (409 PAYMENT_PENDING) (B13 #1013).
+    const status = user.stripeSubscriptionStatus;
+    if (status === 'past_due' || status === 'unpaid') return null;
     return calendarDaysUntil(new Date(user.trialEndsAt), new Date());
   });
 
