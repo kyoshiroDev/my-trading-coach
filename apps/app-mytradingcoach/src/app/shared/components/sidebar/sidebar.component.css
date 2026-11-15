@@ -397,7 +397,8 @@
   box-sizing: border-box;
   padding: 0 18px;
   overflow: hidden;
-  background: linear-gradient(135deg, rgba(59,130,246,.16), rgba(139,92,246,.12));
+  /* Teinte posée sur un fond PLEIN (#1041) : semi-transparent, le contenu défilait visible à travers. */
+  background: linear-gradient(135deg, rgba(59,130,246,.16), rgba(139,92,246,.12)), var(--bg);
   border-bottom: 1px solid rgba(59,130,246,.28);
   font-size: 13px;
   color: var(--text);
