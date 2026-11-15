@@ -465,4 +465,9 @@ Verrouillé par `discord-link.service.spec.ts` (7 mutations détectées) et `dis
   503 avec message clair et liaison GARDÉE (effacée seule, elle laisserait un rôle que plus rien ne
   retire). Puis `updateMany` conditionné à l'identifiant lu (un Discord relié entre-temps reste).
   Journaux : nom de l'erreur ou statut HTTP seulement, jamais l'identifiant Discord, l'URL ni le code.
+- Exception unique à « jamais l'identifiant Discord » (N2 #1046) : à la SUPPRESSION du compte, si le
+  retrait des rôles échoue (`removePlanRoles` → `false`), un `warn` donne le discordId pour retirer les
+  rôles à la main. Le compte n'existe plus : rien ne retentera, l'identifiant est le seul moyen.
+- `setPlanRole` lève sur une réponse en erreur (hors 404) ou une panne réseau ; `removePlanRoles` et
+  `tryRemovePlanRoles` reposent sur le même appel (`call`), le premier ne lève jamais (booléen).
 - Le bouton « Copier » du Profil copie le code seul (plus la commande `/verify code:`).
