@@ -29,7 +29,7 @@ describe('premiumInterceptor', () => {
     ctrl = TestBed.inject(HttpTestingController);
   });
 
-  const call = async (status: number, body: unknown) => {
+  const call = async (status: number, body: object) => {
     const p = firstValueFrom(http.get('/api/insights')).catch((e: unknown) => e);
     ctrl.expectOne('/api/insights').flush(body, { status, statusText: 'x' });
     return p;
