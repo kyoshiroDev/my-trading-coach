@@ -1,5 +1,6 @@
 # Décisions de Greg (lues par l'agent relecteur)
 
+- 2026-11-15 : texte CGU Q1 validé par le relecteur (délégation de Greg) : essai de 30 jours, abonnement mensuel hors offre fondateur, comptes jamais essayés ; `CGU_VERSION` = 2026-11-15. Libellé harmonisé des paywalls E3 : fondateur « Passer à Premium · 29 €/mois à vie (offre fondateur) → », essai « Essayer Premium · 30 jours d'essai → », sinon « Passer à Premium → ».
 - 2026-11-15 : audit fonctionnel lot 2d, ligne des CGU pour Q1 (essai de 30 jours des comptes antérieurs jamais essayés) : Greg délègue la validation du texte au relecteur (« que dit le relecteur si il valide c'est ok »).
 - 2026-11-15 : audit fonctionnel lot 2, Q4 : Greg confirme que les 4 prix Stripe live sont bons (« les prix stripe sont bon ») : Premium 49 €/mois et 490 €/an (`_V2`), fondateur 29 €/mois et 290 €/an (`_FOUNDER`). Le prix partenaire, calculé sur 49 €, est donc juste.
 - 2026-11-15 : #1020 (« modifier l'e-mail » du Profil en 400) : Greg suit la recommandation du relecteur (« suit les recommandation du relecteur ») : bouton retiré, e-mail en lecture seule. Le changement d'e-mail complet (confirmation sur la nouvelle adresse) n'est pas construit. #1004 reste en attente (aucun « state renvoyé » dans les logs prod depuis le déploiement du 14/11).
