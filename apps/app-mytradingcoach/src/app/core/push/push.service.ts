@@ -13,6 +13,7 @@ import { UserScopedReset } from '../auth/user-scoped-reset';
 import { PUSH_BROWSER, type BrowserEnv } from './push-browser';
 import { devicePlace, isInAppBrowser, isIos } from './push-device';
 import { ProductEventsService, type InstallEvent } from '../services/product-events.service';
+import { HttpErrorResponse } from '@angular/common/http';
 
 /**
  * Où en est le push sur CET appareil (#666). Ordre de diagnostic : serveur, navigateur intégré,
@@ -231,7 +232,11 @@ export class PushService {
     if (!this.loaded(gen)) return false;
     const signal = this.abort.signal;
     try {
-      await this.api.removeDevice(id, signal);
+      await this.api.removeDevice(id, signal).catch((err: unknown) => {
+        // F12 (#1047) : 404 = appareil déjà retiré (purgé après un 410, ou depuis un autre appareil) :
+        // la suppression a eu lieu, on continue comme un succès (règle « 404 sur une suppression »).
+        if (!(err instanceof HttpErrorResponse && err.status === 404)) throw err;
+      });
       if (!this.current(gen)) return false;
       if (id === this.currentDeviceId()) {
         const sub = await this.browser.currentSubscription().catch(() => null);
