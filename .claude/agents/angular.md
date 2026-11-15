@@ -359,7 +359,7 @@ mentir. Sous 768px : 52px, la phrase longue (`.demo-banner-long`) tombe. Depuis 
 du haut n'a plus de bouton : il dit seulement « Mode démo » (le CTA est le bandeau du bas, ci-dessous).
 
 Bandeau d'inscription du bas (#1029) : `--demo-cta-h` (`.main-content.has-demo-cta`, tokens
-`--demo-cta-h-desktop` 56 px / `--demo-cta-h-mobile` 72 px de `theme.css`, **zone sûre du bas de
+`--demo-cta-h-desktop` 64 px / `--demo-cta-h-mobile` 72 px de `theme.css`, **zone sûre du bas de
 l'iPhone comprise**), même principe : une vue calée sur `100vh` retranche aussi
 `var(--demo-cta-h, 0px)` (Pré-session et Session live le font).
 
@@ -1464,14 +1464,19 @@ teaser Premium → `once('premium_seen')`. Admin : bloc « Entonnoir Premium » 
 `<main>`) seulement si `userStore.isDemo()`. **Seul** bouton « Créer mon compte » de la démo :
 - **Bandeau** collé en bas de la zone de contenu (`position: sticky; bottom: 0` dans `.main-content`
   en colonne flex, `margin-top: auto`) : visible en bas pendant le défilement, rangé APRÈS le contenu
-  en fin de page, donc jamais par-dessus un bouton. Texte « Ça te parle ? Crée ton compte :
-  **{N} jours de Premium offerts**, sans carte », N = `PREMIUM_SIGNUP_TRIAL_DAYS`. Aucun prix,
+  en fin de page, donc jamais par-dessus un bouton. Texte sur 3 lignes « Ça te parle ? Crée ton compte » /
+  « **{N} jours de Premium offerts** » / « sans carte », N = `PREMIUM_SIGNUP_TRIAL_DAYS`. Aucun prix,
   aucune promesse de gain.
 - **Téléphone + bouton « + » flottant** (journal… ; `styles.css`, #631 : `padding-bottom: 92px` sur
   `.main-content`) : en démo ce padding passe à 0 (sinon le sticky s'accroche 92 px au-dessus du bas),
   le « + » remonte à `var(--demo-cta-h) + 16px`, et `.demo-cta-fab-space` (80 px, juste avant le
   bandeau) garde la fin de page visible. Mesuré à 390 px : bandeau à 772 px, « + » 700-756, fin du
-  contenu 692. Texte du bandeau sur 3 lignes à 390 px, 4 à 320 px (12 px), dans les 72 px.
+  contenu 692.
+- **Texte sur 3 lignes, une phrase chacune** (#1041) : « Ça te parle ? Crée ton compte » /
+  « {N} jours de Premium offerts » (gras) / « sans carte » (`.demo-cta-line` en bloc). Hauteurs :
+  64 px sur ordinateur (texte 53 px), 72 px sur téléphone (texte 12 px, 45-47 px de 320 à 768 px) ;
+  sous 400 px le bouton « Créer mon compte » passe sur 2 lignes (84 px), sinon la 1re phrase
+  repasse à la ligne dès 375 px ; 11,5 px sous 340 px. Mesuré en prod avec les vraies polices.
 - **Croix** → pastille « Créer mon compte » à droite (rangée transparente, clics laissés au contenu) ;
   le bandeau revient en grand au `NavigationEnd` suivant.
 - **Relance unique** (`demo-cta.util.ts`, `relanceDue`) : après 60 s depuis l'arrivée (horodatage en
