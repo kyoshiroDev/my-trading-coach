@@ -32,12 +32,16 @@ export class OfferIntentHostComponent {
   private readonly offers = inject(OffersStore);
 
   constructor() {
-    // Lien vers une offre ouvert par un compte déjà Premium : on regarde si le fondateur lui est
-    // accessible (offres chargées une fois) ; sinon l'intention est oubliée.
+    // Lien vers une offre ouvert par un compte déjà Premium (essai d'inscription compris) : on regarde
+    // si le fondateur lui est accessible (offres chargées une fois) ; sinon seul `plan=founder` est
+    // oublié, un code partenaire du lien reste proposé (B3 #1013).
     effect(() => {
-      if (!this.intent.pending() || !this.userStore.isPremium()) return;
+      const pending = this.intent.pending();
+      if (!pending || !this.userStore.isPremium()) return;
       this.offers.load();
-      if (this.offers.offers() && !this.offers.founderAvailable()) this.intent.clear();
+      if (this.offers.offers() && !this.offers.founderAvailable() && (pending.plan !== null || !pending.promo)) {
+        this.intent.keepPromoOnly();
+      }
     });
   }
 
@@ -54,7 +58,9 @@ export class OfferIntentHostComponent {
     if (user.stripeSubscriptionStatus === 'active' || user.stripeSubscriptionStatus === 'past_due') return false;
     // Déjà Premium autrement, venu d'un lien : seulement si le fondateur lui est accessible
     // (rien tant que les offres ne sont pas chargées). Ouverture depuis un écran : inchangée.
-    if (this.intent.pending() && this.userStore.isPremium()) return this.offers.founderAvailable();
+    // Code partenaire : proposé même sans place fondateur (B3), offres chargées d'abord.
+    const fromLink = this.intent.pending();
+    if (fromLink && this.userStore.isPremium()) return this.offers.founderAvailable() || (!!fromLink.promo && !!this.offers.offers());
     return true;
   });
 }

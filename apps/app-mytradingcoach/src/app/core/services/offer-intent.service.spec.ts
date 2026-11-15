@@ -63,4 +63,15 @@ describe('OfferIntentService', () => {
     expect(new OfferIntentService().pending()).toBeNull();
     expect(s.capture('?promo=TRADER10', '/dashboard')).not.toBeNull();
   });
+
+  it('keepPromoOnly : oublie plan=founder, garde le code (persisté) ; sans code, efface (B3 #1013)', () => {
+    const s = new OfferIntentService();
+    s.capture('?plan=founder&promo=TRADER10&cta=email', '/register');
+    s.keepPromoOnly();
+    expect(s.pending()).toEqual({ plan: null, promo: 'TRADER10', cta: 'email' });
+    expect(new OfferIntentService().pending()).toEqual({ plan: null, promo: 'TRADER10', cta: 'email' });
+    s.capture('?plan=founder', '/register');
+    s.keepPromoOnly();
+    expect(s.pending()).toBeNull();
+  });
 });
