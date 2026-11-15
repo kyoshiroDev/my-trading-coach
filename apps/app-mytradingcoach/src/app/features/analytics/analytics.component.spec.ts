@@ -120,3 +120,28 @@ describe('AnalyticsComponent — currentMonthLabel (dashboard)', () => {
   });
 
 });
+
+// F1 (#1047) : une route analytics en 500 faisait lever les computed (value() sans hasValue()).
+describe('AnalyticsComponent — API en erreur', () => {
+  beforeEach(() => {
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()],
+    });
+  });
+
+  it('summary, heatmap, top actifs et setups en 500 : rien ne lève, loadError vrai', async () => {
+    const c = TestBed.runInInjectionContext(() => new AnalyticsComponent()) as unknown as Record<string, () => unknown>;
+    TestBed.tick();
+    const http = TestBed.inject(HttpTestingController);
+    for (const req of http.match((r) => /\/analytics\/(summary|by-hour|top-assets|by-setup)/.test(r.url))) {
+      req.flush('boom', { status: 500, statusText: 'Server Error' });
+    }
+    await new Promise((r) => setTimeout(r, 0));
+
+    expect(() => c['summary']()).not.toThrow();
+    expect(c['summary']()).toBeNull();
+    expect(() => [c['heatmapData'](), c['topAssets'](), c['setupData']()]).not.toThrow();
+    expect(c['loadError']()).toBe(true);
+  });
+});

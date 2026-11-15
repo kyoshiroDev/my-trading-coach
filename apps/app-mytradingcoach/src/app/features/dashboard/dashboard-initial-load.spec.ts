@@ -8,7 +8,7 @@ import { TestBed } from '@angular/core/testing';
 import { signal, WritableSignal, NO_ERRORS_SCHEMA } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { of } from 'rxjs';
 import { DashboardComponent } from './dashboard.component';
 import { UserStore } from '../../core/stores/user.store';
@@ -139,5 +139,27 @@ describe('Dashboard — pas de rechargement des analytics au premier chargement'
     fixture.detectChanges();
 
     expect(reloads).toHaveBeenCalledOnce();
+  });
+});
+
+// F1 (#1047) : le camembert FREE (setup-shares) n'était ni dans loadError ni dans reload() ; son
+// échec, lu sans hasValue(), faisait planter le rendu sans message ni « Réessayer ».
+describe('Dashboard — répartition des setups (FREE) en erreur', () => {
+  beforeEach(() => TestBed.resetTestingModule());
+
+  it('setup-shares en 500 : rien ne lève, loadError vrai, « Réessayer » la relance', async () => {
+    const { cmp } = setup(12, true);
+    const http = TestBed.inject(HttpTestingController);
+    for (const req of http.match((r) => r.url.includes('/analytics/setup-shares'))) {
+      if (!req.cancelled) req.flush('boom', { status: 500, statusText: 'Server Error' });
+    }
+    await new Promise((r) => setTimeout(r, 0));
+
+    expect(() => cmp.setupsDonutView()).not.toThrow();
+    expect(cmp.loadError()).toBe(true);
+
+    cmp.reload();
+    TestBed.tick();
+    expect(http.match((r) => r.url.includes('/analytics/setup-shares')).filter((r) => !r.cancelled)).toHaveLength(1);
   });
 });

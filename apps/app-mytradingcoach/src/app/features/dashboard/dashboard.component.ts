@@ -78,6 +78,7 @@ import { FloorReachedBannerComponent } from '../accounts/lost-account/floor-reac
 import { InactiveAccountsToggleComponent } from '../../shared/components/inactive-accounts-toggle/inactive-accounts-toggle.component';
 import { NO_AUTO_PERIOD, periodChosenByUser, periodOnSelection, type AutoPeriodState } from '../../core/utils/inactive-period.util';
 import { TRIAL_LABEL } from '@app/core/services/paywall-cta.service';
+import { resourceValue } from '@app/core/utils/resource-value';
 
 /**
  * Dashboard : état (période, compte, resources analytics), cadre des panneaux et états
@@ -251,7 +252,8 @@ export class DashboardComponent {
         this.activityResource.error() ||
         this.bySetupResource.error() ||
         this.byEmotionResource.error() ||
-        this.topAssetsResource.error()
+        this.topAssetsResource.error() ||
+        this.setupSharesResource.error()
       ),
   );
 
@@ -263,15 +265,16 @@ export class DashboardComponent {
       this.bySetupResource,
       this.byEmotionResource,
       this.topAssetsResource,
+      this.setupSharesResource,
     ]) {
       resource.reload();
     }
   }
 
-  protected readonly summary = computed(() => this.summaryResource.value()?.data ?? null);
+  protected readonly summary = computed(() => resourceValue(this.summaryResource)?.data ?? null);
 
   /** Top actifs par P&L (HBars) : largeur de barre précalculée sur le max absolu. */
-  protected readonly topAssets = computed(() => topAssetBars(this.topAssetsResource.value()?.data ?? []));
+  protected readonly topAssets = computed(() => topAssetBars(resourceValue(this.topAssetsResource)?.data ?? []));
 
   /**
    * Capital de base, source unique scopée au compte sélectionné : miroir EXACT
@@ -317,7 +320,7 @@ export class DashboardComponent {
       this.baseCapital(),
       this.currentCapital(),
       this.summary()?.totalPnl ?? 0,
-      this.equityCurveResource.value()?.data?.before,
+      resourceValue(this.equityCurveResource)?.data?.before,
     ),
   );
   /**
@@ -338,18 +341,18 @@ export class DashboardComponent {
     isMultiAccountView(
       this.selectedAccount.selectedAccountId(),
       this.selectedAccount.aggregateAccounts().length,
-      this.equityCurveResource.value()?.data?.maxDrawdownAccountCount,
+      resourceValue(this.equityCurveResource)?.data?.maxDrawdownAccountCount,
     ),
   );
   protected readonly maxDrawdown = computed(
     () =>
-      this.equityCurveResource.value()?.data?.maxDrawdown ??
+      resourceValue(this.equityCurveResource)?.data?.maxDrawdown ??
       (this.multiAccountView() ? 0 : Math.min(0, ...this.drawdownSeries())),
   );
   /** « sur le compte X » sous le drawdown max en vue multi-comptes ; null sinon. */
   protected readonly drawdownScope = computed(() => {
     if (!this.multiAccountView()) return null;
-    const data = this.equityCurveResource.value()?.data;
+    const data = resourceValue(this.equityCurveResource)?.data;
     return drawdownScopeLabel(data?.maxDrawdownAccountId, data?.maxDrawdown ?? 0, this.selectedAccount.accounts());
   });
   /**
@@ -364,7 +367,7 @@ export class DashboardComponent {
   );
   /** Points de la période, payouts reçus insérés (déduits des courbes de solde, pas du P&L). */
   protected readonly equityCurve = computed(() => {
-    const data = this.equityCurveResource.value()?.data;
+    const data = resourceValue(this.equityCurveResource)?.data;
     return withPayoutsByTrade(data?.points ?? [], data?.payouts);
   });
   /** Objectif de gain du compte sélectionné, tracé sur la courbe d'équité. */
@@ -374,9 +377,9 @@ export class DashboardComponent {
   /** P&L cumulé le long de la courbe : source de la courbe d'équité et des sparklines. */
   protected readonly eqSeries = computed(() => this.equityCurve().map((p) => p.cumulativePnl));
   protected readonly payoutSeries = computed(() => cumulativePayouts(this.equityCurve()));
-  protected readonly bySetup = computed(() => this.bySetupResource.value()?.data ?? []);
+  protected readonly bySetup = computed(() => resourceValue(this.bySetupResource)?.data ?? []);
   /** Stats par émotion (R moyen / win rate) : source du feedback coach. */
-  protected readonly byEmotion = computed(() => this.byEmotionResource.value()?.data ?? []);
+  protected readonly byEmotion = computed(() => resourceValue(this.byEmotionResource)?.data ?? []);
   /**
    * Chargement du dashboard : on affiche un squelette (jamais des zéros) tant que les
    * comptes ou les données de base (summary, courbe d'équité) ne sont PAS chargés, pour
@@ -533,7 +536,7 @@ export class DashboardComponent {
   protected readonly setupsDonutView = computed(() =>
     this.userStore.isPremium()
       ? setupsDonutFromStats(this.bySetup())
-      : setupsDonutFromShares(this.setupSharesResource.value()?.data ?? []),
+      : setupsDonutFromShares(resourceValue(this.setupSharesResource)?.data ?? []),
   );
 
   protected readonly emotionStats = computed(() => emotionSharesFromStats(this.byEmotion()));
@@ -545,9 +548,9 @@ export class DashboardComponent {
   protected readonly plTitle = computed(() => plTitleFor(this.plGranularity()));
   protected readonly plTooltip = computed(() => plTooltipFor(this.plGranularity()));
   /** Barres réelles de la carte « Trades pris » : trades par jour tradé de la période. */
-  protected readonly tradeBars = computed(() => tradeCountBars(this.activityResource.value()?.data?.days ?? []));
+  protected readonly tradeBars = computed(() => tradeCountBars(resourceValue(this.activityResource)?.data?.days ?? []));
   protected readonly plBuckets = computed(() => {
-    const days = this.activityResource.value()?.data?.days ?? null;
+    const days = resourceValue(this.activityResource)?.data?.days ?? null;
     return days === null
       ? null
       : buildPlBuckets(days, this.plGranularity(), this.periodRange(), (v) =>

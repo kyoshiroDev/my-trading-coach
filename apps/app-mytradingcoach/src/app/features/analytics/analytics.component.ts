@@ -42,6 +42,7 @@ import { isInactiveStatus } from '../../core/utils/account-status.util';
 import { rollingRange } from '../../core/utils/rolling-period.util';
 import { NO_AUTO_PERIOD, periodChosenByUser, periodOnSelection, type AutoPeriodState } from '../../core/utils/inactive-period.util';
 import { PaywallCtaService } from '@app/core/services/paywall-cta.service';
+import { resourceValue } from '@app/core/utils/resource-value';
 
 const MOCK_HEATMAP_CELLS = [
   0.75, 0.45, 0.8, 0.3, 0.65, 0.55, 0.2, 0.6, 0.7, 0.35, 0.85, 0.5, 0.4, 0.72,
@@ -147,7 +148,7 @@ export class AnalyticsComponent {
 
   // ── Computed dérivés des resources ──────────────────────────────────────
   protected readonly summary = computed(
-    () => this.summaryResource.value()?.data ?? null,
+    () => resourceValue(this.summaryResource)?.data ?? null,
   );
   /** Points de la période, payouts reçus insérés (déduits des courbes de solde, pas du P&L). */
   protected readonly equityCurve = computed(() =>
@@ -212,13 +213,13 @@ export class AnalyticsComponent {
     planObjectiveLine(this.selectedAccount.selected(), this.equityCurve()),
   );
   protected readonly heatmapData = computed(
-    () => this.heatmapResource.value()?.data ?? [],
+    () => resourceValue(this.heatmapResource)?.data ?? [],
   );
   protected readonly topAssets = computed(
-    () => this.topAssetsResource.value()?.data ?? [],
+    () => resourceValue(this.topAssetsResource)?.data ?? [],
   );
   protected readonly setupData = computed(
-    () => this.setupResource.value()?.data ?? [],
+    () => resourceValue(this.setupResource)?.data ?? [],
   );
 
   private readonly equityError = signal(false);
