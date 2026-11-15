@@ -14,6 +14,7 @@ import { DailyRecapApi, DailyRecap } from '../api/daily-recap.api';
 import { DebriefApi, DebriefObjective } from '../api/debrief.api';
 import { EcoCalendarApi, EcoCalendarData } from '../api/eco-calendar.api';
 import { UserStore } from './user.store';
+import { UserScopedReset } from '../auth/user-scoped-reset';
 import { POLLING_MS } from '../constants/polling.const';
 import { ToastService } from '../services/toast.service';
 import { EcoSocketService } from '../services/eco-socket.service';
@@ -81,6 +82,10 @@ export class SessionStore {
   });
 
   constructor() {
+    // Logout (#994) : la séance de l'utilisateur précédent ne survit pas. `activeSession` à null
+    // coupe aussi tous les pollings (switchMap ci-dessous) : plus de 401 en boucle sans jeton.
+    inject(UserScopedReset).register(() => this.reset());
+
     // Horloge 1 s pour le timer de session
     interval(1000)
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -121,6 +126,20 @@ export class SessionStore {
   }
 
   // ── Public API ────────────────────────────────────────────────────────────
+
+  /** Vide l'état propre à l'utilisateur (logout). */
+  reset(): void {
+    this.activeSession.set(null);
+    this.todayStats.set(null);
+    this.todayTrades.set([]);
+    this.selectedMood.set('CONFIDENT');
+    this.yesterdayRecap.set(null);
+    this.currentObjectives.set([]);
+    this.currentDebriefId.set(null);
+    this.triggerCloseModal.set(false);
+    this.sessionLoadError.set(false);
+    this.starting.set(false);
+  }
 
   loadSessionData(): void {
     this.sessionLoadError.set(false);
@@ -166,17 +185,27 @@ export class SessionStore {
     this.selectedMood.set(mood);
   }
 
+  /** Démarrage en cours : un 2e clic avant la réponse ne relance rien (#994). */
+  readonly starting = signal(false);
+
   startSession(accountId?: string): void {
+    // Double clic : le 2e POST clôturait la 1re séance (vide) côté API, restée dans l'historique.
+    if (this.starting()) return;
+    this.starting.set(true);
     this.sessionApi
       .startSession(this.selectedMood(), accountId)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (res) => {
+          this.starting.set(false);
           this.activeSession.set(res.data);
           this.refreshLiveStats();
         },
         // AVANT : échec muet, le bouton « Démarrer » semblait ne rien faire.
-        error: (err) => this.toast.error(apiErrorMessage(err, 'La session n’a pas pu démarrer. Réessaie.')),
+        error: (err) => {
+          this.starting.set(false);
+          this.toast.error(apiErrorMessage(err, 'La session n’a pas pu démarrer. Réessaie.'));
+        },
       });
   }
 

@@ -77,7 +77,7 @@ describe('Protocole Tradovate — fonctions pures', () => {
     expect([endpoint, id, query]).toEqual(['user/syncrequest', '1', '']);
     expect(JSON.parse(body)).toEqual({
       accounts: [EXT],
-      entityTypes: ['fill', 'fillPair', 'position', 'cashBalance', 'order', 'orderVersion'],
+      entityTypes: ['fill', 'fillPair', 'position', 'cashBalance', 'order', 'orderVersion', 'orderStrategyLink'],
     });
   });
 
@@ -304,15 +304,25 @@ describe('Protocole live — solde du compte', () => {
     const d = { cashBalances: [{ accountId: EXT, amount: 10, timestamp: '2026-10-03T10:00:00Z' }], positions: [] };
     expect(initialAccountState({ s: 200, i: 1, d }, EXT)).toEqual({
       balance: { amount: 10, at: new Date('2026-10-03T10:00:00Z') }, openPositions: 0, orders: [], orderVersions: [],
+      orderStrategyLinks: [], snapshotKeys: ['cashBalances', 'positions'],
     });
     expect(initialAccountState({ s: 200, i: 0, d }, EXT)).toBeNull();
     expect(initialAccountState({ s: 401, i: 1, d }, EXT)).toBeNull();
-    expect(initialAccountState({ s: 200, i: 1, d: {} }, EXT)).toEqual({ balance: null, openPositions: 0, orders: [], orderVersions: [] });
+    expect(initialAccountState({ s: 200, i: 1, d: {} }, EXT)).toEqual({
+      balance: null, openPositions: 0, orders: [], orderVersions: [], orderStrategyLinks: [], snapshotKeys: [],
+    });
   });
 
   it('état initial : ordres et versions de la séance transmis tels quels', () => {
     const d = { orders: [{ id: 1, accountId: EXT, ordStatus: 'Working' }], orderVersions: [{ id: 2, orderId: 1, orderType: 'Stop' }] };
     expect(initialAccountState({ s: 200, i: 1, d }, EXT)).toMatchObject(d);
+  });
+
+  it('état initial : liens de stratégie (#963) lus sous `orderStrategyLinks`, absents = vide, clés reçues relevées', () => {
+    const links = [{ id: 3, orderId: 1, orderStrategyId: 50 }];
+    expect(initialAccountState({ s: 200, i: 1, d: { orders: [], orderStrategyLinks: links } }, EXT))
+      .toMatchObject({ orderStrategyLinks: links, snapshotKeys: ['orderStrategyLinks', 'orders'] });
+    expect(initialAccountState({ s: 200, i: 1, d: { orders: [] } }, EXT)?.orderStrategyLinks).toEqual([]);
   });
 });
 
@@ -325,6 +335,8 @@ describe('Protocole live — ordres (#601)', () => {
       .toEqual({ entityType: 'order', eventType: 'Created', entity: { id: 1, ordStatus: 'Working' } });
     expect(orderEvent(props('orderVersion', { orderId: 1, stopPrice: 21_480 })))
       .toMatchObject({ entityType: 'orderVersion', entity: { orderId: 1 } });
+    expect(orderEvent(props('orderStrategyLink', { orderId: 1, orderStrategyId: 50 }, 'Created')))
+      .toEqual({ entityType: 'orderStrategyLink', eventType: 'Created', entity: { orderId: 1, orderStrategyId: 50 } });
     expect(orderEvent(props('fill', { id: 1 }))).toBeNull();
     expect(orderEvent({ s: 200, i: 1 })).toBeNull();
     expect(isTradeEvent(props('order', { accountId: EXT }) as never, EXT)).toBe(false);

@@ -47,7 +47,7 @@ export interface AdminStats {
   // Comptes supprimés (trace RGPD) : distinct du churn d'abonnement.
   comptesSupprimesMois: number; comptesSupprimesTotal: number;
   /** MRR réellement payé, découpé (#525). */
-  mrrBreakdown?: { normal: number; founder: number; partner: number };
+  mrrBreakdown?: { normal: number; founder: number; partner: number; referral?: number };
 }
 
 // ── Offre fondateur et codes partenaires (#525) ─────────────────────────────

@@ -1,5 +1,6 @@
 // Paramètres du compte démo : identité, comptes prop firm, instruments, profils de setups, hasard seedé.
 import { AccountType, DrawdownType } from '@prisma/client';
+import { roundCents } from '@mtc/shared';
 
 export const DEMO_EMAIL = 'demo@mytradingcoach.app';
 export const DEMO_NAME = 'Lucas Mercier';
@@ -105,5 +106,5 @@ export function rng(seed: number) {
 export type Rand = () => number;
 export const between = (r: Rand, [a, b]: readonly [number, number] | readonly number[]) => a + r() * (b - a);
 export const toTick = (v: number) => Math.max(TICK, Math.round(v / TICK) * TICK);
-export const round2 = (v: number) => Math.round(v * 100) / 100;
+export const round2 = (v: number) => roundCents(v);
 export const pick = <T>(r: Rand, arr: readonly T[]): T => arr[Math.floor(r() * arr.length)];

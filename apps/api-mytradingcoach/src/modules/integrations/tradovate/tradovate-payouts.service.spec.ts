@@ -148,6 +148,15 @@ describe('Filet : payouts déduits des clôtures officielles', () => {
     expect(balanceDrops(closes)[0]).toMatchObject({ changeType: 'balancedrop', confidence: 'certain', transactionId: 'balancedrop:2026-08-04' });
   });
 
+  it('montant arrondi au centime avec la règle unique roundCents (comme Postgres), pas Math.round', () => {
+    // 48 765,43 − 50 000,18 + 3,255 = −1 231,495 : Math.round(x × 100) donnait 1 231,49 (valeur binaire).
+    const drops = balanceDrops([
+      { tradeDate: '2026-10-05', closingBalance: 50_000.18, realizedPnl: 0 },
+      { tradeDate: '2026-10-06', closingBalance: 48_765.43, realizedPnl: -3.255 },
+    ]);
+    expect(drops.map((d) => d.amount)).toEqual([1_231.5]);
+  });
+
   it('même retrait à un jour près (bornes de séance)', () => {
     expect(sameWithdrawal('2026-10-01', '2026-10-02')).toBe(true);
     expect(sameWithdrawal('2026-10-01', '2026-10-03')).toBe(false);

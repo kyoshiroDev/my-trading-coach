@@ -21,16 +21,86 @@ describe('planFeeRepairs', () => {
     expect(plan.matched).toBe(1);
   });
 
-  it('fill partagé (ancienne répartition 2,18 / 0, recalcul 1,09 / 1,09) : aucun trade monté (#947)', () => {
-    // Sans garde-fou : A ignoré (plus haut), B monté à 1,09 → total 3,27 $ au lieu de 2,18 $.
+  describe('fill partagé : répartition au prorata (#950)', () => {
     const a = trade({ exit: 7753 });
     const b = trade({ exit: 7754 });
+    const computed = [
+      { ...a, commission: 1.09, _buyFillId: '1', _sellFillId: '2' },
+      { ...b, commission: 1.09, _buyFillId: '1', _sellFillId: '3' },
+    ];
+
+    it('ancienne répartition 2,18 / 0, recalcul 1,09 / 1,09 : les deux trades à 1,09, total inchangé', () => {
+      // Sans règle de groupe : A ignoré (plus haut), B monté à 1,09 → total 3,27 $ au lieu de 2,18 $.
+      const plan = planFeeRepairs(computed, [{ id: 'A', ...a, commission: 2.18 }, { id: 'B', ...b, commission: 0 }]);
+      expect(plan.updates).toEqual([{ id: 'A', commission: 1.09 }, { id: 'B', commission: 1.09 }]);
+      expect(plan.redistributed).toBe(2);
+      expect(plan.feesAdded).toBe(0);
+      expect(plan.skippedShared).toBe(0);
+    });
+
+    it('frais incomplets en base (0,59 / 0) : répartis ET complétés, total 2,18 $', () => {
+      const plan = planFeeRepairs(computed, [{ id: 'A', ...a, commission: 0.59 }, { id: 'B', ...b, commission: 0 }]);
+      expect(plan.updates).toEqual([{ id: 'A', commission: 1.09 }, { id: 'B', commission: 1.09 }]);
+      expect(plan.feesAdded).toBe(1.59);
+    });
+
+    it('déjà au prorata : rien à écrire', () => {
+      const plan = planFeeRepairs(computed, [{ id: 'A', ...a, commission: 1.09 }, { id: 'B', ...b, commission: 1.09 }]);
+      expect(plan.updates).toEqual([]);
+      expect(plan.unchanged).toBe(2);
+    });
+
+    it('total du groupe plus élevé en base (frais saisis à la main) : jamais baissé, groupe ignoré', () => {
+      const plan = planFeeRepairs(computed, [{ id: 'A', ...a, commission: 5 }, { id: 'B', ...b, commission: 0 }]);
+      expect(plan.updates).toEqual([]);
+      expect(plan.skippedShared).toBe(2);
+    });
+
+    it('un trade du groupe absent de la base : groupe ignoré (le fill serait compté à moitié)', () => {
+      const plan = planFeeRepairs(computed, [{ id: 'A', ...a, commission: 2.18 }]);
+      expect(plan.updates).toEqual([]);
+      expect(plan.skippedShared).toBe(1);
+      expect(plan.notFound).toBe(1);
+    });
+
+    it('frais indisponibles pour un trade du groupe : groupe ignoré', () => {
+      const plan = planFeeRepairs(
+        [computed[0], { ...computed[1], commission: undefined }],
+        [{ id: 'A', ...a, commission: 2.18 }, { id: 'B', ...b, commission: 0 }],
+      );
+      expect(plan.updates).toEqual([]);
+      expect(plan.skippedShared).toBe(2);
+    });
+
+    it('groupe en chaîne (fill 2 partagé par B et C) : les trois répartis ensemble', () => {
+      const c = trade({ exit: 7755 });
+      const plan = planFeeRepairs(
+        [
+          { ...a, commission: 1, _buyFillId: '1', _sellFillId: '9' },
+          { ...b, commission: 1, _buyFillId: '1', _sellFillId: '2' },
+          { ...c, commission: 1, _buyFillId: '3', _sellFillId: '2' },
+        ],
+        [{ id: 'A', ...a, commission: 2 }, { id: 'B', ...b, commission: 1 }, { id: 'C', ...c, commission: 0 }],
+      );
+      expect(plan.updates).toEqual([{ id: 'A', commission: 1 }, { id: 'C', commission: 1 }]);
+      expect(plan.unchanged).toBe(1);
+      expect(plan.feesAdded).toBe(0);
+    });
+  });
+
+  it('trade stocké avec l’ancien arrondi toFixed (39,84) face au recalcul roundCents (39,845 → 39,85) : retrouvé (B1, #981)', () => {
     const plan = planFeeRepairs(
-      [{ ...a, commission: 1.09, _buyFillId: '1', _sellFillId: '2' }, { ...b, commission: 1.09, _buyFillId: '1', _sellFillId: '3' }],
-      [{ id: 'A', ...a, commission: 2.18 }, { id: 'B', ...b, commission: 0 }],
+      [trade({ pnl: 39.85, commission: 4.36 })],
+      [{ id: 't1', ...trade({ pnl: 39.84, commission: 1.18 }) }],
     );
-    expect(plan.updates).toEqual([]);
-    expect(plan.skippedShared).toBe(2);
+    expect(plan.matched).toBe(1);
+    expect(plan.notFound).toBe(0);
+    expect(plan.updates).toEqual([{ id: 't1', commission: 4.36 }]);
+  });
+
+  it('contre-épreuve : 2 centimes d’écart → non retrouvé', () => {
+    const plan = planFeeRepairs([trade({ pnl: 39.86, commission: 4.36 })], [{ id: 't1', ...trade({ pnl: 39.84, commission: 1.18 }) }]);
+    expect(plan.notFound).toBe(1);
   });
 
   it('contre-épreuve : frais déjà justes → aucune mise à jour', () => {
@@ -175,14 +245,14 @@ describe('TradovateFeesRepairService', () => {
 describe('TradovateAdminController', () => {
   it('essai par défaut, écriture seulement avec apply=true', async () => {
     const repair = { start: vi.fn().mockResolvedValue(true), lastReport: vi.fn() };
-    const ctrl = new TradovateAdminController(repair as never);
+    const ctrl = new TradovateAdminController(repair as never, {} as never);
     expect(await ctrl.repairFees()).toEqual({ started: true, apply: false });
     expect(await ctrl.repairFees('1')).toEqual({ started: true, apply: false });
     expect(await ctrl.repairFees('true')).toEqual({ started: true, apply: true });
   });
 
   it('réparation déjà en cours → 409', async () => {
-    const ctrl = new TradovateAdminController({ start: vi.fn().mockResolvedValue(false) } as never);
+    const ctrl = new TradovateAdminController({ start: vi.fn().mockResolvedValue(false) } as never, {} as never);
     await expect(ctrl.repairFees()).rejects.toMatchObject({ status: 409 });
   });
 

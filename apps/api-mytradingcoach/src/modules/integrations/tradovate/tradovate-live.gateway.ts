@@ -53,7 +53,8 @@ export class TradovateLiveGateway implements OnGatewayInit, OnGatewayConnection,
       // Nouveau solde : alertes prop firm (Premium) évaluées sur le worker titulaire, une fois.
       // Nouveaux trades reçus EN DIRECT : anti-tilt (Premium), même worker, une fois. Pas sur le
       // rattrapage à l'ouverture de l'app : un nudge après coup n'a plus de sens.
-      if (event === 'tradovate:trades' && (payload as LiveTradesEvent).source === 'live') {
+      // Anti-tilt : sur un trade NOUVEAU seulement (une position mise à jour n'est pas un trade de plus).
+      if (event === 'tradovate:trades' && (payload as LiveTradesEvent).source === 'live' && (payload as LiveTradesEvent).created > 0) {
         this.tilt.schedule(userId, (payload as LiveTradesEvent).accountId, (e, p) => {
           this.server.to(userRoom(userId)).emit(e, p);
         });

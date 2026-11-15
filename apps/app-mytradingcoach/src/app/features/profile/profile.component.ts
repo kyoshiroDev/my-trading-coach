@@ -12,8 +12,7 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { map, finalize } from 'rxjs/operators';
+import { finalize } from 'rxjs/operators';
 import {
   LucideDynamicIcon,
   LucidePencil as Pencil,
@@ -55,7 +54,7 @@ import {
 import { ConfirmService, DialogDirective } from '@mtc/front-ui';
 import { OffersStore } from '../../core/stores/offers.store';
 import { PRICING } from '../../core/constants/pricing.const';
-import { PARTNER_FOREVER_LABEL, partnerDurationLabel } from '../../shared/components/plan-modal/plan-modal.component';
+import { PARTNER_FOREVER_LABEL } from '../../shared/components/plan-modal/plan-modal.component';
 import { searchLocalInstruments, sessionLabel, styleEmoji, styleLabel, withAsset, withoutAsset } from './profile.helpers';
 
 type ProfileTab = 'trader' | 'params';
@@ -91,10 +90,6 @@ export class ProfileComponent implements OnInit {
   protected readonly offersStore = inject(OffersStore);
   protected readonly PRICING = PRICING;
 
-  protected readonly checkoutParam = toSignal(
-    this.route.queryParamMap.pipe(map((p) => p.get('checkout'))),
-  );
-
   // Onglets Profil trader / Paramètres (deep-link ?tab=params)
   protected readonly activeProfileTab = signal<ProfileTab>('trader');
 
@@ -114,6 +109,14 @@ export class ProfileComponent implements OnInit {
    * terminé en avance) n'est plus « en essai » même si l'essai d'inscription court encore.
    */
   protected readonly subState = computed(() => subscriptionState(this.userStore.user() ?? { plan: 'FREE' }));
+  /**
+   * Abonnement Stripe en cours (payant ou en essai) : seul cas avec un portail de facturation à
+   * ouvrir. ADMIN / BETA / Premium manuel sans abonnement n'ont pas de client Stripe (B10 #1013).
+   */
+  protected readonly hasBillingPortal = computed(() => {
+    const kind = this.subState().kind;
+    return kind === 'paying' || kind === 'subscription_trial';
+  });
   /** Essai d'abonnement en cours, non annulé : premier prélèvement à venir. */
   protected readonly isInTrial = computed(() => this.subState().kind === 'subscription_trial' && !this.subState().cancelAt);
   /** Fin programmée d'un essai annulé ou d'un abonnement résilié : plus aucun prélèvement. */
@@ -140,16 +143,17 @@ export class ProfileComponent implements OnInit {
     const end = this.trialEndsAt();
     return end ? calendarDaysUntil(end, new Date()) : 0;
   });
+  /** Libellé des jours restants, comme le bandeau : « dernier jour » le jour de la fin (B11 #1013). */
+  protected readonly trialLeftLabel = computed(() => {
+    const days = this.trialDaysLeft();
+    if (days <= 0) return 'dernier jour';
+    return `il te reste ${days} jour${days > 1 ? 's' : ''}`;
+  });
 
   // Compte : nom
   protected readonly editingName = signal(false);
   protected readonly nameInput = signal('');
   protected readonly isSavingName = signal(false);
-
-  // Compte : email
-  protected readonly editingEmail = signal(false);
-  protected readonly emailInput = signal('');
-  protected readonly isSavingEmail = signal(false);
 
   // Compte : mot de passe
   protected readonly passwordResetSent = signal(false);
@@ -237,12 +241,8 @@ export class ProfileComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    if (this.route.snapshot.queryParamMap.get('checkout') === 'success') {
-      this.userStore.refreshUser();
-      this.offersStore.refresh();
-    } else {
-      this.offersStore.load();
-    }
+    // Retour de Stripe (?checkout=) : traité au niveau de l'app (CheckoutReturnService).
+    this.offersStore.load();
     // Deep-link onglet : ?tab=params ouvre directement l'onglet Paramètres.
     if (this.route.snapshot.queryParamMap.get('tab') === 'params') {
       this.activeProfileTab.set('params');
@@ -360,9 +360,12 @@ export class ProfileComponent implements OnInit {
     this.editingSetup.set(null);
   }
 
-  protected archiveSetup(id: string): void { this.setupsStore.archive(id); }
-  protected restoreSetup(id: string): void { this.setupsStore.restore(id); }
-  protected deleteSetup(id: string): void { this.setupsStore.remove(id); }
+  // Refus de l'API affiché (#994) : avant, le setup réapparaissait sans explication (ex. « jamais
+  // utilisé » périmé → 400 « archive-le plutôt »).
+  private readonly setupError = (msg: string) => this.toast.error(msg);
+  protected archiveSetup(id: string): void { this.setupsStore.archive(id, this.setupError); }
+  protected restoreSetup(id: string): void { this.setupsStore.restore(id, this.setupError); }
+  protected deleteSetup(id: string): void { this.setupsStore.remove(id, this.setupError); }
 
   // ── Onglets ───────────────────────────────────────────────────────────────
   protected setProfileTab(tab: ProfileTab): void {
@@ -396,18 +399,22 @@ export class ProfileComponent implements OnInit {
   });
 
   /** Mensuel ↔ annuel par notre flux (le portail ne change pas de formule) : abonnement payant. */
+  // Prix calculé par l'API (`intervalSwitch`), même calcul que le changement : fondateur, code
+  // partenaire ou −10 % filleul pour les mois de remise RESTANTS seulement (B14 #1013).
   protected readonly intervalSwitch = computed(() => {
     const o = this.offersStore.offers();
-    if (!o || o.subscription.status !== 'active' || !o.subscription.interval) return null;
-    const toYear = o.subscription.interval === 'month';
+    const sw = o?.intervalSwitch;
+    if (!o || o.subscription.status !== 'active' || !sw) return null;
+    const toYear = sw.to === 'year';
+    const unit = toYear ? '€/an' : '€/mois';
+    const eur = (n: number) =>
+      Number.isInteger(n) ? `${n}` : n.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     let price: string;
-    if (o.founder.isFounder) price = toYear ? `${PRICING.founder.yearly} €/an` : `${PRICING.founder.monthly} €/mois`;
-    else if (o.partner) {
-      const p = o.partner;
-      price = `${toYear ? `${p.priceAnnualEur} €/an` : `${p.priceMonthlyEur} €/mois`} ${partnerDurationLabel(
-        p.durationMonths, toYear ? 'yearly' : 'monthly')}`;
-    } else price = toYear ? `${PRICING.premium.yearly} €/an` : `${PRICING.premium.monthly} €/mois`;
-    return { to: (toYear ? 'year' : 'month') as 'year' | 'month', label: toYear ? "Passer à l'annuel" : 'Passer au mensuel', price };
+    if (sw.firstEur === sw.normalEur) price = `${eur(sw.normalEur)} ${unit}`;
+    else if (!sw.discountEndsAt) price = `${eur(sw.firstEur)} ${unit} ${PARTNER_FOREVER_LABEL}`;
+    else if (toYear) price = `${eur(sw.firstEur)} € la 1re année, puis ${eur(sw.normalEur)} €/an`;
+    else price = `${eur(sw.firstEur)} €/mois jusqu'au ${new Date(sw.discountEndsAt).toLocaleDateString('fr-FR')}, puis ${eur(sw.normalEur)} €/mois`;
+    return { to: sw.to, label: toYear ? "Passer à l'annuel" : 'Passer au mensuel', price };
   });
   protected readonly changingInterval = signal(false);
 
@@ -475,19 +482,6 @@ export class ProfileComponent implements OnInit {
       });
   }
 
-  protected startEditEmail() {
-    this.emailInput.set(this.userStore.user()?.email ?? '');
-    this.editingEmail.set(true);
-  }
-
-  protected saveEmail() {
-    const email = this.emailInput().trim();
-    if (!email) return;
-    this.saveUserField({ email }, this.isSavingEmail, () =>
-      this.editingEmail.set(false),
-    );
-  }
-
   protected startEditName() {
     this.nameInput.set(this.userStore.user()?.name ?? '');
     this.editingName.set(true);
@@ -516,7 +510,10 @@ export class ProfileComponent implements OnInit {
           done();
           loadingSig.set(false);
         },
-        error: () => loadingSig.set(false),
+        error: (err) => {
+          loadingSig.set(false);
+          this.toast.error(apiErrorMessage(err, 'La modification n’a pas pu être enregistrée. Réessaie.'));
+        },
       });
   }
 
@@ -531,9 +528,7 @@ export class ProfileComponent implements OnInit {
           this.passwordResetSent.set(true);
           setTimeout(() => this.passwordResetSent.set(false), 4000);
         },
-        error: () => {
-          /* silently ignore : user stays on page */
-        },
+        error: () => this.toast.error('L’e-mail de réinitialisation n’a pas pu partir. Réessaie dans un instant.'),
       });
   }
 
@@ -768,12 +763,22 @@ export class ProfileComponent implements OnInit {
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe({
-        error: () => this.tradingAssets.set(prev), // rollback optimiste
+        error: () => {
+          this.tradingAssets.set(prev); // rollback optimiste
+          this.toast.error('Tes actifs n’ont pas pu être enregistrés. Réessaie.');
+        },
       });
   }
 
+  /**
+   * Mot de confirmation, sans tenir compte de la casse ni des espaces (#994) : la majuscule
+   * automatique d'iPhone (« Supprimer ») laissait le bouton désactivé. Taper le mot suffit à montrer
+   * l'intention ; la casse n'ajoute aucune sécurité.
+   */
+  protected readonly deleteConfirmed = computed(() => this.deleteInput().trim().toUpperCase() === 'SUPPRIMER');
+
   protected confirmDelete() {
-    if (this.deleteInput() !== 'SUPPRIMER') return;
+    if (!this.deleteConfirmed()) return;
     this.isDeleting.set(true);
     this.deleteError.set(null);
     this.usersApi

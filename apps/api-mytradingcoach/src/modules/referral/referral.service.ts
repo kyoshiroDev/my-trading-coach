@@ -4,6 +4,7 @@ import { AdminNotifier } from '../admin-push/admin-notifier.service';
 import { ADMIN_PUSH_MESSAGES } from '../admin-push/push-messages';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
+import { roundCents } from '@mtc/shared';
 import { ResendService } from '../resend/resend.service';
 import { StripeCustomerService } from '../stripe/stripe-customer.service';
 import { buildStatementPdf } from './referral-statement.pdf';
@@ -78,11 +79,12 @@ export class ReferralService {
 
     for (let attempt = 0; attempt < 10; attempt++) {
       const candidate = attempt === 0 ? base : `${base.slice(0, 12)}${randomSuffix(4)}`.slice(0, 20);
-      const exists = await this.prisma.user.findUnique({
-        where: { referralCode: candidate },
+      // Libre = porté par personne, jamais utilisé par un filleul et jamais retiré (A5 #1013).
+      const exists = await this.prisma.user.findFirst({
+        where: { OR: [{ referralCode: candidate }, { referredBy: candidate }] },
         select: { id: true },
       });
-      if (!exists) return candidate;
+      if (!exists && !(await this.prisma.retiredReferralCode.findUnique({ where: { code: candidate } }))) return candidate;
     }
     return `REF${randomSuffix(8)}`;
   }
@@ -90,6 +92,11 @@ export class ReferralService {
   // ── ÉTAPE 4 : stats parrain ─────────────────────────────────────────────────
 
   async getMyReferral(userId: string) {
+    // Démo en lecture seule (#993) : aucun code écrit par ce GET, aucun lien distribué.
+    const me = await this.prisma.user.findUnique({ where: { id: userId }, select: { isDemo: true } });
+    if (me?.isDemo) {
+      return { referralCode: null, link: null, invited: 0, subscribed: 0, freeMonthsEarned: 0, creditAvailable: 0, filleuls: [] };
+    }
     const code = await this.ensureReferralCode(userId);
 
     const filleuls = await this.prisma.user.findMany({
@@ -245,7 +252,7 @@ export class ReferralService {
 
     const period = new Date().toISOString().slice(0, 7); // YYYY-MM
     const commissions = await this.prisma.referralCommission.findMany({
-      where: { ambassadorId: userId, period },
+      where: { ambassadorId: userId, period, status: { not: 'canceled' } },
       select: { amount: true, referredUserId: true },
     });
 
@@ -262,7 +269,7 @@ export class ReferralService {
       filleul: nameById.get(c.referredUserId) ?? 'Filleul',
       amount: c.amount,
     }));
-    const total = +lines.reduce((s, l) => s + l.amount, 0).toFixed(2);
+    const total = roundCents(lines.reduce((s, l) => s + l.amount, 0));
 
     const pdf = await buildStatementPdf({
       ambassadorName: amb.name ?? amb.email,

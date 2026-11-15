@@ -133,6 +133,17 @@ describe('TradovateLiveSocketService — temps réel Tradovate côté app', () =
     expect(alerts.handleTilt).toHaveBeenCalledWith(e);
   });
 
+  it('position déjà importée qui a grandi (#956) : écrans rechargés, sans toast', () => {
+    const { service, toast, accounts } = setup(false);
+    const seen: TradovateLiveTrades[] = [];
+    service.imported$.subscribe((e) => seen.push(e));
+    service.connect();
+    fake.sockets[0].emit('tradovate:trades', { ...trades(0), updated: 1 });
+    expect(toast.success).not.toHaveBeenCalled();
+    expect(accounts.load).toHaveBeenCalled();
+    expect(seen).toHaveLength(1);
+  });
+
   it('rien de créé → silence', () => {
     const { service, toast } = setup();
     service.connect();

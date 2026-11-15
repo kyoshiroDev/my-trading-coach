@@ -21,6 +21,8 @@ const element = (handlers: Record<string, Handler>) => ({
 });
 /** Session Stripe : chargée seulement quand le test appelle `loadSession()`. */
 let loadSession: () => void = () => undefined;
+/** `actions.confirm` de Stripe : remplacé par test (B16). */
+let confirmMock: (o: unknown) => Promise<unknown> = vi.fn();
 const SESSION = { email: null, total: { total: { minorUnitsAmount: 4900 } } };
 vi.mock('@stripe/stripe-js', () => ({
   loadStripe: vi.fn(async () => ({
@@ -28,7 +30,7 @@ vi.mock('@stripe/stripe-js', () => ({
       createPaymentElement: () => element(paymentHandlers),
       createExpressCheckoutElement: () => element(expressHandlers),
       loadActions: () => new Promise((resolve) => {
-        loadSession = () => resolve({ type: 'success', actions: { getSession: () => SESSION, confirm: vi.fn() } });
+        loadSession = () => resolve({ type: 'success', actions: { getSession: () => SESSION, confirm: (o: unknown) => confirmMock(o) } });
       }),
     }),
   })),
@@ -179,5 +181,43 @@ describe('Page de paiement : formulaire affiché une fois posé (#829)', () => {
     expect(w.isDone()).toBe(false); // 4,5 s
     await w.advance(600);
     expect(w.isDone()).toBe(true);
+  });
+});
+
+/** B16 (#1013) : un paiement express jamais laissé en suspens, un bouton jamais bloqué. */
+describe('Page de paiement : confirmation robuste (B16)', () => {
+  beforeEach(reset);
+  afterEach(() => TestBed.resetTestingModule());
+
+  const expressEvent = () => ({ paymentFailed: vi.fn() });
+
+  it('rejet de actions.confirm : message d’erreur, bouton rendu, feuille express refermée en échec', async () => {
+    const { settle, fixture } = await mount();
+    loadSession();
+    await settle();
+    confirmMock = vi.fn(() => Promise.reject(new Error('network')));
+    const cmp = fixture.componentInstance as unknown as {
+      confirm(e?: unknown): Promise<void>; paying(): boolean; payError(): string | null;
+    };
+    const e = expressEvent();
+    await cmp.confirm(e);
+    expect(cmp.paying()).toBe(false);
+    expect(cmp.payError()).toBeTruthy();
+    expect(e.paymentFailed).toHaveBeenCalled();
+  });
+
+  it('confirmation express pendant un paiement en cours : refusée explicitement (paymentFailed), pas ignorée', async () => {
+    const { settle, fixture } = await mount();
+    loadSession();
+    await settle();
+    let release: (v: unknown) => void = () => undefined;
+    confirmMock = vi.fn(() => new Promise((r) => { release = r; }));
+    const cmp = fixture.componentInstance as unknown as { confirm(e?: unknown): Promise<void> };
+    const first = cmp.confirm();
+    const e = expressEvent();
+    await cmp.confirm(e);
+    expect(e.paymentFailed).toHaveBeenCalled();
+    release({ type: 'error', error: { message: 'Carte refusée' } });
+    await first;
   });
 });

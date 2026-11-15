@@ -102,6 +102,8 @@ GET    /api/session/today/stats        JWT → stats live (totalPnl, winRate, tr
 # 1 session = 1 compte (#457) : un trade n'est rattaché à la session active (création, synchro
 # broker, rattachement à la clôture) que s'il est sur SON compte ; la clôture ne compte que ces
 # trades. Le débrief et la carte « Publier » lisent les totaux de la session clôturée.
+# Et seulement s'il est daté de la journée CME de la session (#994) : un import d'historique ou une
+# synchro complète pendant une séance ouverte n'y rattache pas les trades passés.
 POST   /api/session/trades/:id/close   JWT → clôturer un trade (exitPrice → détection SL/TP/Manuel)
 
 GET    /api/eco-calendar/today         PREMIUM → events du jour + analyse IA (cache Redis 1h)
@@ -273,10 +275,16 @@ POST   /api/test/upgrade-user          NODE_ENV=test uniquement
   la liste admin). Corollaire : un `AMBASSADOR` doit **toujours** avoir un code — les
   changements de rôle passent par `AmbassadorService.promote()` / `revoke()`, jamais par
   un `user.update({ data: { role } })` direct. `UsersService.setRole` y délègue.
+  `promote` refuse ADMIN / BETA_TESTER (400, jamais rétrogradés) ; `revoke` refuse tout rôle autre
+  qu'AMBASSADOR (#1013 A6). `GET /ambassador/new-count?since=` invalide → 400.
+  Compte démo : jamais parrain. `GET /referral/me` ne lui écrit pas de code (réponse vide), l'inscription
+  ignore un code démo et `referralApplies` refuse un parrain `isDemo`.
   Backfill : `tools/scripts/backfill/ambassador-codes.ts` (idempotent).
 - **Règle de coexistence du parrainage** : c'est le **rôle du parrain** qui décide, dans
   `processReferral` (`stripe-referral.service.ts`). Parrain `AMBASSADOR` → commission cash 20 %
-  (`ReferralCommission`), **jamais** de mois offert. Parrain `USER` → mois offert
+  (`ReferralCommission`, une ligne par facture `invoiceId`, A1 #1013), **jamais** de mois offert.
+  Remboursement intégral du 1er paiement du filleul : `settleReferralRewardsOnRefund` (webhook
+  `charge.refunded`, A4). Parrain `USER` → mois offert
   (`ReferralReward`) + coupon filleul au checkout, **jamais** les 20 %. Auto-parrainage
   ignoré. Couvert par `stripe-referral.service.spec.ts` (unitaire) et
   `referral-coexistence.int-spec.ts` (intégration, vraie stack).
@@ -786,8 +794,23 @@ canActivate(ctx: ExecutionContext): boolean {
   mode test le 27/10 : il arrive juste avant `payment_action_required` ; un refus de carte compte 1
   tentative) → pas d'e-mail d'échec. E-mails réservation et 3D Secure « une seule fois »
   (`sendOnce`, marque Redis `stripe:mail-once:*` 30 j, retirée si l'envoi échoue) : une tâche BullMQ
-  rejouée ne les renvoie pas. Journaux : nom de l'erreur seulement.
-  Premium offert par l'admin (`offerPremium`) : 409 si abonnement `active` / `trialing` (une réservation
+  rejouée ne les renvoie pas. Journaux : nom de l'erreur seulement. Bienvenue partenaire aussi
+  derrière `sendOnce` (`partner-welcome:<sub>`) : `claim` rend l'utilisation existante au rejeu.
+  **Bascule essai 49 € → fondateur** (#1013 A7) : `cancelSupersededTrials` passe EN DERNIER (après place,
+  garantie, parrainage) et seulement si une place a été prise ; échec de la liste ou d'une annulation →
+  alerte admin une fois (`sendOnce`) puis erreur (BullMQ rejoue). Paiement fondateur sans place : l'essai
+  est gardé. `syncSubscription` ignore un AUTRE abonnement encore actif tant qu'une place fondateur
+  `ACTIVE` pointe sur l'abonnement en cours (jamais l'essai à 49 € suivi à la place du fondateur).
+  **Clés d'idempotence Stripe = mêmes paramètres** : checkout sans réservation
+  `checkout-<user>-<offer>-<ui>-<price>-<expires_at>` (un créneau de 30 min avec un `expires_at` qui change
+  → `idempotency_error` → 500) ; changement d'intervalle `interval-<sub>-<prix cible>-<latest_invoice>`
+  (double clic = même clé, aller-retour dans les 24 h = nouvelle clé). Refus du passage à l'annuel pendant
+  une réservation fondateur : « Changement impossible pendant ta réservation fondateur : tu pourras le
+  faire après ton premier prélèvement, le JJ/MM. »
+  `cta` du checkout (`CreateCheckoutDto`) : une valeur hors `OFFER_CTAS` est IGNORÉE (`@Transform` →
+  `undefined`), jamais un 400 qui bloque le paiement.
+  Premium offert par l'admin (`offerPremium`) : pose le rôle Discord Premium (si Discord lié, panne non
+  bloquante) et vide `billing:status:<id>`. 409 si abonnement `active` / `trialing` (une réservation
   est en `trialing`) ou `past_due` / `unpaid` (« Paiement Stripe en attente : régler d'abord
   l'abonnement »). La fiche admin (`GET /admin/users/:id`) expose `offer.founder.reserved` et
   `firstChargeAt` ; l'admin affiche la raison sous le bouton désactivé (réservation : date du premier
@@ -866,6 +889,17 @@ puis RECALCULÉS par `refreshClosedSessionTotals` (`session/refresh-session-tota
 `removeBrokerImported`, `reassignAccount`, `refreshAfterFeesRepair`, et `SessionService.closeTrade`.
 Toute nouvelle écriture sur un trade rattaché à une séance passe par lui.
 
+### Réparation des séances : trades d'autres journées (#1000)
+Avant N1 (#994, lot 1b), un import d'historique pendant une séance y rattachait tous les trades passés.
+`POST /api/admin/sessions/repair-days` (ADMIN, `session/admin-sessions.controller.ts`, synchrone, la
+réponse est le rapport) : essai par défaut, `?apply=true` écrit. Règle (`session/session-days-repair.ts`,
+pures) : trade hors de la journée CME de sa séance → séance de SA journée si une seule compatible (même
+utilisateur, même compte ou séance sans compte), sinon `sessionId` null (rapport : `detachedNoSession` / `detachedAmbiguous`) ; trade d'un autre compte que sa
+séance (#457) non traité. Avant écriture : sauvegarde JSONL (rattachements + totaux d'avant) en Redis
+30 j, `GET …/repair-days/backup?at=AAAAMMJJ-HHMM` ; déplacements conditionnels, puis
+`refreshClosedSessionTotals` et invalidation du cache analytics. Verrou Redis, comptes démo exclus.
+Effet voulu : un trade sans émotion saisie prend l'humeur de sa nouvelle séance (`inheritedEmotion`).
+
 ### Filtre Gagnants / Perdants / BE du journal (#947)
 Classé sur le NET arrondi (`TRADE_NET_SQL` = `round(pnl − |commission|, 2)`), comme les stats. Prisma ne
 sait pas comparer `pnl − |commission|` : la liste passe par `resolveTradeWhere` (ids sélectionnés par
@@ -923,16 +957,20 @@ Filets posés par `DemoSeedCron` (`modules/admin/demo-seed.cron.ts`) :
   suivante commence) → aucun trade du jour, position ouverte à 22:50 ; avant 00:40 → position de la
   dernière séance à 21:40. **Week-end (décision de Greg du 2026-11-13, #977)** : marché fermé,
   **ni session live ni position ouverte** ; la dernière séance est celle du vendredi (`kind:
-  'yesterday'`), CLÔTURÉE avec humeur et réflexion. `GET /sessions/today` la sert au compte démo
-  (`getTodaySession(userId, isDemo)` : séance clôturée depuis le vendredi 00:00, démo seulement ;
-  les vrais comptes gardent « séance clôturée du jour ») → l'écran Session du jour s'ouvre sur le
+  'yesterday'`), CLÔTURÉE avec humeur et réflexion. `GET /session/today` la sert au compte démo
+  (`getTodaySession(userId, isDemo)` : séance clôturée depuis le début de la journée CME du vendredi,
+  démo seulement ; les vrais comptes gardent la journée CME en cours) → l'écran Session du jour s'ouvre sur le
   Débrief, jamais sur « Démarrer la session » (#880). Aucun trade un samedi / dimanche (garde-fou
   `assertDemoCalendar`, il couvre aussi `openTrade`). `isStale` : en semaine, re-seed si aucune
   session n'est active pour la journée de trading en cours (`activeSessionWhere`) ; le week-end,
   re-seed s'il reste une session ACTIVE ou une position ouverte (seed du vendredi soir) ; toujours
   re-seed si le dernier trade CLÔTURÉ est antérieur à la séance attendue. Re-seed 45 min en
   semaine : gardé (même décision).
-- **Trade encore ouvert gardé après minuit** : `getTodayTrades` = trades du jour **ou** trade sans
+- **« Aujourd'hui » = journée de trading CME**, jamais minuit serveur : `getTodayTrades`,
+  `getTodaySession` et le rattachement des trades à la clôture (`closeSession`, fenêtre
+  `[tradingDayStart, tradingDayEnd[`) utilisent les mêmes bornes que la session active (audit des
+  chiffres, lot 3 : pendant les semaines de décalage d'heure, un trade à 23:30 Paris sortait de la carte live).
+- **Trade encore ouvert gardé après la bascule** : `getTodayTrades` = trades du jour **ou** trade sans
   P&L rattaché à la session active (`sessionId`, `pnl: null`). Vaut pour tous les comptes (position
   ouverte à 23:50) et sert la position de la vitrine.
 - **Les deux comptes prop firm de la démo sont « connectés »** (vitrine, faux jeton, une connexion
@@ -1154,6 +1192,16 @@ export class CreateTradeDto {
   sens opposé, SL = stop sous l'entrée d'un LONG (`stopPrice`), TP = `Limit` au-dessus (`price`) ;
   **plusieurs candidats sans lien de bracket → `null`** (jamais une association devinée). Mapping
   jamais validé sur un vrai bracket : trames `order` / `orderVersion` brutes en `logger.debug`.
+  **#963** : le WebSocket souscrit aussi `orderStrategyLink` (type inconnu = ignoré sans erreur, doc
+  user/syncrequest). Liens lus dans l'instantané sous `orderStrategyLinks` (clé NON documentée,
+  absente = vide) et en direct ; carnet `strategies` (un lien arrivé avant son ordre est gardé,
+  purgé avec l'ordre, ignoré après sa sortie, mémoire `closed` bornée à 1 000 ; `Deleted` par id
+  seul du lien retrouvé via l'index `links`). `WorkingOrder.strategyId`
+  (ancienne valeur Redis sans le champ = null) ; `sameBracket` relie aussi par même stratégie, jamais
+  null = null. Effet : cas MIXTES résolus (bracket complet + ordre isolé ou jambe orpheline) ; deux
+  brackets COMPLETS restent `null` (règle stricte). Mesure : log « Liens de stratégie Tradovate WS
+  <conn> : n à l'instantané, clés reçues [...] » à chaque instantané, et un log au premier lien reçu
+  en direct par connexion.
 
 ## Synchro broker par API — pattern (PROMPT-207, Tradovate / NinjaTrader)
 
@@ -1182,6 +1230,43 @@ Premier broker synchronisé par **API** plutôt que par fichier. Module
   étaient écartées comme doublons. Un trade API doit avoir
   EXACTEMENT la forme d'un trade CSV du même broker (règles partagées dans
   `trades/tradovate-pair.util.ts`, utilisées par les DEUX chemins).
+- **Un trade Tradovate = une POSITION (#956, décision du 13/11)**, de l'ouverture au retour à plat,
+  plus une paire de fills. `trades/tradovate-position-group.util.ts` (pur) regroupe les paires par
+  le cumul net des exécutions, contrat par contrat, dans les TROIS chemins : synchro (mapper puis
+  `groupTradovateTrades`, `leftovers: 'skip'`), rattrapage Reporting et import CSV de l'export
+  Performance (`leftovers: 'pairs'`). Règles : quantité = somme des contrats, entrée et sortie
+  moyennes pondérées, P&L et frais additionnés (frais posés par paire AVANT, fill de retournement au
+  prorata), `tradedAt` = dernière clôture, stop/objectif de la première entrée (capture sur l'ordre
+  du fill d'ouverture, `_openFillId`), R/R sur l'entrée moyenne. Retournement par une seule
+  exécution = deux trades.
+  - **Clé stable** `importHash = tv:<fill d'ouverture>` (`positionImportKey`), identique dans les
+    trois sources : aucun doublon synchro ↔ CSV ↔ rapport, quel que soit le fuseau.
+  - **Synchro** : aucun trade avant le retour à plat (anti-tilt et journal de risque réagissent à la
+    clôture). Données de séance (`tradovate-position-input.ts`) : `prevPos`/`netPos` de la position,
+    exécutions non appariées rattachées au compte par `order.accountId` (`/order/list` lue une fois,
+    réutilisée par la capture du stop). Position ouverte la veille (`prevPos ≠ 0`) ou cumul ≠ `netPos`
+    → paires mises de côté (`deferred` du résultat), reprises au retour à plat ou par le rattrapage.
+  - **`importTrades`** : `_positionKey` déjà en base → doublon, ou mise à jour des champs du broker
+    (`growPosition` : prix, quantité, P&L, frais, clôture, R/R, note d'exécution si stop, totaux de
+    la séance clôturée) si la position a grandi — jamais stop, émotion, setup, notes. Une paire de la position déjà en base à l'ancien format (trade par
+    paire, avant #956) → la position est importée **paire par paire** (`_pairs`), sans doublon,
+    jusqu'à la réparation des trades existants. Métadonnées `_…` retirées par `withoutImportMeta`.
+  - Événement `tradovate:trades` : `updated` en plus de `created` ; anti-tilt sur `created` seul.
+  - Limite connue : une position à cheval sur deux mois est vue en deux morceaux par le rattrapage
+    Reporting (une fenêtre par mois).
+  - **Réparation des anciens trades (PR 2)** : `POST /api/admin/tradovate/repair-positions` (ADMIN,
+    essai par défaut, `?apply=true` pour écrire, verrou Redis, réponse 202 et travail en arrière-plan),
+    `GET …/repair-positions` (dernier rapport), `GET …/repair-positions/backup[?at=AAAAMMJJ-HHMM]`
+    (JSONL des lignes AVANT fusion, une clé Redis datée par exécution appliquée, jamais réécrite,
+    30 jours ; `backedUp` du rapport = nombre de lignes du fichier). Positions recalculées depuis la Reporting API (`recomputedWindows`, comme
+    #783), plan pur `tradovate-positions-repair.ts` : toutes les paires retrouvées en base, aucune
+    clé `tv:` déjà là, MÊMES saisies sur toutes les lignes (émotion, setup, stop, objectif, notes,
+    tags, capital, unité de temps, séance) — sinon comptée (`incomplete` / `alreadyGrouped` /
+    `conflicting`), jamais fusionnée. Ligne gardée = celle de la paire d'ouverture ; champs du broker
+    recalculés depuis les lignes EN BASE (total P&L et frais inchangés). `TradesService.mergeImportedPosition` :
+    transaction (alertes de comportement rattachées, lignes supprimées, R/R et note « stop » recalculés),
+    puis `refreshAfterFeesRepair` par compte. Périmètre : connexions actives, non démo, compte non
+    archivé ; lignes importées seulement (synchro, historique, CSV du compte connecté).
 - **Client HTTP en lecture seule** (`tradovate-api.client.ts`) : que des GET de données + les
   appels d'auth. Aucune méthode d'écriture (ordre, risque) — contrat NinjaTrader.
 - **Erreurs** : `TradovateException(code)` → message FR clair + `code` machine (relayé par
@@ -1241,7 +1326,8 @@ Conséquences à connaître :
   rapport (Redis, 14 j). `TradovateFeesRepairService` relit chaque connexion CONNECTED non démo via
   `TradovateHistoryService.recomputedWindows` (mêmes calculs que l'import, rien d'écrit), rapproche
   par `dedupeKey` (`planFeeRepairs`, un pour un) les trades `BROKER_HISTORY` / `CSV_IMPORT` du compte,
-  et ne change QUE `commission`, toujours à la hausse ; puis barème + cache analytics
+  et ne change QUE `commission`, à la hausse (trades reliés par un fill partagé : remis au prorata en
+  groupe, total du groupe jamais baissé, #950) ; puis barème + cache analytics
   (`TradesService.refreshAfterFeesRepair`). Pas de détection d'incident relancée. Dans l'API et non en
   script : un script renouvellerait les jetons hors des verrous de connexion.
 
@@ -1386,7 +1472,7 @@ sont en direct.
 - **`state` signé + cookie httpOnly** (`mtc_tradovate_oauth`, SameSite=Lax, path du callback).
   Le cookie est **obligatoire** au callback : sans lui, un tiers pourrait faire consentir une
   victime avec SON lien et recevoir les trades de la victime. La doc ne dit pas si Tradovate
-  renvoie `state` : s'il le renvoie, il doit égaler le cookie. Côté front, l'appel `authorize`
+  renvoie `state` : s'il le renvoie, il doit égaler le cookie. Le callback journalise « state renvoyé = oui/non » (#1004) : quand la prod montre « oui », exiger `state` (un cookie d'une tentative abandonnée vit 10 min et laisse passer un code tiers sans `state`). Côté front, l'appel `authorize`
   doit partir **avec credentials** pour que le cookie soit posé.
 - **Jamais de choix d'office à la première connexion** (#332, 2026-10-03) : même avec UN seul
   compte, `saveConnection` laisse `externalAccountId` vide → `select_account`, et rien n'est
@@ -2350,6 +2436,20 @@ flottante). SQL : `round((pnl - abs(coalesce(commission,0)))::text::numeric, 2)`
 flottant). Vérifié identique sur 200 000 paires aléatoires. L'ancien `toFixed(2)` arrondissait selon
 la valeur binaire (10,575 → 10,57) : 7 trades sur 979 en prod changent d'1 centime.
 Les tests d'équivalence SQL doivent contenir des montants à **3 décimales** (demi-centimes).
+**Garde-fou (audit des chiffres, lot 3)** : `src/money-rounding.guard.spec.ts` interdit tout arrondi
+numérique « à la main » (`+(x).toFixed(2)`, `Number(x.toFixed(2))`, `Math.round(x * 100) / 100`) dans
+l'API, les deux fronts et les libs : montants, frais, commissions, totaux, ratios passent par
+`roundCents`. Le formatage d'un texte (`${x.toFixed(2)} EUR`) reste permis. Seule exception, listée
+dans le spec : l'étalon figé `src/test/analytics-legacy.service.ts`.
+**P&L stocké au centime (B1, #981)** : `create` stocke `roundCents(dto.pnl)` (même avec une entrée à 0),
+`calculatePnl`, le mapper Tradovate et le formulaire arrondissent par `roundCents`. Les trades importés
+avant gardent leur P&L brut ou arrondi par l'ancien `toFixed` : `dedupeKey` arrondit le P&L au centime
+(un P&L déjà au centime garde sa clé d'avant), et `CentRoundingPool` (dans `importTrades`) rapproche un
+pour un un trade identique dont le P&L ne diffère que d'1 centime d'arrondi (39,845 : `toFixed` 39,84,
+`roundCents` 39,85) ; `planFeeRepairs` applique la même tolérance aux trades restés sans clé exacte.
+Test d'intégration : `trades/import-pnl-arrondi.int-spec.ts`. Les P&L déjà en base ne sont pas réécrits
+(décision de Greg à prendre) : chaque ligne s'affiche au centime, mais les sommes SQL additionnent les
+P&L bruts des trades d'avant B1, un total peut donc différer d'1 centime de la somme des lignes affichées.
 
 ### Présence et activité : écritures bornées (SCA-B3-02, 2026-10-03)
 
@@ -2498,6 +2598,10 @@ global à la file ; Resend = 10 req/s par équipe, clé partagée entre environn
   jours où une annonce chiffrée passée est restée sans résultat (la veille ; le vendredi soir le lundi).
   Dimanche 17 h : today + lundi (annonces du dimanche soir). 18 h 30 : filet + purge `eco:calendar:<jour>:*`
   (calendriers par user reconstruits à la demande ; ne touche ni `eco:analysis:*` ni les verrous).
+- Purge aussi (#982) : à chaque résultat relevé par le tick de 20 s, `eco:calendar:<jour>:*` est vidé
+  **avant** le broadcast (le tableau de bord démo, où `refresh-today` est refusé, relit un cache frais au
+  polling de secours) ; à 6 h, today, demain et les jours rattrapés. Une panne Redis au vidage est
+  journalisée et ne bloque ni le broadcast ni le relevé suivant.
 - Coût FMP : avant ~603 requêtes/jour ouvré ; après = 3 à 5 fixes + 1 par tick de 20 s pendant les
   fenêtres (au plus 45 par créneau horaire si FMP ne publie jamais le chiffre).
 - **Observable en prod seulement** : relevé du soir, `🔔 … nouveaux résultats`, `✨ … analyse(s)` (analyse

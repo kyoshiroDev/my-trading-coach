@@ -20,8 +20,11 @@ import { AuthUserCacheService } from '../infra/auth-user-cache.service';
 import { OFFER_PREMIUM_DEFAULT_DAYS, hasActiveStripeSubscription } from './premium-offer.util';
 import { StripeAccountClosureService } from '../stripe/stripe-account-closure.service';
 import { DiscordGuildClient } from '../discord/discord-guild.client';
+import { RedisService } from '../infra/redis.service';
+import { billingCacheKey } from '../stripe/stripe.helpers';
 import { REAL_USERS_WHERE } from '../../common/stats/real-users';
 import { premiumAccessWhere, subscriptionStateWhere, subscriptionStatesWhere } from '../../common/stats/subscription-state-where';
+import { emailEquals } from '../../common/utils/email.util';
 
 /** Résiliation Stripe impossible : rien n'est supprimé, l'utilisateur peut réessayer. */
 export const BILLING_CLOSURE_FAILED_MESSAGE =
@@ -101,6 +104,7 @@ export class UsersService {
     private readonly billingClosure: StripeAccountClosureService,
     @Optional() private readonly userCache?: AuthUserCacheService,
     @Optional() private readonly discordGuild?: DiscordGuildClient,
+    @Optional() private readonly redisService?: RedisService,
   ) {}
 
   async findById(id: string) {
@@ -108,7 +112,7 @@ export class UsersService {
   }
 
   async findByEmail(email: string) {
-    return this.prisma.user.findUnique({ where: { email } });
+    return this.prisma.user.findFirst({ where: { email: emailEquals(email) }, orderBy: { createdAt: 'asc' } });
   }
 
   async findActivePremium() {
@@ -346,9 +350,10 @@ export class UsersService {
     ]);
 
     // MRR/ARR sur le montant RÉELLEMENT payé (#525) : 49 € / 490/12 au prix normal, 29 € / 290/12
-    // en fondateur, prix remisé d'un code partenaire tant que la remise court (puis prix normal).
+    // en fondateur, prix remisé d'un code partenaire tant que la remise court (puis prix normal),
+    // −10 % filleul pendant 12 mois (#954).
     const mrrBreakdown = await this.realMrr(REAL_USERS, now);
-    const mrr = mrrBreakdown.normal + mrrBreakdown.founder + mrrBreakdown.partner;
+    const mrr = mrrBreakdown.normal + mrrBreakdown.founder + mrrBreakdown.partner + mrrBreakdown.referral;
     const arr = mrr * 12;
 
     const monthly = premiumMonthly;
@@ -367,33 +372,46 @@ export class UsersService {
     };
   }
 
-  /** MRR découpé normal / fondateur / partenaires, abonnements `active` uniquement (arrondi à l'euro). */
+  /**
+   * MRR découpé normal / fondateur / partenaires / filleuls, abonnements `active` uniquement (arrondi
+   * à l'euro). Un filleul dont la remise est terminée repasse en « normal ».
+   */
   private async realMrr(where: Prisma.UserWhereInput, now: Date) {
     const paying = await this.prisma.user.findMany({
       where: { ...where, plan: 'PREMIUM', stripeSubscriptionStatus: 'active', stripeInterval: { in: ['month', 'year'] } },
       select: {
         stripeInterval: true,
+        referralDiscountSince: true,
         founderSeat: { select: { status: true } },
         partnerRedemption: {
           select: { status: true, priceMonthlyEur: true, priceAnnualEur: true, durationMonths: true, createdAt: true },
         },
       },
     });
-    const sums = { normal: 0, founder: 0, partner: 0 };
+    const sums = { normal: 0, founder: 0, partner: 0, referral: 0 };
     for (const u of paying) {
       const interval = u.stripeInterval === 'year' ? 'year' : 'month';
       const founder = u.founderSeat?.status === 'ACTIVE';
       const r = u.partnerRedemption?.status === 'ACTIVE' ? u.partnerRedemption : null;
       const partner = r ? { ...r, since: r.createdAt } : null;
-      const amount = realMonthlyEur({ interval, founder, partner, now });
+      const referralSince = u.referralDiscountSince ?? null;
+      const amount = realMonthlyEur({ interval, founder, partner, referralSince, now });
       const normal = realMonthlyEur({ interval, now });
-      const bucket = founder ? 'founder' : partner && amount !== normal ? 'partner' : 'normal';
+      const withPartner = partner ? realMonthlyEur({ interval, partner, now }) : normal;
+      const bucket = founder
+        ? 'founder'
+        : partner && withPartner !== normal
+          ? 'partner'
+          : amount !== normal
+            ? 'referral'
+            : 'normal';
       sums[bucket] += amount;
     }
     return {
       normal: Math.round(sums.normal),
       founder: Math.round(sums.founder),
       partner: Math.round(sums.partner),
+      referral: Math.round(sums.referral),
     };
   }
 
@@ -459,7 +477,7 @@ export class UsersService {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       select: {
-        plan: true, role: true, isDemo: true, trialEndsAt: true,
+        plan: true, role: true, isDemo: true, trialEndsAt: true, discordId: true,
         stripeSubscriptionId: true, stripeSubscriptionStatus: true,
       },
     });
@@ -491,6 +509,14 @@ export class UsersService {
       data: { trialEndsAt, trialUsed: true, trialSource: TrialSource.ADMIN },
     });
     await this.userCache?.invalidate(userId); // le Premium doit s'ouvrir immédiatement
+    // Statut de facturation (profil, bandeaux) relu tout de suite, pas après les 5 min du cache, et
+    // rôle Discord Premium posé comme pour un abonnement payé. Un échec ne bloque pas l'offre.
+    await this.redisService?.client.del(billingCacheKey(userId)).catch(() => undefined);
+    if (user.discordId) {
+      await this.discordGuild?.setPlanRole(user.discordId, true).catch((err: Error) =>
+        this.logger.warn(`Rôle Discord Premium non posé après l'offre (user ${userId}) : ${err.message}`),
+      );
+    }
     this.logger.log(
       `Premium offert | admin: ${adminId ?? 'inconnu'}, user: ${userId}, fin: ${trialEndsAt.toISOString()}`,
     );
@@ -587,7 +613,8 @@ export class UsersService {
   }
 
   async deleteMe(userId: string, reason?: string): Promise<void> {
-    await this.archiveAndDelete(userId, 'self', reason);
+    // Corps non validé : une raison non textuelle est ignorée, la suppression passe (#994).
+    await this.archiveAndDelete(userId, 'self', typeof reason === 'string' ? reason : undefined);
   }
 
   async adminSubscriptions(page = 1, limit = 20) {

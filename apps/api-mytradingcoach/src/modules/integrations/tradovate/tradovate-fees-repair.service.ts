@@ -5,6 +5,7 @@ import { RedisService } from '../../infra/redis.service';
 import { TradesService } from '../../trades/trades.service';
 import { TradovateHistoryService } from './tradovate-history.service';
 import { planFeeRepairs } from './tradovate-fees-repair';
+import { roundCents } from '@mtc/shared';
 
 /**
  * Réparation des frais des trades Tradovate importés avant le 31/10 (#783), lancée par l'admin.
@@ -37,8 +38,10 @@ export interface FeesRepairConnectionReport {
   updated: number;
   unchanged: number;
   skippedLower: number;
-  /** Trades à fill partagé, jamais montés (#947, relèvent de #950). */
+  /** Trades à fill partagé non réparables (groupe incomplet, ou total plus élevé en base). */
   skippedShared: number;
+  /** Trades à fill partagé remis au prorata (#950). */
+  redistributed: number;
   noFees: number;
   notFound: number;
   feesAdded: number;
@@ -108,7 +111,7 @@ export class TradovateFeesRepairService {
         const r = await this.repairConnection(conn, apply);
         report.perConnection.push(r);
         report.updated += r.updated;
-        report.feesAdded = +(report.feesAdded + r.feesAdded).toFixed(2);
+        report.feesAdded = roundCents(report.feesAdded + r.feesAdded);
         await this.save(report);
       }
       report.status = 'done';
@@ -128,7 +131,7 @@ export class TradovateFeesRepairService {
   async repairConnection(conn: BrokerConnection, apply: boolean): Promise<FeesRepairConnectionReport> {
     const r: FeesRepairConnectionReport = {
       connectionId: conn.id, windows: 0, failedWindows: 0, windowsWithoutFullFees: 0, computed: 0,
-      matched: 0, updated: 0, unchanged: 0, skippedLower: 0, skippedShared: 0, noFees: 0, notFound: 0, feesAdded: 0,
+      matched: 0, updated: 0, unchanged: 0, skippedLower: 0, skippedShared: 0, redistributed: 0, noFees: 0, notFound: 0, feesAdded: 0,
     };
     try {
       for await (const w of this.history.recomputedWindows(conn)) {
@@ -157,10 +160,11 @@ export class TradovateFeesRepairService {
         r.unchanged += plan.unchanged;
         r.skippedLower += plan.skippedLower;
         r.skippedShared += plan.skippedShared;
+        r.redistributed += plan.redistributed;
         r.noFees += plan.noFees;
         r.notFound += plan.notFound;
         r.updated += plan.updates.length;
-        r.feesAdded = +(r.feesAdded + plan.feesAdded).toFixed(2);
+        r.feesAdded = roundCents(r.feesAdded + plan.feesAdded);
         if (apply && plan.updates.length > 0) {
           await this.prisma.$transaction(
             plan.updates.map((u) => this.prisma.trade.update({ where: { id: u.id }, data: { commission: u.commission } })),
@@ -174,7 +178,7 @@ export class TradovateFeesRepairService {
     this.logger.log(
       `Réparation des frais, connexion : ${r.windows} mois (${r.failedWindows} en échec), ` +
         `${r.computed} recalculé(s), ${r.matched} retrouvé(s), ${r.updated} ${apply ? 'corrigé(s)' : 'à corriger'} ` +
-        `(+${r.feesAdded} $), ${r.skippedLower} plus élevé(s) en base, ${r.skippedShared} à fill partagé, ${r.notFound} absent(s)` +
+        `(+${r.feesAdded} $), ${r.skippedLower} plus élevé(s) en base, ${r.redistributed} remis au prorata (fill partagé), ${r.skippedShared} à fill partagé ignoré(s), ${r.notFound} absent(s)` +
         `${r.error ? ', abandonnée' : ''}.`,
     );
     return r;

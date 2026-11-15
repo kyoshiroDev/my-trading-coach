@@ -6,6 +6,7 @@ import { RedisService } from '../infra/redis.service';
 import { STRIPE_CLIENT } from './stripe.client';
 import { ACTIVE_STATUSES, billingCacheKey, extractId } from './stripe.helpers';
 import { AuthUserCacheService } from '../infra/auth-user-cache.service';
+import { referralDiscountStart } from './stripe-coupon.service';
 
 /** État d'abonnement : synchro DB ← Stripe et invalidation du cache de facturation. */
 /** Résultat d'une synchro : l'utilisateur et l'abonnement tel que Stripe le décrit. */
@@ -91,6 +92,27 @@ export class StripeSubscriptionService {
       return null;
     }
 
+    // Bascule fondateur dont l'essai au prix normal n'a pas (encore) été annulé : un événement de cet
+    // essai, encore ACTIF, ne remplace jamais la place fondateur payée (sinon le profil, la facturation
+    // et le prochain prélèvement suivraient l'essai à 49 €). L'annulation est rejouée côté webhook.
+    if (
+      isActive &&
+      user.stripeSubscriptionId &&
+      user.stripeSubscriptionId !== subscription.id &&
+      ACTIVE_STATUSES.has((user.stripeSubscriptionStatus ?? '') as Stripe.Subscription['status'])
+    ) {
+      const seat = await this.prisma.founderSeat.findUnique({
+        where: { userId: user.id },
+        select: { status: true, stripeSubscriptionId: true },
+      });
+      if (seat?.status === 'ACTIVE' && seat.stripeSubscriptionId === user.stripeSubscriptionId) {
+        this.logger.error(
+          `Sync ignorée | user: ${user.id}, sub ${subscription.id} (${status}) active à côté de la place fondateur ${user.stripeSubscriptionId}`,
+        );
+        return null;
+      }
+    }
+
     const firstItem = subscription.items.data[0];
     const priceId = firstItem?.price.id ?? null;
     const interval = firstItem?.price.recurring?.interval ?? null; // 'month' | 'year'
@@ -114,10 +136,18 @@ export class StripeSubscriptionService {
         ? periodEnd
         : null;
 
+    // Remise filleul (#954) : enregistrée pour le MRR base. Un AUTRE abonnement sans remise efface
+    // celle de l'ancien ; le même abonnement dont le payload ne la montre plus la garde (la fenêtre
+    // de 12 mois est appliquée au calcul du MRR).
+    const referralStart = referralDiscountStart(subscription);
+    const referralDiscountSince =
+      referralStart ?? (subscription.id !== user.stripeSubscriptionId ? null : undefined);
+
     await this.prisma.user.update({
       where: { id: user.id },
       data: {
         plan: newPlan,
+        referralDiscountSince,
         stripeSubscriptionId: subscription.id,
         stripePriceId: priceId,
         stripeInterval: interval,

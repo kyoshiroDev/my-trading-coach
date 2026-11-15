@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { OfferIntentService } from '../services/offer-intent.service';
 import { OffersStore } from '../stores/offers.store';
 import { clearAcquisition } from './signup-context';
+import { takeReturnUrl } from './return-url';
 
 /**
  * Où aller une fois connecté ou le compte créé, commun à l'e-mail et à Google (#618) :
@@ -34,6 +35,9 @@ export class PostSignupService {
   afterLogin(): void {
     // Lien d'offre en attente (#578) : offres demandées dès la connexion, pour la modale.
     if (this.offerIntent.needsChoice()) this.offersStore.load({ silent: true });
-    void this.router.navigate(['/dashboard']);
+    // Page demandée avant la connexion (lien d'e-mail, push) : on y retourne (#994).
+    const back = takeReturnUrl();
+    if (back) void this.router.navigateByUrl(back);
+    else void this.router.navigate(['/dashboard']);
   }
 }

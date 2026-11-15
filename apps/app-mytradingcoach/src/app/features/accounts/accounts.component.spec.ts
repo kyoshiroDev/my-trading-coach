@@ -52,7 +52,7 @@ function setup(opts: { premium: boolean; accounts: TradingAccount[]; limit?: num
   const accountsSig = signal(opts.accounts);
   const store = {
     accounts: accountsSig,
-    isLoading: signal(false),
+    isLoading: signal(false), loadError: signal(false),
     loaded: signal(true),
     selectedAccountId: signal<string | 'all'>('all'), // 'all' = « Tous les comptes »
     load: vi.fn(),

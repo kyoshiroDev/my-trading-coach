@@ -113,3 +113,40 @@ describe('Écran de réassurance Tradovate', () => {
     expect(buttons).not.toMatch(/acheter|vendre|passer un ordre|trader maintenant|buy|sell/i);
   });
 });
+
+// Audit fonctionnel #994 (lot 1d, F18) : retour depuis Tradovate par « Précédent » (page restaurée du
+// cache du navigateur) → la modale restait sur « Redirection… », bouton et « Annuler » inertes.
+describe('Écran de réassurance Tradovate — retour arrière', () => {
+  beforeEach(() => {
+    TestBed.resetTestingModule();
+    store.authorizeUrl.mockReset();
+  });
+
+  it('page restaurée du cache après la redirection : la modale redevient utilisable', () => {
+    store.authorizeUrl.mockReturnValue(of('https://trader.tradovate.com/oauth'));
+    const { fixture, closed } = mount();
+    const cmp = fixture.componentInstance as unknown as { connect: () => void; cancel: () => void; redirecting: () => boolean };
+    cmp.connect();
+    expect(cmp.redirecting()).toBe(true);
+
+    const restored = new Event('pageshow');
+    Object.defineProperty(restored, 'persisted', { value: true });
+    window.dispatchEvent(restored);
+    fixture.detectChanges();
+
+    expect(cmp.redirecting()).toBe(false);
+    cmp.cancel();
+    expect(closed).toHaveBeenCalled();
+  });
+
+  it('pageshow d’un chargement normal (pas le cache) : rien ne change', () => {
+    store.authorizeUrl.mockReturnValue(of('https://trader.tradovate.com/oauth'));
+    const { fixture } = mount();
+    const cmp = fixture.componentInstance as unknown as { connect: () => void; redirecting: () => boolean };
+    cmp.connect();
+    const fresh = new Event('pageshow');
+    Object.defineProperty(fresh, 'persisted', { value: false });
+    window.dispatchEvent(fresh);
+    expect(cmp.redirecting()).toBe(true);
+  });
+});

@@ -12,7 +12,10 @@ import { AccountsService, brokerReferenceMismatch, type RuleBroker, type RulePay
 // est ouvert à FREE (1 compte) comme à PREMIUM (illimité) ; le plafond vit dans le service.
 
 function makePrisma() {
-  return {
+  const db = {
+    // Création à quota sous verrou (#994) : la transaction rejoue sur ce même double.
+    $executeRaw: vi.fn(async () => 1),
+    $transaction: vi.fn(async (fn: (tx: unknown) => unknown): Promise<unknown> => fn(db)),
     tradingAccount: {
       findMany: vi.fn(),
       findUnique: vi.fn(),
@@ -31,6 +34,7 @@ function makePrisma() {
     brokerPayout: { findMany: vi.fn(async () => []), updateMany: vi.fn() },
     accountIncident: { findMany: vi.fn(async (): Promise<unknown[]> => []), updateMany: vi.fn(async () => ({ count: 1 })) },
   };
+  return db;
 }
 
 describe('AccountsService', () => {
@@ -110,6 +114,22 @@ describe('AccountsService', () => {
   describe('create — quota par plan', () => {
     const ctx = (plan: string, extra: Record<string, unknown> = {}) =>
       ({ plan, role: 'USER', ...extra }) as never;
+
+    // #994 (N14) : comptage puis création sans verrou → deux POST simultanés créaient 2 comptes en FREE.
+    it('FREE : comptage et création sous verrou par utilisateur (même transaction)', async () => {
+      const order: string[] = [];
+      const tx = {
+        $executeRaw: vi.fn(async () => { order.push('lock'); return 1; }),
+        tradingAccount: {
+          count: vi.fn(async () => { order.push('count'); return 0; }),
+          create: vi.fn(async () => { order.push('create'); return { id: 'a1' }; }),
+        },
+      };
+      (prisma as unknown as { $transaction: unknown }).$transaction = vi.fn(async (fn: (t: typeof tx) => unknown) => fn(tx));
+      await svc.create('u1', { label: 'C1' } as never, ctx('FREE', { trialEndsAt: null }));
+      expect(order).toEqual(['lock', 'count', 'create']);
+      expect(prisma.tradingAccount.create).not.toHaveBeenCalled();
+    });
 
     it('FREE sous le quota (0/1) → crée, ne compte que les comptes ACTIVE', async () => {
       prisma.tradingAccount.count.mockResolvedValue(0);
@@ -895,6 +915,13 @@ describe('AccountsService', () => {
       expect(m.currentBalance).toBe(53000);
       expect(m.realizedPnl).toBe(3000); // base de l'objectif et du cycle de payout, inchangée
       expect(m.tradingPnl).toBe(5000); // ce qu'affiche Mes comptes, comme le tableau de bord
+    });
+
+    it('tradingPnl arrondi par roundCents : un demi-centime part loin de zéro (1 231,495 → 1 231,50)', () => {
+      // 1 000 + 1 231,495 − 1 000 vaut exactement 1231.495 en flottant : Math.round(x × 100) donnait 1 231,49.
+      const acc = { startingBalance: 1000, accountSize: null, profitTarget: null, maxDrawdown: null, drawdownType: 'STATIC' as const };
+      const m = svc.ruleMetricsFromAgg(acc as never, aggregateRuleTrades([t(1_231.495, 1)]), null, null, null, null, new Date(), [], null);
+      expect(m.tradingPnl).toBe(1_231.5);
     });
 
     it('sans règles (maxDrawdown null) → drawdown null, startingBalance via accountSize', () => {

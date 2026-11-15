@@ -4,6 +4,7 @@ import {
   LucideActivity as Activity,
 } from '@lucide/angular';
 import { MarketContext } from '@app/core/api/trades.api';
+import { roundCents } from '@mtc/shared';
 
 @Component({
   selector: 'mtc-market-context-bar',
@@ -163,7 +164,7 @@ export class MarketContextBarComponent {
     const t2  = this.ctx()?.treasury.t2y;
     const t10 = this.ctx()?.treasury.t10y;
     if (t2 == null || t10 == null) return null;
-    return parseFloat((t10 - t2).toFixed(2));
+    return roundCents(t10 - t2);
   });
 
   /** Variation du spread (10Y − 2Y) = variation 10Y − variation 2Y. */
@@ -171,7 +172,7 @@ export class MarketContextBarComponent {
     const c2  = this.ctx()?.treasury.t2yChg;
     const c10 = this.ctx()?.treasury.t10yChg;
     if (c2 == null || c10 == null) return null;
-    return parseFloat((c10 - c2).toFixed(2));
+    return roundCents(c10 - c2);
   });
 
   protected readonly isInverted = computed(() => (this.spread() ?? 0) < 0);

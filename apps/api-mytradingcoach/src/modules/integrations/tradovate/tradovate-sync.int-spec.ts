@@ -136,8 +136,24 @@ const splitPairs = () =>
     id: 200 + i, positionId: 9, buyFillId: SPLIT_SELL + 1 + i, sellFillId: SPLIT_SELL,
     qty: 1, buyPrice: 32000, sellPrice: 32010, active: true,
   }));
-const allFills = () => [...FILLS, ...extraFills(), ...splitFills()];
-const allPairs = () => [...PAIRS, ...extraPairsOf(), ...splitPairs()];
+// Position 11 (#956) : long 2 MNQ entré en deux fois, sorti en deux fois ; `openLegs` = sorties
+// déjà faites (0, 1 ou 2). Tant qu'une sortie manque, Tradovate donne netPos ≠ 0.
+let openLegs = 0;
+const OPEN_BASE = 620000000000;
+const openFills = () => (openLegs
+  ? [
+      fill(OPEN_BASE, 'Buy', 33000, '2026-07-14T14:00:00.000Z'),
+      fill(OPEN_BASE + 1, 'Buy', 33002, '2026-07-14T14:01:00.000Z'),
+      fill(OPEN_BASE + 2, 'Sell', 33010, '2026-07-14T14:05:00.000Z'),
+      ...(openLegs > 1 ? [fill(OPEN_BASE + 3, 'Sell', 33020, '2026-07-14T14:09:00.000Z')] : []),
+    ]
+  : []);
+const openPairs = () => [
+  ...(openLegs > 0 ? [{ id: 300, positionId: 11, buyFillId: OPEN_BASE, sellFillId: OPEN_BASE + 2, qty: 1, buyPrice: 33000, sellPrice: 33010, active: true }] : []),
+  ...(openLegs > 1 ? [{ id: 301, positionId: 11, buyFillId: OPEN_BASE + 1, sellFillId: OPEN_BASE + 3, qty: 1, buyPrice: 33002, sellPrice: 33020, active: true }] : []),
+];
+const allFills = () => [...FILLS, ...extraFills(), ...splitFills(), ...openFills()];
+const allPairs = () => [...PAIRS, ...extraPairsOf(), ...splitPairs(), ...openPairs()];
 const feeOf = (f: { id: number }) => ({ id: f.id, commission: 0.35, exchangeFee: 0.1, clearingFee: 0.05, nfaFee: 0.02 });
 const notFound = () => new Response('', { status: 404 });
 const tooMany = (url: URL) => (url.searchParams.get('ids') ?? '').split(',').filter(Boolean).length > ITEMS_LIMIT;
@@ -207,7 +223,7 @@ function tradovate(rawUrl: string, init?: RequestInit): Response {
     return json([
       { id: 9, accountId: EXT_ACCOUNT, contractId: CONTRACT, netPos: 0 },
       { id: 10, accountId: 999, contractId: CONTRACT, netPos: 0 },
-      { id: 11, accountId: EXT_ACCOUNT, contractId: CONTRACT, netPos: 1 },
+      { id: 11, accountId: EXT_ACCOUNT, contractId: CONTRACT, netPos: openLegs === 2 ? 0 : 1 },
     ]);
   }
   if (path === '/fillPair/list') return pairListNotFound ? notFound() : json(allPairs());
@@ -274,6 +290,7 @@ beforeEach(async () => {
   itemsNotFound = false;
   pairListNotFound = false;
   identicalPairs = 0;
+  openLegs = 0;
   bracket = false;
   forbidden = [];
   orderListMode = 'ok';
@@ -365,10 +382,10 @@ describe('Tradovate — consentement', () => {
     expect(location.searchParams.get('tradovate')).toBe('select_account');
     expect(location.searchParams.get('accountId')).toBe(account.id);
     // Première synchro après le choix du compte.
-    expect(firstSync?.created).toBe(3);
+    expect(firstSync?.created).toBe(2);
     expect(firstSync?.feesImported.reconciled).toBe(true);
     expect(location.searchParams.get('from')).toBeNull();
-    expect(await prisma.trade.count({ where: { userId } })).toBe(3);
+    expect(await prisma.trade.count({ where: { userId } })).toBe(2);
 
     // Le client_secret n'a voyagé que serveur → Tradovate, jamais dans l'URL navigateur.
     expect(authorize.toString()).not.toContain('client-secret-de-test');
@@ -391,7 +408,7 @@ describe('Tradovate — consentement', () => {
     expect(location.pathname).toBe('/dashboard');
     expect(location.searchParams.get('from')).toBe('wizard');
     expect(location.searchParams.get('tradovate')).toBe('select_account');
-    expect(firstSync?.created).toBe(3);
+    expect(firstSync?.created).toBe(2);
   });
 
   it('compte unique : rien n’est importé avant que l’utilisateur ait choisi le compte', async () => {
@@ -461,7 +478,7 @@ describe('Tradovate — synchro', () => {
     const { id: userId, token } = await registerUser();
     const account = await createAccount(userId, 'Apex 50k');
 
-    // 1. Import CSV antérieur de l'export Performance (20 trades).
+    // 1. Import CSV antérieur de l'export Performance (20 paires = 7 positions, #956).
     const form = new FormData();
     form.append('file', new Blob([PERF_CSV], { type: 'text/csv' }), 'Performance.csv');
     form.append('accountId', account.id);
@@ -469,20 +486,21 @@ describe('Tradovate — synchro', () => {
       method: 'POST', headers: { authorization: `Bearer ${token}` }, body: form,
     });
     expect(csv.ok, await csv.clone().text()).toBe(true);
-    expect(await prisma.trade.count({ where: { userId } })).toBe(20);
+    expect(await prisma.trade.count({ where: { userId } })).toBe(7);
 
-    // 2. Connexion : la première synchro part au retour. 3 paires du compte 777 : 2 déjà
-    // importées par CSV (décalage de fuseau toléré), 1 nouvelle. Le compte 999 n'est pas touché.
+    // 2. Connexion : la première synchro part au retour. 3 paires du compte 777 = 2 positions :
+    // le short de 2 contrats, déjà importé par CSV (même clé tv:<fill d'ouverture>, quel que soit
+    // le fuseau), et 1 nouvelle. Le compte 999 n'est pas touché.
     const { firstSync } = await connect(token, account.id);
     expect(firstSync?.created).toBe(1);
-    expect(await prisma.trade.count({ where: { userId } })).toBe(21);
+    expect(await prisma.trade.count({ where: { userId } })).toBe(8);
 
     // Synchro manuelle : rapport complet, tout est déjà là.
     calls = [];
     const first = await api(token, `/accounts/${account.id}/sync`, 'POST');
     expect(first.status, await first.clone().text()).toBe(201);
     const r1 = ((await first.json()) as { data: Record<string, unknown> }).data;
-    expect(r1).toMatchObject({ created: 0, duplicates: 3, failed: 0, total: 3, skipped: 0, openPositions: 1 });
+    expect(r1).toMatchObject({ created: 0, duplicates: 2, failed: 0, total: 2, skipped: 0, openPositions: 1 });
     expect(r1['feesImported']).toMatchObject({ reconciled: true, assigned: 3.12, expected: 3.12 });
 
     // Même forme qu'un trade CSV : compte cible, « Sans setup », empreinte, frais, P&L brut.
@@ -495,7 +513,7 @@ describe('Tradovate — synchro', () => {
       accountId: account.id, asset: 'MNQ', side: 'LONG', entry: 30000, exit: 30010,
       pnl: 20, commission: 1.04, quantity: 1, emotion: null,
     });
-    expect(synced.importHash).toBe('MNQ|LONG|2026-07-11T14:05:00.000Z|30000|30010|20');
+    expect(synced.importHash).toBe('tv:900000000001');
     expect(synced.setupId).toBeTruthy();
     expect(await prisma.trade.count({ where: { userId, entry: 29000 } })).toBe(0);
 
@@ -514,7 +532,7 @@ describe('Tradovate — synchro', () => {
       brokerCashBalance: true, brokerNetLiq: true, brokerOpenPnl: true, brokerOpenPositions: true,
     } })).toEqual({ brokerCashBalance: 50_123.5, brokerNetLiq: 50_098.5, brokerOpenPnl: -25, brokerOpenPositions: 1 });
 
-    expect(await prisma.trade.count({ where: { userId } })).toBe(21);
+    expect(await prisma.trade.count({ where: { userId } })).toBe(8);
 
     // 4. État exposé au front : jamais de token.
     const list = await api(token, '/connections');
@@ -616,7 +634,7 @@ describe('Tradovate — synchro', () => {
     orderListMode = mode;
     const res = await api(token, `/accounts/${account.id}/sync`, 'POST');
     expect(res.status, await res.clone().text()).toBe(201);
-    expect(await prisma.trade.count({ where: { userId } })).toBe(3);
+    expect(await prisma.trade.count({ where: { userId } })).toBe(2);
     expect(await prisma.trade.count({ where: { userId, OR: [{ stopLoss: { not: null } }, { riskReward: { not: null } }] } })).toBe(0);
     const conn = await prisma.brokerConnection.findFirstOrThrow({ where: { accountId: account.id } });
     expect(conn.status).toBe(BrokerConnectionStatus.CONNECTED);
@@ -650,9 +668,9 @@ describe('Tradovate — synchro', () => {
     const { firstSync } = await connect(token, account.id);
 
     // Fills du 10-11/07/2026, bien avant la connexion : tous importés dès le premier passage.
-    expect(firstSync?.created).toBe(3);
+    expect(firstSync?.created).toBe(2);
     const trades = await prisma.trade.findMany({ where: { userId }, select: { tradedAt: true } });
-    expect(trades).toHaveLength(3);
+    expect(trades).toHaveLength(2);
     expect(trades.every((t) => t.tradedAt < connectedAt)).toBe(true);
 
     // Les routes list partent SANS aucun filtre : ni date de connexion, ni lastSyncAt.
@@ -792,9 +810,9 @@ describe('Tradovate — synchro', () => {
     const { location, firstSync } = await connect(token, account.id);
 
     expect(location.searchParams.get('tradovate')).toBe('select_account');
-    expect(firstSync?.created).toBe(15);
+    expect(firstSync?.created).toBe(14);
     expect(firstSync?.feesImported.reconciled).toBe(true);
-    expect(await prisma.trade.count({ where: { userId } })).toBe(15);
+    expect(await prisma.trade.count({ where: { userId } })).toBe(14);
 
     const batches = calls.filter((c) => /\/(fill|fillFee)\/items/.test(c.url));
     expect(batches.every((c) => (new URL(c.url).searchParams.get('ids') ?? '').split(',').length <= ITEMS_LIMIT)).toBe(true);
@@ -802,13 +820,13 @@ describe('Tradovate — synchro', () => {
   });
 
   it('fill absent de la liste : relu par petit lot ; introuvable, seule sa paire est ignorée', async () => {
-    // Relu par /fill/items (1 id) : les 3 trades sont importés.
+    // Relu par /fill/items (1 id) : les 2 positions sont importées.
     listOmits = new Set([900000000002]);
     const a = await registerUser();
     const accountA = await createAccount(a.id, 'Compte A');
     calls = [];
     const first = await connect(a.token, accountA.id);
-    expect(first.firstSync?.created).toBe(3);
+    expect(first.firstSync?.created).toBe(2);
     const reread = calls.find((c) => new URL(c.url).pathname === '/v1/fill/items');
     expect(new URL(reread?.url ?? 'https://none').searchParams.get('ids')).toBe('900000000002');
 
@@ -819,18 +837,18 @@ describe('Tradovate — synchro', () => {
     const accountB = await createAccount(b.id, 'Compte B');
     const second = await connect(b.token, accountB.id);
     expect(second.location.searchParams.get('tradovate')).toBe('select_account');
-    expect(second.firstSync?.created).toBe(2);
+    expect(second.firstSync?.created).toBe(1);
     const conn = await prisma.brokerConnection.findFirstOrThrow({ where: { accountId: accountB.id } });
     expect(conn).toMatchObject({ status: BrokerConnectionStatus.CONNECTED, lastSyncError: null });
   });
 
   it('CSV Performance importé APRÈS la synchro : les trades déjà synchronisés ne sont pas recréés', async () => {
-    // Sens inverse du premier test : la synchro crée les 3 trades, puis l'utilisateur importe
-    // son export Performance (heures locales sans fuseau). Les 2 trades communs = doublons.
+    // Sens inverse du premier test : la synchro crée les 2 positions, puis l'utilisateur importe
+    // son export Performance (heures locales sans fuseau). La position commune = doublon (même clé).
     const { id: userId, token } = await registerUser();
     const account = await createAccount(userId, 'Synchro puis CSV');
     const { firstSync } = await connect(token, account.id);
-    expect(firstSync?.created).toBe(3);
+    expect(firstSync?.created).toBe(2);
 
     const form = new FormData();
     form.append('file', new Blob([PERF_CSV], { type: 'text/csv' }), 'Performance.csv');
@@ -840,28 +858,47 @@ describe('Tradovate — synchro', () => {
     });
     expect(csv.ok, await csv.clone().text()).toBe(true);
     const { data } = (await csv.json()) as { data: { created: number; duplicates: number } };
-    expect(data).toMatchObject({ created: 18, duplicates: 2 });
-    expect(await prisma.trade.count({ where: { userId } })).toBe(21);
+    expect(data).toMatchObject({ created: 6, duplicates: 1 });
+    expect(await prisma.trade.count({ where: { userId } })).toBe(8);
   });
 
-  it('trade à plusieurs contrats (paires identiques) : chaque paire devient un trade, resynchro sans doublon', async () => {
-    // Synchro de Val (14/09/2026) : 4 paires d'un contrat, même fill de vente, mêmes prix →
-    // même empreinte ; 3 étaient écartées comme « doublons » (contrats et P&L perdus).
+  it('position à plusieurs contrats (4 paires, même vente) : UN trade de 4 contrats, resynchro sans doublon (#956)', async () => {
+    // Synchro de Val (14/09/2026) : 4 paires d'un contrat, même fill de vente. Avant #956 : 4 trades
+    // d'un contrat ; depuis : une position = un trade (4 achats, une vente, retour à plat).
     identicalPairs = 4;
     const { id: userId, token } = await registerUser();
     const account = await createAccount(userId, 'Compte multi-contrats');
     const { firstSync } = await connect(token, account.id);
 
-    expect(firstSync?.created).toBe(7); // 3 de base + 4 paires identiques
-    const split = await prisma.trade.findMany({ where: { userId, entry: 32000 }, select: { importHash: true } });
-    expect(split).toHaveLength(4);
-    expect(new Set(split.map((t) => t.importHash)).size, 'une empreinte distincte par répétition').toBe(4);
+    expect(firstSync?.created).toBe(3); // 2 positions de base + la position de 4 contrats
+    const split = await prisma.trade.findMany({ where: { userId, entry: 32000 } });
+    expect(split).toHaveLength(1);
+    expect(split[0]).toMatchObject({ quantity: 4, exit: 32010, pnl: 80, importHash: `tv:${SPLIT_SELL + 1}` });
 
     const again = await api(token, `/accounts/${account.id}/sync`, 'POST');
     expect(again.status, await again.clone().text()).toBe(201);
     const r = ((await again.json()) as { data: { created: number; duplicates: number } }).data;
-    expect(r).toMatchObject({ created: 0, duplicates: 7 });
-    expect(await prisma.trade.count({ where: { userId } })).toBe(7);
+    expect(r).toMatchObject({ created: 0, duplicates: 3 });
+    expect(await prisma.trade.count({ where: { userId } })).toBe(3);
+  });
+
+  it('position pas encore à plat : aucun trade ; au retour à plat, UN trade pour toute la position (#956)', async () => {
+    const { id: userId, token } = await registerUser();
+    const account = await createAccount(userId, 'Position ouverte');
+    openLegs = 1; // 2 achetés, 1 revendu : netPos = 1
+    const { firstSync } = await connect(token, account.id);
+    expect(firstSync?.created).toBe(2); // les 2 positions de base seulement
+    expect(await prisma.trade.count({ where: { userId, entry: { gte: 33000 } } })).toBe(0);
+
+    openLegs = 2; // deuxième sortie : retour à plat
+    const res = await api(token, `/accounts/${account.id}/sync`, 'POST');
+    expect(res.status, await res.clone().text()).toBe(201);
+    const r = ((await res.json()) as { data: { created: number; deferred: number } }).data;
+    expect(r).toMatchObject({ created: 1, deferred: 0 });
+    const t = await prisma.trade.findFirstOrThrow({ where: { userId, entry: { gte: 33000 } } });
+    // Entrée moyenne (33000 + 33002) / 2, sortie moyenne (33010 + 33020) / 2, P&L brut 56 $ (2 $/pt).
+    expect(t).toMatchObject({ side: 'LONG', quantity: 2, entry: 33001, exit: 33015, pnl: 56, importHash: `tv:${OPEN_BASE}` });
+    expect(t.tradedAt.toISOString()).toBe('2026-07-14T14:09:00.000Z');
   });
 
   it('404 de Tradovate sur une lecture de données → « momentanément injoignable », connexion intacte', async () => {
@@ -901,7 +938,7 @@ describe('Tradovate — synchro', () => {
     await connect(token, account.id);
     await api(token, `/accounts/${account.id}/sync`, 'POST');
     const trades = await prisma.trade.count({ where: { userId } });
-    expect(trades).toBe(3); // première synchro au retour + synchro manuelle sans doublon
+    expect(trades).toBe(2); // première synchro au retour + synchro manuelle sans doublon
 
     expect((await api(token, `/accounts/${account.id}`, 'DELETE')).status).toBe(200);
     expect(await prisma.brokerConnection.count({ where: { accountId: account.id } })).toBe(0);
@@ -917,7 +954,7 @@ describe('Tradovate — synchro', () => {
     const account = await createAccount(userId, 'Mauvais compte');
     const other = await createAccount(userId, 'Autre compte');
     await connect(token, account.id);
-    expect(await prisma.trade.count({ where: { accountId: account.id, source: 'BROKER_SYNC' } })).toBe(3);
+    expect(await prisma.trade.count({ where: { accountId: account.id, source: 'BROKER_SYNC' } })).toBe(2);
 
     // Copies d'un trade synchronisé : une saisie manuelle et un import CSV sur le MÊME compte,
     // plus un trade broker sur un AUTRE compte du user. Aucun ne doit être touché.
@@ -929,15 +966,15 @@ describe('Tradovate — synchro', () => {
     const history = await prisma.trade.create({ data: { ...tpl, source: 'BROKER_HISTORY' } });
     const elsewhere = await prisma.trade.create({ data: { ...tpl, accountId: other.id, source: 'BROKER_SYNC' } });
 
-    // Le nombre affiché AVANT confirmation : 3 synchronisés + 1 historique.
+    // Le nombre affiché AVANT confirmation : 2 synchronisés + 1 historique.
     const list = (await (await api(token, '/connections')).json()) as { data: { accountId: string; brokerTradesCount: number }[] };
-    expect(list.data.find((c) => c.accountId === account.id)?.brokerTradesCount).toBe(4);
+    expect(list.data.find((c) => c.accountId === account.id)?.brokerTradesCount).toBe(3);
 
     expect((await api(token, `/accounts/${account.id}?deleteTrades=oui`, 'DELETE')).status).toBe(400);
 
     const res = await api(token, `/accounts/${account.id}?deleteTrades=true`, 'DELETE');
     expect(res.status).toBe(200);
-    expect(((await res.json()) as { data: unknown }).data).toEqual({ disconnected: true, tradesDeleted: 4 });
+    expect(((await res.json()) as { data: unknown }).data).toEqual({ disconnected: true, tradesDeleted: 3 });
     expect(await prisma.brokerConnection.count({ where: { accountId: account.id } })).toBe(0);
     const left = await prisma.trade.findMany({ where: { userId }, select: { id: true } });
     expect(left.map((t) => t.id).sort()).toEqual([manual.id, csv.id, elsewhere.id].sort());
@@ -950,7 +987,7 @@ describe('Tradovate — synchro', () => {
     await connect(token, account.id);
     const res = await api(token, `/accounts/${account.id}?deleteTrades=false`, 'DELETE');
     expect(((await res.json()) as { data: unknown }).data).toEqual({ disconnected: true, tradesDeleted: 0 });
-    expect(await prisma.trade.count({ where: { userId } })).toBe(3);
+    expect(await prisma.trade.count({ where: { userId } })).toBe(2);
   });
 
   it('deux comptes MTC, deux connexions indépendantes (Apex + Lucid)', async () => {

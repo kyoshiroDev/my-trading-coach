@@ -10,6 +10,7 @@ import {
 import { syncResultLines } from '../utils/tradovate-return.util';
 import { ToastService } from '../services/toast.service';
 import { apiErrorMessage } from '../utils/api-error';
+import { UserScopedReset } from '../auth/user-scoped-reset';
 
 /** Action en cours sur un compte : pilote les spinners et désactive les boutons. */
 export type TradovateBusy = 'sync' | 'select' | 'disconnect' | 'connect';
@@ -33,6 +34,19 @@ export class TradovateStore {
   readonly loaded = signal(false);
   readonly busy = signal<Record<string, TradovateBusy | undefined>>({});
   readonly feedback = signal<Record<string, TradovateFeedback | undefined>>({});
+
+  constructor() {
+    // Logout (#994) : les connexions de l'utilisateur précédent ne restent pas « chargées ».
+    inject(UserScopedReset).register(() => this.reset());
+  }
+
+  /** Vide l'état propre à l'utilisateur (logout). */
+  reset(): void {
+    this.connections.set([]);
+    this.loaded.set(false);
+    this.busy.set({});
+    this.feedback.set({});
+  }
 
   readonly byAccount = computed(
     () => new Map(this.connections().map((c) => [c.accountId, c] as const)),

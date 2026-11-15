@@ -34,7 +34,7 @@ import { MoneyService } from '../../core/services/money.service';
 import { ToastService } from '../../core/services/toast.service';
 import { TradovateLiveSocketService } from '../../core/services/tradovate-live-socket.service';
 import { apiErrorMessage } from '../../core/utils/api-error';
-import { DialogDirective, PctPipe } from '@mtc/front-ui';
+import { ConfirmService, DialogDirective, ErrorStateComponent, PctPipe } from '@mtc/front-ui';
 import { InactiveAccountsToggleComponent } from '../../shared/components/inactive-accounts-toggle/inactive-accounts-toggle.component';
 import { isInactiveStatus, statusBadgeClass, statusLabel } from '../../core/utils/account-status.util';
 import {
@@ -50,7 +50,7 @@ import {
     DatePipe, DecimalPipe, TitleCasePipe, LucideDynamicIcon,
     TopbarComponent, TradeFormComponent, TradeStopDialogComponent, CsvImportComponent,
     PnlColorPipe, PnlFormatPipe, MoneyPipe, EmotionEmojiPipe, InfoTooltipComponent,
-    MixedCurrencyNoticeComponent, InactiveAccountsToggleComponent,
+    MixedCurrencyNoticeComponent, InactiveAccountsToggleComponent, ErrorStateComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './journal.component.css',
@@ -59,6 +59,7 @@ import {
 export class JournalComponent {
   protected readonly tradesStore = inject(TradesStore);
   private readonly tradesApi     = inject(TradesApi);
+  private readonly confirm = inject(ConfirmService);
   private readonly destroyRef    = inject(DestroyRef);
   private readonly selectedAccount = inject(SelectedAccountStore);
   protected readonly setupsStore = inject(SetupsStore);
@@ -258,6 +259,28 @@ export class JournalComponent {
     this.filterEmotion() !== 'ALL',
   );
 
+  /**
+   * Quel écran quand la liste est vide (#994) : 'error' (chargement échoué, « Réessayer »),
+   * 'filtered' (filtre ou période sans résultat), 'none' (journal vraiment vide), null (des trades).
+   * Avant, les trois cas affichaient « Aucun trade enregistré · Ajouter mon premier trade ».
+   */
+  protected readonly emptyKind = computed<'error' | 'filtered' | 'none' | null>(() => {
+    if (this.tradesByDay().length > 0) return null;
+    if (this.tradesStore.error()) return 'error';
+    if (this.hasActiveFilters() || this.datePreset() !== 'all') return 'filtered';
+    return 'none';
+  });
+
+  /** « Tout afficher » : filtres et période remis à zéro. */
+  protected showAllTrades(): void {
+    this.resetFilters();
+    this.setDatePreset('all');
+  }
+
+  protected retryLoad(): void {
+    this.refreshJournal();
+  }
+
   protected resetFilters(): void {
     this.filterSide.set('ALL');
     this.filterSetup.set(null);
@@ -411,6 +434,21 @@ export class JournalComponent {
     this.refreshStats();
   }
 
+  /**
+   * Croix d'une ligne (#994) : confirmation avant de supprimer, comme la suppression d'une journée.
+   * La suppression est irréversible et une croix se lit comme « fermer ».
+   */
+  protected async askDeleteTrade(trade: Trade): Promise<void> {
+    const day = new Date(trade.tradedAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
+    const ok = await this.confirm.ask({
+      title: 'Supprimer ce trade ?',
+      message: `${trade.asset} ${trade.side === 'LONG' ? 'long' : 'short'} du ${day}. La suppression est définitive.`,
+      confirmLabel: 'Supprimer',
+      danger: true,
+    });
+    if (ok) this.deleteTrade(trade.id);
+  }
+
   deleteTrade(id: string): void {
     this.tradesApi.delete(id)
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -521,8 +559,8 @@ export class JournalComponent {
 
   loadMore(): void { this.tradesStore.loadMore(); }
 
+  /** La modale reste ouverte sur son récap (doublons, lignes rejetées, frais) ; on rafraîchit derrière (#994). */
   onImported(): void {
-    this.showImport.set(false);
     this.refreshJournal();
   }
 }

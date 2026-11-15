@@ -70,11 +70,15 @@ export class CrossSourcePool {
   /** Retire le trade existant qui correspond à `dto` dans un autre fuseau ; `true` s'il y en a un. */
   take(dto: TradeIdentity): boolean {
     const list = this.byPrice.get(CrossSourcePool.bucket(dto));
-    if (!list) return false;
-    const i = list.findIndex((e) => isCrossSourceDuplicate(dto, [e]));
-    if (i === -1) return false;
+    const i = list ? list.findIndex((e) => isCrossSourceDuplicate(dto, [e])) : -1;
+    if (!list || i === -1) return false;
     list.splice(i, 1);
     return true;
+  }
+
+  /** Comme `take`, sans rien retirer (regroupement par position, #956). */
+  has(dto: TradeIdentity): boolean {
+    return this.byPrice.get(CrossSourcePool.bucket(dto))?.some((e) => isCrossSourceDuplicate(dto, [e])) ?? false;
   }
 }
 

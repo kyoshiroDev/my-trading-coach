@@ -52,7 +52,7 @@ export async function computeSummary(prisma: SqlClient, f: TradeFilter) {
 
   // Profit factor = gains nets / pertes nettes. null si aucune perte (∞ → géré côté front).
   const profitFactor =
-    totals.grossLoss > 0 ? Math.round((totals.grossProfit / totals.grossLoss) * 100) / 100 : null;
+    totals.grossLoss > 0 ? roundCents(totals.grossProfit / totals.grossLoss) : null;
   const topSession = bestByWinRate(sessions);
   const topHour = bestByWinRate(hours);
   // Drawdown max PAR COMPTE : le pire des comptes de la vue, jamais une série mélangée.

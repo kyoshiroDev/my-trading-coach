@@ -102,6 +102,14 @@ export class HttpExceptionFilter implements ExceptionFilter {
         return { status: HttpStatus.NOT_FOUND, code: 'NOT_FOUND', message: 'Ressource introuvable.' };
       }
     }
+    // `null` reçu sur une colonne obligatoire (`@IsOptional` le laisse passer) : erreur du client, 400.
+    // Seul ce cas : toute autre erreur de validation Prisma est un bug du code et reste un 500 (#994).
+    if (exception instanceof Prisma.PrismaClientValidationError) {
+      const field = /Argument `(\w+)` must not be null\./.exec(exception.message)?.[1];
+      if (field) {
+        return { status: HttpStatus.BAD_REQUEST, code: 'BAD_REQUEST', message: `Le champ « ${field} » ne peut pas être vide.` };
+      }
+    }
 
     // Tout le reste : 500 sans détail technique côté client (le détail part dans les logs).
     return {

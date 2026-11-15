@@ -14,6 +14,7 @@ import {
 } from './behavior.constants';
 import type { BehaviorBaselineData } from './behavior-baseline';
 import { type BehaviorPosition, isLoss } from './behavior-positions';
+import { roundCents } from '@mtc/shared';
 
 /**
  * Détecteurs de comportement (#602) — fonctions PURES, aucun appel IA, aucune I/O.
@@ -69,7 +70,7 @@ export interface EntryContext {
 export const isLearning = (baseline: BehaviorBaselineData | null) =>
   !baseline || baseline.sessionsUsed < LEARNING_MIN_SESSIONS;
 
-const fmtQty = (q: number) => String(Math.round(q * 100) / 100).replace('.', ',');
+const fmtQty = (q: number) => String(roundCents(q)).replace('.', ',');
 const fmtPts = (p: number) => String(Math.round(p)).replace('.', ',');
 const fmtDelay = (ms: number) => (ms < 90_000 ? `${Math.round(ms / 1000)} s` : `${Math.round(ms / 60_000)} min`);
 
@@ -120,7 +121,7 @@ export function detectDailyLossDistance(ctx: EntryContext): BehaviorAlertDraft |
     type: 'A2_DAILY_LOSS_DISTANCE',
     severity: points <= threshold * A2_HIGH_FRACTION ? 'high' : 'medium',
     message: `Avec ${fmtQty(pos.quantity)} ${pos.asset}, ${fmtPts(points)} pts contre toi = perte max du jour atteinte.`,
-    context: { points: Math.round(points * 100) / 100, threshold, remaining, quantity: pos.quantity, pointValue: pv },
+    context: { points: roundCents(points), threshold, remaining, quantity: pos.quantity, pointValue: pv },
   };
 }
 
@@ -199,7 +200,7 @@ export function detectLossStreak(ctx: EntryContext): BehaviorAlertDraft | null {
     type: 'C1_LOSS_STREAK',
     severity: 'high',
     message: `Nouvelle entrée après ${streak} pertes d’affilée dans la séance.`,
-    context: { streak, lost: Math.round(lost * 100) / 100 },
+    context: { streak, lost: roundCents(lost) },
   };
 }
 

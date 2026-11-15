@@ -59,3 +59,35 @@ describe('INSTRUMENTS — spécifications CME', () => {
     });
   });
 });
+
+describe('#951 — forex en saisie manuelle', () => {
+  const dto = (d: Partial<CreateTradeDto>) => d as CreateTradeDto;
+
+  it('EUR/USD LONG 1.0800 → 1.0850, 1 lot = +500 $ (avant : 0,00 $)', () => {
+    expect(calculatePnl(dto({ asset: 'EUR/USD', side: 'LONG', entry: 1.08, exit: 1.085, quantity: 1 }))).toBe(500);
+  });
+
+  it('GBP/USD SHORT 20 pips × 0,5 lot = +100 $ ; AUD/USD et NZD/USD au catalogue', () => {
+    expect(calculatePnl(dto({ asset: 'GBP/USD', side: 'SHORT', entry: 1.27, exit: 1.268, quantity: 0.5 }))).toBe(100);
+    for (const s of ['AUD/USD', 'NZD/USD']) expect(valeurDuPoint(s), s).toBeCloseTo(100_000, 6);
+  });
+
+  it('risque du stop EUR/USD : 25 pips × 2 lots = 500 $', () => {
+    expect(stopRiskAmount(1.08, 1.0775, 2, getTickSize('EUR/USD'), getTickValue('EUR/USD'))).toBe(500);
+  });
+
+  it('USD/JPY sans capital : aucun P&L inventé (avant : stocké en yens)', () => {
+    expect(INSTRUMENTS.some((i) => i.symbol === 'USD/JPY')).toBe(false);
+    expect(calculatePnl(dto({ asset: 'USD/JPY', side: 'LONG', entry: 150, exit: 151, quantity: 1 }))).toBeUndefined();
+    expect(calculatePnl(dto({ asset: 'EURGBP', side: 'LONG', entry: 0.86, exit: 0.87, quantity: 1 }))).toBeUndefined();
+  });
+
+  it('USD/JPY avec capital : variation × capital ; P&L fourni : gardé', () => {
+    expect(calculatePnl(dto({ asset: 'USD/JPY', side: 'LONG', entry: 150, exit: 151.5, capitalEngaged: 10_000 }))).toBe(100);
+    expect(calculatePnl(dto({ asset: 'USD/JPY', side: 'LONG', entry: 150, exit: 151, pnl: 66.67 }))).toBe(66.67);
+  });
+
+  it('crypto inchangée : BTC/USDT sans capital = points × quantité', () => {
+    expect(calculatePnl(dto({ asset: 'BTC/USDT', side: 'LONG', entry: 100, exit: 110, quantity: 2 }))).toBe(20);
+  });
+});

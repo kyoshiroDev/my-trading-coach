@@ -63,7 +63,7 @@ describe('Historique des sessions — comptes échoués et archivés', () => {
 
   it('par défaut sans includeInactive ; l\'interrupteur recharge avec, puis sans', () => {
     const { fixture, store, api, lastIncludeInactive } = setup([{ status: 'ACTIVE' }, { status: 'ARCHIVED' }]);
-    expect(api.getSessionsByMonth).toHaveBeenCalledWith(2026, 11, undefined, 50, false);
+    expect(api.getSessionsByMonth).toHaveBeenCalledWith(2026, 11, undefined, 200, false);
     store.includeInactive.set(true);
     fixture.detectChanges();
     expect(lastIncludeInactive()).toBe(true);

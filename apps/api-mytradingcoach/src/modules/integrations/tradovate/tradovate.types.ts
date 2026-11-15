@@ -28,6 +28,8 @@ export interface TradovatePosition {
   accountId: number;
   contractId: number;
   netPos: number;
+  /** Position au début de la séance (reportée de la veille) : ≠ 0 = ouverture invisible (#956). */
+  prevPos?: number;
   /** Prix moyen de la position ouverte, calculé par Tradovate. */
   netPrice?: number;
   /** Dernière modification de la position (ISO). */

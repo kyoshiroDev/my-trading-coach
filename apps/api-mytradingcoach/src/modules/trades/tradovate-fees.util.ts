@@ -1,5 +1,6 @@
 import { parseUsNumber, splitCsvLine } from './csv-parsers';
 import { normFillId } from './tradovate-pair.util';
+import { roundCents } from '@mtc/shared';
 
 /**
  * Frais Tradovate COMPLETS par fill, lus dans le Cash History (#783) : commission, mais aussi
@@ -77,9 +78,9 @@ export function cashHistoryFeesByFill(cashCsv: string, fills: TradovateFillStamp
       continue;
     }
     const k = String(owner);
-    feeByFill.set(k, +((feeByFill.get(k) ?? 0) + amount).toFixed(2));
+    feeByFill.set(k, roundCents((feeByFill.get(k) ?? 0) + amount));
   }
-  return { feeByFill, expected: +expected.toFixed(2), orphans };
+  return { feeByFill, expected: roundCents(expected), orphans };
 }
 
 /** Fills d'un export / rapport Performance (buyFillId + boughtTimestamp, sellFillId + soldTimestamp). */

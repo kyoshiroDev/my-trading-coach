@@ -1147,6 +1147,9 @@ affichés (service réel, pas besoin de le mocker). Pour un composant qui monte 
 `mtc-toasts` via `matchMedia`), les autres en file (« +N »). Avant : jusqu'à 3 toasts à 92 px du bas,
 en plein contenu. Le refus « mode démo » (403 `DemoReadOnlyGuard`) ne fait **jamais** de toast :
 `demoInterceptor` ouvre déjà l'invite « Crée ton compte » (`ToastService.show` l'ignore).
+Le 403 `PREMIUM_REQUIRED` (`PremiumGuard`) : `premiumInterceptor` relit le compte (une fois par 10 s)
+pour que les écrans gatés repassent au cadenas, et `apiErrorMessage` rend « Cette fonctionnalité est
+réservée au Premium. » au lieu du repli de l'écran (B17 #1013).
 ## Librairie partagée `@mtc/shared` (2026-09-13)
 
 - Import `from '@mtc/shared'` (stats de trades, valeurs tarifaires) — source unique avec l'API.
@@ -1308,6 +1311,11 @@ en plein contenu. Le refus « mode démo » (403 `DemoReadOnlyGuard`) ne fait **
     Colonne de présentation (975 px de haut naturels à ≥ 1280 px) : marges verticales 28/32 px au
     lieu de 40/44 (28/44 entre 1024 et 1279 px), palier `max-height: 1000px` (accord de Greg), via
     `:host-context(.signup)` dans `auth-pitch`.
+  - Lien de parrainage (#976) : `[class.with-referral]="!!referralCode()"` sur le gabarit. ≥ 1024 px :
+    encadré « Invitation » compact (12 px, padding 6/10, texte inchangé). `(min-width: 1024px) and
+    (max-height: 1199px)` : carte resserrée en plus (écarts 6 px, libellés 4 px, marges de page 12 px,
+    carte 18/16) ; sans code, rien ne change. Page = fenêtre de 960 à 1300 px de haut avec un code de
+    4 à 20 caractères.
   - `/forgot-password`, `/reset-password` et la finalisation Google gardent l'ancien gabarit carte
     seule (`auth-layout/card-page.css`, `card-page-signup.css`), à migrer si besoin.
 - **Écran de chargement** (`#mtc-boot`, `index.html`) : logo et « Chargement… » statiques, style
@@ -1326,6 +1334,41 @@ en plein contenu. Le refus « mode démo » (403 `DemoReadOnlyGuard`) ne fait **
   `SetupsStore`, qui partaient au démarrage avec leurs API (−9,4 kB, 497,8 → 488,4 kB). Nouveau store
   propre à l'utilisateur → s'inscrire là, pas l'injecter dans `AuthService`. Reste au démarrage ~4,5 kB
   de `@mtc/shared` (règles prop firm, stats) via un morceau partagé d'esbuild, sans import direct.
+  Inscrits (audit #994) : trades, setups, comptes, push, **séance** (`SessionStore` : `activeSession`
+  à null coupe aussi ses pollings) et **Tradovate** (`TradovateStore`, `loaded` repasse à false).
+- **Store qui recharge une liste filtrée** : génération incrémentée à chaque `loadTrades`, réponse
+  d'une génération passée ignorée (`TradesStore`, #994) — sinon « Win » puis « Loss » rapides ou
+  « Charger plus » puis un filtre affichent la réponse arrivée en dernier. Supprimer le trade qui
+  sert de curseur recale `nextCursor` sur le dernier restant.
+- **Suppression irréversible d'une ligne** : `ConfirmService.ask({ danger: true })` avant l'appel
+  (croix du journal, #994), comme la suppression d'une journée.
+- **Liste vide** : distinguer erreur (`mtc-error-state`), filtre sans résultat (« Tout afficher ») et
+  vraie absence de données (`JournalComponent.emptyKind`, #994).
+- **Schéma zod d'un formulaire** : il retire les clés qu'il ne connaît pas ; tout champ saisi doit y
+  figurer (les frais du formulaire de trade ne partaient pas, #994). Ne jamais réécrire l'état du
+  formulaire avec la valeur transformée pour l'envoi (le 2e envoi plantait).
+- **Retour à la page demandée après connexion** (`core/auth/return-url.ts`, #994) : `authGuard`
+  mémorise `state.url` dans `sessionStorage` (`mtc.returnUrl`), `PostSignupService.afterLogin()`
+  (e-mail ET Google) y revient par `navigateByUrl`, sinon `/dashboard`. Liste blanche dans
+  `isSafeReturnUrl` (cf. security.md). Spec d'un garde : routeur de test AVEC la route `login`,
+  sinon rejet non géré qui fait sortir la suite en erreur.
+- **Séance du jour** (#994) : l'onglet suit le statut de la séance (effet du constructeur), jamais
+  posé à la main après `startSession` / `closeSessionThenDebrief` (sinon « Live » même en échec) ;
+  pré-remplissage humeur / notes UNE fois par séance, lectures `untracked` ; la sauvegarde différée
+  du journal part au `ngOnDestroy` si elle est en attente. `SessionStore.starting` verrouille
+  « Démarrer » jusqu'à la réponse (double clic = 2 séances).
+- **`SelectedAccountStore.loadError`** (#994) : une erreur de chargement garde les comptes déjà
+  connus (plus de `accounts.set([])`) ; Mes comptes montre `mtc-error-state` s'il n'en connaît aucun.
+- **Mes comptes** (#994) : suppression = toast « supprimé » / « archivé » selon la réponse, puis
+  `refreshAfterImport()` (comptes + trades), 404 = succès ; Tradovate « À reconnecter » propose
+  Déconnecter, et la branche de confirmation passe AVANT le statut dans le template ; la modale de
+  connexion écoute `window:pageshow` (page restaurée du cache après « Précédent » → plus bloquée).
+- **Auth** (#994) : login 400 (DTO) = « Email ou mot de passe incorrect » ; mot de passe oublié :
+  succès seulement sur 204, sinon message (429, 400, panne).
+- **Profil** (#994) : refus de l'API affichés (setups, nom, mot de passe, actifs) ; « SUPPRIMER »
+  comparé sans casse ni espaces, champ en `autocapitalize="off"` / `autocorrect="off"`.
+- **Historique des séances** (#994) : groupes par lundi de la semaine (avec l'année, jamais le seul
+  n° ISO), 200 séances par mois (plafond de l'API).
 - Dans les libs, sorties en `@Output() … = new EventEmitter()` : leurs tests tournent en JIT, qui
   ne voit pas `output()`.
 - **Toute donnée chargée affiche son échec** : `@if (loadError()) { <mtc-error-state (retry)="reload()" /> }`
@@ -1338,7 +1381,12 @@ en plein contenu. Le refus « mode démo » (403 `DemoReadOnlyGuard`) ne fait **
   formulaire Stripe (Checkout Elements, `@stripe/stripe-js` épinglé 9.17.0 = Stripe.js `dahlia`) :
   Apple Pay / Google Pay / Link en boutons express, carte (CB co-badgée reconnue) et Klarna dans le
   formulaire. Textes par offre : `checkout-copy.ts` (fonction pure, testée) ; montant du jour lu dans
-  la session. Après paiement : `/dashboard?checkout=success`. Si l'API renvoie `{ url }` (clé
+  la session. Après paiement : `/dashboard?checkout=success`, traité au niveau de l'app par
+  `CheckoutReturnService` (appelé par `App` à chaque navigation, une fois par chargement) : toast,
+  `/auth/me` relu à 0 / 2,5 / 5 / 10 s jusqu'à voir l'abonnement, offres rechargées, puis `checkout`
+  et `session_id` retirés de l'URL (B2 #1013 ; le Profil n'a plus de bandeau). `/paiement` ne capture
+  jamais d'intention d'offre (B7). Confirmation express refusée (paiement en cours, rejet de
+  `actions.confirm`) : toujours `paymentFailed`, bouton rendu (B16). Si l'API renvoie `{ url }` (clé
   publiable absente), repli sur la page Stripe. Hauteur du formulaire figée après chargement
   (passer à Klarna ne fait rien bouger) ; colonne gauche collante en desktop.
   **Boutons express** (#818) : ils arrivent 3 à 7 s après le formulaire carte. Leur zone
@@ -1468,7 +1516,10 @@ L'API lit ce corps en JSON sur cette route seulement (cf. nestjs.md). Ne pas rev
   `AuthUser` porte `trialSource` et `signupTrialEndsAt`.
 - **Bandeau** « Premium offert · il te reste N jours » + « Voir les offres → » (`OfferIntentService.open('bandeau')`) :
   dans `mtc-topbar`, sous l'en-tête, NON collant (les vues calées sur le viewport n'ont pas de topbar
-  et `--demo-banner-h` n'est pas touché). Spec : `topbar-trial-strip.spec.ts`.
+  et `--demo-banner-h` n'est pas touché). Spec : `topbar-trial-strip.spec.ts`. Masqué pendant une
+  pause (`past_due` / `unpaid`) : son bouton mènerait au 409 `PAYMENT_PENDING` (B13 #1013). Le Profil
+  dit « dernier jour » le jour de la fin, comme le bandeau (B11). Bouton du portail Stripe seulement
+  avec un abonnement payant ou en essai (`hasBillingPortal`, B10).
 - **Fenêtre des offres** pendant l'essai : plus de « 1 mois offert » (`trialUsed` posé à l'inscription)
   et une ligne `plan-trial-note` : fin du Premium offert (JJ/MM) et paiement dès la souscription.
 - **Fin d'essai** : `mtc-trial-ended-modal` (shell, `@defer (when userStore.signupTrialEnded())`), une
@@ -1819,3 +1870,11 @@ textes (la déconnexion supprime nos jetons, elle ne révoque rien chez Tradovat
 - Dashboard matin (`session-morning`) : `ecoBriefing` = `ecoCalendar().briefing` filtré sur
   `status === 'upcoming'` (aujourd'hui seulement) ; une ligne factuelle calculée côté serveur, affichée telle
   quelle (`line.text`), aucune direction ni conseil.
+
+## Profil : e-mail en lecture seule (#1020, 2026-11-15)
+
+L'e-mail du Profil s'affiche sans bouton « Modifier ». Avant, il envoyait `{ email }` à `PATCH /users/me`,
+dont le DTO API n'accepte que `name` (`forbidNonWhitelisted` → 400 à chaque essai). `UpdateMeDto` du front
+= `name` seul, comme l'API. Changer d'adresse = fonctionnalité à part (lien de confirmation sur la
+nouvelle adresse, `emailTransform` / `emailEquals` côté API, 409 si l'adresse est prise), pas un champ
+à remettre ici. Test : `profile-email-lecture-seule.spec.ts`.

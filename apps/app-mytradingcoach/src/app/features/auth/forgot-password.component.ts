@@ -48,9 +48,17 @@ export class ForgotPasswordComponent {
           this.success.set(true);
           this.isLoading.set(false);
         },
-        error: () => {
-          // Anti-énumération : même message en cas d'erreur
-          this.success.set(true);
+        // L'API répond 204 pour toute adresse (anti-énumération) : une erreur n'est donc jamais
+        // « adresse inconnue », c'est une panne ou un refus de débit. Avant, l'écran annonçait
+        // l'envoi quand même et l'utilisateur attendait un e-mail qui ne partirait jamais (#994).
+        error: (err: { status?: number }) => {
+          this.error.set(
+            err?.status === 429
+              ? 'Trop de demandes. Réessaie dans quelques minutes.'
+              : err?.status === 400
+                ? 'Saisis une adresse e-mail valide.'
+                : 'Le service ne répond pas. Réessaie dans un instant.',
+          );
           this.isLoading.set(false);
         },
       });

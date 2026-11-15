@@ -33,7 +33,7 @@ function setup(opts: { confirmed?: boolean; brokerConnected?: boolean; deleteImp
   const store = {
     accounts: signal(comptes),
     selectedAccountId: signal<string | 'all'>('all'),
-    isLoading: signal(false), loaded: signal(true), load: vi.fn(),
+    isLoading: signal(false), loadError: signal(false), loaded: signal(true), load: vi.fn(),
   };
   const api = {
     remove: vi.fn(() => of({ data: { archived: true } })),

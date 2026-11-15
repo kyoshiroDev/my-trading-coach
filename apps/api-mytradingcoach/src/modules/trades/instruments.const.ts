@@ -1,3 +1,5 @@
+import { FOREX_USD_PIP_SIZE, FOREX_USD_PIP_VALUE } from '@mtc/shared';
+
 export interface Instrument {
   symbol: string;
   label: string;
@@ -54,13 +56,17 @@ export const INSTRUMENTS: Instrument[] = [
   { symbol: '6A',  label: 'Australian Dollar (6A)',          category: 'FUTURES_US', tickValue: 5.0,      tickSize: 0.00005   },
   { symbol: '6C',  label: 'Canadian Dollar (6C)',            category: 'FUTURES_US', tickValue: 5.0,      tickSize: 0.00005   },
   { symbol: '6S',  label: 'Swiss Franc (6S)',                category: 'FUTURES_US', tickValue: 6.25,     tickSize: 0.00005   },
-  // ── Crypto / Forex spot : tickValue null, FMP fournit labels ─────────────
+  // ── Crypto spot : tickValue null, FMP fournit labels ──────────────────────
   { symbol: 'BTC/USDT', label: 'Bitcoin (BTC/USDT)',  category: 'CRYPTO', tickValue: null },
   { symbol: 'ETH/USDT', label: 'Ethereum (ETH/USDT)', category: 'CRYPTO', tickValue: null },
   { symbol: 'SOL/USDT', label: 'Solana (SOL/USDT)',   category: 'CRYPTO', tickValue: null },
-  { symbol: 'EUR/USD',  label: 'Euro / Dollar',        category: 'FOREX',  tickValue: null, pipDecimals: 4 },
-  { symbol: 'GBP/USD',  label: 'Livre / Dollar',       category: 'FOREX',  tickValue: null, pipDecimals: 4 },
-  { symbol: 'USD/JPY',  label: 'Dollar / Yen',         category: 'FOREX',  tickValue: null, pipDecimals: 2 },
+  // ── Forex coté en dollars (#951) : quantité en lots standard (100 000), 1 pip = 10 $ par lot ──
+  // Les autres paires (USD/JPY, EUR/GBP…) ne sont PAS ici : P&L en devise de cotation, aucun taux
+  // de change dans l'app → calcul sur le capital engagé seulement (`isNonUsdQuotedForex`).
+  { symbol: 'EUR/USD', label: 'Euro / Dollar (EUR/USD)',               category: 'FOREX', tickValue: FOREX_USD_PIP_VALUE, tickSize: FOREX_USD_PIP_SIZE, pipDecimals: 4 },
+  { symbol: 'GBP/USD', label: 'Livre / Dollar (GBP/USD)',              category: 'FOREX', tickValue: FOREX_USD_PIP_VALUE, tickSize: FOREX_USD_PIP_SIZE, pipDecimals: 4 },
+  { symbol: 'AUD/USD', label: 'Dollar australien / Dollar (AUD/USD)',  category: 'FOREX', tickValue: FOREX_USD_PIP_VALUE, tickSize: FOREX_USD_PIP_SIZE, pipDecimals: 4 },
+  { symbol: 'NZD/USD', label: 'Dollar néo-zélandais / Dollar (NZD/USD)', category: 'FOREX', tickValue: FOREX_USD_PIP_VALUE, tickSize: FOREX_USD_PIP_SIZE, pipDecimals: 4 },
 ];
 
 export function getTickValue(symbol: string): number | null {

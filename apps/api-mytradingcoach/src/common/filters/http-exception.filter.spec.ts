@@ -62,6 +62,22 @@ describe('HttpExceptionFilter', () => {
     expect(status).toHaveBeenCalledWith(HttpStatus.NOT_FOUND);
   });
 
+  // #994 (N12) : `@IsOptional` laisse passer `null` ; sur une colonne obligatoire, Prisma refuse
+  // (message relevé sur Prisma 7 : « Argument `email` must not be null. ») → 400, pas 500.
+  it('null sur un champ obligatoire → 400 qui nomme le champ', () => {
+    const { host, status, json } = httpHost();
+    const err = new Prisma.PrismaClientValidationError('Invalid `prisma.trade.update()` invocation:\n\n\nArgument `asset` must not be null.', { clientVersion: 'test' });
+    filter.catch(err, host);
+    expect(status).toHaveBeenCalledWith(HttpStatus.BAD_REQUEST);
+    expect(json).toHaveBeenCalledWith(expect.objectContaining({ code: 'BAD_REQUEST', message: 'Le champ « asset » ne peut pas être vide.' }));
+  });
+
+  it('autre erreur de validation Prisma (bug du code) → reste un 500', () => {
+    const { host, status } = httpHost();
+    filter.catch(new Prisma.PrismaClientValidationError('Unknown argument `foo`.', { clientVersion: 'test' }), host);
+    expect(status).toHaveBeenCalledWith(HttpStatus.INTERNAL_SERVER_ERROR);
+  });
+
   it('erreur inattendue → 500 au même format, sans détail technique', () => {
     const { host, status, json } = httpHost();
     filter.catch(new TypeError("Cannot read properties of undefined (reading 'id')"), host);

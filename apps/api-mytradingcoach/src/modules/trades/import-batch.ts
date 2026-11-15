@@ -2,7 +2,7 @@ import type { Prisma } from '@prisma/client';
 import type { SetupsService } from '../setups/setups.service';
 import type { AccountsService } from '../accounts/accounts.service';
 
-export const ACTIVE_SESSION_SELECT = { id: true, accountId: true, moodStart: true } as const;
+export const ACTIVE_SESSION_SELECT = { id: true, accountId: true, moodStart: true, startedAt: true } as const;
 type ActiveSession = Prisma.TradeSessionGetPayload<{ select: typeof ACTIVE_SESSION_SELECT }>;
 
 /** Résolutions d'un import en lot, faites une fois et partagées par ses lignes (SCA-B1-02). */

@@ -243,7 +243,7 @@ describe('Tradovate live — app ouverte, puis fermée', () => {
     const ws = wsSockets[wsSockets.length - 1];
     expect(ws.url).toBe('wss://demo.tradovateapi.com/v1/websocket');
     expect(ws.sent[0]).toBe('authorize\n0\n\nAT-1');
-    expect(JSON.parse(ws.sent[1].split('\n')[3])).toEqual({ accounts: [EXT_ACCOUNT], entityTypes: ['fill', 'fillPair', 'position', 'cashBalance', 'order', 'orderVersion'] });
+    expect(JSON.parse(ws.sent[1].split('\n')[3])).toEqual({ accounts: [EXT_ACCOUNT], entityTypes: ['fill', 'fillPair', 'position', 'cashBalance', 'order', 'orderVersion', 'orderStrategyLink'] });
 
     // 3. Trade en direct : Tradovate pousse la nouvelle paire → trade créé via la synchro existante.
     PAIRS.push(pair(3, 3001, 3002));
@@ -253,7 +253,8 @@ describe('Tradovate live — app ouverte, puis fermée', () => {
     const live = await prisma.trade.findFirstOrThrow({ where: { userId, entry: 30200 } });
     // Même forme qu'un trade CSV / synchro manuelle (mapper réutilisé) : P&L, frais, empreinte.
     expect(live).toMatchObject({ accountId: account.id, asset: 'MNQ', side: 'LONG', exit: 30205, pnl: 10, commission: 1.04 });
-    expect(live.importHash).toBe('MNQ|LONG|2026-09-03T14:05:00.000Z|30200|30205|10');
+    // Clé stable de la position (#956) : son fill d'ouverture.
+    expect(live.importHash).toBe('tv:3001');
 
     // 4. App fermée → WebSocket Tradovate fermé (1000), plus rien ne tourne pour ce user.
     const liveService = app.get(TradovateLiveService);

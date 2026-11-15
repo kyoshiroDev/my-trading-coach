@@ -18,13 +18,14 @@ import {
   ACTIVE_STATUSES,
   BILLING_CACHE_TTL_SECONDS,
   billingCacheKey,
+  extractId,
 } from './stripe.helpers';
 import { StripeCustomerService } from './stripe-customer.service';
 import { CHECKOUT_TTL_MS, FounderOfferService } from '../founder-offer/founder-offer.service';
 import { founderFirstChargeAt } from '../founder-offer/founder-deferred';
-import { StripeCouponService } from './stripe-coupon.service';
+import { REFERRAL_DISCOUNT_METADATA, StripeCouponService } from './stripe-coupon.service';
 import { PartnerCodeService } from '../partner-codes/partner-code.service';
-import { partnerFirstYearCost, referralFirstYearCost } from '../partner-codes/partner-code.util';
+import { intervalSwitchTerms, partnerFirstYearCost, referralFirstYearCost } from '../partner-codes/partner-code.util';
 import { StripeStatusResponse, CachedStripeStatus } from './stripe.types';
 
 /** Offre achetée au checkout. */
@@ -220,7 +221,7 @@ export class StripeBillingService {
     // ── Code partenaire : validé avant tout (raison précise du refus) ──────────
     // Non-cumul avec le parrainage : on garde le plus avantageux sur la 1re année. Si le −10 %
     // filleul coûte moins cher que le code, le code n'est pas consommé.
-    const referralCoupon = isFounder ? false : await this.referralApplies(user.referredBy);
+    const referralCoupon = isFounder ? false : await this.referralApplies(user);
     let partnerCode: string | null = null;
     let partnerTerms: { recurringEur: number; durationMonths: number | null } | null = null;
     if (opts.promo && !isFounder) {
@@ -286,9 +287,14 @@ export class StripeBillingService {
     const customerId = await this.customers.ensureStripeCustomer(userId, userEmail);
 
     const cta = opts.cta ?? null;
+    // Remise filleul : marquée dans les métadonnées de l'abonnement, que le webhook enregistre
+    // (`User.referralDiscountSince`) pour la compter dans le MRR base (#954).
+    const referralDiscountApplied =
+      !partnerCode && referralCoupon && (this.isAnnualPrice(priceId) || this.isMonthlyPrice(priceId));
     const metadata: Record<string, string> = {
       userId, offer, priceId, ui, ...(cta ? { cta } : {}), ...(partnerCode ? { partnerCode } : {}),
       ...(chargeKey ? { firstChargeAt: chargeKey } : {}),
+      ...(referralDiscountApplied ? { [REFERRAL_DISCOUNT_METADATA]: '1' } : {}),
     };
 
     const subscriptionData = trialGranted
@@ -304,7 +310,7 @@ export class StripeBillingService {
     // Stripe interdit discounts + allow_promotion_codes ensemble → si pas de coupon,
     // on garde les codes promo manuels ouverts (prix normal uniquement).
     let discounts: Stripe.Checkout.SessionCreateParams.Discount[] | undefined;
-    if (!partnerCode && referralCoupon) {
+    if (referralDiscountApplied) {
       if (this.isAnnualPrice(priceId)) {
         discounts = [{ coupon: await this.coupons.ensureReferralCoupon('annual') }];
       } else if (this.isMonthlyPrice(priceId)) {
@@ -357,6 +363,12 @@ export class StripeBillingService {
             ...customText,
           };
 
+    // Clé d'idempotence = mêmes paramètres : `expires_at` en fait partie. Avant, la clé tenait sur un
+    // créneau de 30 min alors que `expires_at` changeait à chaque appel : une 2e création dans le
+    // créneau (session précédente expirée, changement d'offre puis retour) renvoyait une
+    // `idempotency_error` de Stripe, donc une 500. Le double clic reste couvert (même seconde ici,
+    // sinon la session encore ouverte est reprise plus haut).
+    const expiresAt = Math.floor((Date.now() + CHECKOUT_TTL_MS) / 1000);
     let session: Stripe.Checkout.Session;
     try {
       session = await this.stripe.checkout.sessions.create(
@@ -369,12 +381,12 @@ export class StripeBillingService {
           ...uiParams,
           metadata,
           client_reference_id: userId,
-          expires_at: Math.floor((Date.now() + CHECKOUT_TTL_MS) / 1000),
+          expires_at: expiresAt,
         },
         {
           idempotencyKey: reservation
             ? `checkout-${userId}-${offer}-${ui}-${reservation.id}`
-            : `checkout-${userId}-${offer}-${ui}-${priceId}-${Math.floor(Date.now() / (30 * 60 * 1000))}`,
+            : `checkout-${userId}-${offer}-${ui}-${priceId}-${expiresAt}`,
           ...(ui === 'elements' ? { apiVersion: ELEMENTS_API_VERSION } : {}),
         },
       );
@@ -476,7 +488,9 @@ export class StripeBillingService {
       this.partners.statusFor(userId),
       this.prisma.user.findUnique({
         where: { id: userId },
-        select: { stripeInterval: true, stripeSubscriptionStatus: true, trialEndsAt: true, trialSource: true },
+        select: {
+          stripeInterval: true, stripeSubscriptionStatus: true, trialEndsAt: true, trialSource: true, referralDiscountSince: true,
+        },
       }),
     ]);
     const since = founder?.isFounder ? founder.founderSince : null;
@@ -508,6 +522,7 @@ export class StripeBillingService {
         interval: user?.stripeInterval === 'year' ? 'year' : user?.stripeInterval === 'month' ? 'month' : null,
         status: user?.stripeSubscriptionStatus ?? null,
       },
+      intervalSwitch: this.intervalSwitchPreview(user, !!founder?.isFounder, partner.partnerCode),
     };
   }
 
@@ -526,12 +541,20 @@ export class StripeBillingService {
     if (!user?.stripeSubscriptionId) throw new BadRequestException("Aucun abonnement à modifier.");
     const sub = await this.stripe.subscriptions.retrieve(user.stripeSubscriptionId);
     if (!ACTIVE_STATUSES.has(sub.status)) throw new BadRequestException("L'abonnement n'est pas actif.");
-    if (sub.status === 'trialing' && interval === 'year') {
-      throw new BadRequestException("Pendant l'essai, l'annuel n'est pas disponible : il est facturé sans essai.");
-    }
     const item = sub.items.data[0];
     const current = item?.price.id ?? '';
     const founder = this.founderPriceIds().includes(current);
+    if (sub.status === 'trialing' && interval === 'year') {
+      // Réservation fondateur (prélèvement à la fin de l'essai d'inscription) : ce n'est pas un essai
+      // au prix normal, l'ancien message (« l'annuel est facturé sans essai ») était faux.
+      const firstCharge = sub.trial_end ? new Date(sub.trial_end * 1000) : null;
+      if (founder && firstCharge) {
+        throw new BadRequestException(
+          `Changement impossible pendant ta réservation fondateur : tu pourras le faire après ton premier prélèvement, le ${frDate(firstCharge)}.`,
+        );
+      }
+      throw new BadRequestException("Pendant l'essai, l'annuel n'est pas disponible : il est facturé sans essai.");
+    }
     const target = this.config.getOrThrow<string>(
       founder
         ? interval === 'year' ? 'STRIPE_PREMIUM_PRICE_YEARLY_FOUNDER' : 'STRIPE_PREMIUM_PRICE_MONTHLY_FOUNDER'
@@ -541,15 +564,28 @@ export class StripeBillingService {
     // Code partenaire : coupon de l'AUTRE intervalle, aux conditions figées de l'abonné et pour les
     // mois de remise restants (aucune remise perdue par le changement).
     const redemption = founder ? null : await this.partners.activeForSubscription(sub.id);
-    const coupon = redemption ? await this.partners.couponForIntervalChange(redemption, interval) : null;
+    let discounts: { coupon: string }[] | undefined;
+    if (redemption) {
+      const coupon = await this.partners.couponForIntervalChange(redemption, interval);
+      discounts = coupon ? [{ coupon }] : [];
+    } else if (!founder && user.referralDiscountSince) {
+      // −10 % filleul pour les mois restants seulement (B14 #1013) : sans ça, le coupon mensuel
+      // (12 mois) restait sur l'annuel et remisait toute l'année.
+      const { discount } = intervalSwitchTerms({
+        target: interval, founder: false, partner: null, referralSince: user.referralDiscountSince,
+      });
+      discounts = discount ? [{ coupon: await this.coupons.ensureReferralSwitchCoupon(discount) }] : [];
+    }
     await this.stripe.subscriptions.update(
       sub.id,
       {
         items: [{ id: item.id, price: target }],
         proration_behavior: 'always_invoice',
-        ...(redemption ? { discounts: coupon ? [{ coupon }] : [] } : {}),
+        ...(discounts ? { discounts } : {}),
       },
-      { idempotencyKey: `interval-${sub.id}-${target}` },
+      // Clé liée à l'état de l'abonnement (dernière facture) : un double clic garde la même clé, mais
+      // un aller-retour mensuel ↔ annuel dans les 24 h n'est plus rejoué à l'identique par Stripe.
+      { idempotencyKey: `interval-${sub.id}-${target}-${extractId(sub.latest_invoice) ?? 'none'}` },
     );
     await this.redis.del(billingCacheKey(userId)).catch(() => undefined);
     this.logger.log(`Intervalle changé | user: ${userId}, ${current} → ${target}${founder ? ' (fondateur)' : ''}`);
@@ -557,16 +593,55 @@ export class StripeBillingService {
   }
 
   /**
+   * Prix du passage mensuel ↔ annuel annoncé dans le Profil (B14 #1013) : même calcul que
+   * `changeInterval` (mois de remise restants). `null` sans abonnement actif.
+   */
+  private intervalSwitchPreview(
+    user: { stripeInterval: string | null; stripeSubscriptionStatus: string | null; referralDiscountSince?: Date | null } | null,
+    founder: boolean,
+    partner: { priceMonthlyEur: number; priceAnnualEur: number; durationMonths: number | null; since: Date } | null,
+  ) {
+    if (user?.stripeSubscriptionStatus !== 'active') return null;
+    const to = user.stripeInterval === 'month' ? 'year' : user.stripeInterval === 'year' ? 'month' : null;
+    if (!to) return null;
+    const { firstEur, normalEur, discountEndsAt } = intervalSwitchTerms({
+      target: to, founder, partner, referralSince: user.referralDiscountSince ?? null,
+    });
+    return { to, firstEur, normalEur, discountEndsAt };
+  }
+
+  /**
    * Le −10 % filleul s'applique-t-il ? RÉSERVÉ au parrainage classique : jamais pour les filleuls
    * d'ambassadeur (l'ambassadeur touche déjà ses 20 % via le webhook : sinon double coût).
    */
-  private async referralApplies(referredBy: string | null): Promise<boolean> {
-    if (!referredBy) return false;
+  private async referralApplies(user: {
+    referredBy: string | null;
+    stripeCustomerId: string | null;
+    referralDiscountSince: Date | null;
+  }): Promise<boolean> {
+    if (!user.referredBy) return false;
     const parrain = await this.prisma.user.findFirst({
-      where: { referralCode: referredBy },
-      select: { role: true },
+      where: { referralCode: user.referredBy },
+      select: { role: true, isDemo: true },
     });
-    return !!parrain && parrain.role !== Role.AMBASSADOR;
+    // Filleul inscrit avec le code de la démo (avant #993) : pas de remise.
+    if (!parrain || parrain.role === Role.AMBASSADOR || parrain.isDemo) return false;
+    return this.neverSubscribed(user);
+  }
+
+  /**
+   * Remise filleul « 1re année » (plans.md) : seulement au PREMIER abonnement (A8 #1013, décision du
+   * 14/11). Avant, elle revenait à chaque nouvel abonnement après une résiliation. Stripe fait foi
+   * (`stripeSubscriptionId` est vidé à la résiliation) ; une remise déjà notée suffit aussi.
+   */
+  private async neverSubscribed(user: { stripeCustomerId: string | null; referralDiscountSince: Date | null }): Promise<boolean> {
+    if (user.referralDiscountSince) return false;
+    if (!user.stripeCustomerId) return true;
+    const past = await this.stripe.subscriptions
+      .list({ customer: user.stripeCustomerId, status: 'all', limit: 1 })
+      .catch(() => null);
+    // Stripe injoignable : pas de remise plutôt qu'une remise indue (le paiement reste possible).
+    return past !== null && past.data.length === 0;
   }
 
   /** Prix fondateur (mensuel et annuel) de la config. */

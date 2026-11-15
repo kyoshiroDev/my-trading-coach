@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpContext } from '@angular/common/http';
 import { SILENT_ERRORS } from '@mtc/front-ui';
 import { environment } from '@app/environments/environment';
+import { OFFER_CTAS } from '@mtc/shared';
 
 export type CheckoutPlan = 'premium_monthly' | 'premium_yearly' | 'founder_monthly' | 'founder_yearly';
 export type BillingInterval = 'month' | 'year';
@@ -65,6 +66,12 @@ export interface BillingOffers {
   };
   partner: (PartnerConditions & { since: string; endsAt: string | null }) | null;
   subscription: { interval: BillingInterval | null; status: string | null };
+  /**
+   * Passage mensuel ↔ annuel (B14 #1013), calculé par l'API comme le changement lui-même : montant
+   * de la 1re période remise comprise (mois de remise restants), prix normal ensuite, fin de la
+   * remise (`null` : à vie ou sans remise). `null` sans abonnement actif.
+   */
+  intervalSwitch?: { to: BillingInterval; firstEur: number; normalEur: number; discountEndsAt: string | null } | null;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -75,7 +82,9 @@ export class BillingApi {
   checkout(plan: CheckoutPlan, opts: { cta?: string | null; promo?: string | null; ui?: 'hosted' | 'elements' } = {}) {
     return this.http.post<{ data: CheckoutStart }>(`${this.base}/checkout`, {
       plan,
-      ...(opts.cta ? { cta: opts.cta } : {}),
+      // Seules les valeurs connues de l'API partent : une inconnue (lien `?cta=…`) faisait échouer
+      // tout le paiement en 400 (#993). Le point de clic n'est qu'une mesure, jamais bloquante.
+      ...(opts.cta && (OFFER_CTAS as readonly string[]).includes(opts.cta) ? { cta: opts.cta } : {}),
       ...(opts.promo ? { promo: opts.promo } : {}),
       ...(opts.ui ? { ui: opts.ui } : {}),
     });

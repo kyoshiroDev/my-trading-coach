@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
@@ -7,7 +8,9 @@ import {
 import { Prisma, Role } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuthUserCacheService } from '../infra/auth-user-cache.service';
-import { referralMonthlyCommission } from './ambassador-commission.util';
+import { isPayingReferral, referralMonthlyCommission } from './ambassador-commission.util';
+import { roundCents } from '@mtc/shared';
+import { emailEquals } from '../../common/utils/email.util';
 
 // Lien de parrainage : même format que celui affiché par le dashboard ambassadeur.
 const REFERRAL_BASE = 'https://mytradingcoach.app';
@@ -39,6 +42,8 @@ export interface ReferralUser {
   isActive: boolean;
   /** 20 % du montant mensuel réellement payé (fondateur, annuel ÷ 12, code partenaire) ; 0 sans abonnement actif. */
   monthlyCommission: number;
+  /** Abonnement Premium `active` : « Payant » (un essai ou une pause n'en est pas un). */
+  paying: boolean;
 }
 
 export interface AmbassadorStats {
@@ -74,15 +79,21 @@ export class AmbassadorService {
    * - code absent → réutilise le code existant, sinon en génère un unique.
    */
   async promote(email: string, referralCode?: string): Promise<PromoteResult> {
-    const user = await this.prisma.user.findUnique({
-      where: { email },
-      select: { id: true, name: true, email: true, referralCode: true },
+    const user = await this.prisma.user.findFirst({
+      where: { email: emailEquals(email) },
+      orderBy: { createdAt: 'asc' },
+      select: { id: true, name: true, email: true, referralCode: true, role: true },
     });
     if (!user) {
       throw new NotFoundException('Aucun utilisateur avec cet email');
     }
+    // Même garde que setRole (#993) : promouvoir un ADMIN ou un BETA_TESTER le rétrogradait.
+    if (user.role === Role.ADMIN || user.role === Role.BETA_TESTER) {
+      throw new BadRequestException('Ce compte est ADMIN ou BETA_TESTER : change son rôle d’abord depuis sa fiche.');
+    }
 
     let code: string;
+    let reclaim = false; // le compte reprend un code qu'il avait lui-même retiré
     if (referralCode) {
       const owner = await this.prisma.user.findUnique({
         where: { referralCode },
@@ -91,17 +102,46 @@ export class AmbassadorService {
       if (owner && owner.id !== user.id) {
         throw new ConflictException('Ce code est déjà utilisé, choisis-en un autre');
       }
+      if (!owner) {
+        // Code retiré (changé ou révoqué, A5 #1013) : seul son ancien porteur peut le reprendre.
+        const retired = await this.prisma.retiredReferralCode.findUnique({ where: { code: referralCode } });
+        if (retired && retired.userId !== user.id) {
+          throw new ConflictException('Ce code est déjà utilisé, choisis-en un autre');
+        }
+        reclaim = !!retired;
+        // Code sans propriétaire mais déjà porté par des filleuls : le donner à un autre lui ferait
+        // hériter de ces filleuls.
+        if (!retired && (await this.prisma.user.findFirst({ where: { referredBy: referralCode }, select: { id: true } }))) {
+          throw new ConflictException('Ce code est déjà utilisé, choisis-en un autre');
+        }
+      }
       code = referralCode;
     } else {
       code = user.referralCode ?? (await this.generateUniqueCode(user.name, user.email));
     }
 
     try {
-      const updated = await this.prisma.user.update({
-        where: { id: user.id },
-        data: { role: Role.AMBASSADOR, referralCode: code },
-        select: { email: true, name: true, role: true, referralCode: true },
-      });
+      const select = { email: true, name: true, role: true, referralCode: true } as const;
+      const previous = user.referralCode;
+      // Changement de code : les filleuls suivent, dans la même transaction (A5 #1013). Avant, leur
+      // `referredBy` gardait l'ancien code : plus de commission ni de lien avec l'ambassadeur.
+      const changed = !!previous && previous !== code;
+      const updated = changed || reclaim
+        ? await this.prisma.$transaction(async (tx) => {
+            const u = await tx.user.update({ where: { id: user.id }, data: { role: Role.AMBASSADOR, referralCode: code }, select });
+            if (changed && previous) {
+              await tx.user.updateMany({ where: { referredBy: previous }, data: { referredBy: code } });
+              // L'ancien code est retiré : un vieux lien ne créditera jamais un autre porteur.
+              await tx.retiredReferralCode.upsert({ where: { code: previous }, create: { code: previous, userId: user.id }, update: {} });
+            }
+            if (reclaim) await tx.retiredReferralCode.deleteMany({ where: { code, userId: user.id } });
+            return u;
+          })
+        : await this.prisma.user.update({
+            where: { id: user.id },
+            data: { role: Role.AMBASSADOR, referralCode: code },
+            select,
+          });
       await this.userCache?.invalidate(user.id); // rôle relu par le JWT (SCA-B3-01)
       return {
         email: updated.email,
@@ -127,17 +167,29 @@ export class AmbassadorService {
    * Ne touche pas aux commissions déjà enregistrées (referredBy des filleuls reste).
    */
   async revoke(email: string): Promise<{ email: string; name: string | null; role: Role }> {
-    const user = await this.prisma.user.findUnique({
-      where: { email },
-      select: { id: true },
+    const user = await this.prisma.user.findFirst({
+      where: { email: emailEquals(email) },
+      orderBy: { createdAt: 'asc' },
+      select: { id: true, role: true, referralCode: true },
     });
     if (!user) {
       throw new NotFoundException('Aucun utilisateur avec cet email');
     }
-    const updated = await this.prisma.user.update({
-      where: { id: user.id },
-      data: { role: Role.USER, referralCode: null },
-      select: { email: true, name: true, role: true },
+    // Seul un ambassadeur se révoque (#993) : un ADMIN / BETA_TESTER repassait USER (perte d'accès),
+    // un USER perdait son code de parrainage grand public (ses filleuls ne rapportaient plus rien).
+    if (user.role !== Role.AMBASSADOR) {
+      throw new BadRequestException('Ce compte n’est pas ambassadeur.');
+    }
+    const code = user.referralCode;
+    const updated = await this.prisma.$transaction(async (tx) => {
+      const u = await tx.user.update({
+        where: { id: user.id },
+        data: { role: Role.USER, referralCode: null },
+        select: { email: true, name: true, role: true },
+      });
+      // Code retiré (A5 #1013) : jamais redonné à un autre compte.
+      if (code) await tx.retiredReferralCode.upsert({ where: { code }, create: { code, userId: user.id }, update: {} });
+      return u;
     });
     await this.userCache?.invalidate(user.id); // rôle relu par le JWT (SCA-B3-01)
     return updated;
@@ -155,11 +207,12 @@ export class AmbassadorService {
     for (let attempt = 0; attempt < 10; attempt++) {
       const candidate =
         attempt === 0 ? base : `${base.slice(0, 12)}${randomSuffix(4)}`.slice(0, 20);
-      const exists = await this.prisma.user.findUnique({
-        where: { referralCode: candidate },
+      // Libre = porté par personne, jamais utilisé par un filleul et jamais retiré (A5).
+      const exists = await this.prisma.user.findFirst({
+        where: { OR: [{ referralCode: candidate }, { referredBy: candidate }] },
         select: { id: true },
       });
-      if (!exists) return candidate;
+      if (!exists && !(await this.prisma.retiredReferralCode.findUnique({ where: { code: candidate } }))) return candidate;
     }
     return `AMB${randomSuffix(8)}`;
   }
@@ -184,7 +237,9 @@ export class AmbassadorService {
         name: true,
         email: true,
         referralCode: true,
+        // Commission annulée (1er paiement remboursé, A4 #1013) : ne compte nulle part.
         referrals: {
+          where: { status: { not: 'canceled' } },
           select: { amount: true, status: true, referredUserId: true },
         },
       },
@@ -222,8 +277,8 @@ export class AmbassadorService {
         referralCode: a.referralCode!,
         totalReferrals:   totalMap[a.referralCode!]   ?? 0,
         premiumReferrals: premiumMap[a.referralCode!]  ?? 0,
-        totalEarned: +totalEarned.toFixed(2),
-        pendingPayout: +pendingPayout.toFixed(2),
+        totalEarned: roundCents(totalEarned),
+        pendingPayout: roundCents(pendingPayout),
       };
     });
   }
@@ -237,6 +292,8 @@ export class AmbassadorService {
     if (!ambassador?.referralCode) return { count: 0 };
 
     const sinceDate = since ? new Date(since) : new Date(0);
+    // Date illisible : 400, au lieu d'une erreur Prisma en 500 (#993).
+    if (Number.isNaN(sinceDate.getTime())) throw new BadRequestException('Paramètre `since` invalide (date ISO attendue).');
 
     const count = await this.prisma.user.count({
       where: {
@@ -291,7 +348,7 @@ export class AmbassadorService {
     const premium = referredUsers.filter(u => u.plan === 'PREMIUM').length;
 
     const commissions = await this.prisma.referralCommission.findMany({
-      where: { ambassadorId: userId },
+      where: { ambassadorId: userId, status: { not: 'canceled' } },
       select: { amount: true, period: true, status: true },
     });
 
@@ -300,11 +357,10 @@ export class AmbassadorService {
       earningsByMonth[c.period] = (earningsByMonth[c.period] ?? 0) + c.amount;
     }
 
-    const totalEarned = +commissions.reduce((s, c) => s + c.amount, 0).toFixed(2);
-    const pendingPayout = +commissions
+    const totalEarned = roundCents(commissions.reduce((s, c) => s + c.amount, 0));
+    const pendingPayout = roundCents(commissions
       .filter(c => c.status === 'pending')
-      .reduce((s, c) => s + c.amount, 0)
-      .toFixed(2);
+      .reduce((s, c) => s + c.amount, 0));
 
     return {
       referralCode: ambassador.referralCode,
@@ -316,6 +372,7 @@ export class AmbassadorService {
         createdAt: u.createdAt,
         isActive: u._count.trades > 0,
         monthlyCommission: referralMonthlyCommission(u, now),
+        paying: isPayingReferral(u),
       })),
       total: referredUsers.length,
       free,

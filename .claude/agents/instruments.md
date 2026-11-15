@@ -106,6 +106,15 @@ un chiffre plausible mais tout aussi faux). Le pipe `pnlFormat` prend le trade
 |------|-----------|---------|
 | `futures` | `category === 'FUTURES_US'` | `(rawPoints / tickSize) × tickValue × qty` |
 | `forex` | `category === 'FOREX'` | `(rawPoints / pipSize) × tickValue × qty` où `pipSize = 10^-pipDecimals` |
+
+**Forex en saisie manuelle (#951, décision du 13/11).** Seules les paires **cotées en dollars** sont au
+catalogue (`GET /instruments`) : EUR/USD, GBP/USD, AUD/USD, NZD/USD, `tickSize = 0,0001` (1 pip),
+`tickValue = 10 $` (1 pip × 1 lot standard de 100 000), quantité = lots. Le back (`calculatePnl`), le
+formulaire et le risque du stop (`stopRiskAmount`) passent par la formule générique ticks × valeur :
+EUR/USD 1,0800 → 1,0850, 1 lot = +500 $. Les autres paires (USD/JPY, EUR/GBP…, `isNonUsdQuotedForex`
+de `@mtc/shared`) donneraient un P&L en devise de cotation, sans taux de change dans l'app
+(PROMPT-214) : jamais `points × quantité` (le back renvoie « P&L inconnu »), le P&L passe par le
+capital engagé (variation × capital), exigé par le formulaire. Aucune conversion de devise nulle part.
 | `crypto-spot` | `CRYPTO`, levier = 1 | capital > 0 → `variation% × capital` ; sinon back : `points × quantity` |
 | `crypto-leverage` | `CRYPTO`, levier > 1 | `variation% × capital × levier` |
 | `null` (CFD/Actions) | `tickValue === null` | `variation% × capital` |
@@ -198,9 +207,24 @@ naïf 24,96 $ vs exact 21,84 $). Elle est **répartie au prorata de la quantité
 qui utilisent ce fill (`assignFeesOncePerFill`, #947), au centime, le dernier trade prend le reste.
 Ne jamais revenir à « tout au premier trade, 0 aux suivants » : total juste mais net par trade faux
 (achat 2 ES vendu en 2 fois : 6,54 $ / 2,18 $ au lieu de 4,36 $ / 4,36 $, un trade perdant affiché gagnant).
-La réparation des frais #783 (`planFeeRepairs`) ne monte JAMAIS un trade dont un fill sert à un autre
-trade (`skippedShared`) : en base, l'ancienne règle a tout posé sur le premier ; ne monter que les
-suivants compterait le fill deux fois. Ces trades sont repris par le script #950.
+La réparation des frais #783 (`planFeeRepairs`) traite les trades reliés par un fill commun **en
+groupe** (#950) : en base, l'ancienne règle a tout posé sur le premier ; ne monter que les suivants
+compterait le fill deux fois. Chaque trade du groupe prend sa part recalculée (un trade peut baisser,
+`redistributed`), le **total du groupe ne baisse jamais** ; groupe incomplet (trade absent, frais
+indisponibles) ou total plus élevé en base (frais saisis à la main) → ignoré (`skippedShared`).
+
+**Positions (#956)** : les frais sont d'abord posés **par paire** (règle ci-dessus), puis
+**additionnés** dans le trade de la position (`aggregateGroup`). Le rapport de frais (`FeesReport.count`,
+« Frais importés : … sur N trade(s) ») compte les trades créés, donc les positions. La réparation des frais #783 compare des trades par paire : un trade de
+position (`importHash` `tv:…`) n'y est jamais retrouvé (`notFound`), donc jamais modifié.
+
+**Script #950** (`scripts/repair-chiffres-950.ts`, règles dans `trades/repair-950.util.ts`) : répare
+en prod les données faussées avant l'audit #947 : MEXC stocké au P&L net (signature : frais avec des
+fractions de centime, symbole `…USDT`/`…USDC`/`X/USD` même exotique, import d'avant `LOT1_EN_PROD`),
+clôture en séance stockée en écart de prix (créée avant `LOT1_EN_PROD`),
+totaux de séances clôturées figés. Simulation par défaut, `--apply --backup`. Les fills partagés
+Tradovate passent par la réparation des frais de l'admin, AVANT le script (elle ne touche que
+`commission` ; le script recalcule ensuite séances, récaps et barèmes).
 
 **Checksum** : `Σ commission(trade) == Σ |Delta| des frais` (à 0,01 près) → `reconciled`. En cas
 d'écart : warning + `reconciled=false` (non bloquant, « frais partiellement rapprochés »), jamais de

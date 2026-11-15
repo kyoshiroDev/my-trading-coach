@@ -11,6 +11,7 @@ import {
 import { Prisma } from '@prisma/client';
 import { JwtService } from '@nestjs/jwt';
 import { AuthService } from './auth.service';
+import { RedisService } from '../infra/redis.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ResendService } from '../resend/resend.service';
 import { SetupsService } from '../setups/setups.service';
@@ -73,6 +74,11 @@ const mockDemoSeed = { ensureFresh: vi.fn().mockResolvedValue(false) };
 const mockProductEvents = { record: vi.fn().mockResolvedValue(undefined) };
 
 const mockNotifier = { notify: vi.fn() };
+const mockMulti = { hset: vi.fn(), expire: vi.fn(), exec: vi.fn().mockResolvedValue([]) };
+mockMulti.hset.mockReturnValue(mockMulti);
+mockMulti.expire.mockReturnValue(mockMulti);
+// eval = script de rotation (#1002) : 1 ok · 0 révoqué · 2 réutilisation détectée.
+const mockRedis = { client: { eval: vi.fn().mockResolvedValue(1), multi: vi.fn(() => mockMulti) } };
 
 const GOOGLE_IDENTITY = { googleId: 'g-sub-1', email: 'trader@gmail.com', name: 'Trader' };
 const mockVerifier = { verify: vi.fn() };
@@ -92,6 +98,9 @@ describe('AuthService', () => {
     // Les tests startTrial/forgotPassword/resetPassword surchargent ce mock au besoin.
     mockPrisma.user.update.mockResolvedValue(mockSafeUser);
     mockPrisma.deletedAccount.findFirst.mockResolvedValue(null);
+    // Les recherches par e-mail passent par findFirst (#999) : pas d'implémentation héritée d'un test précédent.
+    mockPrisma.user.findFirst.mockReset();
+    mockPrisma.user.findUnique.mockReset();
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -104,6 +113,7 @@ describe('AuthService', () => {
         { provide: ProductEventsService, useValue: mockProductEvents },
         { provide: AdminNotifier, useValue: mockNotifier },
         { provide: GoogleIdTokenVerifier, useValue: mockVerifier },
+        { provide: RedisService, useValue: mockRedis },
       ],
     }).compile();
 
@@ -133,7 +143,7 @@ describe('AuthService', () => {
 
   describe('register', () => {
     it('crée un utilisateur avec plan FREE par défaut', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue(null);
+      mockPrisma.user.findFirst.mockResolvedValue(null);
       mockPrisma.user.create.mockResolvedValue({
         id: mockUser.id,
         email: mockUser.email,
@@ -155,7 +165,7 @@ describe('AuthService', () => {
     });
 
     it('enregistre l’acceptation des CGU : date et version (#745, F2)', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue(null);
+      mockPrisma.user.findFirst.mockResolvedValue(null);
       mockPrisma.user.create.mockResolvedValue({ ...mockSafeUser });
       await service.register({ email: 'cgu@test.com', password: 'password123' });
       const { data } = mockPrisma.user.create.mock.calls[0][0];
@@ -169,7 +179,7 @@ describe('AuthService', () => {
       beforeEach(() => {
         vi.useFakeTimers({ toFake: ['Date'] });
         vi.setSystemTime(NOW);
-        mockPrisma.user.findUnique.mockResolvedValue(null);
+        mockPrisma.user.findFirst.mockResolvedValue(null);
         mockPrisma.user.create.mockResolvedValue({ ...mockSafeUser });
       });
       afterEach(() => vi.useRealTimers());
@@ -193,7 +203,7 @@ describe('AuthService', () => {
         expect(data).not.toHaveProperty('signupTrialEndsAt');
         // Casse ignorée, traces anonymisées exclues, fenêtre de 90 jours.
         expect(mockPrisma.deletedAccount.findFirst.mock.calls[0][0].where).toEqual({
-          email: { equals: 'Revenu@Test.com', mode: 'insensitive' },
+          email: { equals: 'revenu@test.com', mode: 'insensitive' },
           anonymizedAt: null,
           deletedAt: { gte: new Date(NOW.getTime() - 90 * DAY) },
         });
@@ -216,7 +226,7 @@ describe('AuthService', () => {
     });
 
     it('une inscription = un seul e-mail (bienvenue), plus d’alerte admin par inscription', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue(null);
+      mockPrisma.user.findFirst.mockResolvedValue(null);
       mockPrisma.user.create.mockResolvedValue({ id: mockUser.id, email: mockUser.email, name: 'Thomas', plan: 'FREE', createdAt: mockUser.createdAt });
 
       await service.register({ email: 'test@test.com', password: 'password123', name: 'Thomas' });
@@ -226,7 +236,7 @@ describe('AuthService', () => {
     });
 
     it('inscription → un push admin SIGNUP, sans e-mail dans le message', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue(null);
+      mockPrisma.user.findFirst.mockResolvedValue(null);
       mockPrisma.user.create.mockResolvedValue({ id: mockUser.id, email: mockUser.email, name: 'Thomas', plan: 'FREE', role: 'USER', createdAt: mockUser.createdAt });
 
       await service.register({ email: 'test@test.com', password: 'password123', name: 'Thomas' });
@@ -239,7 +249,7 @@ describe('AuthService', () => {
     });
 
     it('compte ADMIN créé → pas de push', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue(null);
+      mockPrisma.user.findFirst.mockResolvedValue(null);
       mockPrisma.user.create.mockResolvedValue({ id: mockUser.id, email: mockUser.email, name: 'A', plan: 'FREE', role: 'ADMIN', createdAt: mockUser.createdAt });
 
       await service.register({ email: 'test@test.com', password: 'password123', name: 'A' });
@@ -248,7 +258,7 @@ describe('AuthService', () => {
     });
 
     it('persiste les UTM d’acquisition, et null quand ils sont absents', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue(null);
+      mockPrisma.user.findFirst.mockResolvedValue(null);
       mockPrisma.user.create.mockResolvedValue({ id: mockUser.id, email: mockUser.email, name: null, plan: 'FREE', createdAt: mockUser.createdAt });
 
       await service.register({
@@ -274,7 +284,7 @@ describe('AuthService', () => {
     });
 
     it('lance ConflictException si email déjà utilisé', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
+      mockPrisma.user.findFirst.mockResolvedValue(mockUser);
 
       await expect(
         service.register({ email: 'test@test.com', password: 'password123' }),
@@ -282,7 +292,7 @@ describe('AuthService', () => {
     });
 
     it('ne retourne jamais le hash du mot de passe', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue(null);
+      mockPrisma.user.findFirst.mockResolvedValue(null);
       mockPrisma.user.create.mockResolvedValue({
         id: mockUser.id,
         email: mockUser.email,
@@ -302,7 +312,7 @@ describe('AuthService', () => {
 
   describe('login', () => {
     it("retourne les tokens et l'utilisateur si identifiants corrects", async () => {
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
+      mockPrisma.user.findFirst.mockResolvedValue(mockUser);
 
       const result = await service.login({
         email: 'test@test.com',
@@ -314,7 +324,7 @@ describe('AuthService', () => {
     });
 
     it('hash aux anciens paramètres : remplacé dans la même écriture que lastLoginAt', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
+      mockPrisma.user.findFirst.mockResolvedValue(mockUser);
       const argon2 = await import('argon2');
       vi.mocked(argon2.needsRehash).mockReturnValueOnce(true);
       vi.mocked(argon2.hash).mockResolvedValueOnce('nouveau_hash');
@@ -328,7 +338,7 @@ describe('AuthService', () => {
     });
 
     it('hash déjà aux bons paramètres : le mot de passe n’est pas réécrit', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
+      mockPrisma.user.findFirst.mockResolvedValue(mockUser);
 
       await service.login({ email: 'test@test.com', password: 'password123' });
 
@@ -336,7 +346,7 @@ describe('AuthService', () => {
     });
 
     it('lance UnauthorizedException si email introuvable', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue(null);
+      mockPrisma.user.findFirst.mockResolvedValue(null);
 
       await expect(
         service.login({ email: 'unknown@test.com', password: 'password123' }),
@@ -344,7 +354,7 @@ describe('AuthService', () => {
     });
 
     it('lance UnauthorizedException si mot de passe incorrect', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
+      mockPrisma.user.findFirst.mockResolvedValue(mockUser);
       const argon2 = await import('argon2');
       vi.mocked(argon2.verify).mockResolvedValueOnce(false);
 
@@ -354,7 +364,7 @@ describe('AuthService', () => {
     });
 
     it('ne retourne jamais le hash du mot de passe', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
+      mockPrisma.user.findFirst.mockResolvedValue(mockUser);
 
       const result = await service.login({
         email: 'test@test.com',
@@ -368,7 +378,7 @@ describe('AuthService', () => {
 
   describe('forgotPassword', () => {
     it("ne fait rien si l'email n'existe pas (anti-énumération)", async () => {
-      mockPrisma.user.findUnique.mockResolvedValue(null);
+      mockPrisma.user.findFirst.mockResolvedValue(null);
 
       await expect(
         service.forgotPassword('unknown@test.com'),
@@ -378,7 +388,7 @@ describe('AuthService', () => {
     });
 
     it("stocke un token hashé SHA256 et envoie l'email", async () => {
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
+      mockPrisma.user.findFirst.mockResolvedValue(mockUser);
       mockPrisma.user.update.mockResolvedValue(mockUser);
 
       await service.forgotPassword('test@test.com');
@@ -402,7 +412,7 @@ describe('AuthService', () => {
     });
 
     it("l'expiration est dans ~1 heure", async () => {
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
+      mockPrisma.user.findFirst.mockResolvedValue(mockUser);
       mockPrisma.user.update.mockResolvedValue(mockUser);
 
       const before = Date.now();
@@ -442,6 +452,17 @@ describe('AuthService', () => {
           }),
         }),
       );
+    });
+
+    // Audit fonctionnel #994 : un nouveau mot de passe doit couper les sessions ouvertes (compte
+    // pré-créé par un tiers, session volée). `refresh` refuse un jeton dont `tv` ≠ tokenVersion.
+    it('révoque les sessions existantes (tokenVersion incrémenté)', async () => {
+      mockPrisma.user.findFirst.mockResolvedValue(mockUser);
+      mockPrisma.user.update.mockResolvedValue(mockUser);
+
+      await service.resetPassword('valid-raw-token', 'newpassword123');
+
+      expect(mockPrisma.user.update.mock.calls[0][0].data.tokenVersion).toEqual({ increment: 1 });
     });
 
     it('cherche par le hash SHA256 du token brut, pas le token brut', async () => {
@@ -570,6 +591,16 @@ describe('AuthService', () => {
       expect(mockPrisma.user.update).not.toHaveBeenCalled();
     });
 
+    // Audit fonctionnel #993 (lot 2, B6) : le code de parrainage du compte démo (copié depuis la démo
+    // publique) était accepté : −10 % au filleul et la démo devenait parrain.
+    it('code de parrainage du compte démo → ignoré, aucun parrain', async () => {
+      mockPrisma.user.findUnique
+        .mockResolvedValueOnce(null) // googleId
+        .mockResolvedValueOnce({ referralCode: 'DEMO', isDemo: true }); // « parrain » = la démo
+      await service.googleAuth({ ...dto, referralCode: 'demo' });
+      expect(mockPrisma.user.create.mock.calls[0][0].data.referredBy).toBeNull();
+    });
+
     it('nouvel e-mail → création avec parrain, UTM conservés, e-mail vérifié, sans mot de passe', async () => {
       mockPrisma.user.findUnique
         .mockResolvedValueOnce(null) // googleId
@@ -626,14 +657,27 @@ describe('AuthService', () => {
     });
   });
 
-  describe('login d’un compte Google sans mot de passe', () => {
-    it('401 identique à un mauvais mot de passe, argon2 jamais appelé', async () => {
+  // #994 (S5) : sans hash à vérifier, la réponse partait tout de suite ; un e-mail connu passait par
+  // argon2 (~dizaines de ms). L'écart de temps révélait les comptes : vérification factice à la place.
+  describe('login sans mot de passe à vérifier : même coût qu’un mauvais mot de passe', () => {
+    it('compte Google sans mot de passe : 401 identique, argon2 vérifie un hash factice', async () => {
       const argon2 = await import('argon2');
-      mockPrisma.user.findUnique.mockResolvedValue({ ...mockUser, password: null });
+      vi.mocked(argon2.verify).mockClear();
+      mockPrisma.user.findFirst.mockResolvedValue({ ...mockUser, password: null });
       await expect(service.login({ email: 'test@test.com', password: 'Password123' })).rejects.toThrow(
         new UnauthorizedException('Identifiants invalides'),
       );
-      expect(argon2.verify).not.toHaveBeenCalled();
+      expect(argon2.verify).toHaveBeenCalledTimes(1);
+    });
+
+    it('e-mail inconnu : 401 identique, argon2 vérifie un hash factice', async () => {
+      const argon2 = await import('argon2');
+      vi.mocked(argon2.verify).mockClear();
+      mockPrisma.user.findFirst.mockResolvedValue(null);
+      await expect(service.login({ email: 'inconnu@test.com', password: 'Password123' })).rejects.toThrow(
+        new UnauthorizedException('Identifiants invalides'),
+      );
+      expect(argon2.verify).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -690,9 +734,120 @@ describe('AuthService', () => {
     });
   });
 
+  // #994 (S2) : la déconnexion effaçait seulement le cookie ; un refresh copié restait valide 7 jours.
+  // #1002 : l'ancien refresh restait valide après rotation. Suivi par famille (une par connexion).
+  describe('refresh : familles, rotation et déconnexion', () => {
+    const verify = (payload: object) => {
+      (mockJwt as Record<string, unknown>)['verifyAsync'] = vi.fn().mockResolvedValue(payload);
+    };
+    const refreshSign = () =>
+      mockJwt.signAsync.mock.calls.find((c) => (c[1] as { secret?: string })?.secret === process.env['JWT_REFRESH_SECRET'] && (c[0] as { tv?: number }).tv !== undefined);
+    const knownUser = () =>
+      mockPrisma.user.findUnique.mockResolvedValue({ ...mockSafeUser, password: 'h', googleId: null, tokenVersion: 0 });
+
+    it('connexion : refresh avec un jti et une famille neufs, 7 jours', async () => {
+      mockPrisma.user.findFirst.mockResolvedValue(mockUser);
+      await service.login({ email: 'test@test.com', password: 'password123' });
+      const [payload, opts] = refreshSign() as [{ fid: string }, { jwtid: string; expiresIn: number }];
+      expect(opts.jwtid).toMatch(/^[0-9a-f-]{36}$/);
+      expect(payload.fid).toMatch(/^[0-9a-f-]{36}$/);
+      expect(payload.fid).not.toBe(opts.jwtid);
+      expect(opts.expiresIn).toBe(7 * 24 * 3600);
+    });
+
+    it('refresh : la famille est gardée, le jti change, la rotation passe par Redis', async () => {
+      verify({ sub: 'user-123', email: 'a@b.c', tv: 0, jti: 'jti-1', fid: 'fam-1' });
+      knownUser();
+      await expect(service.refresh('t')).resolves.toMatchObject({ access_token: 'mock_token' });
+      const [payload, opts] = refreshSign() as [{ fid: string }, { jwtid: string }];
+      expect(payload.fid).toBe('fam-1');
+      expect(opts.jwtid).not.toBe('jti-1');
+      const [, nKeys, famKey, legacyKey, jti, nextJti] = mockRedis.client.eval.mock.calls[0];
+      expect([nKeys, famKey, legacyKey, jti, nextJti]).toEqual([2, 'auth:refresh-family:fam-1', 'auth:revoked-refresh:jti-1', 'jti-1', opts.jwtid]);
+    });
+
+    it('jeton d’avant #1002 (jti sans famille) : famille dérivée du jti, gardée ensuite', async () => {
+      verify({ sub: 'user-123', email: 'a@b.c', tv: 0, jti: 'jti-old' });
+      knownUser();
+      await service.refresh('t');
+      expect(mockRedis.client.eval.mock.calls[0][2]).toBe('auth:refresh-family:j:jti-old');
+      expect((refreshSign() as [{ fid: string }])[0].fid).toBe('j:jti-old');
+    });
+
+    it('jeton d’avant #994 (sans jti) : accepté sans suivi, nouvelle famille', async () => {
+      verify({ sub: 'user-123', email: 'a@b.c', tv: 0 });
+      knownUser();
+      await expect(service.refresh('t')).resolves.toMatchObject({ access_token: 'mock_token' });
+      expect(mockRedis.client.eval).not.toHaveBeenCalled();
+      expect((refreshSign() as [{ fid: string }])[0].fid).toMatch(/^[0-9a-f-]{36}$/);
+    });
+
+    it('famille ou jeton révoqué → 401', async () => {
+      verify({ sub: 'user-123', email: 'a@b.c', tv: 0, jti: 'jti-1', fid: 'fam-1' });
+      knownUser();
+      mockRedis.client.eval.mockResolvedValueOnce(0);
+      await expect(service.refresh('t')).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('réutilisation d’un jeton déjà renouvelé → 401', async () => {
+      verify({ sub: 'user-123', email: 'a@b.c', tv: 0, jti: 'jti-1', fid: 'fam-1' });
+      knownUser();
+      mockRedis.client.eval.mockResolvedValueOnce(2);
+      await expect(service.refresh('t')).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('Redis en panne au refresh : accepté (une panne ne déconnecte personne)', async () => {
+      verify({ sub: 'user-123', email: 'a@b.c', tv: 0, jti: 'jti-1', fid: 'fam-1' });
+      knownUser();
+      mockRedis.client.eval.mockRejectedValueOnce(new Error('redis down'));
+      await expect(service.refresh('t')).resolves.toMatchObject({ access_token: 'mock_token' });
+    });
+
+    it('logout : la famille du jeton présenté est coupée pour 7 jours', async () => {
+      verify({ sub: 'user-123', jti: 'jti-1', fid: 'fam-1' });
+      await service.revokeRefreshToken('t');
+      expect(mockMulti.hset).toHaveBeenCalledWith('auth:refresh-family:fam-1', 'revoked', '1');
+      expect(mockMulti.expire).toHaveBeenCalledWith('auth:refresh-family:fam-1', 7 * 24 * 3600);
+    });
+
+    it('logout sans cookie, jeton illisible ou Redis en panne : jamais d’erreur', async () => {
+      await expect(service.revokeRefreshToken(undefined)).resolves.toBeUndefined();
+      (mockJwt as Record<string, unknown>)['verifyAsync'] = vi.fn().mockRejectedValue(new Error('bad'));
+      await expect(service.revokeRefreshToken('x')).resolves.toBeUndefined();
+      verify({ sub: 'user-123', jti: 'jti-1', fid: 'fam-1' });
+      mockMulti.exec.mockRejectedValueOnce(new Error('redis down'));
+      await expect(service.revokeRefreshToken('t')).resolves.toBeUndefined();
+    });
+  });
+
+  // #999 (S7) : casse ignorée, sans joker. Prisma traduit `mode: 'insensitive'` en ILIKE sans échapper
+  // `_` ni `%` : sans échappement, « a_b@x.com » retrouvait le compte « axb@x.com ».
+  describe('recherche par e-mail : casse ignorée, sans joker (#999)', () => {
+    const where = () => mockPrisma.user.findFirst.mock.calls[0][0].where;
+
+    it('connexion : adresse en minuscules, sans espaces, `_` et `%` échappés', async () => {
+      mockPrisma.user.findFirst.mockResolvedValue(null);
+      await expect(service.login({ email: '  A_B%c@Test.com ', password: 'password123' })).rejects.toThrow(UnauthorizedException);
+      expect(where()).toEqual({ email: { equals: 'a\\_b\\%c@test.com', mode: 'insensitive' } });
+    });
+
+    it('inscription : un compte d’avant le correctif avec des majuscules bloque la même adresse', async () => {
+      mockPrisma.user.findFirst.mockResolvedValue({ id: 'ancien' });
+      await expect(service.register({ email: 'alice@test.com', password: 'password123' })).rejects.toThrow(ConflictException);
+      expect(where()).toEqual({ email: { equals: 'alice@test.com', mode: 'insensitive' } });
+      expect(mockPrisma.user.create).not.toHaveBeenCalled();
+    });
+
+    it('mot de passe oublié : même recherche', async () => {
+      mockPrisma.user.findFirst.mockResolvedValue(null);
+      await service.forgotPassword('Alice@Test.com');
+      expect(where()).toEqual({ email: { equals: 'alice@test.com', mode: 'insensitive' } });
+    });
+  });
+
   describe('forgotPassword d’un compte Google sans mot de passe', () => {
     it('même traitement (204) mais e-mail « définir un mot de passe »', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue({ ...mockUser, password: null });
+      mockPrisma.user.findFirst.mockResolvedValue({ ...mockUser, password: null });
       mockPrisma.user.update.mockResolvedValue(mockUser);
       await service.forgotPassword('test@test.com');
       expect(mockResend.sendResetPassword).toHaveBeenCalledWith(expect.objectContaining({ googleOnly: true }));

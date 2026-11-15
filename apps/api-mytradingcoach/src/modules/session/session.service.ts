@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -12,7 +13,7 @@ import { computeTradeStats, toParisDateStr } from '@mtc/shared';
 import type { LiveBrokerState, SessionHistoryItem } from '@mtc/shared';
 import { openPositionsKey, parseOpenPositions } from '../integrations/tradovate/tradovate-open-positions';
 import { parseWorkingOrders, protectionFor, workingOrdersKey } from '../integrations/tradovate/tradovate-orders';
-import { activeSessionWhere, tradingDayStart } from './active-session';
+import { activeSessionWhere, tradingDayEnd, tradingDayStart } from './active-session';
 import { autoCloseData, sessionTotalsFrom } from './session-totals';
 import { calculatePnl } from '../trades/trade-metrics.util';
 import { refreshClosedSessionTotals, sessionTradesFor } from './refresh-session-totals';
@@ -32,10 +33,7 @@ export class SessionService {
   ) {}
 
   async startSession(userId: string, mood: MoodState, accountId?: string) {
-    await this.prisma.tradeSession.updateMany({
-      where: { userId, status: SessionStatus.ACTIVE },
-      data: { status: SessionStatus.CLOSED, endedAt: new Date() },
-    });
+    await this.closeOpenSessions(userId);
 
     // accountId fourni et valide (appartient au user) → on l'utilise ; sinon compte
     // par défaut (anti-NULL : jamais de session sans compte).
@@ -75,7 +73,7 @@ export class SessionService {
    * Sans ça, une session clôturée disparaissait au rechargement de la page (onglet mis en
    * arrière-plan sur mobile, choix d'image pour « Publier ») : retour sur la Pré-session,
    * « Démarrer » et session vide parasite (#456).
-   * Compte démo le week-end (#977) : marché fermé, la fenêtre recule au vendredi 00:00 et la
+   * Compte démo le week-end (#977) : marché fermé, la fenêtre recule à la journée CME du vendredi et la
    * vitrine sert la séance du vendredi, clôturée (onglet Débrief), au lieu d'un écran « Démarrer
    * la session » que la démo ne peut pas lancer. Les vrais comptes ne changent pas.
    */
@@ -83,13 +81,14 @@ export class SessionService {
     const active = await this.getActiveSession(userId);
     if (active) return active;
 
-    const startOfDay = new Date(now);
-    startOfDay.setHours(0, 0, 0, 0);
+    // « Aujourd'hui » = journée de trading CME (17:00 Chicago), comme la session active. Compte
+    // démo le week-end (#977) : journée CME du vendredi, la séance du vendredi reste servie.
+    const ref = new Date(now);
     if (isDemo) {
-      while (startOfDay.getDay() === 0 || startOfDay.getDay() === 6) startOfDay.setDate(startOfDay.getDate() - 1);
+      while (ref.getDay() === 0 || ref.getDay() === 6) { ref.setDate(ref.getDate() - 1); ref.setHours(12, 0, 0, 0); }
     }
     return this.prisma.tradeSession.findFirst({
-      where: { userId, status: SessionStatus.CLOSED, startedAt: { gte: startOfDay } },
+      where: { userId, status: SessionStatus.CLOSED, startedAt: { gte: tradingDayStart(ref) } },
       orderBy: { endedAt: 'desc' },
       include: {
         _count: { select: { trades: true } },
@@ -108,21 +107,21 @@ export class SessionService {
   ) {
     const existing = await this.prisma.tradeSession.findFirst({
       where: { id: sessionId, userId },
-      select: { startedAt: true, accountId: true },
+      select: { startedAt: true, accountId: true, status: true, endedAt: true },
     });
     if (!existing) throw new NotFoundException('Session introuvable');
+    // Déjà clôturée (double clic, cron passé avant) : fin d'origine gardée, humeur et notes enregistrées (#994).
+    const endedAt = existing.status === SessionStatus.CLOSED && existing.endedAt ? existing.endedAt : new Date();
     // 1 session = 1 compte : les trades d'un autre compte n'y entrent pas (#457).
     const sameAccount = existing.accountId ? { accountId: existing.accountId } : {};
 
-    // Fenêtre du jour de la session (même base de date que getLiveStats / Débrief)
-    const dayStart = new Date(existing.startedAt);
-    dayStart.setHours(0, 0, 0, 0);
-    const dayEnd = new Date(existing.startedAt);
-    dayEnd.setHours(23, 59, 59, 999);
+    // Fenêtre = journée de trading CME de la session (même base que getTodayTrades et la session active)
+    const dayStart = tradingDayStart(existing.startedAt);
+    const dayEnd = tradingDayEnd(existing.startedAt);
 
     // Rattacher les trades du jour encore non liés à cette session
     await this.prisma.trade.updateMany({
-      where: { userId, sessionId: null, tradedAt: { gte: dayStart, lte: dayEnd }, ...sameAccount },
+      where: { userId, sessionId: null, tradedAt: { gte: dayStart, lt: dayEnd }, ...sameAccount },
       data: { sessionId },
     });
 
@@ -132,7 +131,7 @@ export class SessionService {
       where: { id: sessionId, userId },
       data: {
         status: SessionStatus.CLOSED,
-        endedAt: new Date(),
+        endedAt,
         moodEnd: mood,
         ...totals,
         notes,
@@ -152,6 +151,26 @@ export class SessionService {
 
   private sessionTrades(userId: string, sessionId: string, sameAccount: { accountId?: string }) {
     return sessionTradesFor(this.prisma, userId, sessionId, sameAccount.accountId ?? null);
+  }
+
+  /**
+   * Séances encore ouvertes au démarrage d'une nouvelle (#994) : clôturées AVEC leurs totaux, sinon
+   * `totalTrades` restait à 0 et la séance disparaissait de l'historique. Séance d'une journée
+   * précédente = comme le cron (fin de SA journée) ; séance du jour (autre appareil) = maintenant.
+   */
+  private async closeOpenSessions(userId: string, now = new Date()): Promise<void> {
+    const open = await this.prisma.tradeSession.findMany({
+      where: { userId, status: SessionStatus.ACTIVE },
+      select: { id: true, accountId: true, startedAt: true },
+    });
+    for (const s of open) {
+      const trades = await this.sessionTrades(userId, s.id, s.accountId ? { accountId: s.accountId } : {});
+      const data =
+        s.startedAt < tradingDayStart(now)
+          ? autoCloseData(s.startedAt, trades)
+          : { status: SessionStatus.CLOSED, endedAt: now, ...sessionTotalsFrom(trades) };
+      await this.prisma.tradeSession.updateMany({ where: { id: s.id, status: SessionStatus.ACTIVE }, data });
+    }
   }
 
   /**
@@ -226,8 +245,9 @@ export class SessionService {
     const rows = await this.prisma.tradeSession.findMany({
       where,
       orderBy: { startedAt: 'desc' },
-      skip: offset,
-      take: limit,
+      // Bornes (#994) : un `skip` négatif faisait un 500, un `limit` sans plafond chargeait tout.
+      skip: Math.max(0, offset),
+      take: Math.min(Math.max(1, limit), 200),
       select: {
         id: true,
         accountId: true,
@@ -321,8 +341,8 @@ export class SessionService {
   }
 
   async getTodayTrades(userId: string) {
-    const startOfDay = new Date();
-    startOfDay.setHours(0, 0, 0, 0);
+    // Journée de trading CME (17:00 Chicago), pas minuit serveur : même borne que la session active.
+    const startOfDay = tradingDayStart(new Date());
 
     // 1 session = 1 compte : pendant une session, seuls les trades de son compte comptent
     // (un trade synchronisé sur un autre compte gonflait le P&L de la carte, #457).
@@ -335,7 +355,7 @@ export class SessionService {
       where: {
         userId,
         // Trades du jour, plus un trade ENCORE OUVERT rattaché à la session active même s'il a été
-        // ouvert avant minuit (position gardée) : sinon « Trade en cours » le perdait à 00:00.
+        // ouvert avant le début de la journée (position gardée) : sinon « Trade en cours » le perdait à la bascule.
         OR: [
           { tradedAt: { gte: startOfDay } },
           ...(active ? [{ sessionId: active.id, pnl: null }] : []),
@@ -410,6 +430,13 @@ export class SessionService {
       where: { id: tradeId, userId },
     });
     if (!trade) throw new NotFoundException('Trade introuvable');
+    // `exitPrice` vient de @Body('exitPrice') : ni validé ni converti par le ValidationPipe (#994).
+    if (typeof exitPrice !== 'number' || !Number.isFinite(exitPrice) || exitPrice <= 0) {
+      throw new BadRequestException('Prix de sortie invalide.');
+    }
+    // Déjà clôturé (P&L réalisé du broker, prix de sortie sans P&L calculable, double clic) : jamais
+    // réécrit, ni étiquette poussée deux fois.
+    if (trade.exit != null || trade.pnl != null) return trade;
 
     let closeType: 'SL' | 'TP' | 'MANUAL' = 'MANUAL';
 
@@ -440,14 +467,14 @@ export class SessionService {
       capitalEngaged: trade.capitalEngaged ?? undefined,
     } as CreateTradeDto);
 
-    const closed = await this.prisma.trade.update({
-      where: { id: tradeId },
-      data: {
-        exit: exitPrice,
-        pnl: pnl ?? null,
-        tags: { push: closeType },
-      },
+    // Écriture conditionnelle : deux clics simultanés lisent tous deux un trade ouvert ; seul le
+    // premier écrit, le second renvoie le trade clôturé par l'autre.
+    const { count } = await this.prisma.trade.updateMany({
+      where: { id: tradeId, userId, exit: null, pnl: null },
+      data: { exit: exitPrice, pnl: pnl ?? null, tags: { push: closeType } },
     });
+    const closed = await this.prisma.trade.findUniqueOrThrow({ where: { id: tradeId } });
+    if (count === 0) return closed;
     // Le P&L change : totaux de sa séance si elle est déjà clôturée, et statistiques en cache.
     await refreshClosedSessionTotals(this.prisma, [trade.sessionId]);
     await this.analytics.invalidateUserCache(userId);

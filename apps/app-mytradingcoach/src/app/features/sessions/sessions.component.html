@@ -74,7 +74,7 @@
   } @else {
     <!-- Semaines en cartes : une colonne de plus dès que la largeur le permet (pas de plafond). -->
     <div class="mtc-cards weeks-grid">
-    @for (group of weekGroups(); track group.weekNumber) {
+    @for (group of weekGroups(); track group.label) {
       <div class="week-group">
         <div class="week-header">
           <div class="week-label">{{ group.label }}</div>

@@ -4,9 +4,9 @@ import { Observable } from 'rxjs';
 import { environment } from '@app/environments/environment';
 import { AuthUser } from '../auth/auth.service';
 
+/** Même contrat que l'API (`UpdateMeDto` : `name` seul). L'e-mail ne se change pas ici (#1020). */
 export interface UpdateMeDto {
   name?: string;
-  email?: string;
 }
 
 export interface CompleteOnboardingDto {

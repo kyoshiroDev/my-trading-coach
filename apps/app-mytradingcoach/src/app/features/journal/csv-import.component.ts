@@ -265,13 +265,16 @@ export class CsvImportComponent {
         this.accountStore.load();
         this.installPrompt.offer('import');
       }
-      this.imported.emit({
+      const summary: ImportResult = {
         created: r.created,
         duplicates: r.duplicates,
         failed: r.failed,
         total: r.total,
         feesImported: r.feesImported,
-      });
+      };
+      // Même récap qu'un import de fichier : la modale reste ouverte dessus (#994).
+      this.result.set(summary);
+      this.imported.emit(summary);
     });
   }
 
@@ -287,8 +290,13 @@ export class CsvImportComponent {
   }
 
   onOverlayClick(e: MouseEvent) {
-    if ((e.target as HTMLElement).classList.contains('overlay'))
-      this.dismissed.emit();
+    if ((e.target as HTMLElement).classList.contains('overlay')) this.close();
+  }
+
+  /** Toute fermeture repart à zéro : la réouverture montrait l'ancien résultat ou l'ancienne erreur (#994). */
+  protected close(): void {
+    this.reset();
+    this.dismissed.emit();
   }
 
   onDragOver(e: DragEvent) {

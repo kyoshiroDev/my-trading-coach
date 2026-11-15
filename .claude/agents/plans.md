@@ -69,8 +69,8 @@ Toute feature gated DOIT être cohérente aux **4 endroits** (voir Règle d'or).
 - 📄 **PDF du débrief de la semaine** (aucun rapport mensuel n'existe)
 - 🌙 **Recap journalier email 17h30**
 - **Comptes illimités**, chacun avec les règles de sa prop firm (le FREE a déjà son compte avec ses règles)
-- 🚨 **Alertes avant la limite** et 🧘 **anti-tilt** en direct (+ sons et notifications) : app ouverte,
-  compte Tradovate connecté (synchro en direct uniquement, rien sur une saisie manuelle, pas d'e-mail ;
+- 🚨 **Alertes avant la limite** et 🧘 **anti-tilt** en direct (+ sons et notifications) : app ouverte
+  ou en notification pendant la séance (Q2, #1013), compte Tradovate connecté (synchro en direct uniquement, rien sur une saisie manuelle, pas d'e-mail ;
   push vers les appareils abonnés, #666 ; app fermée, limites, objectif et payout relevés par la
   synchro de fond, jusqu'à 15 min de décalage ; veille serveur #770, éteinte tant que
   `TRADOVATE_WATCH_MAX` n'est pas posé : en direct aussi app fermée pendant la séance, Premium seulement)
@@ -88,8 +88,9 @@ réservée au Premium. Changer une ligne → `libs/shared/src/plan-benefits.ts` 
   firm, suivi en direct pendant la séance (equity, marge avant le plancher, objectif ou payout) ·
   Journal et trades illimités, historique complet · Préparation et débrief de chaque séance ·
   Calendrier éco, news et contexte marché.
-- **Premium** : Alertes avant d'atteindre ta limite de perte, app ouverte pendant ta séance (compte
-  Tradovate connecté) · Anti-tilt en direct, app ouverte (compte Tradovate connecté) : reprise de
+- **Premium** : Alertes avant d'atteindre ta limite de perte, app ouverte ou en notification pendant
+  ta séance (compte Tradovate connecté) · Anti-tilt en direct, app ouverte ou en notification pendant
+  ta séance (compte Tradovate connecté) : reprise de
   position après une perte, taille qui grossit, surtrading · Comptes illimités, chacun avec les
   règles de sa prop firm · Débrief de ta semaine rédigé par le coach IA · Analyses avancées : par
   setup, par heure, drawdown détaillé · Coach IA : insights, chat et récap du jour à 17 h 30.
@@ -381,7 +382,8 @@ Constantes : `FOUNDER_OFFER = { priceMonthlyEur: 29, priceAnnualEur: 290, seats:
   `REFUNDED` (rendue), tarif perdu, abonnement annulé. Partiel ou renouvellement remboursé : rien.
   La charge est rapprochée de la 1re facture payée (> 0 €) par facture ou PaymentIntent.
 - **Bascule** : un essai Stripe à 49 € ou un mois offert peut passer fondateur (prélèvement immédiat,
-  l'essai est annulé au 1er paiement fondateur ; jamais de prolongation ni de cumul).
+  l'essai est annulé au 1er paiement fondateur ; jamais de prolongation ni de cumul). Annulation ratée :
+  alerte admin et nouvel essai automatique, jamais deux abonnements actifs (#1013 A7).
 - **Lancement contrôlé** : `FounderOfferConfig.open` (fermé par défaut), `endsAt` optionnel. Fermé =
   personne d'éligible, `open: false` sur `GET /pricing/founder`, rien d'affiché.
 - **Places** : prise au 1er paiement réussi (numéro 1 à 200, jamais réattribué). Rendue seulement si
@@ -391,7 +393,8 @@ Constantes : `FOUNDER_OFFER = { priceMonthlyEur: 29, priceAnnualEur: 290, seats:
   `past_due` = rien perdu (e-mail « ton tarif est en jeu ») ; perdu à `customer.subscription.deleted`
   (place `LOST`, reste comptée) ou au remboursement. Retour = prix normal.
 - **Non-cumul** : fondateur, code partenaire et coupon de parrainage s'excluent ; le fondateur ne
-  reçoit jamais le −10 % filleul (toujours moins cher sur la 1re année). Le mois offert au PARRAIN
+  reçoit jamais le −10 % filleul (toujours moins cher sur la 1re année). Le −10 % filleul seulement
+  au **premier** abonnement (A8 #1013) : aucun abonnement passé chez Stripe, aucune remise déjà notée. Le mois offert au PARRAIN
   reste accordé (pas une remise pour l'acheteur). Commission ambassadeur : 20 % du montant payé.
 - **Gating** : un fondateur est PREMIUM comme tout abonné Stripe actif (aucun guard à part).
 - **Compteur de places** : TOUJOURS `founderSeatsLabel(seatsLeft, seatsTotal)` de `@mtc/shared`
@@ -442,13 +445,38 @@ Constantes : `FOUNDER_OFFER = { priceMonthlyEur: 29, priceAnnualEur: 290, seats:
   remboursement intégral du 1er paiement réel (quel que soit le délai) ou fin d'essai impayée (`cancellation_details.reason =
   payment_failed` sans paiement). Abonnement terminé → remise perdue (`LOST`, reste comptée).
 - Changement d'intervalle (`POST /billing/interval`) : coupon de l'autre intervalle aux conditions
-  figées, pour les mois de remise restants.
+  figées, pour les mois de remise **restants** seulement (B14 #1013, `intervalSwitchTerms`) : vers le
+  mensuel, la remise mensuelle pendant ces mois ; vers l'annuel, la remise d'une année au prorata des
+  mois restants (12 au plus ; à vie = entière). Même règle pour le −10 % filleul (coupon
+  `mtc-referral-…`, remplace le coupon de 12 mois). Le Profil affiche le prix calculé par l'API
+  (`/billing/offers` → `intervalSwitch`), jamais un prix recalculé côté front. Limite connue : un code
+  de plus de 12 mois non multiple de 12 (ex. 18) remise aussi en entier la 2e facture annuelle
+  (coupon `repeating` de 18 mois), alors que le Profil annonce « puis 490 €/an » : en faveur du trader,
+  et déjà le cas avant.
 - **MRR** (base et Stripe) sur le montant **réellement payé** : découpé `mrrBreakdown`
-  normal / fondateur / partenaires (`realMonthlyEur`). Le MRR Stripe déduit les remises
-  (`expand: data.discounts`). Reste : le −10 % filleul n'est pas déduit du MRR base (écart connu).
-- Commission ambassadeur : 20 % de `invoice.amount_paid`, donc déjà sur le montant remisé.
+  normal / fondateur / partenaires / filleuls (`realMonthlyEur`). Le MRR Stripe déduit les remises
+  (`expand: data.discounts`). Le −10 % filleul est compté dans le MRR base depuis #954 : le checkout
+  pose la métadonnée d'abonnement `referralDiscount=1`, le webhook enregistre
+  `User.referralDiscountSince` (`referralDiscountStart` : coupon développé, sinon métadonnée), et le
+  MRR base applique −10 % pendant 12 mois (44,10 € / 441/12), puis le prix normal. Filleuls abonnés
+  AVANT #954 : l'API Stripe épinglée en `2024-06-20` développe `discount` dans l'abonnement, donc les
+  **mensuels** sont repris au renouvellement suivant (`customer.subscription.updated` →
+  `syncSubscription`), sous un mois ; les **annuels** seulement à leur renouvellement, quand la remise
+  est déjà finie : leur MRR base reste à 490/12 au lieu de 441/12 d'ici là. Aucun rattrapage (il
+  faudrait lire Stripe live, jamais sans Greg). L'historique `MetricsSnapshot` n'est pas recalculé.
+- Commission ambassadeur : 20 % de `invoice.amount_paid`, donc déjà sur le montant remisé. **Une
+  commission par facture** (`ReferralCommission.invoiceId`, unique, A1 #1013) : jamais réécrite au
+  rejeu, une ligne `paid` reste intacte. Remboursement intégral du 1er paiement du filleul (A4) :
+  commission `pending` → `canceled` (ne compte plus nulle part, jamais marquable payée) ; `paid`
+  gardée + alerte admin ; mois offert du parrain jamais repris + alerte admin.
+- Code ambassadeur (A5) : changé → les filleuls suivent (même transaction) ; un code changé ou
+  révoqué va dans `RetiredReferralCode` et n'est jamais redonné à un autre compte, ni choisi ni généré
+  (un vieux lien créditerait le nouveau porteur) ; seul son ancien porteur peut le reprendre. Un code
+  porté par des filleuls est refusé de même.
   Estimation mensuelle affichée à l'ambassadeur (`referralMonthlyCommission`, `ambassador-commission.util.ts`) :
   20 % de `realMonthlyEur` (fondateur, annuel ÷ 12, code partenaire), abonnements `active` seulement (#947).
+  Filleul « Payant » sur la page Ambassadeur = même règle (`isPayingReferral`, champ `paying` de
+  `/ambassador/stats`) : un essai ou une pause reste « Inscrit » (B12 #1013).
 - **Satisfait ou remboursé (choix #525)** : demande par e-mail à support@ depuis Profil > Abonnement et depuis l'écran de suppression
   (lien jusqu'à J+14 du 1er paiement), remboursement fait à la main dans Stripe ; le webhook
   `charge.refunded` rend la place et annule l'abonnement. Aucune route ne déplace d'argent toute seule.

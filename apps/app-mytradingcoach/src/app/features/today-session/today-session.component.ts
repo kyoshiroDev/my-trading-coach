@@ -8,6 +8,7 @@ import {
   effect,
   inject,
   signal,
+  untracked,
 } from '@angular/core';
 import { DatePipe, registerLocaleData } from '@angular/common';
 import { computeTradeStats, formatPercent, netPnl } from '@mtc/shared';
@@ -317,7 +318,10 @@ export class TodaySessionComponent implements OnInit, OnDestroy {
     this.journalText.set(value);
     this.journalSaved.set(false);
     if (this.journalSaveTimer) clearTimeout(this.journalSaveTimer);
-    this.journalSaveTimer = setTimeout(() => this.patch({ notes: this.journalText() }), 1200);
+    this.journalSaveTimer = setTimeout(() => {
+      this.journalSaveTimer = null; // partie : rien à renvoyer au départ de la page
+      this.patch({ notes: this.journalText() });
+    }, 1200);
   }
 
   constructor() {
@@ -327,6 +331,7 @@ export class TodaySessionComponent implements OnInit, OnDestroy {
     effect(() => {
       const status = this.store.activeSession()?.status;
       if (status === 'ACTIVE') {
+        closedShown = false; // la clôture de CETTE séance basculera sur le Débrief (#994)
         this.activeTab.set('live');
       } else if (status === 'CLOSED' && !closedShown) {
         closedShown = true;
@@ -334,12 +339,17 @@ export class TodaySessionComponent implements OnInit, OnDestroy {
       }
     });
 
-    // Pré-remplir depuis la session
+    // Pré-remplir depuis la session, UNE fois par séance (#994) : l'effet relisait `closeMood()` et
+    // `journalText()`, donc choisir « Neutre » ou vider le journal remettait aussitôt l'ancien choix.
+    let prefilledFor: string | null = null;
     effect(() => {
       const session = this.store.activeSession();
-      if (!session) return;
-      if (session.notes && this.journalText() === '')        this.journalText.set(session.notes);
-      if (session.moodEnd && this.closeMood() === 'NEUTRAL') this.closeMood.set(session.moodEnd as MoodState);
+      if (!session || session.id === prefilledFor) return;
+      prefilledFor = session.id;
+      untracked(() => {
+        if (session.notes && this.journalText() === '')        this.journalText.set(session.notes);
+        if (session.moodEnd && this.closeMood() === 'NEUTRAL') this.closeMood.set(session.moodEnd as MoodState);
+      });
     });
 
     effect(() => {
@@ -359,7 +369,13 @@ export class TodaySessionComponent implements OnInit, OnDestroy {
     this.selectedAccount.load(); // Premium-only en interne ; alimente le sélecteur
   }
   ngOnDestroy(): void {
-    if (this.journalSaveTimer)  clearTimeout(this.journalSaveTimer);
+    // Sauvegarde différée en attente : envoyée maintenant, sinon la fin du journal était perdue
+    // quand on quittait la page dans la seconde (#994).
+    if (this.journalSaveTimer) {
+      clearTimeout(this.journalSaveTimer);
+      this.journalSaveTimer = null;
+      this.patch({ notes: this.journalText() });
+    }
   }
 
   protected selectTab(tab: 'morning' | 'live' | 'debrief'): void { this.activeTab.set(tab); }
@@ -367,13 +383,13 @@ export class TodaySessionComponent implements OnInit, OnDestroy {
     // 1 session = 1 compte : sécurité serveur/UX même si les boutons sont déjà désactivés
     // (accountChoiceRequired) quand aucun compte précis n'est choisi.
     if (this.accountChoiceRequired()) return;
+    // L'onglet suit la séance (effet du constructeur) : jamais « Live » si le démarrage échoue (#994).
     this.store.startSession(this.selectedAccount.accountParam());
-    this.activeTab.set('live');
   }
 
   protected closeAndGoToDebrief(): void {
     this.confirmCloseOpen.set(false);
+    // L'onglet suit la séance : Débrief seulement une fois la clôture faite (#994).
     this.store.closeSessionThenDebrief();
-    this.activeTab.set('debrief');
   }
 }

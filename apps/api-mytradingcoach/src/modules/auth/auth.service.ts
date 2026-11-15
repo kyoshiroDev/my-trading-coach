@@ -12,9 +12,10 @@ import { JwtService } from '@nestjs/jwt';
 import { AdminPushEvent, AuthProvider, Prisma, Role } from '@prisma/client';
 import { CGU_VERSION } from '@mtc/shared';
 import * as argon2 from 'argon2';
-import { hashPassword, needsPasswordRehash } from './password-hashing';
+import { dummyPasswordHash, hashPassword, needsPasswordRehash } from './password-hashing';
 import * as crypto from 'crypto';
 import { PrismaService } from '../../prisma/prisma.service';
+import { RedisService } from '../infra/redis.service';
 import { ResendService } from '../resend/resend.service';
 import { DemoSeedService } from '../admin/demo-seed.service';
 import { ProductEventsService } from '../product-events/product-events.service';
@@ -27,6 +28,8 @@ import { GoogleAuthDto } from './dto/google-auth.dto';
 import { GoogleIdTokenVerifier, GoogleTokenRefusedException } from './google-id-token.verifier';
 import { resolveGoogleAuthConfig } from '../../config/google-auth-config';
 import { redeleteCutoff, signupTrialData } from '../trial/signup-trial';
+import { REFRESH_TTL_S, familyOf, revokeFamily, rotateRefresh } from './refresh-rotation';
+import { emailEquals } from '../../common/utils/email.util';
 
 const RESET_TOKEN_TTL_MS = 60 * 60 * 1000; // 1 heure
 
@@ -146,12 +149,14 @@ export class AuthService {
     private demoSeed: DemoSeedService,
     private productEvents: ProductEventsService,
     private googleVerifier: GoogleIdTokenVerifier,
+    private redis: RedisService,
     @Optional() private adminNotifier?: AdminNotifier,
   ) {}
 
   async register(dto: RegisterDto) {
-    const existing = await this.prisma.user.findUnique({
-      where: { email: dto.email },
+    const existing = await this.prisma.user.findFirst({
+      where: { email: emailEquals(dto.email) },
+      select: { id: true },
     });
     if (existing) throw new ConflictException('Cet email est déjà utilisé');
 
@@ -191,16 +196,17 @@ export class AuthService {
     if (data.referralCode) {
       const ambassador = await this.prisma.user.findUnique({
         where: { referralCode: data.referralCode.toUpperCase() },
-        select: { referralCode: true },
+        select: { referralCode: true, isDemo: true },
       });
-      if (ambassador?.referralCode) referredBy = ambassador.referralCode;
+      // Jamais la démo comme parrain : son lien circulait depuis la démo publique (#993).
+      if (ambassador?.referralCode && !ambassador.isDemo) referredBy = ambassador.referralCode;
     }
 
     // Essai Premium d'inscription (#769), refusé si l'e-mail vient de supprimer un compte.
     const now = new Date();
     const recentlyDeleted = await this.prisma.deletedAccount.findFirst({
       where: {
-        email: { equals: data.email, mode: 'insensitive' },
+        email: emailEquals(data.email),
         anonymizedAt: null,
         deletedAt: { gte: redeleteCutoff(now) },
       },
@@ -268,13 +274,16 @@ export class AuthService {
   }
 
   async login(dto: LoginDto) {
-    const user = await this.prisma.user.findUnique({
-      where: { email: dto.email },
+    const user = await this.prisma.user.findFirst({
+      where: { email: emailEquals(dto.email) },
+      orderBy: { createdAt: 'asc' },
     });
-    if (!user) throw new UnauthorizedException('Identifiants invalides');
-
-    // Compte Google sans mot de passe : même réponse qu'un mauvais mot de passe (anti-énumération).
-    if (!user.password) throw new UnauthorizedException('Identifiants invalides');
+    // E-mail inconnu ou compte Google sans mot de passe : même réponse ET même coût qu'un mauvais
+    // mot de passe (anti-énumération, #994) — sinon l'absence d'argon2 se mesurait au temps de réponse.
+    if (!user?.password) {
+      await argon2.verify(await dummyPasswordHash(), dto.password).catch(() => false);
+      throw new UnauthorizedException('Identifiants invalides');
+    }
     const valid = await argon2.verify(user.password, dto.password);
     if (!valid) throw new UnauthorizedException('Identifiants invalides');
 
@@ -331,7 +340,7 @@ export class AuthService {
     }
 
     const byEmail = await this.prisma.user.findFirst({
-      where: { email: { equals: identity.email, mode: 'insensitive' } },
+      where: { email: emailEquals(identity.email) },
       orderBy: { createdAt: 'asc' },
       select: {
         id: true,
@@ -468,7 +477,7 @@ export class AuthService {
   }
 
   async refresh(refreshToken: string) {
-    let payload: { sub: string; email: string; tv?: number };
+    let payload: { sub: string; email: string; tv?: number; jti?: string; fid?: string };
     try {
       payload = await this.jwtService.verifyAsync(refreshToken, {
         secret: process.env['JWT_REFRESH_SECRET'],
@@ -487,9 +496,33 @@ export class AuthService {
       throw new UnauthorizedException('Refresh token invalide ou expiré');
     }
 
+    // Jeton sans `jti` (d'avant #994, 7 j au plus) : aucun suivi possible, une nouvelle famille démarre.
+    const fid = familyOf(payload) ?? crypto.randomUUID();
+    const nextJti = crypto.randomUUID();
+    if (payload.jti) await this.checkRotation(user.id, fid, payload.jti, nextJti);
+
     const { tokenVersion, ...me } = user;
-    const tokens = await this.generateTokens({ id: user.id, email: user.email, tokenVersion });
+    const tokens = await this.generateTokens({ id: user.id, email: user.email, tokenVersion }, { fid, jti: nextJti });
     return { ...tokens, user: toMe(me) };
+  }
+
+  /**
+   * Rotation suivie en Redis (#1002) : un jeton déjà renouvelé et rejoué hors tolérance coupe sa famille.
+   * Redis en panne : jeton accepté (une panne ne doit déconnecter personne), comme avant #994.
+   */
+  private async checkRotation(userId: string, fid: string, jti: string, nextJti: string): Promise<void> {
+    let outcome: Awaited<ReturnType<typeof rotateRefresh>>;
+    try {
+      outcome = await rotateRefresh(this.redis.client, { fid, jti, nextJti });
+    } catch (err) {
+      this.logger.warn(`Suivi des refresh illisible : ${(err as Error).message}`);
+      return;
+    }
+    if (outcome === 'ok') return;
+    if (outcome === 'reused') {
+      this.logger.warn(`Refresh déjà renouvelé puis rejoué : session coupée (user ${userId})`);
+    }
+    throw new UnauthorizedException('Refresh token invalide ou expiré');
   }
 
   async getMe(userId: string) {
@@ -502,7 +535,10 @@ export class AuthService {
   }
 
   async forgotPassword(email: string): Promise<void> {
-    const user = await this.prisma.user.findUnique({ where: { email } });
+    const user = await this.prisma.user.findFirst({
+      where: { email: emailEquals(email) },
+      orderBy: { createdAt: 'asc' },
+    });
     // Réponse identique que l'utilisateur existe ou non (anti-énumération)
     if (!user) return;
 
@@ -553,6 +589,8 @@ export class AuthService {
         password: hashedPassword,
         resetPasswordToken: null,
         resetPasswordExpires: null,
+        // Nouveau mot de passe = sessions ouvertes coupées (refresh refusé si `tv` ≠ tokenVersion), #994.
+        tokenVersion: { increment: 1 },
         // Le lien reçu par e-mail prouve la possession de l'adresse.
         emailVerifiedAt: user.emailVerifiedAt ?? new Date(),
       },
@@ -585,19 +623,46 @@ export class AuthService {
     return { access_token, user: toMe(user) };
   }
 
-  /** `tv` (version) dans le refresh token seulement : l'incrémenter révoque toutes les sessions. */
-  private async generateTokens(user: { id: string; email: string; tokenVersion?: number }) {
+  /**
+   * Déconnexion (#994, S2 ; #1002) : la famille du refresh présenté est coupée jusqu'à son expiration,
+   * jetons émis après lui compris, pour qu'aucune copie du cookie ne serve plus. Les autres appareils
+   * restent connectés. Ne lève jamais : la déconnexion efface le cookie quoi qu'il arrive (jeton
+   * absent, illisible, Redis en panne).
+   */
+  async revokeRefreshToken(refreshToken: string | undefined): Promise<void> {
+    if (!refreshToken) return;
+    try {
+      const payload = await this.jwtService.verifyAsync<{ jti?: string; fid?: string }>(refreshToken, {
+        secret: process.env['JWT_REFRESH_SECRET'],
+      });
+      const fid = familyOf(payload);
+      if (fid) await revokeFamily(this.redis.client, fid);
+    } catch (err) {
+      this.logger.warn(`Révocation du refresh à la déconnexion impossible : ${(err as Error).message}`);
+    }
+  }
+
+  /**
+   * `tv` (version) dans le refresh token seulement : l'incrémenter révoque toutes les sessions.
+   * `fid` = famille de la connexion, nouvelle à chaque login (#1002) ; `jti` = identifiant du jeton.
+   */
+  private async generateTokens(
+    user: { id: string; email: string; tokenVersion?: number },
+    chain: { fid: string; jti: string } = { fid: crypto.randomUUID(), jti: crypto.randomUUID() },
+  ) {
     const payload = { sub: user.id, email: user.email };
     const [access_token, refresh_token] = await Promise.all([
       this.jwtService.signAsync(payload, { expiresIn: '15m' }),
       this.jwtService.signAsync(
-        { ...payload, tv: user.tokenVersion ?? 0 },
+        { ...payload, tv: user.tokenVersion ?? 0, fid: chain.fid },
         {
           secret: process.env['JWT_REFRESH_SECRET'],
-          expiresIn: '7d',
+          expiresIn: REFRESH_TTL_S,
+          jwtid: chain.jti,
         },
       ),
     ]);
     return { access_token, refresh_token };
   }
 }
+

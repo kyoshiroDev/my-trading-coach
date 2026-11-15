@@ -109,6 +109,9 @@ model User {
   // ── Parrainage ambassadeur ────────────────────────────────────────────────
   referralCode String? @unique // code de parrainage unique
   referredBy   String? // code de l'ambassadeur qui a référé cet user
+  /// Début de la remise filleul −10 % (coupon Stripe du parrainage classique), posé par le webhook
+  /// d'abonnement. Le MRR base la compte 12 mois à partir de cette date (#954). null = pas de remise.
+  referralDiscountSince DateTime?
 
   // ── Acquisition (UTM du lien d'inscription) ──────────────────────────────
   // Capturés à l'inscription (landing → /register → POST /auth/register), normalisés
@@ -171,6 +174,9 @@ model ReferralCommission {
   referredUserId String
   amount         Float
   subscriptionId String
+  /// Facture Stripe payée : UNE commission par facture (A1 #1013). Null sur les lignes antérieures.
+  invoiceId      String?  @unique
+  /// Mois de rattachement (period_start de la facture), pour l'affichage et le relevé.
   period         String
   status         String   @default("pending")
   createdAt      DateTime @default(now())
@@ -180,8 +186,19 @@ model ReferralCommission {
   // compte — la transaction de `archiveAndDelete` echoue, et le front n'en disait rien.
   ambassador User @relation("AmbassadorCommissions", fields: [ambassadorId], references: [id], onDelete: Cascade)
 
-  @@unique([subscriptionId, period])
+  @@index([subscriptionId, period])
   @@index([ambassadorId])
+}
+
+/// Code de parrainage retiré (A5 #1013) : changé ou révoqué. Jamais redonné à un autre compte (un vieux
+/// lien créditerait le nouveau porteur) ; seul `userId` peut le reprendre. Pas de clé étrangère : la
+/// trace survit à la suppression du compte.
+model RetiredReferralCode {
+  code      String   @id
+  userId    String
+  retiredAt DateTime @default(now())
+
+  @@index([userId])
 }
 
 // Parrainage grand public : mois offert au parrain (user normal) pour chaque

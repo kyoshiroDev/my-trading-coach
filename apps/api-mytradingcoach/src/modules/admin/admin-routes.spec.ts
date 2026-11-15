@@ -5,6 +5,7 @@ import { AdminUsersController } from './admin-users.controller';
 import { AdminAmbassadorsController } from './admin-ambassadors.controller';
 import { AdminPushController } from '../admin-push/admin-push.controller';
 import { AdminPropFirmsController } from './admin-prop-firms.controller';
+import { AdminSessionsController } from '../session/admin-sessions.controller';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { AdminGuard } from '../../common/guards/admin.guard';
 
@@ -12,7 +13,7 @@ import { AdminGuard } from '../../common/guards/admin.guard';
  * API-20 : toutes les routes admin vivent sous /admin, protégées AU NIVEAU DE LA CLASSE.
  * Une route ajoutée plus tard dans ces contrôleurs est donc protégée sans y penser.
  */
-const CONTROLLERS = [AdminController, AdminUsersController, AdminAmbassadorsController, AdminPushController, AdminPropFirmsController];
+const CONTROLLERS = [AdminController, AdminUsersController, AdminAmbassadorsController, AdminPushController, AdminPropFirmsController, AdminSessionsController];
 
 describe('Contrôleurs admin — préfixe et guards', () => {
   it.each(CONTROLLERS)('%o : préfixe /admin', (ctrl) => {

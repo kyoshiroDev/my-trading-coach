@@ -447,8 +447,9 @@ export class StripeWebhookService {
         `Paiement réussi | subscription: ${subscriptionId} synchronisée`,
       );
     }
+    let founderSwitch = false;
     if (synced && invoice.billing_reason === 'subscription_create') {
-      if (this.isFounderPrice(synced.priceId)) await this.onFounderFirstPayment(synced, invoice);
+      if (this.isFounderPrice(synced.priceId)) founderSwitch = await this.onFounderFirstPayment(synced, invoice);
       // Code partenaire : utilisation comptée dès la 1re facture (0 € pendant l'essai compris).
       else if (synced.metadata['partnerCode']) {
         const redemption = await this.partners.claim({
@@ -469,6 +470,7 @@ export class StripeWebhookService {
       if (seat?.firstPaidAt) await this.sendFounderWelcome(synced, seat.number, seat.firstPaidAt);
     }
     await this.referrals.processReferral(invoice);
+    if (synced && founderSwitch) await this.cancelSupersededTrials(synced);
 
     // Reçu de renouvellement. La souscription initiale (subscription_create) est déjà
     // couverte par le mail de bienvenue Premium ; une facture à 0 (essai, avoir) n'est pas un paiement.
@@ -504,7 +506,7 @@ export class StripeWebhookService {
    * Sans place (cas théorique : réservation expirée ET offre complète), l'abonnement est annulé et
    * l'admin alerté pour rembourser : personne ne garde un tarif fondateur sans place.
    */
-  private async onFounderFirstPayment(synced: SyncedSubscription, invoice: Stripe.Invoice): Promise<void> {
+  private async onFounderFirstPayment(synced: SyncedSubscription, invoice: Stripe.Invoice): Promise<boolean> {
     const interval: FounderInterval = synced.interval === 'year' ? 'year' : 'month';
     // Abonnement déjà terminé (fin reçue avant cette facture : annulation immédiate, ou tâche rejouée
     // en retard, #769) : une réservation jamais payée ne prend pas de place ; un paiement réel la prend
@@ -512,7 +514,7 @@ export class StripeWebhookService {
     const ended = ENDED_STATUSES.has(synced.stripeSubscriptionStatus ?? '');
     if (ended && (invoice.amount_paid ?? 0) <= 0) {
       this.logger.log('Réservation fondateur ignorée : abonnement déjà terminé');
-      return;
+      return false;
     }
     const seat = await this.founders.claimSeat({
       userId: synced.id,
@@ -531,11 +533,11 @@ export class StripeWebhookService {
           `Abonnement ${synced.subscriptionId} (user ${synced.id}) payé sans place disponible : annulé, remboursement manuel requis.`,
         )
         .catch(() => undefined);
-      return;
+      return false;
     }
     if (ended) {
       await this.founders.markLost(synced.subscriptionId);
-      return;
+      return false;
     }
     // Réservation pendant un Premium offert (facture d'essai à 0 €, #769) : place prise, prélèvement à
     // la fin de l'essai. Paiement immédiat : la bienvenue part du bloc « premier paiement réel ».
@@ -551,17 +553,39 @@ export class StripeWebhookService {
         }),
       ).catch((err: Error) => this.logger.warn(`Réservation fondateur non confirmée par e-mail : ${err.name}`));
     }
-    // Bascule depuis un essai au prix normal : l'essai s'arrête, sans prolongation ni cumul.
+    return true;
+  }
+
+  /**
+   * Bascule depuis un essai au prix normal : l'essai s'arrête, sans prolongation ni cumul. Jamais deux
+   * abonnements actifs : un essai laissé en place serait prélevé à 49 € en plus du tarif fondateur.
+   * Échec (liste ou annulation) : alerte admin une fois, puis erreur pour que BullMQ rejoue la tâche
+   * (tout ce qui précède est idempotent). Appelé en DERNIER, après place, garantie et parrainage, pour
+   * qu'un échec ici ne prive pas l'abonné du reste.
+   */
+  private async cancelSupersededTrials(synced: SyncedSubscription): Promise<void> {
+    const failed: string[] = [];
     const trials = await this.stripe.subscriptions
       .list({ customer: synced.customerId, status: 'trialing', limit: 10 })
-      .catch(() => null);
+      .catch((err: Error) => {
+        failed.push(`liste des essais (${err.message})`);
+        return null;
+      });
     for (const t of trials?.data ?? []) {
-      if (t.id !== synced.subscriptionId) {
-        await this.stripe.subscriptions.cancel(t.id).catch((err: Error) =>
-          this.logger.warn(`Essai ${t.id} non annulé après bascule fondateur : ${err.message}`),
-        );
-      }
+      if (t.id === synced.subscriptionId) continue;
+      await this.stripe.subscriptions.cancel(t.id).catch((err: Error) => {
+        failed.push(`${t.id} (${err.message})`);
+      });
     }
+    if (failed.length === 0) return;
+    this.logger.error(`[FONDATEUR] Essai non annulé après bascule | sub: ${synced.subscriptionId} : ${failed.join(', ')}`);
+    await this.sendOnce(`founder-trial-cancel:${synced.subscriptionId}`, () =>
+      this.resend.sendAdminAlert(
+        'Offre fondateur : essai au prix normal non annulé',
+        `Abonnement fondateur ${synced.subscriptionId} (user ${synced.id}) payé, mais l'essai au prix normal n'a pas pu être annulé : ${failed.join(', ')}. Nouvel essai automatique ; sinon annuler l'essai à la main dans Stripe avant sa fin (double prélèvement).`,
+      ),
+    ).catch(() => undefined);
+    throw new Error(`Essai au prix normal non annulé après bascule fondateur (${synced.subscriptionId})`);
   }
 
   private founderPriceLabel(interval: FounderInterval): string {
@@ -609,8 +633,10 @@ export class StripeWebhookService {
     redemption: { priceMonthlyEur: number; priceAnnualEur: number; durationMonths: number | null },
   ): Promise<void> {
     const yearly = synced.interval === 'year';
-    await this.resend
-      .sendPartnerWelcome({
+    // Une seule fois par abonnement : `claim` rend l'utilisation existante quand la tâche est rejouée
+    // (BullMQ, redélivrance Stripe), ce qui renvoyait la confirmation à chaque fois.
+    await this.sendOnce(`partner-welcome:${synced.subscriptionId}`, () =>
+      this.resend.sendPartnerWelcome({
         to: synced.email,
         userName: synced.name ?? '',
         code: synced.metadata['partnerCode'].toUpperCase(),
@@ -618,8 +644,8 @@ export class StripeWebhookService {
         normalPriceLabel: priceLabel(yearly ? PREMIUM_PRICE_EUR.annual : PREMIUM_PRICE_EUR.monthly, synced.interval),
         durationMonths: redemption.durationMonths,
         trialEndsAt: synced.stripeSubscriptionStatus === 'trialing' ? synced.currentPeriodEnd : null,
-      })
-      .catch((err: Error) => this.logger.warn(`Confirmation partenaire non envoyée (user ${synced.id}) : ${err.message}`));
+      }),
+    ).catch((err: Error) => this.logger.warn(`Confirmation partenaire non envoyée (user ${synced.id}) : ${err.message}`));
   }
 
   /** Tarif conservé par l'abonné (place fondateur ou code partenaire actifs), sinon null. */
@@ -689,9 +715,10 @@ export class StripeWebhookService {
     if (!customerId) return;
     const user = await this.prisma.user.findUnique({
       where: { stripeCustomerId: customerId },
-      select: { id: true },
+      select: { id: true, email: true },
     });
     if (!user) return;
+    await this.settleReferralRewardsOnRefund(user, charge);
     const [seat, redemption] = await Promise.all([
       this.prisma.founderSeat.findUnique({ where: { userId: user.id } }),
       this.prisma.partnerRedemption.findFirst({ where: { userId: user.id, status: 'ACTIVE' } }),
@@ -708,23 +735,86 @@ export class StripeWebhookService {
   }
 
   /**
+   * Remboursement intégral du 1er paiement d'un filleul (A4 #1013, décision du 14/11) : commission
+   * ambassadeur `pending` → `canceled` ; commission déjà `paid` gardée, alerte admin ; mois offert
+   * déjà appliqué au parrain jamais repris, alerte admin. Tous abonnements (pas seulement fondateur
+   * ou code) : c'est le paiement du filleul qui disparaît. Un renouvellement remboursé : rien.
+   */
+  private async settleReferralRewardsOnRefund(
+    user: { id: string; email: string },
+    charge: Stripe.Charge,
+  ): Promise<void> {
+    const [commissions, reward] = await Promise.all([
+      this.prisma.referralCommission.findMany({
+        where: { referredUserId: user.id },
+        select: { id: true, status: true, amount: true, subscriptionId: true, invoiceId: true, period: true },
+      }),
+      this.prisma.referralReward.findUnique({
+        where: { filleulId: user.id },
+        select: { id: true, status: true, subscriptionId: true, parrainId: true },
+      }),
+    ]);
+    const subscriptionIds = new Set([...commissions.map((c) => c.subscriptionId), ...(reward ? [reward.subscriptionId] : [])]);
+    for (const subscriptionId of subscriptionIds) {
+      // Lecture stricte : Stripe injoignable → l'erreur remonte et l'événement est rejoué, sinon la
+      // commission restait `pending` (puis payable) sans aucun signal.
+      const first = await this.firstPaymentInvoiceOf(subscriptionId, charge, { strict: true });
+      if (!first) continue;
+      for (const c of commissions.filter((x) => x.subscriptionId === subscriptionId && x.invoiceId === first.id)) {
+        if (c.status === 'pending') {
+          await this.prisma.referralCommission.updateMany({
+            where: { id: c.id, status: 'pending' },
+            data: { status: 'canceled' },
+          });
+          this.logger.log(`Commission ${c.id} annulée : 1er paiement du filleul ${user.id} remboursé`);
+        } else if (c.status === 'paid') {
+          await this.sendOnce(`refund-commission:${c.id}`, () =>
+            this.resend.sendAdminAlert(
+              'Remboursement : commission ambassadeur déjà payée',
+              `Filleul : ${user.email}\nCommission : ${c.amount} € (${c.period}), déjà versée, gardée.\n` +
+                `Abonnement : ${subscriptionId}\nÀ régulariser à la main si besoin.`,
+            ),
+          );
+        }
+      }
+      if (reward?.subscriptionId === subscriptionId && reward.status === 'APPLIED') {
+        await this.sendOnce(`refund-reward:${reward.id}`, () =>
+          this.resend.sendAdminAlert(
+            'Remboursement : mois offert du parrain gardé',
+            `Filleul : ${user.email}\nParrain : ${reward.parrainId}\nLe mois offert déjà crédité n'est pas repris (règle du 14/11).`,
+          ),
+        );
+      }
+    }
+  }
+
+  /**
    * La charge remboursée est-elle le PREMIER paiement réel (> 0 €) de l'abonnement ? Comparaison
    * par facture ou par PaymentIntent (l'essai à 0 € d'un code partenaire n'est pas un paiement).
    */
   private async isFirstPaymentCharge(subscriptionId: string, charge: Stripe.Charge): Promise<boolean> {
-    const paid = await this.stripe.invoices
-      .list({ subscription: subscriptionId, status: 'paid', limit: 100 })
-      .catch(() => null);
+    return (await this.firstPaymentInvoiceOf(subscriptionId, charge)) !== null;
+  }
+
+  /** 1re facture réellement payée de l'abonnement, si c'est elle que la charge rembourse ; sinon `null`. */
+  private async firstPaymentInvoiceOf(
+    subscriptionId: string,
+    charge: Stripe.Charge,
+    opts: { strict?: boolean } = {},
+  ): Promise<Stripe.Invoice | null> {
+    const list = this.stripe.invoices.list({ subscription: subscriptionId, status: 'paid', limit: 100 });
+    const paid = opts.strict ? await list : await list.catch(() => null);
     const first = (paid?.data ?? [])
       .filter((i) => (i.amount_paid ?? 0) > 0)
       .sort((a, b) => a.created - b.created)[0];
-    if (!first) return false;
+    if (!first) return null;
     // Champs de l'API épinglée 2024-06-20 (absents des types du SDK récent).
     const c = charge as unknown as { invoice?: string | { id: string } | null; payment_intent?: string | { id: string } | null };
     const i = first as unknown as { payment_intent?: string | { id: string } | null };
     const chargeInvoice = extractId(c.invoice ?? null);
     const chargePi = extractId(c.payment_intent ?? null);
-    return (!!chargeInvoice && chargeInvoice === first.id) || (!!chargePi && chargePi === extractId(i.payment_intent ?? null));
+    const matches = (!!chargeInvoice && chargeInvoice === first.id) || (!!chargePi && chargePi === extractId(i.payment_intent ?? null));
+    return matches ? first : null;
   }
 
   /** Au moins une facture réellement payée (> 0 €) sur l'abonnement. */

@@ -13,6 +13,8 @@ import { PropAlertsService, type PropAlertEvent, type TiltAlertEvent } from './p
 export interface TradovateLiveTrades {
   accountId: string;
   created: number;
+  /** Positions déjà importées qui ont grandi (#956) : relues, sans toast. */
+  updated?: number;
   duplicates: number;
   total: number;
   source: 'catch-up' | 'live';
@@ -109,9 +111,11 @@ export class TradovateLiveSocketService {
   }
 
   private onTrades(e: TradovateLiveTrades): void {
-    if (!e?.created) return;
-    const s = e.created > 1 ? 's' : '';
-    this.toast.success(`${e.created} trade${s} Tradovate synchronisé${s}`);
+    if (!e?.created && !e?.updated) return;
+    if (e.created) {
+      const s = e.created > 1 ? 's' : '';
+      this.toast.success(`${e.created} trade${s} Tradovate synchronisé${s}`);
+    }
     this.accounts.load(); // soldes, P&L cumulé
     this.tradovate.load(); // « Dernière synchro » + cumul de la carte compte
     // Session en cours : le Live feed reçoit le trade sans attendre.

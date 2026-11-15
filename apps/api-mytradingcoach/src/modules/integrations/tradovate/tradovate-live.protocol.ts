@@ -1,6 +1,6 @@
 import { wsUrl } from './tradovate-hosts';
 import type { TradovateEnv } from './tradovate.types';
-import type { TradovateOrderEntity, TradovateOrderVersionEntity } from './tradovate-orders';
+import type { TradovateOrderEntity, TradovateOrderStrategyLinkEntity, TradovateOrderVersionEntity } from './tradovate-orders';
 
 /**
  * Protocole du WebSocket Tradovate « données utilisateur » (temps réel) — fonctions PURES.
@@ -28,8 +28,12 @@ export const QUOTA_BACKOFF_MS = 5 * 60_000;
 
 /** Entités qui annoncent un trade (nouveau fill, paire appariée, position modifiée). */
 export const TRADE_ENTITY_TYPES = ['fill', 'fillPair', 'position'] as const;
-/** Ordres actifs (SL / TP posés, #601) : `order` porte le lien, `orderVersion` le type et les prix. */
-export const ORDER_ENTITY_TYPES = ['order', 'orderVersion'] as const;
+/**
+ * Ordres actifs (SL / TP posés, #601) : `order` porte le lien, `orderVersion` le type et les prix,
+ * `orderStrategyLink` la stratégie d'ordres d'un bracket TradingView (#963). Un type que Tradovate
+ * ne reconnaît pas est ignoré sans erreur (doc user/syncrequest).
+ */
+export const ORDER_ENTITY_TYPES = ['order', 'orderVersion', 'orderStrategyLink'] as const;
 /**
  * Entités souscrites : les trades, le solde RÉALISÉ officiel du compte (`cashBalance`, poussé à
  * chaque variation) et les ordres. Le latent, lui, n'est pas poussé : il dépend des cotations.
@@ -148,6 +152,10 @@ export interface InitialAccountState {
   /** Ordres de la séance (tous statuts : le carnet ne garde que les actifs). */
   orders: TradovateOrderEntity[];
   orderVersions: TradovateOrderVersionEntity[];
+  /** Liens ordre → stratégie (#963) ; clé `orderStrategyLinks` non documentée, absente = vide. */
+  orderStrategyLinks: TradovateOrderStrategyLinkEntity[];
+  /** Clés reçues dans l'instantané (mesure #963 : le nom de la clé des liens n'est pas documenté). */
+  snapshotKeys: string[];
 }
 
 /**
@@ -161,6 +169,7 @@ export function initialAccountState(m: TradovateWsMessage, externalAccountId: nu
     positions?: { accountId?: number; netPos?: number }[];
     orders?: TradovateOrderEntity[];
     orderVersions?: TradovateOrderVersionEntity[];
+    orderStrategyLinks?: TradovateOrderStrategyLinkEntity[];
   } | undefined;
   if (!d || typeof d !== 'object') return null;
   // Un compte peut avoir un solde par devise et par séance : le plus récent fait foi.
@@ -175,12 +184,15 @@ export function initialAccountState(m: TradovateWsMessage, externalAccountId: nu
     openPositions,
     orders: Array.isArray(d.orders) ? d.orders : [],
     orderVersions: Array.isArray(d.orderVersions) ? d.orderVersions : [],
+    orderStrategyLinks: Array.isArray(d.orderStrategyLinks) ? d.orderStrategyLinks : [],
+    snapshotKeys: Object.keys(d).sort(),
   };
 }
 
 export type OrderEvent =
   | { entityType: 'order'; eventType?: string; entity: TradovateOrderEntity }
-  | { entityType: 'orderVersion'; eventType?: string; entity: TradovateOrderVersionEntity };
+  | { entityType: 'orderVersion'; eventType?: string; entity: TradovateOrderVersionEntity }
+  | { entityType: 'orderStrategyLink'; eventType?: string; entity: TradovateOrderStrategyLinkEntity };
 
 /** Ordre posé, modifié, rempli ou annulé (événement `props` `order` / `orderVersion`). */
 export function orderEvent(m: TradovateWsMessage): OrderEvent | null {
@@ -190,6 +202,9 @@ export function orderEvent(m: TradovateWsMessage): OrderEvent | null {
   if (d.entityType === 'order') return { entityType: 'order', eventType: d.eventType, entity: d.entity as TradovateOrderEntity };
   if (d.entityType === 'orderVersion') {
     return { entityType: 'orderVersion', eventType: d.eventType, entity: d.entity as TradovateOrderVersionEntity };
+  }
+  if (d.entityType === 'orderStrategyLink') {
+    return { entityType: 'orderStrategyLink', eventType: d.eventType, entity: d.entity as TradovateOrderStrategyLinkEntity };
   }
   return null;
 }

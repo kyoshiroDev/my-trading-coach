@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, inject, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, HostListener, inject, input, output, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   LucideDynamicIcon,
@@ -56,6 +56,15 @@ export class TradovateConnectModalComponent {
           );
         },
       });
+  }
+
+  /**
+   * Retour depuis Tradovate par « Précédent » : le navigateur restaure la page de son cache, avec
+   * `redirecting` encore vrai — bouton et « Annuler » restaient inertes (#994).
+   */
+  @HostListener('window:pageshow', ['$event'])
+  protected onPageShow(event: PageTransitionEvent): void {
+    if (event.persisted) this.redirecting.set(false);
   }
 
   protected cancel(): void {

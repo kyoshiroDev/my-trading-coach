@@ -397,6 +397,10 @@ Migration `20261027120000_founder_first_paid` (#769, B1, additive) : `FounderSea
 (premier paiement réel ; null = place réservée pendant le Premium offert, pas encore payée).
 Rattrapage : `firstPaidAt = takenAt` pour les places existantes (toutes payées à la prise de place).
 
+Migration `20261113150000_referral_discount_since` (#954, additive, nullable, compatible N-1) :
+`User.referralDiscountSince` = début de la remise filleul −10 %, écrit par le webhook d'abonnement,
+lu par le MRR base (12 mois). Pas de rattrapage SQL : la base ne sait pas quels abonnés l'ont eue.
+
 ## Migrations — bonnes pratiques
 
 - Toujours nommer clairement : `add_stripe_customer_id`, `add_trade_tags`
@@ -515,6 +519,25 @@ annonces fortes (#920, `ensureReleasedAnalysis`), relue pour un jour passé par
 Le seed démo n'en écrit que sans FMP (faux vendredi NFP, chômage, ISM), au format factuel
 `{ interpretation, gap }` (écart par `releaseGap`, aucun sentiment ; textes dans
 `fakePastReleaseAnalyses`), jamais sur des annonces FMP. Il réécrit ses propres lignes à chaque passage.
+
+## Commission ambassadeur par facture (`ReferralCommission.invoiceId`, A1 #1013, 2026-11-15)
+
+Migration `20261115120000_referral_commission_invoice` : colonne `invoiceId` (nullable, unique),
+l'unicité `(subscriptionId, period)` devient un simple index. Une commission par facture Stripe
+(upsert sur `invoiceId`, `update: {}`) ; `period` reste le mois de rattachement (affichage, relevé).
+Statuts : `pending` → `paid` (admin) ou `canceled` (1er paiement du filleul remboursé, A4) ; une
+`canceled` est exclue de toutes les lectures. N-1 : pendant les ~30 s de drain, l'ancienne version ne
+peut plus faire son upsert `(subscriptionId, period)` (index unique retiré) : le job BullMQ échoue et
+est rejoué par la nouvelle version (5 tentatives) ; prod au 14/11 : 0 commission. Lignes antérieures :
+`invoiceId` null (aucune en prod).
+
+## Codes de parrainage retirés (`RetiredReferralCode`, A5 #1013, 2026-11-15)
+
+Migration `20261115130000_retired_referral_code` (additive, table seule). Écrite dans la transaction
+d'un changement de code ambassadeur et à la révocation (`upsert`, `update: {}`) ; lue par `promote` et
+les deux générateurs de code (ambassadeur, parrainage). Clé = le code ; `userId` sans clé étrangère
+(la trace survit à la suppression du compte) ; seul ce `userId` peut reprendre le code (la ligne est
+alors supprimée).
 
 ## Index des requêtes chaudes (SCA-B2-05, 2026-10-03)
 

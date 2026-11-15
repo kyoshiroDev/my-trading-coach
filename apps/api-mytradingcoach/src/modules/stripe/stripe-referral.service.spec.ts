@@ -20,6 +20,7 @@ function makeService(prisma: Record<string, unknown>, stripe: Record<string, unk
 
 function invoice() {
   return {
+    id: 'in_123',
     customer: 'cus_filleul',
     amount_paid: 3900,
     parent: { subscription_details: { subscription: 'sub_123' } },
@@ -104,6 +105,21 @@ describe('StripeReferralService —processReferral (coexistence)', () => {
     prisma.user.findFirst
       .mockResolvedValueOnce({ id: 'same', referredBy: 'SELF', plan: 'PREMIUM' })
       .mockResolvedValueOnce({ id: 'same', role: 'USER' });
+    const service = makeService(prisma, stripe);
+
+    await service.processReferral(invoice());
+
+    expect(prisma.referralReward.create).not.toHaveBeenCalled();
+    expect(prisma.referralCommission.upsert).not.toHaveBeenCalled();
+    expect(stripe.customers.createBalanceTransaction).not.toHaveBeenCalled();
+  });
+
+  // Audit fonctionnel #993 (lot 2, B6) : un filleul inscrit avec le code de la démo avant le correctif
+  // garde `referredBy` ; à son 1er paiement, la démo recevait une récompense.
+  it('parrain = compte démo → aucune récompense ni commission', async () => {
+    prisma.user.findFirst
+      .mockResolvedValueOnce({ id: 'filleul', referredBy: 'DEMO', plan: 'PREMIUM' })
+      .mockResolvedValueOnce({ id: 'demo', role: 'USER', isDemo: true });
     const service = makeService(prisma, stripe);
 
     await service.processReferral(invoice());
@@ -282,6 +298,7 @@ describe('StripeReferralService —processReferral relance ses erreurs', () => {
 
   function invoice() {
     return {
+      id: 'in_jan',
       customer: 'cus_filleul',
       amount_paid: 4900,
       period_start: Math.floor(Date.UTC(2026, 0, 15) / 1000),
@@ -311,7 +328,7 @@ describe('StripeReferralService —processReferral relance ses erreurs', () => {
     ).rejects.toThrow('DB indisponible');
   });
 
-  it('rejeu apres echec → un seul upsert par (sub, periode), pas de double credit', async () => {
+  it('rejeu apres echec → un seul upsert par facture, pas de double credit', async () => {
     const prisma = {
       user: { findFirst: vi.fn(), findUnique: vi.fn(), update: vi.fn() },
       referralCommission: { upsert: vi.fn().mockResolvedValue({}) },
@@ -328,13 +345,9 @@ describe('StripeReferralService —processReferral relance ses erreurs', () => {
     await run(service, invoice());
     await run(service, invoice()); // rejeu du même event
 
-    // Deux appels, mais même clé d'unicité → la 2e écriture met à jour, ne duplique pas.
+    // Deux appels, mais même clé d'unicité (la facture) → la 2e écriture ne duplique pas.
     const keys = prisma.referralCommission.upsert.mock.calls.map(
-      (c: unknown[]) =>
-        {
-          const { where } = c[0] as { where: { subscriptionId_period: { subscriptionId: string; period: string } } };
-          return `${where.subscriptionId_period.subscriptionId}|${where.subscriptionId_period.period}`;
-        },
+      (c: unknown[]) => (c[0] as { where: { invoiceId: string } }).where.invoiceId,
     );
     expect(keys[0]).toBe(keys[1]);
   });
@@ -343,7 +356,7 @@ describe('StripeReferralService —processReferral relance ses erreurs', () => {
 /**
  * le mois de rattachement vient de la FACTURE, pas de l'horloge.
  *
- * La clé d'unicité est `(subscriptionId, period)`. Quand `period` venait de
+ * La clé d'unicité était `(subscriptionId, period)` (une ligne par facture depuis A1). Quand `period` venait de
  * `Date.now()`, une facture de janvier traitée en février (retry BullMQ,
  * redélivrance après indisponibilité) prenait la clé de février, puis l'`upsert`
  * de la vraie facture de février écrasait la ligne : un mois de commission perdu
@@ -356,6 +369,7 @@ describe('StripeReferralService —période de commission dérivée de la factur
 
   function invoiceAt(periodStart: number, created = periodStart) {
     return {
+      id: `in_${periodStart}`,
       customer: 'cus_filleul',
       amount_paid: 4900,
       created,
@@ -394,26 +408,27 @@ describe('StripeReferralService —période de commission dérivée de la factur
     const { prisma, service } = setup();
     await run(service, invoiceAt(JANUARY_EPOCH));
 
-    const where = prisma.referralCommission.upsert.mock.calls[0][0].where;
+    const { create } = prisma.referralCommission.upsert.mock.calls[0][0];
     expect(
-      where.subscriptionId_period.period,
+      create.period,
       "La commission doit suivre la facture, pas l'heure de traitement",
     ).toBe('2026-01');
   });
 
-  it('deux mois distincts → deux clés distinctes (aucun écrasement)', async () => {
+  it('deux mois distincts → deux périodes de rattachement', async () => {
     const jan = setup();
     await run(jan.service, invoiceAt(JANUARY_EPOCH));
     const feb = setup();
     await run(feb.service, invoiceAt(FEBRUARY_EPOCH));
 
-    expect(jan.prisma.referralCommission.upsert.mock.calls[0][0].where.subscriptionId_period.period).toBe('2026-01');
-    expect(feb.prisma.referralCommission.upsert.mock.calls[0][0].where.subscriptionId_period.period).toBe('2026-02');
+    expect(jan.prisma.referralCommission.upsert.mock.calls[0][0].create.period).toBe('2026-01');
+    expect(feb.prisma.referralCommission.upsert.mock.calls[0][0].create.period).toBe('2026-02');
   });
 
   it('sans period_start → repli sur created', async () => {
     const { prisma, service } = setup();
     const inv = {
+      id: 'in_jan',
       customer: 'cus_filleul',
       amount_paid: 4900,
       created: JANUARY_EPOCH,
@@ -422,6 +437,55 @@ describe('StripeReferralService —période de commission dérivée de la factur
 
     await run(service, inv);
 
-    expect(prisma.referralCommission.upsert.mock.calls[0][0].where.subscriptionId_period.period).toBe('2026-01');
+    expect(prisma.referralCommission.upsert.mock.calls[0][0].create.period).toBe('2026-01');
+  });
+});
+
+/**
+ * A1 (#1013) : une commission par FACTURE. Indexée sur (abonnement, mois de period_start), la
+ * 1re facture et le 1er renouvellement (ou une facture de prorata) du même mois prenaient la même
+ * clé : l'upsert écrasait la première (une commission perdue), et pouvait réécrire une ligne déjà
+ * payée.
+ */
+describe('StripeReferralService —une commission par facture (A1)', () => {
+  const EPOCH = Math.floor(Date.UTC(2026, 10, 3, 12) / 1000);
+  const inv = (id: string, amount = 4900) => ({
+    id, customer: 'cus_filleul', amount_paid: amount, created: EPOCH, period_start: EPOCH,
+    parent: { subscription_details: { subscription: 'sub_123' } },
+  }) as never;
+
+  function setup() {
+    const prisma = {
+      user: { findFirst: vi.fn(), findUnique: vi.fn(), update: vi.fn() },
+      referralCommission: { upsert: vi.fn().mockResolvedValue({}) },
+      referralReward: { create: vi.fn(), update: vi.fn() },
+    };
+    prisma.user.findFirst.mockImplementation(({ where }: { where: Record<string, unknown> }) =>
+      Promise.resolve('stripeCustomerId' in where
+        ? { id: 'filleul', referredBy: 'AMBCODE', plan: 'PREMIUM' }
+        : { id: 'amb', role: 'AMBASSADOR', isDemo: false }));
+    const service = makeService(prisma, {
+      subscriptions: { retrieve: vi.fn() }, prices: { retrieve: vi.fn() }, customers: { createBalanceTransaction: vi.fn() },
+    });
+    return { prisma, service };
+  }
+
+  it('deux factures du même abonnement dans le même mois → deux commissions distinctes', async () => {
+    const { prisma, service } = setup();
+    await service.processReferral(inv('in_first'));
+    await service.processReferral(inv('in_renewal', 2900));
+    const calls = prisma.referralCommission.upsert.mock.calls.map((c: unknown[]) => c[0] as {
+      where: Record<string, unknown>; create: Record<string, unknown>;
+    });
+    expect(calls.map((c) => c.where)).toEqual([{ invoiceId: 'in_first' }, { invoiceId: 'in_renewal' }]);
+    expect(calls.map((c) => c.create['amount'])).toEqual([9.8, 5.8]);
+    expect(calls[0].create).toMatchObject({ invoiceId: 'in_first', period: '2026-11', status: 'pending' });
+  });
+
+  it('rejeu de la même facture : la ligne existante n’est jamais réécrite (même payée)', async () => {
+    const { prisma, service } = setup();
+    await service.processReferral(inv('in_first'));
+    const args = prisma.referralCommission.upsert.mock.calls[0][0] as { update: Record<string, unknown> };
+    expect(args.update).toEqual({});
   });
 });

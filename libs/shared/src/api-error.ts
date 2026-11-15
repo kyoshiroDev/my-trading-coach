@@ -6,6 +6,9 @@
  * PUR : lit seulement `err.error.message`, présent sur un `HttpErrorResponse` Angular comme sur
  * tout objet de même forme — utilisable par l'app ET l'admin sans importer Angular.
  */
+/** Refus de la garde Premium (403 `PREMIUM_REQUIRED`, sans message) : dit pourquoi, pas « erreur ». */
+export const PREMIUM_REQUIRED_MESSAGE = 'Cette fonctionnalité est réservée au Premium.';
+
 export function apiErrorMessage(err: unknown, fallback: string): string {
   // Erreur inattendue (500) : le message du back est générique, le repli de l'écran dit mieux
   // ce qui a échoué (« Ton débrief n'a pas pu être chargé… »). Les 503 gardent le message du
@@ -14,6 +17,7 @@ export function apiErrorMessage(err: unknown, fallback: string): string {
   if (status === 500) return fallback;
 
   const body = (err as { error?: unknown } | null | undefined)?.error;
+  if ((body as { code?: unknown } | null | undefined)?.code === 'PREMIUM_REQUIRED') return PREMIUM_REQUIRED_MESSAGE;
   const msg = (body as { message?: unknown } | null | undefined)?.message;
   if (Array.isArray(msg)) {
     const parts = msg.filter((m): m is string => typeof m === 'string' && m.length > 0);

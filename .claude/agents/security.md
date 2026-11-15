@@ -243,6 +243,21 @@ const user = await prisma.user.findUnique({
   permettait d'écrire n'importe quelle colonne via `PATCH /session/:id` (corrigé).
 - Ne jamais passer un DTO entier à `prisma.*.update({ data })` : recopier les champs autorisés.
 
+### E-mails : insensibles à la casse (#999, S7 de l'audit #994)
+
+- **Écriture** : tout DTO qui reçoit une adresse de compte porte `@Transform(emailTransform)`
+  (`common/utils/email.util.ts` : espaces autour retirés, minuscules) avant `@IsEmail`. Inscription,
+  connexion, mot de passe oublié, promotion et retrait ambassadeur. Google normalise déjà dans
+  `google-id-token.verifier.ts`.
+- **Lecture** : chercher un compte par e-mail avec `emailEquals(email)` dans un `findFirst`
+  (`orderBy: { createdAt: 'asc' }`), jamais `findUnique({ where: { email } })` : les comptes d'avant
+  le correctif peuvent garder des majuscules en base (2 en prod le 14/11, aucun doublon), et ne sont
+  pas réécrits.
+- **Piège Prisma** : `equals` + `mode: 'insensitive'` devient un `ILIKE` SANS échappement. `_` et `%`
+  y sont des jokers : « a_b@x.com » retrouvait « axb@x.com » (vu sur une vraie base). Ne jamais
+  écrire ce filtre à la main sur une valeur saisie : `emailEquals` échappe (`escapeLike`).
+  Preuve : `email-case.int-spec.ts`.
+
 ---
 
 ## Secrets broker & OAuth (PROMPT-207)
@@ -363,6 +378,22 @@ prix). CORS : origines globales (`CORS_ORIGINS` doit inclure `https://www.mytrad
   ça, un tiers ayant pré-créé un compte sur l'adresse garderait son mot de passe et sa session.
 - **Refresh token** : porte `tv` (version) ; `refresh` refuse une version ≠ `User.tokenVersion`
   (jeton sans `tv` = version 0). Incrémenter `tokenVersion` = déconnecter toutes les sessions.
+  Incrémenté aussi à la réinitialisation du mot de passe (#994). Chaque refresh porte un `jti` et
+  une famille `fid` (une par connexion, gardée à chaque refresh, #1002), suivie dans le hash Redis
+  `auth:refresh-family:<fid>` (script Lua de `auth/refresh-rotation.ts`, TTL 7 j) : un `jti` déjà
+  renouvelé et rejoué plus de 60 s après (`REFRESH_REUSE_GRACE_MS`) = copie du cookie → famille
+  entière coupée (log « Refresh déjà renouvelé puis rejoué »). Les 60 s couvrent les onglets qui
+  renouvellent en même temps (cookie partagé) et la réponse perdue rejouée. `POST /auth/logout`
+  coupe la famille du refresh présenté ; les autres appareils restent connectés. Jeton sans `fid`
+  (d'avant #1002) : famille `j:<jti>` ; liste noire `auth:revoked-refresh:<jti>` des anciennes
+  déconnexions encore lue (à retirer 7 j après la mise en prod de #1002). Redis en panne : refresh accepté (fail-open voulu).
+  Connexion : e-mail inconnu ou compte sans mot de passe → argon2 vérifie un hash factice
+  (`dummyPasswordHash`), même coût qu'un mauvais mot de passe (anti-énumération par le temps).
+- **Retour après connexion** (front, `core/auth/return-url.ts`, #994) : liste blanche — chemin
+  interne seulement (`/…`), jamais `//hote`, `\`, URL absolue ni page d'auth (login, register,
+  forgot / reset-password) : pas de redirection ouverte. Stocké en `sessionStorage`.
+- **Mot de passe oublié** : l'API répond 204 pour toute adresse ; le front n'affiche le succès que
+  sur 204 et un message sur 429 / 400 / panne (#994) — aucune réponse ne révèle un compte.
 - **Exclus** : comptes `isDemo` et `ADMIN` (403 `GOOGLE_NOT_ALLOWED`), en connexion comme en liaison.
   Une liaison existante n'est jamais remplacée par un autre `sub` (409 `GOOGLE_ALREADY_LINKED`).
 - **Délier** (`DELETE /auth/google`) refusé sans mot de passe (400 `PASSWORD_REQUIRED`).

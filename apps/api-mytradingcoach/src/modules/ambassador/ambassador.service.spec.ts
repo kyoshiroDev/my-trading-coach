@@ -8,17 +8,21 @@
  * Ce module n'avait aucun spec, c'est pour ça que le bug est passé.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { BadRequestException } from '@nestjs/common';
 import { AmbassadorService } from './ambassador.service';
 
 describe('AmbassadorService', () => {
   let prisma: {
     user: {
       findUnique: ReturnType<typeof vi.fn>;
+      findFirst: ReturnType<typeof vi.fn>;
       findMany: ReturnType<typeof vi.fn>;
       update: ReturnType<typeof vi.fn>;
       groupBy: ReturnType<typeof vi.fn>;
     };
     referralCommission: { updateMany: ReturnType<typeof vi.fn> };
+    retiredReferralCode: { findUnique: ReturnType<typeof vi.fn>; upsert: ReturnType<typeof vi.fn>; deleteMany: ReturnType<typeof vi.fn> };
+    $transaction: ReturnType<typeof vi.fn>;
   };
   let service: AmbassadorService;
 
@@ -26,11 +30,16 @@ describe('AmbassadorService', () => {
     prisma = {
       user: {
         findUnique: vi.fn(),
+        findFirst: vi.fn(),
         findMany: vi.fn().mockResolvedValue([]),
         update: vi.fn(),
         groupBy: vi.fn().mockResolvedValue([]),
       },
       referralCommission: { updateMany: vi.fn() },
+      // Codes retirés (A5) : aucun par défaut.
+      retiredReferralCode: { findUnique: vi.fn().mockResolvedValue(null), upsert: vi.fn().mockResolvedValue({}), deleteMany: vi.fn().mockResolvedValue({ count: 0 }) },
+      // Transaction interactive : le client lui-même sert de `tx`.
+      $transaction: vi.fn((fn: (tx: unknown) => unknown) => fn(prisma)),
     };
     service = new AmbassadorService(prisma as never);
   });
@@ -103,11 +112,10 @@ describe('AmbassadorService', () => {
 
   describe('promote — un ambassadeur a TOUJOURS un code', () => {
     it('génère un code quand l\'utilisateur n\'en a pas (cas VAL)', async () => {
-      prisma.user.findUnique
-        // 1) lookup de l'utilisateur à promouvoir : pas de code
-        .mockResolvedValueOnce({ id: 'u1', name: 'Val', email: 'val@x.com', referralCode: null })
-        // 2) generateUniqueCode : le candidat est libre
-        .mockResolvedValueOnce(null);
+      // 1) lookup de l'utilisateur à promouvoir (par e-mail, #999) : pas de code
+      prisma.user.findFirst.mockResolvedValueOnce({ id: 'u1', name: 'Val', email: 'val@x.com', referralCode: null });
+      // 2) generateUniqueCode : le candidat est libre
+      prisma.user.findUnique.mockResolvedValueOnce(null);
       prisma.user.update.mockResolvedValue({
         email: 'val@x.com',
         name: 'Val',
@@ -127,7 +135,7 @@ describe('AmbassadorService', () => {
     });
 
     it('réutilise le code existant plutôt que d\'en générer un nouveau', async () => {
-      prisma.user.findUnique.mockResolvedValueOnce({
+      prisma.user.findFirst.mockResolvedValueOnce({
         id: 'u1',
         name: 'Greg',
         email: 'g@x.com',
@@ -151,25 +159,160 @@ describe('AmbassadorService', () => {
     });
 
     it('refuse un code déjà pris par quelqu\'un d\'autre', async () => {
-      prisma.user.findUnique
-        .mockResolvedValueOnce({ id: 'u1', name: 'A', email: 'a@x.com', referralCode: null })
-        .mockResolvedValueOnce({ id: 'autre' }); // le code demandé appartient à un autre
+      prisma.user.findFirst.mockResolvedValueOnce({ id: 'u1', name: 'A', email: 'a@x.com', referralCode: null });
+      prisma.user.findUnique.mockResolvedValueOnce({ id: 'autre' }); // le code demandé appartient à un autre
 
       await expect(service.promote('a@x.com', 'PRIS')).rejects.toThrow(/déjà utilisé/);
       expect(prisma.user.update).not.toHaveBeenCalled();
     });
   });
 
+  // Audit fonctionnel #993 (lot 2, A5, décision du 14/11) : changer le code d'un ambassadeur coupait
+  // ses filleuls (referredBy pointait l'ancien code) ; un code révoqué pouvait être donné à un autre,
+  // qui héritait des filleuls.
+  describe('promote — code changé ou déjà utilisé (A5)', () => {
+    it('changement de code : les filleuls suivent, dans la même transaction', async () => {
+      const tx = {
+        user: {
+          update: vi.fn().mockResolvedValue({ email: 'a@x.com', name: 'A', role: 'AMBASSADOR', referralCode: 'NEUF' }),
+          updateMany: vi.fn().mockResolvedValue({ count: 3 }),
+        },
+        retiredReferralCode: { upsert: vi.fn().mockResolvedValue({}), deleteMany: vi.fn().mockResolvedValue({ count: 0 }) },
+      };
+      (prisma as unknown as { $transaction: unknown }).$transaction = vi.fn((fn: (t: typeof tx) => unknown) => fn(tx));
+      prisma.user.findFirst
+        .mockResolvedValueOnce({ id: 'u1', name: 'A', email: 'a@x.com', referralCode: 'VIEUX', role: 'AMBASSADOR' })
+        .mockResolvedValueOnce(null); // personne d'autre ne porte ni n'a porté NEUF
+      prisma.user.findUnique.mockResolvedValueOnce(null);
+
+      const res = await service.promote('a@x.com', 'NEUF');
+
+      expect(tx.user.updateMany).toHaveBeenCalledWith({ where: { referredBy: 'VIEUX' }, data: { referredBy: 'NEUF' } });
+      // L'ancien code est retiré : un vieux lien ne créditera jamais un autre porteur.
+      expect(tx.retiredReferralCode.upsert).toHaveBeenCalledWith({
+        where: { code: 'VIEUX' }, create: { code: 'VIEUX', userId: 'u1' }, update: {},
+      });
+      expect(tx.user.update).toHaveBeenCalledWith(expect.objectContaining({ data: { role: 'AMBASSADOR', referralCode: 'NEUF' } }));
+      expect(res.referralCode).toBe('NEUF');
+    });
+
+    it('code sans propriétaire mais déjà utilisé par des filleuls (révoqué) → 409, rien n’est écrit', async () => {
+      prisma.user.findFirst
+        .mockResolvedValueOnce({ id: 'u1', name: 'A', email: 'a@x.com', referralCode: null, role: 'USER' })
+        .mockResolvedValueOnce({ id: 'filleul' }); // un compte a été parrainé avec ce code
+      prisma.user.findUnique.mockResolvedValueOnce(null); // plus de propriétaire (révoqué)
+
+      await expect(service.promote('a@x.com', 'REVOQUE')).rejects.toThrow(/déjà utilisé/);
+      expect(prisma.user.update).not.toHaveBeenCalled();
+    });
+
+    it('code généré : jamais un code déjà porté ou déjà utilisé par un filleul', async () => {
+      prisma.user.findFirst
+        .mockResolvedValueOnce({ id: 'u1', name: 'Val', email: 'val@x.com', referralCode: null, role: 'USER' })
+        .mockResolvedValueOnce({ id: 'filleul' }) // VAL : déjà utilisé (code révoqué)
+        .mockResolvedValueOnce(null); // VALxxxx : libre
+      prisma.user.update.mockImplementation(({ data }: { data: { referralCode: string } }) =>
+        Promise.resolve({ email: 'val@x.com', name: 'Val', role: 'AMBASSADOR', referralCode: data.referralCode }));
+
+      const res = await service.promote('val@x.com');
+
+      expect(prisma.user.findFirst.mock.calls[1][0].where).toEqual({ OR: [{ referralCode: 'VAL' }, { referredBy: 'VAL' }] });
+      expect(res.referralCode).not.toBe('VAL');
+      expect(res.referralCode.startsWith('VAL')).toBe(true);
+    });
+  });
+
+  // Relecture A5 : après un changement ou une révocation, plus personne ne porte l'ancien code ni
+  // n'a de filleul dessus ; sans trace, il redevenait libre et un vieux lien créditait le nouveau porteur.
+  describe('codes retirés (A5)', () => {
+    it('code retiré par un autre compte → 409, rien n’est écrit', async () => {
+      prisma.user.findFirst
+        .mockResolvedValueOnce({ id: 'u2', name: 'B', email: 'b@x.com', referralCode: null, role: 'USER' })
+        .mockResolvedValueOnce(null); // aucun filleul dessus
+      prisma.user.findUnique.mockResolvedValueOnce(null); // aucun porteur
+      prisma.retiredReferralCode.findUnique.mockResolvedValueOnce({ code: 'VIEUX', userId: 'u1' });
+
+      await expect(service.promote('b@x.com', 'VIEUX')).rejects.toThrow(/déjà utilisé/);
+      expect(prisma.user.update).not.toHaveBeenCalled();
+    });
+
+    it('le même compte reprend son code retiré (révoqué puis repromu) → accepté, code réactivé', async () => {
+      prisma.user.findFirst
+        .mockResolvedValueOnce({ id: 'u1', name: 'A', email: 'a@x.com', referralCode: null, role: 'USER' })
+        .mockResolvedValueOnce({ id: 'filleul' }); // ses anciens filleuls pointent encore ce code
+      prisma.user.findUnique.mockResolvedValueOnce(null);
+      prisma.retiredReferralCode.findUnique.mockResolvedValueOnce({ code: 'VIEUX', userId: 'u1' });
+      prisma.user.update.mockResolvedValue({ email: 'a@x.com', name: 'A', role: 'AMBASSADOR', referralCode: 'VIEUX' });
+
+      const res = await service.promote('a@x.com', 'VIEUX');
+
+      expect(res.referralCode).toBe('VIEUX');
+      expect(prisma.retiredReferralCode.deleteMany).toHaveBeenCalledWith({ where: { code: 'VIEUX', userId: 'u1' } });
+    });
+
+    it('révocation : le code est retiré', async () => {
+      prisma.user.findFirst.mockResolvedValue({ id: 'u1', role: 'AMBASSADOR', referralCode: 'VAL' });
+      prisma.user.update.mockResolvedValue({ email: 'a@x.com', name: 'A', role: 'USER' });
+      await service.revoke('a@x.com');
+      expect(prisma.retiredReferralCode.upsert).toHaveBeenCalledWith({
+        where: { code: 'VAL' }, create: { code: 'VAL', userId: 'u1' }, update: {},
+      });
+    });
+
+    it('code généré : jamais un code retiré', async () => {
+      prisma.user.findFirst
+        .mockResolvedValueOnce({ id: 'u1', name: 'Val', email: 'val@x.com', referralCode: null, role: 'USER' })
+        .mockResolvedValue(null); // ni porté ni utilisé
+      prisma.retiredReferralCode.findUnique
+        .mockResolvedValueOnce({ code: 'VAL', userId: 'u9' }) // VAL : retiré
+        .mockResolvedValue(null);
+      prisma.user.update.mockImplementation(({ data }: { data: { referralCode: string } }) =>
+        Promise.resolve({ email: 'val@x.com', name: 'Val', role: 'AMBASSADOR', referralCode: data.referralCode }));
+
+      const res = await service.promote('val@x.com');
+      expect(res.referralCode).not.toBe('VAL');
+    });
+  });
+
   describe('revoke — la rétrogradation vide le code', () => {
     it('repasse en USER et met le code à null', async () => {
-      prisma.user.findUnique.mockResolvedValue({ id: 'u1' });
+      prisma.user.findFirst.mockResolvedValue({ id: 'u1', role: 'AMBASSADOR' });
       prisma.user.update.mockResolvedValue({ email: 'a@x.com', name: 'A', role: 'USER' });
 
-      await service.revoke('a@x.com');
+      await service.revoke('A@X.com');
+
+      // Casse ignorée (#999) : un compte d'avant le correctif garde ses majuscules en base.
+      expect(prisma.user.findFirst.mock.calls[0][0].where).toEqual({ email: { equals: 'a@x.com', mode: 'insensitive' } });
 
       expect(prisma.user.update).toHaveBeenCalledWith(
         expect.objectContaining({ data: { role: 'USER', referralCode: null } }),
       );
+    });
+  });
+
+  // Audit fonctionnel #993 (lot 2, A6) : les deux routes admin passaient à côté des gardes de setRole.
+  // Révoquer un ADMIN ou un BETA_TESTER le repassait USER (perte d'accès) ; promouvoir un ADMIN le
+  // rétrogradait ; révoquer un USER effaçait son code de parrainage grand public.
+  describe('promote / revoke — rôle actuel vérifié', () => {
+    it.each(['ADMIN', 'BETA_TESTER'])('promouvoir un %s → 400, rien n’est écrit', async (role) => {
+      prisma.user.findFirst.mockResolvedValueOnce({ id: 'u1', name: 'A', email: 'a@x.com', referralCode: null, role });
+      await expect(service.promote('a@x.com')).rejects.toThrow(BadRequestException);
+      expect(prisma.user.update).not.toHaveBeenCalled();
+    });
+
+    it.each(['ADMIN', 'BETA_TESTER', 'USER'])('révoquer un %s (pas ambassadeur) → 400, rien n’est écrit', async (role) => {
+      prisma.user.findFirst.mockResolvedValueOnce({ id: 'u1', role });
+      await expect(service.revoke('a@x.com')).rejects.toThrow(BadRequestException);
+      expect(prisma.user.update).not.toHaveBeenCalled();
+    });
+  });
+
+  // Audit fonctionnel #993 (lot 2, A15) : une date invalide partait dans Prisma → 500.
+  describe('getNewCount — date invalide', () => {
+    it('`since=abc` → 400, aucune requête de comptage', async () => {
+      prisma.user.findUnique.mockResolvedValueOnce({ referralCode: 'VAL' });
+      (prisma.user as unknown as { count: ReturnType<typeof vi.fn> }).count = vi.fn();
+      await expect(service.getNewCount('u1', 'abc')).rejects.toThrow(BadRequestException);
     });
   });
 });

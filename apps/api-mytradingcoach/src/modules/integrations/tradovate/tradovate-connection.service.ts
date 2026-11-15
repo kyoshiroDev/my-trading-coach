@@ -114,6 +114,9 @@ export class TradovateConnectionService {
     // Sans state lisible, on ne sait pas d'où il vient : les réglages, jamais une page morte.
     if (!payload) return { status: 'error', reason: 'session_expired', origin: 'settings' };
     const { userId, accountId, origin } = payload;
+    // #994 (S4) : la doc ne dit pas si Tradovate renvoie `state`. Constat avant de l'exiger : un
+    // `state` absent laisse passer un code tiers tant qu'un cookie d'une tentative abandonnée vit.
+    this.logger.log(`Callback Tradovate : state renvoyé = ${query.state ? 'oui' : 'non'}`);
     if (query.state && query.state !== cookieState) {
       return { status: 'error', reason: 'state_mismatch', accountId, origin };
     }
@@ -362,6 +365,20 @@ export class TradovateConnectionService {
         // prop firm), donc l'écrire ici écraserait le bon login par un identifiant partagé.
         // Efface la raison d'un rechoix (« ce compte n'existe plus… ») : le nouveau compte est posé.
         lastSyncError: null,
+        // AUTRE compte broker (#994) : l'état de l'ancien ne vaut rien pour lui. Historique remis à
+        // zéro (le contrôleur relance l'import complet), payouts relus depuis le début, solde vidé.
+        ...(conn.externalAccountId && conn.externalAccountId !== target.id
+          ? {
+              historyImportedAt: null,
+              payoutsCheckedThrough: null,
+              brokerCashBalance: null,
+              brokerCashBalanceAt: null,
+              brokerNetLiq: null,
+              brokerOpenPnl: null,
+              brokerEquityAt: null,
+              brokerOpenPositions: 0,
+            }
+          : {}),
       },
       include: { account: { select: SYNC_PAUSE_ACCOUNT_SELECT } },
     });

@@ -16,6 +16,9 @@ import { FreeLimitSyncService } from './free-limit-sync.service';
 import { toOpenPositions } from './tradovate-open-positions';
 import { isPenaltyFailure, TradovateApiError, TradovateException, TradovatePenaltyError } from './tradovate.errors';
 import { mapTradovatePairs } from './tradovate-trade.mapper';
+import { sessionPositionInput } from './tradovate-position-input';
+import { groupTradovateTrades } from '../../trades/tradovate-position-group.util';
+import type { ImportTradeInput } from '../../trades/trades.service';
 import { describeTradovateSnapshot } from './tradovate-sync-diagnostics';
 import {
   countOutcomes,
@@ -60,6 +63,10 @@ export interface TradovateSyncResult {
   skipped: number;
   /** Positions encore ouvertes : pas des trades, non importées. */
   openPositions: number;
+  /** Trades d'une position qui a grandi depuis la dernière synchro (#956) : mis à jour. */
+  updated: number;
+  /** Paires mises de côté (#956) : position pas encore à plat, ouverte la veille ou incohérente. */
+  deferred: number;
   feesImported: FeesReport;
   lastSyncAt: Date;
 }
@@ -284,7 +291,10 @@ export class TradovateSyncService {
     const pairs = allPairs.filter((p) => positionIds.has(p.positionId));
 
     const fillIds = [...new Set(pairs.flatMap((p) => [p.buyFillId, p.sellFillId]))];
-    const fills = await this.sessionEntities<TradovateFill>(get, '/fill/list', '/fill/items', fillIds);
+    let sessionFills: TradovateFill[] = [];
+    const fills = await this.sessionEntities<TradovateFill>(get, '/fill/list', '/fill/items', fillIds, (all) => {
+      sessionFills = all;
+    });
     const fees = await this.optionalFees(get, fillIds);
 
     // Contrats des fills ET des positions ouvertes (symbole de la carte « Trade en cours »).
@@ -302,25 +312,52 @@ export class TradovateSyncService {
 
     const mapped = mapTradovatePairs({ pairs, fills, fees, contracts, maturities, products });
 
+    // Un trade = une position, de l'ouverture au retour à plat (#956). Les ordres de la séance
+    // rattachent au compte les exécutions encore non appariées (position ouverte).
+    const orders = pairs.length > 0 ? await this.sessionOrders(get) : null;
+    const input = sessionPositionInput({
+      accountPositions, pairs, sessionFills, orders, externalAccountId: externalId, contracts,
+    });
+    const pairByFills = new Map(pairs.map((p) => [`${p.buyFillId}|${p.sellFillId}`, p]));
+    for (const t of mapped.trades) {
+      const pair = pairByFills.get(`${t._buyFillId}|${t._sellFillId}`);
+      if (pair && t._contract) t._contract = input.keyOf(pair, t._contract);
+      else delete t._contract; // paire introuvable : importée seule, comme avant
+    }
+    const grouped = groupTradovateTrades(mapped.trades, {
+      fills: input.fills, startNet: input.startNet, endNet: input.endNet, leftovers: 'skip',
+    });
+
     // Rapprochement avec un import CSV (même trade, autre fuseau) : fait par `importTrades`,
     // un-pour-un, pour la synchro comme pour l'import CSV (trades/import-dedupe.util.ts).
 
     // Stop et objectif initiaux liés à l'ordre d'entrée (#916 phase 2), lus dans les ordres de la
     // séance. Best-effort : une lecture refusée ne fait jamais échouer la synchro.
-    const protections = await this.entryProtections(get, mapped.trades, fills);
+    const protections = await this.entryProtections(get, grouped.trades, fills, orders);
 
     // Mêmes valeurs de lot que l'import CSV : compte cible, « Sans setup », émotion non renseignée.
     const setupId = await this.setups.getImportSetupId(userId);
-    const dtos: Partial<CreateTradeDto>[] = mapped.trades.map((t, i) => {
-      const dto: typeof t = { ...t, accountId: conn.accountId, emotion: null };
-      // Posés à la CRÉATION seulement : `importTrades` ne met jamais à jour un trade existant, une
-      // saisie de l'utilisateur dans le Journal n'est donc jamais écrasée.
+    const withDefaults = (t: Partial<CreateTradeDto>): Partial<CreateTradeDto> => {
+      const dto: Partial<CreateTradeDto> = { ...t, accountId: conn.accountId, emotion: null };
+      if (setupId) dto.setupId = setupId;
+      return dto;
+    };
+    const dtos: ImportTradeInput[] = grouped.trades.map((t, i) => {
+      const dto: ImportTradeInput = { ...withDefaults(t), _positionKey: t._positionKey };
+      // Posés à la CRÉATION seulement (stop et objectif de la PREMIÈRE entrée de la position) :
+      // `importTrades` ne réécrit jamais une saisie de l'utilisateur dans le Journal.
       const p = protections?.[i];
       if (p?.stopLoss !== undefined) dto.stopLoss = p.stopLoss;
       if (p?.takeProfit !== undefined) dto.takeProfit = p.takeProfit;
-      if (setupId) dto.setupId = setupId;
-      delete dto._buyFillId; // métadonnées internes : jamais persistées
-      delete dto._sellFillId;
+      // Paires d'origine (position déjà en base à l'ancien format) : mêmes valeurs de lot.
+      if (t._pairs) {
+        dto._pairs = t._pairs.map((pair) => {
+          const d = withDefaults(pair);
+          if (dto.stopLoss !== undefined) d.stopLoss = dto.stopLoss;
+          if (dto.takeProfit !== undefined) d.takeProfit = dto.takeProfit;
+          return d;
+        });
+      }
       return dto;
     });
 
@@ -334,8 +371,9 @@ export class TradovateSyncService {
     // Ce que Tradovate a renvoyé, pas seulement ce qui a été créé : distingue
     // « rien renvoyé » de « données écartées » (autre compte du login, paire orpheline).
     this.logger.log(
-      `Synchro Tradovate ${conn.id} : ${imported.created} créés, ` +
-        `${imported.duplicates} doublons, ${mapped.skipped} ignorés. ` +
+      `Synchro Tradovate ${conn.id} : ${imported.created} créés, ${imported.updated} mis à jour, ` +
+        `${imported.duplicates} doublons, ${mapped.skipped} ignorés, ` +
+        `${grouped.deferred} paire(s) en attente du retour à plat, ${grouped.uncertain} incohérente(s). ` +
         describeTradovateSnapshot({
           accounts, positions, pairs: allPairs, externalAccountId: externalId, fillsFetched: fills.size,
         }),
@@ -353,10 +391,12 @@ export class TradovateSyncService {
       created: imported.created,
       duplicates: imported.duplicates,
       failed: imported.failed,
-      total: mapped.trades.length,
+      total: grouped.trades.length,
       skipped: mapped.skipped,
       openPositions,
-      feesImported: mapped.fees,
+      updated: imported.updated,
+      deferred: grouped.deferred + grouped.uncertain,
+      feesImported: { ...mapped.fees, count: grouped.trades.length },
       lastSyncAt: new Date(),
     };
   }
@@ -369,16 +409,16 @@ export class TradovateSyncService {
    */
   private async entryProtections(
     get: <R>(path: string, query?: Record<string, string>) => Promise<R>,
-    trades: readonly { side?: 'LONG' | 'SHORT'; entry?: number; _buyFillId?: string; _sellFillId?: string }[],
+    trades: readonly { side?: 'LONG' | 'SHORT'; entry?: number; _buyFillId?: string; _sellFillId?: string; _openFillId?: string }[],
     fills: Map<number, TradovateFill>,
+    /** `/order/list` déjà lue pour le regroupement ; null = illisible, pas de capture. */
+    orders: TradovateOrderEntity[] | null,
   ): Promise<EntryProtection[] | null> {
-    if (trades.length === 0) return null;
-    let orders: TradovateOrderEntity[];
+    if (trades.length === 0 || !orders) return null;
     let versions: TradovateOrderVersionEntity[];
     let links: TradovateOrderStrategyLinkEntity[] | null;
     try {
-      [orders, versions, links] = await Promise.all([
-        get<TradovateOrderEntity[]>('/order/list'),
+      [versions, links] = await Promise.all([
         get<TradovateOrderVersionEntity[]>('/orderVersion/list'),
         get<TradovateOrderStrategyLinkEntity[]>('/orderStrategyLink/list').catch((err: unknown) => {
           // Pénalité : relancée (pause notée plus bas). Autre refus : liaison par parentId seule.
@@ -400,10 +440,30 @@ export class TradovateSyncService {
     const strategyOf = strategyByOrder(Array.isArray(links) ? links : []);
     return trades.map((t) => {
       if (t.entry == null || t.side == null) return { outcome: 'session-gone' as const };
+      // Position (#956) : ordre de la PREMIÈRE entrée, R/R sur l'entrée moyenne.
+      const leg = t._openFillId ? { side: t.side, _buyFillId: t._openFillId, _sellFillId: t._openFillId } : t;
       return entryProtection({
-        entryOrderId: entryOrderIdFor(t, fills), side: t.side, entryPrice: t.entry, orders: list, first, strategyOf,
+        entryOrderId: entryOrderIdFor(leg, fills), side: t.side, entryPrice: t.entry, orders: list, first, strategyOf,
       });
     });
+  }
+
+  /**
+   * Ordres de la séance (`/order/list`), lus UNE fois pour le regroupement par position et la
+   * capture du stop. Pénalité relancée (pause notée par `sync`) ; autre refus (401 sans
+   * Orders:Read, 5xx) : null, la synchro continue sans ordres.
+   */
+  private async sessionOrders(
+    get: <R>(path: string, query?: Record<string, string>) => Promise<R>,
+  ): Promise<TradovateOrderEntity[] | null> {
+    try {
+      const list = await get<TradovateOrderEntity[]>('/order/list');
+      return Array.isArray(list) ? list : [];
+    } catch (err) {
+      if (isPenaltyFailure(err)) throw err;
+      this.logger.warn(`Capture stop Tradovate : ordres de la séance illisibles (${(err as Error).message})`);
+      return null;
+    }
   }
 
   /** `/xxx/items?ids=1,2,3` par lots → Map id → entité. */
@@ -433,11 +493,14 @@ export class TradovateSyncService {
     listPath: string,
     itemsPath: string,
     ids: number[],
+    /** Reçoit la liste complète lue (exécutions non appariées, #956). */
+    keepList?: (all: T[]) => void,
   ): Promise<Map<number, T>> {
     const out = new Map<number, T>();
     if (!ids.length) return out;
     const wanted = new Set(ids);
     const list = await get<T[]>(listPath);
+    keepList?.(Array.isArray(list) ? list : []);
     for (const item of Array.isArray(list) ? list : []) {
       if (wanted.has(item.id)) out.set(item.id, item);
     }

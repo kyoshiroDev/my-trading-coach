@@ -43,8 +43,13 @@ export class OfferIntentService {
     this.requested.set({ cta });
   }
 
-  /** Capture l'intention de l'URL d'arrivée (appelé au démarrage et sur /register). */
-  capture(search: string = window.location.search): OfferIntent | null {
+  /**
+   * Capture l'intention de l'URL d'arrivée (appelé au démarrage et sur /register). Jamais sur la
+   * page de paiement : ses paramètres (`plan`, `promo`, `cta`) décrivent le paiement en cours, et un
+   * rechargement après paiement rouvrirait la modale de plans (B7 #1013).
+   */
+  capture(search: string = window.location.search, path: string = window.location.pathname): OfferIntent | null {
+    if (/^\/paiement(\/|$)/.test(path)) return null;
     const intent = intentFromSearch(search);
     if (!intent) return null;
     try {

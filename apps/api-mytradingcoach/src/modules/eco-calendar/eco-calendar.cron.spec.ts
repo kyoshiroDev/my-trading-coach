@@ -67,6 +67,8 @@ describe('EcoCalendarCron · relevé planifié', () => {
   let cron: EcoCalendarCron;
   let fetchMock: ReturnType<typeof vi.fn>;
   let fmpPayload: unknown[];
+  let redisKeys: Set<string>;
+  let callOrder: string[];
 
   const build = (rows: Row[]) => {
     ecoEvent = inMemoryEcoEvents(rows);
@@ -74,9 +76,22 @@ describe('EcoCalendarCron · relevé planifié', () => {
       ecoEvent,
       ecoLabelTranslation: { findMany: vi.fn(async () => []) },
     } as unknown as PrismaService;
-    const redis = { client: {} } as unknown as RedisService;
+    // Redis en mémoire : seules les clés `eco:calendar:<jour>:<user>` comptent ici.
+    const redis = {
+      scanKeys: vi.fn(async (pattern: string) => {
+        const prefix = pattern.replace(/\*$/, '');
+        return [...redisKeys].filter((k) => k.startsWith(prefix));
+      }),
+      client: {
+        del: vi.fn(async (...keys: string[]) => {
+          callOrder.push('del');
+          keys.forEach((k) => redisKeys.delete(k));
+          return keys.length;
+        }),
+      },
+    } as unknown as RedisService;
     const service = new EcoCalendarService(prisma, {} as AiService, redis, {} as AnthropicClientService);
-    gateway = { notifyNewReleases: vi.fn() };
+    gateway = { notifyNewReleases: vi.fn(() => { callOrder.push('notify'); }) };
     cron = new EcoCalendarCron(service, gateway as unknown as EcoCalendarGateway);
   };
 
@@ -85,6 +100,8 @@ describe('EcoCalendarCron · relevé planifié', () => {
     vi.stubEnv('FMP_API_KEY', 'test-key');
     vi.stubEnv('NODE_ENV', 'test'); // pas de traduction
     fmpPayload = [];
+    redisKeys = new Set();
+    callOrder = [];
     // FMP simulé : ne renvoie que les annonces de la plage UTC demandée (from/to inclus).
     fetchMock = vi.fn(async (url: string) => {
       const q = new URL(url).searchParams;
@@ -199,5 +216,55 @@ describe('EcoCalendarCron · relevé planifié', () => {
     expect(urls).toHaveLength(3); // lundi, mardi, puis vendredi rattrapé
     expect(urls[2]).toContain('from=2026-11-05&to=2026-11-07');
     expect(ecoEvent.rows.find((r) => r.date === '2026-11-06')?.actual).toBe(3.5);
+  });
+
+  it('#982 : un résultat relevé vide le cache du jour de tous les traders, avant la diffusion', async () => {
+    vi.setSystemTime(new Date('2026-11-04T19:00:20Z'));
+    build([fed(null)]);
+    redisKeys = new Set([
+      'eco:calendar:2026-11-04:user-a',
+      'eco:calendar:2026-11-04:demo',
+      'eco:calendar:2026-11-03:user-a', // autre jour : gardé
+      'eco:analysis:2026-11-04:x', // analyses : jamais touchées
+    ]);
+    fmpPayload = [fmpFed(3.75)];
+
+    await cron.pollScheduledReleases();
+
+    expect([...redisKeys].sort()).toEqual(['eco:analysis:2026-11-04:x', 'eco:calendar:2026-11-03:user-a']);
+    expect(callOrder).toEqual(['del', 'notify']);
+  });
+
+  it('#982 : sans nouveau résultat, le cache est gardé', async () => {
+    vi.setSystemTime(new Date('2026-11-04T19:00:00Z'));
+    build([fed(null)]);
+    redisKeys = new Set(['eco:calendar:2026-11-04:user-a']);
+    fmpPayload = [fmpFed(null)];
+
+    await cron.pollScheduledReleases();
+
+    expect([...redisKeys]).toEqual(['eco:calendar:2026-11-04:user-a']);
+  });
+
+  it('#982 : Redis en panne au vidage, le résultat est quand même diffusé', async () => {
+    vi.setSystemTime(new Date('2026-11-04T19:00:20Z'));
+    build([fed(null)]);
+    fmpPayload = [fmpFed(3.75)];
+    redisKeys = { [Symbol.iterator]: () => { throw new Error('ECONNREFUSED'); } } as unknown as Set<string>;
+
+    await cron.pollScheduledReleases();
+
+    expect(gateway.notifyNewReleases).toHaveBeenCalledTimes(1);
+  });
+
+  it('#982 : rattrapage de 6 h, le cache du jour rattrapé est vidé', async () => {
+    vi.setSystemTime(new Date('2026-11-09T05:00:00Z'));
+    build([{ ...fed(null), date: '2026-11-06', time: '22:00' }]);
+    redisKeys = new Set(['eco:calendar:2026-11-06:user-a', 'eco:calendar:2026-11-09:user-a']);
+    fmpPayload = [{ ...fmpFed(3.5), date: '2026-11-06 21:00:00' }];
+
+    await cron.prefetchDay();
+
+    expect(redisKeys.size).toBe(0);
   });
 });

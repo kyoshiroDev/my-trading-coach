@@ -8,7 +8,7 @@ import {
   Optional,
 } from '@nestjs/common';
 import type { AccountPlanHint, PropFirmDrawdownKind, PropFirmPhaseRules } from '@mtc/shared';
-import { drawdownFloor, drawdownPeakProfit, planDrawdownRule } from '@mtc/shared';
+import { ACCOUNT_LIMITS, drawdownFloor, drawdownPeakProfit, planDrawdownRule, roundCents } from '@mtc/shared';
 import {
   AccountStatus,
   AccountType,
@@ -132,10 +132,10 @@ const PLAN_SELECT = {
 /** Contexte plan du user pour le calcul du quota de comptes. */
 export type PlanContext = { plan: Plan; role: Role; trialEndsAt?: Date | null };
 
-// Quota de comptes par plan : aligné front `ACCOUNT_LIMITS` (pricing.const.ts).
-// Premium / trial / admin / beta = illimité. Seuls les comptes ACTIVE consomment un
-// slot (PASSED / FAILED / ARCHIVED le libèrent).
-const FREE_ACCOUNT_LIMIT = 1;
+// Quota de comptes par plan : `ACCOUNT_LIMITS` de `@mtc/shared` (même source que le front et la
+// liste des avantages). Premium / trial / admin / beta = illimité. Seuls les comptes ACTIVE
+// consomment un slot (PASSED / FAILED / ARCHIVED le libèrent).
+const FREE_ACCOUNT_LIMIT = ACCOUNT_LIMITS.free;
 
 const BROKER_DISCLAIMER =
   "Solde et positions ouvertes lus chez le broker ; seuil de drawdown calculé par MyTradingCoach, " +
@@ -591,7 +591,7 @@ export class AccountsService {
     return {
       startingBalance,
       realizedPnl,
-      tradingPnl: agg.count === 0 ? 0 : Math.round((realizedPnl + (payouts?.total ?? 0)) * 100) / 100,
+      tradingPnl: agg.count === 0 ? 0 : roundCents(realizedPnl + (payouts?.total ?? 0)),
       currentBalance,
       tradesCount: agg.count,
       winRate,
@@ -666,9 +666,18 @@ export class AccountsService {
     ctx?: PlanContext,
   ): Promise<TradingAccount> {
     // Un compte créé est ACTIVE par défaut → il consomme un slot.
-    await this.assertActiveSlotAvailable(userId, ctx);
-    if (dto.propFirmPlanId) await this.assertCatalogPlan(dto.propFirmPlanId);
-    return this.prisma.tradingAccount.create({ data: { userId, ...withDates(dto) } });
+    if (this.resolveAccountLimit(ctx) === null) {
+      if (dto.propFirmPlanId) await this.assertCatalogPlan(dto.propFirmPlanId);
+      return this.prisma.tradingAccount.create({ data: { userId, ...withDates(dto) } });
+    }
+    // Plan à quota : comptage et création sous verrou par utilisateur, sinon deux créations
+    // simultanées (double clic) passaient toutes les deux le comptage (#994). Même verrou que retry.
+    return this.prisma.$transaction(async (tx) => {
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`account-retry:${userId}`}, 0))`;
+      await this.assertActiveSlotAvailable(userId, ctx, tx);
+      if (dto.propFirmPlanId) await this.assertCatalogPlan(dto.propFirmPlanId);
+      return tx.tradingAccount.create({ data: { userId, ...withDates(dto) } });
+    });
   }
 
   async update(
@@ -1060,7 +1069,7 @@ export class AccountsService {
         accountId,
         transactionId: `${MANUAL_PAYOUT_TYPE}:${id}`,
         tradeDate: new Date(`${input.tradeDate}T00:00:00.000Z`),
-        amount: Math.round(input.amount * 100) / 100,
+        amount: roundCents(input.amount),
         changeType: MANUAL_PAYOUT_TYPE,
         confidence: 'certain',
       },

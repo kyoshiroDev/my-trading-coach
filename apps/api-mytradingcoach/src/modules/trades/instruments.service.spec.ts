@@ -41,3 +41,15 @@ describe('InstrumentsService.search', () => {
     expect(res.some((r) => r.symbol === 'NQ')).toBe(true);
   });
 });
+
+describe('InstrumentsService.list', () => {
+  it('#951 : forex coté en dollars exposé avec sa valeur du pip, à côté des futures et de la crypto', async () => {
+    const { service } = make();
+    const list = await service.list();
+    const eurusd = list.find((i) => i.symbol === 'EUR/USD') as { tickValue: number; tickSize: number; pipDecimals: number };
+    expect(eurusd).toMatchObject({ category: 'FOREX', tickValue: 10, tickSize: 0.0001, pipDecimals: 4 });
+    expect(list.some((i) => i.symbol === 'MNQ')).toBe(true);
+    expect(list.some((i) => i.symbol === 'BTC/USDT')).toBe(true);
+    expect(list.some((i) => i.symbol === 'USD/JPY')).toBe(false);
+  });
+});

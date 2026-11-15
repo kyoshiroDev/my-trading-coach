@@ -28,7 +28,7 @@ let baseUrl: string;
 const uid = () => `${Date.now().toString(36)}${Math.floor(Math.random() * 1296).toString(36)}`;
 
 const PERF_CSV = readFileSync(join(__dirname, '__fixtures__', 'tradovate-performance.csv'));
-const EXPECTED_TRADES = 20; // prouvé par csv-import.service.spec.ts sur la même fixture
+const EXPECTED_TRADES = 7; // 20 paires = 7 positions (#956), prouvé par csv-import.service.spec.ts sur la même fixture
 
 async function registerUser(email: string): Promise<{ id: string; token: string }> {
   const res = await fetch(`${baseUrl}/api/auth/register`, {

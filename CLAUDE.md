@@ -56,7 +56,7 @@ Pour l'app **admin**, la maquette `admin-mytradingcoach.html` (racine) reste LA 
 Demander d'abord : **nouvelle feature ou pas ?** (sauf si le prompt le précise déjà)
 - **Nouvelle feature** → branche depuis `dev`, livrée sur `dev`, puis `dev` → `main`. Ne passe pas par beta.
 - **Tout le reste** (bug, optimisation, perf, refactor, dette, docs, CI…) → branche depuis `dev`, livrée sur `dev`. Ne passe pas par beta.
-- Les PR vers `dev` sont ouvertes par l'agent `relecteur`, une fois tout validé et après le « OK push » de Greg. La PR `dev` → `main` n'est ouverte que sur demande explicite de Greg. **Seul Greg merge** (merge commit, jamais squash).
+- **Tout prompt passe par l'agent `relecteur`** : il valide, fait corriger et dirige la session (et les autres agents). **Aucun push tant qu'il n'a pas rendu « OK à 100 % »** (aucune correction restante, aucune question ouverte pour Greg). À 100 % → on pousse et on ouvre la PR vers `dev`, sans attendre de « OK push » de Greg. La PR `dev` → `main` n'est ouverte que sur demande explicite de Greg. **Seul Greg merge** (merge commit, jamais squash).
 
 ### Avant de coder
 0. Prompt collé par Greg → l'enregistrer tel quel dans `.claude/prompts/PROMPT-<nom-du-prompt>.md` (texte exact, compléments ajoutés à la suite) et le commiter avec le travail : le relecteur lit ce texte-là.

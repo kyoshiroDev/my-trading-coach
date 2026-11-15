@@ -1,0 +1,1 @@
+note dans ta memoire ou claude.md tous prompt on demande pase par l'agent de relecture qu'il valide modifie ou dirige tous le monde temps que li di pas que c'et ok a 100% on push pas si c'est bon a 100% pour lui alors on push et ouvre un PR vers dev
