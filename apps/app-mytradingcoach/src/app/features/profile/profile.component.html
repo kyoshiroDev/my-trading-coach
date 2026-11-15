@@ -556,9 +556,11 @@
                         {{ sw.label }} ({{ sw.price }}) →
                       </button>
                     }
-                    <button class="btn btn-secondary" (click)="openPortal()">
-                      {{ isInTrial() ? 'Gérer / annuler mon essai →' : 'Gérer mon abonnement →' }}
-                    </button>
+                    @if (hasBillingPortal()) {
+                      <button class="btn btn-secondary" (click)="openPortal()">
+                        {{ isInTrial() ? 'Gérer / annuler mon essai →' : 'Gérer mon abonnement →' }}
+                      </button>
+                    }
                   </div>
                   @if ((offersStore.isFounder() || offersStore.partner()) && !canceledAt()) {
                     <!-- Rappel neutre, sans freiner : le portail garde son bouton de résiliation. -->

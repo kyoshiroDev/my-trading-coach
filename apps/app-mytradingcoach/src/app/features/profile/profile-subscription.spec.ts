@@ -118,6 +118,16 @@ describe('Profil > Abonnement', () => {
   });
 
   it.each([
+    ['ADMIN sans abonnement', { role: 'ADMIN', plan: 'FREE' }],
+    ['BETA_TESTER sans abonnement', { role: 'BETA_TESTER', plan: 'FREE' }],
+    ['Premium manuel (sans Stripe)', { role: 'USER', plan: 'PREMIUM' }],
+  ])('%s : pas de bouton du portail Stripe (aucun client Stripe, B10 #1013)', (_l, over) => {
+    const text = render({ offered: false, user: { ...over, trialEndsAt: null, stripeSubscriptionStatus: null } }).textContent ?? '';
+    expect(text).not.toContain('Gérer mon abonnement');
+    expect(text).not.toContain('annuler mon essai');
+  });
+
+  it.each([
     ['Premium offert', { offered: true }],
     ['essai d’inscription', { offered: false, signup: true }],
     ['essai Stripe', { offered: false }],
