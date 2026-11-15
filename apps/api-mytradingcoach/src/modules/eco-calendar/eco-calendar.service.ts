@@ -159,9 +159,9 @@ export class EcoCalendarService {
         };
 
         // FMP révise après coup l'heure, les prévisions ou l'impact : on resynchronise
-        // tout sauf la clé (date, nom, devise), pas seulement `actual`.
+        // tout sauf la clé (date, nom, devise, pays : C6 #1046), pas seulement `actual`.
         const row = await this.prisma.ecoEvent.upsert({
-          where: { date_name_currency: { date: parisDate, name: e.event, currency: e.currency } },
+          where: { date_name_currency_country: { date: parisDate, name: e.event, currency: e.currency, country: e.country } },
           update: {
             time: mapped.time,
             impact: mapped.impact,
@@ -374,7 +374,7 @@ export class EcoCalendarService {
     const prevSet = new Set(
       before
         .filter((e) => e.isReleased)
-        .map((e) => normalizeEventKey(`${e.name}:${e.currency}`)),
+        .map((e) => `${normalizeEventKey(`${e.name}:${e.currency}`)}:${e.country}`),
     );
 
     // Fetch + upsert (met aussi à jour nameFr en prod)
@@ -386,7 +386,7 @@ export class EcoCalendarService {
     const brandNew = after.filter(
       (e) =>
         e.isReleased &&
-        !prevSet.has(normalizeEventKey(`${e.name}:${e.currency}`)),
+        !prevSet.has(`${normalizeEventKey(`${e.name}:${e.currency}`)}:${e.country}`),
     );
 
     return { hasNew: brandNew.length > 0, newEvents: brandNew };
