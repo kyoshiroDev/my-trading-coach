@@ -36,7 +36,10 @@ const mockPrisma = {
     upsert: vi.fn(),
   },
   trade: {
-    findMany: vi.fn().mockResolvedValue([]),
+    // Une semaine tradée par défaut (C8 : sans trade, generate répond 400).
+    findMany: vi.fn().mockResolvedValue([
+      { asset: 'NQ', side: 'LONG', pnl: 100, commission: 2, emotion: null, tradeSession: null, setup: null, session: null, tradedAt: new Date('2026-11-10T15:00:00Z'), accountId: null },
+    ]),
   },
   tradingAccount: {
     findMany: vi.fn().mockResolvedValue([]),
@@ -242,6 +245,19 @@ describe('DebriefService', () => {
       );
     });
 
+    it('C8 (#1046) : aucun trade dans la semaine → 400 clair, ni IA, ni limite du jour, ni débrief vide', async () => {
+      mockPrisma.weeklyDebrief.findUnique.mockResolvedValue(null);
+      mockPrisma.trade.findMany.mockResolvedValueOnce([]);
+
+      await expect(service.generate('user-123', Role.USER, false, { force: true })).rejects.toMatchObject({
+        status: 400,
+        message: 'Aucun trade cette semaine pour l’instant. Le débrief se génère dès ton premier trade de la semaine.',
+      });
+      expect(mockAiService.checkDailyLimit).not.toHaveBeenCalled();
+      expect(mockAiService.generateDebrief).not.toHaveBeenCalled();
+      expect(mockPrisma.weeklyDebrief.upsert).not.toHaveBeenCalled();
+    });
+
     it('idempotent : débrief existant + pas de force → retourne l\'existant, zéro IA, zéro upsert', async () => {
       mockPrisma.weeklyDebrief.findUnique.mockResolvedValue(mockDebrief);
 
@@ -321,7 +337,10 @@ describe('DebriefService', () => {
       mockPrisma.weeklyDebrief.findFirst.mockResolvedValue(null);
       mockPrisma.weeklyDebrief.upsert.mockImplementation((args: { create: unknown }) => Promise.resolve(args.create));
       mockPrisma.tradingAccount.findMany.mockResolvedValue([]);
-      mockPrisma.trade.findMany.mockResolvedValue([]);
+      // Un trade hors compte (les comptes perdus sont filtrés par la requête elle-même).
+      mockPrisma.trade.findMany.mockResolvedValueOnce([
+        { asset: 'NQ', side: 'LONG', pnl: 50, emotion: null, setup: null, session: null, tradedAt: new Date(), accountId: null },
+      ]);
       mockAiService.generateDebrief.mockResolvedValueOnce({ overview: { summary: '' }, accounts: [], objectives: [] });
 
       await service.generate('user-123');

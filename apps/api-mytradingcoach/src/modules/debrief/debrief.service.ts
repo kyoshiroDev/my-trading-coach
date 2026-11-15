@@ -1,4 +1,4 @@
-import { Injectable, ForbiddenException, NotFoundException, Logger, Optional } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, Logger, NotFoundException, Optional } from '@nestjs/common';
 import { Plan, Prisma, Role, WeeklyDebrief } from '@prisma/client';
 import { effectiveEmotion } from '../../common/utils/effective-emotion.util';
 import { averageKnownRiskReward, computeTradeStats, netPnl } from '@mtc/shared';
@@ -135,6 +135,14 @@ export class DebriefService {
       })
       // Émotion effective (override sinon humeur de session ; null = non renseignée).
     ).map((t) => ({ ...t, setup: t.setup?.title ?? null, emotion: effectiveEmotion(t) }));
+
+    // C8 (#1046) : semaine sans trade (lundi matin) → pas d'appel IA facturé ni de débrief vide qui
+    // remplacerait à l'écran le vrai débrief de la semaine passée.
+    if (trades.length === 0) {
+      throw new BadRequestException(
+        'Aucun trade cette semaine pour l’instant. Le débrief se génère dès ton premier trade de la semaine.',
+      );
+    }
 
     // Comptes actifs et validés (avec leurs règles prop firm) pour l'analyse par compte.
     const accounts = await this.prisma.tradingAccount.findMany({

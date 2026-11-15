@@ -136,7 +136,7 @@ GET    /api/debrief/:year/:week        PREMIUM
 GET    /api/debrief/:year/:week/pdf    PREMIUM → export PDF via puppeteer ; @Throttle 5/min, file par process ≤ 10 rendus (`PDF_QUEUE_MAX`) sinon 503 (S3 #1045)
 PATCH  /api/debrief/:debriefId/objectives/:index/note PREMIUM → `ObjectiveNoteDto` (texte ≤ 1000, réinjecté dans le prompt suivant) (C11 #1045)
 GET    /api/debrief/history            PREMIUM
-POST   /api/debrief/generate           PREMIUM → 1/jour par user
+POST   /api/debrief/generate           PREMIUM → 1/jour par user (rendue si l IA échoue) ; semaine sans trade → 400 « Aucun trade cette semaine pour l’instant… » (C8 #1046)
 
 GET    /api/vps/servers                ADMIN → serveurs du sélecteur Surveillance [{id,label,readOnly}]
 GET    /api/vps/stats                  ADMIN → stats système SSH
