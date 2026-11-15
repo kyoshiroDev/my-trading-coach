@@ -1,6 +1,6 @@
 // ── Templates emails MyTradingCoach ─────────────────────────────────────────
 // Templates HTML inline : pas de dépendance externe pour le rendu
-import { FOUNDER_REFUND_DAYS, PLAN_BENEFITS, PREMIUM_SIGNUP_TRIAL_DAYS, formatMoney } from '@mtc/shared';
+import { FOUNDER_OFFER, FOUNDER_REFUND_DAYS, PLAN_BENEFITS, PREMIUM_SIGNUP_TRIAL_DAYS, TRIAL_PERIOD_DAYS, formatMoney } from '@mtc/shared';
 
 // ── Base système ──────────────────────────────────────────────────────────────
 
@@ -403,7 +403,7 @@ export function welcomePremiumTemplate(params: {
   const content = `
     ${card(`
       <p style="${FONT}font-size:13px;color:#8fa3bf;margin:0 0 4px 0;text-transform:uppercase;letter-spacing:.8px;">
-        ${isTrial ? 'Essai gratuit · 30 jours' : 'Premium activé'}
+        ${isTrial ? `Essai gratuit · ${TRIAL_PERIOD_DAYS} jours` : 'Premium activé'}
       </p>
       <h1 style="${FONT}font-size:24px;font-weight:700;color:#e2eaf5;margin:0 0 16px 0;letter-spacing:-.5px;">
         ${isTrial ? 'Ton compagnon Premium est actif 🚀' : 'Bienvenue en Premium 🚀'}
@@ -412,7 +412,7 @@ export function welcomePremiumTemplate(params: {
       <p style="${FONT}font-size:14px;color:#9db4ce;margin:0 0 20px 0;line-height:1.7;">
         Bonjour ${userName || 'Trader'},
         ${isTrial
-          ? `ton essai gratuit de <strong style="color:#e2eaf5;">30 jours</strong> est activé. Aucun prélèvement avant la fin, annulable en un clic.`
+          ? `ton essai gratuit de <strong style="color:#e2eaf5;">${TRIAL_PERIOD_DAYS} jours</strong> est activé. Aucun prélèvement avant la fin, annulable en un clic.`
           : `ton abonnement Premium est actif. Profite de toutes les fonctionnalités de ton compagnon.`
         }
       </p>
@@ -445,7 +445,7 @@ export function welcomePremiumTemplate(params: {
     subject: isTrial
       ? '🚀 Ton essai Premium démarre'
       : '🚀 Bienvenue en Premium',
-    html: emailWrapper(content, isTrial ? '30 jours offerts, aucun prélèvement.' : 'Accès complet activé.'),
+    html: emailWrapper(content, isTrial ? `${TRIAL_PERIOD_DAYS} jours offerts, aucun prélèvement.` : 'Accès complet activé.'),
   };
 }
 
@@ -661,7 +661,7 @@ export function founderWelcomeTemplate(params: {
       Tu es fondateur n° ${number} 🎉
     </h1>
     <p style="${FONT}font-size:14px;color:#9db4ce;margin:0 0 12px 0;line-height:1.7;">
-      Salut ${userName || 'Trader'}, merci de faire partie des 200 premiers. Tout Premium est actif,
+      Salut ${userName || 'Trader'}, merci de faire partie des ${FOUNDER_OFFER.seats} premiers. Tout Premium est actif,
       nouveautés à venir comprises, à <strong style="color:#e2eaf5;">${priceLabel}</strong>.
     </p>
     ${rulesList([

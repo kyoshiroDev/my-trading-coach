@@ -46,10 +46,12 @@ export class StripeReferralService {
 
       const parrain = await this.prisma.user.findFirst({
         where: { referralCode: filleul.referredBy },
-        select: { id: true, role: true },
+        select: { id: true, role: true, isDemo: true },
       });
       if (!parrain) return;
       if (parrain.id === filleul.id) return; // anti auto-parrainage (single-level)
+      // Compte démo jamais parrain : un filleul inscrit avec son code avant #993 garde `referredBy`.
+      if (parrain.isDemo) return;
 
       if (parrain.role === Role.AMBASSADOR) {
         await this.creditAmbassadorCommission({

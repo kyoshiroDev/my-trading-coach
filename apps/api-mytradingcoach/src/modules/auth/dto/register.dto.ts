@@ -1,5 +1,6 @@
 import { Transform } from 'class-transformer';
 import { IsBoolean, IsEmail, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
+import { emailTransform } from '../../../common/utils/email.util';
 
 // UTM normalisés (trim + minuscules) pour que « NinjaTrader » et « ninjatrader » tombent
 // dans la même source à l'agrégation admin ; chaîne vide → absent (null en base).
@@ -8,6 +9,7 @@ export const normalizeUtm = ({ value }: { value: unknown }): unknown =>
 
 export class RegisterDto {
   @IsEmail()
+  @Transform(emailTransform)
   email!: string;
 
   @IsString()

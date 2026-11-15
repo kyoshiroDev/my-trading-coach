@@ -113,6 +113,21 @@ describe('StripeReferralService —processReferral (coexistence)', () => {
     expect(stripe.customers.createBalanceTransaction).not.toHaveBeenCalled();
   });
 
+  // Audit fonctionnel #993 (lot 2, B6) : un filleul inscrit avec le code de la démo avant le correctif
+  // garde `referredBy` ; à son 1er paiement, la démo recevait une récompense.
+  it('parrain = compte démo → aucune récompense ni commission', async () => {
+    prisma.user.findFirst
+      .mockResolvedValueOnce({ id: 'filleul', referredBy: 'DEMO', plan: 'PREMIUM' })
+      .mockResolvedValueOnce({ id: 'demo', role: 'USER', isDemo: true });
+    const service = makeService(prisma, stripe);
+
+    await service.processReferral(invoice());
+
+    expect(prisma.referralReward.create).not.toHaveBeenCalled();
+    expect(prisma.referralCommission.upsert).not.toHaveBeenCalled();
+    expect(stripe.customers.createBalanceTransaction).not.toHaveBeenCalled();
+  });
+
   it('mois offert une seule fois par filleul (P2002 → pas de double crédit)', async () => {
     prisma.user.findFirst
       .mockResolvedValueOnce({ id: 'filleul', referredBy: 'GREGCODE', plan: 'PREMIUM' })

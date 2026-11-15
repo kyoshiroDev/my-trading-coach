@@ -91,6 +91,11 @@ export class ReferralService {
   // ── ÉTAPE 4 : stats parrain ─────────────────────────────────────────────────
 
   async getMyReferral(userId: string) {
+    // Démo en lecture seule (#993) : aucun code écrit par ce GET, aucun lien distribué.
+    const me = await this.prisma.user.findUnique({ where: { id: userId }, select: { isDemo: true } });
+    if (me?.isDemo) {
+      return { referralCode: null, link: null, invited: 0, subscribed: 0, freeMonthsEarned: 0, creditAvailable: 0, filleuls: [] };
+    }
     const code = await this.ensureReferralCode(userId);
 
     const filleuls = await this.prisma.user.findMany({

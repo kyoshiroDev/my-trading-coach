@@ -1,9 +1,10 @@
 import { Transform } from 'class-transformer';
 import { IsEmail, IsOptional, IsString, Matches } from 'class-validator';
+import { emailTransform } from '../../../common/utils/email.util';
 
 export class PromoteAmbassadorDto {
   @IsEmail({}, { message: 'Email invalide' })
-  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  @Transform(emailTransform)
   email!: string;
 
   // Optionnel : si absent, un code unique est généré côté service.
@@ -21,6 +22,6 @@ export class PromoteAmbassadorDto {
 
 export class RevokeAmbassadorDto {
   @IsEmail({}, { message: 'Email invalide' })
-  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  @Transform(emailTransform)
   email!: string;
 }

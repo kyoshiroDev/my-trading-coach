@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
@@ -9,6 +10,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { AuthUserCacheService } from '../infra/auth-user-cache.service';
 import { referralMonthlyCommission } from './ambassador-commission.util';
 import { roundCents } from '@mtc/shared';
+import { emailEquals } from '../../common/utils/email.util';
 
 // Lien de parrainage : même format que celui affiché par le dashboard ambassadeur.
 const REFERRAL_BASE = 'https://mytradingcoach.app';
@@ -75,12 +77,17 @@ export class AmbassadorService {
    * - code absent → réutilise le code existant, sinon en génère un unique.
    */
   async promote(email: string, referralCode?: string): Promise<PromoteResult> {
-    const user = await this.prisma.user.findUnique({
-      where: { email },
-      select: { id: true, name: true, email: true, referralCode: true },
+    const user = await this.prisma.user.findFirst({
+      where: { email: emailEquals(email) },
+      orderBy: { createdAt: 'asc' },
+      select: { id: true, name: true, email: true, referralCode: true, role: true },
     });
     if (!user) {
       throw new NotFoundException('Aucun utilisateur avec cet email');
+    }
+    // Même garde que setRole (#993) : promouvoir un ADMIN ou un BETA_TESTER le rétrogradait.
+    if (user.role === Role.ADMIN || user.role === Role.BETA_TESTER) {
+      throw new BadRequestException('Ce compte est ADMIN ou BETA_TESTER : change son rôle d’abord depuis sa fiche.');
     }
 
     let code: string;
@@ -128,12 +135,18 @@ export class AmbassadorService {
    * Ne touche pas aux commissions déjà enregistrées (referredBy des filleuls reste).
    */
   async revoke(email: string): Promise<{ email: string; name: string | null; role: Role }> {
-    const user = await this.prisma.user.findUnique({
-      where: { email },
-      select: { id: true },
+    const user = await this.prisma.user.findFirst({
+      where: { email: emailEquals(email) },
+      orderBy: { createdAt: 'asc' },
+      select: { id: true, role: true },
     });
     if (!user) {
       throw new NotFoundException('Aucun utilisateur avec cet email');
+    }
+    // Seul un ambassadeur se révoque (#993) : un ADMIN / BETA_TESTER repassait USER (perte d'accès),
+    // un USER perdait son code de parrainage grand public (ses filleuls ne rapportaient plus rien).
+    if (user.role !== Role.AMBASSADOR) {
+      throw new BadRequestException('Ce compte n’est pas ambassadeur.');
     }
     const updated = await this.prisma.user.update({
       where: { id: user.id },
@@ -238,6 +251,8 @@ export class AmbassadorService {
     if (!ambassador?.referralCode) return { count: 0 };
 
     const sinceDate = since ? new Date(since) : new Date(0);
+    // Date illisible : 400, au lieu d'une erreur Prisma en 500 (#993).
+    if (Number.isNaN(sinceDate.getTime())) throw new BadRequestException('Paramètre `since` invalide (date ISO attendue).');
 
     const count = await this.prisma.user.count({
       where: {

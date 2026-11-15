@@ -377,7 +377,7 @@ export function founderLaunchTemplate({ userName, appUrl, unsubUrl, seatsLeft }:
   const intro = `Aujourd'hui, j'ouvre l'offre fondateur, réservée aux ${total} premiers : ceux qui construisent l'outil avec moi.`;
   const concrete = 'Concrètement, Premium te prévient avant que tu atteignes ta perte journalière max de prop firm, et te signale en direct quand tu passes en revenge trading ou en surtrading. Tu as aussi le coach IA, le debrief de la semaine et les comptes illimités.';
   const free = 'Si le gratuit te suffit, aucun souci : il reste gratuit, sans limite de trades.';
-  const ps = 'Le prix fondateur ne bouge plus tant que tu restes abonné. Et si ça ne te convient pas, je te rembourse ton premier paiement sous 14 jours, sans discussion.';
+  const ps = `Le prix fondateur ne bouge plus tant que tu restes abonné. Et si ça ne te convient pas, je te rembourse ton premier paiement sous ${FOUNDER_REFUND_DAYS} jours, sans discussion.`;
 
   const p = 'style="margin:0 0 16px;line-height:1.55"';
   const link = (label: string) =>
@@ -388,7 +388,7 @@ export function founderLaunchTemplate({ userName, appUrl, unsubUrl, seatsLeft }:
 <ul style="margin:0 0 16px;padding-left:22px;line-height:1.55">
   <li style="margin-bottom:6px">Premium à <b>${m} €/mois</b> au lieu de ${normalM} € (ou <b>${y} €/an</b> au lieu de ${normalY} €) : <b>jusqu'à ${saved} € économisés par an</b></li>
   <li style="margin-bottom:6px"><b>Prix bloqué à vie</b>, tant que ton abonnement reste actif</li>
-  <li style="margin-bottom:6px"><b>Satisfait ou remboursé 14 jours</b> : tu ne prends aucun risque</li>
+  <li style="margin-bottom:6px"><b>Satisfait ou remboursé ${FOUNDER_REFUND_DAYS} jours</b> : tu ne prends aucun risque</li>
 </ul>
 <p ${p}>${concrete}</p>
 <p ${p}><b>${seatsText}</b>. Quand elles sont parties, c'est ${normalM} €.</p>
@@ -404,7 +404,7 @@ export function founderLaunchTemplate({ userName, appUrl, unsubUrl, seatsLeft }:
     [
       `- Premium à ${m} €/mois au lieu de ${normalM} € (ou ${y} €/an au lieu de ${normalY} €) : jusqu'à ${saved} € économisés par an`,
       '- Prix bloqué à vie, tant que ton abonnement reste actif',
-      '- Satisfait ou remboursé 14 jours : tu ne prends aucun risque',
+      `- Satisfait ou remboursé ${FOUNDER_REFUND_DAYS} jours : tu ne prends aucun risque`,
     ].join('\n'),
     concrete,
     `${seatsText}. Quand elles sont parties, c'est ${normalM} €.`,
