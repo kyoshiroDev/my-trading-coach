@@ -143,6 +143,12 @@ export class ProfileComponent implements OnInit {
     const end = this.trialEndsAt();
     return end ? calendarDaysUntil(end, new Date()) : 0;
   });
+  /** Libellé des jours restants, comme le bandeau : « dernier jour » le jour de la fin (B11 #1013). */
+  protected readonly trialLeftLabel = computed(() => {
+    const days = this.trialDaysLeft();
+    if (days <= 0) return 'dernier jour';
+    return `il te reste ${days} jour${days > 1 ? 's' : ''}`;
+  });
 
   // Compte : nom
   protected readonly editingName = signal(false);
