@@ -1,13 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma, Role } from '@prisma/client';
 import { REAL_USERS_WHERE, realUsersSql } from '../../common/stats/real-users';
-import { INSTALL_EVENTS } from '../product-events/product-events.const';
+import { DEMO_EVENTS, INSTALL_EVENTS } from '../product-events/product-events.const';
+import { acquisitionUsersSql, anonymousAcquisitionSql } from '../../common/stats/test-acquisition';
 import { PrismaService } from '../../prisma/prisma.service';
 import { UsersService } from '../users/users.service';
 import { StripeSubscriptionService } from '../stripe/stripe-subscription.service';
 import {
+  DEMO_CTA_PLACEMENTS,
   roundCents,
   todayParis,
+  type DemoCtaPlacement,
   type AdminAcquisitionData,
   type AdminFunnelData,
   type AdminFunnelPlace,
@@ -196,45 +199,49 @@ export class AdminService {
    * hors démo et hors ADMIN (`ProductEventDaily`) ; la démo, elle, est comptée en occurrences
    * (un seul user partagé). Installation de l'app : users distincts par événement et plateforme,
    * plateforme telle qu'enregistrée (`ios-other` reste distinct de `ios`).
+   * Campagnes de test et comptes internes / ADMIN exclus sauf `includeTests` (#1029) ; la démo,
+   * elle, n'est jamais filtrée par campagne (aucune UTM sur le compte partagé).
    */
-  async getFunnel(days = 30): Promise<AdminFunnelData> {
+  async getFunnel(days = 30, includeTests = false): Promise<AdminFunnelData> {
+    const scope = (alias?: 'u') => acquisitionUsersSql(includeTests, alias);
+    const realVisits = anonymousAcquisitionSql(includeTests);
     const from = new Date(`${todayParis()}T00:00:00Z`);
     from.setUTCDate(from.getUTCDate() - (days - 1));
 
     const [[visits], [signups], demoRows, stepRows, placeRows, [current], installRows, [trial]] = await Promise.all([
       this.prisma.$queryRaw<{ n: bigint | null }[]>`
-        SELECT SUM("visits") AS n FROM "LandingVisitDaily" WHERE "date" >= ${from}::date`,
+        SELECT SUM("visits") AS n FROM "LandingVisitDaily" WHERE "date" >= ${from}::date AND ${realVisits}`,
       this.prisma.$queryRaw<{ n: bigint }[]>`
         SELECT COUNT(*) AS n FROM "User"
-        WHERE ${realUsersSql()} AND "createdAt" >= ${from}`,
-      this.prisma.$queryRaw<{ event: string; n: bigint }[]>`
-        SELECT e."event", SUM(e."count") AS n
+        WHERE ${scope()} AND "createdAt" >= ${from}`,
+      this.prisma.$queryRaw<{ event: string; place: string; n: bigint }[]>`
+        SELECT e."event", e."place", SUM(e."count") AS n
         FROM "ProductEventDaily" e JOIN "User" u ON u."id" = e."userId"
         WHERE u."isDemo" = true AND e."date" >= ${from}::date
-          AND e."event" IN ('demo_open', 'demo_signup_click')
-        GROUP BY e."event"`,
+          AND e."event" IN (${Prisma.join([...DEMO_EVENTS])})
+        GROUP BY e."event", e."place"`,
       this.prisma.$queryRaw<{ key: string; n: bigint }[]>`
         SELECT CASE WHEN e."event" = 'checkout_return' THEN 'checkout_' || e."place" ELSE e."event" END AS key,
           COUNT(DISTINCT e."userId") AS n
         FROM "ProductEventDaily" e JOIN "User" u ON u."id" = e."userId"
-        WHERE ${realUsersSql('u')} AND e."date" >= ${from}::date
+        WHERE ${scope('u')} AND e."date" >= ${from}::date
           AND e."event" IN ('premium_seen', 'plan_modal_open', 'trial_click', 'checkout_return')
         GROUP BY 1`,
       this.prisma.$queryRaw<{ event: AdminFunnelPlace['event']; place: string; n: bigint }[]>`
         SELECT e."event", e."place", COUNT(DISTINCT e."userId") AS n
         FROM "ProductEventDaily" e JOIN "User" u ON u."id" = e."userId"
-        WHERE ${realUsersSql('u')} AND e."date" >= ${from}::date
+        WHERE ${scope('u')} AND e."date" >= ${from}::date
           AND e."event" IN ('premium_seen', 'plan_modal_open', 'trial_click')
         GROUP BY e."event", e."place"
         ORDER BY n DESC`,
       this.prisma.$queryRaw<{ trialing: bigint; paying: bigint }[]>`
         SELECT COUNT(*) FILTER (WHERE "stripeSubscriptionStatus" = 'trialing') AS trialing,
           COUNT(*) FILTER (WHERE "stripeSubscriptionStatus" IN ('active', 'past_due')) AS paying
-        FROM "User" WHERE ${realUsersSql()}`,
+        FROM "User" WHERE ${scope()}`,
       this.prisma.$queryRaw<{ event: AdminInstallRow['event']; place: string; n: bigint }[]>`
         SELECT e."event", e."place", COUNT(DISTINCT e."userId") AS n
         FROM "ProductEventDaily" e JOIN "User" u ON u."id" = e."userId"
-        WHERE ${realUsersSql('u')} AND e."date" >= ${from}::date
+        WHERE ${scope('u')} AND e."date" >= ${from}::date
           AND e."event" IN (${Prisma.join([...INSTALL_EVENTS])})
         GROUP BY e."event", e."place"
         ORDER BY e."place", e."event"`,
@@ -252,17 +259,30 @@ export class AdminService {
           MIN(u."stripeCurrentPeriodEnd") FILTER (WHERE s."number" IS NOT NULL AND u."stripeSubscriptionStatus" = 'trialing') AS next_charge
         FROM "User" u
         LEFT JOIN "FounderSeat" s ON s."userId" = u."id" AND s."status" = 'ACTIVE' AND s."firstPaidAt" IS NULL
-        WHERE ${realUsersSql('u')} AND u."signupTrialEndsAt" IS NOT NULL`,
+        WHERE ${scope('u')} AND u."signupTrialEndsAt" IS NOT NULL`,
     ]);
 
     const step = new Map(stepRows.map((r) => [r.key, Number(r.n)]));
-    const demo = new Map(demoRows.map((r) => [r.event, Number(r.n)]));
+    const demoTotal = (event: string) => demoRows.filter((r) => r.event === event).reduce((acc, r) => acc + Number(r.n), 0);
+    const clicksByPlacement = Object.fromEntries(
+      DEMO_CTA_PLACEMENTS.map((p) => [
+        p,
+        demoRows.filter((r) => r.event === 'demo_cta_click' && r.place === p).reduce((acc, r) => acc + Number(r.n), 0),
+      ]),
+    ) as Record<DemoCtaPlacement, number>;
     const keys = ['premium_seen', 'plan_modal_open', 'trial_click', 'checkout_success', 'checkout_canceled'] as const;
     return {
       days,
       landingVisits: Number(visits?.n ?? 0),
       signups: Number(signups?.n ?? 0),
-      demo: { opens: demo.get('demo_open') ?? 0, signupClicks: demo.get('demo_signup_click') ?? 0 },
+      demo: {
+        opens: demoTotal('demo_open'),
+        // Clics « Créer mon compte » : bandeau, pastille, relance, action bloquée (#1029) + ancien bouton.
+        signupClicks: demoTotal('demo_cta_click') + demoTotal('demo_signup_click'),
+        ctaViews: demoTotal('demo_cta_view'),
+        modalShown: demoTotal('demo_modal_shown'),
+        clicksByPlacement,
+      },
       steps: keys.map((key) => ({ key, users: step.get(key) ?? 0 })),
       byPlace: placeRows.map((r) => ({ event: r.event, place: r.place, users: Number(r.n) })),
       install: installRows.map((r) => ({ event: r.event, place: r.place, users: Number(r.n) })),
@@ -282,7 +302,7 @@ export class AdminService {
    * Inscriptions par méthode (#618) : e-mail / Google sur 7 j, 30 j et au total, finalisation des
    * inscriptions Google (opt-in choisi) et comptes e-mail reliés ensuite. Hors démo et ADMIN.
    */
-  async getSignupMethods(): Promise<AdminSignupMethodsData> {
+  async getSignupMethods(includeTests = false): Promise<AdminSignupMethodsData> {
     const rows = await this.prisma.$queryRaw<
       { method: 'EMAIL' | 'GOOGLE'; d7: bigint; d30: bigint; total: bigint; finalized: bigint; linked: bigint }[]
     >`
@@ -294,7 +314,7 @@ export class AdminService {
         COUNT(*) FILTER (WHERE u."signupFinalizedAt" IS NOT NULL) AS finalized,
         COUNT(*) FILTER (WHERE u."googleId" IS NOT NULL) AS linked
       FROM "User" u
-      WHERE ${realUsersSql('u')}
+      WHERE ${acquisitionUsersSql(includeTests, 'u')}
       GROUP BY u."authProvider"
     `;
     const pct = (n: number, d: number) => (d > 0 ? Math.round((n / d) * 1000) / 10 : 0);
@@ -320,7 +340,8 @@ export class AdminService {
     };
   }
 
-  async getAcquisition(): Promise<AdminAcquisitionData> {
+  async getAcquisition(includeTests = false): Promise<AdminAcquisitionData> {
+    const realVisits = anonymousAcquisitionSql(includeTests, 'v');
     // Fenêtres de visites en jours calendaires Paris (le compteur est journalier).
     const today = todayParis();
     const dayStr = (offset: number) => {
@@ -346,7 +367,7 @@ export class AdminService {
           COUNT(*) FILTER (WHERE u."stripeSubscriptionStatus" IN ('active', 'trialing', 'past_due')) AS premium,
           COUNT(*) FILTER (WHERE u."stripeSubscriptionStatus" = 'trialing') AS trialing
         FROM "User" u
-        WHERE ${realUsersSql('u')}
+        WHERE ${acquisitionUsersSql(includeTests, 'u')}
         GROUP BY u."acquisitionSource", u."acquisitionMedium", u."acquisitionCampaign"
       `,
       this.prisma.$queryRaw<(Utm & { v7: bigint; v30: bigint })[]>`
@@ -354,19 +375,19 @@ export class AdminService {
           COALESCE(SUM(v."visits") FILTER (WHERE v."date" >= ${from7}::date), 0) AS v7,
           SUM(v."visits") AS v30
         FROM "LandingVisitDaily" v
-        WHERE v."date" >= ${from30}::date
+        WHERE v."date" >= ${from30}::date AND ${realVisits}
         GROUP BY v."source", v."medium", v."campaign"
       `,
       this.prisma.$queryRaw<{ date: Date; visits: bigint; pageviews: bigint }[]>`
         SELECT v."date", SUM(v."visits") AS visits, SUM(v."pageviews") AS pageviews
         FROM "LandingVisitDaily" v
-        WHERE v."date" >= ${from30}::date
+        WHERE v."date" >= ${from30}::date AND ${realVisits}
         GROUP BY v."date"
       `,
       this.prisma.$queryRaw<{ path: string; visits: bigint; pageviews: bigint }[]>`
         SELECT v."path", SUM(v."visits") AS visits, SUM(v."pageviews") AS pageviews
         FROM "LandingVisitDaily" v
-        WHERE v."date" >= ${from30}::date
+        WHERE v."date" >= ${from30}::date AND ${realVisits}
         GROUP BY v."path"
         ORDER BY pageviews DESC
         LIMIT 10

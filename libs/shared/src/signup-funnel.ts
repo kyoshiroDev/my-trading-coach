@@ -39,8 +39,14 @@ export const SIGNUP_FUNNEL_CHECKOUT_PLANS = ['founder', 'premium'] as const;
 export const SIGNUP_FUNNEL_ERRORS = ['email_taken', 'validation', 'network', 'server', 'other'] as const;
 export type SignupFunnelError = (typeof SIGNUP_FUNNEL_ERRORS)[number];
 
+/** Inscription partie du bandeau de la démo (`source=demo` sur /register, #1029). */
+export const SIGNUP_FUNNEL_ORIGINS = ['demo'] as const;
+
 const DETAILS: Partial<Record<FunnelBeaconStep, readonly string[]>> = {
   cta_click: SIGNUP_FUNNEL_CTAS,
+  register_view: SIGNUP_FUNNEL_ORIGINS,
+  register_submit: SIGNUP_FUNNEL_ORIGINS,
+  register_success: SIGNUP_FUNNEL_ORIGINS,
   checkout_redirect: SIGNUP_FUNNEL_CHECKOUT_PLANS,
   register_error: SIGNUP_FUNNEL_ERRORS,
   scroll_depth: LANDING_SCROLL_THRESHOLDS.map(String),

@@ -7,6 +7,31 @@
 
 .page-path { word-break: break-all; }
 
+/* ── « Inclure les tests » (#1029) : même interrupteur que les notifications ── */
+.tests-filter {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 8px 10px;
+  margin: 0 0 16px; font-size: 13px; color: var(--text2);
+}
+.tests-label { color: var(--text); font-weight: 500; }
+.tests-hint { color: var(--text3); font-size: 12px; }
+.tests-switch {
+  position: relative; flex-shrink: 0; width: 40px; height: 22px; padding: 0;
+  border-radius: 999px; border: 1px solid var(--border2); background: var(--bg4); cursor: pointer;
+  transition: background .15s, border-color .15s;
+}
+.tests-switch[aria-checked='true'] { background: var(--teal); border-color: var(--teal); }
+.tests-switch:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
+.tests-switch-knob {
+  position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%;
+  background: var(--text2); transition: transform .15s, background .15s;
+}
+.tests-switch[aria-checked='true'] .tests-switch-knob { transform: translateX(18px); background: var(--text-on-teal); }
+@media (prefers-reduced-motion: reduce) {
+  .tests-switch, .tests-switch-knob { transition: none; }
+}
+
+.signup-accounts { margin: 10px 0 0; font-size: 12.5px; color: var(--text2); line-height: 1.5; }
+
 @media (min-width: 1024px) {
   /* Graphe large à gauche, top pages à droite. */
   .grid-2.uneven-right { grid-template-columns: 1fr 380px; }

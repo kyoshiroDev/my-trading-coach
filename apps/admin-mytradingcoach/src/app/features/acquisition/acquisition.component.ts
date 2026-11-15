@@ -2,10 +2,10 @@ import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signa
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { catchError, of } from 'rxjs';
-import { acquisitionQueryParams } from '@mtc/shared';
+import { TEST_ACQUISITION_PATTERNS, acquisitionQueryParams } from '@mtc/shared';
 import type { ChartConfiguration } from 'chart.js';
 import { AdminApi, AcquisitionData, FunnelData, LandingEngagementData, SignupFunnelData, SignupMethodsData } from '../../core/api/admin.api';
-import { INSTALL_COLUMNS, funnelRows, installRows, placeLabel, placeRows, signupTrialTiles } from './funnel.util';
+import { INSTALL_COLUMNS, demoSummary, funnelRows, installRows, placeLabel, placeRows, signupTrialTiles } from './funnel.util';
 import { SIGNUP_COLUMNS, signupErrors, signupLines, signupTotal, type BrowserFilter } from './signup-funnel.util';
 import { ENGAGEMENT_COLUMNS, engagementGroups } from './landing-engagement.util';
 import { ChartCanvasComponent } from '../../shared/components/chart-canvas/chart-canvas.component';
@@ -29,6 +29,13 @@ export class AcquisitionComponent {
   /** Inscrits d'une ligne campagne → liste Utilisateurs filtrée sur ce triplet exact (#625). */
   protected readonly utmParams = acquisitionQueryParams;
 
+  /**
+   * « Inclure les tests » (#1029) : faux par défaut, les 5 blocs excluent les campagnes / sources de
+   * test (`TEST_ACQUISITION_PATTERNS`) et les comptes internes et ADMIN. Vrai : chiffres bruts.
+   */
+  protected readonly includeTests = signal(false);
+  protected readonly testPatterns = TEST_ACQUISITION_PATTERNS.join(', ');
+
   protected readonly data = signal<AcquisitionData | null>(null);
   protected readonly error = signal<string | null>(null);
 
@@ -42,6 +49,8 @@ export class AcquisitionComponent {
   protected readonly installs = computed(() => installRows(this.funnel()));
   protected readonly installColumns = INSTALL_COLUMNS;
   protected readonly placeLabel = placeLabel;
+  /** Démo : ouvertures, bandeau vu, relance, clics par placement (#1029). */
+  protected readonly demo = computed(() => demoSummary(this.funnel()));
 
   /** Inscriptions par méthode, e-mail / Google (GET /admin/signup-methods, #618) : chargé à part. */
   protected readonly methods = signal<SignupMethodsData | null>(null);
@@ -91,31 +100,43 @@ export class AcquisitionComponent {
   });
 
   constructor() {
-    this.loadSignup(30);
-    this.loadEngagement(30);
-    this.api.signupMethods().pipe(
+    this.loadAll();
+  }
+
+  /** Interrupteur « Inclure les tests » : recharge les 5 blocs avec ou sans les tests. */
+  protected toggleTests(): void {
+    this.includeTests.update((v) => !v);
+    this.loadAll();
+  }
+
+  private loadAll(): void {
+    const tests = this.includeTests();
+    this.loadSignup(this.signupDays());
+    this.loadEngagement(this.engagementDays());
+    this.api.signupMethods(tests).pipe(
       catchError(() => of(null)),
       takeUntilDestroyed(this.destroyRef),
-    ).subscribe((r) => { if (r) this.methods.set(r.data); });
-    this.api.funnel().pipe(
+    ).subscribe((r) => { if (r && tests === this.includeTests()) this.methods.set(r.data); });
+    this.api.funnel(tests).pipe(
       catchError(() => of(null)),
       takeUntilDestroyed(this.destroyRef),
-    ).subscribe((r) => { if (r) this.funnel.set(r.data); });
-    this.api.acquisition().pipe(
+    ).subscribe((r) => { if (r && tests === this.includeTests()) this.funnel.set(r.data); });
+    this.api.acquisition(tests).pipe(
       catchError((e: unknown) => { this.error.set(e instanceof Error ? e.message : 'Erreur de chargement'); return of(null); }),
       takeUntilDestroyed(this.destroyRef),
-    ).subscribe((r) => { if (r) this.data.set(r.data); });
+    ).subscribe((r) => { if (r && tests === this.includeTests()) this.data.set(r.data); });
   }
 
   protected loadSignup(days: 7 | 30): void {
     this.signupDays.set(days);
     this.signupLoading.set(true);
-    this.api.signupFunnel(days).pipe(
+    const tests = this.includeTests();
+    this.api.signupFunnel(days, tests).pipe(
       catchError(() => of(null)),
       takeUntilDestroyed(this.destroyRef),
     ).subscribe((r) => {
       // Une réponse arrivée après un changement de période est ignorée.
-      if (days === this.signupDays()) {
+      if (days === this.signupDays() && tests === this.includeTests()) {
         this.signup.set(r?.data ?? null);
         this.signupLoading.set(false);
       }
@@ -125,11 +146,12 @@ export class AcquisitionComponent {
   protected loadEngagement(days: 7 | 30): void {
     this.engagementDays.set(days);
     this.engagementLoading.set(true);
-    this.api.landingEngagement(days).pipe(
+    const tests = this.includeTests();
+    this.api.landingEngagement(days, tests).pipe(
       catchError(() => of(null)),
       takeUntilDestroyed(this.destroyRef),
     ).subscribe((r) => {
-      if (days === this.engagementDays()) {
+      if (days === this.engagementDays() && tests === this.includeTests()) {
         this.engagement.set(r?.data ?? null);
         this.engagementLoading.set(false);
       }

@@ -2,6 +2,7 @@ import type { AuthProvider, Plan, Role, TrialSource } from './enums';
 import type { SignupFunnelStep } from '../signup-funnel';
 import type { LandingEngagementPage } from '../landing-engagement';
 import type { AcquisitionUtm } from '../acquisition-filter';
+import type { DemoCtaPlacement } from '../demo-cta';
 
 /** Back-office : formes JSON des routes /admin (API + app admin). */
 
@@ -235,7 +236,18 @@ export interface AdminFunnelData {
   days: number;
   landingVisits: number;
   signups: number;
-  demo: { opens: number; signupClicks: number };
+  /**
+   * Démo, en occurrences (un seul compte partagé). `signupClicks` = `demo_cta_click` + ancien
+   * `demo_signup_click` ; `ctaViews` = bandeau affiché (une fois par visite) ; `modalShown` = relance
+   * unique affichée ; `clicksByPlacement` = clics par placement (#1029).
+   */
+  demo: {
+    opens: number;
+    signupClicks: number;
+    ctaViews: number;
+    modalShown: number;
+    clicksByPlacement: Record<DemoCtaPlacement, number>;
+  };
   steps: AdminFunnelStep[];
   byPlace: AdminFunnelPlace[];
   install: AdminInstallRow[];

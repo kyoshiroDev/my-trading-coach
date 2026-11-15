@@ -263,6 +263,25 @@ const robots = noindex
             } catch (e) {}
           });
         }
+        // Liens vers la démo de l'app (#1029) : mêmes UTM, code parrain de l'URL et mode interne.
+        // Le bouton « Créer mon compte » de la démo garde ainsi l'origine de la visite, et une
+        // ouverture en mode interne n'est pas comptée (le localStorage ne passe pas d'un domaine à l'autre).
+        var ref = (params.get('ref') || '').trim();
+        if (!/^[A-Za-z0-9_-]{1,40}$/.test(ref)) ref = '';
+        if (found || ref || internal) {
+          document.querySelectorAll('a[href*="/demo"]').forEach(function (a) {
+            try {
+              var h = new URL(a.href);
+              if (!/^\/demo\/?$/.test(h.pathname)) return;
+              if (found) NAMES.forEach(function (n) {
+                if (utm[n] && !h.searchParams.get(n)) h.searchParams.set(n, utm[n]);
+              });
+              if (ref && !h.searchParams.get('ref')) h.searchParams.set('ref', ref);
+              if (internal) h.searchParams.set('internal', '1');
+              a.href = h.toString();
+            } catch (e) {}
+          });
+        }
         if (internal) return;
 
         var origin = {

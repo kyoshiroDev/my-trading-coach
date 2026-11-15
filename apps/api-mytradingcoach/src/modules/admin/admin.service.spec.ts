@@ -208,7 +208,15 @@ describe('AdminService.getFunnel', () => {
     q.mockReset();
     q.mockResolvedValueOnce([{ n: 120n }]) // visites
       .mockResolvedValueOnce([{ n: 9n }]) // inscrits
-      .mockResolvedValueOnce([{ event: 'demo_open', n: 14n }, { event: 'demo_signup_click', n: 3n }])
+      .mockResolvedValueOnce([
+        { event: 'demo_open', place: 'dashboard', n: 14n },
+        { event: 'demo_signup_click', place: 'journal', n: 3n },
+        { event: 'demo_cta_view', place: 'banner', n: 10n },
+        { event: 'demo_modal_shown', place: 'journal', n: 4n },
+        { event: 'demo_cta_click', place: 'banner', n: 2n },
+        { event: 'demo_cta_click', place: 'modal', n: 1n },
+        { event: 'demo_cta_click', place: '', n: 1n },
+      ])
       .mockResolvedValueOnce([
         { key: 'premium_seen', n: 6n }, { key: 'plan_modal_open', n: 3n },
         { key: 'trial_click', n: 1n }, { key: 'checkout_canceled', n: 1n },
@@ -225,7 +233,11 @@ describe('AdminService.getFunnel', () => {
 
     expect(f).toMatchObject({
       days: 30, landingVisits: 120, signups: 9,
-      demo: { opens: 14, signupClicks: 3 },
+      // Clics = nouveaux (tous placements, même inconnu) + ancien bouton ; détail par placement.
+      demo: {
+        opens: 14, signupClicks: 7, ctaViews: 10, modalShown: 4,
+        clicksByPlacement: { banner: 2, pill: 0, modal: 1, action: 0 },
+      },
       current: { trialing: 0, paying: 0 },
       signupTrial: { inProgress: 4, ended: 5, converted: 2, reservations: 1, reservationsAwaitingPayment: 0, nextChargeAt: '2026-11-16T10:00:00.000Z' },
       byPlace: [{ event: 'premium_seen', place: 'ai-insights', users: 4 }],
@@ -241,10 +253,29 @@ describe('AdminService.getFunnel', () => {
     expect(sql.join('?')).not.toMatch(/CASE/);
     expect(fullSql([sql, ...values])).toMatch(/"isDemo" = false/);
     expect(JSON.stringify(values)).toContain('install_shown');
+    // Par défaut (#1029) : comptes réels hors campagnes de test, visites hors campagnes de test ;
+    // la requête de la démo, elle, ne filtre pas par campagne.
+    expect(fullSql(q.mock.calls[0] as [TemplateStringsArray, ...unknown[]])).toMatch(/LIKE ANY/);
+    expect(fullSql(q.mock.calls[1] as [TemplateStringsArray, ...unknown[]])).toMatch(/"isInternal" = false[\s\S]*"acquisitionCampaign"/);
+    expect(fullSql(q.mock.calls[2] as [TemplateStringsArray, ...unknown[]])).not.toMatch(/LIKE ANY/);
     // Ordre fixe des étapes, 0 quand aucune donnée (retour Stripe réussi absent ici).
     expect(f.steps.map((s) => [s.key, s.users])).toEqual([
       ['premium_seen', 6], ['plan_modal_open', 3], ['trial_click', 1], ['checkout_success', 0], ['checkout_canceled', 1],
     ]);
+  });
+
+  it('« Inclure les tests » : ni motif de test ni exclusion des internes / ADMIN, la démo toujours exclue', async () => {
+    const q = (mockPrisma as { $queryRaw: ReturnType<typeof vi.fn> }).$queryRaw;
+    q.mockReset();
+    q.mockResolvedValueOnce([{ n: 0n }]).mockResolvedValueOnce([{ n: 0n }]).mockResolvedValueOnce([])
+      .mockResolvedValueOnce([]).mockResolvedValueOnce([]).mockResolvedValueOnce([{ trialing: 0n, paying: 0n }])
+      .mockResolvedValueOnce([]).mockResolvedValueOnce([]);
+    await service.getFunnel(30, true);
+    const visits = fullSql(q.mock.calls[0] as [TemplateStringsArray, ...unknown[]]);
+    const signups = fullSql(q.mock.calls[1] as [TemplateStringsArray, ...unknown[]]);
+    expect(visits).not.toMatch(/LIKE ANY/);
+    expect(signups).toMatch(/"isDemo" = false/);
+    expect(signups).not.toMatch(/isInternal|ADMIN|LIKE ANY/);
   });
 
   it('aucune visite enregistrée → 0, jamais null', async () => {

@@ -14,6 +14,7 @@ import {
 import type { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
+import { DemoLoginDto } from './dto/demo-login.dto';
 import { LoginDto } from './dto/login.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
@@ -123,8 +124,8 @@ export class AuthController {
   @Public()
   @Throttle({ default: { ttl: 60_000, limit: 20 } })
   @Post('demo-login')
-  demoLogin() {
-    return this.authService.demoLogin();
+  demoLogin(@Body() dto: DemoLoginDto) {
+    return this.authService.demoLogin(dto.internal === true);
   }
 
   @Public()
