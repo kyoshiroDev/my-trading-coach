@@ -41,3 +41,19 @@ Découpage du lot 2 en sous-lots, une sous-issue et une PR vers dev chacun :
 - 2c : argent (commissions, remboursement, remises, changement d'intervalle) ;
 - 2d : textes et e-mails (dont E3, boutons de paywall, avec le libellé d'essai de Q1).
 Le détail des décisions est en tête de `.claude/decisions.md` (entrée du 2026-11-14).
+
+## Complément lot 3 (2026-11-15)
+
+Texte exact de Greg pour lancer le lot 3, après le merge du lot 2 :
+
+> ok continue
+
+Constats du lot 3 (#1044) : audit en lecture par les agents nestjs (IA, crons), angular et security, trié par le relecteur. Découpage en 4 sous-lots, une sous-issue de #1044 et une PR vers dev chacun :
+- 3a, garde-fous de l'API : S1, S2, S3, C11, N4, C3+S4, C2, C10 (avec le front de C10/F15) ;
+- 3b, justesse IA et débrief : C4 (avec le front F3), C5, C6, C8, C9, C12, C13, N2 ;
+- 3c, front : F1, F5 (libellé seulement), F6 à F17 ;
+- 3d, débrief du dimanche et e-mails : C1, N1, N3, après la réponse de Greg (e-mails envoyés à de vrais utilisateurs).
+
+Réponse de Greg aux recommandations du relecteur (texte exact) :
+
+> ok pour tout ce que recommande le relecteur
