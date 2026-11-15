@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { SessionStatus } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../infra/redis.service';
 import { DEMO_EMAIL, seedDemo, DemoSeedResult } from './demo-seed';
@@ -30,14 +31,23 @@ export class DemoSeedService {
   }
 
   /**
-   * Démo absente, sans trade, sans session live pour la journée de trading en cours (la vitrine
-   * montre TOUJOURS une session live, même le week-end), ou sans trade depuis le dernier jour ouvré.
+   * Démo absente, sans trade, ou sans trade depuis le dernier jour ouvré. En semaine : aussi sans
+   * session live pour la journée de trading en cours. Le week-end (#977) : la vitrine montre la
+   * séance du vendredi clôturée, donc périmée s'il reste une session ACTIVE ou une position
+   * ouverte (seed du vendredi soir, coupure de 23:00, encore en base le samedi).
    */
   async isStale(now: Date = new Date()): Promise<boolean> {
     const user = await this.prisma.user.findUnique({ where: { email: DEMO_EMAIL }, select: { id: true } });
     if (!user) return true;
-    const live = await this.prisma.tradeSession.findFirst({ where: activeSessionWhere(user.id, now), select: { id: true } });
-    if (!live) return true;
+    const weekday = now.getDay() !== 0 && now.getDay() !== 6;
+    if (weekday) {
+      const live = await this.prisma.tradeSession.findFirst({ where: activeSessionWhere(user.id, now), select: { id: true } });
+      if (!live) return true;
+    } else {
+      const leftover = await this.prisma.tradeSession.findFirst({ where: { userId: user.id, status: SessionStatus.ACTIVE }, select: { id: true } })
+        ?? await this.prisma.trade.findFirst({ where: { userId: user.id, pnl: null }, select: { id: true } });
+      if (leftover) return true;
+    }
     // Dernier trade CLÔTURÉ : la position ouverte de la vitrine ne compte pas comme un trade du jour.
     const last = await this.prisma.trade.findFirst({
       where: { userId: user.id, pnl: { not: null } },
@@ -49,7 +59,6 @@ export class DemoSeedService {
     // 45 min (ou aucune) → re-seed à la connexion démo, recalé sur l'heure de la visite. Au plus un
     // re-seed toutes les 45 min : les autres visiteurs connectés gardent des données stables.
     const slot = demoTodaySlot(now);
-    const weekday = now.getDay() !== 0 && now.getDay() !== 6;
     if (weekday && slot) {
       const open = await this.prisma.trade.findFirst({
         where: { userId: user.id, pnl: null },

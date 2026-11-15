@@ -944,8 +944,8 @@ Filets posés par `DemoSeedCron` (`modules/admin/demo-seed.cron.ts`) :
   **dev** tourne sans cron (`IS_CRON_WORKER=false` dans `.env.dev`, process unique hors
   `NODE_ENV=production`) ; sa démo était restée au 2026-06-07 (aucun compte, session ouverte
   depuis 2 900 h). `DemoSeedService` vit dans `DemoSeedModule` (importé par Admin et Auth).
-- **Session live TOUJOURS présente** (vitrine, 2026-10-18 : « si le visiteur ne voit pas le live,
-  c'est pas bon ») : le seed crée à chaque run une session ACTIVE du jour sur Apex, avec une
+- **Session live présente EN SEMAINE** (vitrine, 2026-10-18 : « si le visiteur ne voit pas le live,
+  c'est pas bon » ; plus le week-end depuis #977) : le seed crée à chaque run de semaine une session ACTIVE du jour sur Apex, avec une
   position saisie à la main **encore ouverte** (`DemoDay.openTrade`, MNQ, SL + TP, R/R 1 : 2, hors
   stats) rattachée à la session. **Séance vivante à l'heure de la visite** (2026-11-09,
   `demoTodaySlot`) : en semaine de 00:40 à 23:00 (Paris, heures CME), 3 ou 4 trades du jour AVANT
@@ -955,11 +955,17 @@ Filets posés par `DemoSeedCron` (`modules/admin/demo-seed.cron.ts`) :
   de **45 min** (`OPEN_TRADE_MAX_AGE_MS`) : au plus un re-seed toutes les 45 min, les autres
   visiteurs gardent des données stables entre-temps. Hors créneau : coupure de 23:00 (la journée CME
   suivante commence) → aucun trade du jour, position ouverte à 22:50 ; avant 00:40 → position de la
-  dernière séance à 21:40. Week-end (inchangé, décision de Greg en attente) : **aucun trade du jour**
-  (garde-fou `assertDemoCalendar`, il couvre aussi `openTrade`), session ouverte il y a 30 min et
-  position datée du vendredi 21:40 (le front affiche « Marché fermé » le week-end CME). `isStale`
-  re-seede aussi si aucune session n'est active pour la journée de trading en cours
-  (`activeSessionWhere`) ou si le dernier trade CLÔTURÉ est antérieur à la séance attendue.
+  dernière séance à 21:40. **Week-end (décision de Greg du 2026-11-13, #977)** : marché fermé,
+  **ni session live ni position ouverte** ; la dernière séance est celle du vendredi (`kind:
+  'yesterday'`), CLÔTURÉE avec humeur et réflexion. `GET /session/today` la sert au compte démo
+  (`getTodaySession(userId, isDemo)` : séance clôturée depuis le début de la journée CME du vendredi,
+  démo seulement ; les vrais comptes gardent la journée CME en cours) → l'écran Session du jour s'ouvre sur le
+  Débrief, jamais sur « Démarrer la session » (#880). Aucun trade un samedi / dimanche (garde-fou
+  `assertDemoCalendar`, il couvre aussi `openTrade`). `isStale` : en semaine, re-seed si aucune
+  session n'est active pour la journée de trading en cours (`activeSessionWhere`) ; le week-end,
+  re-seed s'il reste une session ACTIVE ou une position ouverte (seed du vendredi soir) ; toujours
+  re-seed si le dernier trade CLÔTURÉ est antérieur à la séance attendue. Re-seed 45 min en
+  semaine : gardé (même décision).
 - **« Aujourd'hui » = journée de trading CME**, jamais minuit serveur : `getTodayTrades`,
   `getTodaySession` et le rattachement des trades à la clôture (`closeSession`, fenêtre
   `[tradingDayStart, tradingDayEnd[`) utilisent les mêmes bornes que la session active (audit des
@@ -975,8 +981,8 @@ Filets posés par `DemoSeedCron` (`modules/admin/demo-seed.cron.ts`) :
 Invariants verrouillés par `demo-seed-idempotence.spec.ts` : purge **avant** recréation
 et **scopée `userId`** (un re-run remplace, il n'empile pas) · tous les trades dans les
 `DEMO_WINDOW_DAYS` (42, soit 6 semaines) derniers jours, la vue « 1M » restant pleine · J-0 et
-J-1 peuplés · session du jour ACTIVE **même le week-end**, démarrée aujourd'hui, une seule position
-ouverte (SL + TP), **aucun trade après `now`** ni un samedi / dimanche (même
+J-1 peuplés · en semaine, session du jour ACTIVE démarrée aujourd'hui avec une seule position
+ouverte (SL + TP) ; le week-end, aucune session ACTIVE ni position ouverte, séance du vendredi CLÔTURÉE · **aucun trade après `now`** ni un samedi / dimanche (même
 quand le cron tourne à 03:20 : les trades du jour sont calés avant l'heure du run) ·
 P&L total < 15 % du capital et pertes visibles (sobriété AMF : on montre la
 fonctionnalité, jamais une performance). Le capital n'y est **jamais en dur** : les tests
