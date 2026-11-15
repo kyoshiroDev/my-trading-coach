@@ -20,12 +20,13 @@ import {
 import { PRICING } from '@app/core/constants/pricing.const';
 import { ProductEventsService } from '@app/core/services/product-events.service';
 import { BillingService } from '@app/core/services/billing.service';
+import { ToastService } from '@app/core/services/toast.service';
 import { OfferIntentService, type OfferIntent } from '@app/core/services/offer-intent.service';
 import { BillingApi, type CheckoutPlan, type PartnerValidation } from '@app/core/api/billing.api';
 import { OffersStore } from '@app/core/stores/offers.store';
 import { UserStore } from '@app/core/stores/user.store';
 import { DialogDirective, ErrorStateComponent } from '@mtc/front-ui';
-import { FOUNDER_INELIGIBLE_MESSAGES, PLAN_BENEFITS, founderSeatsLabel, type FounderIneligibility } from '@mtc/shared';
+import { FOUNDER_INELIGIBLE_MESSAGES, PLAN_BENEFITS, apiErrorMessage, founderSeatsLabel, type FounderIneligibility } from '@mtc/shared';
 
 type Interval = 'monthly' | 'yearly';
 /** Offre choisie : jamais deux à la fois (fondateur, code partenaire ou prix normal). */
@@ -75,6 +76,7 @@ export class PlanModalComponent implements OnInit {
   protected interval = signal<Interval>('monthly');
   private readonly billing = inject(BillingService);
   private readonly billingApi = inject(BillingApi);
+  private readonly toast = inject(ToastService);
   private readonly events = inject(ProductEventsService);
   private readonly intent = inject(OfferIntentService);
   private readonly destroyRef = inject(DestroyRef);
@@ -281,6 +283,24 @@ export class PlanModalComponent implements OnInit {
 
   protected close() {
     this.closed.emit();
+  }
+
+  /** Abonnement en pause (past_due / unpaid) : la modale propose seulement de confirmer le paiement (B4). */
+  protected readonly paymentPending = computed(() => {
+    const status = this.userStore.user()?.stripeSubscriptionStatus;
+    return status === 'past_due' || status === 'unpaid';
+  });
+
+  protected openPortal(): void {
+    this.billingApi
+      .portal()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => {
+          window.location.href = res.data.url;
+        },
+        error: (err) => this.toast.error(apiErrorMessage(err, 'L’espace de facturation est indisponible pour le moment.')),
+      });
   }
 
   protected onOverlayClick(event: MouseEvent) {

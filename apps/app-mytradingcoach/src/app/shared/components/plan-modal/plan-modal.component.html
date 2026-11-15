@@ -8,6 +8,18 @@
   (keydown.escape)="close()"
 >
   <div class="plan-modal-card" role="dialog" aria-modal="true" mtcDialog (mtcDialogClose)="close()" aria-labelledby="plan-modal-title">
+    <!-- Abonnement en pause (B4 #1013) : jamais une nouvelle offre (409 côté API), seulement confirmer
+         le paiement dans l'espace de facturation. -->
+    @if (paymentPending()) {
+    <div class="plan-modal-header" data-testid="plan-modal-paused">
+      <h2 id="plan-modal-title">Paiement en attente</h2>
+      <p>Ton Premium est en pause tant que le paiement n'est pas confirmé. Confirme-le dans l'espace de facturation&nbsp;: l'accès revient dès qu'il passe.</p>
+      <button class="plan-modal-close" (click)="close()" aria-label="Fermer">
+        <svg [lucideIcon]="XIcon" [size]="13"></svg>
+      </button>
+    </div>
+    <button class="plan-modal-cta" (click)="openPortal()" data-testid="plan-modal-confirm-payment">Confirmer mon paiement →</button>
+    } @else {
     <!-- Header -->
     <div class="plan-modal-header">
       <h2 id="plan-modal-title">Passer à Premium <svg [lucideIcon]="ZapIcon" [size]="19"></svg></h2>
@@ -233,6 +245,7 @@
         {{ ctaPriceLabel() }} · facturé aujourd'hui · annulable en un clic
       }
     </p>
+    }
     }
   </div>
 </div>

@@ -55,7 +55,10 @@ export class OfferIntentHostComponent {
     const user = this.userStore.user();
     if (!pending || !user || user.isDemo) return false;
     // Abonné qui paie déjà (hors essai) : rien à vendre, l'intention est simplement oubliée.
-    if (user.stripeSubscriptionStatus === 'active' || user.stripeSubscriptionStatus === 'past_due') return false;
+    if (user.stripeSubscriptionStatus === 'active') return false;
+    // En pause (past_due / unpaid) : la modale s'ouvre et ne propose que « Confirmer mon paiement »
+    // (B4 #1013 ; avant, le cadenas était un bouton mort).
+    if (user.stripeSubscriptionStatus === 'past_due' || user.stripeSubscriptionStatus === 'unpaid') return true;
     // Déjà Premium autrement, venu d'un lien : seulement si le fondateur lui est accessible
     // (rien tant que les offres ne sont pas chargées). Ouverture depuis un écran : inchangée.
     // Code partenaire : proposé même sans place fondateur (B3), offres chargées d'abord.

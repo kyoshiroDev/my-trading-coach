@@ -73,8 +73,9 @@ describe('PlanModalComponent — palier unique, plus de grille 2 colonnes', () =
     for (const glyphe of ['✓', '✕', '⚡']) {
       expect(h, `Glyphe ${glyphe} encore présent`).not.toContain(glyphe);
     }
-    // « Tout le plan Gratuit » + la boucle des avantages (PLAN_BENEFITS) + fermeture + éclair du titre.
-    expect((h.match(/\[lucideIcon\]/g) ?? []).length).toBe(4); // @lucide/angular : <svg [lucideIcon]>
+    // « Tout le plan Gratuit » + la boucle des avantages (PLAN_BENEFITS) + fermeture (×2 : offres et
+    // pause de paiement, B4) + éclair du titre.
+    expect((h.match(/\[lucideIcon\]/g) ?? []).length).toBe(5); // @lucide/angular : <svg [lucideIcon]>
   });
 });
 

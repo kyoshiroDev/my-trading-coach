@@ -98,3 +98,14 @@ describe('OfferIntentHostComponent : code partenaire gardé quand le fondateur e
     expect(show()).toBe(true);
   });
 });
+
+/** B4 (#1013) : en pause, le cadenas était un bouton mort (modale jamais ouverte). */
+describe('OfferIntentHostComponent : abonnement en pause (B4)', () => {
+  it.each(['past_due', 'unpaid'])('%s : la modale s’ouvre (elle propose « Confirmer mon paiement »)', (status) => {
+    const { show } = setup({
+      user: { stripeSubscriptionStatus: status }, premium: false, founderAvailable: false,
+      intent: { plan: null, promo: null, cta: null },
+    });
+    expect(show()).toBe(true);
+  });
+});
