@@ -188,13 +188,17 @@ export function generate(now: Date, seed: number): DemoDay[] {
     days.push({ daysAgo: d, account: 'apex', moodStart: 'FOCUSED', moodEnd: 'CONFIDENT', kind: 'yesterday', trades: [a, b] });
   }
 
-  // Aujourd'hui (J-0) : la vitrine montre TOUJOURS une session live (compte Apex connecté, suivi
-  // prop firm), avec un trade saisi à la main encore ouvert (barre SL / entrée / TP).
-  //  - en semaine, marché ouvert (`demoTodaySlot`) : 3 ou 4 trades du jour AVANT `now` (3 gains,
-  //    une perte, donc un meilleur trade ET un trade à revoir au débrief), puis la position ouverte
-  //    6 min avant `now`. `isStale` re-seede à la connexion démo quand elle a plus de 45 min ;
-  //  - week-end : marché fermé, aucun trade du jour, la position ouverte date de la dernière
-  //    séance (gardée), d'où « ouvert depuis… » ; coupure de 23:00 : position ouverte à 22:50.
+  // Aujourd'hui (J-0), EN SEMAINE : session live (compte Apex connecté, suivi prop firm), avec un
+  // trade saisi à la main encore ouvert (barre SL / entrée / TP).
+  //  - marché ouvert (`demoTodaySlot`) : 3 ou 4 trades du jour AVANT `now` (3 gains, une perte,
+  //    donc un meilleur trade ET un trade à revoir au débrief), puis la position ouverte 6 min
+  //    avant `now`. `isStale` re-seede à la connexion démo quand elle a plus de 45 min ;
+  //  - coupure de 23:00 et tout début de journée : aucun trade du jour, position ouverte à 22:50
+  //    (coupure) ou datée de la veille 21:40.
+  // WEEK-END (décision de Greg du 2026-11-13, #977) : marché fermé, ni session live ni position
+  // ouverte ; la dernière séance est celle du vendredi, clôturée (l'API la sert comme séance du
+  // jour au compte démo, onglet Débrief). AVANT : session live vide + position du vendredi 21:40
+  // « ouverte depuis » tout le week-end.
   const slot = demoTodaySlot(now);
   if (tradesToday && slot) {
     const at = ([h, m]: [number, number]) => dayAt(now, 0, h, m);
@@ -210,8 +214,8 @@ export function generate(now: Date, seed: number): DemoDay[] {
     });
     const openTrade = buildOpenTrade(r, { at: at(slot.open), daysAgo: 0 });
     days.push({ daysAgo: 0, account: 'apex', moodStart: 'FOCUSED', moodEnd: 'CONFIDENT', kind: 'today', trades, openTrade });
-  } else {
-    const lateCut = tradesToday && now.getHours() >= 23;
+  } else if (tradesToday) {
+    const lateCut = now.getHours() >= 23;
     const openTrade = lateCut
       ? buildOpenTrade(r, { at: dayAt(now, 0, 22, 50), daysAgo: 0 })
       : buildOpenTrade(r, { at: dayAt(now, lastDay, 21, 40), daysAgo: lastDay });

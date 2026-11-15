@@ -1,10 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import type { AdminFunnelData } from '@mtc/shared';
-import { funnelRows, installRows, placeLabel, placeRows, signupTrialTiles } from './funnel.util';
+import { demoSummary, funnelRows, installRows, placeLabel, placeRows, signupTrialTiles } from './funnel.util';
 
 const data: AdminFunnelData = {
   days: 30, landingVisits: 200, signups: 10,
-  demo: { opens: 30, signupClicks: 4 },
+  demo: { opens: 30, signupClicks: 4, ctaViews: 20, modalShown: 6, clicksByPlacement: { banner: 2, pill: 0, modal: 1, action: 1 } },
   steps: [
     { key: 'premium_seen', users: 6 }, { key: 'plan_modal_open', users: 3 },
     { key: 'trial_click', users: 1 }, { key: 'checkout_success', users: 0 }, { key: 'checkout_canceled', users: 1 },
@@ -109,5 +109,16 @@ describe('essai Premium de l’inscription (#769, B3)', () => {
     const tiles = signupTrialTiles(data);
     expect(tiles[2].sub).toBe('aucun essai terminé');
     expect(tiles[3].sub).toBe('en attente du premier paiement');
+  });
+});
+
+describe('démo : bandeau d’inscription (#1029)', () => {
+  it('bandeau vu, relance et clics par placement', () => {
+    expect(demoSummary(data)).toEqual({
+      views: 20,
+      modalShown: 6,
+      placements: 'bandeau 2 · pastille 0 · relance 1 · action bloquée 1',
+    });
+    expect(demoSummary(null)).toBeNull();
   });
 });

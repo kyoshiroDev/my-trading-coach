@@ -8,7 +8,7 @@ import { AdminApi } from '../../core/api/admin.api';
 
 // Page Acquisition (#769, B3) : la bande « essai Premium de l'inscription » s'affiche avec l'entonnoir.
 const funnel: AdminFunnelData = {
-  days: 30, landingVisits: 0, signups: 0, demo: { opens: 0, signupClicks: 0 }, byPlace: [], install: [],
+  days: 30, landingVisits: 0, signups: 0, demo: { opens: 0, signupClicks: 0, ctaViews: 0, modalShown: 0, clicksByPlacement: { banner: 0, pill: 0, modal: 0, action: 0 } }, byPlace: [], install: [],
   steps: (['premium_seen', 'plan_modal_open', 'trial_click', 'checkout_success', 'checkout_canceled'] as const).map((key) => ({ key, users: 0 })),
   current: { trialing: 0, paying: 0 },
   signupTrial: { inProgress: 12, ended: 8, converted: 2, reservations: 3, reservationsAwaitingPayment: 1, nextChargeAt: null },

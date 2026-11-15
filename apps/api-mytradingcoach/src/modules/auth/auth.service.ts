@@ -605,7 +605,7 @@ export class AuthService {
    * long SANS refresh : la session démo est éphémère et le DemoReadOnlyGuard
    * neutralise toute écriture même si le token fuite (défense en profondeur).
    */
-  async demoLogin() {
+  async demoLogin(internal = false) {
     // Démo fraîche pour chaque visiteur, même sans cron (dev) : re-seed si périmée. Un échec ne
     // bloque jamais la connexion, la démo actuelle est servie.
     await this.demoSeed.ensureFresh('connexion démo').catch((err: Error) =>
@@ -616,8 +616,9 @@ export class AuthService {
       select: ME_ROW_SELECT,
     });
     if (!user) throw new NotFoundException('Compte démo indisponible');
-    // Entonnoir : visites de la démo (best-effort, n'échoue jamais).
-    void this.productEvents.record(user.id, 'demo_open');
+    // Entonnoir : visites de la démo (best-effort, n'échoue jamais). Mode interne (`?internal=1`,
+    // tests de l'équipe, #1029) : pas compté. Flag du client : ne touche que des statistiques.
+    if (!internal) void this.productEvents.record(user.id, 'demo_open');
 
     const access_token = await this.jwtService.signAsync(
       { sub: user.id, email: user.email },

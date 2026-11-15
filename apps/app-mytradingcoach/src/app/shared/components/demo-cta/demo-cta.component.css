@@ -1,0 +1,177 @@
+/* Bandeau d'inscription de la démo (#1029).
+   Collé en bas de la zone de contenu (`position: sticky` dans `.main-content`, colonne flex) :
+   visible en bas pendant le défilement et, en fin de page, rangé APRÈS le contenu, donc jamais
+   par-dessus un bouton. Hauteur = --demo-cta-h (publiée par `.main-content.has-demo-cta`,
+   zone sûre de l'iPhone comprise), que les vues calées sur le viewport retranchent. */
+:host {
+  display: contents;
+}
+
+.demo-cta-fab-space {
+  display: none;
+  flex: 0 0 80px;
+  height: 80px;
+}
+
+.demo-cta {
+  position: sticky;
+  bottom: 0;
+  z-index: 40;
+  margin-top: auto;
+  flex: 0 0 var(--demo-cta-h);
+  height: var(--demo-cta-h);
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 0 12px env(safe-area-inset-bottom, 0px) 18px;
+  background: var(--bg-card);
+  border-top: 1px solid var(--border);
+  box-shadow: 0 -6px 18px rgba(0, 0, 0, .28);
+}
+
+.demo-cta-text {
+  margin: 0;
+  min-width: 0;
+  font-size: 13px;
+  line-height: 1.35;
+  color: var(--text-2);
+}
+.demo-cta-text strong { color: var(--text); font-weight: 600; }
+
+.demo-cta-btn,
+.demo-cta-pill {
+  flex: 0 0 auto;
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 16px;
+  border-radius: 8px;
+  background: var(--primary);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: opacity .15s;
+}
+.demo-cta-btn:hover,
+.demo-cta-pill:hover { opacity: .88; }
+.demo-cta-btn:focus-visible,
+.demo-cta-pill:focus-visible,
+.demo-cta-close:focus-visible {
+  outline: 2px solid var(--text);
+  outline-offset: 2px;
+}
+
+.demo-cta-close {
+  flex: 0 0 auto;
+  width: var(--tap-min);
+  height: var(--tap-min);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  border-radius: 8px;
+  color: var(--text-3);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+.demo-cta-close:hover { color: var(--text); }
+
+/* Réduit : seule la pastille reste, à droite ; la rangée est transparente et laisse passer les
+   clics vers le contenu en dessous. */
+.demo-cta.is-collapsed {
+  justify-content: flex-end;
+  background: transparent;
+  border-top: none;
+  box-shadow: none;
+  pointer-events: none;
+  padding-right: 16px;
+}
+.demo-cta-pill {
+  pointer-events: auto;
+  border-radius: 999px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, .35);
+}
+
+/* Téléphone : texte sur 3 lignes à 390 px (mesuré : 50 px dans 72), bouton compact, croix à
+   44 px de zone tactile. */
+@media (max-width: 768px) {
+  .demo-cta { gap: 6px; padding-left: 12px; padding-right: 4px; justify-content: space-between; }
+  .demo-cta-text { font-size: 12.5px; }
+  .demo-cta-btn { padding: 0 10px; font-size: 12.5px; min-height: var(--tap-min); }
+  .demo-cta-pill { min-height: var(--tap-min); }
+}
+/* Petits téléphones (320 px) : 4 lignes qui tiennent dans les 72 px. */
+@media (max-width: 360px) {
+  .demo-cta-text { font-size: 12px; line-height: 1.3; }
+}
+
+/* ─── Relance unique ─── */
+.demo-relance-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(0, 0, 0, .6);
+  animation: demo-relance-fade .18s ease-out;
+}
+.demo-relance {
+  width: 100%;
+  max-width: 380px;
+  padding: 26px 24px 20px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--bg-card);
+  text-align: center;
+}
+.demo-relance-emoji { font-size: 34px; margin-bottom: 8px; }
+.demo-relance-title {
+  margin: 0 0 8px;
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text);
+}
+.demo-relance-text {
+  margin: 0 0 18px;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--text-2);
+}
+.demo-relance-cta {
+  display: block;
+  padding: 12px;
+  border-radius: 10px;
+  background: var(--primary);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: opacity .15s;
+}
+.demo-relance-cta:hover { opacity: .88; }
+.demo-relance-dismiss {
+  margin-top: 10px;
+  min-height: var(--tap-min);
+  padding: 4px 12px;
+  background: none;
+  border: none;
+  color: var(--text-3);
+  font-size: 13px;
+  cursor: pointer;
+}
+.demo-relance-dismiss:hover { color: var(--text); }
+
+@keyframes demo-relance-fade { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  .demo-relance-overlay { animation: none; }
+  .demo-cta-btn, .demo-cta-pill { transition: none; }
+}

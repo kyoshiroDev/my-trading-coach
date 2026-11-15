@@ -4,6 +4,7 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { DemoAllowed } from '../../common/decorators/demo-allowed.decorator';
 import { ProductEventDto } from './dto/product-event.dto';
 import { ProductEventsService } from './product-events.service';
+import { productEventPlace } from './product-events.const';
 
 @Controller('events')
 export class ProductEventsController {
@@ -15,6 +16,6 @@ export class ProductEventsController {
   @DemoAllowed()
   @Throttle({ default: { ttl: 60_000, limit: 60 } })
   async record(@CurrentUser() user: { id: string }, @Body() dto: ProductEventDto): Promise<void> {
-    await this.events.record(user.id, dto.event, dto.place ?? '');
+    await this.events.record(user.id, dto.event, productEventPlace(dto.event, dto.place ?? ''));
   }
 }

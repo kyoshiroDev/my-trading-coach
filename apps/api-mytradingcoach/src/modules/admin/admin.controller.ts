@@ -11,7 +11,7 @@ import { DemoSeedService } from './demo-seed.service';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { DiscordService } from '../discord/discord.service';
 import { CampaignContentDto, SendCampaignDto } from './dto/campaign.dto';
-import { SignupFunnelQueryDto } from './dto/signup-funnel-query.dto';
+import { AcquisitionPeriodQueryDto, AcquisitionQueryDto } from './dto/acquisition-query.dto';
 import { SignupFunnelService } from './signup-funnel.service';
 import { LandingEngagementService } from './landing-engagement.service';
 
@@ -100,34 +100,38 @@ export class AdminController {
     return this.adminService.getRetention();
   }
 
+  // ── Page Acquisition : `?includeTests=true` sur ses 5 routes (funnel, signup-funnel,
+  // landing-engagement, signup-methods, acquisition) remet les campagnes de test et les comptes
+  // internes / ADMIN (#1029). Absent = tests exclus.
+
   /** Entonnoir Premium sur 30 jours : visites → inscrits → Premium vu → offres → essai → Stripe. */
   @Get('funnel')
-  getFunnel() {
-    return this.adminService.getFunnel(30);
+  getFunnel(@Query() query: AcquisitionQueryDto) {
+    return this.adminService.getFunnel(30, query.includeTests ?? false);
   }
 
   /** Parcours d'inscription par source et navigateur intégré, sur 7 ou 30 jours. */
   @Get('signup-funnel')
-  getSignupFunnel(@Query() query: SignupFunnelQueryDto) {
-    return this.signupFunnel.get(query.days ?? 30);
+  getSignupFunnel(@Query() query: AcquisitionPeriodQueryDto) {
+    return this.signupFunnel.get(query.days ?? 30, query.includeTests ?? false);
   }
 
   /** Engagement de la landing (défilement, temps passé, sélecteur de règles) par page et campagne. */
   @Get('landing-engagement')
-  getLandingEngagement(@Query() query: SignupFunnelQueryDto) {
-    return this.landingEngagement.get(query.days ?? 30);
+  getLandingEngagement(@Query() query: AcquisitionPeriodQueryDto) {
+    return this.landingEngagement.get(query.days ?? 30, query.includeTests ?? false);
   }
 
   /** Inscriptions par méthode (e-mail / Google) et finalisation des inscriptions Google (#618). */
   @Get('signup-methods')
-  getSignupMethods() {
-    return this.adminService.getSignupMethods();
+  getSignupMethods(@Query() query: AcquisitionQueryDto) {
+    return this.adminService.getSignupMethods(query.includeTests ?? false);
   }
 
   /** Inscrits et conversion Premium par source UTM (null = direct / non renseigné). */
   @Get('acquisition')
-  getAcquisition() {
-    return this.adminService.getAcquisition();
+  getAcquisition(@Query() query: AcquisitionQueryDto) {
+    return this.adminService.getAcquisition(query.includeTests ?? false);
   }
 
   @Get('stripe/reconcile')

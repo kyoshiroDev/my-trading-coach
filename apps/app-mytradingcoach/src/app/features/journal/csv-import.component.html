@@ -37,6 +37,9 @@
               {{ result()!.failed }} ligne(s) ignorée(s) (format invalide)
             </p>
           }
+          @for (o of result()!.alsoInOtherAccounts ?? []; track o.accountId) {
+            <p class="result-sub" data-testid="import-also-in-account">{{ alsoInOtherAccountLine(o) }}</p>
+          }
           @if (result()!.feesImported; as f) {
             @if (f.merged === false) {
               <!-- Fichier de frais fourni mais inexploitable : le dire, plutôt que

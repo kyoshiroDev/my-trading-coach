@@ -4,7 +4,8 @@ import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 import { ProductEventsService } from './product-events.service';
 import { ProductEventDto } from './dto/product-event.dto';
-import { INSTALL_EVENTS, INSTALL_PLACES, PRODUCT_EVENTS } from './product-events.const';
+import { DEMO_EVENTS, INSTALL_EVENTS, INSTALL_PLACES, PRODUCT_EVENTS, productEventPlace } from './product-events.const';
+import { DEMO_CTA_PLACEMENTS } from '@mtc/shared';
 
 describe('ProductEventsService.record', () => {
   it('upsert atomique jour × user × événement × écran', async () => {
@@ -59,5 +60,21 @@ describe('ProductEventDto', () => {
     expect(await errors({ event: 'page_view' })).not.toHaveLength(0);
     expect(await errors({ event: 'premium_seen', place: 'Jean Dupont' })).not.toHaveLength(0);
     expect(await errors({ event: 'premium_seen', place: 'x'.repeat(41) })).not.toHaveLength(0);
+  });
+});
+
+describe('Bandeau d’inscription de la démo (#1029)', () => {
+  it('les 3 nouveaux événements sont dans la liste blanche, l’ancien bouton aussi (historique)', () => {
+    expect(DEMO_EVENTS.every((e) => (PRODUCT_EVENTS as readonly string[]).includes(e))).toBe(true);
+    for (const e of ['demo_cta_view', 'demo_cta_click', 'demo_modal_shown', 'demo_signup_click']) {
+      expect(PRODUCT_EVENTS as readonly string[]).toContain(e);
+    }
+  });
+
+  it('demo_cta_click : placement de la liste fermée, sinon vide', () => {
+    for (const p of DEMO_CTA_PLACEMENTS) expect(productEventPlace('demo_cta_click', p)).toBe(p);
+    expect(productEventPlace('demo_cta_click', 'journal')).toBe('');
+    expect(productEventPlace('demo_modal_shown', 'journal')).toBe('journal');
+    expect(productEventPlace('premium_seen', 'analytics')).toBe('analytics');
   });
 });

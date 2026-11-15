@@ -81,7 +81,7 @@ POST   /api/session/:id/close          JWT → clôturer, { mood: MoodState, not
 POST   /api/events                     JWT + @DemoAllowed → événements d'usage { event, place } (liste blanche
                                        `PRODUCT_EVENTS` : entonnoir Premium, place = 1er segment de route ;
                                        installation de l'app, place = plateforme), 204, best-effort
-GET    /api/admin/funnel               ADMIN → visites → inscrits → Premium vu → offres → clic essai → retour Stripe ; signupTrial (#769, B3)
+GET    /api/admin/funnel               ADMIN (?includeTests) → visites → inscrits → Premium vu → offres → clic essai → retour Stripe ; signupTrial (#769, B3) ; démo (ouvertures, bandeau vu, relance, clics par placement)
 POST   /api/public/funnel              PUBLIC (60/min/IP), 204 → étape du parcours d'inscription ou engagement landing { step, source?, medium?, campaign?, inApp?, detail?, path? }
 GET    /api/admin/signup-funnel        ADMIN (?days=7|30, défaut 30) → visites + étapes par source/medium/campagne × inApp, erreurs par code
 GET    /api/admin/landing-engagement   ADMIN (?days=7|30, défaut 30) → vues + défilement/temps/sélecteur de / et /prop-firm par page × source/medium/campagne
@@ -944,8 +944,8 @@ Filets posés par `DemoSeedCron` (`modules/admin/demo-seed.cron.ts`) :
   **dev** tourne sans cron (`IS_CRON_WORKER=false` dans `.env.dev`, process unique hors
   `NODE_ENV=production`) ; sa démo était restée au 2026-06-07 (aucun compte, session ouverte
   depuis 2 900 h). `DemoSeedService` vit dans `DemoSeedModule` (importé par Admin et Auth).
-- **Session live TOUJOURS présente** (vitrine, 2026-10-18 : « si le visiteur ne voit pas le live,
-  c'est pas bon ») : le seed crée à chaque run une session ACTIVE du jour sur Apex, avec une
+- **Session live présente EN SEMAINE** (vitrine, 2026-10-18 : « si le visiteur ne voit pas le live,
+  c'est pas bon » ; plus le week-end depuis #977) : le seed crée à chaque run de semaine une session ACTIVE du jour sur Apex, avec une
   position saisie à la main **encore ouverte** (`DemoDay.openTrade`, MNQ, SL + TP, R/R 1 : 2, hors
   stats) rattachée à la session. **Séance vivante à l'heure de la visite** (2026-11-09,
   `demoTodaySlot`) : en semaine de 00:40 à 23:00 (Paris, heures CME), 3 ou 4 trades du jour AVANT
@@ -955,11 +955,17 @@ Filets posés par `DemoSeedCron` (`modules/admin/demo-seed.cron.ts`) :
   de **45 min** (`OPEN_TRADE_MAX_AGE_MS`) : au plus un re-seed toutes les 45 min, les autres
   visiteurs gardent des données stables entre-temps. Hors créneau : coupure de 23:00 (la journée CME
   suivante commence) → aucun trade du jour, position ouverte à 22:50 ; avant 00:40 → position de la
-  dernière séance à 21:40. Week-end (inchangé, décision de Greg en attente) : **aucun trade du jour**
-  (garde-fou `assertDemoCalendar`, il couvre aussi `openTrade`), session ouverte il y a 30 min et
-  position datée du vendredi 21:40 (le front affiche « Marché fermé » le week-end CME). `isStale`
-  re-seede aussi si aucune session n'est active pour la journée de trading en cours
-  (`activeSessionWhere`) ou si le dernier trade CLÔTURÉ est antérieur à la séance attendue.
+  dernière séance à 21:40. **Week-end (décision de Greg du 2026-11-13, #977)** : marché fermé,
+  **ni session live ni position ouverte** ; la dernière séance est celle du vendredi (`kind:
+  'yesterday'`), CLÔTURÉE avec humeur et réflexion. `GET /session/today` la sert au compte démo
+  (`getTodaySession(userId, isDemo)` : séance clôturée depuis le début de la journée CME du vendredi,
+  démo seulement ; les vrais comptes gardent la journée CME en cours) → l'écran Session du jour s'ouvre sur le
+  Débrief, jamais sur « Démarrer la session » (#880). Aucun trade un samedi / dimanche (garde-fou
+  `assertDemoCalendar`, il couvre aussi `openTrade`). `isStale` : en semaine, re-seed si aucune
+  session n'est active pour la journée de trading en cours (`activeSessionWhere`) ; le week-end,
+  re-seed s'il reste une session ACTIVE ou une position ouverte (seed du vendredi soir) ; toujours
+  re-seed si le dernier trade CLÔTURÉ est antérieur à la séance attendue. Re-seed 45 min en
+  semaine : gardé (même décision).
 - **« Aujourd'hui » = journée de trading CME**, jamais minuit serveur : `getTodayTrades`,
   `getTodaySession` et le rattachement des trades à la clôture (`closeSession`, fenêtre
   `[tradingDayStart, tradingDayEnd[`) utilisent les mêmes bornes que la session active (audit des
@@ -975,8 +981,8 @@ Filets posés par `DemoSeedCron` (`modules/admin/demo-seed.cron.ts`) :
 Invariants verrouillés par `demo-seed-idempotence.spec.ts` : purge **avant** recréation
 et **scopée `userId`** (un re-run remplace, il n'empile pas) · tous les trades dans les
 `DEMO_WINDOW_DAYS` (42, soit 6 semaines) derniers jours, la vue « 1M » restant pleine · J-0 et
-J-1 peuplés · session du jour ACTIVE **même le week-end**, démarrée aujourd'hui, une seule position
-ouverte (SL + TP), **aucun trade après `now`** ni un samedi / dimanche (même
+J-1 peuplés · en semaine, session du jour ACTIVE démarrée aujourd'hui avec une seule position
+ouverte (SL + TP) ; le week-end, aucune session ACTIVE ni position ouverte, séance du vendredi CLÔTURÉE · **aucun trade après `now`** ni un samedi / dimanche (même
 quand le cron tourne à 03:20 : les trades du jour sont calés avant l'heure du run) ·
 P&L total < 15 % du capital et pertes visibles (sobriété AMF : on montre la
 fonctionnalité, jamais une performance). Le capital n'y est **jamais en dur** : les tests
@@ -1224,6 +1230,30 @@ Premier broker synchronisé par **API** plutôt que par fichier. Module
   étaient écartées comme doublons. Un trade API doit avoir
   EXACTEMENT la forme d'un trade CSV du même broker (règles partagées dans
   `trades/tradovate-pair.util.ts`, utilisées par les DEUX chemins).
+- **Dédoublonnage PAR COMPTE (#1001, décision du 15/11)** : un trade n'est un doublon que s'il existe
+  déjà dans le compte où il va. Le même trade copié sur deux comptes (copy trading) = deux trades.
+  `importTrades` résout le compte de chaque ligne comme `create` (`targetAccountId` : fourni → séance
+  active → compte par défaut), puis applique empreinte, répétitions et rapprochements (autre fuseau,
+  ancien P&L net MEXC, ancien arrondi) dans ce compte seulement (`AccountDedupeStates`,
+  `trades/account-dedupe-state.ts`). Les trades sans compte comptent pour tous (0 en prod le 15/11).
+  Empreinte stockée `a:<compte>|<clé>` (`accountImportHash`) : l'index `@@unique([userId, importHash])`
+  ne change PAS (aucune migration) ; une empreinte d'avant #1001 (sans préfixe) reste reconnue au
+  ré-import dans son compte (comparaison des champs). Les clés de position `tv:<fill>` restent sans
+  préfixe. Résultat : `alsoInOtherAccounts` (`[{ accountId, name, count }]`), affiché par l'import CSV
+  (« 12 trades existent aussi dans le compte « X » : importés ici aussi. »). « Supprimer les doublons »
+  (`accountDuplicateIdentity`) compare dans un même compte, jamais d'un compte à l'autre.
+  Tradovate (`assertNotMixingAccounts`) : un compte Tradovate déjà relié à un autre compte MTC du
+  trader est refusé (`TRADOVATE_ACCOUNT_LINKED_ELSEWHERE`, N8) ; changer de compte Tradovate quand le
+  compte MTC contient déjà des trades synchronisés est refusé (`TRADOVATE_ACCOUNT_HAS_OTHER_TRADES`,
+  N7). Limite : après un compte disparu chez Tradovate (détaché), l'ancien n'est plus connu. Preuve :
+  `import-par-compte.int-spec.ts`, `tradovate-select-account.spec.ts`.
+  Empreintes d'avant #1001 : un trade importé puis MODIFIÉ ne se reconnaît plus à ses champs ; ses
+  empreintes sans préfixe sont relues en base pour les clés du lot (`occurrenceHash(clé, 1..n)`) et
+  restent prises dans LEUR compte (une empreinte d'un autre compte ne bloque rien).
+  Un trade réaffecté garde l'empreinte de son compte d'origine : ré-importé dans l'ancien compte, il
+  compte comme doublon (P2002), jamais recréé. Tout script de réparation qui réécrit `importHash` doit
+  garder le préfixe (`accountImportHash(t.accountId, …)`) et chercher les collisions avec l'empreinte
+  préfixée (les `empreinteLibre` des scripts #780 / #950 écrivent une empreinte sans préfixe).
 - **Un trade Tradovate = une POSITION (#956, décision du 13/11)**, de l'ouverture au retour à plat,
   plus une paire de fills. `trades/tradovate-position-group.util.ts` (pur) regroupe les paires par
   le cumul net des exécutions, contrat par contrat, dans les TROIS chemins : synchro (mapper puis
@@ -1982,6 +2012,30 @@ l'ancien front après le déploiement est refusé jusqu'au rechargement : il gar
   existants (`/admin/acquisition`, `/admin/funnel`) gardent leur exclusion `isDemo` / ADMIN.
 - Pas de donnée personnelle (exemption CNIL, comme les visites) : ne jamais ajouter UA brut, e-mail,
   IP ni identifiant de session à ces routes ou à la table.
+- `detail: 'demo'` (`SIGNUP_FUNNEL_ORIGINS`, #1029) accepté sur `register_view`, `register_submit` et
+  `register_success` : inscription partie du bandeau de la démo (`/register?source=demo`). Le parcours
+  admin additionne toujours les étapes quel que soit le `detail`.
+
+## Campagnes de test exclues de l'admin Acquisition (#1029, nov. 2026)
+
+- **Une seule liste** : `TEST_ACQUISITION_PATTERNS` (`libs/shared/src/test-acquisition.ts`) =
+  `test`, `test-*`, `ami`, appliquée à la source, au medium ET à la campagne, sans casse. Motif sans
+  `*` = valeur exacte, `*` final = préfixe ; jamais « contient » (`contest`, `latest-promo`, `miami`,
+  `amis-trading` restent). Ajouter une campagne de test = un motif ici + une ligne dans
+  `.claude/decisions.md`.
+- SQL : `common/stats/test-acquisition.ts`. `notTestAcquisitionSql` (`LOWER(COALESCE(col,'')) LIKE ANY
+  (ARRAY[…])`, motifs passés par `testPatternToLike` : `\`, `_`, `%` échappés) ;
+  `acquisitionUsersSql(includeTests)` = `realUsersSql` + hors campagne de test, ou `"isDemo" = false`
+  seul avec les tests (internes et ADMIN compris, **la démo toujours exclue**) ;
+  `anonymousAcquisitionSql(includeTests)` pour `LandingVisitDaily` / `FunnelEventDaily`.
+  Propre à Acquisition : les autres pages gardent `realUsersSql()`.
+- Les 5 routes de la page (`/admin/acquisition`, `/funnel`, `/signup-funnel`, `/landing-engagement`,
+  `/signup-methods`) prennent `?includeTests=true|1` (`AcquisitionQueryDto`,
+  `AcquisitionPeriodQueryDto` avec `days`) ; absent = tests exclus. Rien n'est supprimé en base.
+  Vérifié sur une vraie base : `common/stats/test-acquisition.int-spec.ts`.
+- **Limite** : les `register_success` anonymes envoyés sans UTM par des tests passés ne sont pas
+  filtrables (aucune jointure User). L'admin affiche à côté le nombre de comptes créés (`funnel.signups`).
+  Pour tester : ouvrir l'app avec `?internal=1` avant (plus rien n'est envoyé).
 
 ## Catalogue prop firm : synchro au démarrage (PROMPT-136, 2026-10-02)
 
@@ -2687,8 +2741,13 @@ global à la file ; Resend = 10 req/s par équipe, clé partagée entre environn
 `modules/product-events/` : `POST /api/events` (JWT, `@DemoAllowed`, 60/min) → `ProductEventsService.record`
 → `ProductEventDaily` (jour Paris × user × événement × écran, `INSERT … ON CONFLICT` +1, best-effort).
 Événements : `premium_seen`, `plan_modal_open`, `trial_click`, `checkout_return` (place `success` /
-`canceled`), `demo_signup_click` (front) et `demo_open` (enregistré par `AuthService.demoLogin`).
-`AdminService.getFunnel(30)` : étapes en users DISTINCTS hors démo et ADMIN, démo en occurrences,
+`canceled`), `demo_open` (enregistré par `AuthService.demoLogin`, **sauf** `{ internal: true }` dans le
+corps de `POST /auth/demo-login`, `DemoLoginDto`, #1029), bandeau de la démo (#1029) : `demo_cta_view`,
+`demo_cta_click` (place ramené par `productEventPlace` à `DEMO_CTA_PLACEMENTS` = `banner|pill|modal|action`,
+sinon `''`), `demo_modal_shown` ; `demo_signup_click` (ancien bouton, plus émis, gardé 13 mois et compté
+avec `demo_cta_click`). `DEMO_EVENTS` = les 5 de la démo.
+`AdminService.getFunnel(30, includeTests)` : étapes en users DISTINCTS hors démo et ADMIN, démo en occurrences
+(`demo` : `opens`, `signupClicks`, `ctaViews`, `modalShown`, `clicksByPlacement`),
 détail par écran, état Stripe actuel. But : savoir où le Premium donne envie, avant de toucher à la durée
 de l'essai (0 essai en prod au 2026-10-07, décision : garder 30 jours).
 Installation de l'app (2026-10-25) : 8 événements de plus (`INSTALL_EVENTS` : `install_shown`,

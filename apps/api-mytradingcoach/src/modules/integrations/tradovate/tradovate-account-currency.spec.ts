@@ -45,7 +45,7 @@ describe('TradovateConnectionService — devise lue chez le broker', () => {
       // Compteur des trades importés renvoyé avec la vue (aucun ici).
       trade: { groupBy: vi.fn().mockResolvedValue([]) },
       brokerConnection: {
-        findFirst: vi.fn().mockResolvedValue(conn),
+        findFirst: vi.fn((args: { where: { accountId?: unknown } }) => Promise.resolve(typeof args.where.accountId === 'object' ? null : conn)), // #1001 : aucun autre compte MTC relié au même compte broker
         // Garde-fou « déjà relié ailleurs » : personne d'autre sur ce compte ici.
         findMany: vi.fn().mockResolvedValue([]),
         update: vi.fn().mockResolvedValue({ ...conn, externalAccountId: '90000020', externalEnv: 'demo' }),

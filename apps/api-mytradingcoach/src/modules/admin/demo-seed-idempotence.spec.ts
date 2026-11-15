@@ -657,24 +657,22 @@ describe('seedDemo — réalisme validé : un trader crédible, pas un gagnant p
     }
   });
 
-  it('le week-end : session live quand même (vitrine), marché fermé, position gardée depuis vendredi', async () => {
-    const now = saturdayAt(11);
-    const { prisma, created } = fakePrisma([]);
-    await seedDemo(prisma, now);
-
-    const active = created['tradeSession'].filter((x) => x['status'] === 'ACTIVE');
-    expect(active).toHaveLength(1);
-    expect((active[0]['startedAt'] as Date) <= now).toBe(true);
-    // Aucun trade daté du week-end ; dernier trade clôturé et position ouverte : vendredi.
-    const last = Math.max(...created['trade'].filter((t) => t['pnl'] !== null).map((t) => (t['tradedAt'] as Date).getTime()));
-    expect(new Date(last).getDay()).toBe(5);
-    const open = created['trade'].filter((t) => t['pnl'] === null);
-    expect(open).toHaveLength(1);
-    expect((open[0]['tradedAt'] as Date).getDay()).toBe(5);
-    // Faux Prisma : id = `<modèle>-<rang de création>` ; la position est rattachée à la session live.
-    expect(open[0]['sessionId']).toBe(`tradeSession-${created['tradeSession'].indexOf(active[0]) + 1}`);
-    expect(open[0]['stopLoss']).not.toBeNull();
-    expect(open[0]['takeProfit']).not.toBeNull();
+  it('le week-end (#977) : ni session live ni position ouverte, la séance du vendredi est clôturée', async () => {
+    for (const now of [saturdayAt(0), saturdayAt(11), new Date(saturdayAt(15).getTime() + 24 * 3600_000)]) {
+      const { prisma, created } = fakePrisma([]);
+      await seedDemo(prisma, now);
+      const label = `seed du ${now.toString()}`;
+      expect(created['tradeSession'].filter((x) => x['status'] === 'ACTIVE'), label).toHaveLength(0);
+      expect(created['trade'].filter((t) => t['pnl'] === null), label).toHaveLength(0);
+      // Dernière séance : vendredi, clôturée, avec ses trades et son débrief (humeur, réflexion).
+      const last = created['tradeSession'].reduce((a, b) => ((b['startedAt'] as Date) > (a['startedAt'] as Date) ? b : a));
+      expect((last['startedAt'] as Date).getDay(), label).toBe(5);
+      expect(last['status']).toBe('CLOSED');
+      expect(last['endedAt']).not.toBeNull();
+      expect(last['moodEnd']).toBeTruthy();
+      const lastSessionId = `tradeSession-${created['tradeSession'].indexOf(last) + 1}`;
+      expect(created['trade'].filter((t) => t['sessionId'] === lastSessionId).length).toBeGreaterThan(0);
+    }
   });
 
   it('garde-fou : un trade un week-end ou hors futures fait échouer le seed', () => {
@@ -846,7 +844,6 @@ describe('séance du jour de la démo selon l’heure (horloge figée)', () => {
   const HOURS: Record<string, string> = {
     'lundi 10:30 Paris': '2026-11-09T09:30:00Z',
     'lundi 22:00 Paris': '2026-11-09T21:00:00Z',
-    'dimanche 15:00 Paris': '2026-11-08T14:00:00Z',
     'lundi 01:30 Paris (reseed du demo-login)': '2026-11-09T00:30:00Z',
   };
   afterEach(() => vi.useRealTimers());
@@ -870,4 +867,17 @@ describe('séance du jour de la démo selon l’heure (horloge figée)', () => {
       expect((session['startedAt'] as Date).getTime()).toBeLessThanOrEqual(now.getTime());
     });
   }
+
+  // Week-end (#977) : aucune séance active ; l'API sert au compte démo la séance du vendredi clôturée.
+  it('dimanche 15:00 Paris : aucune séance active, séance du vendredi clôturée', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-11-08T14:00:00Z'));
+    const now = new Date();
+    const { prisma, created } = fakePrisma([]);
+    await seedDemo(prisma, now);
+    expect(created['tradeSession'].filter((s) => s['status'] === 'ACTIVE')).toHaveLength(0);
+    const friday = created['tradeSession'].filter((s) => (s['startedAt'] as Date).toDateString() === new Date('2026-11-06T12:00:00Z').toDateString());
+    expect(friday).toHaveLength(1);
+    expect(friday[0]['status']).toBe('CLOSED');
+  });
 });

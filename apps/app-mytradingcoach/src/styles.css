@@ -149,6 +149,20 @@ textarea {
   .main-content:has(.floating-add-btn) {
     padding-bottom: calc(env(safe-area-inset-bottom) + 92px);
   }
+
+  /* Démo (#1029) : le bandeau d'inscription est collé en bas de .main-content. Un padding du bas
+     décalerait son point d'accroche (le sticky se cale au-dessus du padding) : il passe à 0, le « + »
+     remonte au-dessus du bandeau, et la réserve qu'il lui faut (.demo-cta-fab-space, 80 px) se place
+     juste avant le bandeau pour que la fin de page reste visible. */
+  .main-content.has-demo-cta:has(.floating-add-btn) {
+    padding-bottom: 0;
+  }
+  .main-content.has-demo-cta .floating-add-btn {
+    bottom: calc(var(--demo-cta-h) + 16px);
+  }
+  .main-content.has-demo-cta:has(.floating-add-btn) .demo-cta-fab-space {
+    display: block;
+  }
 }
 
 /* ─── Pages du shell sans topbar commune (Mes sessions, Calendrier éco, Parrainage, Ambassadeur,

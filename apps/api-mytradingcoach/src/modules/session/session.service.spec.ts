@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { Test } from '@nestjs/testing';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { SessionService } from './session.service';
+import { tradingDayStart } from './active-session';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../infra/redis.service';
 import { AccountsService } from '../accounts/accounts.service';
@@ -152,6 +153,22 @@ describe('SessionService', () => {
       });
       expect(query.orderBy).toEqual({ endedAt: 'desc' });
       expect(query.include.trades).toBeDefined();
+    });
+
+    it('compte démo le week-end (#977) : séance clôturée depuis le vendredi 00:00', async () => {
+      mockPrisma.tradeSession.findFirst.mockResolvedValueOnce(null).mockResolvedValueOnce(null);
+      await service.getTodaySession('demo', true, new Date('2026-11-15T15:00:00')); // dimanche
+      const from = mockPrisma.tradeSession.findFirst.mock.calls[1][0].where.startedAt.gte as Date;
+      expect(from.getTime()).toBe(tradingDayStart(new Date('2026-11-13T12:00:00')).getTime()); // journée CME du vendredi
+      expect(from.getTime()).toBe(new Date('2026-11-12T23:00:00Z').getTime()); // jeudi 17:00 Chicago = vendredi 00:00 Paris
+    });
+
+    it('vrai compte le week-end : seulement la journée CME en cours (inchangé)', async () => {
+      mockPrisma.tradeSession.findFirst.mockResolvedValueOnce(null).mockResolvedValueOnce(null);
+      const sunday = new Date('2026-11-15T15:00:00');
+      await service.getTodaySession('user-1', false, sunday);
+      const from = mockPrisma.tradeSession.findFirst.mock.calls[1][0].where.startedAt.gte as Date;
+      expect(from.getTime()).toBe(tradingDayStart(sunday).getTime());
     });
   });
 
