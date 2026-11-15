@@ -8,7 +8,7 @@ import {
 import { Prisma, Role } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuthUserCacheService } from '../infra/auth-user-cache.service';
-import { referralMonthlyCommission } from './ambassador-commission.util';
+import { isPayingReferral, referralMonthlyCommission } from './ambassador-commission.util';
 import { roundCents } from '@mtc/shared';
 import { emailEquals } from '../../common/utils/email.util';
 
@@ -42,6 +42,8 @@ export interface ReferralUser {
   isActive: boolean;
   /** 20 % du montant mensuel réellement payé (fondateur, annuel ÷ 12, code partenaire) ; 0 sans abonnement actif. */
   monthlyCommission: number;
+  /** Abonnement Premium `active` : « Payant » (un essai ou une pause n'en est pas un). */
+  paying: boolean;
 }
 
 export interface AmbassadorStats {
@@ -331,6 +333,7 @@ export class AmbassadorService {
         createdAt: u.createdAt,
         isActive: u._count.trades > 0,
         monthlyCommission: referralMonthlyCommission(u, now),
+        paying: isPayingReferral(u),
       })),
       total: referredUsers.length,
       free,

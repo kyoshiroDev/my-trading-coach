@@ -1147,6 +1147,9 @@ affichés (service réel, pas besoin de le mocker). Pour un composant qui monte 
 `mtc-toasts` via `matchMedia`), les autres en file (« +N »). Avant : jusqu'à 3 toasts à 92 px du bas,
 en plein contenu. Le refus « mode démo » (403 `DemoReadOnlyGuard`) ne fait **jamais** de toast :
 `demoInterceptor` ouvre déjà l'invite « Crée ton compte » (`ToastService.show` l'ignore).
+Le 403 `PREMIUM_REQUIRED` (`PremiumGuard`) : `premiumInterceptor` relit le compte (une fois par 10 s)
+pour que les écrans gatés repassent au cadenas, et `apiErrorMessage` rend « Cette fonctionnalité est
+réservée au Premium. » au lieu du repli de l'écran (B17 #1013).
 ## Librairie partagée `@mtc/shared` (2026-09-13)
 
 - Import `from '@mtc/shared'` (stats de trades, valeurs tarifaires) — source unique avec l'API.
@@ -1378,7 +1381,12 @@ en plein contenu. Le refus « mode démo » (403 `DemoReadOnlyGuard`) ne fait **
   formulaire Stripe (Checkout Elements, `@stripe/stripe-js` épinglé 9.17.0 = Stripe.js `dahlia`) :
   Apple Pay / Google Pay / Link en boutons express, carte (CB co-badgée reconnue) et Klarna dans le
   formulaire. Textes par offre : `checkout-copy.ts` (fonction pure, testée) ; montant du jour lu dans
-  la session. Après paiement : `/dashboard?checkout=success`. Si l'API renvoie `{ url }` (clé
+  la session. Après paiement : `/dashboard?checkout=success`, traité au niveau de l'app par
+  `CheckoutReturnService` (appelé par `App` à chaque navigation, une fois par chargement) : toast,
+  `/auth/me` relu à 0 / 2,5 / 5 / 10 s jusqu'à voir l'abonnement, offres rechargées, puis `checkout`
+  et `session_id` retirés de l'URL (B2 #1013 ; le Profil n'a plus de bandeau). `/paiement` ne capture
+  jamais d'intention d'offre (B7). Confirmation express refusée (paiement en cours, rejet de
+  `actions.confirm`) : toujours `paymentFailed`, bouton rendu (B16). Si l'API renvoie `{ url }` (clé
   publiable absente), repli sur la page Stripe. Hauteur du formulaire figée après chargement
   (passer à Klarna ne fait rien bouger) ; colonne gauche collante en desktop.
   **Boutons express** (#818) : ils arrivent 3 à 7 s après le formulaire carte. Leur zone
@@ -1508,7 +1516,10 @@ L'API lit ce corps en JSON sur cette route seulement (cf. nestjs.md). Ne pas rev
   `AuthUser` porte `trialSource` et `signupTrialEndsAt`.
 - **Bandeau** « Premium offert · il te reste N jours » + « Voir les offres → » (`OfferIntentService.open('bandeau')`) :
   dans `mtc-topbar`, sous l'en-tête, NON collant (les vues calées sur le viewport n'ont pas de topbar
-  et `--demo-banner-h` n'est pas touché). Spec : `topbar-trial-strip.spec.ts`.
+  et `--demo-banner-h` n'est pas touché). Spec : `topbar-trial-strip.spec.ts`. Masqué pendant une
+  pause (`past_due` / `unpaid`) : son bouton mènerait au 409 `PAYMENT_PENDING` (B13 #1013). Le Profil
+  dit « dernier jour » le jour de la fin, comme le bandeau (B11). Bouton du portail Stripe seulement
+  avec un abonnement payant ou en essai (`hasBillingPortal`, B10).
 - **Fenêtre des offres** pendant l'essai : plus de « 1 mois offert » (`trialUsed` posé à l'inscription)
   et une ligne `plan-trial-note` : fin du Premium offert (JJ/MM) et paiement dès la souscription.
 - **Fin d'essai** : `mtc-trial-ended-modal` (shell, `@defer (when userStore.signupTrialEnded())`), une
@@ -1859,3 +1870,11 @@ textes (la déconnexion supprime nos jetons, elle ne révoque rien chez Tradovat
 - Dashboard matin (`session-morning`) : `ecoBriefing` = `ecoCalendar().briefing` filtré sur
   `status === 'upcoming'` (aujourd'hui seulement) ; une ligne factuelle calculée côté serveur, affichée telle
   quelle (`line.text`), aucune direction ni conseil.
+
+## Profil : e-mail en lecture seule (#1020, 2026-11-15)
+
+L'e-mail du Profil s'affiche sans bouton « Modifier ». Avant, il envoyait `{ email }` à `PATCH /users/me`,
+dont le DTO API n'accepte que `name` (`forbidNonWhitelisted` → 400 à chaque essai). `UpdateMeDto` du front
+= `name` seul, comme l'API. Changer d'adresse = fonctionnalité à part (lien de confirmation sur la
+nouvelle adresse, `emailTransform` / `emailEquals` côté API, 409 si l'adresse est prise), pas un champ
+à remettre ici. Test : `profile-email-lecture-seule.spec.ts`.

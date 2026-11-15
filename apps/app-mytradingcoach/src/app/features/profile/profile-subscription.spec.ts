@@ -118,6 +118,16 @@ describe('Profil > Abonnement', () => {
   });
 
   it.each([
+    ['ADMIN sans abonnement', { role: 'ADMIN', plan: 'FREE' }],
+    ['BETA_TESTER sans abonnement', { role: 'BETA_TESTER', plan: 'FREE' }],
+    ['Premium manuel (sans Stripe)', { role: 'USER', plan: 'PREMIUM' }],
+  ])('%s : pas de bouton du portail Stripe (aucun client Stripe, B10 #1013)', (_l, over) => {
+    const text = render({ offered: false, user: { ...over, trialEndsAt: null, stripeSubscriptionStatus: null } }).textContent ?? '';
+    expect(text).not.toContain('Gérer mon abonnement');
+    expect(text).not.toContain('annuler mon essai');
+  });
+
+  it.each([
     ['Premium offert', { offered: true }],
     ['essai d’inscription', { offered: false, signup: true }],
     ['essai Stripe', { offered: false }],
@@ -329,5 +339,24 @@ describe('Profil > Abonnement : jours restants en jours de calendrier, comme le 
     };
     expect(days(new Date(2026, 10, 1, 23, 59))).toContain('il te reste 2 jours');
     expect(days(new Date(2026, 10, 2, 0, 1))).toContain('il te reste 1 jour');
+  });
+
+  it('le dernier jour : « dernier jour », jamais « il te reste 0 jour » (B11 #1013)', () => {
+    const end = new Date(2026, 10, 3, 20, 0).toISOString();
+    for (const user of [
+      { trialSource: 'SIGNUP', trialEndsAt: end },
+      { plan: 'PREMIUM', trialEndsAt: null, stripeSubscriptionStatus: 'trialing', stripeCurrentPeriodEnd: end },
+    ]) {
+      TestBed.resetTestingModule();
+      vi.useFakeTimers({ now: new Date(2026, 10, 3, 9, 0), toFake: ['Date'] });
+      try {
+        const signup = user.trialSource === 'SIGNUP';
+        const text = render({ offered: false, signup, user }).textContent ?? '';
+        expect(text).toContain(signup ? 'Premium offert\u00a0: dernier jour' : 'Essai gratuit\u00a0: dernier jour');
+        expect(text).not.toContain('0 jour');
+      } finally {
+        vi.useRealTimers();
+      }
+    }
   });
 });

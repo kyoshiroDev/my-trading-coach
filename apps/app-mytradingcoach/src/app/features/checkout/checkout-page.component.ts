@@ -243,13 +243,27 @@ export class CheckoutPageComponent {
   }
 
   protected async confirm(expressEvent?: StripeExpressCheckoutElementConfirmEvent): Promise<void> {
-    if (!this.actions || this.paying()) return;
+    // Paiement express refusé : toujours le dire à Stripe (paymentFailed), sinon la feuille Apple Pay /
+    // Google Pay reste ouverte en attente (B16 #1013).
+    if (!this.actions || this.paying()) {
+      expressEvent?.paymentFailed({ reason: 'fail' });
+      return;
+    }
     this.paying.set(true);
     this.payError.set(null);
-    const res = await this.actions.confirm({
-      redirect: 'if_required',
-      ...(expressEvent ? { expressCheckoutConfirmEvent: expressEvent } : {}),
-    });
+    let res: Awaited<ReturnType<StripeCheckoutLoadActionsSuccess['confirm']>>;
+    try {
+      res = await this.actions.confirm({
+        redirect: 'if_required',
+        ...(expressEvent ? { expressCheckoutConfirmEvent: expressEvent } : {}),
+      });
+    } catch {
+      // Rejet (réseau, Stripe.js) : bouton rendu, sinon il resterait bloqué sur « paiement en cours ».
+      expressEvent?.paymentFailed({ reason: 'fail' });
+      this.payError.set('Le paiement n’a pas pu aboutir. Réessaie dans un instant.');
+      this.paying.set(false);
+      return;
+    }
     if (res.type === 'error') {
       this.payError.set(res.error.message);
       this.paying.set(false);

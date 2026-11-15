@@ -13,12 +13,20 @@ export interface ReferralBilling {
 }
 
 /**
+ * Filleul payant : Premium avec un abonnement `active`, la seule base des commissions. Un essai
+ * (`trialing`) ou une pause (`past_due`, `unpaid`) n'est pas « Payant » (B12 #1013).
+ */
+export function isPayingReferral(u: Pick<ReferralBilling, 'plan' | 'stripeSubscriptionStatus'>): boolean {
+  return u.plan === 'PREMIUM' && u.stripeSubscriptionStatus === 'active';
+}
+
+/**
  * Commission mensuelle estimée d'un filleul : 20 % du montant MENSUEL réellement payé (fondateur,
  * annuel ÷ 12, code partenaire), même calcul que le MRR admin (`realMonthlyEur`, abonnements
  * `active` seulement). Avant (#947), 9,80 € fixes pour tout filleul Premium, essai compris.
  */
 export function referralMonthlyCommission(u: ReferralBilling, now: Date): number {
-  if (u.plan !== 'PREMIUM' || u.stripeSubscriptionStatus !== 'active') return 0;
+  if (!isPayingReferral(u)) return 0;
   const r = u.partnerRedemption?.status === 'ACTIVE' ? u.partnerRedemption : null;
   const monthly = realMonthlyEur({
     interval: u.stripeInterval === 'year' ? 'year' : 'month',

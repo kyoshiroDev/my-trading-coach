@@ -56,6 +56,14 @@ describe('UserStore : essai d’inscription (#769)', () => {
     expect(store.signupTrialDaysLeft()).toBeNull();
   });
 
+  it('pause (past_due / unpaid) pendant l’essai : pas de bandeau d’essai, son bouton mènerait au 409 (B13 #1013)', () => {
+    for (const status of ['past_due', 'unpaid']) {
+      set({ trialSource: 'SIGNUP', trialEndsAt: inDays(5), stripeSubscriptionStatus: status });
+      expect(store.signupTrialDaysLeft()).toBeNull();
+      expect(store.isPremium()).toBe(true); // l'accès offert continue (Profil : « Paiement en attente »)
+    }
+  });
+
   it('Premium offert par l’admin : jamais l’essai d’inscription', () => {
     set({ trialSource: 'SIGNUP', trialEndsAt: inDays(5) });
     expect(store.isOfferedPremium()).toBe(false);
