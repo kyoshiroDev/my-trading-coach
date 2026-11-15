@@ -100,7 +100,10 @@ export class AdminController {
     return this.adminService.getRetention();
   }
 
-  /** `?includeTests=true` sur les 5 routes de la page Acquisition : campagnes de test et comptes internes / ADMIN remis (#1029). */
+  // ── Page Acquisition : `?includeTests=true` sur ses 5 routes (funnel, signup-funnel,
+  // landing-engagement, signup-methods, acquisition) remet les campagnes de test et les comptes
+  // internes / ADMIN (#1029). Absent = tests exclus.
+
   /** Entonnoir Premium sur 30 jours : visites → inscrits → Premium vu → offres → essai → Stripe. */
   @Get('funnel')
   getFunnel(@Query() query: AcquisitionQueryDto) {
