@@ -139,6 +139,13 @@ describe('AuthService', () => {
       await service.demoLogin();
       expect(mockProductEvents.record).toHaveBeenCalledWith('demo-id', 'demo_open');
     });
+
+    it('mode interne (?internal=1, #1029) : connexion servie, ouverture non comptée', async () => {
+      mockPrisma.user.findFirst.mockResolvedValue({ ...mockSafeUser, id: 'demo-id' });
+      mockProductEvents.record.mockClear();
+      await expect(service.demoLogin(true)).resolves.toMatchObject({ access_token: 'mock_token' });
+      expect(mockProductEvents.record).not.toHaveBeenCalled();
+    });
   });
 
   describe('register', () => {

@@ -1,3 +1,5 @@
+import { DEMO_CTA_PLACEMENTS } from '@mtc/shared';
+
 /**
  * Événements d'usage de l'app (liste blanche), rattachés au compte et partagés par l'API et l'admin.
  * Conservés 13 mois (`RetentionCron`, purge quotidienne) et effacés avec le compte (cascade).
@@ -8,7 +10,11 @@
  * - `trial_click`      : clic « Essayer » / « Passer Premium » dans la modale (départ vers Stripe)
  * - `checkout_return`  : retour de Stripe (`place` = `success` ou `canceled`)
  * - `demo_open`        : connexion au compte démo (enregistré côté API)
- * - `demo_signup_click`: clic « Créer mon compte » depuis la démo
+ * - `demo_signup_click`: ancien bouton « Créer mon compte » de la démo (plus émis depuis #1029,
+ *                        gardé pour l'historique de 13 mois, compté avec `demo_cta_click`)
+ * - `demo_cta_view`    : bandeau d'inscription de la démo affiché (une fois par visite, `place` = `banner`)
+ * - `demo_cta_click`   : clic « Créer mon compte » de la démo, `place` = placement (`DEMO_CTA_PLACEMENTS`)
+ * - `demo_modal_shown` : relance unique de la démo affichée (`place` = écran)
  *
  * Installation de l'app (`place` = plateforme, `INSTALL_PLACES`) :
  * - `install_shown`  : la feuille d'installation s'affiche (une fois par session)
@@ -28,6 +34,9 @@ export const PRODUCT_EVENTS = [
   'checkout_return',
   'demo_open',
   'demo_signup_click',
+  'demo_cta_view',
+  'demo_cta_click',
+  'demo_modal_shown',
   'install_shown',
   'install_click',
   'install_done',
@@ -38,6 +47,24 @@ export const PRODUCT_EVENTS = [
   'push_denied',
 ] as const;
 export type ProductEvent = (typeof PRODUCT_EVENTS)[number];
+
+/** Événements de la démo, comptés en occurrences (un seul compte démo partagé) dans l'admin. */
+export const DEMO_EVENTS = [
+  'demo_open',
+  'demo_signup_click',
+  'demo_cta_view',
+  'demo_cta_click',
+  'demo_modal_shown',
+] as const satisfies readonly ProductEvent[];
+
+/**
+ * `place` d'un événement, ramené à sa liste fermée quand il en a une : un clic de la démo hors
+ * `DEMO_CTA_PLACEMENTS` est enregistré sans placement (jamais une valeur libre).
+ */
+export function productEventPlace(event: ProductEvent, place: string): string {
+  if (event === 'demo_cta_click') return (DEMO_CTA_PLACEMENTS as readonly string[]).includes(place) ? place : '';
+  return place;
+}
 
 /** Événements de l'installation, comptés par plateforme dans l'admin. */
 export const INSTALL_EVENTS = [
