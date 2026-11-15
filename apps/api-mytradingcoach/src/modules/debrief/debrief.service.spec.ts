@@ -216,6 +216,32 @@ describe('DebriefService', () => {
       expect(mockAiService.releaseDailyLimit).not.toHaveBeenCalled();
     });
 
+    it('C5 (#1045) : objectifs = débrief strictement AVANT la semaine visée, à cheval sur l’année', async () => {
+      mockPrisma.weeklyDebrief.findUnique.mockResolvedValue(mockDebrief);
+      mockPrisma.weeklyDebrief.findFirst.mockResolvedValue(null);
+      mockPrisma.weeklyDebrief.upsert.mockResolvedValue(mockDebrief);
+
+      // Semaine ISO 1 de 2027 (lundi 4 janvier) : la semaine 53 de 2026 doit pouvoir servir.
+      await service.generate('user-123', Role.USER, true, { refDate: new Date('2027-01-06T12:00:00'), force: true });
+
+      expect(mockPrisma.weeklyDebrief.findFirst).toHaveBeenCalledWith({
+        where: { userId: 'user-123', OR: [{ year: { lt: 2027 } }, { year: 2027, weekNumber: { lt: 1 } }] },
+        orderBy: [{ year: 'desc' }, { weekNumber: 'desc' }],
+      });
+    });
+
+    it('C5 (#1045) : séances récentes bornées à la fin de la semaine visée', async () => {
+      mockPrisma.weeklyDebrief.findUnique.mockResolvedValue(null);
+      mockPrisma.weeklyDebrief.findFirst.mockResolvedValue(null);
+      mockPrisma.weeklyDebrief.upsert.mockResolvedValue(mockDebrief);
+
+      await service.generate('user-123', Role.USER, true, { refDate: new Date('2026-06-24T12:00:00') });
+
+      expect(mockSessionService.getSessionHistory).toHaveBeenCalledWith(
+        'user-123', 5, 0, { before: new Date('2026-06-28T23:59:59.999') },
+      );
+    });
+
     it('idempotent : débrief existant + pas de force → retourne l\'existant, zéro IA, zéro upsert', async () => {
       mockPrisma.weeklyDebrief.findUnique.mockResolvedValue(mockDebrief);
 

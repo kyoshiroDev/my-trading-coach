@@ -158,9 +158,12 @@ export class DebriefService {
     // Format (`debriefStats`) partagé avec le script de recalcul des anciens débriefs (#943).
     const stats = debriefStats(await this.analyticsService.getSummary(userId, undefined, startDate, endDate));
 
+    // C5 (#1045) : le débrief immédiatement AVANT la semaine visée, à cheval sur l'année. Avant,
+    // `{ userId, year }` trié par semaine renvoyait le débrief de la semaine elle-même en
+    // régénération, une semaine plus récente pour une semaine passée, et rien en semaine 1.
     const previousDebrief = await this.prisma.weeklyDebrief.findFirst({
-      where: { userId, year },
-      orderBy: { weekNumber: 'desc' },
+      where: { userId, OR: [{ year: { lt: year } }, { year, weekNumber: { lt: weekNumber } }] },
+      orderBy: [{ year: 'desc' }, { weekNumber: 'desc' }],
     });
     const previousObjectives = previousDebrief
       ? (previousDebrief.objectives as unknown[])
@@ -181,7 +184,8 @@ export class DebriefService {
       },
     });
 
-    const recentSessions = await this.sessionService.getSessionHistory(userId, 5, 0);
+    // Séances jusqu'à la fin de la semaine visée seulement (C5 #1045).
+    const recentSessions = await this.sessionService.getSessionHistory(userId, 5, 0, { before: endDate });
 
     // Comptes désignés à l'IA par une clé courte (compte-1, compte-2…), jamais par leur id interne.
     const keys = accountKeys(accounts.map((a) => a.id));

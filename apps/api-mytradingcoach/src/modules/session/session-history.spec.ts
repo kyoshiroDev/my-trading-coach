@@ -13,7 +13,11 @@ function serviceWith(rows: unknown[], recaps: unknown[]) {
     tradeSession: { findMany: vi.fn().mockResolvedValue(rows) },
     dailyRecap: { findMany: recapFindMany },
   };
-  return { service: new SessionService(prisma as never, {} as never, {} as never, {} as never), recapFindMany };
+  return {
+    service: new SessionService(prisma as never, {} as never, {} as never, {} as never),
+    recapFindMany,
+    sessionFindMany: prisma.tradeSession.findMany,
+  };
 }
 
 describe('SessionService.getSessionHistory — résumé IA du jour', () => {
@@ -68,5 +72,23 @@ describe('SessionService.getSessionHistory — pagination bornée', () => {
     expect(findMany.mock.calls[0][0]).toMatchObject({ skip: 0, take: 200 });
     await service.getSessionHistory('u1', 0, 0);
     expect(findMany.mock.calls[1][0]).toMatchObject({ take: 1 });
+  });
+});
+
+describe('SessionService.getSessionHistory — borne de fin (C5 #1045)', () => {
+  it('`before` : seules les séances commencées au plus tard à cet instant', async () => {
+    const { service, sessionFindMany } = serviceWith([], []);
+    const before = new Date('2026-06-28T23:59:59.999');
+    await service.getSessionHistory('u1', 5, 0, { before });
+    expect(sessionFindMany.mock.calls[0][0].where.startedAt).toEqual({ lte: before });
+  });
+
+  it('`before` avec un mois : la borne la plus tôt l’emporte', async () => {
+    const { service, sessionFindMany } = serviceWith([], []);
+    await service.getSessionHistory('u1', 5, 0, { year: 2026, month: 6, before: new Date('2026-06-14T23:59:59.999') });
+    expect(sessionFindMany.mock.calls[0][0].where.startedAt).toEqual({
+      gte: new Date(2026, 5, 1),
+      lte: new Date('2026-06-14T23:59:59.999'),
+    });
   });
 });
