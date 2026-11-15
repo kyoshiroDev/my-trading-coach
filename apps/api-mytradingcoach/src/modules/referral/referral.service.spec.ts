@@ -6,6 +6,7 @@ describe('ReferralService', () => {
     user: { findUnique: ReturnType<typeof vi.fn>; findFirst: ReturnType<typeof vi.fn>; update: ReturnType<typeof vi.fn>; findMany: ReturnType<typeof vi.fn>; groupBy: ReturnType<typeof vi.fn> };
     referralReward: { findMany: ReturnType<typeof vi.fn>; groupBy: ReturnType<typeof vi.fn> };
     referralCommission: { findMany: ReturnType<typeof vi.fn> };
+    retiredReferralCode: { findUnique: ReturnType<typeof vi.fn> };
   };
   let resend: { sendAmbassadorApplication: ReturnType<typeof vi.fn> };
   let stripe: { getCustomerBalanceCreditEur: ReturnType<typeof vi.fn> };
@@ -15,6 +16,7 @@ describe('ReferralService', () => {
     prisma = {
       user: { findUnique: vi.fn(), findFirst: vi.fn().mockResolvedValue(null), update: vi.fn(), findMany: vi.fn(), groupBy: vi.fn() },
       referralReward: { findMany: vi.fn().mockResolvedValue([]), groupBy: vi.fn().mockResolvedValue([]) },
+      retiredReferralCode: { findUnique: vi.fn().mockResolvedValue(null) },
       referralCommission: { findMany: vi.fn().mockResolvedValue([]) },
     };
     resend = { sendAmbassadorApplication: vi.fn().mockResolvedValue(undefined) };

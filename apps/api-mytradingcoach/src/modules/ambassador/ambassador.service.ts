@@ -91,6 +91,7 @@ export class AmbassadorService {
     }
 
     let code: string;
+    let reclaim = false; // le compte reprend un code qu'il avait lui-même retiré
     if (referralCode) {
       const owner = await this.prisma.user.findUnique({
         where: { referralCode },
@@ -99,10 +100,18 @@ export class AmbassadorService {
       if (owner && owner.id !== user.id) {
         throw new ConflictException('Ce code est déjà utilisé, choisis-en un autre');
       }
-      // Code sans propriétaire mais déjà porté par des filleuls (code révoqué ou changé) : le donner
-      // à un autre lui ferait hériter de ces filleuls (A5 #1013).
-      if (!owner && (await this.prisma.user.findFirst({ where: { referredBy: referralCode }, select: { id: true } }))) {
-        throw new ConflictException('Ce code est déjà utilisé, choisis-en un autre');
+      if (!owner) {
+        // Code retiré (changé ou révoqué, A5 #1013) : seul son ancien porteur peut le reprendre.
+        const retired = await this.prisma.retiredReferralCode.findUnique({ where: { code: referralCode } });
+        if (retired && retired.userId !== user.id) {
+          throw new ConflictException('Ce code est déjà utilisé, choisis-en un autre');
+        }
+        reclaim = !!retired;
+        // Code sans propriétaire mais déjà porté par des filleuls : le donner à un autre lui ferait
+        // hériter de ces filleuls.
+        if (!retired && (await this.prisma.user.findFirst({ where: { referredBy: referralCode }, select: { id: true } }))) {
+          throw new ConflictException('Ce code est déjà utilisé, choisis-en un autre');
+        }
       }
       code = referralCode;
     } else {
@@ -114,10 +123,16 @@ export class AmbassadorService {
       const previous = user.referralCode;
       // Changement de code : les filleuls suivent, dans la même transaction (A5 #1013). Avant, leur
       // `referredBy` gardait l'ancien code : plus de commission ni de lien avec l'ambassadeur.
-      const updated = previous && previous !== code
+      const changed = !!previous && previous !== code;
+      const updated = changed || reclaim
         ? await this.prisma.$transaction(async (tx) => {
             const u = await tx.user.update({ where: { id: user.id }, data: { role: Role.AMBASSADOR, referralCode: code }, select });
-            await tx.user.updateMany({ where: { referredBy: previous }, data: { referredBy: code } });
+            if (changed && previous) {
+              await tx.user.updateMany({ where: { referredBy: previous }, data: { referredBy: code } });
+              // L'ancien code est retiré : un vieux lien ne créditera jamais un autre porteur.
+              await tx.retiredReferralCode.upsert({ where: { code: previous }, create: { code: previous, userId: user.id }, update: {} });
+            }
+            if (reclaim) await tx.retiredReferralCode.deleteMany({ where: { code, userId: user.id } });
             return u;
           })
         : await this.prisma.user.update({
@@ -153,7 +168,7 @@ export class AmbassadorService {
     const user = await this.prisma.user.findFirst({
       where: { email: emailEquals(email) },
       orderBy: { createdAt: 'asc' },
-      select: { id: true, role: true },
+      select: { id: true, role: true, referralCode: true },
     });
     if (!user) {
       throw new NotFoundException('Aucun utilisateur avec cet email');
@@ -163,10 +178,16 @@ export class AmbassadorService {
     if (user.role !== Role.AMBASSADOR) {
       throw new BadRequestException('Ce compte n’est pas ambassadeur.');
     }
-    const updated = await this.prisma.user.update({
-      where: { id: user.id },
-      data: { role: Role.USER, referralCode: null },
-      select: { email: true, name: true, role: true },
+    const code = user.referralCode;
+    const updated = await this.prisma.$transaction(async (tx) => {
+      const u = await tx.user.update({
+        where: { id: user.id },
+        data: { role: Role.USER, referralCode: null },
+        select: { email: true, name: true, role: true },
+      });
+      // Code retiré (A5 #1013) : jamais redonné à un autre compte.
+      if (code) await tx.retiredReferralCode.upsert({ where: { code }, create: { code, userId: user.id }, update: {} });
+      return u;
     });
     await this.userCache?.invalidate(user.id); // rôle relu par le JWT (SCA-B3-01)
     return updated;
@@ -184,12 +205,12 @@ export class AmbassadorService {
     for (let attempt = 0; attempt < 10; attempt++) {
       const candidate =
         attempt === 0 ? base : `${base.slice(0, 12)}${randomSuffix(4)}`.slice(0, 20);
-      // Libre = porté par personne ET jamais utilisé par un filleul (code révoqué ou changé, A5).
+      // Libre = porté par personne, jamais utilisé par un filleul et jamais retiré (A5).
       const exists = await this.prisma.user.findFirst({
         where: { OR: [{ referralCode: candidate }, { referredBy: candidate }] },
         select: { id: true },
       });
-      if (!exists) return candidate;
+      if (!exists && !(await this.prisma.retiredReferralCode.findUnique({ where: { code: candidate } }))) return candidate;
     }
     return `AMB${randomSuffix(8)}`;
   }

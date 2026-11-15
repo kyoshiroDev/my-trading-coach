@@ -190,6 +190,17 @@ model ReferralCommission {
   @@index([ambassadorId])
 }
 
+/// Code de parrainage retiré (A5 #1013) : changé ou révoqué. Jamais redonné à un autre compte (un vieux
+/// lien créditerait le nouveau porteur) ; seul `userId` peut le reprendre. Pas de clé étrangère : la
+/// trace survit à la suppression du compte.
+model RetiredReferralCode {
+  code      String   @id
+  userId    String
+  retiredAt DateTime @default(now())
+
+  @@index([userId])
+}
+
 // Parrainage grand public : mois offert au parrain (user normal) pour chaque
 // filleul payant. Miroir de ReferralCommission, mais récompense en mois offert
 // (crédit Stripe) et non en commission cash. Unicité (filleulId) = 1 seule

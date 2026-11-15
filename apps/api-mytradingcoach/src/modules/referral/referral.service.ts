@@ -79,12 +79,12 @@ export class ReferralService {
 
     for (let attempt = 0; attempt < 10; attempt++) {
       const candidate = attempt === 0 ? base : `${base.slice(0, 12)}${randomSuffix(4)}`.slice(0, 20);
-      // Libre = porté par personne ET jamais utilisé par un filleul (code révoqué ou changé, A5 #1013).
+      // Libre = porté par personne, jamais utilisé par un filleul et jamais retiré (A5 #1013).
       const exists = await this.prisma.user.findFirst({
         where: { OR: [{ referralCode: candidate }, { referredBy: candidate }] },
         select: { id: true },
       });
-      if (!exists) return candidate;
+      if (!exists && !(await this.prisma.retiredReferralCode.findUnique({ where: { code: candidate } }))) return candidate;
     }
     return `REF${randomSuffix(8)}`;
   }
