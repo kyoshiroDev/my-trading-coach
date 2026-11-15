@@ -75,7 +75,7 @@ describe('SessionService.getSessionHistory — pagination bornée', () => {
   });
 });
 
-describe('SessionService.getSessionHistory — borne de fin (C5 #1045)', () => {
+describe('SessionService.getSessionHistory — borne de fin (C5 #1046)', () => {
   it('`before` : seules les séances commencées au plus tard à cet instant', async () => {
     const { service, sessionFindMany } = serviceWith([], []);
     const before = new Date('2026-06-28T23:59:59.999');

@@ -274,7 +274,7 @@ describe('DebriefService', () => {
       expect(mockAiService.releaseDailyLimit).not.toHaveBeenCalled();
     });
 
-    it('C5 (#1045) : objectifs = débrief strictement AVANT la semaine visée, à cheval sur l’année', async () => {
+    it('C5 (#1046) : objectifs = débrief strictement AVANT la semaine visée, à cheval sur l’année', async () => {
       mockPrisma.weeklyDebrief.findUnique.mockResolvedValue(mockDebrief);
       mockPrisma.weeklyDebrief.findFirst.mockResolvedValue(null);
       mockPrisma.weeklyDebrief.upsert.mockResolvedValue(mockDebrief);
@@ -288,7 +288,7 @@ describe('DebriefService', () => {
       });
     });
 
-    it('C5 (#1045) : séances récentes bornées à la fin de la semaine visée', async () => {
+    it('C5 (#1046) : séances récentes bornées à la fin de la semaine visée', async () => {
       mockPrisma.weeklyDebrief.findUnique.mockResolvedValue(null);
       mockPrisma.weeklyDebrief.findFirst.mockResolvedValue(null);
       mockPrisma.weeklyDebrief.upsert.mockResolvedValue(mockDebrief);

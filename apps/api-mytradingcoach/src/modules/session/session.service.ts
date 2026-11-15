@@ -223,7 +223,7 @@ export class SessionService {
       month?: number;
       accountId?: string;
       includeInactive?: boolean;
-      /** Séances commencées au plus tard à cet instant (débrief d'une semaine passée, C5 #1045). */
+      /** Séances commencées au plus tard à cet instant (débrief d'une semaine passée, C5 #1046). */
       before?: Date;
     },
   ): Promise<SessionHistoryItem[]> {
