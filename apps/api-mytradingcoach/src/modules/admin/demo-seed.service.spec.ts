@@ -2,11 +2,17 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { DemoSeedService, DEMO_RESEED_LOCK } from './demo-seed.service';
 
 /** Fraîcheur de la démo, indépendante des crons (dev tourne sans cron). */
-function setup(lastTrade: Date | null, user = true, live = true) {
+// `open` : position ouverte (pnl null) en base, par défaut datée comme le dernier trade.
+function setup(lastTrade: Date | null, user = true, live = true, open: Date | null = lastTrade) {
   const prisma = {
     user: { findUnique: vi.fn().mockResolvedValue(user ? { id: 'demo' } : null) },
     tradeSession: { findFirst: vi.fn().mockResolvedValue(live ? { id: 'live' } : null) },
-    trade: { findFirst: vi.fn().mockResolvedValue(lastTrade ? { tradedAt: lastTrade } : null) },
+    trade: {
+      findFirst: vi.fn().mockImplementation(({ where }: { where: { pnl: unknown } }) => {
+        const at = where.pnl === null ? open : lastTrade;
+        return Promise.resolve(at ? { id: 't', tradedAt: at } : null);
+      }),
+    },
   };
   const redis = { client: { set: vi.fn().mockResolvedValue('OK'), del: vi.fn().mockResolvedValue(1) } };
   const service = new DemoSeedService(prisma as never, redis as never);
@@ -18,9 +24,15 @@ describe('DemoSeedService.ensureFresh', () => {
   beforeEach(() => vi.restoreAllMocks());
 
   it('démo du jour → aucun re-seed', async () => {
-    const { service, run } = setup(new Date());
-    expect(await service.ensureFresh('test')).toBe(false);
-    expect(run).not.toHaveBeenCalled();
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-10-06T10:30:00')); // mardi, marché ouvert
+    try {
+      const { service, run } = setup(new Date('2026-10-06T10:20:00'));
+      expect(await service.ensureFresh('test')).toBe(false);
+      expect(run).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('démo périmée (dernier trade il y a des mois) → re-seed sous verrou, verrou rendu', async () => {
@@ -56,15 +68,28 @@ describe('DemoSeedService.ensureFresh', () => {
     expect(await setup(at(-2, -10)).service.isStale(at(0, 20)), 'veille 22:50, à 00:20').toBe(false);
   });
 
-  it('aucune session live pour la journée de trading en cours (week-end, après minuit) → re-seed', async () => {
-    const { service, run } = setup(new Date(), true, false);
-    expect(await service.ensureFresh('connexion démo')).toBe(true);
-    expect(run).toHaveBeenCalled();
+  it('en semaine, aucune session live pour la journée de trading en cours → re-seed', async () => {
+    const { service } = setup(new Date('2026-10-06T10:20:00'), true, false);
+    expect(await service.isStale(new Date('2026-10-06T10:30:00'))).toBe(true);
   });
 
-  it('week-end : un trade du vendredi suffit', async () => {
-    const { service } = setup(new Date('2026-10-02T15:00:00')); // vendredi
-    expect(await service.isStale(new Date('2026-10-04T10:00:00'))).toBe(false); // dimanche
+  it('week-end (#977) : séance du vendredi clôturée, sans session live ni position ouverte → servie', async () => {
+    const friday = new Date('2026-10-02T15:47:00');
+    const sunday = new Date('2026-10-04T10:00:00');
+    expect(await setup(friday, true, false, null).service.isStale(sunday)).toBe(false);
+    expect(await setup(friday, true, false, null).service.isStale(new Date('2026-10-03T00:05:00')), 'samedi 00:05').toBe(false);
+  });
+
+  it('week-end : session ACTIVE ou position ouverte restée du vendredi soir → re-seed', async () => {
+    const friday = new Date('2026-10-02T22:50:00');
+    const saturday = new Date('2026-10-03T09:00:00');
+    expect(await setup(friday, true, true, null).service.isStale(saturday), 'session ACTIVE').toBe(true);
+    expect(await setup(friday, true, false, friday).service.isStale(saturday), 'position ouverte').toBe(true);
+  });
+
+  it('week-end : dernière séance plus ancienne que le vendredi → re-seed', async () => {
+    const { service } = setup(new Date('2026-10-01T15:00:00'), true, false, null); // jeudi
+    expect(await service.isStale(new Date('2026-10-04T10:00:00'))).toBe(true);
   });
 });
 

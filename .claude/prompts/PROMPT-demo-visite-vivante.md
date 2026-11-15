@@ -30,3 +30,11 @@ Deux branches séparées depuis dev : fix(app) pour l'app/la démo, puis on rée
 - Barre de navigation : le texte de la page se voit derrière les liens quand la section passe
   dessous → fond plus opaque (même valeur que dans l'app : rgba(8,12,20,.97) + blur).
 - Section aussi sur /prop-firm après « Compatible avec », ancre #visite.
+
+---
+
+## Complément de Greg (2026-11-13)
+
+Réponse aux recommandations (week-end : séance du vendredi clôturée sans position ouverte ; re-seed 45 min : garder) :
+
+ok applique tes deux ecommandation
