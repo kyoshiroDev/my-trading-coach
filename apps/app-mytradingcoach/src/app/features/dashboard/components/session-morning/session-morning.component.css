@@ -480,7 +480,7 @@
    --demo-banner-h (0 hors démo) retranche le bandeau « Mode démo » posé au-dessus. */
 @container (min-width: 981px) {
   .daily-row,
-  .eco-card { max-height: calc(100vh - 103px - var(--demo-banner-h, 0px)); min-height: 0; }
+  .eco-card { max-height: calc(100vh - 103px - var(--demo-banner-h, 0px) - var(--demo-cta-h, 0px)); min-height: 0; }
 }
 
 /* Responsive : mobile → 1 colonne, scroll page normal (aligné container-query maquette ≤820px) */

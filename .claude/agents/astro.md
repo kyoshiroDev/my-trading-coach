@@ -410,6 +410,10 @@ Règles :
   (`document.referrer` externe → `utm_source=<hôte sans www>`, `utm_medium=referral`), gardée en
   sessionStorage `mtc_utm` et ajoutée à tous les liens `/register`. L'app applique le même plan B
   si on arrive directement sur `/register` (`referrerHost` de `register.component.ts`).
+  **Liens vers la démo** (`{APP_URL}/demo` exactement, #1029) : mêmes UTM, plus `ref` de l'URL
+  (lettres, chiffres, `-`, `_`, 40 car.) et `internal=1` si le mode interne est posé sur www (le
+  localStorage ne passe pas d'un domaine à l'autre) : le bouton « Créer mon compte » de la démo garde
+  l'origine de la visite, et une ouverture en mode interne n'est pas comptée.
 - **Compteur de visites sans cookie** : le même script envoie `POST {API_URL}/public/visit`
   (`path`, `source`, `medium`, `campaign`, `entry` = 1re page de la session, flag sessionStorage `mtc_visit`) sur chaque
   page, quel que soit le choix cookies (exemption CNIL : agrégé, anonyme). Résultat dans l'admin

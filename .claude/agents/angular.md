@@ -355,7 +355,13 @@ dans la fenêtre.
 `--demo-banner-h` est publiée par `.main-content.has-demo-banner` (sidebar.component.css),
 vaut `0px` hors démo, et le bandeau a une **hauteur fixe égale à la variable**
 (`flex: 0 0 var(--demo-banner-h)`, `flex-wrap: nowrap`) pour que l'offset ne puisse pas
-mentir. Sous 768px : 40px, la phrase longue (`.demo-banner-long`) tombe, le CTA reste.
+mentir. Sous 768px : 52px, la phrase longue (`.demo-banner-long`) tombe. Depuis #1029, ce bandeau
+du haut n'a plus de bouton : il dit seulement « Mode démo » (le CTA est le bandeau du bas, ci-dessous).
+
+Bandeau d'inscription du bas (#1029) : `--demo-cta-h` (`.main-content.has-demo-cta`, tokens
+`--demo-cta-h-desktop` 56 px / `--demo-cta-h-mobile` 72 px de `theme.css`, **zone sûre du bas de
+l'iPhone comprise**), même principe : une vue calée sur `100vh` retranche aussi
+`var(--demo-cta-h, 0px)` (Pré-session et Session live le font).
 
 **Toute nouvelle vue calée sur `100vh` doit retrancher `var(--demo-banner-h, 0px)`.**
 **Tout élément `position: sticky` du contenu (topbar, sélecteur de compte, en-tête propre d'une
@@ -1447,9 +1453,52 @@ Test de charge B9 : le polling faisait **la moitié** des requêtes de l'API. R�
 `core/services/product-events.service.ts` : `track(event, place?)` / `once(...)` (une fois par écran et par
 onglet), place = 1er segment de la route, envoi best-effort. Branché sur : `mtc-premium-lock` (`premium_seen`),
 `mtc-plan-modal` (`plan_modal_open` à l'ouverture, `trial_click` sur « Essayer »), `App` (retour Stripe
-`?checkout=success|canceled` → `checkout_return`), CTA « Créer mon compte » de la démo (sidebar). Nouveau
+`?checkout=success|canceled` → `checkout_return`), bandeau d'inscription de la démo (`demo_cta_*`, voir
+« Démo : bandeau d'inscription » ci-dessous). Nouveau
 teaser Premium → `once('premium_seen')`. Admin : bloc « Entonnoir Premium » de `/acquisition`
 (`features/acquisition/funnel.util.ts`, testé).
+
+## Démo : bandeau d'inscription (#1029, nov. 2026)
+
+`shared/components/demo-cta/` (`mtc-demo-cta`), monté par le shell (`sidebar.component.html`, fin de
+`<main>`) seulement si `userStore.isDemo()`. **Seul** bouton « Créer mon compte » de la démo :
+- **Bandeau** collé en bas de la zone de contenu (`position: sticky; bottom: 0` dans `.main-content`
+  en colonne flex, `margin-top: auto`) : visible en bas pendant le défilement, rangé APRÈS le contenu
+  en fin de page, donc jamais par-dessus un bouton. Texte « Ça te parle ? Crée ton compte :
+  **{N} jours de Premium offerts**, sans carte », N = `PREMIUM_SIGNUP_TRIAL_DAYS`. Aucun prix,
+  aucune promesse de gain.
+- **Téléphone + bouton « + » flottant** (journal… ; `styles.css`, #631 : `padding-bottom: 92px` sur
+  `.main-content`) : en démo ce padding passe à 0 (sinon le sticky s'accroche 92 px au-dessus du bas),
+  le « + » remonte à `var(--demo-cta-h) + 16px`, et `.demo-cta-fab-space` (80 px, juste avant le
+  bandeau) garde la fin de page visible. Mesuré à 390 px : bandeau à 772 px, « + » 700-756, fin du
+  contenu 692. Texte du bandeau sur 3 lignes à 390 px, 4 à 320 px (12 px), dans les 72 px.
+- **Croix** → pastille « Créer mon compte » à droite (rangée transparente, clics laissés au contenu) ;
+  le bandeau revient en grand au `NavigationEnd` suivant.
+- **Relance unique** (`demo-cta.util.ts`, `relanceDue`) : après 60 s depuis l'arrivée (horodatage en
+  sessionStorage, un rechargement ne remet pas à zéro) OU 3 pages vues (URL distinctes sans
+  paramètres, `/demo` exclue ; la page de création du bandeau compte une fois même s'il naît
+  pendant la navigation), une fois par visite (sessionStorage `mtc_demo_relance`). Repoussée tant
+  qu'un défilement a eu lieu dans les 1,5 s, qu'un champ a le focus (`isTypingTarget`) ou qu'une
+  autre fenêtre `aria-modal` est ouverte. Focus sur « Continuer la démo », Échap ferme (`mtcDialog`).
+  Le smoke E2E (3 pages) l'ouvre sans cliquer ; un futur E2E qui clique après 3 pages ou 60 s doit
+  poser `sessionStorage.mtc_demo_relance = '1'` avant.
+- **Action bloquée** (403 « mode démo » → `DemoService.promptSignup()`) : fenêtre rendue par ce
+  composant (plus par la sidebar), même lien, placement `action`.
+- **Lien** : `DemoService.registerUrl()` = `/register?` + `demoRegisterParams` (`@mtc/shared`) : UTM
+  et `ref` retenus à l'arrivée sur `/demo` (`DemoEntryComponent` → `captureOrigin`, sessionStorage
+  `mtc_demo_origin`), `utm_source=demo` seulement sans UTM, `source=demo` toujours. Clic : événement,
+  puis `AuthService.endDemoSession()` (jeton démo effacé sans appel API ni redirection /login) et
+  navigation DANS l'app (la requête d'événement n'est pas coupée). Ctrl/Cmd/clic milieu : nouvel
+  onglet, la démo reste. `RegisterComponent` passe `source=demo` en `entry` à `SignupFunnelService`
+  → `detail: 'demo'` sur `register_view/submit/success` (jamais le champ `entry` envoyé) ; le script
+  `register_view` d'`index.html` fait de même.
+- **Événements** (`ProductEventsService`) : `demo_cta_view` (une fois par visite, `banner`),
+  `demo_cta_click` (`place` = `banner|pill|modal|action`, `DEMO_CTA_PLACEMENTS`), `demo_modal_shown`
+  (place = écran). `demo_signup_click` n'est plus émis.
+- **Mode interne** : `DemoEntryComponent` envoie `{ internal: true }` à `demo-login` quand
+  `SignupFunnelService.internal()` : l'ouverture n'est pas comptée.
+- Tests : `demo-cta.component.spec.ts` (bandeau, pastille, relance 60 s / 3 pages, saisie, défilement,
+  action bloquée), `demo.service.spec.ts`, `signup-funnel.service.spec.ts`.
 
 ## Parcours d'inscription par source (oct. 2026)
 

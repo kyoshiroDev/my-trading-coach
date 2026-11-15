@@ -222,11 +222,26 @@ export class AuthService {
       );
   }
 
-  /** Connexion au compte démo vitrine (lecture seule). Stocke token + user. */
-  demoLogin() {
+  /**
+   * Connexion au compte démo vitrine (lecture seule). Stocke token + user. `internal` (mode
+   * interne `?internal=1`) : l'API ne compte pas l'ouverture (#1029).
+   */
+  demoLogin(internal = false) {
     return this.http
-      .post<AuthResponse>(`${environment.apiUrl}/auth/demo-login`, {})
+      .post<AuthResponse>(`${environment.apiUrl}/auth/demo-login`, internal ? { internal: true } : {})
       .pipe(tap((res) => this.handleAuthResponse(res)));
+  }
+
+  /**
+   * Sortie de la démo vers l'inscription (#1029) : session démo effacée SANS appel API (le jeton
+   * démo n'a pas de refresh) ni redirection vers /login ; l'appelant navigue vers /register.
+   */
+  endDemoSession(): void {
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('user');
+    this.currentUser.set(null);
+    this.isAuthenticated.set(false);
+    this.userScopedReset.resetAll();
   }
 
   forgotPassword(email: string) {

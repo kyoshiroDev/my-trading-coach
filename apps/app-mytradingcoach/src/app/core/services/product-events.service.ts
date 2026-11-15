@@ -9,8 +9,11 @@ export type ProductEvent =
   | 'plan_modal_open'
   | 'trial_click'
   | 'checkout_return'
-  | 'demo_signup_click'
+  | DemoCtaEvent
   | InstallEvent;
+
+/** Bandeau d'inscription de la démo (#1029) : `place` = placement pour le clic (`DEMO_CTA_PLACEMENTS`). */
+export type DemoCtaEvent = 'demo_cta_view' | 'demo_cta_click' | 'demo_modal_shown';
 
 /** Installation de l'app et activation des alertes, `place` = plateforme (`devicePlace`). */
 export type InstallEvent =

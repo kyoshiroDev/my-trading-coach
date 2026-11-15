@@ -1,4 +1,4 @@
-import { PREMIUM_SIGNUP_TRIAL_DAYS, type AdminFunnelData, type AdminInstallEvent } from '@mtc/shared';
+import { DEMO_CTA_PLACEMENTS, PREMIUM_SIGNUP_TRIAL_DAYS, type AdminFunnelData, type AdminInstallEvent, type DemoCtaPlacement } from '@mtc/shared';
 
 export interface FunnelRow {
   label: string;
@@ -151,4 +151,23 @@ export function installRows(f: AdminFunnelData | null): InstallRow[] {
   }
   const rank = (p: string) => (INSTALL_ORDER.includes(p) ? INSTALL_ORDER.indexOf(p) : INSTALL_ORDER.length);
   return [...rows.values()].sort((a, b) => rank(a.place) - rank(b.place) || a.place.localeCompare(b.place));
+}
+
+/** Libellés des placements du bouton « Créer mon compte » de la démo (#1029). */
+export const DEMO_PLACEMENT_LABELS: Record<DemoCtaPlacement, string> = {
+  banner: 'bandeau',
+  pill: 'pastille',
+  modal: 'relance',
+  action: 'action bloquée',
+};
+
+/** Démo : bandeau vu, relance affichée et clics par placement (« bandeau 3 · pastille 0 · … »). */
+export function demoSummary(f: AdminFunnelData | null): { views: number; modalShown: number; placements: string } | null {
+  if (!f) return null;
+  const d = f.demo;
+  return {
+    views: d.ctaViews,
+    modalShown: d.modalShown,
+    placements: DEMO_CTA_PLACEMENTS.map((p) => `${DEMO_PLACEMENT_LABELS[p]} ${d.clicksByPlacement?.[p] ?? 0}`).join(' · '),
+  };
 }

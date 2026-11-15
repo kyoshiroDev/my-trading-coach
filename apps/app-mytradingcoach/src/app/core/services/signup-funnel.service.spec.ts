@@ -74,6 +74,27 @@ describe('SignupFunnelService', () => {
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 
+  it('arrivée depuis la démo (#1029) : detail demo sur vue, envoi et succès, jamais le champ entry', async () => {
+    const funnel = make();
+    funnel.start({ source: 'ninjatrader', medium: 'newsletter', campaign: 'newsletter-novembre-2026', entry: 'demo' });
+    funnel.track('register_submit');
+    funnel.track('register_success');
+    funnel.track('register_error', 'validation');
+    const [view, submit, success, error] = await bodies();
+    expect(view).toEqual({
+      step: 'register_view',
+      source: 'ninjatrader',
+      medium: 'newsletter',
+      campaign: 'newsletter-novembre-2026',
+      inApp: false,
+      detail: 'demo',
+    });
+    expect(submit).toMatchObject({ step: 'register_submit', detail: 'demo' });
+    expect(success).toMatchObject({ step: 'register_success', detail: 'demo' });
+    expect(error).toMatchObject({ step: 'register_error', detail: 'validation' });
+    for (const b of [view, submit, success, error]) expect(b).not.toHaveProperty('entry');
+  });
+
   it("register_view déjà envoyé par index.html : pas de double comptage, l'origine est gardée", async () => {
     window.mtcRegisterView = true;
     const funnel = make();

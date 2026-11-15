@@ -13,7 +13,12 @@ export interface FunnelOrigin {
   source?: string;
   medium?: string;
   campaign?: string;
+  /** Point d'entrée `source=demo` (bandeau de la démo, #1029) : envoyé en `detail`, jamais tel quel. */
+  entry?: 'demo';
 }
+
+/** Étapes qui portent le point d'entrée en `detail` (`SIGNUP_FUNNEL_ORIGINS` de `@mtc/shared`). */
+const ENTRY_STEPS: readonly SignupFunnelStep[] = ['register_view', 'register_submit', 'register_success'];
 
 const ORIGIN_KEY = 'mtc_funnel';
 
@@ -83,8 +88,9 @@ export class SignupFunnelService {
 
   track(step: SignupFunnelStep, detail?: string): void {
     if (this.internal()) return;
-    const origin = this.origin() ?? {};
+    const { entry, ...origin } = this.origin() ?? {};
     const url = `${environment.apiUrl}/public/funnel`;
+    if (!detail && entry && ENTRY_STEPS.includes(step)) detail = entry;
     const body = JSON.stringify({ step, ...origin, inApp: this.inApp, ...(detail ? { detail } : {}) });
     let sent = false;
     try {
