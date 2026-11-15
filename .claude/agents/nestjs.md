@@ -1230,6 +1230,30 @@ Premier broker synchronisé par **API** plutôt que par fichier. Module
   étaient écartées comme doublons. Un trade API doit avoir
   EXACTEMENT la forme d'un trade CSV du même broker (règles partagées dans
   `trades/tradovate-pair.util.ts`, utilisées par les DEUX chemins).
+- **Dédoublonnage PAR COMPTE (#1001, décision du 15/11)** : un trade n'est un doublon que s'il existe
+  déjà dans le compte où il va. Le même trade copié sur deux comptes (copy trading) = deux trades.
+  `importTrades` résout le compte de chaque ligne comme `create` (`targetAccountId` : fourni → séance
+  active → compte par défaut), puis applique empreinte, répétitions et rapprochements (autre fuseau,
+  ancien P&L net MEXC, ancien arrondi) dans ce compte seulement (`AccountDedupeStates`,
+  `trades/account-dedupe-state.ts`). Les trades sans compte comptent pour tous (0 en prod le 15/11).
+  Empreinte stockée `a:<compte>|<clé>` (`accountImportHash`) : l'index `@@unique([userId, importHash])`
+  ne change PAS (aucune migration) ; une empreinte d'avant #1001 (sans préfixe) reste reconnue au
+  ré-import dans son compte (comparaison des champs). Les clés de position `tv:<fill>` restent sans
+  préfixe. Résultat : `alsoInOtherAccounts` (`[{ accountId, name, count }]`), affiché par l'import CSV
+  (« 12 trades existent aussi dans le compte « X » : importés ici aussi. »). « Supprimer les doublons »
+  (`accountDuplicateIdentity`) compare dans un même compte, jamais d'un compte à l'autre.
+  Tradovate (`assertNotMixingAccounts`) : un compte Tradovate déjà relié à un autre compte MTC du
+  trader est refusé (`TRADOVATE_ACCOUNT_LINKED_ELSEWHERE`, N8) ; changer de compte Tradovate quand le
+  compte MTC contient déjà des trades synchronisés est refusé (`TRADOVATE_ACCOUNT_HAS_OTHER_TRADES`,
+  N7). Limite : après un compte disparu chez Tradovate (détaché), l'ancien n'est plus connu. Preuve :
+  `import-par-compte.int-spec.ts`, `tradovate-select-account.spec.ts`.
+  Empreintes d'avant #1001 : un trade importé puis MODIFIÉ ne se reconnaît plus à ses champs ; ses
+  empreintes sans préfixe sont relues en base pour les clés du lot (`occurrenceHash(clé, 1..n)`) et
+  restent prises dans LEUR compte (une empreinte d'un autre compte ne bloque rien).
+  Un trade réaffecté garde l'empreinte de son compte d'origine : ré-importé dans l'ancien compte, il
+  compte comme doublon (P2002), jamais recréé. Tout script de réparation qui réécrit `importHash` doit
+  garder le préfixe (`accountImportHash(t.accountId, …)`) et chercher les collisions avec l'empreinte
+  préfixée (les `empreinteLibre` des scripts #780 / #950 écrivent une empreinte sans préfixe).
 - **Un trade Tradovate = une POSITION (#956, décision du 13/11)**, de l'ouverture au retour à plat,
   plus une paire de fills. `trades/tradovate-position-group.util.ts` (pur) regroupe les paires par
   le cumul net des exécutions, contrat par contrat, dans les TROIS chemins : synchro (mapper puis

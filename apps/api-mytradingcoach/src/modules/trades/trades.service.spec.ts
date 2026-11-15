@@ -1040,7 +1040,7 @@ describe('TradesService', () => {
     });
 
     it('lot vide → aucune requête', async () => {
-      expect(await service.importTrades('user-123', [])).toEqual({ created: 0, updated: 0, duplicates: 0, failed: 0, total: 0 });
+      expect(await service.importTrades('user-123', [])).toEqual({ created: 0, updated: 0, duplicates: 0, failed: 0, total: 0, alsoInOtherAccounts: [] });
       expect(mockPrisma.trade.findMany).not.toHaveBeenCalled();
       expect(mockPrisma.tradeSession.findFirst).not.toHaveBeenCalled();
     });

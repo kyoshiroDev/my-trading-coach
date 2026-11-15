@@ -995,10 +995,18 @@ describe('Tradovate — synchro', () => {
     const apex = await createAccount(userId, 'Apex');
     const lucid = await createAccount(userId, 'Lucid');
     await connect(token, apex.id);
-    await connect(token, lucid.id);
+    // Le login simulé n'a qu'un compte broker : déjà relié à « Apex », il est refusé pour « Lucid »
+    // (#1001, N8 : ses trades arriveraient deux fois). La connexion de Lucid existe, sans compte choisi.
+    await connect(token, lucid.id, { pick: false });
+    const sel = await api(token, `/accounts/${lucid.id}/select`, 'POST', {
+      body: JSON.stringify({ externalAccountId: String(EXT_ACCOUNT) }),
+    });
+    expect(sel.status).toBe(409);
+    expect(await sel.json()).toMatchObject({ code: 'TRADOVATE_ACCOUNT_LINKED_ELSEWHERE', message: 'Ce compte Tradovate est déjà relié à « Apex ».' });
     const rows = await prisma.brokerConnection.findMany({ where: { userId } });
     expect(rows.map((r) => r.accountId).sort()).toEqual([apex.id, lucid.id].sort());
     expect(rows[0].accessTokenEnc).not.toBe(rows[1].accessTokenEnc);
+    expect(rows.find((r) => r.accountId === lucid.id)?.externalAccountId).toBeNull();
   });
 });
 

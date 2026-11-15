@@ -41,6 +41,8 @@ export interface ImportResult {
   duplicates: number;
   failed: number;
   total: number;
+  /** Trades créés ici qui existaient déjà dans un autre compte (copy trading, #1001). */
+  alsoInOtherAccounts?: { accountId: string; name: string; count: number }[];
   /** Présent dès qu'un fichier de frais (Tradovate Cash history) a été fourni. */
   feesImported?: {
     assigned: number;
@@ -121,6 +123,7 @@ export class CsvImportComponent {
   protected readonly XIcon = X;
   protected readonly UploadIcon = Upload;
   protected readonly CheckCircleIcon = CheckCircle;
+  protected readonly alsoInOtherAccountLine = alsoInOtherAccountLine;
   protected readonly AlertCircleIcon = AlertCircle;
   protected readonly ZapIcon = Zap;
   protected readonly FileTextIcon = FileText;
@@ -503,4 +506,14 @@ export class CsvImportComponent {
     this.showFeesConfirm.set(false);
     this.clearFeesFile();
   }
+}
+
+/**
+ * Ligne du résultat d'import (#1001) : le même trade sur deux comptes (copy trading) est importé dans
+ * chacun ; on dit lesquels existaient déjà ailleurs, pour repérer un fichier importé dans le mauvais compte.
+ */
+export function alsoInOtherAccountLine(o: { name: string; count: number }): string {
+  return o.count > 1
+    ? `${o.count} trades existent aussi dans le compte « ${o.name} » : importés ici aussi.`
+    : `1 trade existe aussi dans le compte « ${o.name} » : importé ici aussi.`;
 }

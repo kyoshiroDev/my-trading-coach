@@ -354,6 +354,7 @@ export class TradovateConnectionService {
     if ((await this.dropAlreadyLinked(userId, [target])).length === 0) {
       throw new TradovateException('TRADOVATE_ACCOUNT_ALREADY_LINKED');
     }
+    await this.assertNotMixingAccounts(userId, accountId, conn, target);
     const updated = await this.prisma.brokerConnection.update({
       where: { id: conn.id },
       data: {
@@ -387,6 +388,44 @@ export class TradovateConnectionService {
     const counts = await this.brokerTradesCounts(userId, [accountId]);
     const { account, ...view } = updated;
     return this.toView(view, counts.get(accountId) ?? 0, account);
+  }
+
+  /**
+   * Jamais deux comptes mélangés (#1001, décision du 11/11) :
+   * - N8 : un compte Tradovate déjà relié à un AUTRE compte MTC du même trader est refusé (ses
+   *   trades arriveraient deux fois, le dédoublonnage étant désormais par compte) ;
+   * - N7 : changer de compte Tradovate est refusé quand le compte MTC contient déjà des trades
+   *   synchronisés de l'ancien (les deux historiques se mélangeraient). Sans trade synchronisé, le
+   *   changement reste permis (historique remis à zéro, cf. selectAccount).
+   * Limite : après un compte disparu chez Tradovate (handleMissingAccount), l'ancien compte n'est
+   * plus connu de la connexion ; ce cas n'est pas couvert ici.
+   */
+  private async assertNotMixingAccounts(
+    userId: string,
+    accountId: string,
+    conn: BrokerConnection,
+    target: ExternalAccountRef,
+  ): Promise<void> {
+    const elsewhere = await this.prisma.brokerConnection.findFirst({
+      where: { userId, provider: BrokerProvider.TRADOVATE, externalAccountId: target.id, accountId: { not: accountId } },
+      select: { account: { select: { label: true } } },
+    });
+    if (elsewhere) {
+      throw new TradovateException(
+        'TRADOVATE_ACCOUNT_LINKED_ELSEWHERE',
+        `Ce compte Tradovate est déjà relié à « ${elsewhere.account.label} ».`,
+      );
+    }
+    if (conn.externalAccountId && conn.externalAccountId !== target.id) {
+      const synced = (await this.brokerTradesCounts(userId, [accountId])).get(accountId) ?? 0;
+      if (synced > 0) {
+        const previous = conn.externalAccountName ?? "l'ancien compte Tradovate";
+        throw new TradovateException(
+          'TRADOVATE_ACCOUNT_HAS_OTHER_TRADES',
+          `Ce compte contient déjà les trades de ${previous}. Crée un compte pour ${target.name}.`,
+        );
+      }
+    }
   }
 
   /**
