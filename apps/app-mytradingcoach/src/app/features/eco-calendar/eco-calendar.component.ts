@@ -16,6 +16,7 @@ import { translateEcoEvent } from '../../core/data/eco-event-translations';
 
 import { UserStore } from '../../core/stores/user.store';
 import { ToastService } from '../../core/services/toast.service';
+import { apiErrorMessage } from '../../core/utils/api-error';
 import { toParisDateStr, todayParis } from '@mtc/shared';
 import type { EcoEvent } from '@mtc/shared';
 import { ErrorStateComponent } from '@mtc/front-ui';
@@ -520,7 +521,8 @@ export class EcoCalendarComponent implements OnInit {
 
   protected togglePin(event: EcoEvent): void {
     const key = `${event.name}:${event.currency}`;
-    const pins = new Set(this.pinnedEvents());
+    const previous = this.pinnedEvents();
+    const pins = new Set(previous);
     if (pins.has(key)) { pins.delete(key); } else { pins.add(key); }
     this.pinnedEvents.set(pins);
 
@@ -529,8 +531,12 @@ export class EcoCalendarComponent implements OnInit {
       .pipe(finalize(() => this.isSavingPins.set(false)))
       .subscribe({
         next: () => this.loadPinnedUpcoming(),
-        // AVANT : échec muet, l'épingle affichée ne correspondait plus au serveur.
-        error: () => this.toast.error('Épinglage non enregistré. Réessaie.'),
+        error: (err: unknown) => {
+          // F10 (#1047) : l'épingle reprend l'état du serveur. Message de l'API d'abord : en démo,
+          // « mode démo » est déjà couvert par l'invite (filtré par ToastService, pas de doublon).
+          this.pinnedEvents.set(previous);
+          this.toast.error(apiErrorMessage(err, 'Épinglage non enregistré. Réessaie.'));
+        },
       });
   }
 
