@@ -317,6 +317,23 @@ describe('EcoCalendarService', () => {
     });
   });
 
+  describe('getPinnedUpcoming : une épingle couvre toutes les annonces de ce nom et de cette devise (C6 #1046)', () => {
+    it('3 PMI flash EUR (FR, DE, zone euro) et 1 épingle → 3 éléments, triés par heure', async () => {
+      const today = todayParis();
+      mockPrisma.user.findUnique.mockResolvedValue({ pinnedEcoEvents: ['PMI Flash:EUR'], pinnedEcoDate: today });
+      mockPrisma.ecoEvent.findMany.mockResolvedValue(
+        [['DE', '09:30'], ['FR', '09:15'], ['EU', '10:00']].map(([country, time]) => ({
+          date: today, time, name: 'PMI Flash', nameFr: null, country, currency: 'EUR', impact: 'medium',
+          actual: null, estimate: 48, previous: 47, isReleased: false, unit: null,
+        })),
+      );
+
+      const pinned = await service.getPinnedUpcoming('u1');
+
+      expect(pinned.map((e) => e.country)).toEqual(['FR', 'DE', 'EU']);
+    });
+  });
+
   // ── getEventsFromDb ───────────────────────────────────────────────────────
 
   describe('getEventsFromDb', () => {
