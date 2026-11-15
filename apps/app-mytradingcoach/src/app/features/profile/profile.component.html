@@ -2,13 +2,6 @@
 
 <div class="settings-content">
 
-  @if (checkoutParam() === 'success') {
-    <div class="alert alert-success">✓ Abonnement activé, bienvenue !</div>
-  }
-  @if (checkoutParam() === 'canceled') {
-    <div class="alert alert-cancel">Paiement annulé. Tu peux réessayer quand tu veux.</div>
-  }
-
   <!-- ════ ONGLETS ════ -->
   <div class="profile-tabs">
     <button class="ptab" [class.active]="activeProfileTab() === 'trader'"

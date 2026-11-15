@@ -12,8 +12,7 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { map, finalize } from 'rxjs/operators';
+import { finalize } from 'rxjs/operators';
 import {
   LucideDynamicIcon,
   LucidePencil as Pencil,
@@ -90,10 +89,6 @@ export class ProfileComponent implements OnInit {
   private readonly discordApi = inject(DiscordApi);
   protected readonly offersStore = inject(OffersStore);
   protected readonly PRICING = PRICING;
-
-  protected readonly checkoutParam = toSignal(
-    this.route.queryParamMap.pipe(map((p) => p.get('checkout'))),
-  );
 
   // Onglets Profil trader / Paramètres (deep-link ?tab=params)
   protected readonly activeProfileTab = signal<ProfileTab>('trader');
@@ -237,12 +232,8 @@ export class ProfileComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    if (this.route.snapshot.queryParamMap.get('checkout') === 'success') {
-      this.userStore.refreshUser();
-      this.offersStore.refresh();
-    } else {
-      this.offersStore.load();
-    }
+    // Retour de Stripe (?checkout=) : traité au niveau de l'app (CheckoutReturnService).
+    this.offersStore.load();
     // Deep-link onglet : ?tab=params ouvre directement l'onglet Paramètres.
     if (this.route.snapshot.queryParamMap.get('tab') === 'params') {
       this.activeProfileTab.set('params');

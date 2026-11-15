@@ -18,6 +18,7 @@ import { filter, first, map } from 'rxjs/operators';
 import { SeoService } from './core/seo/seo.service';
 import { ProductEventsService } from './core/services/product-events.service';
 import { OfferIntentService } from './core/services/offer-intent.service';
+import { CheckoutReturnService } from './core/services/checkout-return.service';
 import { ConfirmService } from '@mtc/front-ui';
 // Chemin direct, pas le barrel : un composant importé par `@mtc/front-ui` resterait dans le bundle
 // initial, même derrière `@defer`.
@@ -59,6 +60,7 @@ export class App implements OnInit {
   protected readonly confirm = inject(ConfirmService);
   private readonly browser = inject(PUSH_BROWSER);
   private readonly auth = inject(AuthService);
+  private readonly checkoutReturn = inject(CheckoutReturnService);
   private installLoaded = false;
 
   constructor() {
@@ -87,6 +89,8 @@ export class App implements OnInit {
         // Entonnoir : retour de Stripe (success_url / cancel_url de l'API).
         const checkout = route.snapshot.queryParamMap.get('checkout');
         if (checkout === 'success' || checkout === 'canceled') this.events.once('checkout_return', checkout);
+        // Puis compte relu, offres rechargées et message, une fois (le paramètre est ensuite retiré).
+        this.checkoutReturn.handle(checkout);
         // Lancée depuis l'écran d'accueil, connecté : le parcours (paresseux) compte l'installation
         // et peut inviter aux alertes. Il suit ensuite lui-même les navigations.
         if (!this.installLoaded && this.auth.currentUser() && this.browser.env().standalone) {
