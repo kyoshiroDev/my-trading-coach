@@ -63,11 +63,8 @@ export class AmbassadorComponent implements OnInit {
     return `${environment.landingUrl}/?ref=${code}`;
   });
 
-  /** Filleuls payants (plan Premium). */
-  protected readonly paidCount = computed(() => {
-    const s = this.stats();
-    return s ? s.premium : 0;
-  });
+  /** Filleuls payants : abonnement actif, comme les commissions (un essai n'en est pas un, B12 #1013). */
+  protected readonly paidCount = computed(() => this.stats()?.referrals.filter((u) => u.paying).length ?? 0);
 
   /** Commission du mois courant (données réelles ReferralCommission). */
   protected readonly currentMonthEarnings = computed(() => {
@@ -135,7 +132,7 @@ export class AmbassadorComponent implements OnInit {
   }
 
   protected isPaid(u: ReferralUser): boolean {
-    return u.plan === 'PREMIUM';
+    return u.paying;
   }
 
   /**

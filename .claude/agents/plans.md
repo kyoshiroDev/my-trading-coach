@@ -69,8 +69,8 @@ Toute feature gated DOIT être cohérente aux **4 endroits** (voir Règle d'or).
 - 📄 **PDF du débrief de la semaine** (aucun rapport mensuel n'existe)
 - 🌙 **Recap journalier email 17h30**
 - **Comptes illimités**, chacun avec les règles de sa prop firm (le FREE a déjà son compte avec ses règles)
-- 🚨 **Alertes avant la limite** et 🧘 **anti-tilt** en direct (+ sons et notifications) : app ouverte,
-  compte Tradovate connecté (synchro en direct uniquement, rien sur une saisie manuelle, pas d'e-mail ;
+- 🚨 **Alertes avant la limite** et 🧘 **anti-tilt** en direct (+ sons et notifications) : app ouverte
+  ou en notification pendant la séance (Q2, #1013), compte Tradovate connecté (synchro en direct uniquement, rien sur une saisie manuelle, pas d'e-mail ;
   push vers les appareils abonnés, #666 ; app fermée, limites, objectif et payout relevés par la
   synchro de fond, jusqu'à 15 min de décalage ; veille serveur #770, éteinte tant que
   `TRADOVATE_WATCH_MAX` n'est pas posé : en direct aussi app fermée pendant la séance, Premium seulement)
@@ -88,8 +88,9 @@ réservée au Premium. Changer une ligne → `libs/shared/src/plan-benefits.ts` 
   firm, suivi en direct pendant la séance (equity, marge avant le plancher, objectif ou payout) ·
   Journal et trades illimités, historique complet · Préparation et débrief de chaque séance ·
   Calendrier éco, news et contexte marché.
-- **Premium** : Alertes avant d'atteindre ta limite de perte, app ouverte pendant ta séance (compte
-  Tradovate connecté) · Anti-tilt en direct, app ouverte (compte Tradovate connecté) : reprise de
+- **Premium** : Alertes avant d'atteindre ta limite de perte, app ouverte ou en notification pendant
+  ta séance (compte Tradovate connecté) · Anti-tilt en direct, app ouverte ou en notification pendant
+  ta séance (compte Tradovate connecté) : reprise de
   position après une perte, taille qui grossit, surtrading · Comptes illimités, chacun avec les
   règles de sa prop firm · Débrief de ta semaine rédigé par le coach IA · Analyses avancées : par
   setup, par heure, drawdown détaillé · Coach IA : insights, chat et récap du jour à 17 h 30.
@@ -458,6 +459,8 @@ Constantes : `FOUNDER_OFFER = { priceMonthlyEur: 29, priceAnnualEur: 290, seats:
 - Commission ambassadeur : 20 % de `invoice.amount_paid`, donc déjà sur le montant remisé.
   Estimation mensuelle affichée à l'ambassadeur (`referralMonthlyCommission`, `ambassador-commission.util.ts`) :
   20 % de `realMonthlyEur` (fondateur, annuel ÷ 12, code partenaire), abonnements `active` seulement (#947).
+  Filleul « Payant » sur la page Ambassadeur = même règle (`isPayingReferral`, champ `paying` de
+  `/ambassador/stats`) : un essai ou une pause reste « Inscrit » (B12 #1013).
 - **Satisfait ou remboursé (choix #525)** : demande par e-mail à support@ depuis Profil > Abonnement et depuis l'écran de suppression
   (lien jusqu'à J+14 du 1er paiement), remboursement fait à la main dans Stripe ; le webhook
   `charge.refunded` rend la place et annule l'abonnement. Aucune route ne déplace d'argent toute seule.

@@ -12,8 +12,7 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { map, finalize } from 'rxjs/operators';
+import { finalize } from 'rxjs/operators';
 import {
   LucideDynamicIcon,
   LucidePencil as Pencil,
@@ -91,10 +90,6 @@ export class ProfileComponent implements OnInit {
   protected readonly offersStore = inject(OffersStore);
   protected readonly PRICING = PRICING;
 
-  protected readonly checkoutParam = toSignal(
-    this.route.queryParamMap.pipe(map((p) => p.get('checkout'))),
-  );
-
   // Onglets Profil trader / Paramètres (deep-link ?tab=params)
   protected readonly activeProfileTab = signal<ProfileTab>('trader');
 
@@ -114,6 +109,14 @@ export class ProfileComponent implements OnInit {
    * terminé en avance) n'est plus « en essai » même si l'essai d'inscription court encore.
    */
   protected readonly subState = computed(() => subscriptionState(this.userStore.user() ?? { plan: 'FREE' }));
+  /**
+   * Abonnement Stripe en cours (payant ou en essai) : seul cas avec un portail de facturation à
+   * ouvrir. ADMIN / BETA / Premium manuel sans abonnement n'ont pas de client Stripe (B10 #1013).
+   */
+  protected readonly hasBillingPortal = computed(() => {
+    const kind = this.subState().kind;
+    return kind === 'paying' || kind === 'subscription_trial';
+  });
   /** Essai d'abonnement en cours, non annulé : premier prélèvement à venir. */
   protected readonly isInTrial = computed(() => this.subState().kind === 'subscription_trial' && !this.subState().cancelAt);
   /** Fin programmée d'un essai annulé ou d'un abonnement résilié : plus aucun prélèvement. */
@@ -139,6 +142,12 @@ export class ProfileComponent implements OnInit {
   protected readonly trialDaysLeft = computed(() => {
     const end = this.trialEndsAt();
     return end ? calendarDaysUntil(end, new Date()) : 0;
+  });
+  /** Libellé des jours restants, comme le bandeau : « dernier jour » le jour de la fin (B11 #1013). */
+  protected readonly trialLeftLabel = computed(() => {
+    const days = this.trialDaysLeft();
+    if (days <= 0) return 'dernier jour';
+    return `il te reste ${days} jour${days > 1 ? 's' : ''}`;
   });
 
   // Compte : nom
@@ -237,12 +246,8 @@ export class ProfileComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    if (this.route.snapshot.queryParamMap.get('checkout') === 'success') {
-      this.userStore.refreshUser();
-      this.offersStore.refresh();
-    } else {
-      this.offersStore.load();
-    }
+    // Retour de Stripe (?checkout=) : traité au niveau de l'app (CheckoutReturnService).
+    this.offersStore.load();
     // Deep-link onglet : ?tab=params ouvre directement l'onglet Paramètres.
     if (this.route.snapshot.queryParamMap.get('tab') === 'params') {
       this.activeProfileTab.set('params');

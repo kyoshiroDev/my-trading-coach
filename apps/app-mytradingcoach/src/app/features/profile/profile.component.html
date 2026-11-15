@@ -2,13 +2,6 @@
 
 <div class="settings-content">
 
-  @if (checkoutParam() === 'success') {
-    <div class="alert alert-success">✓ Abonnement activé, bienvenue !</div>
-  }
-  @if (checkoutParam() === 'canceled') {
-    <div class="alert alert-cancel">Paiement annulé. Tu peux réessayer quand tu veux.</div>
-  }
-
   <!-- ════ ONGLETS ════ -->
   <div class="profile-tabs">
     <button class="ptab" [class.active]="activeProfileTab() === 'trader'"
@@ -518,7 +511,7 @@
                 }
                 @if (freePremium()) {
                   <div class="trial-status" data-testid="offered-premium">
-                    <p class="trial-status-title"><svg [lucideIcon]="GiftIcon" [size]="15"></svg>Premium offert&nbsp;: il te reste {{ trialDaysLeft() }} jour{{ trialDaysLeft() > 1 ? 's' : '' }}</p>
+                    <p class="trial-status-title"><svg [lucideIcon]="GiftIcon" [size]="15"></svg>Premium offert&nbsp;: {{ trialLeftLabel() }}</p>
                     <p class="trial-status-sub">
                       Jusqu'au {{ trialEndsAt() | date:'dd/MM/yyyy' }}. Aucun prélèvement, tu repasses en gratuit automatiquement.
                     </p>
@@ -536,7 +529,7 @@
                   </div>
                 } @else if (isInTrial()) {
                   <div class="trial-status" data-testid="subscription-trial">
-                    <p class="trial-status-title"><svg [lucideIcon]="GiftIcon" [size]="15"></svg>Essai gratuit&nbsp;: il te reste {{ trialDaysLeft() }} jour{{ trialDaysLeft() > 1 ? 's' : '' }}</p>
+                    <p class="trial-status-title"><svg [lucideIcon]="GiftIcon" [size]="15"></svg>Essai gratuit&nbsp;: {{ trialLeftLabel() }}</p>
                     <p class="trial-status-sub">
                       Premier prélèvement le {{ trialEndsAt() | date:'dd/MM/yyyy' }}. Annulable en un clic, aucun prélèvement si tu annules avant.
                     </p>
@@ -563,9 +556,11 @@
                         {{ sw.label }} ({{ sw.price }}) →
                       </button>
                     }
-                    <button class="btn btn-secondary" (click)="openPortal()">
-                      {{ isInTrial() ? 'Gérer / annuler mon essai →' : 'Gérer mon abonnement →' }}
-                    </button>
+                    @if (hasBillingPortal()) {
+                      <button class="btn btn-secondary" (click)="openPortal()">
+                        {{ isInTrial() ? 'Gérer / annuler mon essai →' : 'Gérer mon abonnement →' }}
+                      </button>
+                    }
                   </div>
                   @if ((offersStore.isFounder() || offersStore.partner()) && !canceledAt()) {
                     <!-- Rappel neutre, sans freiner : le portail garde son bouton de résiliation. -->
