@@ -520,6 +520,17 @@ Le seed démo n'en écrit que sans FMP (faux vendredi NFP, chômage, ISM), au fo
 `{ interpretation, gap }` (écart par `releaseGap`, aucun sentiment ; textes dans
 `fakePastReleaseAnalyses`), jamais sur des annonces FMP. Il réécrit ses propres lignes à chaque passage.
 
+## Commission ambassadeur par facture (`ReferralCommission.invoiceId`, A1 #1013, 2026-11-15)
+
+Migration `20261115120000_referral_commission_invoice` : colonne `invoiceId` (nullable, unique),
+l'unicité `(subscriptionId, period)` devient un simple index. Une commission par facture Stripe
+(upsert sur `invoiceId`, `update: {}`) ; `period` reste le mois de rattachement (affichage, relevé).
+Statuts : `pending` → `paid` (admin) ou `canceled` (1er paiement du filleul remboursé, A4) ; une
+`canceled` est exclue de toutes les lectures. N-1 : pendant les ~30 s de drain, l'ancienne version ne
+peut plus faire son upsert `(subscriptionId, period)` (index unique retiré) : le job BullMQ échoue et
+est rejoué par la nouvelle version (5 tentatives) ; prod au 14/11 : 0 commission. Lignes antérieures :
+`invoiceId` null (aucune en prod).
+
 ## Index des requêtes chaudes (SCA-B2-05, 2026-10-03)
 
 Migration `20261003160000_b2_index_cleanup` :
