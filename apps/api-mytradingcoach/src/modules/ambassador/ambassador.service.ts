@@ -10,6 +10,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { AuthUserCacheService } from '../infra/auth-user-cache.service';
 import { referralMonthlyCommission } from './ambassador-commission.util';
 import { roundCents } from '@mtc/shared';
+import { emailEquals } from '../../common/utils/email.util';
 
 // Lien de parrainage : même format que celui affiché par le dashboard ambassadeur.
 const REFERRAL_BASE = 'https://mytradingcoach.app';
@@ -76,8 +77,9 @@ export class AmbassadorService {
    * - code absent → réutilise le code existant, sinon en génère un unique.
    */
   async promote(email: string, referralCode?: string): Promise<PromoteResult> {
-    const user = await this.prisma.user.findUnique({
-      where: { email },
+    const user = await this.prisma.user.findFirst({
+      where: { email: emailEquals(email) },
+      orderBy: { createdAt: 'asc' },
       select: { id: true, name: true, email: true, referralCode: true, role: true },
     });
     if (!user) {
@@ -133,8 +135,9 @@ export class AmbassadorService {
    * Ne touche pas aux commissions déjà enregistrées (referredBy des filleuls reste).
    */
   async revoke(email: string): Promise<{ email: string; name: string | null; role: Role }> {
-    const user = await this.prisma.user.findUnique({
-      where: { email },
+    const user = await this.prisma.user.findFirst({
+      where: { email: emailEquals(email) },
+      orderBy: { createdAt: 'asc' },
       select: { id: true, role: true },
     });
     if (!user) {

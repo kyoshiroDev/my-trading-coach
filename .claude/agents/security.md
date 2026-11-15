@@ -243,6 +243,21 @@ const user = await prisma.user.findUnique({
   permettait d'écrire n'importe quelle colonne via `PATCH /session/:id` (corrigé).
 - Ne jamais passer un DTO entier à `prisma.*.update({ data })` : recopier les champs autorisés.
 
+### E-mails : insensibles à la casse (#999, S7 de l'audit #994)
+
+- **Écriture** : tout DTO qui reçoit une adresse de compte porte `@Transform(emailTransform)`
+  (`common/utils/email.util.ts` : espaces autour retirés, minuscules) avant `@IsEmail`. Inscription,
+  connexion, mot de passe oublié, promotion et retrait ambassadeur. Google normalise déjà dans
+  `google-id-token.verifier.ts`.
+- **Lecture** : chercher un compte par e-mail avec `emailEquals(email)` dans un `findFirst`
+  (`orderBy: { createdAt: 'asc' }`), jamais `findUnique({ where: { email } })` : les comptes d'avant
+  le correctif peuvent garder des majuscules en base (2 en prod le 14/11, aucun doublon), et ne sont
+  pas réécrits.
+- **Piège Prisma** : `equals` + `mode: 'insensitive'` devient un `ILIKE` SANS échappement. `_` et `%`
+  y sont des jokers : « a_b@x.com » retrouvait « axb@x.com » (vu sur une vraie base). Ne jamais
+  écrire ce filtre à la main sur une valeur saisie : `emailEquals` échappe (`escapeLike`).
+  Preuve : `email-case.int-spec.ts`.
+
 ---
 
 ## Secrets broker & OAuth (PROMPT-207)
