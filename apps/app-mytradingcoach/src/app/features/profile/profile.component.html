@@ -231,27 +231,13 @@
           <div class="settings-section-label">Compte</div>
           <div class="settings-card">
 
-            <!-- Email -->
-            <div class="settings-row">
+            <!-- Email : lecture seule (#1020). Changer d'adresse demande une confirmation sur la
+                 nouvelle adresse : fonctionnalité à part, pas encore construite. -->
+            <div class="settings-row" data-testid="profile-email">
               <div class="settings-row-left">
                 <span class="settings-row-label">Email</span>
-                @if (editingEmail()) {
-                  <div class="inline-edit">
-                    <input class="settings-input" type="email" [value]="emailInput()"
-                      (input)="emailInput.set($any($event.target).value)" placeholder="Nouvel email" />
-                    <button class="btn-inline-save" (click)="saveEmail()"
-                      [disabled]="isSavingEmail() || !emailInput().trim()">
-                      {{ isSavingEmail() ? '…' : 'Sauvegarder' }}
-                    </button>
-                    <button class="btn-inline-cancel" (click)="editingEmail.set(false)">Annuler</button>
-                  </div>
-                } @else {
-                  <span class="settings-row-value">{{ userStore.user()?.email }}</span>
-                }
+                <span class="settings-row-value">{{ userStore.user()?.email }}</span>
               </div>
-              @if (!editingEmail()) {
-                <button class="settings-edit-btn" (click)="startEditEmail()">Modifier</button>
-              }
             </div>
 
             <!-- Nom -->
