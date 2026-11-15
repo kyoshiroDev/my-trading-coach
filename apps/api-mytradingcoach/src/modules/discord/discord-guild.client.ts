@@ -25,7 +25,7 @@ export class DiscordGuildClient {
   }
 
   /**
-   * Retire les deux rôles (Discord détaché d'un compte, compte supprimé). Ne lève jamais ; `false`
+   * Retire les deux rôles (compte supprimé). Ne lève jamais ; `false`
    * si un retrait a échoué (l'appelant peut le signaler pour un retrait à la main).
    */
   async removePlanRoles(discordId: string): Promise<boolean> {
