@@ -166,7 +166,8 @@ export class DebriefService {
       ? (previousDebrief.objectives as unknown[])
       : [];
 
-    if (role !== Role.ADMIN && !skipLimit) {
+    const limited = role !== Role.ADMIN && !skipLimit;
+    if (limited) {
       await this.aiService.checkDailyLimit(userId, 'debrief', 1);
     }
 
@@ -204,18 +205,25 @@ export class DebriefService {
       return null;
     })) ?? null;
 
-    const aiResult = (await this.aiService.generateDebrief({
-      propContext,
-      trades,
-      stats,
-      previousObjectives,
-      weekNumber,
-      year,
-      userProfile: userProfile ?? undefined,
-      recentSessions,
-      accounts: accountInputs,
-      tradesByAccount: tradesByKey(tradesByAccount, keys),
-    }, userId)) as DebriefAiResult;
+    let aiResult: DebriefAiResult;
+    try {
+      aiResult = (await this.aiService.generateDebrief({
+        propContext,
+        trades,
+        stats,
+        previousObjectives,
+        weekNumber,
+        year,
+        userProfile: userProfile ?? undefined,
+        recentSessions,
+        accounts: accountInputs,
+        tradesByAccount: tradesByKey(tradesByAccount, keys),
+      }, userId)) as DebriefAiResult;
+    } catch (err) {
+      // C2 (#1045) : aucun débrief produit → la génération manuelle du jour est rendue.
+      if (limited) await this.aiService.releaseDailyLimit(userId, 'debrief');
+      throw err;
+    }
 
     const normalizedObjectives = this.normalizeObjectives(aiResult.objectives);
     // Colonne JSON Prisma : nos interfaces n'ont pas de signature d'index, d'où le cast explicite.

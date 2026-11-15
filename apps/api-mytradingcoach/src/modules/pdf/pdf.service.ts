@@ -1,4 +1,4 @@
-import { Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
+import { Injectable, Logger, OnModuleDestroy, ServiceUnavailableException } from '@nestjs/common';
 import puppeteer, { type Browser } from 'puppeteer';
 import { formatMoney } from '@mtc/shared';
 
@@ -16,6 +16,11 @@ export function escapeHtml(value: unknown): string {
 export const BROWSER_IDLE_MS = 5 * 60_000;
 export const BROWSER_MAX_RENDERS = 200;
 export const PDF_TIMEOUT_MS = 20_000;
+/**
+ * PDF en cours ou en attente dans ce process : au-delà, 503 immédiat (S3 #1045). Sans borne, une
+ * rafale (300/min) empilait des centaines de rendus et faisait attendre tous les autres traders.
+ */
+export const PDF_QUEUE_MAX = 10;
 
 export interface DebriefPdfData {
   /** Devise des comptes du débrief ; null si elles diffèrent (montants sans symbole). */
@@ -71,10 +76,20 @@ export class PdfService implements OnModuleDestroy {
   private idleTimer: NodeJS.Timeout | null = null;
   /** File d'attente : un seul rendu à la fois dans ce process. */
   private queue: Promise<unknown> = Promise.resolve();
+  /** Rendus en cours ou en attente dans la file. */
+  private pending = 0;
 
   generateDebriefPDF(data: DebriefPdfData): Promise<Buffer> {
+    if (this.pending >= PDF_QUEUE_MAX) {
+      return Promise.reject(
+        new ServiceUnavailableException('Trop de PDF en préparation. Réessaie dans une minute.'),
+      );
+    }
+    this.pending += 1;
     const html = this.buildHTML(data);
-    const run = this.queue.then(() => this.render(html));
+    const run = this.queue.then(() => this.render(html)).finally(() => {
+      this.pending -= 1;
+    });
     this.queue = run.catch(() => undefined);
     return run;
   }

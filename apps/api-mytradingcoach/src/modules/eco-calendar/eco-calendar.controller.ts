@@ -9,11 +9,14 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { AdminGuard } from '../../common/guards/admin.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { EcoCalendarService } from './eco-calendar.service';
 import { todayParis } from '@mtc/shared';
+import { ECO_RANGE_MAX_DAYS, rangeDates } from './eco-calendar.range';
+import { AnalyzeResultDto, SavePinsDto } from './dto/eco-calendar.dto';
 
 // Calendrier économique = IA mutualisée (coût O(actifs), pas O(users)) → FREE.
 // Affichage ET analyse IA (bull/bear) accessibles à tous les utilisateurs connectés.
@@ -33,15 +36,17 @@ export class EcoCalendarController {
   }
 
   @Post('analyze-result')
+  @Throttle({ default: { ttl: 60_000, limit: 20 } })
   analyzeResult(
     @CurrentUser() user: { id: string; isDemo?: boolean },
-    @Body('eventName') eventName: string,
+    @Body() body: AnalyzeResultDto,
   ) {
-    return this.service.analyzeReleasedEvent(user.id, eventName, user.isDemo === true);
+    return this.service.analyzeReleasedEvent(user.id, body.eventName, user.isDemo === true);
   }
 
   // Vide le cache Redis user + retourne analyse fraîche (après nouveaux actual WebSocket)
   @Post('refresh-today')
+  @Throttle({ default: { ttl: 60_000, limit: 5 } })
   async refreshToday(@CurrentUser() user: { id: string; isDemo?: boolean }) {
     const today = todayParis();
     await this.service.redis.del(`eco:calendar:${today}:${user.id}`);
@@ -55,15 +60,16 @@ export class EcoCalendarController {
     return this.service.getReleaseAnalyses(user.id, date);
   }
 
-  // Events sur une plage de dates (vue semaine)
+  // Events sur une plage de dates (vue semaine) : AAAA-MM-JJ, au plus 31 jours (S1 #1045)
   @Get('range')
-  async getRange(
-    @CurrentUser() user: { id: string },
-    @Query('from') from: string,
-    @Query('to') to: string,
-  ) {
-    if (!from || !to) throw new BadRequestException('from et to requis');
-    return this.service.getEventsRange(user.id, from, to);
+  async getRange(@Query('from') from: string, @Query('to') to: string) {
+    const dates = rangeDates(from, to);
+    if (!dates) {
+      throw new BadRequestException(
+        `from et to requis (AAAA-MM-JJ), from ≤ to, au plus ${ECO_RANGE_MAX_DAYS} jours`,
+      );
+    }
+    return this.service.getEventsRange(dates);
   }
 
   @Get('pinned-upcoming')
@@ -80,9 +86,9 @@ export class EcoCalendarController {
   @Patch('pins')
   async savePins(
     @CurrentUser() user: { id: string },
-    @Body('pins') pins: string[],
+    @Body() body: SavePinsDto,
   ) {
-    return this.service.updateUserPins(user.id, pins ?? []);
+    return this.service.updateUserPins(user.id, body.pins ?? []);
   }
 
   // Admin : forcer un fetch sans attendre 6h00

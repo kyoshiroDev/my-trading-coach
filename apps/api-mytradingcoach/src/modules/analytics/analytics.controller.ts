@@ -1,4 +1,4 @@
-import { Controller, Get, Param, ParseIntPipe, Query, UseGuards } from '@nestjs/common';
+import { BadRequestException, Controller, Get, Param, ParseIntPipe, Query, UseGuards } from '@nestjs/common';
 import { Plan, Role } from '@prisma/client';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { PremiumGuard } from '../../common/guards/premium.guard';
@@ -7,6 +7,12 @@ import { AnalyticsService } from './analytics.service';
 import { DailyRecapService } from '../daily-recap/daily-recap.service';
 import { AccountsService } from '../accounts/accounts.service';
 import { parseIncludeInactive } from '../accounts/account-status-scope';
+
+/** Date lisible, sinon 400 (C11 #1045). */
+function validDate(d: Date, name: string): Date {
+  if (Number.isNaN(d.getTime())) throw new BadRequestException(`${name} : date invalide`);
+  return d;
+}
 
 @UseGuards(JwtAuthGuard)
 @Controller('analytics')
@@ -35,8 +41,8 @@ export class AnalyticsController {
     return this.analyticsService.getSummary(
       user.id,
       await this.accountId(user.id, accountId),
-      from ? new Date(from) : undefined,
-      to ? this.endBound(to) : undefined,
+      this.startBound(from),
+      this.endBound(to),
       parseIncludeInactive(includeInactive),
     );
   }
@@ -52,7 +58,7 @@ export class AnalyticsController {
   ) {
     return this.analyticsService.getBySetup(
       user.id, await this.accountId(user.id, accountId), parseIncludeInactive(includeInactive),
-      from ? new Date(from) : undefined, to ? this.endBound(to) : undefined,
+      this.startBound(from), this.endBound(to),
     );
   }
 
@@ -68,7 +74,7 @@ export class AnalyticsController {
   ) {
     const stats = await this.analyticsService.getBySetup(
       user.id, await this.accountId(user.id, accountId), parseIncludeInactive(includeInactive),
-      from ? new Date(from) : undefined, to ? this.endBound(to) : undefined,
+      this.startBound(from), this.endBound(to),
     );
     return stats
       .filter((s) => s.count > 0)
@@ -86,7 +92,7 @@ export class AnalyticsController {
   ) {
     return this.analyticsService.getByEmotion(
       user.id, await this.accountId(user.id, accountId), parseIncludeInactive(includeInactive),
-      from ? new Date(from) : undefined, to ? this.endBound(to) : undefined,
+      this.startBound(from), this.endBound(to),
     );
   }
 
@@ -101,7 +107,7 @@ export class AnalyticsController {
   ) {
     return this.analyticsService.getByHour(
       user.id, await this.accountId(user.id, accountId), parseIncludeInactive(includeInactive),
-      from ? new Date(from) : undefined, to ? this.endBound(to) : undefined,
+      this.startBound(from), this.endBound(to),
     );
   }
 
@@ -132,8 +138,14 @@ export class AnalyticsController {
    * courbe d'équité de l'écran Analytics restait vide pour un compte qui n'avait tradé
    * qu'aujourd'hui. Un horodatage complet est pris tel quel.
    */
-  private endBound(to: string): Date {
-    return /^\d{4}-\d{2}-\d{2}$/.test(to) ? new Date(`${to}T23:59:59.999`) : new Date(to);
+  private endBound(to?: string): Date | undefined {
+    if (!to) return undefined;
+    return validDate(/^\d{4}-\d{2}-\d{2}$/.test(to) ? new Date(`${to}T23:59:59.999`) : new Date(to), 'to');
+  }
+
+  /** Borne de début ; illisible = 400 (C11 #1045 : `new Date('abc')` partait en SQL, 500). */
+  private startBound(from?: string): Date | undefined {
+    return from ? validDate(new Date(from), 'from') : undefined;
   }
 
   // P&L par jour = vue de base FREE.
@@ -147,8 +159,8 @@ export class AnalyticsController {
   ) {
     return this.analyticsService.getEquityCurveDaily(
       user.id,
-      from ? new Date(from) : undefined,
-      to ? this.endBound(to) : undefined,
+      this.startBound(from),
+      this.endBound(to),
       await this.accountId(user.id, accountId),
       parseIncludeInactive(includeInactive),
     );
@@ -165,8 +177,8 @@ export class AnalyticsController {
   ) {
     return this.analyticsService.getEquityCurveTrades(
       user.id,
-      from ? new Date(from) : undefined,
-      to ? this.endBound(to) : undefined,
+      this.startBound(from),
+      this.endBound(to),
       await this.accountId(user.id, accountId),
       parseIncludeInactive(includeInactive),
     );
@@ -183,7 +195,7 @@ export class AnalyticsController {
   ) {
     return this.analyticsService.getTopAssets(
       user.id, await this.accountId(user.id, accountId), parseIncludeInactive(includeInactive),
-      from ? new Date(from) : undefined, to ? this.endBound(to) : undefined,
+      this.startBound(from), this.endBound(to),
     );
   }
 
@@ -216,8 +228,8 @@ export class AnalyticsController {
   ) {
     return this.analyticsService.getActivityRange(
       user.id,
-      from ? new Date(from) : undefined,
-      to ? this.endBound(to) : undefined,
+      this.startBound(from),
+      this.endBound(to),
       await this.accountId(user.id, accountId),
       parseIncludeInactive(includeInactive),
     );
@@ -236,6 +248,7 @@ export class AnalyticsController {
     @Query('accountId') accountId?: string,
     @Query('includeInactive') includeInactive?: string,
   ) {
+    if (month < 1 || month > 12) throw new BadRequestException('Mois entre 1 et 12');
     return this.analyticsService.getMonthlyActivity(
       user.id,
       year,

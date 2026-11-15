@@ -3,7 +3,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 const launch = vi.fn();
 vi.mock('puppeteer', () => ({ default: { launch: (...a: unknown[]) => launch(...a) } }));
 
-import { PdfService, escapeHtml, type DebriefPdfData } from './pdf.service';
+import { ServiceUnavailableException } from '@nestjs/common';
+import { PdfService, PDF_QUEUE_MAX, escapeHtml, type DebriefPdfData } from './pdf.service';
 
 const data = (over: Partial<DebriefPdfData> = {}): DebriefPdfData => ({
   currency: 'USD', weekNumber: 40, year: 2026, startDate: '28/09', endDate: '04/10', userName: 'Lucas',
@@ -75,6 +76,27 @@ describe('PdfService — un Chromium réutilisé, un rendu à la fois', () => {
     await expect(svc.generateDebriefPDF(data())).resolves.toBeInstanceOf(Buffer);
     expect(broken.close).toHaveBeenCalled();
     expect(launch).toHaveBeenCalledTimes(2);
+    await svc.onModuleDestroy();
+  });
+});
+
+describe('PdfService — file d’attente bornée (S3 #1045)', () => {
+  it(`au-delà de ${PDF_QUEUE_MAX} PDF en attente : 503 immédiat, les autres sont servis`, async () => {
+    launch.mockImplementation(async () => fakeBrowser());
+    const svc = new PdfService();
+
+    const results = await Promise.allSettled(
+      Array.from({ length: PDF_QUEUE_MAX + 2 }, () => svc.generateDebriefPDF(data())),
+    );
+
+    const ok = results.filter((r) => r.status === 'fulfilled');
+    const refused = results.filter((r) => r.status === 'rejected') as PromiseRejectedResult[];
+    expect(ok).toHaveLength(PDF_QUEUE_MAX);
+    expect(refused).toHaveLength(2);
+    expect(refused.every((r) => r.reason instanceof ServiceUnavailableException)).toBe(true);
+
+    // La file s'est vidée : un nouveau PDF repasse.
+    await expect(svc.generateDebriefPDF(data())).resolves.toBeInstanceOf(Buffer);
     await svc.onModuleDestroy();
   });
 });

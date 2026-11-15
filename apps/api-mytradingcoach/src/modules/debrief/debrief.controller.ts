@@ -9,12 +9,14 @@ import {
   Res,
   UseGuards,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { Role } from '@prisma/client';
 import type { Response } from 'express';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { PremiumGuard } from '../../common/guards/premium.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { DebriefService } from './debrief.service';
+import { ObjectiveNoteDto } from './dto/objective-note.dto';
 import { PdfService } from '../pdf/pdf.service';
 
 @UseGuards(JwtAuthGuard, PremiumGuard)
@@ -35,7 +37,9 @@ export class DebriefController {
     return this.debriefService.getHistory(user.id);
   }
 
+  // S3 (#1045) : rendu Chromium coûteux, file par process bornée (PDF_QUEUE_MAX).
   @Get(':year/:week/pdf')
+  @Throttle({ default: { ttl: 60_000, limit: 5 } })
   async exportPDF(
     @CurrentUser() user: { id: string },
     @Param('year', ParseIntPipe) year: number,
@@ -75,8 +79,8 @@ export class DebriefController {
     @CurrentUser() user: { id: string },
     @Param('debriefId') debriefId: string,
     @Param('index', ParseIntPipe) index: number,
-    @Body('note') note: string,
+    @Body() body: ObjectiveNoteDto,
   ) {
-    return this.debriefService.addNoteToObjective(user.id, debriefId, index, note);
+    return this.debriefService.addNoteToObjective(user.id, debriefId, index, body.note);
   }
 }

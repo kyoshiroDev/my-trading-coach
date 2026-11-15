@@ -61,6 +61,17 @@ describe('ResendService', () => {
     service = module.get(ResendService);
   });
 
+  describe('sendAdminAlert : corps échappé (N4 #1045)', () => {
+    it('un nom d’inscrit avec du balisage reste du texte dans l’e-mail admin', async () => {
+      await service.sendAdminAlert('Inscriptions', '- </pre><a href="https://x">Valider le paiement</a> (FREE)');
+
+      const html = mockSend.mock.calls[0][0].html as string;
+      expect(html).not.toContain('<a href');
+      expect(html).toContain('&lt;/pre&gt;&lt;a href="https://x"&gt;Valider le paiement&lt;/a&gt;');
+      expect(html.match(/<\/pre>/g)).toHaveLength(1);
+    });
+  });
+
   describe('sendDebriefReady', () => {
     it('envoie un email avec le bon sujet et les stats', async () => {
       await service.sendDebriefReady({
