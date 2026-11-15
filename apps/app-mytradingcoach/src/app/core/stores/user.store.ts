@@ -62,6 +62,9 @@ export class UserStore {
   readonly signupTrialEnded = computed(() => {
     const user = this.user();
     if (!user?.signupTrialEndsAt || user.isDemo || user.trialSource !== 'SIGNUP') return false;
+    // Ancien abonné payant (abonné pendant l'essai puis résilié) : `trialSource` reste SIGNUP, mais la
+    // fenêtre « Ton Premium offert est terminé » n'est pas pour lui (B5 #1013).
+    if (user.subscriptionCanceledAt) return false;
     return new Date() >= new Date(user.signupTrialEndsAt) && !this.isPremium();
   });
 
