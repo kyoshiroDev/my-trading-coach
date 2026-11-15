@@ -17,6 +17,7 @@ import { fetchWithTimeout } from '../../common/utils/fetch-timeout';
 import { buildBriefing } from './eco-calendar.briefing';
 import { morningFocus } from './eco-calendar.gap';
 import { datesToCatchUp, datesToPoll, hasNumericResult, parisDate, shiftDate } from './eco-calendar.schedule';
+import { withinFetchWindow } from './eco-calendar.range';
 
 // Réexport : les appelants existants importent ces types depuis le service.
 export type { EcoCalendarData, EcoResultAnalysis } from './eco-calendar.types';
@@ -31,6 +32,8 @@ const TRANSLATION_BATCH = 15;
  */
 const TRANSLATION_RETRY_TTL_S = 12 * 60 * 60;
 const translationLockKey = (name: string) => `eco:label-tr:${name}`;
+/** Un jour relevé vide chez FMP (week-end, férié) n'est pas redemandé avant 6 h (S1 #1045). */
+const RANGE_EMPTY_TTL_S = 6 * 60 * 60;
 
 /**
  * État affiché d'une annonce : « passée » se distingue de « publiée » (une intervention sans chiffre
@@ -816,25 +819,23 @@ export class EcoCalendarService {
 
   // ── getEventsRange : events sur une plage de dates (vue semaine) ──────────
 
-  async getEventsRange(
-    userId: string,
-    from: string,
-    to: string,
-  ): Promise<{ date: string; events: EcoEvent[] }[]> {
-    const dates: string[] = [];
-    const current = new Date(from);
-    const end = new Date(to);
-    while (current <= end) {
-      dates.push(toParisDateStr(current));
-      current.setDate(current.getDate() + 1);
-    }
-
+  /**
+   * `dates` vient de `rangeDates` (au plus `ECO_RANGE_MAX_DAYS` jours, contrôlé par le controller).
+   * Un jour vide n'est demandé à FMP que s'il est proche d'aujourd'hui et pas déjà relevé vide
+   * dans les 6 dernières heures (week-ends, jours fériés) : S1 (#1045).
+   */
+  async getEventsRange(dates: string[]): Promise<{ date: string; events: EcoEvent[] }[]> {
+    const today = todayParis();
     const results = await Promise.all(
       dates.map(async (date) => {
         let events = await this.getEventsFromDb(date);
-        if (events.length === 0) {
-          try { events = await this.fetchAndStoreEvents(date); }
-          catch { events = []; }
+        if (events.length === 0 && withinFetchWindow(date, today)) {
+          const emptyKey = `eco:range-empty:${date}`;
+          if (!(await this.redis.get(emptyKey))) {
+            try { events = await this.fetchAndStoreEvents(date); }
+            catch { events = []; }
+            if (events.length === 0) await this.redis.setex(emptyKey, RANGE_EMPTY_TTL_S, '1');
+          }
         }
         return { date, events };
       }),

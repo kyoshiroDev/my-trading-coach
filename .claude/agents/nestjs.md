@@ -109,6 +109,7 @@ POST   /api/session/trades/:id/close   JWT → clôturer un trade (exitPrice →
 GET    /api/eco-calendar/today         PREMIUM → events du jour + analyse IA (cache Redis 1h)
 POST   /api/eco-calendar/analyze-result PREMIUM → analyse d'un résultat tombé en temps réel
 GET    /api/eco-calendar/release-analyses?date=YYYY-MM-DD JWT → analyses déjà produites d'un jour PASSÉ
+GET    /api/eco-calendar/range?from&to JWT → vue semaine ; AAAA-MM-JJ, from ≤ to, ≤ 31 jours sinon 400 ; FMP seulement à ±90 j d'aujourd'hui, jour vide marqué 6 h (`eco:range-empty:<date>`) (S1 #1045)
        (EcoReleaseAnalysis, aucun appel IA, donc ouverte à la démo ; vide pour aujourd'hui et après) ;
        renvoyées sous le nom FMP ET sous le libellé affiché (`nameFr`), sans suffixe de période.
        Signature d'actifs de l'utilisateur d'abord, sinon la plus récente. Rendu = `{ interpretation, gap }`

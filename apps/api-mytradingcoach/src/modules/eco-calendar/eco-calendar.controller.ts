@@ -14,6 +14,7 @@ import { AdminGuard } from '../../common/guards/admin.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { EcoCalendarService } from './eco-calendar.service';
 import { todayParis } from '@mtc/shared';
+import { ECO_RANGE_MAX_DAYS, rangeDates } from './eco-calendar.range';
 
 // Calendrier économique = IA mutualisée (coût O(actifs), pas O(users)) → FREE.
 // Affichage ET analyse IA (bull/bear) accessibles à tous les utilisateurs connectés.
@@ -55,15 +56,16 @@ export class EcoCalendarController {
     return this.service.getReleaseAnalyses(user.id, date);
   }
 
-  // Events sur une plage de dates (vue semaine)
+  // Events sur une plage de dates (vue semaine) : AAAA-MM-JJ, au plus 31 jours (S1 #1045)
   @Get('range')
-  async getRange(
-    @CurrentUser() user: { id: string },
-    @Query('from') from: string,
-    @Query('to') to: string,
-  ) {
-    if (!from || !to) throw new BadRequestException('from et to requis');
-    return this.service.getEventsRange(user.id, from, to);
+  async getRange(@Query('from') from: string, @Query('to') to: string) {
+    const dates = rangeDates(from, to);
+    if (!dates) {
+      throw new BadRequestException(
+        `from et to requis (AAAA-MM-JJ), from ≤ to, au plus ${ECO_RANGE_MAX_DAYS} jours`,
+      );
+    }
+    return this.service.getEventsRange(dates);
   }
 
   @Get('pinned-upcoming')

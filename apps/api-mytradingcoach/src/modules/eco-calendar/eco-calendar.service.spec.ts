@@ -259,6 +259,45 @@ describe('EcoCalendarService', () => {
     });
   });
 
+  // ── getEventsRange (S1 #1045) ─────────────────────────────────────────────
+
+  describe('getEventsRange : FMP borné (S1 #1045)', () => {
+    it('jour vide loin d’aujourd’hui : pas d’appel FMP', async () => {
+      mockPrisma.ecoEvent.findMany.mockResolvedValue([]);
+      const fetchSpy = vi.spyOn(service, 'fetchAndStoreEvents').mockResolvedValue([]);
+
+      const result = await service.getEventsRange(['1990-01-01', '1990-01-02']);
+
+      expect(fetchSpy).not.toHaveBeenCalled();
+      expect(result).toEqual([]);
+    });
+
+    it('jour vide proche déjà relevé (marqueur Redis) : pas de nouvel appel FMP', async () => {
+      mockPrisma.ecoEvent.findMany.mockResolvedValue([]);
+      const fetchSpy = vi.spyOn(service, 'fetchAndStoreEvents').mockResolvedValue([]);
+      const today = todayParis();
+      vi.spyOn(service['redis'], 'get').mockImplementation(
+        ((key: string) => Promise.resolve(key === `eco:range-empty:${today}` ? '1' : null)) as never,
+      );
+
+      await service.getEventsRange([today]);
+
+      expect(fetchSpy).not.toHaveBeenCalled();
+    });
+
+    it('jour vide proche jamais relevé : un appel FMP, puis marqué vide 6 h s’il le reste', async () => {
+      mockPrisma.ecoEvent.findMany.mockResolvedValue([]);
+      const fetchSpy = vi.spyOn(service, 'fetchAndStoreEvents').mockResolvedValue([]);
+      const today = todayParis();
+
+      await service.getEventsRange([today]);
+
+      expect(fetchSpy).toHaveBeenCalledOnce();
+      expect(fetchSpy).toHaveBeenCalledWith(today);
+      expect(service['redis'].setex).toHaveBeenCalledWith(`eco:range-empty:${today}`, 6 * 3600, '1');
+    });
+  });
+
   // ── getEventsFromDb ───────────────────────────────────────────────────────
 
   describe('getEventsFromDb', () => {
