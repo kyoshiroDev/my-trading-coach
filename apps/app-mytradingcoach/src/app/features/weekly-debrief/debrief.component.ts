@@ -22,8 +22,7 @@ import {
 import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
 import { ToastService } from '../../core/services/toast.service';
 import { apiErrorMessage } from '../../core/utils/api-error';
-import { timer } from 'rxjs';
-import { switchMap, map, takeWhile } from 'rxjs/operators';
+import { map } from 'rxjs/operators';
 import { DebriefApi } from '../../core/api/debrief.api';
 import type { DebriefAccountSection as AccountSection, DebriefBadgeItem as DebriefItem, WeeklyDebrief } from '@mtc/shared';
 import { ErrorStateComponent, PctPipe } from '@mtc/front-ui';
@@ -127,17 +126,17 @@ export class DebriefComponent {
     this.pollCurrent();
   }
 
-  /** Charge le débrief courant et interroge l'API toutes les 15 s tant qu'il est en génération. */
+  /**
+   * Charge le débrief courant, une fois (F6 #1047). `null` veut dire « aucun débrief encore », pas
+   * « en génération » : l'ancien relevé toutes les 15 s tournait sans fin, onglet caché compris.
+   * Le débrief manuel revient dans la réponse de `generate`.
+   */
   private pollCurrent(): void {
     this.loadError.set(false);
-    timer(0, 15_000)
+    this.debriefApi
+      .getCurrent()
       .pipe(
-        switchMap(() =>
-          this.debriefApi
-            .getCurrent()
-            .pipe(map((res) => res.data)),
-        ),
-        takeWhile((d) => d === null, true),
+        map((res) => res.data),
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe({

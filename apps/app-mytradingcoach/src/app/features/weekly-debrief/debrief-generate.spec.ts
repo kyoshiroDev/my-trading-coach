@@ -17,3 +17,39 @@ describe('Débrief : bouton de génération (F5 #1047)', () => {
     expect(TEMPLATE).toContain('Clique sur « Générer le débrief de cette semaine »');
   });
 });
+
+describe('Débrief : un seul chargement à l’ouverture (F6 #1047)', () => {
+  let http: HttpTestingController;
+  beforeEach(() => {
+    vi.useFakeTimers();
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: UserStore, useValue: { isPremium: () => true, isDemo: () => false } },
+      ],
+    });
+    TestBed.overrideComponent(DebriefComponent, {
+      set: { imports: [], template: '<div></div>', styleUrls: [], styleUrl: undefined as unknown as string, schemas: [NO_ERRORS_SCHEMA] },
+    });
+  });
+  afterEach(() => {
+    http?.verify();
+    vi.useRealTimers();
+  });
+
+  it('aucun débrief encore (null) : pas de nouvelle requête 15 s plus tard', () => {
+    const fixture = TestBed.createComponent(DebriefComponent);
+    http = TestBed.inject(HttpTestingController);
+    vi.advanceTimersByTime(0);
+    http.expectOne((r) => r.url.endsWith('/debrief/current')).flush({ data: null });
+    // Requêtes annexes du composant (comptes) : hors sujet ici.
+    for (const req of http.match((r) => r.url.endsWith('/accounts'))) req.flush({ data: [] });
+
+    vi.advanceTimersByTime(60_000);
+
+    http.expectNone((r) => r.url.endsWith('/debrief/current'));
+    expect((fixture.componentInstance as unknown as { isLoading: () => boolean }).isLoading()).toBe(false);
+  });
+});
