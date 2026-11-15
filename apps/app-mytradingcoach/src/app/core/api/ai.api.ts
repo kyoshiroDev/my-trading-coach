@@ -18,8 +18,9 @@ export class AiApi {
   private readonly http = inject(HttpClient);
   private readonly base = `${environment.apiUrl}/ai`;
 
-  cooldown(): Observable<{ data: { cooldownSeconds: number } }> {
-    return this.http.get<{ data: { cooldownSeconds: number } }>(`${this.base}/cooldown`);
+  /** Délai restant et dernière analyse réussie, gardée par l'API pendant le délai (C4 #1046). */
+  cooldown<T>(): Observable<{ data: { cooldownSeconds: number; insights?: T | null } }> {
+    return this.http.get<{ data: { cooldownSeconds: number; insights?: T | null } }>(`${this.base}/cooldown`);
   }
 
   insights<T>(): Observable<{ data: T }> {

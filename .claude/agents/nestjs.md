@@ -119,6 +119,7 @@ GET    /api/eco-calendar/range?from&to JWT → vue semaine ; AAAA-MM-JJ, from �
        Écrites au clic ET par la génération automatique (`ensureReleasedAnalysis`, même `assetsSignature`
        dédoublonnée que la clé Redis).
 
+GET    /api/ai/cooldown                PREMIUM → { cooldownSeconds, insights } (dernière analyse réussie gardée 4 h, null sinon) (C4 #1046)
 POST   /api/ai/insights                PREMIUM → cooldown 4h par user (posé atomiquement, retiré si l'analyse échoue) ; 0 trade clôturé → 400 « Ajoute au moins un trade clôturé… » (C9 #1046)
 POST   /api/ai/chat                    PREMIUM → 50 messages/jour par user
 
@@ -461,7 +462,7 @@ async runInsightsFlow(userId: string) {
   const history = await this.debriefService.getHistory(userId);
   const summary = this.dataAgent.buildTradesSummary(trades);
 
-  // Étape 2 — Pattern (1 appel Anthropic, mis en cache 4h)
+  // Étape 2 — Pattern (1 appel Anthropic, résultat final gardé 4 h dans Redis `ai:insights:last:<userId>`, relu par GET /ai/cooldown (C4 #1046))
   const patterns = await this.patternAgent.analyze(summary);
 
   // Étape 3 — Coach (1 appel Anthropic)
