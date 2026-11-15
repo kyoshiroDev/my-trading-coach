@@ -114,8 +114,10 @@ describe('ResendService', () => {
 
       expect(mockSend).toHaveBeenCalledOnce();
       const call = mockSend.mock.calls[0][0];
-      expect(call.subject).toContain('7 jours');
-      expect(call.html).toContain('2026');
+      // A2 (#1013) : objet « Ton Premium se termine le {date} », jamais « expire dans 7 jours ».
+      expect(call.subject).toBe('Ton Premium se termine le 1 mai 2026');
+      expect(call.html).toContain('résilié');
+      expect(call.html).not.toContain('Sans renouvellement');
     });
 
     it('ne throw pas si Resend retourne une erreur', async () => {

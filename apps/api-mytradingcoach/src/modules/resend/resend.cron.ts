@@ -22,16 +22,18 @@ export class ResendCron {
     const end = new Date(in7days);
     end.setHours(23, 59, 59, 999);
 
+    // Fin RÉELLE seulement (A2 #1013, décision du 14/11) : résiliation programmée dans 7 jours,
+    // mensuel comme annuel. Avant, le rappel « tu passeras au gratuit » partait chaque mois à tout
+    // abonné qui se renouvelle (date de renouvellement) ; la reconduction annuelle a son propre
+    // rappel (invoice.upcoming, montant réel).
     const users = await this.prisma.user.findMany({
       where: {
         isDemo: false,
         plan: 'PREMIUM',
         notificationsEmail: true,
-        stripeCurrentPeriodEnd: { gte: start, lte: end },
-        // Annuels : rappel de reconduction avec le montant réel via le webhook invoice.upcoming.
-        OR: [{ stripeInterval: null }, { stripeInterval: { not: 'year' } }],
+        stripeCancelAt: { gte: start, lte: end },
       },
-      select: { email: true, name: true, stripeCurrentPeriodEnd: true },
+      select: { email: true, name: true, stripeCancelAt: true },
     });
 
     this.logger.log(`Sending renewal reminders to ${users.length} users`);
@@ -41,7 +43,7 @@ export class ResendCron {
       this.resend.sendRenewalReminder({
         to: u.email,
         userName: u.name ?? 'Trader',
-        expiresAt: u.stripeCurrentPeriodEnd!,
+        expiresAt: u.stripeCancelAt!,
       }),
     );
   }
