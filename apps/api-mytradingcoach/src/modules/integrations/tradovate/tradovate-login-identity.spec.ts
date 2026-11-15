@@ -143,7 +143,7 @@ describe('Login d’une connexion Tradovate = l’utilisateur authentifié', () 
       // Compteur des trades importés renvoyé avec la vue (aucun ici).
       trade: { groupBy: vi.fn().mockResolvedValue([]) },
       brokerConnection: {
-        findFirst: vi.fn().mockResolvedValue(conn),
+        findFirst: vi.fn((args: { where: { accountId?: unknown } }) => Promise.resolve(typeof args.where.accountId === 'object' ? null : conn)), // #1001 : aucun autre compte MTC relié au même compte broker
         findMany: vi.fn().mockResolvedValue([]), // aucun autre utilisateur sur ce compte
         update: vi.fn().mockResolvedValue({ ...conn, externalAccountId: '90000011' }),
       },
@@ -285,7 +285,7 @@ describe('Un compte Tradovate ne se relie qu’à un seul compte MTC', () => {
     } as unknown as BrokerConnection;
     const prisma = {
       brokerConnection: {
-        findFirst: vi.fn().mockResolvedValue(conn),
+        findFirst: vi.fn((args: { where: { accountId?: unknown } }) => Promise.resolve(typeof args.where.accountId === 'object' ? null : conn)), // #1001 : aucun autre compte MTC relié au même compte broker
         findMany: vi.fn().mockResolvedValue([{ externalAccountId: '90000010' }]),
         update: vi.fn().mockResolvedValue({}),
       },

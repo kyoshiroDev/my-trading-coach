@@ -45,6 +45,22 @@ export function dedupeKey(t: {
  * (une répétition légitime porte `#2`, `#3`… et n'est donc JAMAIS un doublon), sinon la clé
  * recalculée (trades saisis à la main ou importés avant la migration `importHash`).
  */
+/**
+ * Empreinte d'import stockée, propre au compte (#1001) : `a:<compte>|<empreinte>`. Le même trade copié
+ * sur deux comptes (copy trading) donne deux trades, un par compte, sans toucher à l'index
+ * `@@unique([userId, importHash])`. Les empreintes d'avant #1001 (sans préfixe) restent valides : le
+ * contrôle avant écriture compare les champs, compte par compte. Les clés de position Tradovate
+ * (`tv:<fill>`) ne passent pas par ici : un fill appartient déjà à un seul compte broker.
+ */
+export function accountImportHash(accountId: string | null | undefined, hash: string): string {
+  return accountId ? `a:${accountId}|${hash}` : hash;
+}
+
+/** Empreinte sans son préfixe de compte (`a:<compte>|`), pour comparer deux trades d'un même compte. */
+export function withoutAccountPrefix(hash: string): string {
+  return hash.replace(/^a:[^|]+\|/, '');
+}
+
 export function duplicateIdentity(t: {
   asset?: string | null;
   side?: string | null;
@@ -54,7 +70,7 @@ export function duplicateIdentity(t: {
   pnl?: number | null;
   importHash?: string | null;
 }): string {
-  return t.importHash ?? dedupeKey(t);
+  return t.importHash ? withoutAccountPrefix(t.importHash) : dedupeKey(t);
 }
 
 /**
@@ -147,4 +163,9 @@ export class CentRoundingPool {
  */
 export function withoutImportMeta<T extends object>(dto: T): T {
   return Object.fromEntries(Object.entries(dto).filter(([k]) => !k.startsWith('_'))) as T;
+}
+
+/** Identité d'un trade pour « Supprimer les doublons » : par compte (#1001), jamais d'un compte à l'autre. */
+export function accountDuplicateIdentity(t: Parameters<typeof duplicateIdentity>[0] & { accountId?: string | null }): string {
+  return `${t.accountId ?? ''}|${duplicateIdentity(t)}`;
 }
