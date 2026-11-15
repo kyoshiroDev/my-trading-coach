@@ -51,6 +51,7 @@ const mockAiService = {
     objectives: [],
   }),
   checkDailyLimit: vi.fn().mockResolvedValue(undefined),
+  releaseDailyLimit: vi.fn().mockResolvedValue(undefined),
 };
 
 const mockAnalyticsService = {
@@ -191,6 +192,28 @@ describe('DebriefService', () => {
         new Date('2026-06-22T00:00:00.000'),
         new Date('2026-06-28T23:59:59.999'),
       );
+    });
+
+    it('C2 (#1045) : l’IA échoue → la génération du jour est rendue, on peut réessayer', async () => {
+      mockPrisma.weeklyDebrief.findUnique.mockResolvedValue(null);
+      mockPrisma.weeklyDebrief.findFirst.mockResolvedValue(null);
+      mockAiService.generateDebrief.mockRejectedValueOnce(new Error('IA surchargée'));
+
+      await expect(service.generate('user-123', Role.USER, false, { force: true })).rejects.toThrow('IA surchargée');
+
+      expect(mockAiService.checkDailyLimit).toHaveBeenCalledWith('user-123', 'debrief', 1);
+      expect(mockAiService.releaseDailyLimit).toHaveBeenCalledWith('user-123', 'debrief');
+      expect(mockPrisma.weeklyDebrief.upsert).not.toHaveBeenCalled();
+    });
+
+    it('C2 (#1045) : génération sans limite (cron, admin) qui échoue → rien à rendre', async () => {
+      mockPrisma.weeklyDebrief.findUnique.mockResolvedValue(null);
+      mockPrisma.weeklyDebrief.findFirst.mockResolvedValue(null);
+      mockAiService.generateDebrief.mockRejectedValueOnce(new Error('IA surchargée'));
+
+      await expect(service.generate('user-123', Role.USER, true)).rejects.toThrow('IA surchargée');
+
+      expect(mockAiService.releaseDailyLimit).not.toHaveBeenCalled();
     });
 
     it('idempotent : débrief existant + pas de force → retourne l\'existant, zéro IA, zéro upsert', async () => {

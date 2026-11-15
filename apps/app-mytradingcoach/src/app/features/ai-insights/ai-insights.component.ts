@@ -31,6 +31,7 @@ import { apiErrorMessage } from '../../core/utils/api-error';
 import { AiApi } from '../../core/api/ai.api';
 import { todayParis } from '@mtc/shared';
 import { PaywallCtaService } from '@app/core/services/paywall-cta.service';
+import { chatHistoryForApi, type ChatMessage } from './chat-history';
 
 interface Insight {
   type: 'strength' | 'weakness' | 'pattern';
@@ -42,10 +43,6 @@ interface InsightsResponse {
   insights: Insight[];
   topPattern: string;
   emotionInsight: string;
-}
-interface ChatMessage {
-  role: 'user' | 'assistant';
-  content: string;
 }
 
 type InsightVariant = 'warn' | 'info' | 'tip' | 'alert';
@@ -265,7 +262,7 @@ export class AiInsightsComponent implements AfterViewChecked {
     }
 
     this.aiApi
-      .chat(msg, history.slice(-6))
+      .chat(msg, chatHistoryForApi(history))
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (res) => {
@@ -289,7 +286,11 @@ export class AiInsightsComponent implements AfterViewChecked {
           }
           this.chatHistory.update((h) => [
             ...h,
-            { role: 'assistant', content: apiErrorMessage(err, 'Erreur IA.') },
+            {
+              role: 'assistant',
+              content: apiErrorMessage(err, 'Erreur IA.'),
+              error: true,
+            },
           ]);
           this.chatLoading.set(false);
           this.shouldScrollToBottom = true;

@@ -51,6 +51,9 @@ const DEMO_INSIGHTS = {
 const DEMO_CHAT_REPLY =
   "Je suis ton coach IA. En mode démo, mes réponses sont des exemples. Crée ton compte gratuit pour un coaching personnalisé sur tes vrais trades : tes patterns, tes émotions et des objectifs concrets chaque semaine.";
 
+/** Fenêtre entre deux analyses d'insights (4 h). */
+const INSIGHTS_COOLDOWN_S = 60 * 60 * 4;
+
 @Injectable()
 export class AiService {
   private readonly logger = new Logger(AiService.name);
@@ -70,7 +73,13 @@ export class AiService {
     const flow = () => guardAiText('insights', () => this.orchestrator.runInsightsFlow(userId), this.logger);
     if (role === Role.ADMIN) return flow();
     await this.checkInsightsCooldown(userId);
-    return this.metered(userId, flow);
+    try {
+      return await this.metered(userId, flow);
+    } catch (err) {
+      // C3 (#1045) : aucune analyse produite (IA en panne, quota) → pas de délai de 4 h.
+      await this.releaseInsightsCooldown(userId);
+      throw err;
+    }
   }
 
   // ── Chat : direct Anthropic call with trader context ─────────────────────
@@ -91,7 +100,13 @@ export class AiService {
     if (userRole === Role.ADMIN) return this.chatCall(userId, message, history, accountId);
     return this.metered(userId, async () => {
       await this.checkDailyLimit(userId, 'chat', 50);
-      return this.chatCall(userId, message, history, accountId);
+      try {
+        return await this.chatCall(userId, message, history, accountId);
+      } catch (err) {
+        // C10 (#1045) : pas de réponse → le message du jour est rendu, comme le quota mensuel.
+        await this.releaseDailyLimit(userId, 'chat');
+        throw err;
+      }
     });
   }
 
@@ -551,10 +566,14 @@ Génère un JSON strict (pas de markdown, pas de texte autour) :
     return { cooldownSeconds: Math.max(0, ttl) };
   }
 
+  /**
+   * Réserve la fenêtre de 4 h en une seule opération (SET NX EX) : avant, lire puis écrire
+   * laissait passer une rafale de requêtes simultanées (S4 #1045). Déjà réservée → 429.
+   */
   async checkInsightsCooldown(userId: string): Promise<void> {
     const key = `ai:cooldown:insights:${userId}`;
-    const exists = await this.redisService.client.get(key);
-    if (exists) {
+    const reserved = await this.redisService.client.set(key, '1', 'EX', INSIGHTS_COOLDOWN_S, 'NX');
+    if (reserved !== 'OK') {
       const ttl = await this.redisService.client.ttl(key);
       throw new HttpException(
         {
@@ -564,7 +583,14 @@ Génère un JSON strict (pas de markdown, pas de texte autour) :
         HttpStatus.TOO_MANY_REQUESTS,
       );
     }
-    await this.redisService.client.set(key, '1', 'EX', 60 * 60 * 4);
+  }
+
+  private async releaseInsightsCooldown(userId: string): Promise<void> {
+    try {
+      await this.redisService.client.del(`ai:cooldown:insights:${userId}`);
+    } catch {
+      this.logger.warn('Redis unavailable, délai des insights non retiré');
+    }
   }
 
   async checkDailyLimit(
@@ -581,6 +607,18 @@ Génère un JSON strict (pas de markdown, pas de texte autour) :
         `Limite atteinte : ${max} ${action} par jour. Reviens demain.`,
         HttpStatus.TOO_MANY_REQUESTS,
       );
+    }
+  }
+
+  /**
+   * Rend la place du jour prise par `checkDailyLimit` quand l'appel IA a échoué (C2 #1045) :
+   * sinon une panne du modèle valait « Limite atteinte, reviens demain ».
+   */
+  async releaseDailyLimit(userId: string, action: string): Promise<void> {
+    try {
+      await this.redisService.client.decr(`ai:limit:${userId}:${action}:${todayParis()}`);
+    } catch {
+      this.logger.warn('Redis unavailable, limite journalière non rendue');
     }
   }
 

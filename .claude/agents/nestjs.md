@@ -107,8 +107,11 @@ GET    /api/session/today/stats        JWT → stats live (totalPnl, winRate, tr
 POST   /api/session/trades/:id/close   JWT → clôturer un trade (exitPrice → détection SL/TP/Manuel)
 
 GET    /api/eco-calendar/today         PREMIUM → events du jour + analyse IA (cache Redis 1h)
-POST   /api/eco-calendar/analyze-result PREMIUM → analyse d'un résultat tombé en temps réel
+POST   /api/eco-calendar/analyze-result PREMIUM → analyse d'un résultat tombé en temps réel ; @Throttle 20/min (S2 #1045)
+POST   /api/eco-calendar/refresh-today JWT → vide le cache du jour du trader ; @Throttle 5/min ; résumé du matin mutualisé : au plus 5 générations distinctes par trader et par jour (`eco:morning-gen:<date>:<userId>`, au-delà « Données IA indisponibles ») (S2 #1045)
+PATCH  /api/eco-calendar/pins     JWT → `SavePinsDto` (≤ 50 clés « nom:devise » de ≤ 120) ; analyze-result → `AnalyzeResultDto` (eventName ≤ 200) ; analytics : from/to illisibles et mois hors 1-12 = 400 (C11 #1045)
 GET    /api/eco-calendar/release-analyses?date=YYYY-MM-DD JWT → analyses déjà produites d'un jour PASSÉ
+GET    /api/eco-calendar/range?from&to JWT → vue semaine ; AAAA-MM-JJ, from ≤ to, ≤ 31 jours sinon 400 ; FMP seulement à ±90 j d'aujourd'hui, jour vide marqué 6 h (`eco:range-empty:<date>`) (S1 #1045)
        (EcoReleaseAnalysis, aucun appel IA, donc ouverte à la démo ; vide pour aujourd'hui et après) ;
        renvoyées sous le nom FMP ET sous le libellé affiché (`nameFr`), sans suffixe de période.
        Signature d'actifs de l'utilisateur d'abord, sinon la plus récente. Rendu = `{ interpretation, gap }`
@@ -116,7 +119,7 @@ GET    /api/eco-calendar/release-analyses?date=YYYY-MM-DD JWT → analyses déj�
        Écrites au clic ET par la génération automatique (`ensureReleasedAnalysis`, même `assetsSignature`
        dédoublonnée que la clé Redis).
 
-POST   /api/ai/insights                PREMIUM → cooldown 4h par user
+POST   /api/ai/insights                PREMIUM → cooldown 4h par user (posé atomiquement, retiré si l'analyse échoue)
 POST   /api/ai/chat                    PREMIUM → 50 messages/jour par user
 
 POST   /api/trades/import              PREMIUM → CSV parsing via Claude SDK
@@ -130,7 +133,8 @@ GET    /api/market/live-price?symbol=  JWT (FREE) → trade rapide
 
 GET    /api/debrief/current            PREMIUM
 GET    /api/debrief/:year/:week        PREMIUM
-GET    /api/debrief/:year/:week/pdf    PREMIUM → export PDF via puppeteer
+GET    /api/debrief/:year/:week/pdf    PREMIUM → export PDF via puppeteer ; @Throttle 5/min, file par process ≤ 10 rendus (`PDF_QUEUE_MAX`) sinon 503 (S3 #1045)
+PATCH  /api/debrief/:debriefId/objectives/:index/note PREMIUM → `ObjectiveNoteDto` (texte ≤ 1000, réinjecté dans le prompt suivant) (C11 #1045)
 GET    /api/debrief/history            PREMIUM
 POST   /api/debrief/generate           PREMIUM → 1/jour par user
 
@@ -597,21 +601,21 @@ private clean(text: string): string {
 ## Limites IA via Redis
 
 ```typescript
-// Cooldown 4h — insights
+// Cooldown 4h — insights : réservé en UNE opération (SET NX EX, S4 #1045), retiré si
+// l'analyse échoue ou si le quota mensuel est atteint (C3 #1045, releaseInsightsCooldown).
 async checkInsightsCooldown(userId: string) {
   const key = `ai:cooldown:insights:${userId}`;
-  const exists = await this.redis.get(key);
-  if (exists) {
+  const reserved = await this.redis.set(key, '1', 'EX', 60 * 60 * 4, 'NX');
+  if (reserved !== 'OK') {
     const ttl = await this.redis.ttl(key);
-    const minutes = Math.ceil(ttl / 60);
     throw new HttpException(
-      `Analyse déjà effectuée. Réessaie dans ${minutes} minute(s).`, 429
+      `Analyse déjà effectuée. Réessaie dans ${Math.ceil(ttl / 60)} minute(s).`, 429
     );
   }
-  await this.redis.set(key, '1', 'EX', 60 * 60 * 4);
 }
 
-// Limite journalière — chat (50/jour) et debrief (1/jour)
+// Limite journalière — chat (50/jour) et debrief (1/jour). Appel IA en échec → place rendue
+// par `releaseDailyLimit(userId, action)` (C2, C10 #1045).
 async checkDailyLimit(userId: string, action: string, max: number) {
   const today = new Date().toISOString().slice(0, 10);
   const key = `ai:limit:${userId}:${action}:${today}`;
