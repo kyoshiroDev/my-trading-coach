@@ -346,3 +346,11 @@ Contenu déplacé à l'identique le 2026-11-16. Lire un fichier seulement quand 
 | `commun/liaison-discord.md` | liaison Discord par code |
 | `commun/offre-fondateur.md` | offre fondateur, places, codes partenaires, route publique `/pricing/founder` |
 | `commun/pgbouncer.md` | pool Postgres, PgBouncer, SCRAM |
+
+## Texte d'utilisateur dans un e-mail HTML (S1 #1063, 2026-11-16)
+
+Tout texte saisi par un utilisateur (nom à l'inscription, nom Google) inséré dans un gabarit d'e-mail
+passe par `escapeHtml` / `greetingName` (`resend/templates/index.ts`) : jamais tel quel. L'aperçu admin
+des campagnes rend ce HTML (nom du 1er destinataire réel) dans une `<iframe [srcdoc]>` en
+`sandbox=""` (aucun script, origine opaque). Nom borné à 100 caractères (inscription, modale admin, Google).
+

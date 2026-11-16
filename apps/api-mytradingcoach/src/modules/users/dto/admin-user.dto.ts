@@ -9,7 +9,7 @@ export class SetRoleDto {
 }
 
 export class AdminUpdateUserDto {
-  @IsOptional() @IsString() name?: string;
+  @IsOptional() @IsString() @MaxLength(100) name?: string;
   @IsOptional() @IsEnum(Plan) plan?: Plan;
   @IsOptional() @IsEnum(Role) role?: Role;
   /** Compte interne (#823) : exclu des statistiques admin. */
