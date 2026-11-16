@@ -1,5 +1,5 @@
 ---
-title: "Revenge Trading : Comment l'Identifier et l'Arrêter Définitivement"
+title: "Revenge Trading : Comment l'Identifier et l'Arrêter"
 seoTitle: "Revenge trading : le comprendre et l'arrêter"
 description: "Le revenge trading détruit les comptes. Repère ce comportement et les règles concrètes pour en sortir."
 publishDate: 2026-04-10
