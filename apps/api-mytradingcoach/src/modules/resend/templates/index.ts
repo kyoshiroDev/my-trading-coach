@@ -309,7 +309,6 @@ export function onboardingLink(appUrl: string, path: string, campaign: string, q
   return `${appUrl.replace(/\/+$/, '')}${path}?${params.toString()}`;
 }
 
-/** Prénom : `name` est libre (« Greg Tahir ») → premier mot ; vide → chaîne vide. */
 /**
  * Texte saisi par un utilisateur (nom à l'inscription) inséré dans un e-mail HTML : jamais
  * interprété comme du balisage (S1 #1063 : l'aperçu admin d'une campagne exécutait un nom
@@ -324,6 +323,7 @@ export function greetingName(userName: string | null | undefined): string {
   return escapeHtml(userName || 'Trader');
 }
 
+/** Prénom : `name` est libre (« Greg Tahir ») → premier mot ; vide → chaîne vide. */
 export function firstNameOf(userName: string): string {
   return userName.trim().split(/\s+/)[0] ?? '';
 }
