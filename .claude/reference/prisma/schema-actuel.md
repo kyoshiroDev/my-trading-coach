@@ -1,0 +1,201 @@
+# Schéma Prisma actuel (vue d'ensemble)
+
+> Contenu déplacé à l'identique depuis `.claude/agents/prisma.md` le 2026-11-16 (PROMPT-orchestration-agents).
+> Chaque bloc garde son titre d'origine ; « Origine » donne l'agent, la section et la date d'origine (date du titre, sinon premier commit qui l'a écrite).
+
+<!-- Origine : prisma.md · Schéma actuel · 2026-04-25 -->
+> **Origine** : `prisma.md` · « Schéma actuel » · 2026-04-25
+
+## Schéma actuel
+
+```prisma
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["queryCompiler", "driverAdapters"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String          @id @default(cuid())
+  email       String          @unique
+  password    String          // Argon2 hash — jamais exposer
+  name        String?
+  plan        Plan            @default(FREE)
+  role        Role            @default(USER)
+  trialEndsAt DateTime?
+  trialUsed   Boolean         @default(false)
+  stripeCustomerId         String?   @unique
+  stripeSubscriptionId     String?
+  stripePriceId            String?
+  stripeCurrentPeriodEnd   DateTime?
+  stripeInterval           String?   // 'month' | 'year'
+  trades           Trade[]
+  debriefs         WeeklyDebrief[]
+  aiUsageLogs      AiUsageLog[]
+  tradingSessions  TradingSession[]   // ← V2
+  dailyRecaps      DailyRecap[]       // ← V2
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+}
+
+model Trade {
+  id              String          @id @default(cuid())
+  userId          String
+  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  asset           String
+  side            TradeSide
+  entry           Float
+  exit            Float?
+  exitPrice       Float?          // alias de exit pour clarté — V2
+  stopLoss        Float?
+  takeProfit      Float?
+  pnl             Float?          // P&L BRUT (frais dans `commission`) ; net = netPnl() à la lecture (PROMPT-213)
+  riskReward      Float?
+  executionScore  Int?                             // note d'exécution CALCULÉE 0-100 (PROMPT-161), null si non évaluable
+  executionGrade  ExecutionGrade?                  // EXCELLENT/BON/MOYEN/MAUVAIS dérivé du score
+  executionMethod ExecutionMethod?                 // barème ayant produit la note (STOP_BASED / BEHAVIORAL), null si non notée (PROMPT-168)
+  emotion         EmotionState?                    // override OPTIONNEL (PROMPT-163) — null = non renseignée
+  setupId         String                           // FK → Setup (setup défini par l'user)
+  setup           Setup           @relation(fields: [setupId], references: [id], onDelete: NoAction)
+  session         TradingSessionLabel
+  sessionId       String?                          // ← V2 — lien vers TradingSession
+  tradingSession  TradingSession? @relation(fields: [sessionId], references: [id])
+  timeframe       String
+  notes           String?
+  tags            String[]       @default([])
+  tradedAt        DateTime       @default(now())
+  createdAt       DateTime       @default(now())
+
+  @@index([userId, tradedAt])
+  @@index([userId, emotion])
+  @@index([userId, setupId])
+  @@index([userId, session])
+  @@index([userId, sessionId])
+}
+
+// ── Modèles V2 Session Mode ──────────────────────────────────────────────────
+
+model TradingSession {
+  id          String        @id @default(cuid())
+  userId      String
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  startedAt   DateTime      @default(now())
+  endedAt     DateTime?
+  moodStart   MoodState?
+  moodEnd     MoodState?
+  totalPnl    Float?
+  totalTrades Int           @default(0)
+  winRate     Float?
+  status      SessionStatus @default(ACTIVE)
+  notes       String?
+  trades      Trade[]
+  createdAt   DateTime      @default(now())
+
+  @@index([userId, startedAt])
+  @@index([userId, status])
+}
+
+model DailyRecap {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date            DateTime // date du jour (minuit UTC)
+  tradesCount     Int      @default(0)
+  pnl             Float    @default(0)
+  winRate         Float    @default(0)
+  dominantEmotion String?
+  aiOneLiner      String?  // phrase IA — Premium uniquement
+  generatedAt     DateTime @default(now())
+
+  @@unique([userId, date])
+  @@index([userId, date])
+}
+
+model EcoCalendarCache {
+  id          String   @id @default(cuid())
+  date        DateTime
+  rawData     Json
+  aiAnalysis  Json
+  generatedAt DateTime @default(now())
+
+  @@unique([date])
+  @@index([date])
+}
+
+model WeeklyDebrief {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  weekNumber  Int
+  year        Int
+  startDate   DateTime
+  endDate     DateTime
+  aiSummary   String
+  insights    Json
+  objectives  Json
+  stats       Json
+  generatedAt DateTime @default(now())
+
+  @@unique([userId, weekNumber, year])
+  @@index([userId, year, weekNumber])
+}
+
+model AiUsageLog {
+  id           String   @id @default(cuid())
+  userId       String
+  feature      String   // 'insights' | 'chat' | 'debrief' | 'csv_import'
+  inputTokens  Int
+  outputTokens Int
+  costUsd      Float
+  createdAt    DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
+  @@index([feature])
+}
+
+enum Plan                { FREE PREMIUM }
+enum Role                { USER ADMIN BETA_TESTER }
+enum TradeSide           { LONG SHORT }
+enum EmotionState        { CONFIDENT STRESSED REVENGE FEAR FOCUSED NEUTRAL }
+enum TradingSessionLabel { LONDON NEW_YORK ASIAN PRE_MARKET OVERLAP }  // label session trade
+enum MoodState           { CONFIDENT FOCUSED NEUTRAL TIRED STRESSED }   // ← V2
+enum SessionStatus       { ACTIVE CLOSED }                              // ← V2
+```
+
+> **Suppression de compte et FK** : toute relation vers `User` doit porter une règle
+> `onDelete` EXPLICITE. Sans elle, Postgres applique `RESTRICT`, et
+> `UsersService.archiveAndDelete` (trace RGPD + `user.delete` dans UNE transaction)
+> échoue sur violation de contrainte — l'utilisateur ne peut plus partir, et la trace
+> est annulée avec le reste. C'est arrivé sur `ReferralCommission.ambassadorId` et
+> `ReferralReward.parrainId`, seules des 11 relations vers `User` à ne rien déclarer
+> (migration `20260830000000_referral_cascade_on_user_delete`). Vérifier la règle
+> RÉELLEMENT appliquée en base, pas seulement le schéma :
+> `SELECT rc.delete_rule FROM information_schema.referential_constraints rc …`.
+> Un double Prisma ne connaît aucune FK : seul un `int-spec` sur vraie base peut le
+> prouver (`delete-me-referral.int-spec.ts`).
+
+> **Setups** : setups définis par l'utilisateur (modèle `Setup` : `title`, `color`, `description`, `sortOrder`, `archived`). 6 défauts seedés au signup et pour la démo (Breakout `#10b981`, Pullback `#3b82f6`, Range `#f59e0b`, Reversal `#ef4444`, Scalping `#8b5cf6`, News `#60a5fa`). L'ancienne énumération de setups a été migrée en table (remap par titre, zéro régression). `Trade.setupId` (FK, `onDelete: NoAction`) → `Setup` ; la suppression d'un setup encore référencé par des trades est bloquée par `SetupsService` (+ backstop FK).
+>
+> **« Sans setup »** (PROMPT-213) : `Trade.setupId` restant NOT NULL, les trades importés sans setup choisi (synchro broker, CSV, `setupId` périmé) sont rangés dans un setup `Sans setup` (`#6b7280`, sortOrder 999) créé à la volée par `SetupsService.getImportSetupId` — pas de migration. Les trades importés AVANT ce correctif restent sur le premier setup du user (souvent « Breakout ») : ne pas les déplacer sans accord. Exception faite avec accord (2026-09-15, beta) : les 279 trades synchronisés de Val (comptes TDFY + test) passés sur « Sans setup », les 34 saisis à la main restés sur Breakout ; sauvegarde id → ancien setup conservée pour rollback.
+>
+> **Devise (PROMPT-214)** : propriété DU COMPTE — `TradingAccount.currency` (TEXT, défaut `USD`, valeurs autorisées = `ACCOUNT_CURRENCIES` de `@mtc/shared` : USD, USDT, EUR, validées par l'API). Aucune conversion nulle part. **`User.currency` et `User.currencyRate` sont OBSOLÈTES** : plus lus ni écrits par le code (API, app, admin), colonnes conservées pour un retour arrière ; à supprimer dans une **migration séparée** une fois le code déployé en prod (5 users prod avaient une préférence EUR, prévenus avant ce déploiement). Normalisation des devises de compte (vide / hors liste → USD, en transaction avec log des ids) : 0 ligne sur beta le 2026-09-15.
+>
+> **P&L** : `Trade.pnl` = BRUT, `Trade.commission` = frais (positifs). Aucune colonne « net » : le net se calcule (`netPnl` de `@mtc/shared`). Vérifié le 2026-09-14 (lecture seule) : aucun trade manuel avec frais depuis le 20/08, les anciens trades à frais sont bruts ou indéterminables → pas de migration.
+
+> **Émotion (PROMPT-163)** : `Trade.emotion` est **nullable** — un **override optionnel** (surtout REVENGE/FEAR dans l'instant). L'émotion de base vient de la journée : `TradeSession.moodStart` (`MoodState`, inclut `TIRED`). **Émotion effective = `trade.emotion ?? trade.tradeSession?.moodStart ?? null`** — helper unique `common/utils/effective-emotion.util.ts` (`effectiveEmotion`, `isRiskyEmotion` = STRESSED/REVENGE/FEAR/TIRED, `isHealthyEmotion` = CONFIDENT/FOCUSED/NEUTRAL). `null` = non renseignée → **exclue** des agrégations (dominante, analytics, IA, note d'exécution renormalisée), **jamais** de faux NEUTRAL. Toute requête qui a besoin de l'émotion effective doit `select`/`include` `tradeSession: { select: { moodStart: true } }`. L'API `GET /trades` expose `effectiveEmotion` par trade ; le front l'affiche (« — » si null). Les deux enums restent distincts (`EmotionState` trade vs `MoodState` journée).
+
+> **Note d'exécution (PROMPT-161)** : `executionScore` (0-100) + `executionGrade`
+> (`ExecutionGrade` = EXCELLENT/BON/MOYEN/MAUVAIS) **calculés** (déterministe, **zéro IA**,
+> **indépendants du P&L**), **jamais saisis**. Helper pur `computeExecutionGrade(trade, account)`
+> (`common/utils/execution-grade.util.ts`) : 4 critères pondérés (stop respecté 35 · R:R 25 ·
+> émotion effective saine 20 · risque ≤ max 20) ; critère non évaluable ignoré + renormalisation ;
+> < 2 critères applicables → `null` (« Non évalué »). Recalculé à la **création / édition / import**
+> (donnée stable persistée, jamais recalculée à la lecture) ; **backfill SQL** dans la migration.
+> Seuils par défaut exposés : `RR_MIN=1.5`, `RISK_MAX_PCT=1`, `RISK_SOFT_PCT=2`, poids `{35,25,20,20}`.

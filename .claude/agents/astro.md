@@ -1,9 +1,37 @@
 ---
 name: astro
-description: "Conventions de la landing Astro (structure, blog en collection, JSON-LD, prix et liens partagés, conformité NinjaTrader). À lire avant tout travail dans apps/landing-mytradingcoach."
+description: "À appeler pour vérifier un diff qui touche apps/landing-mytradingcoach (pages, composants Astro, blog, SEO, GA4). À lire aussi avant de coder dans la landing."
+tools: Read, Grep, Glob, Bash
 ---
 
 # Agent Astro — landing-mytradingcoach
+
+## Vérification d'un diff
+
+Appelé comme vérificateur : tu lis seulement le diff de ton domaine (`git diff origin/dev...HEAD -- apps/landing-mytradingcoach`), les règles de cet agent et, dans l'index en bas, les seules références utiles au diff. Pas les agents des autres domaines. Tu ne modifies rien. Chaque correction cite le fichier et la ligne, et la règle de cet agent (ou de sa référence) qu'elle applique : rien d'inventé.
+
+1. Prix et durées depuis `@mtc/shared`, jamais en dur.
+2. Liens vers l'app via `${APP_URL}` (jamais l'URL de prod en dur).
+3. NinjaTrader : « Référencé dans l'écosystème NinjaTrader » seulement, jamais « partenaire officiel » ni « compatible NinjaTrader », aucun autre courtier nommé, Tradovate en texte seul sans logo.
+4. Aucune promesse de gain ; textes alignés sur `.claude/contexte-com.md`.
+5. `/prop-firm` jamais supprimée ni déplacée avant fin novembre 2026.
+6. JSON-LD : jamais d'`aggregateRating` sans avis vérifiables.
+7. Pas de `style="…"` : classes dans le `<style>` du composant.
+8. Liens d'action avec `data-ga-event` ; GA4 seulement après consentement (`reference/astro/cookies-ga4.md`).
+9. Article de blog : frontmatter complet (section « SEO — Frontmatter blog obligatoire »).
+10. Checklist SEO avant deploy respectée (section dédiée).
+11. Vocabulaire du drawdown : `DRAWDOWN_LABELS` de `@mtc/shared`.
+
+Réponse, toujours ce format, court :
+```
+Domaine : astro
+Verdict : conforme | corrections nécessaires | bloquant
+Corrections : liste numérotée (fichier:ligne, règle, correction)
+Points pour le relecteur : ce qui sort de mon domaine ou demande un arbitrage
+```
+« bloquant » = règle non négociable violée (sécurité, argent, données, démo, prod) ; « corrections nécessaires » = écart à corriger avant push ; « conforme » = rien à corriger dans ton domaine.
+
+---
 
 ## Stack
 Astro 7 · CSS propre aux composants (Tailwind installé mais **inutilisé** : à retirer dès que le
@@ -43,447 +71,6 @@ src/
 └── styles/global.css, legal.css ← variables, utilitaires (.wrap), pages légales (.legal)
 ```
 
-## Règles de contenu (audit du 27/09/2026)
-
-- **Vocabulaire du drawdown** (#937) : `DRAWDOWN_LABELS` de `@mtc/shared` (même source que l'app).
-  Taille de la règle = `DRAWDOWN_LABELS.rule.label` (« Règle de drawdown », fiche des règles
-  `prop-firm-rules-view.ts`), jamais « Drawdown max » ; marge = « marge avant le plancher », jamais
-  « avant (le) drawdown » ni « il te reste » (réservé à l'objectif, contexte-com.md). Verrouillé par
-  `libs/shared/src/drawdown-labels.spec.ts` (la landing n'a pas de suite de tests). « Drawdown max »
-  reste correct pour une baisse mesurée (blog). La capture `app-prop-firm-rules-mobile.webp` montre
-  encore l'ancien libellé : à recapturer avec son `alt`.
-- **Prix** : toujours `PREMIUM_PRICE_EUR` / `PREMIUM_ANNUAL_SAVINGS_EUR` de `@mtc/shared` (alias dans
-  `tsconfig.json`), jamais un nombre en dur : Hero, Pricing, Compare, CGU, FAQ et JSON-LD en dépendent.
-- **Liens vers l'app** : `${APP_URL}/register` (jamais `https://app.mytradingcoach.app` en dur) ;
-  dans un article Markdown, écrire `href="{APP_URL}/register"` (remplacé au rendu par `[slug].astro`).
-- **JSON-LD** : jamais d'`aggregateRating` sans avis vérifiables (règles Google + pratiques
-  commerciales trompeuses). FAQ modifiée = `src/data/faq.ts` uniquement (affichage + JSON-LD suivent).
-- **Nouvel article** : créer `src/content/blog/<slug>.md` avec le frontmatter ci-dessous. Rien d'autre :
-  la page, la liste du blog et le sitemap (lastmod = updatedDate ?? publishDate) suivent.
-- **Styles** : pas de `style="…"` ; classes dans le `<style>` du composant (scopé) ou utilitaire global
-  (`.wrap` = conteneur 1100 px). Exception tolérée : valeurs uniques de dessin dans `components/mockup/`
-  (positions, largeurs de barres). Survol : `:hover` en CSS, jamais `onmouseover`.
-- Aucun composant orphelin : un composant non rendu est branché ou supprimé.
-- **Hero + « Ta prop firm, en direct »** (`PropFirmLive.astro`, audit du 2026-10-06) : la home vise
-  d'abord le prop trader futures (Tradovate / NinjaTrader). Le sélecteur firm → plan → phase lit le
-  catalogue de l'app (`@mtc/shared` `PROP_FIRM_CATALOG_FILES`) réduit AU BUILD par
-  `src/data/prop-firm-catalog.ts` (JSON compact embarqué, ~50 ko) ; les libellés viennent de
-  `src/data/prop-firm-rules-view.ts` (pur, partagé rendu serveur / script). Ajouter une firm au
-  catalogue suffit : la landing suit. Éléments recréés par le script → styles en `:global()`
-  bornés à la section (sinon sans l'attribut de portée Astro, donc sans style). Nombre de firms du
-  Hero = `PROP_FIRM_CATALOG_FILES.length`, jamais en dur (idem `Compare.astro` et `MultiComptes.astro`).
-  Mise en page (2026-10-08) : carrousel `PropFirmMarquee.astro` sous le sous-titre (noms en wordmark,
-  pas de logos ; clic = choix de la firm via `data-pf-pick`, géré par le script de PropFirmLive),
-  sélecteur à gauche, **panneau de tuiles** à droite (objectif, drawdown + plancher figé, perte du jour,
-  consistency, taille max, clôture en heure de Paris comme l'app, payout en funded), puis CTA, mention
-  « Calcul indicatif : la plateforme de ta firm fait foi. » et captures en pleine largeur avec switch
-  Évaluation / Funded : `showcase/app-prop-firm-rules.webp` (Apex 50K éval) et
-  `showcase/app-prop-firm-funded.webp` (Tradeify 50K funded), dépli « Mes comptes » du compte démo (prod),
-  barre latérale repliée, complet jusqu'à « Sources officielles ». Mobile : tuiles sur 2 colonnes, capture
-  à 820 px défilable. Nav : menu hamburger jusqu'à 1023 px (les liens ne tiennent pas en tablette).
-- **« L'app en vrai »** (`DemoVideo.astro`, 2026-11-09) : visite filmée de l'app (compte démo, données
-  fictives) sur l'accueil (`accueil.astro` tant que `/` redirige ; à garder dans `index.astro` au retrait)
-  après `<Compatible />`, et sur `/prop-firm` après « Compatible avec » (`<DemoVideo wide />` : 1200 px,
-  marge mobile 20 px), ancre `#visite`. Pas de fond propre à la section (une bande `--bg2` jurait avec la
-  page, retirée à la demande de Greg) et **lecteur nu** : la vidéo seule, bordure neutre 3 px `--b2` avec
-  retrait transparent de 6 px (`.dv-screen` > `.dv-media` qui porte l'aspect-ratio et ses coins),
-  ni cadre de navigateur, ni coque de téléphone, ni halo, ni ombre (Greg, 09/11). Deux vidéos dans `public/demo/` (rien d'autre dans ce dossier) :
-  `visite-app-desktop.mp4` (1920×1200, ~1 min) + `visite-app-desktop-poster.webp`, et `visite-app.mp4`
-  (592×1280 : export 720×1280 recadré `crop=592:1280:64:0` pour ôter les bandes de fond, ~1 min) + `visite-app-poster.webp` ; aperçus = 1re image (tableau de bord). Titre « en un
-  peu plus d'une minute » (63 s ordinateur, 71 s mobile) : à revoir si la durée change. Pause du
-  visiteur respectée : `userPaused` par vidéo (événement `pause` hors pauses du script, posées via
-  `halt()`), le défilement ne relance pas ; remis à zéro à la bascule et au clic lecture.
-  - **Mode** décidé en CSS (`data-mode` sur la section + media query 980 px) : ≥ 980 px, ORDINATEUR par
-    défaut (texte centré au-dessus, vidéo jusqu'à `min(1280px, 100vw - 48px)`, il déborde
-    le `.wrap` exprès : à 1100 px le texte de l'app tombe vers 7 px) et sélecteur « Ordinateur | Mobile »
-    (`<button aria-pressed>`, puces de PropFirmLive, `demo_video_toggle` + `data-ga-place`) ; < 980 px,
-    MOBILE seul (vidéo 360 px), sélecteur masqué. Choix non mémorisé. Hauteurs réservées par
-    `aspect-ratio` 1920/1200 et 592/1280.
-  - **Chargement** (LCP intact) : `<video preload="none">` sans `src`, source en `data-src`. Le script pose
-    la source de la SEULE vidéo affichée quand la section approche (IntersectionObserver 200 px) ; l'autre
-    seulement à la bascule. ≥ 980 px sans `prefers-reduced-motion` : lecture auto muette en boucle, pause
-    hors écran (seuil 25 %), à la bascule l'ancienne est mise en pause et remise à 0. < 980 px ou animations
-    réduites : aperçu + bouton lecture (`demo_video_play`), chargement au clic. `play()` refusé → bouton.
-    Dès la lecture, barre de lecture native (`controls`) : avancer, reculer, pause. Aperçus en
-    `<img loading="lazy">` (pas d'attribut `poster`, qui se télécharge dès le chargement).
-  - **Encodage** (exports « -landing » : AUCUNE incrustation, la légende de la section porte la mention) :
-    `ffmpeg -i <source> -an -c:v libx264 -preset veryslow -profile:v high -pix_fmt yuv420p -r 24 -crf 28
-    -movflags +faststart -vf scale=1920:1200 visite-app-desktop.mp4` (720:1280 pour `visite-app.mp4`) ;
-    aperçus `ffmpeg -ss 0.5 -i <source> -frames:v 1 -c:v libwebp -quality 78 <nom>-poster.webp`. Budget :
-    < 4 Mo ordinateur, < 3 Mo mobile.
-  - **Refaire les captures** (scripts hors dépôt : `~/Bureau/videos-instagram/_scripts-visite-13/`) :
-    1. Banc local (mémoire « captures banc local ») : base dédiée, API compilée sur 3001 et app sur 4200
-       depuis un worktree à jour, `pnpm run seed:demo` SANS `FMP_API_KEY` (faux vendredi NFP + analyse).
-       Enregistrer en semaine, marché ouvert (00:40–23:00 Paris) : la séance du jour est vivante.
-    2. `all.sh` : `take.sh desktop|mobile` (re-seed puis `tour13.mjs` : ordinateur 1440×900 DPR 2,
-       mobile 390×844 DPR 2), `build13.sh` (titres de `labels2.mjs`, `post3.py` : exports
-       `13-visite-complete-<format>-{landing,titre}.mp4`, ordinateur ramené à 1920×1200), encodage ci-dessus,
-       planches-contact une image / 2 s (`sheet.py`).
-    3. Parcours : tableau de bord, pré-session, séance en direct, débrief du jour, journal (semaine
-       précédente dépliée sur ordinateur), historique (mois précédent), Mes comptes, Statistiques sur le
-       compte Apex en évaluation, débrief hebdo, calendrier (filtre « Fort », vendredi précédent, analyse
-       NFP dépliée), profil. Masques de `lib-rec2.mjs` : uniquement le hors-sujet (badge interne, bandeau
-       démo, noms de comptes dans la barre, boutons flottants) ; jamais une carte du produit.
-    4. Contrôle sur la planche : aucune case vide, aucun grand vide en bas (sauf pré-session et séance en
-       direct, hauteur réelle de leur contenu), aucun « - » en colonne IA, aucun « marché fermé ».
-- **Structure de la home après l'audit du 2026-10-06** : Hero prop firm (+ ligne de confiance
-  factuelle `.hero-trust`, ordonnée après les CTA en mobile), « Ta prop firm, en direct », timeline
-  d'un prop trader (trade qui arrive seul, marge en direct, anti-tilt), **6 cartes** fonctionnalités
-  hiérarchisées (suivi prop firm en tête ; récap 17h30 et score regroupés), Coach IA raccourci (bloc
-  « 3 étapes » retiré). **Aucune affirmation d'exclusivité** (« le seul », « le premier ») : non
-  défendable face aux concurrents (cf. `docs/veille-focuspips.md`).
-- **Clics CTA → GA4** (`Analytics.astro`) : tout lien avec `data-ga-event` (`cta_signup`, `cta_demo`,
-  `cta_trial`) et `data-ga-place` envoie un événement GA4, SEULEMENT si GA est chargé (après consentement).
-  Nouveau CTA d'inscription → ajouter les deux attributs.
-- **Tarifs (`Pricing.astro`, `PfPricing.astro`)** : les cartes Gratuit / Fondateur / Premium lisent
-  `PLAN_BENEFITS` (`@mtc/shared`, liste partagée avec l'app et les e-mails, cf. plans.md « Avantages
-  affichés ») ; jamais de liste d'avantages écrite dans la carte. Le bloc « Ce que Premium ajoute au
-  Gratuit » de la home garde un détail propre (`premiumDetails`) : chaque ligne = fonction livrée ET
-  réservée au Premium. `#pricing` a `scroll-margin-top` = barre fixe (60 px) : le menu « Tarifs »
-  arrive sur le titre, le bloc et les prix ensemble (retour de Val, 2026-10-06).
-
-- **Offre fondateur (#525)** : état lu côté navigateur sur `GET {API_URL}/pricing/founder`
-  (`src/lib/founder-offer.ts` : une requête par page, réponse `{ data }` déballée, état gardé 60 s en
-  sessionStorage `mtc_founder`, validé ; API injoignable ou réponse invalide → rien).
-  **État lu AU BUILD** (`src/lib/founder-build.ts`, `GET /pricing/founder` une fois par build,
-  comme le compteur de traders) et passé en prop `founderOpen` à Hero, Pricing et FAQ :
-  - **ouverte au build** → carte Fondateur (`#fondateur`), sa note et la question FAQ sont dans le
-    HTML statique (enveloppe `.founder-slot` en `display: contents`, même balisage que le gabarit),
-    `.has-founder` posé d'emblée, compteur de places à place réservée (`.founder-seats.is-pending`,
-    `visibility: hidden` jusqu'au vrai chiffre) → l'arrivée de la réponse de l'API ne déplace rien.
-    L'API ne fait plus que remplir le compteur, ou **retirer** carte, note, FAQ et tout
-    `[data-founder-only]` (raccourci du Hero) si elle répond **explicitement** que l'offre ne vend
-    plus. API injoignable ou réponse invalide (`null`) → tout reste affiché, compteur masqué : pas
-    de saut de mise en page. Sûr parce que le serveur refuse le checkout fondateur si l'offre est
-    fermée, échue ou complète (`FounderOfferService.eligibility` → 400 `closed` / `sold_out`, puis
-    réservation sous verrou Postgres → 409 ; vérifié le 2026-10-16) ;
-  - **fermée au build, ou API injoignable au build** → HTML « offre fermée » comme avant : bandeau,
-    carte, note et FAQ dans des `<template>` (inertes, ni rendus ni indexés), insérés par le script
-    seulement si l'offre vend → 2 cartes, Premium « Recommandé », aucun « 29 € » ni « fondateur »
-    visible (commentaires en `{/* */}`, jamais `<!-- -->` qui part dans le HTML).
-  - **⚠️ Ouverture ou fermeture de l'offre dans l'admin → relancer le déploiement de la landing**
-    (Actions → CD, ou un push sur la landing) : sinon le HTML
-    reste celui du build (offre ouverte au build puis fermée : la carte s'affiche puis est retirée à
-    la réponse de l'API, et le « 29 € » reste dans le HTML indexé jusqu'au prochain build).
-  Un lien inséré après coup reprend les paramètres (ref, promo, utm_*) du lien Premium. Le bandeau
-  (fixe, zéro CLS) reste inséré par le script : rien n'apparaît tant que l'API ne dit pas `open` +
-  places > 0 (cache HTTP de 60 s : jusqu'à 1 min de délai après l'ouverture dans l'admin).
-  - Bandeau `FounderBanner.astro`, inclus par `Nav.astro` (toutes les pages) : fixe, 32 px, la Nav
-    descend par `transform` (`html.has-offer-bar`) → **zéro CLS**. Élément collé sous la Nav sans
-    marge → attribut `data-offer-shift` (bandeau « Fait en France » du Hero). Ancres :
-    `scroll-padding-top: 92px` quand le bandeau est là. Fermeture mémorisée (sessionStorage
-    `mtc_offer_bar_closed`). Prop `href` (défaut `/#pricing`) : une page qui a ses propres tarifs y
-    passe son ancre (`/prop-firm` → `#tarifs`), sinon le bandeau ferait sortir le visiteur de la page.
-  - `Pricing.astro` : carte Fondateur au centre (`.is-founder`), `.has-founder` sur la section
-    → 3 colonnes, Premium perd sa mise en avant ; ≤ 1024 px empilées, Fondateur en premier, et dans
-    la carte **prix, bouton, PUIS fonctionnalités** (`order` CSS). Même liste `PLAN_BENEFITS.premium` que la
-    carte Premium (« Tout Premium inclus »). Prix : « ou 290 €/an · au lieu de 49 €/mois ».
-  - **Arrivée depuis la pub** (`/?utm_…#pricing`, campagne Instagram du 2026-10) : en mobile
-    (≤ 1024 px), offre ouverte au build, `#pricing` ou `#fondateur` → la page s'arrête sur la carte
-    Fondateur (prix et bouton dans le 1er écran, sous la Nav et le bandeau), pas sur le titre de la
-    section 2 écrans plus haut. Script inline juste après la carte (avant le 1er affichage) :
-    recalage à chaque étape du chargement (DOMContentLoaded, polices, load, ResizeObserver, classe
-    `has-offer-bar`, défilement non initié par le visiteur, car le navigateur refait son propre saut
-    vers l'ancre en fin de chargement), pendant 10 s, arrêté au premier geste (toucher, molette,
-    clavier). Carte affichée sans fondu (`.reveal.vis-now`). Bureau : inchangé. Mesure du
-    2026-10-16 (Slow 4G, iPhone 390×844) : bouton cliquable à 1,7 s (1,9 à 2,2 s avec CPU ×4),
-    445 px sous le haut de l'écran, au lieu de 1 900 px plus bas.
-  - Hero, mobile seulement : raccourci « 🔥 Offre fondateur : 29 €/mois » (`#fondateur`)
-    juste après « Commencer gratuitement » (qui reste le premier), rendu si l'offre est ouverte au
-    build (`data-founder-only`). Compact en ≤ 768 px (46 px de haut) et `.hero-founder` réduit la
-    marge sous les puces (24 px au lieu de 40) : entièrement visible au-dessus du bandeau cookies en
-    390×844 et 393×852 (pas en 375×812 ni 375×667, où il passe sous le bandeau). Pas de point de clic `hero` (absent de `OFFER_CTAS`) : la carte
-    envoie `carte`.
-  - Sous-titre des tarifs : le mois offert est rattaché au **Premium mensuel à 49 €** (l'offre
-    fondateur n'a pas d'essai, cf. la note sous les cartes).
-  - FAQ : `FOUNDER_FAQ` (variantes `open` / `ended`) affichée seulement si l'offre vend ou s'est
-    clôturée (`ended`), **hors `FAQ` donc hors JSON-LD**. La question « code partenaire » est dans `FAQ`.
-  - Point de clic `cta` : `carte` par défaut ; `bandeau` / `faq` retenus en sessionStorage `mtc_cta`
-    et posés sur le lien de la carte au clic. **Jamais d'UTM sur un lien interne.**
-    `?cta=email` (lien e-mail pointant sur la landing) est capté par `captureCtaFromUrl()` et retenu
-    de la même façon ; aucune autre valeur n'est acceptée depuis l'URL. (La campagne `founder_launch`
-    pointe, elle, directement dans l'app.)
-  - `?promo=CODE` (script de `Base.astro`) : format `^[A-Z0-9_-]{3,20}$`, gardé 30 j en localStorage
-    `mtc_promo` (comme `ref`), ajouté à tous les liens `/register`, à côté des UTM d'origine.
-  - JSON-LD : prix NORMAL uniquement. CGU : clauses `#offre-fondateur` et `#codes-partenaires`.
-  - **Logique client partagée** : `src/lib/founder-pricing.ts` (`initFounderPricing(section)` : compteur,
-    insertion depuis le gabarit, retrait, paramètres de suivi recopiés du lien `.is-premium`). Toute page
-    qui affiche la carte Fondateur l'appelle avec sa section ; jamais de copie du script. Le garde
-    `libs/shared/src/founder-seats-usage.spec.ts` vérifie que ce module passe par `founderSeatsLabel`.
-
----
-
-## Page `/prop-firm` (test publicitaire, oct. 2026)
-
-Landing épurée pour le **trader futures en prop firm** (tests de lecture du 17-18/10 : la home
-était jugée trop dense, trop d'emojis, et lue « crypto »). Comparée à la home via les clics CTA de
-l'admin : **seul le lien de la pub** y pointe (UTM dédiées), la home ne change pas.
-
-- Fichiers : `src/pages/prop-firm.astro` + `src/components/prop-firm-page/` (`PfHeader`, `PfRules`,
-  `PfPricing`). Maquettes : `maquettes/maquette-landing-prop-firm-{mobile,desktop}.html` (locales).
-  **Rien d'autre n'en dépend** : la supprimer = ces fichiers + la ligne `/prop-firm` du filtre sitemap
-  (`astro.config.mjs`).
-- **`noindex`** + canonical vers elle-même (`Base.astro` émet le canonical d'une page noindex seulement
-  s'il est passé explicitement ; la 404 n'en a toujours pas), absente du sitemap et de la navigation.
-  JSON-LD : `ORGANIZATION` seul (le `WEBSITE` par défaut dit « crypto et forex »).
-- Même `Base.astro` (UTM, `/public/visit`, `cta_click`, bandeau cookies, mode interne) et même
-  `Footer.astro`. En-tête propre (logo `logo-navbar.svg`, ancres + inscription sur ordinateur,
-  « Se connecter » seul en mobile), sans barre sticky. **Même `FounderBanner`** que l'accueil
-  (inclus par `PfHeader`, `href="#tarifs"`) : l'en-tête descend de 32 px par transform
-  (`html.has-offer-bar .pfh`), ancres sous l'en-tête par `scroll-padding-top` de `html` (60 px, 92 px
-  avec le bandeau), haut de page mobile à 44 px pour que le bandeau ne touche pas le libellé.
-- **Pas d'emoji hors footer**, icônes en SVG, sauf deux exceptions voulues : le 🔥 du bandeau de
-  l'offre (composant partagé) et la ligne de confiance sous les boutons du haut (`.pf-trustline`,
-  « 🇫🇷 Fait en France · Indépendant · Sans publicité · Référencé dans l'écosystème NinjaTrader »,
-  sans logo ; « Sans publicité » a remplacé « Tes données ne sont jamais vendues » le 2026-10-22,
-  les autres occurrences, accueil et FAQ, attendent la validation de Greg) ; aucun logo de prop firm (noms en texte) ; logo
-  NinjaTrader dans le bloc `NinjaTraderTrust` sous la carte d'exemple (cf. « Wordmark NinjaTrader »)
-  et au footer, formulation factuelle (clause 17).
-  « Crypto » / « forex » seulement dans « Et aussi » et la FAQ, jamais en haut ni dans la description.
-- **« Compatible avec »** (`components/Compatible.astro`, oct. 2026) : après « Prêt en 2 minutes »
-  (`width={1200} gutter={20}`) et sur l'accueil après `PropFirmLive`. Deux entrées en texte seul :
-  Tradovate (API, lecture seule, aucun ordre ; **pas de logo Tradovate**, aucune autorisation) et
-  saisie manuelle (+ import CSV « quand ta plateforme est reconnue »). N'y ajouter **ni NinjaTrader
-  Desktop / Web** (en attente de confirmation de NinjaTrader) **ni aucun autre nom** de courtier ou
-  de plateforme.
-- Sélecteur firm → plan → phase : même catalogue (`buildPropFirmCatalog`) et même logique que la home
-  via `src/lib/prop-firm-picker.ts` (pur, sans DOM : sélection initiale Apex 50K EOD, 50K par défaut à
-  chaque firm, date de relevé `sourceLabel`). `PropFirmLive.astro` l'utilise aussi. Puces = vrais
-  `<button>`, 6 en vedette puis « + N autres ».
-- Capture des règles **sur mobile** (≤ 900 px) : image dédiée `showcase/app-prop-firm-rules-mobile.webp`
-  (640×1340, 2x, ~47 Ko), prise dans l'app en 390 px sur le compte démo prod (« Mes comptes », Apex
-  50K EOD Trail déplié, Évaluation : la sélection par défaut du sélecteur), recadrée sur objectif,
-  drawdown et perte journalière. La capture ordinateur réduite à 358 px donnait ~7 px de texte. Chaque
-  taille ne charge que son image (lien masqué = image lazy non téléchargée). À refaire si l'écran des
-  règles change dans l'app : `/demo?internal=1`, fenêtre 390 px DPR 2, aucune donnée ni e-mail réel.
-- Textes de la page : espace insécable avant « ? », « ! » et « : » (pas de ponctuation seule en début
-  de ligne). L'en-tête garde « Se connecter » sur une ligne (`white-space: nowrap`, 360 px compris).
-- Carte d'exemple « Marge avant le plancher · 480 $ » (libellé de l'app, 09/11) : montant et barre en **jaune** (alerte), perte du jour en
-  rouge (design.md : rouge = pertes uniquement), mention « Exemple avec des données de démonstration ».
-  Les 3 petites cartes (objectif, perte, trades) : libellé et valeur **centrés**, valeurs sans retour à
-  la ligne, les trois visibles aussi en mobile (une ligne, libellés réservés sur 2 lignes) (08/11).
-- Haut de page : « Voir la démo » = **bouton secondaire** (contour `--blue` 2 px, icône lecture, même
-  hauteur/arrondi/taille que « Commencer gratuitement »), mention mono « Sans compte · 1 min » dessous ;
-  < 640 px les deux boutons empilés pleine largeur, inscription d'abord. Lien et `cta_demo` inchangés (08/11).
-- Tarifs (`PfPricing`) : même mécanisme fondateur que la home (`founderOpen` au build + `initFounderPricing`),
-  mêmes `data-cta` (`free` / `founder` / `premium`). Premium « Recommandé » quand la carte Fondateur
-  est absente, « Prix normal » sinon. Listes courtes, « Comptes illimités » seulement si
-  `FEATURES.multiAccounts`.
-- Témoignages : section rendue seulement si `TEMOIGNAGES` n'est pas vide (ne rien inventer).
-- La redirection de la pub (`utm_medium=paid`, script inline de `index.astro`, 2026-10-18) a été
-  **retirée le 2026-11-08** : remplacée par la redirection de tout `/` (section suivante). Les gardes
-  `window.__mtcPaidRedirect` de `Base.astro` et `Analytics.astro` et le slot `head-start` ont disparu
-  avec elle.
-- Mesure du 2026-10-18 (preview locale, iPhone 390×844, UA Instagram, Slow 4G 150 ms / 1,6 Mbit/s,
-  CPU ×4) : LCP ≈ 0,7 s, chargement 1,5 s, 185 Ko, CLS 0,02 ; bouton du haut à 540 px, au-dessus du
-  bandeau cookies même en 390×664. Après ajout du bandeau d'offre et de la ligne de confiance : bouton
-  à 552 px (390×844), offre ouverte ou fermée, bandeau cookies à 755 px.
-- Découpage CSS : /prop-firm n'ayant pas la Nav, Vite sépare la feuille `Nav` (assez petite depuis
-  l'ajout du bandeau à /prop-firm pour être mise en ligne dans la page) — même contenu sur la home.
-
-## Accueil → /prop-firm (redirection temporaire, 2026-11-08)
-
-Pour la newsletter NinjaTrader (~10/11) : qui tape l'adresse du site arrive sur `/prop-firm`.
-Refonte complète (contenu de /prop-firm servi sur `/`, canonical, sort de l'ancienne home) après la
-newsletter.
-
-- **302 nginx** (`landing-releases.conf`, `location = /` et `= /index.html`) → `/prop-firm` + query
-  string intacte (`utm_*`, `ref`, `promo`, `internal`…). **En prod depuis le 2026-11-08**, appliquée
-  à la main sur l'ancien VPS (la conf n'est pas déployée par la CD) : deploy.md, « Redirection
-  temporaire de l'accueil ».
-- **Page de secours** `src/pages/index.astro` : jamais servie quand la 302 est en place. Sans
-  `Base.astro` (donc ni script d'acquisition, ni GA4, ni bandeau cookies), `noindex`,
-  `location.replace('/prop-firm' + search + hash)`, `meta refresh` dans `<noscript>`, lien visible.
-  Visite comptée une seule fois, sur /prop-firm, avec les UTM. Limite : sans UTM, le site d'origine
-  est perdu (la visite sort en « direct ») ; la 302 nginx, elle, le garde.
-- **Ancienne home** : `src/pages/accueil.astro` → `/accueil`, même contenu, `noindex`, sans canonical,
-  hors sitemap. Pas suivie par l'engagement admin (seuls `/` et `/prop-firm` le sont).
-- **Liens internes** directement vers /prop-firm (pas de détour par la 302) : logo et menu de `Nav`
-  (`/prop-firm#comment`, `#prop-firms`, `#tarifs`, plus d'entrée FAQ), bandeau fondateur de `Nav`
-  (`/prop-firm#tarifs`), logo de `PfHeader`, « ← Retour » des pages 404, légales, ambassadeur et
-  journal-trading-prop-firm (dont les `/#pricing` → `/prop-firm#tarifs`). `<Nav home />` sur
-  `/accueil` : ancres sur la page même (`#journee`, `#features`, `#pricing`, `#faq`).
-- **Sitemap** : `/` et `/accueil` exclus (`astro.config.mjs`). /prop-firm reste noindex et hors sitemap.
-- Liens externes inchangés (passent par la 302) : e-mails, liens de parrainage
-  `https://mytradingcoach.app?ref=CODE` (308 Traefik vers www, puis 302 → `/prop-firm?ref=CODE`, le
-  `ref` est capté par `Base.astro`), liens de l'app.
-- **Point ouvert** : noindex de /prop-firm et canonical à traiter dans la refonte de l'accueil après
-  la newsletter (vers le 15/11). D'ici là, la home n'a plus de page indexable servie en direct : ne
-  pas laisser durer.
-- **Retrait** : supprimer les deux blocs nginx (deploy.md), remettre `accueil.astro` en `index.astro`
-  (canonical `/`, sans `noindex`, `<Nav />` sans `home`), restaurer les liens `/` et le filtre sitemap.
-
----
-
-## Compliance NinjaTrader Ecosystem (PROMPT-201)
-
-MyTradingCoach est référencé dans l'écosystème NinjaTrader, ce qui impose 4 avertissements
-au texte **non modifiable** (source : `Ninja Trader/3. Disclaimers_VF.docx`, hors dépôt) :
-
-| Avertissement | Où |
-|---|---|
-| Risques · Performances hypothétiques · Live Trade Room · Témoignages | `src/pages/disclaimer.astro`, section 7 |
-
-Règles :
-- **Ne jamais paraphraser, résumer ni tronquer** ces 4 textes — ce sont des mentions réglementaires
-  imposées. Toute retouche doit repartir de la `.docx`.
-- Le `footer` doit conserver les mentions clés (risque de perte, performances passées,
-  résultats hypothétiques) + le lien vers `/disclaimer`.
-
-### Wordmark NinjaTrader
-
-- Assets : `public/ninjatrader/` — wordmark `NinjaTrader_Wordmark_color_RGB.png` (2376×300, `#FF4200`
-  sur transparent) + 5 bannières publicitaires (`ninjatrader-banner-*.png`).
-- **Bloc de confiance sur `/` et `/prop-firm` (demande NinjaTrader du 21/10/2026, revue Compliance
-  de la newsletter)** : leur équipe ne trouvait pas le logo, seul au footer. Composant
-  `NinjaTraderTrust.astro` : tout le bloc est le lien affilié (`NINJATRADER_AFFILIATE_URL`,
-  `target="_blank"`, `rel="noopener sponsored nofollow"`), texte « Référencé dans l'écosystème » +
-  wordmark tel quel (26 px, 22 px < 768 px) + « Lien affilié ». Emplacements : home, `.hero-eco` juste
-  sous la ligne `.hero-trust` (premier écran à 1440×900, y ≈ 750) ; /prop-firm, `.pf-hero-side` sous la
-  carte d'exemple (premier écran à 1440×900, y ≈ 630 ; juste après en mobile). Formulation imposée :
-  « Référencé dans l'écosystème NinjaTrader », **jamais** « partenaire », « officiel », « approuvé »
-  ni « recommandé par NinjaTrader », **aucun autre nom de courtier** dans ou à côté du bloc. Ce sont
-  les **seuls** emplacements autorisés hors footer ; le wordmark reste aussi au footer.
-- Affiché dans `Footer.astro` (`.footer-eco`) : **ligne dédiée centrée** sous la barre légale,
-  hauteur **18 px** (`width:auto`, `aspect-ratio:2376/300` pour zéro CLS, `object-fit:contain`).
-  **Ne pas recolorer, déformer ni rogner** — le seul levier de discrétion est la taille : le
-  orange `#FF4200` domine tout le footer dès qu'on dépasse ~20 px, et doit rester secondaire
-  devant la marque « MyTradingCoach » (22 px).
-- Les bannières ne sont **pas utilisées** : ce sont des créatives publicitaires avec CTA « Learn More »,
-  elles supposent un lien d'affiliation actif.
-- Le wordmark est un **lien d'affiliation** (PROMPT-204) : `NINJATRADER_AFFILIATE_URL` dans
-  `src/config.ts` (partagé par `Footer.astro` et `NinjaTraderTrust.astro`), `rel="noopener sponsored
-  nofollow"` + `target="_blank"`. URL = **lien d'affiliation
-  unique** fourni par NinjaTrader, `https://ninjatraderdomesticvendor.sjv.io/DWZgnd` (remplace depuis le
-  2026-10-20 l'ancien `…/c/7724604/3069488/37581`, demande NinjaTrader avant la revue Compliance de la
-  newsletter). Il porte le tracking vendeur : ne jamais le modifier ni en utiliser un autre.
-- **Lien affilié = divulgation obligatoire**, aux deux endroits : mention « Lien affilié » à côté de
-  chaque logo (footer et bloc de confiance) *et* paragraphe « Divulgation d'affiliation » en section 7
-  de `disclaimer.astro` (qui cite le footer et le bloc de / et /prop-firm). Ne jamais
-  retirer l'un sans l'autre, ni le lien sans les deux.
-- **Plateforme uniquement, jamais le courtage** (Affiliate Success Playbook NinjaTrader) : l'affiliation
-  porte sur l'inscription à la **plateforme** NinjaTrader. Jamais « ouvrir un compte » (de courtage),
-  frais de courtage, commissions de trading ni marges en lien avec NinjaTrader (corrigé le 2026-10-19
-  dans la divulgation d'affiliation de `disclaimer.astro`).
-
-### Annonce de la synchro Tradovate (PROMPT-211)
-
-- `Features.astro` (carte 02 « Synchro Tradovate & import CSV ») et `FAQ.astro` (« Puis-je importer
-  mon historique ? ») présentent la **connexion Tradovate** comme voie principale, en lecture seule.
-  **Depuis l'import d'historique par la Reporting API, tout l'historique remonte à la connexion**
-  (`launchFullImport`, cf. nestjs.md « toute la vie du compte ») puis les trades + frais arrivent en
-  direct. L'ancienne règle « le passé s'importe à part en CSV » est périmée (corrigée le 2026-10-06).
-  L'import CSV couvre aussi les autres brokers, **mais pas tous en gratuit** : formats reconnus d'office
-  (Tradovate, Binance, Bybit, MT4/5, IBKR, MEXC) = Gratuit ; tout autre broker passe par l'import IA =
-  **Premium** (cf. plans.md). Jamais « import CSV universel » ni « tout broker » sur le Gratuit (#507) :
-  Pricing (Gratuit + ligne Premium « Import IA »), Compare (« brokers reconnus » / « + import IA »), FAQ,
-  Features, `/prop-firm` et `/journal-trading-prop-firm` disent la même chose.
-- **Formulation factuelle uniquement (clause 17)** : jamais « Partenaire officiel de NinjaTrader »,
-  « Recommandé / Approuvé par NinjaTrader » ni aucune caution. Le logo NinjaTrader n'apparaît
-  qu'au footer et dans le bloc `NinjaTraderTrust` de `/` et `/prop-firm` (21/10). Aucune promesse de gain (AMF) : on décrit ce que fait la synchro, pas un résultat.
-- `Compare.astro` **inchangé volontairement** : TraderSync et TradesViz proposent une synchro
-  broker ; une ligne « Synchro broker directe » les montrerait à tort sans (cf. règle ci-dessous).
-
----
-
-## Cookies & GA4 (consentement RGPD, oct. 2026)
-
-- `PUBLIC_GA_ID` (build, variable de dépôt GitHub `PUBLIC_GA_ID` en prod, `PUBLIC_GA_ID_DEV` en dev).
-  **Vide → ni bandeau, ni GA4, ni lien « Gérer les cookies »**, et la politique de confidentialité
-  (section 6 + Google dans les destinataires) affiche la version « aucun traceur » : tout suit `GA_ID`
-  (`config.ts`).
-- `CookieConsent.astro` recueille le choix (localStorage `mtc_cookie_consent` = `{ value, ts }`,
-  redemandé après 6 mois, `src/lib/consent.ts`) et émet `mtc:consent`. `Analytics.astro` est le
-  **seul** endroit qui charge GA4 : injection dynamique de `gtag/js` après « accepted ». Jamais de
-  balise GA statique dans le `<head>`.
-- Refuser = même taille et même poids que Accepter (CNIL). Retrait après acceptation : cookies
-  `_ga*` effacés + rechargement.
-- Mobile (< 768 px) : bandeau compact (~ 89 px au lieu de 138) — texte à gauche, Refuser et Accepter
-  empilés à droite, mêmes dimensions. Il ne doit jamais couvrir le bouton de la carte Fondateur à
-  l'arrivée depuis la pub.
-- **Le bandeau ne masque jamais le contenu** (21/10, le wordmark du footer était caché tant que le
-  visiteur n'avait pas choisi) : tant qu'il est affiché, `.cc-spacer` (fin de `<body>`) réserve en bas
-  de page sa hauteur **mesurée** (`offsetHeight`, ResizeObserver → recalculée au redimensionnement ;
-  68 px à 1440/1920, 88 px à 768, 89 px à 390, 105 px à 320), remise à 0 au choix. Ne jamais la
-  coder en dur. Vérifié : bas du footer = haut du bandeau à 390, 768, 1440 et 1920 px.
-- **Source d'acquisition** (script UTM de `Base.astro`) : `utm_*` du lien, sinon **site d'origine**
-  (`document.referrer` externe → `utm_source=<hôte sans www>`, `utm_medium=referral`), gardée en
-  sessionStorage `mtc_utm` et ajoutée à tous les liens `/register`. L'app applique le même plan B
-  si on arrive directement sur `/register` (`referrerHost` de `register.component.ts`).
-  **Liens vers la démo** (`{APP_URL}/demo` exactement, #1029) : mêmes UTM, plus `ref` de l'URL
-  (lettres, chiffres, `-`, `_`, 40 car.) et `internal=1` si le mode interne est posé sur www (le
-  localStorage ne passe pas d'un domaine à l'autre) : le bouton « Créer mon compte » de la démo garde
-  l'origine de la visite, et une ouverture en mode interne n'est pas comptée.
-- **Compteur de visites sans cookie** : le même script envoie `POST {API_URL}/public/visit`
-  (`path`, `source`, `medium`, `campaign`, `entry` = 1re page de la session, flag sessionStorage `mtc_visit`) sur chaque
-  page, quel que soit le choix cookies (exemption CNIL : agrégé, anonyme). Résultat dans l'admin
-  `/acquisition`. Si un hébergeur/CDN ajoute une CSP, autoriser `connect-src` vers l'API.
-- **Navigateur intégré** (`inApp`) : motif `IN_APP_UA_PATTERN` de `@mtc/shared` (Instagram, FBAN/FBAV/
-  FB_IAB/FBIOS, TikTok/musical_ly, Line/), passé au script inline par `define:vars` (un script inline
-  n'importe rien). Seul le booléen part avec la visite, jamais le user-agent.
-- **Parcours d'inscription** (`cta_click`) : même script, délégation de clic sur tout
-  `a[href*="/register"]` (couvre la carte Fondateur insérée après coup) → `POST {API_URL}/public/funnel`
-  par **`navigator.sendBeacon` en `text/plain`** (requête simple, sans requête préalable CORS, part
-  même quand la page change ; l'API lit ce corps en JSON sur cette route seulement), repli `fetch`
-  keepalive. `detail` = `data-cta` du lien (`founder` / `free` / `premium`, posé sur les 3 cartes de
-  `Pricing.astro`), sinon `plan` du lien (`founder` / `premium`), sinon `free`. Nouveau CTA
-  d'inscription : rien à faire s'il est gratuit ; poser `data-cta` si c'est une offre.
-- **Engagement de `/` et `/prop-firm`** (19/10/2026, pour comparer les deux pages) : module
-  `src/lib/engagement.ts` (script bundlé de `Base.astro`, différé, ~2 ko) → `POST /public/funnel` par la
-  fonction d'envoi du script d'acquisition, exposée en `window.mtcFunnel` (même origine UTM, `inApp`,
-  sendBeacon text/plain). Absente en mode interne et pendant la redirection de la pub → rien envoyé.
-  Étapes `scroll_depth` (detail 25/50/75/100, `scrollDepthPercent` de `@mtc/shared`, à < 4 px du bas = 100),
-  `time_on_page` (10/30/60 s **onglet visible**, minuteur suspendu sur `visibilitychange`), `rules_use`
-  (1re utilisation du sélecteur : `click` sur un `button` ou `change` d'un `select` dans un conteneur
-  **`[data-track-rules]`** : carte de `PropFirmLive`, carrousel `PropFirmMarquee`, `PfRules`), avec
-  `path`. **Un envoi par seuil et par chargement de page** (pas par session : un rechargement recompte).
-  Écouteur de défilement passif, calcul une fois par image, retiré après 100 %. Nouvelle page à mesurer
-  → `LANDING_ENGAGEMENT_PAGES` (shared) + filtre `path IN (…)` de `LandingEngagementService`. Nouveau
-  sélecteur → poser `data-track-rules`. Résultat : carte « Engagement landing » de l'admin `/acquisition`.
-- **Un appui = un clic** (oct. 2026) : l'app met ~1 s à s'afficher en 4G lente et le bouton ne
-  réagissait pas → les visiteurs réappuyaient (2 `cta_click`, 2 navigations). Un 2e écouteur, enregistré
-  AVANT celui du comptage (et même en mode interne), passe le lien à « Ouverture… » (classe
-  `a.is-opening` de `global.css` : estompé, largeur gardée, `aria-busy`) et ignore 2 s les appuis
-  suivants sur CE lien (`preventDefault` + `stopImmediatePropagation` : ni navigation ni clic compté).
-  Le 1er appui part toujours ; Ctrl/Cmd/Maj/clic milieu (nouvel onglet) non concernés ; `pageshow`
-  (retour arrière, cache de navigation) rétablit le bouton. Le libellé change APRÈS l'événement
-  (`setTimeout 0`) : le remplacer pendant détacherait `ev.target` et l'écouteur de comptage ne
-  retrouverait plus le lien.
-- **`preconnect`** dans le `<head>` de `Base.astro` vers l'origine de `APP_URL` (connexion TLS prête
-  avant l'appui) et de `API_URL` (`crossorigin` : visite et clics partent sans cookie).
-- **Mode interne** (visites de l'équipe) : ouvrir `https://www.mytradingcoach.app/?internal=1` →
-  localStorage `mtc_internal=1` (`INTERNAL_STORAGE_KEY`) : plus aucune visite ni étape envoyée depuis ce
-  navigateur, badge discret « interne » en bas à gauche (`.internal-badge`, `global.css`).
-  `?internal=0` annule. Propre au domaine : l'app a le sien (`app.mytradingcoach.app/?internal=1`).
-  GA4 n'est pas concerné (il dépend du consentement).
-- Politique de confidentialité, section 6 : le paragraphe « Mesure d'audience sans cookie » décrit
-  aussi les étapes de l'inscription, le booléen navigateur intégré et l'engagement de l'accueil et de
-  /prop-firm (défilement, temps, sélecteur). Toute nouvelle mesure → l'y ajouter.
-- Politique de confidentialité, push et autopsie (1.g, bases légales, durées, destinataires) : voir
-  `security.md`. Guillemets français de la page : `«&nbsp;…&nbsp;»` (sinon « » orphelin à 390 px).
-- Nouveau traceur (pixel, Hotjar…) = même règle : chargé par `Analytics.astro` après consentement,
-  et déclaré dans la politique de confidentialité.
-- Cookies GA : `cookie_expires` à 13 mois dans `gtag('config')` (GA4 met 2 ans par défaut ; la
-  politique annonce 13 mois, #745).
-- **Toute clé de stockage navigateur de la landing** (localStorage / sessionStorage) est listée
-  nommément en section 6 de la politique (« Stockage du navigateur sur le site vitrine »), avec sa
-  durée. Nouvelle clé = nouvelle ligne, dans le même commit (#745).
-- Stockage de **l'app** : déclaré par familles dans la même section 6 (« Stockage du navigateur
-  dans l'application » : `access_token`, `user`, clés `mtc.*` / `mtc_*`, `sidebar_collapsed`,
-  `ambassador_last_seen`), avec Stripe.js (`__stripe_mid`, `__stripe_sid`) et le script Google
-  chargé à l'affichage du bouton. Nouvelle clé hors de ces familles → l'ajouter (#747).
-- Listes Gratuit / Premium des CGU (section 5) : alignées à la main sur `PLAN_BENEFITS`
-  (`@mtc/shared`) et le détail Premium de `Pricing.astro`. Changer un avantage → les CGU aussi (#747).
-- Pages légales : n'y écrire que ce que le code fait (audit du 25/10, #745/#747). Pas d'export CSV
-  libre-service (portabilité **sur demande**), conservation « jusqu'à la suppression du compte »,
-  hébergeur unique OVH (pas de Vercel), l'IA s'appuie AUSSI sur des annonces économiques publiques
-  (calendrier éco) : jamais « exclusivement vos données ». Changer un texte → date « Dernière mise
-  à jour » de la page.
-- **Modifier les CGU (`cgu.astro`) → changer `CGU_VERSION` (`libs/shared/src/terms.ts`) dans le même
-  commit** : c'est la version enregistrée sur chaque compte créé (`User.termsVersion`, #745 F2).
-
----
-
 ## Tableau comparatif (`Compare.astro`)
 
 Les lignes sont **une seule source de vérité** (tableau `rows` dans le frontmatter) : le rendu
@@ -507,15 +94,6 @@ autres ») en sortent tous les deux, ils ne peuvent pas diverger.
   `min-width` en mobile — le tableau doit tenir dans le viewport sans scroll horizontal.
 
 ---
-
-## Essai Premium d'inscription (#769, 2026-10-26)
-
-Tout nouvel inscrit a `PREMIUM_SIGNUP_TRIAL_DAYS` (14, `@mtc/shared`) jours de Premium, sans carte,
-puis repasse en Gratuit. La landing ne parle plus de l'essai Stripe de 30 jours ni de « 1 mois offert »
-(sauf le mois offert au PARRAIN, `Referral.astro`, inchangé). Boutons « Essayer Premium · {jours}
-jours offerts » + « Sans carte · puis Gratuit, sans engagement » (tarifs, `/prop-firm`), URL
-`/register?plan=premium` CONSERVÉE (déjà diffusée ; l'app n'envoie plus au paiement). Durée toujours
-par la constante, jamais écrite. Garde : `libs/shared/src/signup-trial-copy.spec.ts`.
 
 ## Pricing — limites IA à afficher
 
@@ -553,18 +131,6 @@ CTA en fin de chaque article :
 
 ---
 
-## Articles blog SEO cibles
-
-| Fichier (`src/content/blog/`) | Mot-clé principal |
-|---|---|
-| `journal-trading-debutant.md` | journal de trading débutant |
-| `psychologie-trading.md` | psychologie trading biais cognitifs |
-| `revenge-trading.md` | revenge trading (faible concurrence) |
-| `win-rate-trading.md` | win rate trading calculer |
-| `journal-trading-crypto.md` | journal trading crypto 2026 |
-
----
-
 ## Package.json landing
 
 Voir `apps/landing-mytradingcoach/package.json`. À faire quand le réseau le permet (lockfile) :
@@ -586,56 +152,31 @@ auto-héberger les fontes (`@fontsource/*`, fin du hack `media="print" onload`).
 - [ ] CLS < 0.05
 - [ ] Images avec `alt` renseigné
 
-## Astro 7 (étape 5 de l'audit, 2026-09-13)
+---
 
-- Astro 7.3.2 · Vite 8 · compilateur Rust (seul compilateur). Tailwind 4.3.3 (`@tailwindcss/vite`
-  accepte Vite 8), `@astrojs/check` 0.9.10. Motif : faille critique d'Astro 6 (exécution de code via
-  l'optimisation d'images AVIF), corrigée seulement à partir de 7.2.8.
-- `compressHTML: true` posé explicitement dans `astro.config.mjs` : le défaut d'Astro 7 (`'jsx'`)
-  supprime des espaces entre éléments en ligne. Ne pas le retirer sans revérifier le rendu.
-- `z` s'importe de `astro/zod` (celui d'`astro:content` est déprécié).
-- Le compilateur Rust ne corrige plus une imbrication HTML invalide et refuse une balise non
-  fermée : un build qui casse après une modif de template vient souvent de là.
-- Vérification de la migration : HTML des 21 pages comparé à Astro 6 (seuls 78 espacements entre
-  blocs diffèrent, aucun texte ni structure) ; mise en page mesurée élément par élément dans le
-  navigateur (accueil, un article, /ambassadeur ; bureau 2 398 px et mobile 400 px) : identique.
-  La CSS générée change de forme (identifiants `data-astro-cid-*`, media queries en syntaxe
-  d'intervalle `(width>=1200px)`), sans effet sur le rendu.
+## Règles de contenu (résumé : détail dans `reference/astro/regles-contenu.md`)
 
-## Règles issues de l'audit UX (2026-09-27)
+- **Prix** : toujours depuis `@mtc/shared` (jamais en dur).
+- **Liens vers l'app** : `${APP_URL}/register`, jamais l'URL de prod en dur.
+- **JSON-LD** : jamais d'`aggregateRating` sans avis vérifiables.
+- **Vocabulaire du drawdown** : `DRAWDOWN_LABELS` de `@mtc/shared`.
+- **Styles** : pas de `style="…"` ; classes dans le `<style>` du composant.
+- **Clics CTA → GA4** : tout lien d'action porte `data-ga-event`.
+- **NinjaTrader** : « Référencé dans l'écosystème NinjaTrader », jamais « partenaire officiel », aucun autre courtier nommé, Tradovate en texte seul (`reference/astro/compliance-ninjatrader.md`).
+- **`/prop-firm`** : ne jamais la supprimer ni changer son URL avant fin novembre 2026 (`reference/astro/prop-firm.md`).
 
-- **URLs de l'app** : jamais `https://app.mytradingcoach.app/...` en dur dans un `.astro`, toujours
-  `` href={`${APP_URL}/register`} `` (`src/config.ts`). Sinon la landing DEV inscrit en prod.
-  Seuls les `.md` de `content/blog/` gardent l'URL prod en dur (pas d'import possible).
-- **Compteur de traders** : n'affiche **aucun chiffre** sous `TRADERS_PUBLIC_THRESHOLD` (100,
-  `config.ts`). Hero : bloc `.hero-proof` non rendu. Testimonials : titre « Construit avec les
-  premiers traders » sans chiffre. Le script live de `index.astro` retire `[data-traders-proof]`
-  si l'API repasse sous le seuil. Côté API, la clé Redis est suffixée par l'hôte de `FRONTEND_URL`
-  (dev et prod partagent Redis db0).
-- **Chiffres de performance** (P&L, WR) dans une narration ou une capture : toujours accompagnés de
-  « exemple illustratif » / « données d'exemple » (`.day-illus` dans DayTimeline,
-  `.showcase-note` dans Showcase). Pas de promesse de progression (« tu seras meilleur »).
-- **Showcase = vraies captures, jamais de maquette** : `public/showcase/app-dashboard.webp` et
-  `app-ai.webp`, prises sur le compte démo DEV (`https://dev.app.mytradingcoach.app/demo`, Lucas
-  Mercier). Les anciens mockups (`components/mockup/`, données inventées) ont été supprimés : ils
-  dérivaient à chaque refonte de l'app. **Rafraîchir** après une refonte visible de ces écrans :
-  - Dashboard : viewport **1680×1000**, DPR 1.5, rogner le bandeau « Mode démo » (44 px en haut).
-    À 1440 px, les sparklines des cartes KPI chevauchent les montants (bug app) : ne pas descendre.
-  - IA Insights : 1440×900, DPR 2, rogné sur le contenu (sans l'en-tête, dont le bouton affiche
-    « Disponible dans 3h 60min », bug d'arrondi de l'app).
-  - PNG → WebP qualité 82 (`convert x.png -quality 82 -define webp:method=6 x.webp`, ~90-110 Ko),
-    puis mettre à jour `width`/`height` des `<img>` (zéro CLS).
-  - Journal et Analytics écartés (sept. 2026) : pourcentages P&L forex aberrants sur les EUR/USD du
-    seed démo (+2764 %), graphiques Analytics vides sur la période par défaut.
-- **Ordre de la home** : Hero → **Showcase** → Moments → DayTimeline → Features → … `Problem.astro`
-  n'est plus rendu (il redisait Moments). `CoachIA` et `Debrief` restent non rendus.
-- **Compare** : le prix MTC affiche **les deux paliers** « 0 € (Gratuit) · dès 49 € (Premium) ».
-  Jamais le Premium seul (MTC paraît le plus cher), jamais « dès 0 € » seul (laisse croire que
-  toutes les coches MTC, dont Coach IA / Weekly Debrief / recap 17h30, sont gratuites). En mobile,
-  un palier par ligne, sans le « · » (`.comp-price-part` / `.comp-price-sep`).
-- **Barre sticky mobile** (`Nav.astro`, `.nav-sticky-cta`) : masquée quand `.hero-cta-main` est à
-  l'écran (IntersectionObserver), quand le menu est ouvert (`body.nav-open`), et absente des pages
-  qui passent `<Nav stickyCta={false} />` (`/disclaimer`).
-- **Adresse de contact publique unique : `support@mytradingcoach.app`** (#747) : pied de page, pages
-  légales, JSON-LD. Plus de `contact@` (boîte non vérifiée) ni de `hello@` (adresse interne, jamais
-  montrée aux utilisateurs).
+---
+
+## Index des références (`.claude/reference/`)
+
+Contenu déplacé à l'identique le 2026-11-16. Lire un fichier seulement quand la tâche correspond à « quand le lire ».
+
+| Fichier | Quand le lire |
+|---|---|
+| `astro/compliance-ninjatrader.md` | toute mention NinjaTrader / Tradovate |
+| `astro/cookies-ga4.md` | cookies, consentement, GA4 |
+| `astro/historique.md` | migration Astro 7, règles de l'audit UX |
+| `astro/prop-firm.md` | page `/prop-firm`, redirection de l'accueil |
+| `astro/regles-contenu.md` | tout contenu de la landing (prix, liens, JSON-LD, sections de la home, tarifs) |
+| `astro/seo-blog.md` | nouvel article de blog |
+| `commun/essai-premium.md` | essai d'inscription 14 j, essai Stripe 30 j, fin d'essai, libellés d'essai |
