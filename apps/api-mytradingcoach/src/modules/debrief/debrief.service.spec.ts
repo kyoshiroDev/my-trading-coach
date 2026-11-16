@@ -69,6 +69,8 @@ const mockSessionService = {
 };
 
 describe('DebriefService', () => {
+  // Dates en dur (semaine du 09/11/2026, getCurrent sur la semaine courante) : horloge figée (règle 1 de tests).
+  freezeClock('2026-11-12T12:00:00Z');
   let service: DebriefService;
 
   beforeEach(async () => {
@@ -301,17 +303,49 @@ describe('DebriefService', () => {
       );
     });
 
+    const NO_CLOSED_TRADE =
+      'Aucun trade clôturé cette semaine pour l’instant. Le débrief se génère dès ton premier trade clôturé de la semaine.';
+
     it('C8 (#1046) : aucun trade dans la semaine → 400 clair, ni IA, ni limite du jour, ni débrief vide', async () => {
       mockPrisma.weeklyDebrief.findUnique.mockResolvedValue(null);
       mockPrisma.trade.findMany.mockResolvedValueOnce([]);
 
       await expect(service.generate('user-123', Role.USER, false, { force: true })).rejects.toMatchObject({
         status: 400,
-        message: 'Aucun trade cette semaine pour l’instant. Le débrief se génère dès ton premier trade de la semaine.',
+        message: NO_CLOSED_TRADE,
       });
       expect(mockAiService.checkDailyLimit).not.toHaveBeenCalled();
       expect(mockAiService.generateDebrief).not.toHaveBeenCalled();
       expect(mockPrisma.weeklyDebrief.upsert).not.toHaveBeenCalled();
+    });
+
+    it('#1056 : seulement des positions ouvertes dans la semaine → 400, aucun appel IA payé pour un débrief vide', async () => {
+      mockPrisma.weeklyDebrief.findUnique.mockResolvedValue(null);
+      mockPrisma.trade.findMany.mockResolvedValueOnce([
+        { asset: 'NQ', side: 'LONG', pnl: null, commission: null, emotion: null, tradeSession: null, setup: null, session: null, tradedAt: new Date('2026-11-10T15:00:00Z'), accountId: null },
+        { asset: 'ES', side: 'SHORT', pnl: null, commission: null, emotion: null, tradeSession: null, setup: null, session: null, tradedAt: new Date('2026-11-11T15:00:00Z'), accountId: 'acc-perso' },
+      ]);
+
+      await expect(service.generate('user-123', Role.USER, false, { force: true })).rejects.toMatchObject({
+        status: 400,
+        message: NO_CLOSED_TRADE,
+      });
+      expect(mockAiService.checkDailyLimit).not.toHaveBeenCalled();
+      expect(mockAiService.generateDebrief).not.toHaveBeenCalled();
+      expect(mockPrisma.weeklyDebrief.upsert).not.toHaveBeenCalled();
+    });
+
+    it('#1056 : un trade clôturé à l’équilibre (P&L 0) compte comme clôturé → débrief généré', async () => {
+      mockPrisma.weeklyDebrief.findUnique.mockResolvedValue(null);
+      mockPrisma.weeklyDebrief.findFirst.mockResolvedValue(null);
+      mockPrisma.weeklyDebrief.upsert.mockResolvedValue(mockDebrief);
+      mockPrisma.trade.findMany.mockResolvedValueOnce([
+        { asset: 'NQ', side: 'LONG', pnl: 0, commission: 0, emotion: null, tradeSession: null, setup: null, session: null, tradedAt: new Date('2026-11-10T15:00:00Z'), accountId: null },
+      ]);
+
+      await service.generate('user-123', Role.USER, true, { force: true });
+
+      expect(mockAiService.generateDebrief).toHaveBeenCalledTimes(1);
     });
 
     describe('C1 (#1048) : débrief manuel de milieu de semaine refait le dimanche soir', () => {
@@ -408,7 +442,7 @@ describe('DebriefService', () => {
   });
 
   describe('getEligibleUsers (SCA-B5-08)', () => {
-    it('seulement ceux qui ont tradé dans la semaine de refDate, mêmes bornes que generate', async () => {
+    it('seulement ceux qui ont clôturé un trade dans la semaine de refDate, mêmes bornes que generate', async () => {
       const ref = new Date('2026-10-04T21:00:00.000Z'); // dimanche 23 h Paris
       const { startDate, endDate } = service.getWeekInfo(ref);
 
@@ -416,8 +450,11 @@ describe('DebriefService', () => {
 
       const where = mockPrisma.user.findMany.mock.calls.at(-1)![0].where;
       expect(where).toMatchObject({ isDemo: false, debriefAutomatic: true });
-      // Même filtre que generate : comptes perdus exclus, sinon débrief à 0 trade (#947).
-      expect(where.trades).toEqual({ some: { tradedAt: { gte: startDate, lte: endDate }, ...inactiveAccountsTradeWhere() } });
+      // Même filtre que generate : comptes perdus exclus (#947) et trades clôturés seulement (#1056) :
+      // une semaine de positions ouvertes ne déclenche ni débrief ni appel IA.
+      expect(where.trades).toEqual({
+        some: { tradedAt: { gte: startDate, lte: endDate }, pnl: { not: null }, ...inactiveAccountsTradeWhere() },
+      });
       expect(where.trades.some.OR).toBeDefined();
     });
   });

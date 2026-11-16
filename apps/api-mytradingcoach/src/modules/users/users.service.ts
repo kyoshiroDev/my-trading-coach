@@ -21,6 +21,7 @@ import { OFFER_PREMIUM_DEFAULT_DAYS, hasActiveStripeSubscription } from './premi
 import { StripeAccountClosureService } from '../stripe/stripe-account-closure.service';
 import { DiscordGuildClient } from '../discord/discord-guild.client';
 import { RedisService } from '../infra/redis.service';
+import { insightsCooldownKey, insightsKeptKey } from '../ai/insights-cache-keys';
 import { billingCacheKey } from '../stripe/stripe.helpers';
 import { REAL_USERS_WHERE } from '../../common/stats/real-users';
 import { premiumAccessWhere, subscriptionStateWhere, subscriptionStatesWhere } from '../../common/stats/subscription-state-where';
@@ -294,6 +295,15 @@ export class UsersService {
       this.prisma.user.delete({ where: { id: userId } }),
     ]);
     await this.userCache?.invalidate(userId); // jeton encore valide d'un compte supprimé : refusé immédiatement
+    // Dernière analyse IA (contenu tiré des trades) et délai des insights effacés avec le compte (#1056).
+    // Redis absent : on ne bloque pas la suppression, les clés expirent seules sous 4 h.
+    try {
+      await this.redisService?.client.del(insightsKeptKey(userId), insightsCooldownKey(userId));
+    } catch (err: unknown) {
+      this.logger.warn(
+        `Compte supprimé : cache IA des insights non effacé, expire sous 4 h (user ${userId}) : ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
     // Le Discord relié perd ses rôles : sans compte, plus d'accès aux salons réservés (#741).
     if (user.discordId && (await this.discordGuild?.removePlanRoles(user.discordId)) === false) {
       // N2 (#1046) : le compte n'existe plus, rien ne retentera ; seul l'identifiant permet de
