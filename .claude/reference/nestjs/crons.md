@@ -14,10 +14,11 @@ activé, non démo, **et au moins un trade dans la semaine de `refDate`** (SCA-B
 journalise que le nombre de jobs, jamais les adresses. 3 essais, échecs gardés 7 j.
 
 **Débrief manuel de milieu de semaine (C1 #1048, 2026-11-16)** : un débrief généré avant le dimanche
-23:00 de sa semaine (`weeklyCutoff`, bouton « Générer le débrief de cette semaine ») est REFAIT par le
+23:00 de sa semaine (`weeklyCutoff`, explicitement en heure de Paris, bouton « Générer le débrief de cette semaine ») est REFAIT par le
 cron du dimanche et, à défaut, par le rattrapage du lundi, sur la semaine complète : `created=true`,
 donc l'e-mail « débrief prêt » part. Un débrief produit par le cron (≥ 23:00) n'est jamais refait :
-pas de 2e e-mail le lundi (test « anti double e-mail »).
+pas de 2e e-mail le lundi (test « anti double e-mail »). Le débrief est refait même si
+`notificationsEmail` est faux (un appel IA, sans e-mail) : l'écran couvre alors toute la semaine.
 
 **Comptes désignés à l'IA par une clé courte** (`debrief/debrief-account-keys.ts`, 2026-10-23) :
 `compte-1`, `compte-2`… dans l'ordre des comptes, `unassigned` inchangé ; jamais l'identifiant

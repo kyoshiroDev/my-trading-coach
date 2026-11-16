@@ -32,6 +32,7 @@ import { accountKeys, analysesById, tradesByKey } from './debrief-account-keys';
 import { activeAccountsWhere, inactiveAccountsTradeWhere } from '../accounts/account-status-scope';
 import type { DebriefAccountSection, DebriefBadgeItem, DebriefObjective } from '@mtc/shared';
 import { debriefStats } from './debrief-stats';
+import { parisWallTimeToUtc } from '../eco-calendar/eco-calendar.schedule';
 
 @Injectable()
 export class DebriefService {
@@ -510,11 +511,16 @@ export class DebriefService {
     };
   }
 
-  /** Dimanche 23:00 (heure du serveur, Paris en prod) de la semaine de `date` : heure du cron hebdo. */
+  /**
+   * Dimanche 23:00 HEURE DE PARIS de la semaine de `date` : l'heure du cron hebdo
+   * (`@Cron('0 23 * * 0', { timeZone: 'Europe/Paris' })`), quel que soit le fuseau du serveur. En
+   * heure locale, une API en UTC aurait placé le seuil après le cron, et le rattrapage du lundi
+   * aurait refait (et re-mailé) tous les débriefs du dimanche.
+   */
   weeklyCutoff(date: Date): Date {
-    const cutoff = new Date(this.getWeekInfo(date).endDate);
-    cutoff.setHours(23, 0, 0, 0);
-    return cutoff;
+    const sunday = this.getWeekInfo(date).endDate;
+    const day = `${sunday.getFullYear()}-${String(sunday.getMonth() + 1).padStart(2, '0')}-${String(sunday.getDate()).padStart(2, '0')}`;
+    return parisWallTimeToUtc(day, '23:00') ?? new Date(sunday.getTime() - 59 * 60_000 - 59_999);
   }
 
   getWeekInfo(date: Date) {

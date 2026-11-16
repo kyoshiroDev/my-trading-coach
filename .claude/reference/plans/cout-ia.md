@@ -19,7 +19,7 @@ On tiér par **structure de coût**, PAS par « IA vs pas d'IA ».
     hors production. Le clic réutilise le même cache.
   - News : `marketNews` partagé (cron) ; traduction Haiku **1×/article**, `userId:null`, cachée.
 - **BORNÉ** — 1/user/période, `max_tokens` capé → **PREMIUM** :
-  - Weekly Debrief : 1/user/semaine. `max_tokens` = min(10 240, 2 500 + 1 125 × comptes)
+  - Weekly Debrief : 1/user/semaine (au plus 2 si un débrief manuel de milieu de semaine est refait le dimanche, C1 #1048). `max_tokens` = min(10 240, 2 500 + 1 125 × comptes)
     (`debriefMaxTokens`, relevé de 25 % le 2026-10-08 : à 2 comptes, Sonnet 4.6 montait à 85 % de 3 800).
 - **SCALE AVEC L'USAGE** — O(users × engagement) → **PREMIUM** :
   - Chat coach, IA Insights à la demande, recap quotidien.

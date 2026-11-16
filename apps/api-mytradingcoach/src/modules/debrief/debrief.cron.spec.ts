@@ -59,6 +59,7 @@ describe('DebriefCron — rattrapage lundi', () => {
 
     await cron.catchUpMissedDebriefs();
 
+    expect(mockService.weeklyCutoff).toHaveBeenCalledWith(ref); // seuil de la semaine PASSÉE
     expect(mockQueue.add).toHaveBeenCalledWith(
       'generate',
       { userId: 'u1', refDate: ref.toISOString(), force: false },
