@@ -373,5 +373,6 @@ publique : 5/min + `ip` 10/h ; connectée : 3/h.
 `trust proxy = 1` : `req.ip` = dernière adresse de `X-Forwarded-For`, celle que Traefik ajoute ; une
 adresse forgée en tête est ignorée. Le limiteur `ip` lit `req.ip`. Prouvé par
 `public/ambassador-apply-ip.int-spec.ts` (10 envois passent, le 11e est refusé, un autre visiteur passe,
-une IP forgée ne contourne pas). À passer à 2 si un autre proxy est placé devant l'API.
+une IP forgée ne contourne pas). À passer à 2 seulement si un autre proxy HTTP est placé devant
+l'API ; le relais TCP de l'ancien VPS (PROXY protocol) ne compte pas comme un saut.
 

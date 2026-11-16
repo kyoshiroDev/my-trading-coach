@@ -10,11 +10,15 @@ import { INestApplication, ValidationPipe } from '@nestjs/common';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { createIntegrationApp } from '../../test/integration-app.helper';
 import { configureProxy } from '../../config/proxy';
+import { RedisService } from '../infra/redis.service';
+import { AdminNotifier } from '../admin-push/admin-notifier.service';
 
 let app: INestApplication;
 let baseUrl: string;
 
-// Adresses de test uniques par exécution : les compteurs vivent dans Redis (1 h).
+// Compteurs isolés par exécution (préfixe Redis propre, vidé à la fin), comme register-ip-throttle.
+const RUN = `${Date.now().toString(36)}${Math.floor(Math.random() * 1e6).toString(36)}`;
+const previousRedisPrefix = process.env['REDIS_PREFIX'];
 const run = Math.floor(Math.random() * 250) + 1;
 const visitor = `198.18.${run}.10`;
 const other = `198.18.${run}.20`;
@@ -30,8 +34,11 @@ function apply(xff: string) {
 }
 
 beforeAll(async () => {
+  process.env['REDIS_PREFIX'] = `itest:${RUN}:`;
   ({ app, baseUrl } = await createIntegrationApp({
     throttle: true,
+    // Aucune vraie notification admin depuis un banc local qui aurait des clés push.
+    configure: (b) => b.overrideProvider(AdminNotifier).useValue({ notify: () => undefined }),
     setup: (a) => {
       a.setGlobalPrefix('api');
       configureProxy(a as NestExpressApplication);
@@ -41,7 +48,14 @@ beforeAll(async () => {
 }, 120_000);
 
 afterAll(async () => {
-  await app?.close().catch(() => undefined);
+  if (app) {
+    const redis = app.get(RedisService);
+    const keys = await redis.scanKeys('*');
+    if (keys.length > 0) await redis.client.del(...keys);
+    await app.close().catch(() => undefined);
+  }
+  if (previousRedisPrefix === undefined) delete process.env['REDIS_PREFIX'];
+  else process.env['REDIS_PREFIX'] = previousRedisPrefix;
 });
 
 describe('POST /api/public/ambassador-apply : limite par IP réelle (S3 #1063)', () => {
@@ -56,6 +70,7 @@ describe('POST /api/public/ambassador-apply : limite par IP réelle (S3 #1063)',
     expect((await apply(other)).status).toBe(201);
   });
 
+  // Dépend du compteur rempli par le 1er test (ordre séquentiel du fichier, fileParallelism: false).
   it('une IP forgée en tête de X-Forwarded-For ne contourne pas la limite', async () => {
     // Traefik ajoute l'IP vue en dernier : seule celle-là compte.
     expect((await apply(`9.9.9.9, ${visitor}`)).status).toBe(429);
