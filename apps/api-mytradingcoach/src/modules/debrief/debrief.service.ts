@@ -353,9 +353,9 @@ export class DebriefService {
    * → plan PREMIUM, rôle ADMIN/BETA_TESTER, ou essai (trial) en cours.
    */
   /**
-   * Destinataires du débrief automatique de la semaine de `refDate` : seulement ceux qui ont tradé
-   * cette semaine-là (SCA-B5-08, décision du 2026-10-07) — une semaine vide coûtait un appel IA et
-   * un e-mail sans contenu. Mêmes bornes que `generate` (getWeekInfo).
+   * Destinataires du débrief automatique de la semaine de `refDate` : seulement ceux qui ont clôturé
+   * un trade cette semaine-là (SCA-B5-08, décision du 2026-10-07 ; clôturé : #1056) — une semaine vide
+   * coûtait un appel IA et un e-mail sans contenu. Mêmes bornes que `generate` (getWeekInfo).
    */
   getEligibleUsers(refDate: Date) {
     const { startDate, endDate } = this.getWeekInfo(refDate);

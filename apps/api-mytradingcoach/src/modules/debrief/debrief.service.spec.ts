@@ -335,6 +335,19 @@ describe('DebriefService', () => {
       expect(mockPrisma.weeklyDebrief.upsert).not.toHaveBeenCalled();
     });
 
+    it('#1056 : un trade clôturé à l’équilibre (P&L 0) compte comme clôturé → débrief généré', async () => {
+      mockPrisma.weeklyDebrief.findUnique.mockResolvedValue(null);
+      mockPrisma.weeklyDebrief.findFirst.mockResolvedValue(null);
+      mockPrisma.weeklyDebrief.upsert.mockResolvedValue(mockDebrief);
+      mockPrisma.trade.findMany.mockResolvedValueOnce([
+        { asset: 'NQ', side: 'LONG', pnl: 0, commission: 0, emotion: null, tradeSession: null, setup: null, session: null, tradedAt: new Date('2026-11-10T15:00:00Z'), accountId: null },
+      ]);
+
+      await service.generate('user-123', Role.USER, true, { force: true });
+
+      expect(mockAiService.generateDebrief).toHaveBeenCalledTimes(1);
+    });
+
     it('idempotent : débrief existant + pas de force → retourne l\'existant, zéro IA, zéro upsert', async () => {
       mockPrisma.weeklyDebrief.findUnique.mockResolvedValue(mockDebrief);
 
