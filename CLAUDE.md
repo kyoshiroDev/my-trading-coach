@@ -1,6 +1,6 @@
 # MyTradingCoach — CLAUDE.md
 
-> Fichier de contexte global. Les règles techniques détaillées sont dans `.claude/agents/`.
+> Fichier de contexte global. Les règles techniques sont dans `.claude/agents/` (règles permanentes + checklist + index), le détail dans `.claude/reference/`.
 > Pour les humains : `CONTRIBUTING.md` (où mettre quoi, conventions, checklist de PR).
 > Claude Code lit ce fichier + les agents pertinents à chaque session.
 
@@ -103,7 +103,7 @@ Avant de coder : lire les agents de la 2ᵉ colonne pour **chaque** ligne qui co
 
 ### Après
 7. Commit atomique : `feat(scope):` / `fix(scope):` / `perf(scope):`
-8. Mettre à jour l'agent concerné dans `.claude/agents/` dès qu'une feature ou un correctif change le comportement/les règles : schéma & migrations → `prisma.md` · DTO/back → `nestjs.md` · calcul P&L / instruments → `instruments.md` · plans/prix/gating/coût IA → `plans.md` · front → `angular.md` · landing → `astro.md` · déploiement → `deploy.md` · design → `design.md` · sécurité → `security.md` · tests → `tests.md`. Un agent périmé est pire que pas d'agent.
+8. Dès qu'une feature ou un correctif change le comportement ou les règles : mettre à jour le **fichier de référence concerné** dans `.claude/reference/<domaine>/` (ou `reference/commun/` si plusieurs couches) — ou en créer un et l'ajouter à l'**index** de l'agent. **L'agent lui-même ne change que pour une règle permanente** (ou sa checklist). Domaines : schéma & migrations → `prisma` · DTO/back → `nestjs` · calcul P&L / instruments → `instruments` · plans/prix/gating/coût IA → `plans` · front → `angular` · landing → `astro` · déploiement → `deploy` · design → `design` · sécurité → `security` · tests → `tests`. Un déplacement de contenu se vérifie avec `.claude/scripts/verifier-references.sh` (aucune ligne perdue). Une référence périmée est pire que pas de référence.
 
 ---
 

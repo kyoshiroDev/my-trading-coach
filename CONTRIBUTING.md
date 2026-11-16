@@ -1,7 +1,7 @@
 # Contribuer à MyTradingCoach
 
 Une page pour savoir où mettre quoi. Démarrage de l'environnement : voir le [README](README.md).
-Règles détaillées par domaine : [`.claude/agents/`](.claude/agents) (seule source des conventions).
+Règles par domaine : [`.claude/agents/`](.claude/agents) (seule source des conventions), détail dans [`.claude/reference/`](.claude/reference).
 
 ## Où mettre quoi
 
@@ -82,7 +82,7 @@ Un commit = un changement cohérent.
 - [ ] Les états de chargement, vide **et erreur** sont gérés sur les écrans modifiés.
 - [ ] Accessibilité : boutons avec un nom, modales avec `mtcDialog`, focus visible.
 - [ ] Prix, plans ou accès modifiés : cohérence landing, front, guard et cron (`.claude/agents/plans.md`).
-- [ ] L'agent concerné dans `.claude/agents/` est à jour si une règle a changé.
+- [ ] Le fichier de référence concerné (`.claude/reference/…`, listé dans l'index de l'agent) est à jour si un comportement a changé ; l'agent lui-même seulement pour une règle permanente.
 
 ## Commandes utiles
 
