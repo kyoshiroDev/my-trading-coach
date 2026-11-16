@@ -1,5 +1,6 @@
 import { inactiveAccountsTradeWhere } from '../accounts/account-status-scope';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { freezeClock } from '../../test/freeze-clock';
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
 import { Role } from '@prisma/client';
@@ -8,7 +9,6 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { AiService } from '../ai/ai.service';
 import { AnalyticsService } from '../analytics/analytics.service';
 import { SessionService } from '../session/session.service';
-import { freezeClock } from '../../test/freeze-clock';
 
 const mockDebrief = {
   id: 'debrief-1',
@@ -26,7 +26,7 @@ const mockDebrief = {
   },
   objectives: [],
   stats: { winRate: 60, totalPnl: 250, totalTrades: 5 },
-  generatedAt: new Date(),
+  generatedAt: new Date('2026-06-01T10:00:00Z'), // date fixe : C1 compare au seuil du dimanche,
 };
 
 const mockPrisma = {
@@ -346,6 +346,55 @@ describe('DebriefService', () => {
       await service.generate('user-123', Role.USER, true, { force: true });
 
       expect(mockAiService.generateDebrief).toHaveBeenCalledTimes(1);
+    });
+
+    describe('C1 (#1048) : débrief manuel de milieu de semaine refait le dimanche soir', () => {
+      // Semaine 46 de 2026 : lundi 9 → dimanche 15 novembre ; seuil = dimanche 15, 23:00 à Paris (22:00 UTC).
+      const sunday = new Date('2026-11-15T22:00:00Z');
+
+      describe('cron du dimanche, 23:00:02 à Paris', () => {
+        freezeClock('2026-11-15T22:00:02Z');
+        it('débrief généré mercredi → régénéré sur la semaine complète (e-mail)', async () => {
+          mockPrisma.weeklyDebrief.findUnique.mockResolvedValue({ ...mockDebrief, generatedAt: new Date('2026-11-11T09:00:00Z') });
+          mockPrisma.weeklyDebrief.findFirst.mockResolvedValue(null);
+          mockPrisma.weeklyDebrief.upsert.mockResolvedValue(mockDebrief);
+
+          // refDate dans la semaine 46 pour tout fuseau du runner (la semaine se calcule en heure locale).
+          const result = await service.generateForUser('user-123', { refDate: new Date('2026-11-13T12:00:00Z'), force: false });
+
+          expect(mockAiService.generateDebrief).toHaveBeenCalledOnce();
+          expect(result.created).toBe(true);
+        });
+      });
+
+      describe('rattrapage du lundi, 08:00 à Paris', () => {
+        freezeClock('2026-11-16T07:00:00Z');
+        it('anti double e-mail : débrief produit par le cron du dimanche → rien de refait', async () => {
+          mockPrisma.weeklyDebrief.findUnique.mockResolvedValue({ ...mockDebrief, generatedAt: new Date('2026-11-15T22:00:40Z') });
+
+          const result = await service.generateForUser('user-123', { refDate: new Date('2026-11-09T07:00:00Z'), force: false });
+
+          expect(result).toEqual({ debrief: expect.anything(), created: false });
+          expect(mockAiService.generateDebrief).not.toHaveBeenCalled();
+        });
+      });
+
+      describe('mercredi 18:00, avant le seuil', () => {
+        freezeClock('2026-11-11T17:00:00Z');
+        it('autre appel sans force : le débrief du jour reste tel quel', async () => {
+          mockPrisma.weeklyDebrief.findUnique.mockResolvedValue({ ...mockDebrief, generatedAt: new Date('2026-11-11T09:00:00Z') });
+
+          const result = await service.generateForUser('user-123', { force: false });
+
+          expect(result.created).toBe(false);
+          expect(mockAiService.generateDebrief).not.toHaveBeenCalled();
+        });
+      });
+
+      it('weeklyCutoff : dimanche 23:00 à Paris de la semaine visée, été comme hiver', () => {
+        expect(service.weeklyCutoff(new Date('2026-11-11T10:00:00'))).toEqual(sunday);
+        expect(service.weeklyCutoff(new Date('2026-07-01T10:00:00'))).toEqual(new Date('2026-07-05T21:00:00Z'));
+      });
     });
 
     it('idempotent : débrief existant + pas de force → retourne l\'existant, zéro IA, zéro upsert', async () => {

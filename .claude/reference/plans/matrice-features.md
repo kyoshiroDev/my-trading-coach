@@ -14,7 +14,7 @@
 - 📰 **Flux news filtrées** sur tes actifs (+ traduction Haiku cachée)
 
 **PREMIUM** : tout le FREE, plus la **profondeur** et l'**IA personnelle** :
-- 📋 **Weekly Debrief IA** (auto, 1/user/semaine)
+- 📋 **Weekly Debrief IA** (auto, 1/user/semaine ; au plus 2 si un débrief manuel de milieu de semaine est refait le dimanche, C1 #1048)
 - ✨ **IA Insights à la demande** (analyse de tes patterns)
 - 💬 **Chat coach IA**¹
 - 🏆 **Score trader /100**, calculé sur les 100 derniers trades (E2 #1013 : pas hebdomadaire ;

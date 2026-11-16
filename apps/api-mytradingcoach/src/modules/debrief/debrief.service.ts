@@ -32,6 +32,7 @@ import { accountKeys, analysesById, tradesByKey } from './debrief-account-keys';
 import { activeAccountsWhere, inactiveAccountsTradeWhere } from '../accounts/account-status-scope';
 import type { DebriefAccountSection, DebriefBadgeItem, DebriefObjective } from '@mtc/shared';
 import { debriefStats } from './debrief-stats';
+import { parisWallTimeToUtc } from '../eco-calendar/eco-calendar.schedule';
 
 @Injectable()
 export class DebriefService {
@@ -113,7 +114,13 @@ export class DebriefService {
     const existing = await this.prisma.weeklyDebrief.findUnique({
       where: { userId_weekNumber_year: { userId, weekNumber, year } },
     });
-    if (existing && !opts?.force) {
+    // C1 (#1048) : un débrief généré AVANT le dimanche 23:00 de sa semaine (bouton « Générer » en
+    // milieu de semaine) ne couvre que quelques jours. Une fois ce seuil passé, le cron et le
+    // rattrapage le refont sur la semaine complète (created=true → l'e-mail « débrief prêt » part).
+    // Un débrief produit par le cron (≥ 23:00) n'est jamais refait : pas de 2e e-mail le lundi.
+    const cutoff = this.weeklyCutoff(opts?.refDate ?? new Date());
+    const partial = !!existing && existing.generatedAt < cutoff && Date.now() >= cutoff.getTime();
+    if (existing && !opts?.force && !partial) {
       return { debrief: existing, created: false };
     }
 
@@ -505,6 +512,18 @@ export class DebriefService {
         tradedAt: t.tradedAt.toISOString(),
       })),
     };
+  }
+
+  /**
+   * Dimanche 23:00 HEURE DE PARIS de la semaine de `date` : l'heure du cron hebdo
+   * (`@Cron('0 23 * * 0', { timeZone: 'Europe/Paris' })`), quel que soit le fuseau du serveur. En
+   * heure locale, une API en UTC aurait placé le seuil après le cron, et le rattrapage du lundi
+   * aurait refait (et re-mailé) tous les débriefs du dimanche.
+   */
+  weeklyCutoff(date: Date): Date {
+    const sunday = this.getWeekInfo(date).endDate;
+    const day = `${sunday.getFullYear()}-${String(sunday.getMonth() + 1).padStart(2, '0')}-${String(sunday.getDate()).padStart(2, '0')}`;
+    return parisWallTimeToUtc(day, '23:00') ?? new Date(sunday.getTime() - 59 * 60_000 - 59_999);
   }
 
   getWeekInfo(date: Date) {
