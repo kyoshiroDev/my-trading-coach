@@ -29,6 +29,7 @@ export * from './prop-firm-rules/drawdown-floor';
 export * from './prop-firm-rules/plan-guess';
 export * from './prop-firm-rules/plan-link';
 export * from './prop-firm-rules/alert-levels';
+export * from './prop-firm-rules/firm-pages';
 export * from './signup-funnel';
 export * from './landing-engagement';
 export * from './blog-related-posts';

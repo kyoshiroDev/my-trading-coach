@@ -76,6 +76,7 @@ const pages = [
   { file: 'journal-trading-prop-firm.jpg', label: 'Trading prop firm', title: 'Le journal de trading prop firm et multi-comptes' },
   { file: 'blog.jpg', label: 'Blog', title: 'Journal de trading, prop firm, psychologie : les guides' },
   { file: 'ambassadeur.jpg', label: 'Programme ambassadeur', title: 'Recommande MyTradingCoach à ta communauté' },
+  { file: 'regles-prop-firm.jpg', label: 'Règles des prop firms', title: 'Règles des prop firms futures en 50K' },
 ];
 const blogDir = join(landing, 'src/content/blog');
 for (const f of (await readdir(blogDir)).filter((n) => n.endsWith('.md')).sort()) {

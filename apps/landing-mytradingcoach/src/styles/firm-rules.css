@@ -1,0 +1,60 @@
+/* Pages « règles des prop firms » (/regles-prop-firm et /regles-prop-firm/<firme>-50k).
+   Tokens de la landing seulement (global.css), dark only. */
+.fr-page { max-width: 860px; margin: 0 auto; padding: 0 20px 48px; }
+
+.fr-crumbs { padding: 28px 0 0; font-size: 13px; font-family: var(--mono); }
+.fr-crumbs ol { display: flex; flex-wrap: wrap; gap: 6px; list-style: none; margin: 0; padding: 0; color: var(--txt3); }
+.fr-crumbs li { display: inline-flex; gap: 6px; min-width: 0; max-width: 100%; }
+.fr-crumbs li + li::before { content: '›'; content: '›' / ''; color: var(--txt3); }
+.fr-crumbs a { color: var(--txt2); text-decoration: none; }
+.fr-crumbs a:hover, .fr-crumbs a:focus-visible { color: var(--txt); text-decoration: underline; }
+
+.fr-hero { padding: 28px 0 8px; }
+.fr-page h1 { font-family: var(--disp); font-size: clamp(28px, 5vw, 40px); font-weight: 700; letter-spacing: -.02em; line-height: 1.15; color: var(--txt); margin: 0; }
+.fr-answer { color: var(--txt); font-size: 16.5px; line-height: 1.65; margin: 16px 0 0; font-weight: 600; }
+.fr-meta { font-family: var(--mono); font-variant-numeric: tabular-nums; font-size: 13px; color: var(--txt3); margin: 12px 0 0; }
+
+.fr-disclaimer { margin: 20px 0 0; font-size: 14px; line-height: 1.6; color: var(--txt2); background: var(--bg3); border: 1px solid var(--b2); border-left: 3px solid var(--yel); border-radius: 10px; padding: 12px 14px; }
+
+.fr-sec { padding: 28px 0; border-top: 1px solid var(--b); margin-top: 28px; }
+.fr-sec h2 { font-family: var(--disp); font-size: 22px; font-weight: 700; color: var(--txt); margin: 0 0 12px; }
+.fr-sec h3 { font-family: var(--disp); font-size: 17px; font-weight: 600; color: var(--txt); margin: 22px 0 10px; }
+.fr-sec p, .fr-sec li { color: var(--txt2); font-size: 15px; line-height: 1.7; }
+.fr-sec ul, .fr-sec ol { padding-left: 20px; margin: 8px 0 0; }
+
+.fr-plan { padding: 22px 0 6px; }
+.fr-plan + .fr-plan { border-top: 1px dashed var(--b); }
+.fr-plan h2 { font-size: 19px; }
+
+.fr-table-wrap { overflow-x: auto; }
+.fr-table { width: 100%; border-collapse: collapse; font-size: 14.5px; }
+.fr-table caption { text-align: left; font-family: var(--disp); font-weight: 600; font-size: 15px; color: var(--txt); padding: 10px 0 8px; }
+.fr-table th, .fr-table td { text-align: left; vertical-align: top; padding: 10px 12px; border-top: 1px solid var(--b); }
+.fr-table th[scope='row'] { color: var(--txt2); font-weight: 500; width: 38%; }
+.fr-table td { color: var(--txt); font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.fr-table td small { display: block; font-family: var(--body); color: var(--txt3); font-size: 12.5px; margin-top: 3px; }
+
+.fr-example { background: var(--card); border: 1px solid var(--b); border-radius: 12px; padding: 14px 16px; margin-top: 14px; }
+.fr-example p { margin: 0; }
+.fr-example .fr-num { font-family: var(--mono); font-variant-numeric: tabular-nums; color: var(--txt); }
+
+.fr-sources summary { cursor: pointer; color: var(--blue2); font-size: 14.5px; }
+.fr-sources ul { list-style: none; padding: 0; margin: 10px 0 0; display: flex; flex-direction: column; gap: 6px; }
+.fr-sources a { color: var(--blue2); font-size: 13.5px; overflow-wrap: anywhere; }
+
+.fr-firms { list-style: none; padding: 0; margin: 12px 0 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 10px; }
+.fr-firms a { display: block; background: var(--card); border: 1px solid var(--b); border-radius: 12px; padding: 14px 16px; text-decoration: none; }
+.fr-firms a:hover, .fr-firms a:focus-visible { border-color: var(--b2); }
+.fr-firm-name { display: block; font-family: var(--disp); font-weight: 600; color: var(--txt); font-size: 16px; }
+.fr-firm-meta { display: block; font-family: var(--mono); font-variant-numeric: tabular-nums; color: var(--txt3); font-size: 12.5px; margin-top: 4px; }
+
+.fr-faq-item + .fr-faq-item { margin-top: 16px; }
+.fr-faq-item h3 { margin: 0 0 6px; }
+.fr-faq-item p { margin: 0; }
+
+.fr-cta { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 16px; }
+.fr-btn { font-family: var(--disp); font-weight: 600; font-size: 14px; padding: 12px 20px; border-radius: 10px; background: var(--blue); color: var(--on-blue); text-decoration: none; }
+.fr-btn.ghost { background: transparent; border: 2px solid var(--blue); color: var(--txt); }
+.fr-link { color: var(--blue2); }
+.fr-example + p { margin-top: 14px; }
+.fr-sec p + p { margin-top: 10px; }

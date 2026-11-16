@@ -90,3 +90,5 @@ Verdict du relecteur, fichiers, mesures avant/après, pages ou données exclues 
 - 2026-11-16, après le rapport de la phase 0 : « GO phase 1, option a, sameAs vide pour l'instant »
 
 - 2026-11-16, après la PR #1076 (phase 1, CI verte) : « continue », pris comme « GO phase 2 ». Branche feat/seo-articles-maj partie de feat/seo-technique (FAQ et JSON-LD des articles reposent sur la phase 1), à mettre à jour par merge de origin/dev si besoin (pas de rebase d'une branche poussée).
+
+- 2026-11-16, après les PR #1076 et #1078 (mergées) : « GO phase 3, pas de seuil, 50K »
