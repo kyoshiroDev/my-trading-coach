@@ -27,7 +27,7 @@ export const GET: APIRoute = () => {
 ## Ce que fait l'outil
 - Synchronise les trades d'un compte Tradovate en lecture seule : aucun ordre passé, aucun mouvement d'argent.
 - Calcule la marge avant le plancher de drawdown et l'objectif, avec les règles de ${PROP_FIRM_CATALOG_FILES.length} prop firms futures, relevées sur leurs sources officielles et datées.
-- Journal de trading (émotions, setups, notes), statistiques, import CSV, coach IA et débrief hebdomadaire.
+- Journal de trading (émotions, setups, notes), statistiques et import CSV ; en Premium, coach IA personnel et débrief hebdomadaire.
 - Interface et support en français. Hébergé en France.
 
 ## Pour qui
@@ -42,7 +42,7 @@ export const GET: APIRoute = () => {
 ## Offre
 - Gratuit : trades illimités, sans carte bancaire.
 - ${PREMIUM_SIGNUP_TRIAL_DAYS} jours de Premium offerts à l'inscription, sans carte, puis retour au plan Gratuit.
-- Premium : ${monthly} € par mois ou ${annual} € par an.
+- Premium : ${monthly} € par mois ou ${annual} € par an. Ajoute le coach IA personnel, le débrief hebdomadaire, les alertes prop firm en direct, les analytics avancés et les comptes illimités.
 
 ## Pages clés
 ${pages.join('\n')}

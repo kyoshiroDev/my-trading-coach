@@ -22,7 +22,7 @@
   `og/default.jpg`. Générées par `node tools/scripts/generate-og-images.mjs` (titre = H1 de la page ou
   `title` du frontmatter). **Nouvel article ou titre modifié → relancer le script** :
   `libs/shared/src/blog-related-posts.spec.ts` échoue si une image d'article manque. Fichiers non
-  hashés (cache 1 an) : une image qui change change de nom.
+  hashés servis par `location /` de nginx (cache 1 h, must-revalidate) : inutile de les renommer.
 - `public/icon/og-image.png` (ancienne image, en anglais) n'est plus utilisée par les pages ; gardée
   pour les liens externes déjà partagés.
 
@@ -37,6 +37,9 @@
 - Articles : `Article` (image = image de partage, auteur et éditeur = l'Organization) +
   `BreadcrumbList` identique au fil d'Ariane visible (`Accueil` = `/prop-firm`, `Blog`, titre).
 - `sameAs` vide tant que Greg n'a pas donné les URL des profils officiels (décision du 2026-11-16).
+- Invariants testés dans `libs/shared/src/blog-related-posts.spec.ts` (la landing n'a pas de suite de
+  tests) ; la cible `shared:test` déclare les fichiers de la landing dans ses `inputs`, sinon le cache
+  Nx sauterait le test quand seule la landing change.
 - Vérification locale : propriétés requises, `@id` résolus, FAQ et fil visibles dans la page (script de
   la phase 1, pas de service externe).
 

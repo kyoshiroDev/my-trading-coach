@@ -56,7 +56,8 @@ export const SOFTWARE_APPLICATION = {
   name: 'MyTradingCoach',
   applicationCategory: 'FinanceApplication',
   operatingSystem: 'Web',
-  url: SITE,
+  // Page d'entrée réelle tant que `/` redirige en 302 vers elle (2026-11-08).
+  url: `${SITE}/prop-firm`,
   publisher: ORGANIZATION_REF,
   description:
     'Journal de trading pour traders futures en prop firm : synchro Tradovate en lecture seule, marge avant la limite de la firme en direct, coach IA et débrief hebdomadaire. Outil d’analyse, pas un conseil en investissement.',

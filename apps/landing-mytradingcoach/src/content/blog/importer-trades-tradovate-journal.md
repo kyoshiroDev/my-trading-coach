@@ -1,7 +1,7 @@
 ---
 title: "Importer ses trades Tradovate dans un journal (sans se prendre la tête avec les frais)"
 seoTitle: "Importer ses trades Tradovate dans un journal de trading"
-description: "Comment exporter ses trades depuis Tradovate et les importer proprement dans un journal, avec les frais exacts. La méthode que personne n'explique vraiment."
+description: "Comment exporter ses trades depuis Tradovate et les importer proprement dans un journal, avec les frais exacts. La méthode que peu de gens expliquent."
 publishDate: 2026-07-14
 tags: ["tradovate", "import", "prop firm", "futures"]
 ---

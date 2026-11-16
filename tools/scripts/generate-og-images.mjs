@@ -4,9 +4,10 @@
 // Chromium de Playwright (déjà installé pour les tests E2E), polices @fontsource du dépôt, couleurs
 // lues dans global.css de la landing. Titres des articles lus dans leur frontmatter (`title`).
 // Usage : node tools/scripts/generate-og-images.mjs   (à relancer après un nouvel article ou un
-// titre modifié ; `landing-og-images.spec.ts` échoue si une image d'article manque).
+// titre modifié ; `libs/shared/src/blog-related-posts.spec.ts` échoue si une image d'article manque).
 // Cartes en JPEG (~40 Ko, contre ~330 Ko en PNG à cause du dégradé), logo en PNG (transparence).
-// Fichiers non hashés (cache 1 an côté nginx) : si une image change, en changer le nom.
+// Fichiers non hashés servis par `location /` de nginx (cache 1 h, must-revalidate) : une image
+// modifiée est visible en moins d'une heure, inutile de la renommer.
 import { chromium } from '@playwright/test';
 import { mkdir, readFile, readdir } from 'node:fs/promises';
 import { join } from 'node:path';
@@ -21,7 +22,12 @@ const token = (name) => {
   return m[1];
 };
 const c = { bg: token('bg'), bg3: token('bg3'), blue: token('blue'), blue2: token('blue2'), txt: token('txt'), txt2: token('txt2'), txt3: token('txt3') };
-const purple = '#8b5cf6'; // dégradé de marque (logo.svg)
+// Second arrêt du dégradé de marque, lu dans le logo (la landing n'a pas de token violet).
+const logoSvg = await readFile(join(landing, 'public/logo.svg'), 'utf8');
+const purple = [...logoSvg.matchAll(/stop-color="(#[0-9a-fA-F]{6})"/g)][1]?.[1];
+if (!purple) throw new Error('second stop-color introuvable dans public/logo.svg');
+/** #rrggbb → rgba(r,g,b,a) */
+const rgba = (hex, a) => `rgba(${[1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16)).join(',')},${a})`;
 
 const font = async (pkg, file) =>
   `data:font/woff2;base64,${(await readFile(join(root, 'node_modules/@fontsource', pkg, 'files', file))).toString('base64')}`;
@@ -49,7 +55,7 @@ const card = ({ label, title }) => `<!doctype html><html lang="fr"><head><meta c
   @font-face { font-family: M; src: url(${fontsLatinExt[1]}) format('woff2'); font-weight: 500; unicode-range: U+0100-024F, U+1E00-1EFF; }
   * { margin: 0; box-sizing: border-box; }
   html, body { width: 1200px; height: 630px; }
-  body { background: radial-gradient(ellipse 60% 70% at 85% 20%, rgba(59,130,246,0.16), transparent 70%), linear-gradient(135deg, ${c.bg}, ${c.bg3});
+  body { background: radial-gradient(ellipse 60% 70% at 85% 20%, ${rgba(c.blue, 0.16)}, transparent 70%), linear-gradient(135deg, ${c.bg}, ${c.bg3});
     color: ${c.txt}; padding: 72px 80px; display: flex; flex-direction: column; justify-content: space-between; font-family: D, sans-serif; }
   .brand { display: flex; align-items: center; gap: 18px; font-size: 34px; font-weight: 700; letter-spacing: -0.5px; }
   .label { font-family: M, monospace; font-size: 24px; letter-spacing: 3px; text-transform: uppercase; color: ${c.blue2}; margin-bottom: 22px; }

@@ -71,11 +71,12 @@ describe('landing · SEO (#1071)', () => {
       expect(read(f), f).not.toMatch(rating);
     }
     expect(schema).toContain("import { PREMIUM_PRICE_EUR } from '@mtc/shared'");
-    expect(schema).not.toMatch(/price:\s*'(?!0')\d/);
+    // Seul le Gratuit a un prix littéral ('0') ; les autres viennent de PREMIUM_PRICE_EUR.
+    expect(schema).not.toMatch(/price:\s*['"`]?[1-9]/);
   });
 
   it('/prop-firm est indexable et dans le sitemap ; /accueil et `/` restent dehors', () => {
-    expect(read('src/pages/prop-firm.astro')).not.toMatch(/^\s*noindex\s*$/m);
+    expect(read('src/pages/prop-firm.astro')).not.toMatch(/\bnoindex\b/);
     const config = read('astro.config.mjs');
     expect(config).not.toMatch(/\\\/prop-firm\\\/\?\$\/\.test\(page\)\) return false/);
     expect(config).toContain("if (/\\/accueil\\/?$/.test(page)) return false;");
