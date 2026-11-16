@@ -75,3 +75,7 @@ Tickets à part : #1068 (CSP admin et app), #1069 (corps validé de DELETE /user
 Réponse de Greg aux trois recommandations du relecteur (texte exact) :
 
 > 1 OK, 2 OK, 3 OK
+
+Ajout au sous-lot 4a (2026-11-16), réponse de Greg au relecteur sur l'IP réelle derrière Traefik (limite par IP de S3) et sur S5 (reporté au 4b), texte exact :
+
+> oui ajoute la phrase, et le test dans le 4a
