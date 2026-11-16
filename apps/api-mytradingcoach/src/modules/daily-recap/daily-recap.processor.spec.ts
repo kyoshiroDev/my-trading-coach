@@ -20,7 +20,7 @@ describe('DailyRecapProcessor (SCA-B5-01)', () => {
     { notify } as never,
   );
   const job = { data: { userId: 'u1', at: '2026-10-07T15:30:00.000Z' } } as Job<DailyRecapJob>;
-  const user = { email: 'a@test.com', name: 'A' };
+  const user = { email: 'a@test.com', name: 'A', notificationsEmail: true };
 
   beforeEach(() => {
     findUnique.mockReset().mockResolvedValue(user);
@@ -33,7 +33,7 @@ describe('DailyRecapProcessor (SCA-B5-01)', () => {
     await processor.process(job);
 
     expect(generateRecap).toHaveBeenCalledWith('u1', new Date('2026-10-07T15:30:00.000Z'));
-    expect(sendDailyRecap).toHaveBeenCalledWith(user, { tradesCount: 2 }, 'USD');
+    expect(sendDailyRecap).toHaveBeenCalledWith({ email: 'a@test.com', name: 'A' }, { tradesCount: 2 }, 'USD');
   });
 
   it('pas de trade (ou récap vide) → pas d’e-mail', async () => {
@@ -49,6 +49,19 @@ describe('DailyRecapProcessor (SCA-B5-01)', () => {
       'u1', 'RECAP', expect.objectContaining({ title: 'Récap du jour', url: '/dashboard' }),
       { dedupKey: 'recap:2026-10-07T15:30:00.000Z' },
     );
+  });
+
+  it('N1 (#1048) : « Notifications email » décochée → pas d’e-mail, récap généré et push envoyé quand même', async () => {
+    findUnique.mockResolvedValue({ ...user, notificationsEmail: false });
+
+    await processor.process(job);
+
+    expect(findUnique).toHaveBeenCalledWith(expect.objectContaining({
+      select: expect.objectContaining({ notificationsEmail: true }),
+    }));
+    expect(generateRecap).toHaveBeenCalled();
+    expect(sendDailyRecap).not.toHaveBeenCalled();
+    expect(notify).toHaveBeenCalledWith('u1', 'RECAP', expect.anything(), expect.anything());
   });
 
   it('compte supprimé entre-temps → rien, sans erreur', async () => {

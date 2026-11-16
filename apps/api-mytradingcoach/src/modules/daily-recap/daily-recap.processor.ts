@@ -27,13 +27,21 @@ export class DailyRecapProcessor extends WorkerHost {
     const { userId, at } = job.data;
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
-      select: { email: true, name: true },
+      select: { email: true, name: true, notificationsEmail: true },
     });
     if (!user) return; // compte supprimé entre le cron et le traitement
 
     const recap = await this.dailyRecapService.generateRecap(userId, new Date(at));
     if (recap && recap.tradesCount > 0) {
-      await this.resend.sendDailyRecap(user, recap, await userAmountsCurrency(this.prisma, userId));
+      // N1 (#1048) : l'e-mail suit « Notifications email » (Profil), comme le débrief ; le récap
+      // reste enregistré (carte « Hier ») et la notification push suit ses propres réglages.
+      if (user.notificationsEmail) {
+        await this.resend.sendDailyRecap(
+          { email: user.email, name: user.name },
+          recap,
+          await userAmountsCurrency(this.prisma, userId),
+        );
+      }
       this.notifier?.notify(userId, 'RECAP', TRADER_PUSH_MESSAGES.recapReady(), { dedupKey: `recap:${at}` });
     }
   }

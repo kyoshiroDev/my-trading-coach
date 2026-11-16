@@ -45,8 +45,8 @@ export class DebriefCron {
   }
 
   // Lundi 08h : filet de rattrapage. Génère le débrief de la semaine PASSÉE pour les éligibles
-  // qui ne l'ont pas reçu dimanche (cron manqué / déploiement / job échoué). Idempotent côté
-  // generate → ceux qui l'ont déjà ne sont pas re-mailés.
+  // qui ne l'ont pas reçu dimanche (cron manqué / déploiement / job échoué) ou dont le débrief
+  // date d'avant dimanche 23:00 (C1 #1048). Idempotent côté generate → pas de 2e e-mail.
   @Cron('0 8 * * 1', { timeZone: 'Europe/Paris' })
   async catchUpMissedDebriefs() {
     const now = new Date();
@@ -56,11 +56,14 @@ export class DebriefCron {
     const eligibleUsers = await this.debriefService.getEligibleUsers(refDate);
     if (eligibleUsers.length === 0) return;
 
+    // C1 (#1048) : un débrief généré avant le dimanche 23:00 (bouton de milieu de semaine) compte
+    // comme manquant : generate le refait sur la semaine complète. Un débrief du cron reste servi.
+    const cutoff = this.debriefService.weeklyCutoff(refDate);
     const existing = await this.prisma.weeklyDebrief.findMany({
       where: { year, weekNumber, userId: { in: eligibleUsers.map((u) => u.id) } },
-      select: { userId: true },
+      select: { userId: true, generatedAt: true },
     });
-    const hasDebrief = new Set(existing.map((e) => e.userId));
+    const hasDebrief = new Set(existing.filter((e) => e.generatedAt >= cutoff).map((e) => e.userId));
     const missing = eligibleUsers.filter((u) => !hasDebrief.has(u.id));
 
     await Promise.all(
