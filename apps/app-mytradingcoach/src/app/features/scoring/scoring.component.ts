@@ -27,6 +27,7 @@ import type { Trade as ApiTrade } from '@mtc/shared';
 import { ErrorStateComponent } from '@mtc/front-ui';
 import { calculerStreak, decalerJour, joursOuvres } from './streak';
 import { PaywallCtaService } from '@app/core/services/paywall-cta.service';
+import { resourceValue } from '@app/core/utils/resource-value';
 
 /** Champs du trade utilisés par le calcul du score. */
 type Trade = Pick<ApiTrade, 'pnl' | 'commission' | 'riskReward' | 'emotion' | 'effectiveEmotion' | 'setupId' | 'tradedAt'>;
@@ -204,7 +205,7 @@ export class ScoringComponent {
     this.tradesResource.isLoading(),
   );
   private readonly trades = computed(
-    () => this.tradesResource.value()?.data.data ?? [],
+    () => resourceValue(this.tradesResource)?.data.data ?? [],
   );
 
   protected readonly bars = computed(() => computeScore(this.trades()));
@@ -232,7 +233,7 @@ export class ScoringComponent {
   }
   // Pastilles (niveau 0 à 4 → classe niveau-N, couleurs --streak-N de theme.css) et série actuelle.
   protected readonly streak = computed(() =>
-    calculerStreak(this.activiteResource.value()?.data.days ?? [], this.aujourdhui, this.joursSerie),
+    calculerStreak(resourceValue(this.activiteResource)?.data.days ?? [], this.aujourdhui, this.joursSerie),
   );
 
   protected titrePastille(p: { date: string; trades: number }): string {
