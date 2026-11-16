@@ -144,6 +144,7 @@ export class AmbassadorComponent implements OnInit {
   }
 
   protected avatar(u: ReferralUser): string {
-    return u.pseudo.slice(0, 2).toUpperCase();
+    // Même règle que le parrainage grand public : sans les étoiles du pseudo masqué (« A*** » → « A »).
+    return u.pseudo.replace(/[^A-Za-z0-9]/g, '').slice(0, 2).toUpperCase() || '??';
   }
 }

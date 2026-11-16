@@ -102,4 +102,13 @@ describe('AmbassadorComponent', () => {
     expect(TEMPLATE).toContain('{{ u.pseudo }}');
     expect(TEMPLATE).not.toMatch(/u\.email|u\.name/);
   });
+
+  it('S2 (#1063) : avatar sans les étoiles du pseudo masqué', () => {
+    const { cmp } = setup();
+    const u = { pseudo: 'A***', plan: 'FREE' as const, createdAt: '2026-11-01', isActive: false, monthlyCommission: 0, paying: false };
+    expect(cmp.avatar(u)).toBe('A');
+    expect(cmp.avatar({ ...u, pseudo: '***' })).toBe('??');
+    expect(cmp.avatar({ ...u, pseudo: 'AL******' })).toBe('AL');
+  });
 });
+
