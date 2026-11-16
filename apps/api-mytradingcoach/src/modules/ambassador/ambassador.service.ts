@@ -11,6 +11,7 @@ import { AuthUserCacheService } from '../infra/auth-user-cache.service';
 import { isPayingReferral, referralMonthlyCommission } from './ambassador-commission.util';
 import { roundCents } from '@mtc/shared';
 import { emailEquals } from '../../common/utils/email.util';
+import { maskPseudo } from '../referral/mask-pseudo';
 
 // Lien de parrainage : même format que celui affiché par le dashboard ambassadeur.
 const REFERRAL_BASE = 'https://mytradingcoach.app';
@@ -33,10 +34,15 @@ export interface PromoteResult {
   referralLink: string;
 }
 
+/**
+ * Filleul tel que le voit l'ambassadeur (S2 #1063) : pseudo masqué, ni id, ni nom, ni e-mail.
+ * La vue admin (fiche ambassadeur) ajoute id, nom et e-mail.
+ */
 export interface ReferralUser {
-  id: string;
-  name: string | null;
-  email: string;
+  pseudo: string;
+  id?: string;
+  name?: string | null;
+  email?: string;
   plan: string;
   createdAt: Date;
   isActive: boolean;
@@ -305,7 +311,7 @@ export class AmbassadorService {
     return { count };
   }
 
-  async getStats(userId: string): Promise<AmbassadorStats> {
+  async getStats(userId: string, view: 'ambassador' | 'admin' = 'ambassador'): Promise<AmbassadorStats> {
     const ambassador = await this.prisma.user.findUnique({
       where: { id: userId },
       select: { referralCode: true },
@@ -365,9 +371,8 @@ export class AmbassadorService {
     return {
       referralCode: ambassador.referralCode,
       referrals: referredUsers.map(u => ({
-        id: u.id,
-        name: u.name,
-        email: u.email,
+        pseudo: maskPseudo(u.name, u.email),
+        ...(view === 'admin' ? { id: u.id, name: u.name, email: u.email } : {}),
         plan: u.plan,
         createdAt: u.createdAt,
         isActive: u._count.trades > 0,

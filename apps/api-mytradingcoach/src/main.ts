@@ -10,6 +10,7 @@ import helmet from 'helmet';
 import * as cookieParser from 'cookie-parser';
 import * as compression from 'compression';
 import { AppModule } from './app/app.module';
+import { configureProxy } from './config/proxy';
 import { checkEnv } from './config/env';
 import { webConcurrency } from './config/web-concurrency';
 import { appRole, runsCrons, runsQueueProcessors } from './config/app-role';
@@ -41,10 +42,8 @@ async function bootstrap() {
   });
   configureBodyParsers(app);
 
-  // L'API est derrière UN reverse proxy (Traefik). Sans ce réglage, `req.ip` vaut l'IP du proxy
-  // pour toutes les requêtes : le rate limiting mettait alors tous les utilisateurs dans le même
-  // compteur. `1` = on fait confiance au dernier saut seulement (pas d'IP forgée par le client).
-  app.set('trust proxy', 1);
+  // Derrière Traefik : `req.ip` = IP réelle du visiteur (un seul saut de confiance, cf. config/proxy.ts).
+  configureProxy(app);
 
   // API JSON pure : aucune ressource n'est servie au navigateur pour rendu.
   // CSP verrouillée + interdiction d'iframing + HSTS 1 an.

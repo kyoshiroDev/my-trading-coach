@@ -8,6 +8,7 @@ import { roundCents } from '@mtc/shared';
 import { ResendService } from '../resend/resend.service';
 import { StripeCustomerService } from '../stripe/stripe-customer.service';
 import { buildStatementPdf } from './referral-statement.pdf';
+import { maskPseudo } from './mask-pseudo';
 
 const REFERRAL_BASE = 'https://mytradingcoach.app';
 const buildReferralLink = (code: string) => `${REFERRAL_BASE}?ref=${code}`;
@@ -21,12 +22,6 @@ function randomSuffix(length: number): string {
   return out;
 }
 
-/** Pseudo masqué : 2 premières lettres + étoiles (RGPD côté parrain). */
-function maskPseudo(name: string | null, email: string): string {
-  const base = (name?.trim() || email.split('@')[0] || '?').trim();
-  const head = base.slice(0, 2).toUpperCase();
-  return `${head}${'*'.repeat(Math.max(3, Math.min(6, base.length - 2)))}`;
-}
 
 type FilleulStatus = 'payant' | 'essai' | 'inscrit';
 function filleulStatus(u: { plan: string; stripeSubscriptionStatus: string | null }): FilleulStatus {

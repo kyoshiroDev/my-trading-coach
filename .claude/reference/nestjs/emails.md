@@ -68,6 +68,7 @@ décision), cron `AutoCampaignsCron` (10 h Paris, prod, worker cron), journal `E
 - **Lien de désinscription d'un contenu fourni par l'admin** (annonce) : passer à `dispatch` un
   override en FONCTION `(unsubUrl) => contenu`, construit après `ensureUnsubToken`. Construire l'URL
   avant avec `user.unsubToken ?? ''` donnait un lien `?token=` mort pour un compte sans jeton (#747).
+- **Envoi manuel d'une campagne (admin)** : un seul à la fois par type, verrou Redis `email-campaign:send:<type>` (`SET NX EX` 2 h, rendu seulement par son propriétaire) ; un 2e envoi pendant le 1er → 409 (#1063). Redis indisponible : envoi autorisé.
 - Aucun envoi de masse hors du moteur de campagnes : pas de script qui lit la base et appelle Resend
   (`send-discord-invite.mjs` supprimé, #747 : ni consentement, ni démo, ni désinscription). Une
   invitation Discord passe par la campagne `discord_invite`.

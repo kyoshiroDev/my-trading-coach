@@ -41,9 +41,8 @@ export class AmbassadorController {
     // IDOR: seul un ADMIN peut consulter les stats d'un autre ambassadeur.
     // Un ambassadeur normal est toujours forcé sur ses propres données.
     // Admin : préférer GET /admin/ambassadors/:id/stats (`userId` gardé une version).
-    const targetId =
-      user.role === Role.ADMIN && userId ? userId : user.id;
-    return this.service.getStats(targetId);
+    const asAdmin = user.role === Role.ADMIN && !!userId;
+    return this.service.getStats(asAdmin ? userId : user.id, asAdmin ? 'admin' : 'ambassador');
   }
 
   @Get('list')
