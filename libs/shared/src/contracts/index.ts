@@ -12,3 +12,4 @@ export * from './push';
 export * from './debrief';
 export * from './prop-firm';
 export * from './incident';
+export * from './ai';

@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { SessionService } from './session.service';
+import { freezeClock } from '../../test/freeze-clock';
 
 const session = (id: string, startedAt: string) => ({
   id, startedAt: new Date(startedAt), endedAt: null, moodStart: null, moodEnd: null, totalPnl: 10, totalTrades: 2,
@@ -19,6 +20,9 @@ function serviceWith(rows: unknown[], recaps: unknown[]) {
     sessionFindMany: prisma.tradeSession.findMany,
   };
 }
+
+// Dates en dur dans tout le fichier : horloge figée (règle 1 de tests).
+freezeClock('2026-09-24T10:00:00Z');
 
 describe('SessionService.getSessionHistory — résumé IA du jour', () => {
   it('rattache à chaque session le résumé IA du récap du même jour (heure de Paris)', async () => {

@@ -139,6 +139,9 @@
   Rattrapage des suppressions antérieures : `scripts/list-orphan-stripe-subscriptions.ts`
   (lecture seule). Tests : `users-delete.spec.ts`, `stripe-account-closure.service.spec.ts`,
   `stripe-webhook.service.spec.ts`, `delete-me-stripe.int-spec.ts` (mode test Stripe).
+  Redis : après la suppression, `ai:insights:last:<userId>` (dernière analyse IA) et
+  `ai:cooldown:insights:<userId>` sont effacés (`modules/ai/insights-cache-keys.ts`, #1056) ; Redis en
+  panne → avertissement, la suppression aboutit, les clés expirent seules sous 4 h.
   ⚠️ Commissions ambassadeur `pending` : emportées par la cascade à la suppression de
   l'ambassadeur (aucune trace côté admin).
 - `@UseGuards(JwtAuthGuard)` sur toutes les routes protégées

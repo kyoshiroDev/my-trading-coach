@@ -94,6 +94,25 @@ describe('UsersService — suppression + trace DeletedAccount', () => {
     warn.mockRestore();
   });
 
+  it('#1056 : dernière analyse IA et délai des insights effacés de Redis, APRÈS la suppression du User', async () => {
+    await service.deleteMe('user-1');
+    expect(mockRedis.client.del).toHaveBeenCalledWith('ai:insights:last:user-1', 'ai:cooldown:insights:user-1');
+    expect(mockPrisma.$transaction.mock.invocationCallOrder[0]).toBeLessThan(
+      mockRedis.client.del.mock.invocationCallOrder[0],
+    );
+  });
+
+  it('#1056 : Redis en panne → la suppression aboutit, avertissement dans les logs', async () => {
+    mockRedis.client.del.mockRejectedValueOnce(new Error('ECONNREFUSED'));
+    const warn = vi.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
+
+    await expect(service.deleteMe('user-1')).resolves.toBeUndefined();
+
+    expect(mockPrisma.user.delete).toHaveBeenCalledWith({ where: { id: 'user-1' } });
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('cache IA des insights non effacé'));
+    warn.mockRestore();
+  });
+
   it('sans Discord relié : aucun appel Discord', async () => {
     await service.deleteMe('user-1');
     expect(discordGuild.removePlanRoles).not.toHaveBeenCalled();

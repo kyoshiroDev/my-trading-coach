@@ -136,11 +136,15 @@ export class DebriefService {
       // Émotion effective (override sinon humeur de session ; null = non renseignée).
     ).map((t) => ({ ...t, setup: t.setup?.title ?? null, emotion: effectiveEmotion(t) }));
 
-    // C8 (#1046) : semaine sans trade (lundi matin) → pas d'appel IA facturé ni de débrief vide qui
-    // remplacerait à l'écran le vrai débrief de la semaine passée.
-    if (trades.length === 0) {
+    // Trades clôturés seulement pour les stats par compte et l'IA (C13 #1046, convention #947) :
+    // une position ouverte gonflait « N trades » sans résultat.
+    const closedTrades = trades.filter((t) => t.pnl !== null);
+
+    // C8 (#1046, #1056) : semaine sans trade clôturé (lundi matin, positions encore ouvertes) → pas
+    // d'appel IA facturé ni de débrief vide qui remplacerait à l'écran le vrai débrief de la semaine passée.
+    if (closedTrades.length === 0) {
       throw new BadRequestException(
-        'Aucun trade cette semaine pour l’instant. Le débrief se génère dès ton premier trade de la semaine.',
+        'Aucun trade clôturé cette semaine pour l’instant. Le débrief se génère dès ton premier trade clôturé de la semaine.',
       );
     }
 
@@ -153,10 +157,6 @@ export class DebriefService {
       },
       orderBy: [{ status: 'asc' }, { createdAt: 'asc' }],
     });
-
-    // Trades clôturés seulement pour les stats par compte et l'IA (C13 #1046, convention #947) :
-    // une position ouverte gonflait « N trades » sans résultat.
-    const closedTrades = trades.filter((t) => t.pnl !== null);
 
     // Trades groupés par compte (accountId null → bucket « unassigned »).
     const tradesByAccount: Record<string, typeof trades> = {};
@@ -369,9 +369,12 @@ export class DebriefService {
           { role: Role.BETA_TESTER },
           { trialEndsAt: { gt: new Date() } },
         ],
-        // Même filtre que `generate` (comptes perdus exclus, #681) : un trader dont tous les trades de
-        // la semaine sont sur un compte échoué ou archivé recevait un débrief à 0 trade (#947).
-        trades: { some: { tradedAt: { gte: startDate, lte: endDate }, ...inactiveAccountsTradeWhere() } },
+        // Même filtre que `generate` (comptes perdus exclus, #681 ; trades clôturés seulement, #1056) :
+        // un trader dont tous les trades de la semaine sont sur un compte échoué ou archivé, ou encore
+        // ouverts, recevait un débrief à 0 trade (#947).
+        trades: {
+          some: { tradedAt: { gte: startDate, lte: endDate }, pnl: { not: null }, ...inactiveAccountsTradeWhere() },
+        },
       },
       select: { id: true },
     });

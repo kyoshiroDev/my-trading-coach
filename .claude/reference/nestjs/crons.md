@@ -10,7 +10,8 @@
 
 `DebriefCron` (dimanche 23 h Paris, rattrapage lundi 8 h) enfile un job `generate` par utilisateur
 de `debriefService.getEligibleUsers(refDate)` : Premium / admin / bêta / essai, débrief automatique
-activé, non démo, **et au moins un trade dans la semaine de `refDate`** (SCA-B5-08). Le cron ne
+activé, non démo, **et au moins un trade clôturé dans la semaine de `refDate`** (SCA-B5-08 ; clôturé :
+#1056, une semaine de positions ouvertes ne coûte pas d'appel IA). Le cron ne
 journalise que le nombre de jobs, jamais les adresses. 3 essais, échecs gardés 7 j.
 
 **Comptes désignés à l'IA par une clé courte** (`debrief/debrief-account-keys.ts`, 2026-10-23) :
