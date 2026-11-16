@@ -88,7 +88,7 @@ describe('AmbassadorComponent', () => {
   it('filleul Premium en essai : « Inscrit », pas compté payant ; seul l’abonnement actif compte (B12 #1013)', () => {
     const { cmp } = setup();
     const ref = (paying: boolean) => ({
-      id: 'r', name: null, email: 'r@t.com', plan: 'PREMIUM' as const, createdAt: '2026-11-01',
+      pseudo: 'RR***', plan: 'PREMIUM' as const, createdAt: '2026-11-01',
       isActive: true, monthlyCommission: paying ? 9.8 : 0, paying,
     });
     cmp.stats.set(makeStats({ premium: 2, referrals: [ref(true), ref(false)] }));
@@ -96,4 +96,19 @@ describe('AmbassadorComponent', () => {
     expect(cmp.isPaid(ref(true))).toBe(true);
     expect(cmp.paidCount()).toBe(1);
   });
+
+  it('S2 (#1063) : un filleul est affiché par son pseudo masqué, jamais par son nom ou son e-mail', async () => {
+    const TEMPLATE = (await import('./ambassador.component.html?raw')).default;
+    expect(TEMPLATE).toContain('{{ u.pseudo }}');
+    expect(TEMPLATE).not.toMatch(/u\.email|u\.name/);
+  });
+
+  it('S2 (#1063) : avatar sans les étoiles du pseudo masqué', () => {
+    const { cmp } = setup();
+    const u = { pseudo: 'A***', plan: 'FREE' as const, createdAt: '2026-11-01', isActive: false, monthlyCommission: 0, paying: false };
+    expect(cmp.avatar(u)).toBe('A');
+    expect(cmp.avatar({ ...u, pseudo: '***' })).toBe('??');
+    expect(cmp.avatar({ ...u, pseudo: 'AL******' })).toBe('AL');
+  });
 });
+

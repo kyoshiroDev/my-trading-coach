@@ -209,7 +209,7 @@ export function debriefReadyTemplate(params: {
     </h1>
 
     <p style="${FONT}font-size:14px;color:#9db4ce;margin:0 0 20px 0;">
-      Bonjour ${userName || 'Trader'}, ton analyse de la semaine ${weekNumber} vient d'être générée par ton compagnon.
+      Bonjour ${greetingName(userName)}, ton analyse de la semaine ${weekNumber} vient d'être générée par ton compagnon.
     </p>
 
     ${statsRow([
@@ -266,7 +266,7 @@ export function dailyRecapTemplate(params: {
     </h1>
 
     <p style="${FONT}font-size:14px;color:#9db4ce;margin:0 0 20px 0;">
-      Bonjour ${userName || 'Trader'}, voici le bilan de ta session du jour.
+      Bonjour ${greetingName(userName)}, voici le bilan de ta session du jour.
     </p>
 
     ${statsRow([
@@ -307,6 +307,20 @@ const DISCORD_INVITE_URL = 'https://discord.gg/TDK2npvkSN';
 export function onboardingLink(appUrl: string, path: string, campaign: string, query: Record<string, string> = {}): string {
   const params = new URLSearchParams({ ...query, utm_source: 'email', utm_medium: 'onboarding', utm_campaign: campaign });
   return `${appUrl.replace(/\/+$/, '')}${path}?${params.toString()}`;
+}
+
+/**
+ * Texte saisi par un utilisateur (nom à l'inscription) inséré dans un e-mail HTML : jamais
+ * interprété comme du balisage (S1 #1063 : l'aperçu admin d'une campagne exécutait un nom
+ * `<img onerror=…>`). Les cinq caractères sensibles.
+ */
+export function escapeHtml(s: string): string {
+  return s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
+}
+
+/** Nom affiché dans « Bonjour {nom} », échappé ; « Trader » si vide. */
+export function greetingName(userName: string | null | undefined): string {
+  return escapeHtml(userName || 'Trader');
 }
 
 /** Prénom : `name` est libre (« Greg Tahir ») → premier mot ; vide → chaîne vide. */
@@ -357,7 +371,7 @@ export function welcomeFreeTemplate(params: {
       </h1>
 
       <p style="${FONT}font-size:14px;color:#9db4ce;margin:0 0 20px 0;line-height:1.7;">
-        ${firstName ? `Bonjour ${firstName}` : 'Bonjour'}, ton compte est prêt. Pour que MyTradingCoach te serve
+        ${firstName ? `Bonjour ${escapeHtml(firstName)}` : 'Bonjour'}, ton compte est prêt. Pour que MyTradingCoach te serve
         pendant ta séance, trois étapes suffisent :
       </p>
       ${trialNote}
@@ -410,7 +424,7 @@ export function welcomePremiumTemplate(params: {
       </h1>
 
       <p style="${FONT}font-size:14px;color:#9db4ce;margin:0 0 20px 0;line-height:1.7;">
-        Bonjour ${userName || 'Trader'},
+        Bonjour ${greetingName(userName)},
         ${isTrial
           ? `ton essai gratuit de <strong style="color:#e2eaf5;">${TRIAL_PERIOD_DAYS} jours</strong> est activé. Aucun prélèvement avant la fin, annulable en un clic.`
           : `ton abonnement Premium est actif. Profite de toutes les fonctionnalités de ton compagnon.`
@@ -461,10 +475,10 @@ export function resetPasswordTemplate(params: {
   const { userName, resetUrl, expiresIn, googleOnly } = params;
 
   const intro = googleOnly
-    ? `Bonjour ${userName || 'Trader'}, ton compte MyTradingCoach utilise la connexion Google :
+    ? `Bonjour ${greetingName(userName)}, ton compte MyTradingCoach utilise la connexion Google :
       tu peux simplement te connecter avec le bouton « Continuer avec Google ».
       Si tu veux aussi un mot de passe, définis-le avec le lien ci-dessous.`
-    : `Bonjour ${userName || 'Trader'}, tu as demandé à réinitialiser ton mot de passe.`;
+    : `Bonjour ${greetingName(userName)}, tu as demandé à réinitialiser ton mot de passe.`;
 
   const content = card(`
     <p style="${FONT}font-size:13px;color:#8fa3bf;margin:0 0 4px 0;text-transform:uppercase;letter-spacing:.8px;">Sécurité</p>
@@ -502,7 +516,7 @@ export function paymentFailedTemplate(params: {
       Problème de paiement
     </h1>
     <p style="${FONT}font-size:14px;color:#9db4ce;margin:0 0 12px 0;line-height:1.7;">
-      Bonjour ${userName || 'Trader'}, nous n'avons pas pu traiter ton
+      Bonjour ${greetingName(userName)}, nous n'avons pas pu traiter ton
       paiement${attemptCount > 1 ? ` (tentative ${attemptCount})` : ''}.
       Ton accès Premium est en pause tant que le paiement n'est pas passé : mets à jour ta carte
       pour le retrouver tout de suite. En attendant, tes trades et ton journal restent accessibles.
@@ -542,7 +556,7 @@ export function paymentSucceededTemplate(params: {
       Ton paiement a bien été reçu
     </h1>
     <p style="${FONT}font-size:14px;color:#9db4ce;margin:0 0 16px 0;line-height:1.7;">
-      Bonjour ${userName || 'Trader'}, merci ! Ton abonnement Premium est renouvelé.
+      Bonjour ${greetingName(userName)}, merci ! Ton abonnement Premium est renouvelé.
     </p>
     <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#0a1220;border:1px solid rgba(99,155,255,.08);border-radius:8px;">
       ${rows.map(([label, value], i) => `<tr>
@@ -588,7 +602,7 @@ export function subscriptionCanceledTemplate(params: {
       Abonnement résilié
     </h1>
     <p style="${FONT}font-size:14px;color:#9db4ce;margin:0 0 12px 0;line-height:1.7;">
-      Bonjour ${userName || 'Trader'}, ${status}
+      Bonjour ${greetingName(userName)}, ${status}
     </p>
     <p style="${FONT}font-size:13px;color:#6b8299;margin:0 0 20px 0;">
       Tu peux te réabonner à tout moment pour retrouver les analytics avancés, l'IA Coach et les Weekly Debriefs.
@@ -621,7 +635,7 @@ export function renewalReminderTemplate(params: {
       Ton Premium se termine le ${dateStr}
     </h1>
     <p style="${FONT}font-size:14px;color:#9db4ce;margin:0 0 12px 0;line-height:1.7;">
-      Bonjour ${userName || 'Trader'}, ton abonnement Premium est résilié : il se termine le
+      Bonjour ${greetingName(userName)}, ton abonnement Premium est résilié : il se termine le
       <strong style="color:#e2eaf5;">${dateStr}</strong>, puis tu passes sur le plan gratuit.
       Aucun nouveau prélèvement. Tu peux le réactiver d'ici là depuis ton espace de facturation.
     </p>
@@ -663,7 +677,7 @@ export function founderWelcomeTemplate(params: {
       Tu es fondateur n° ${number} 🎉
     </h1>
     <p style="${FONT}font-size:14px;color:#9db4ce;margin:0 0 12px 0;line-height:1.7;">
-      Salut ${userName || 'Trader'}, merci de faire partie des ${FOUNDER_OFFER.seats} premiers. Tout Premium est actif,
+      Salut ${greetingName(userName)}, merci de faire partie des ${FOUNDER_OFFER.seats} premiers. Tout Premium est actif,
       nouveautés à venir comprises, à <strong style="color:#e2eaf5;">${priceLabel}</strong>.
     </p>
     ${rulesList([
@@ -699,7 +713,7 @@ export function founderReservationTemplate(params: {
       Ta place fondateur n° ${number} est réservée
     </h1>
     <p style="${FONT}font-size:14px;color:#9db4ce;margin:0 0 12px 0;line-height:1.7;">
-      Salut ${userName || 'Trader'}, ton Premium continue. Premier prélèvement de
+      Salut ${greetingName(userName)}, ton Premium continue. Premier prélèvement de
       <strong style="color:#e2eaf5;">${priceLabel}</strong> le ${date}, pas avant.
     </p>
     ${rulesList([
@@ -731,7 +745,7 @@ export function paymentActionRequiredTemplate(params: {
       Confirme ton paiement
     </h1>
     <p style="${FONT}font-size:14px;color:#9db4ce;margin:0 0 12px 0;line-height:1.7;">
-      Bonjour ${userName || 'Trader'}, ta banque demande une confirmation pour ce prélèvement.
+      Bonjour ${greetingName(userName)}, ta banque demande une confirmation pour ce prélèvement.
     </p>
     <p style="${FONT}font-size:14px;color:#9db4ce;margin:0 0 12px 0;line-height:1.7;">
       Ton Premium est en pause jusqu'à ta confirmation. Tes trades et ton historique restent là. Sans
@@ -768,7 +782,7 @@ export function partnerWelcomeTemplate(params: {
       Ton tarif partenaire est activé 🚀
     </h1>
     <p style="${FONT}font-size:14px;color:#9db4ce;margin:0 0 12px 0;line-height:1.7;">
-      Salut ${userName || 'Trader'}, ton Premium est actif avec le code <strong style="color:#e2eaf5;">${code}</strong>.
+      Salut ${greetingName(userName)}, ton Premium est actif avec le code <strong style="color:#e2eaf5;">${code}</strong>.
     </p>
     ${rulesList([
       ...(trialEndsAt ? [`Essai gratuit jusqu’au ${longDate(trialEndsAt)}&nbsp;: aucun prélèvement avant.`] : []),
@@ -801,7 +815,7 @@ export function tariffAtRiskTemplate(params: {
       Ton ${tariff} est en jeu
     </h1>
     <p style="${FONT}font-size:14px;color:#9db4ce;margin:0 0 12px 0;line-height:1.7;">
-      Salut ${userName || 'Trader'}, ton dernier paiement n’est pas passé${attemptCount > 1 ? ` (tentative ${attemptCount})` : ''}.
+      Salut ${greetingName(userName)}, ton dernier paiement n’est pas passé${attemptCount > 1 ? ` (tentative ${attemptCount})` : ''}.
       Rien n’est perdu pour l’instant : on réessaie dans les prochains jours.
     </p>
     <p style="${FONT}font-size:14px;color:#9db4ce;margin:0 0 20px 0;line-height:1.7;">
@@ -835,7 +849,7 @@ export function annualRenewalReminderTemplate(params: {
       Ton abonnement annuel se renouvelle le ${dateStr}
     </h1>
     <p style="${FONT}font-size:14px;color:#9db4ce;margin:0 0 12px 0;line-height:1.7;">
-      Salut ${userName || 'Trader'}, ton abonnement Premium annuel sera reconduit automatiquement le
+      Salut ${greetingName(userName)}, ton abonnement Premium annuel sera reconduit automatiquement le
       <strong style="color:#e2eaf5;">${dateStr}</strong> pour <strong style="color:#e2eaf5;">${amount}</strong>${keptTariff ? ` (${keptTariff} conservé)` : ''}.
     </p>
     <p style="${FONT}font-size:13px;color:#8fa3bf;margin:0 0 20px 0;line-height:1.7;">

@@ -16,7 +16,9 @@ import {
   cta,
   divider,
   emailWrapper,
+  escapeHtml,
   firstNameOf,
+  greetingName,
   marketingFooter,
   onboardingLink,
   serviceFooter,
@@ -59,7 +61,8 @@ const P = `style="${FONT}font-size:14px;color:#9db4ce;margin:0 0 16px 0;line-hei
 const SMALL = `style="${FONT}font-size:13px;color:#8fa3bf;margin:16px 0 0 0;line-height:1.6;"`;
 const hello = (userName: string) => {
   const firstName = firstNameOf(userName);
-  return firstName ? `Bonjour ${firstName},` : 'Bonjour,';
+  // Nom échappé (S1 #1063) : le résultat est du HTML sûr, à ne pas ré-échapper.
+  return firstName ? `Bonjour ${escapeHtml(firstName)},` : 'Bonjour,';
 };
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
@@ -170,7 +173,7 @@ export function firstTradeTemplate({ userName, appUrl, unsubUrl }: CampaignBuild
         Et si tu enregistrais ton premier trade ? 📈
       </h1>
       <p style="${FONT}font-size:14px;color:#9db4ce;margin:0 0 16px 0;line-height:1.7;">
-        Bonjour ${userName || 'Trader'}, ton compte MyTradingCoach est prêt mais tu n'as pas encore
+        Bonjour ${greetingName(userName)}, ton compte MyTradingCoach est prêt mais tu n'as pas encore
         noté de trade. C'est en journalisant que tout commence : émotions, setups, résultats.
         En 30 secondes, tu poses la première brique de ta progression.
       </p>
@@ -208,7 +211,7 @@ export function profileTemplate({ userName, appUrl, unsubUrl }: CampaignBuildCtx
         Personnalise ton coach en 5 minutes 🎯
       </h1>
       <p style="${FONT}font-size:14px;color:#9db4ce;margin:0 0 16px 0;line-height:1.7;">
-        Bonjour ${userName || 'Trader'}, tu n'as pas encore renseigné ton profil stratégie.
+        Bonjour ${greetingName(userName)}, tu n'as pas encore renseigné ton profil stratégie.
         En le complétant, tu permets à MyTradingCoach de vraiment te connaître : ton style,
         ta stratégie, tes sessions et ta fréquence de trades.
       </p>
@@ -232,7 +235,7 @@ export function discordTemplate({ userName, unsubUrl }: CampaignBuildCtx): Campa
         Rejoins les traders sur Discord 💬
       </h1>
       <p style="${FONT}font-size:14px;color:#9db4ce;margin:0 0 16px 0;line-height:1.7;">
-        Bonjour ${userName || 'Trader'}, des traders échangent chaque jour leurs setups et s'entraident.
+        Bonjour ${greetingName(userName)}, des traders échangent chaque jour leurs setups et s'entraident.
         C'est gratuit et ça prend 2 minutes.
       </p>
       <p style="${FONT}font-size:13px;color:#8fa3bf;margin:0 0 16px 0;line-height:1.6;">
@@ -257,7 +260,7 @@ export function premiumTemplate({ userName, appUrl, unsubUrl }: CampaignBuildCtx
         Passe au niveau supérieur ⚡
       </h1>
       <p style="${FONT}font-size:14px;color:#9db4ce;margin:0 0 16px 0;line-height:1.7;">
-        Bonjour ${userName || 'Trader'}, tu utilises MyTradingCoach activement. Va plus loin avec
+        Bonjour ${greetingName(userName)}, tu utilises MyTradingCoach activement. Va plus loin avec
         les alertes avant ta limite de perte, l'anti-tilt en direct, le débrief de ta semaine par le
         coach IA et les analyses avancées.
       </p>
@@ -284,7 +287,7 @@ export function reengagementTemplate({ userName, unsubUrl }: CampaignBuildCtx): 
         Un retour sur MyTradingCoach ? 📖
       </h1>
       <p style="${FONT}font-size:14px;color:#9db4ce;margin:0 0 16px 0;line-height:1.7;">
-        Bonjour ${userName || 'Trader'}, ça fait un moment qu'on ne t'a pas vu journaliser.
+        Bonjour ${greetingName(userName)}, ça fait un moment qu'on ne t'a pas vu journaliser.
         Qu'est-ce qui t'a manqué ou bloqué ? Pas eu le temps, un détail à améliorer, un bug ?
       </p>
       <p style="${FONT}font-size:13px;color:#6b8299;margin:0 0 8px 0;line-height:1.7;">
@@ -314,7 +317,7 @@ export function announcementTemplate(
       <h1 style="${FONT}font-size:24px;font-weight:700;color:#e2eaf5;margin:0 0 16px 0;letter-spacing:-.5px;">
         ${override?.subject || '📣 Nouveauté MyTradingCoach'}
       </h1>
-      <p style="${FONT}font-size:14px;color:#9db4ce;margin:0 0 12px 0;">Bonjour ${userName || 'Trader'},</p>
+      <p style="${FONT}font-size:14px;color:#9db4ce;margin:0 0 12px 0;">Bonjour ${greetingName(userName)},</p>
       ${body}
       ${divider}
       ${cta('Découvrir →', appUrl)}
@@ -342,7 +345,7 @@ export function legalNoticeTemplate(
   const html =
     card(`
       ${heading('Information de service', escapeHtml(subject))}
-      <p ${P}>${escapeHtml(hello(ctx.userName))}</p>
+      <p ${P}>${hello(ctx.userName)}</p>
       ${content.bodyHtml}
       ${divider}
       <p ${SMALL}>Une question&nbsp;? Écris à ${textLink('support@mytradingcoach.app', 'mailto:support@mytradingcoach.app')}.</p>
@@ -431,9 +434,6 @@ export function founderLaunchTemplate({ userName, appUrl, unsubUrl, seatsLeft }:
   };
 }
 
-function escapeHtml(s: string): string {
-  return s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
-}
 
 // ── Essai Premium d'inscription (#769, B2) : e-mails de service, ton neutre ─────────────────
 

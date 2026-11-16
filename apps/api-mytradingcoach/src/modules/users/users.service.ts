@@ -25,7 +25,7 @@ import { insightsCooldownKey, insightsKeptKey } from '../ai/insights-cache-keys'
 import { billingCacheKey } from '../stripe/stripe.helpers';
 import { REAL_USERS_WHERE } from '../../common/stats/real-users';
 import { premiumAccessWhere, subscriptionStateWhere, subscriptionStatesWhere } from '../../common/stats/subscription-state-where';
-import { emailEquals } from '../../common/utils/email.util';
+import { emailEquals, escapeLike } from '../../common/utils/email.util';
 
 /** Résiliation Stripe impossible : rien n'est supprimé, l'utilisateur peut réessayer. */
 export const BILLING_CLOSURE_FAILED_MESSAGE =
@@ -163,10 +163,11 @@ export class UsersService {
     // Hors démo (cohérence avec le KPI « Utilisateurs » du dashboard).
     const where: Prisma.UserWhereInput = {
       isDemo: false,
+      // Jokers `_` et `%` échappés (#1063) : `contains` de Prisma ne le fait pas (règle #999).
       ...(search && {
         OR: [
-          { email: { contains: search, mode: 'insensitive' } },
-          { name: { contains: search, mode: 'insensitive' } },
+          { email: { contains: escapeLike(search), mode: 'insensitive' } },
+          { name: { contains: escapeLike(search), mode: 'insensitive' } },
         ],
       }),
       ...utmWhere(utm),
@@ -453,6 +454,11 @@ export class UsersService {
       select: { email: true, role: true },
     });
     if (!current) throw new NotFoundException('Utilisateur introuvable');
+    // S6 (#1063) : un administrateur n'est jamais rétrogradé par l'API (ni un autre, ni soi-même),
+    // comme adminUpdate et adminDelete.
+    if (current.role === Role.ADMIN) {
+      throw new ForbiddenException('Impossible de modifier le rôle d’un administrateur');
+    }
 
     // Promotion : promote() génère le code s'il manque, et réutilise l'existant sinon.
     if (role === Role.AMBASSADOR) {
@@ -476,6 +482,22 @@ export class UsersService {
       data: { role },
     });
     await this.userCache?.invalidate(targetUserId);
+  }
+
+  /**
+   * « Retirer bêta » (S6 #1063) : seulement un BETA_TESTER repasse USER. Avant, la route appelait
+   * `setRole(USER)` sur n'importe quel rôle : un AMBASSADOR y perdait son code (`revoke`).
+   */
+  async removeBetaRole(targetUserId: string): Promise<void> {
+    const current = await this.prisma.user.findUnique({
+      where: { id: targetUserId },
+      select: { role: true },
+    });
+    if (!current) throw new NotFoundException('Utilisateur introuvable');
+    if (current.role !== Role.BETA_TESTER) {
+      throw new ConflictException('Ce compte n’est pas bêta-testeur');
+    }
+    await this.setRole(targetUserId, Role.USER);
   }
 
   /**

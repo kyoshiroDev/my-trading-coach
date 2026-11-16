@@ -34,7 +34,7 @@ export class AdminAmbassadorsController {
 
   @Get('ambassadors/:id/stats')
   stats(@Param('id') id: string) {
-    return this.ambassadors.getStats(id);
+    return this.ambassadors.getStats(id, 'admin');
   }
 
   @Patch('ambassadors/:id/pay-all')

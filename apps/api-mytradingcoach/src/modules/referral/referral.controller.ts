@@ -1,3 +1,4 @@
+import { Throttle } from '@nestjs/throttler';
 import {
   Body,
   Controller,
@@ -34,7 +35,9 @@ export class ReferralController {
     return this.service.getAdminOverview();
   }
 
-  // Demande pour devenir ambassadeur : email à l'équipe, pas de passage auto
+  // Demande pour devenir ambassadeur : email à l'équipe, pas de passage auto.
+  // Chaque appel envoie un e-mail et un push à l'équipe : 3 par heure (S4 #1063).
+  @Throttle({ default: { ttl: 3_600_000, limit: 3 } })
   @Post('ambassador/apply')
   apply(@CurrentUser() user: { id: string }, @Body() dto: ApplyAmbassadorDto) {
     return this.service.applyAmbassador(user.id, dto);
