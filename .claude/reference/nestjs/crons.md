@@ -32,7 +32,7 @@ débrief stocké garde les vrais ids (onglets, PDF).
 
 | Cron | Planning | Rôle |
 |---|---|---|
-| `DailyRecapCron` | `30 17 * * 1-5` Paris | Génère recap + envoie email aux users actifs du jour |
+| `DailyRecapCron` | `30 17 * * 1-5` Paris | Génère recap + envoie email aux users actifs du jour, seulement si `notificationsEmail` (N1 #1048) ; push RECAP selon ses propres réglages |
 | `EcoCalendarCron` | `0 7 * * 1-5` Paris | Pré-génère le calendrier pour tous les users Premium |
 | `SessionCloseCron` | `5 17 * * *` **America/Chicago** | Bascule CME : clôture les sessions `ACTIVE` d'une journée précédente (`startedAt < tradingDayStart(now)`, même fonction que `activeSessionWhere`), `endedAt` = fin de leur journée, totaux sur leurs propres trades (`autoCloseData`, `session-totals.ts`), `moodEnd` vide, hors démo (#595). Clôture ponctuelle par id : `scripts/close-sessions.ts` (même logique, dry-run sans `--apply`) |
 | `TrialEndService` | `30 0 * * *` Paris | Fins de `trialEndsAt` passées (essai d'inscription ou Premium offert, #769) : rôle Discord réaligné, `trialEndHandledAt` posé (retraité si `trialEndsAt` est repoussé ensuite), hors démo. Journal : des nombres seulement. `DiscordGuildClient.setPlanRole` lève sur HTTP en erreur (hors 404) ou panne réseau : `discordFailed` compte vraiment, `trialEndHandledAt` reste posé (resynchronisation admin). `removePlanRoles` ne lève pas, renvoie `false` ; suppression de compte → `warn` avec le discordId pour un retrait à la main (N2 #1046) |
