@@ -3,7 +3,7 @@ import { APP_URL, FEATURES } from '../config';
 import Base from './Base.astro';
 import Nav from '../components/Nav.astro';
 import Footer from '../components/Footer.astro';
-import { ORGANIZATION, ORGANIZATION_REF, SITE, breadcrumb } from '../data/schema';
+import { ORGANIZATION, ORGANIZATION_REF, SITE, breadcrumb, faqPage } from '../data/schema';
 
 export interface RelatedPost {
   slug: string;
@@ -21,9 +21,14 @@ interface Props {
   slug: string;
   /** Articles liés (calculés par `pages/blog/[slug].astro`). */
   related?: RelatedPost[];
+  /** FAQ affichée en bas de l'article et reprise telle quelle dans le FAQPage. */
+  faq?: { question: string; answer: string }[];
+  /** Sources officielles des faits affirmés dans l'article. */
+  sources?: { title: string; url: string; consulted: Date }[];
 }
 
-const { title, seoTitle, description, publishDate, updatedDate, tags = [], slug, related = [] } = Astro.props;
+const { title, seoTitle, description, publishDate, updatedDate, tags = [], slug, related = [], faq = [], sources = [] } = Astro.props;
+const frDate = (d: Date) => d.toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' });
 
 // trailingSlash: 'never' → canonical sans slash de dossier (`/blog/x/` servi comme `/blog/x`).
 const canonical = `${SITE}${Astro.url.pathname.replace(/(.)\/$/, '$1')}`;
@@ -56,6 +61,8 @@ const schema = [
     ...(tags.length > 0 && { "keywords": tags.join(', ') }),
   },
   breadcrumb(crumbs),
+  // FAQPage = la FAQ affichée en bas de l'article, mot pour mot.
+  ...(faq.length > 0 ? [faqPage(faq)] : []),
   // Cible des références `@id` (auteur, éditeur) : présente sur la page même.
   ORGANIZATION,
 ];
@@ -103,6 +110,32 @@ const schema = [
       <div class="prose">
         <slot />
       </div>
+
+      {faq.length > 0 && (
+        <section class="article-faq" aria-labelledby="faq-title">
+          <h2 id="faq-title" class="related-title">Questions fréquentes</h2>
+          {faq.map((f) => (
+            <div class="faq-item">
+              <h3 class="faq-q">{f.question}</h3>
+              <p class="faq-a">{f.answer}</p>
+            </div>
+          ))}
+        </section>
+      )}
+
+      {sources.length > 0 && (
+        <section class="article-sources" aria-labelledby="sources-title">
+          <h2 id="sources-title" class="related-title">Sources</h2>
+          <ul class="sources-list">
+            {sources.map((s) => (
+              <li>
+                <a href={s.url} rel="noopener" target="_blank">{s.title}</a>
+                <span class="source-date"> · consulté le {frDate(s.consulted)}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {related.length > 0 && (
         <aside class="article-related" aria-labelledby="related-title">
@@ -245,6 +278,57 @@ const schema = [
     color: var(--txt2);
     font-size: 0.875rem;
     font-family: var(--mono);
+  }
+
+  /* ── FAQ et sources ── */
+  .article-faq,
+  .article-sources {
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--b);
+  }
+
+  .faq-item + .faq-item {
+    margin-top: 1.25rem;
+  }
+
+  .faq-q {
+    font-family: var(--disp);
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--txt);
+    margin: 0 0 0.4rem;
+  }
+
+  .faq-a {
+    font-size: 15px;
+    line-height: 1.75;
+    color: var(--txt2);
+    margin: 0;
+  }
+
+  .sources-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  .sources-list a {
+    color: var(--blue2);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    overflow-wrap: anywhere;
+  }
+
+  .source-date {
+    color: var(--txt3);
+    font-family: var(--mono);
+    font-size: 12px;
   }
 
   /* ── Articles liés ── */

@@ -33,6 +33,8 @@
   sur `/prop-firm` (et `/accueil`, noindex). Pas de résultat enrichi Google sans note : c'est voulu,
   jamais d'`aggregateRating` ni de `Review` sans vrais avis publiés.
 - `FAQPage` seulement là où la FAQ est visible, construite par `faqPage()` depuis le tableau affiché.
+  Articles : champ `faq` du frontmatter, affiché en bas de l'article et repris dans le FAQPage
+  (`reference/astro/seo-blog.md`, « Format d'un article »).
 - `WebPage` (`webPage()`) sur `/prop-firm` et `/journal-trading-prop-firm`.
 - Articles : `Article` (image = image de partage, auteur et éditeur = l'Organization) +
   `BreadcrumbList` identique au fil d'Ariane visible (`Accueil` = `/prop-firm`, `Blog`, titre).

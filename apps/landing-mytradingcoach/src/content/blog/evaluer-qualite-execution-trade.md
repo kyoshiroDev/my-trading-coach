@@ -1,11 +1,24 @@
 ---
 title: "Évaluer la qualité d'exécution de tes trades (pas juste le résultat)"
 seoTitle: "Évaluer la qualité d'exécution de ses trades"
-description: "Un trade gagnant peut être mal exécuté, un perdant bien joué. Comment séparer le résultat de la qualité d'exécution : stop, ratio, émotion, taille."
+description: "Un trade gagnant peut être mal exécuté, un perdant bien joué. Comment séparer le résultat de la qualité d'exécution : stop, ratio, émotion, taille."
 publishDate: 2026-07-26
+updatedDate: 2026-11-16
 tags: ["exécution", "discipline", "note de trade"]
+faq:
+  - question: "Qu'est-ce que la qualité d'exécution d'un trade ?"
+    answer: "C'est la qualité de ta décision au moment où tu l'as prise, indépendamment du résultat : stop placé et respecté, risque/rendement cohérent, état émotionnel, taille habituelle."
+  - question: "Un trade perdant peut-il être un bon trade ?"
+    answer: "Oui. Si tu as suivi ton plan, posé et respecté ton stop avec une taille normale, le trade est bien exécuté même s'il perd. Le résultat d'un seul trade dépend en partie du hasard."
+  - question: "Comment évaluer un trade sans stop loss ?"
+    answer: "Avec des critères de comportement comparés à ta propre moyenne : taille de la perte par rapport à d'habitude, reprise de position juste après une perte, taille qui grossit."
+  - question: "La note d'exécution de MyTradingCoach utilise-t-elle l'IA ?"
+    answer: "Non. C'est une formule fixe appliquée à des faits (stop, ratio, émotion, taille), indépendante du P&L. Le même trade obtient toujours la même note."
 ---
 
+<p>
+<strong>Évaluer la qualité d'exécution d'un trade, c'est juger ta décision et non son résultat : stop placé et respecté, risque/rendement cohérent, état émotionnel calme, taille habituelle. Un trade perdant peut être bien exécuté, un gagnant mal joué.</strong>
+</p>
 <p>
 Un trade gagnant peut être une faute. Un trade perdant peut être parfait. Tant que tu juges tes trades sur ce qu'ils t'ont rapporté, tu apprends du bruit, pas de tes décisions.
 </p>
@@ -24,14 +37,14 @@ Le problème, c'est que le cerveau retient le P&L. Un gain valide le comportemen
 <h2>Séparer deux questions</h2>
 <p>Pour sortir de ce piège, il faut poser deux questions distinctes sur chaque trade, jamais une seule.</p>
 <p>
-La première : combien ça a rapporté ou coûté. C'est le résultat. Il dépend en partie du marché, donc en partie de la chance.
+La première : combien ça a rapporté ou coûté. C'est le résultat. Il dépend en partie du marché, donc en partie de la chance.
 </p>
 <p>
-La seconde : est-ce que la décision était bonne au moment où je l'ai prise, avec ce que je savais. C'est la qualité d'exécution. Elle ne dépend que de toi. C'est la seule des deux sur laquelle tu as prise, donc la seule qui mérite d'être notée.
+La seconde : est-ce que la décision était bonne au moment où je l'ai prise, avec ce que je savais. C'est la qualité d'exécution. Elle ne dépend que de toi. C'est la seule des deux sur laquelle tu as prise, donc la seule qui mérite d'être notée.
 </p>
 
 <h2>Ce qui fait une bonne exécution</h2>
-<p>La qualité d'un trade se lit sur des critères concrets, mesurables, indépendants du gain :</p>
+<p>La qualité d'un trade se lit sur des critères concrets, mesurables, indépendants du gain :</p>
 <ul>
 <li><strong>Le stop.</strong> Était-il placé avant l'entrée, et l'as-tu respecté. Déplacer un stop pour éviter de le toucher est la faute la plus coûteuse, même quand elle "sauve" le trade cette fois-là.</li>
 <li><strong>Le ratio risque / rendement.</strong> Combien tu risquais pour combien tu visais. Un trade qui risque trois pour gagner un est mal construit, qu'il finisse gagnant ou pas.</li>
@@ -39,15 +52,15 @@ La seconde : est-ce que la décision était bonne au moment où je l'ai prise, a
 <li><strong>La taille.</strong> Était-elle cohérente avec ton risque habituel, ou gonflée pour "récupérer". Une taille anormale est un signal, pas un détail.</li>
 </ul>
 <p>
-Aucun de ces critères ne regarde le P&L. C'est le but. Tu peux cocher les quatre et perdre. Tu peux tous les rater et gagner. Sur la durée, celui qui coche les quatre régulièrement travaille proprement ; l'autre paie tôt ou tard ses trades chanceux.
+Aucun de ces critères ne regarde le P&L. C'est le but. Tu peux cocher les quatre et perdre. Tu peux tous les rater et gagner. Sur la durée, celui qui coche les quatre régulièrement travaille proprement ; l'autre paie tôt ou tard ses trades chanceux.
 </p>
 
 <h2>Et quand il n'y a pas de stop</h2>
 <p>
-Certains traders, les scalpeurs manuels en particulier, ne posent pas de stop fixe. Beaucoup de trades importés depuis un broker n'ont d'ailleurs aucun stop enregistré. Faut-il renoncer à noter leur exécution ? Non, il faut changer de critères.
+Certains traders, les scalpeurs manuels en particulier, ne posent pas de stop fixe. Beaucoup de trades importés depuis un broker n'ont d'ailleurs aucun stop enregistré. Faut-il renoncer à noter leur exécution ? Non, il faut changer de critères.
 </p>
 <p>
-Sans stop, la qualité se lit autrement : est-ce que ta perte est restée dans ton ordre de grandeur habituel, ou trois fois plus grosse. Est-ce que tu as ré-entré dans les secondes après une perte, ou laissé passer le coup de sang. Est-ce que ta taille est restée constante, ou as-tu doublé pour te refaire. Ce sont des marqueurs de comportement, et ils se mesurent par rapport à ta propre moyenne, pas dans l'absolu.
+Sans stop, la qualité se lit autrement : est-ce que ta perte est restée dans ton ordre de grandeur habituel, ou trois fois plus grosse. Est-ce que tu as ré-entré dans les secondes après une perte, ou laissé passer le coup de sang. Est-ce que ta taille est restée constante, ou as-tu doublé pour te refaire. Ce sont des marqueurs de comportement, et ils se mesurent par rapport à ta propre moyenne, pas dans l'absolu.
 </p>
 
 <h2>Ce que ça change dans ta lecture</h2>
@@ -60,12 +73,12 @@ C'est aussi la façon la plus rapide de progresser. Le résultat te dit "trop ta
 
 <h2>Mettre un chiffre dessus</h2>
 <p>
-Dans MyTradingCoach, cette idée est devenue une note d'exécution attribuée à chaque trade, calculée à partir de ces critères. Trois points comptent pour qu'elle reste honnête. Elle est déterministe : pas d'IA qui devine, une formule sur des faits (stop, ratio, émotion, taille). Elle est indépendante du P&L : un perdant bien joué peut être noté excellent, un gagnant chanceux médiocre. Et elle trace quel barème a servi, celui avec stop ou celui du comportement, parce que les deux ne mesurent pas la même chose et ne se comparent pas.
+Dans MyTradingCoach, cette idée est devenue une note d'exécution attribuée à chaque trade, calculée à partir de ces critères. Trois points comptent pour qu'elle reste honnête. Elle est déterministe : pas d'IA qui devine, une formule sur des faits (stop, ratio, émotion, taille). Elle est indépendante du P&L : un perdant bien joué peut être noté excellent, un gagnant chanceux médiocre. Et elle trace quel barème a servi, celui avec stop ou celui du comportement, parce que les deux ne mesurent pas la même chose et ne se comparent pas.
 </p>
 <p>
 L'intérêt n'est pas la note en soi. C'est de regarder, sur un mois, si tes bonnes exécutions montent pendant que ton attention baisse, ou l'inverse. Ça, aucun win rate ne te le dira, surtout si tu ne l'as pas encore <a href="/blog/win-rate-break-even">nettoyé de ses break-even</a>.
 </p>
 
 <p>
-Si tu es en prop firm, où la discipline d'exécution pèse plus lourd que quelques trades chanceux, cette lecture devient presque le cœur du travail. J'en parle dans l'article sur le <a href="/blog/meilleur-journal-trading-prop-firm">journal en prop firm</a>. Et si tu veux voir la note sur tes propres trades, tu peux <a href="{APP_URL}/register">commencer gratuitement</a> : elle apparaît dès que tu logges ou importes tes trades.
+Si tu es en prop firm, où la discipline d'exécution pèse plus lourd que quelques trades chanceux, cette lecture devient presque le cœur du travail. J'en parle dans l'article sur le <a href="/blog/meilleur-journal-trading-prop-firm">journal en prop firm</a>. Et si tu veux voir la note sur tes propres trades, tu peux <a href="{APP_URL}/register">commencer gratuitement</a> : elle apparaît dès que tu logges ou importes tes trades.
 </p>

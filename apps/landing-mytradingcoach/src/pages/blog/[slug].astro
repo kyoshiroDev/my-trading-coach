@@ -15,7 +15,7 @@ export async function getStaticPaths() {
 }
 
 const { post, related } = Astro.props;
-const { title, seoTitle, description, publishDate, updatedDate, tags } = post.data;
+const { title, seoTitle, description, publishDate, updatedDate, tags, faq, sources } = post.data;
 // Markdown ne sait pas lire une variable : les liens vers l'app s'écrivent `{APP_URL}/…`.
 const html = (post.rendered?.html ?? '').replaceAll('{APP_URL}', APP_URL);
 ---
@@ -29,6 +29,8 @@ const html = (post.rendered?.html ?? '').replaceAll('{APP_URL}', APP_URL);
   tags={tags}
   slug={post.id}
   related={related}
+  faq={faq}
+  sources={sources}
 >
   <Fragment set:html={html} />
 </BlogPost>

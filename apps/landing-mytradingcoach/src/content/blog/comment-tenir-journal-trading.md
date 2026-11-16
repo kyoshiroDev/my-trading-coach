@@ -3,14 +3,27 @@ title: "Comment tenir un journal de trading (sans l'abandonner au bout d'une sem
 seoTitle: "Comment tenir un journal de trading (méthode simple)"
 description: "La vraie difficulté d'un journal de trading n'est pas de le commencer, c'est de le tenir. Quoi noter, à quelle fréquence, et l'erreur qui fait tout lâcher."
 publishDate: 2026-07-09
+updatedDate: 2026-11-16
 tags: ["journal de trading", "méthode", "discipline"]
+faq:
+  - question: "Combien de temps faut-il pour tenir un journal de trading ?"
+    answer: "Quelques secondes par trade si tu te limites à l'essentiel, surtout si tes trades sont importés automatiquement, plus une relecture d'environ une demi-heure par semaine."
+  - question: "Que faut-il noter au minimum dans un journal de trading ?"
+    answer: "L'actif, l'entrée, la sortie et la taille, ton émotion au moment du trade, ton setup, si ton stop était placé et respecté, et une phrase de commentaire."
+  - question: "À quelle fréquence relire son journal de trading ?"
+    answer: "À chaud juste après le trade pour l'émotion et la phrase, puis une fois par semaine à froid, en regardant les chiffres agrégés plutôt que chaque trade."
+  - question: "Pourquoi abandonne-t-on son journal de trading ?"
+    answer: "Le plus souvent parce qu'il demande trop de travail : trop de champs obligatoires, trop de captures. Mieux vaut trois champs tenus six mois que quinze tenus une semaine."
 ---
 
 <p>
-La plupart des journaux de trading meurent au bout de dix jours. J'ai vu ce schéma se répéter assez souvent pour en tirer une conviction : le problème n'est presque jamais le contenu du journal, c'est sa charge. Vingt colonnes à remplir, des captures d'écran à coller, un fichier Excel qui grossit, et un dimanche soir tu regardes ta semaine à moitié vide en te disant que c'est fichu.
+<strong>Pour tenir un journal de trading dans la durée, note cinq choses en quelques secondes après chaque trade (actif et taille, émotion, setup, stop, une phrase) et relis une fois par semaine. La régularité compte plus que l'exhaustivité.</strong>
 </p>
 <p>
-Je ne suis pas trader. J'ai construit MyTradingCoach en passant des mois à observer comment de vrais traders tiennent (ou lâchent) leur journal, et à leur demander pourquoi ils arrêtent. La réponse revenait toujours au même point : ce n'était pas trop dur à comprendre, c'était trop long à faire.
+La plupart des journaux de trading meurent au bout de dix jours. J'ai vu ce schéma se répéter assez souvent pour en tirer une conviction : le problème n'est presque jamais le contenu du journal, c'est sa charge. Vingt colonnes à remplir, des captures d'écran à coller, un fichier Excel qui grossit, et un dimanche soir tu regardes ta semaine à moitié vide en te disant que c'est fichu.
+</p>
+<p>
+Je ne suis pas trader. J'ai construit MyTradingCoach en passant des mois à observer comment de vrais traders tiennent (ou lâchent) leur journal, et à leur demander pourquoi ils arrêtent. La réponse revenait toujours au même point : ce n'était pas trop dur à comprendre, c'était trop long à faire.
 </p>
 
 <h2>Le vrai sujet, c'est de ne pas abandonner</h2>
@@ -22,10 +35,10 @@ Donc la première décision n'est pas "quoi noter". C'est "qu'est-ce que je peux
 </p>
 
 <h2>Le minimum qui compte</h2>
-<p>Pour chaque trade, cinq choses suffisent :</p>
+<p>Pour chaque trade, cinq choses suffisent :</p>
 <ul>
 <li>L'actif, l'entrée, la sortie, la taille. Le squelette. Si tu importes ton historique broker, c'est déjà rempli tout seul.</li>
-<li>Ton émotion au moment de prendre le trade. Un mot : confiant, neutre, stressé, revenge. C'est le champ le plus important et le plus négligé.</li>
+<li>Ton émotion au moment de prendre le trade. Un mot : confiant, neutre, stressé, revenge. C'est le champ le plus important et le plus négligé.</li>
 <li>Le setup. Le tien, pas une taxonomie de manuel. "Pullback H1", "cassure de range", peu importe, tant que c'est constant d'un trade à l'autre.</li>
 <li>Est-ce que ton stop était placé, et respecté. Une réponse binaire.</li>
 <li>Une phrase. Pas un paragraphe. "Entré trop tôt", "bon plan mal exécuté", "j'ai bougé mon stop". La phrase que tu te dirais à voix haute.</li>
@@ -42,13 +55,13 @@ Le piège des journaux qui meurent, c'est le champ "leçon du jour" obligatoire,
 Note ce que tu peux remplir en dix secondes après avoir fermé une position. Si un champ te fait hésiter plus longtemps, il te coûtera l'habitude un jour ou l'autre.
 </p>
 
-<h2>La fréquence : deux moments, pas un seul</h2>
+<h2>La fréquence : deux moments, pas un seul</h2>
 <p>Il y a deux temps dans un journal, et on les confond souvent.</p>
 <p>
 Le premier, c'est à chaud. Juste après le trade, tu poses l'émotion et la phrase, pendant que c'est encore vif. Dans MyTradingCoach, l'émotion se renseigne dès la pré-session (ton humeur du jour) et ne se surcharge trade par trade que quand ça change vraiment, un revenge ou une peur dans l'instant. Ça t'évite de cocher "neutre" trente fois par réflexe.
 </p>
 <p>
-Le second, c'est à froid. Une fois par semaine, tu relis. Pas trade par trade, en agrégé : combien de fois tu as tradé stressé, quels setups te réussissent, où part ton argent. C'est là que le journal cesse d'être une corvée et devient un outil. Le débrief hebdomadaire existe précisément pour ce moment.
+Le second, c'est à froid. Une fois par semaine, tu relis. Pas trade par trade, en agrégé : combien de fois tu as tradé stressé, quels setups te réussissent, où part ton argent. C'est là que le journal cesse d'être une corvée et devient un outil. Le débrief hebdomadaire existe précisément pour ce moment.
 </p>
 
 <h2>L'erreur numéro un</h2>
@@ -56,7 +69,7 @@ Le second, c'est à froid. Une fois par semaine, tu relis. Pas trade par trade, 
 Elle est toujours la même. Remplir parfaitement pendant une semaine, en soignant chaque champ, puis lâcher d'un coup. Le perfectionnisme tue le journal plus sûrement que la paresse. Un trader qui note trois champs tous les jours pendant six mois apprend beaucoup plus que celui qui documente quinze champs pendant huit jours.
 </p>
 <p>
-Si tu dois choisir entre complet et régulier, choisis régulier. Toujours. Un journal se juge sur sa continuité, pas sur sa richesse. Tu peux enrichir une habitude installée ; tu ne peux pas installer une habitude sur des données absentes.
+Si tu dois choisir entre complet et régulier, choisis régulier. Toujours. Un journal se juge sur sa continuité, pas sur sa richesse. Tu peux enrichir une habitude installée ; tu ne peux pas installer une habitude sur des données absentes.
 </p>
 
 <h2>Ce que ça te montre après un mois</h2>
@@ -69,7 +82,7 @@ Ce sont des constats que personne ne peut te donner à ta place. Ils sortent uni
 
 <h2>Par où commencer concrètement</h2>
 <p>
-Si tu débutes, commence encore plus léger que ce que je viens de décrire. Trois champs : le résultat, l'émotion, une phrase. Tiens ça deux semaines sans exception, même les jours sans trade (tu notes "pas tradé", ça compte comme une entrée). Une fois que ça tourne sans effort, tu ajoutes le setup, puis le stop. L'idée est d'empiler des couches sur une base solide, pas de tout charger le premier jour.
+Si tu débutes, commence encore plus léger que ce que je viens de décrire. Trois champs : le résultat, l'émotion, une phrase. Tiens ça deux semaines sans exception, même les jours sans trade (tu notes "pas tradé", ça compte comme une entrée). Une fois que ça tourne sans effort, tu ajoutes le setup, puis le stop. L'idée est d'empiler des couches sur une base solide, pas de tout charger le premier jour.
 </p>
 <p>
 Le guide <a href="/blog/journal-trading-debutant">journal de trading pour débutants</a> détaille cette progression si tu veux un point de départ pas à pas. Et si tu veux juste t'y mettre sans monter un fichier, tu peux <a href="{APP_URL}/register">ouvrir un compte gratuit</a> et logger ton premier trade en deux minutes. Le plus dur, ce n'est pas l'outil. C'est d'ouvrir le journal le onzième jour.

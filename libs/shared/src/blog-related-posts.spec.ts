@@ -80,6 +80,34 @@ describe('landing · SEO (#1071)', () => {
     for (const name of ['Binance', 'Bybit', 'MetaTrader', 'IBKR', 'MEXC']) expect(page, name).not.toContain(name);
   });
 
+  describe('articles du blog (phase 2 : AMF, sources, FAQ)', () => {
+    const dir = resolve(landing, 'src/content/blog');
+    const articles = readdirSync(dir).filter((f) => f.endsWith('.md')).map((f) => [f, readFileSync(resolve(dir, f), 'utf8')] as const);
+
+    it('chaque article a une date de mise à jour et une FAQ de 3 à 5 questions', () => {
+      for (const [f, md] of articles) {
+        const fm = md.split('---')[1] ?? '';
+        expect(fm, f).toMatch(/^updatedDate: \d{4}-\d{2}-\d{2}$/m);
+        const questions = fm.match(/^ {2}- question: /gm)?.length ?? 0;
+        expect(questions, f).toBeGreaterThanOrEqual(3);
+        expect(questions, f).toBeLessThanOrEqual(5);
+      }
+    });
+
+    it("aucun vocabulaire de gain ni chiffre « interne » inventé (AMF #881)", () => {
+      const interdit = /\brentab|\bprofitabl|\bedge\b|étude interne|utilisateurs actifs|chez les traders qui utilisent|(?<!ne )garanti|surperform/i;
+      for (const [f, md] of articles) expect(md, f).not.toMatch(interdit);
+    });
+
+    it('aucune plateforme autre que NinjaTrader / Tradovate, aucun style inline, aucun tiret long', () => {
+      for (const [f, md] of articles) {
+        for (const name of ['Binance', 'Bybit', 'Kraken', 'MetaTrader', 'MT4', 'IBKR', 'MEXC']) expect(md, `${f} ${name}`).not.toContain(name);
+        expect(md, f).not.toMatch(/style="/);
+        expect(md, f).not.toMatch(/[\u2013\u2014]/);
+      }
+    });
+  });
+
   it('/prop-firm est indexable et dans le sitemap ; /accueil et `/` restent dehors', () => {
     expect(read('src/pages/prop-firm.astro')).not.toMatch(/\bnoindex\b/);
     const config = read('astro.config.mjs');
