@@ -13,6 +13,12 @@ de `debriefService.getEligibleUsers(refDate)` : Premium / admin / bêta / essai,
 activé, non démo, **et au moins un trade dans la semaine de `refDate`** (SCA-B5-08). Le cron ne
 journalise que le nombre de jobs, jamais les adresses. 3 essais, échecs gardés 7 j.
 
+**Débrief manuel de milieu de semaine (C1 #1048, 2026-11-16)** : un débrief généré avant le dimanche
+23:00 de sa semaine (`weeklyCutoff`, bouton « Générer le débrief de cette semaine ») est REFAIT par le
+cron du dimanche et, à défaut, par le rattrapage du lundi, sur la semaine complète : `created=true`,
+donc l'e-mail « débrief prêt » part. Un débrief produit par le cron (≥ 23:00) n'est jamais refait :
+pas de 2e e-mail le lundi (test « anti double e-mail »).
+
 **Comptes désignés à l'IA par une clé courte** (`debrief/debrief-account-keys.ts`, 2026-10-23) :
 `compte-1`, `compte-2`… dans l'ordre des comptes, `unassigned` inchangé ; jamais l'identifiant
 interne. Les trades partent regroupés par clé et SANS leur `accountId`. L'IA renvoie la clé dans

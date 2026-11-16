@@ -113,7 +113,13 @@ export class DebriefService {
     const existing = await this.prisma.weeklyDebrief.findUnique({
       where: { userId_weekNumber_year: { userId, weekNumber, year } },
     });
-    if (existing && !opts?.force) {
+    // C1 (#1048) : un débrief généré AVANT le dimanche 23:00 de sa semaine (bouton « Générer » en
+    // milieu de semaine) ne couvre que quelques jours. Une fois ce seuil passé, le cron et le
+    // rattrapage le refont sur la semaine complète (created=true → l'e-mail « débrief prêt » part).
+    // Un débrief produit par le cron (≥ 23:00) n'est jamais refait : pas de 2e e-mail le lundi.
+    const cutoff = this.weeklyCutoff(opts?.refDate ?? new Date());
+    const partial = !!existing && existing.generatedAt < cutoff && Date.now() >= cutoff.getTime();
+    if (existing && !opts?.force && !partial) {
       return { debrief: existing, created: false };
     }
 
@@ -502,6 +508,13 @@ export class DebriefService {
         tradedAt: t.tradedAt.toISOString(),
       })),
     };
+  }
+
+  /** Dimanche 23:00 (heure du serveur, Paris en prod) de la semaine de `date` : heure du cron hebdo. */
+  weeklyCutoff(date: Date): Date {
+    const cutoff = new Date(this.getWeekInfo(date).endDate);
+    cutoff.setHours(23, 0, 0, 0);
+    return cutoff;
   }
 
   getWeekInfo(date: Date) {
