@@ -85,6 +85,7 @@ describe('landing · SEO (#1071)', () => {
     const articles = readdirSync(dir).filter((f) => f.endsWith('.md')).map((f) => [f, readFileSync(resolve(dir, f), 'utf8')] as const);
 
     it('chaque article a une date de mise à jour et une FAQ de 3 à 5 questions', () => {
+      expect(articles.length).toBeGreaterThan(0);
       for (const [f, md] of articles) {
         const fm = md.split('---')[1] ?? '';
         expect(fm, f).toMatch(/^updatedDate: \d{4}-\d{2}-\d{2}$/m);

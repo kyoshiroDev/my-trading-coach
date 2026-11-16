@@ -7,15 +7,15 @@ updatedDate: 2026-11-16
 tags: ["win rate", "break-even", "statistiques", "journal de trading"]
 faq:
   - question: "Faut-il compter les break-even dans le win rate ?"
-    answer: "Non. Un trade à l'équilibre n'est ni gagnant ni perdant : il sort du calcul. Win rate = gagnants ÷ (gagnants + perdants)."
+    answer: "Non. Un trade à l'équilibre frais compris (P&L net à zéro) n'est ni gagnant ni perdant : il sort du calcul. Win rate = gagnants ÷ (gagnants + perdants)."
   - question: "Quel écart les break-even créent-ils sur le win rate ?"
     answer: "Exemple : 5 gains, 3 pertes, 2 break-even. Compter les break-even donne 50 %, les exclure donne 62,5 %. L'écart grandit avec le nombre de trades à l'équilibre."
   - question: "Comment MyTradingCoach compte-t-il les break-even ?"
-    answer: "Les break-even sont comptés à part et exclus du win rate, dans le journal, les statistiques et le calendrier."
+    answer: "Les break-even (P&L net nul, frais déduits) sont comptés à part et exclus du win rate, dans le journal, les statistiques et le calendrier. Un trade sorti au prix d'entrée mais avec des frais compte comme une petite perte."
 ---
 
 <p>
-<strong>Les trades à l'équilibre (break-even) ne doivent pas compter dans le win rate : win rate = gagnants ÷ (gagnants + perdants). Les compter comme des pertes fait baisser ton win rate à tort.</strong>
+<strong>Les trades à l'équilibre frais compris (break-even, P&L net à zéro) ne doivent pas compter dans le win rate : win rate = gagnants ÷ (gagnants + perdants). Les compter comme des pertes fait baisser ton win rate à tort.</strong>
 </p>
 <p>
 Petite question qui fâche : quand tu clôtures un trade à l'équilibre, ni gain ni perte, tu le comptes comment dans ton win rate ? La plupart des gens ne se posent même pas la question, et leur outil décide à leur place. Souvent mal. Résultat, ton win rate affiché n'est pas ton vrai win rate.
@@ -40,12 +40,12 @@ Un break-even doit sortir du calcul, pas être compté comme une défaite. La fo
 <em>trades gagnants ÷ (gagnants + perdants)</em>
 </p>
 <p>
-Les break-even sont mis de côté. Prends un exemple concret : 5 gains, 3 pertes, 2 break-even. La formule naïve te donne 5 sur 10, soit 50 %. La formule correcte te donne 5 sur 8, soit 62,5 %. Douze points d'écart sur dix trades, à cause de deux trades que tu croyais neutres. Sur un historique de plusieurs centaines de trades, le décalage devient énorme.
+Les break-even sont mis de côté. Prends un exemple concret : 5 gains, 3 pertes, 2 break-even. La formule naïve te donne 5 sur 10, soit 50 %. La formule correcte te donne 5 sur 8, soit 62,5 %. 12,5 points d'écart sur dix trades, à cause de deux trades que tu croyais neutres. Plus tu as de break-even dans ton historique, plus l'écart grandit.
 </p>
 
 <h2>Pourquoi ça compte plus qu'il n'y paraît</h2>
 <p>
-Ce n'est pas qu'une histoire de vanité statistique. Ton win rate nourrit d'autres décisions : ton espérance de gain, ta confiance dans un setup, le moment où tu te dis "cette stratégie ne marche plus". Si le chiffre est biaisé vers le bas, tu risques d'abandonner une approche qui marche, ou de te croire moins bon que tu ne l'es. Les break-even sont d'ailleurs souvent le signe d'une bonne discipline (tu as ramené ton stop à l'entrée pour protéger la position), donc les pénaliser dans les stats, c'est l'inverse de ce qu'il faut.
+Ce n'est pas qu'une histoire de vanité statistique. Ton win rate nourrit d'autres décisions : ton espérance de gain, ta confiance dans un setup, le moment où tu te dis "cette stratégie ne marche plus". Si le chiffre est biaisé vers le bas, tu risques d'abandonner une approche qui marche, ou de te croire moins bon que tu ne l'es. Les break-even sont d'ailleurs souvent le signe d'une bonne discipline (tu as ramené ton stop à l'entrée pour protéger la position), donc les pénaliser dans les stats, c'est l'inverse de ce qu'il faut. Attention aux frais : un stop remonté exactement à l'entrée donne en général une petite perte nette, égale aux commissions. Pour qu'un trade soit un vrai break-even, c'est le P&L net qui doit être nul.
 </p>
 
 <h2>Comment vérifier le tien</h2>

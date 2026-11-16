@@ -13,7 +13,7 @@ faq:
   - question: "Pourquoi choisir un journal de trading en français ?"
     answer: "Pour ne pas avoir à traduire les menus et les notions en plus d'apprendre à trader. Avec MyTradingCoach, l'interface et le support sont en français, et les données sont hébergées en France."
   - question: "Qu'est-ce qui est payant dans MyTradingCoach ?"
-    answer: "Le Premium ajoute le coach IA personnel, le débrief de ta semaine, les analyses avancées, les alertes et l'anti-tilt en direct, et les comptes illimités. Le reste est gratuit."
+    answer: "Le Premium ajoute le coach IA personnel, le débrief de ta semaine, les analyses avancées, les alertes et l'anti-tilt en direct (compte Tradovate connecté), et les comptes illimités. Le reste est gratuit."
 ---
 
 <p>
@@ -46,7 +46,7 @@ Quand tu débutes, tu n'as pas besoin de traduire dans ta tête "drawdown", "exp
 
 <h2>Par où commencer</h2>
 <p>
-Le meilleur journal gratuit, c'est celui que tu vas réellement remplir. Donc choisis simple, rapide à alimenter, et sans mur au bout d'un mois. J'ai construit MyTradingCoach exactement dans cet esprit : le plan gratuit donne les trades illimités, le journal, l'historique, l'import, et même un compagnon de session complet. Tu ne paies que si tu veux le coach IA personnel, les analyses avancées, les alertes en direct ou plusieurs comptes.
+Le meilleur journal gratuit, c'est celui que tu vas réellement remplir. Donc choisis simple, rapide à alimenter, et sans mur au bout d'un mois. J'ai construit MyTradingCoach exactement dans cet esprit : le plan gratuit donne les trades illimités, le journal, l'historique, l'import, et même un compagnon de session complet. Tu ne paies que si tu veux le coach IA personnel, les analyses avancées, les alertes en direct (compte Tradovate connecté) ou plusieurs comptes.
 </p>
 <p>
 Aucune carte demandée pour le gratuit, hébergement en France, interface en français. Tu peux <a href="{APP_URL}/register">créer ton journal en deux minutes</a> et importer ta première session tout de suite. Si tu débutes vraiment, mon article sur <a href="/blog/journal-trading-debutant">comment tenir un journal quand on commence</a> te donnera le bon point de départ.

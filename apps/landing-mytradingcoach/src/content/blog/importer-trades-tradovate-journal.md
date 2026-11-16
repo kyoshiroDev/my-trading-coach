@@ -9,7 +9,7 @@ faq:
   - question: "Comment importer ses trades Tradovate dans un journal ?"
     answer: "Soit en connectant ton compte Tradovate en lecture seule pour que les trades arrivent tout seuls, soit en exportant le fichier Performance depuis Tradovate et en l'important dans ton journal."
   - question: "Pourquoi le P&L de l'export Tradovate ne correspond pas à mon solde ?"
-    answer: "Parce que le fichier Performance donne un P&L brut, avant commissions. Les frais sont dans un autre export, le Cash history. Il faut les rapprocher de chaque trade pour obtenir le P&L net."
+    answer: "Parce que le fichier Performance donne un P&L brut, avant commissions. Les frais sont dans un autre export, le Cash history. Il faut les rapprocher de chaque trade pour obtenir le P&L net. Un petit écart peut aussi venir des frais d'une position encore ouverte ou d'un retrait."
   - question: "Mon export Tradovate est vide, pourquoi ?"
     answer: "Souvent parce que la période choisie n'affichait aucune ligne au moment de l'export. Vérifie que la table montre bien tes trades avant de télécharger le fichier."
   - question: "L'import Tradovate est-il gratuit dans MyTradingCoach ?"
@@ -37,10 +37,10 @@ L'astuce, c'est d'exporter <strong>deux</strong> fichiers depuis Tradovate et de
 </p>
 <ul>
 <li>le fichier <strong>Performance</strong>, pour tes trades ;</li>
-<li>le fichier <strong>Cash history</strong>, qui contient chaque ligne de commission.</li>
+<li>le fichier <strong>Cash history</strong>, qui contient chaque ligne de frais (commissions, frais de bourse et de compensation).</li>
 </ul>
 <p>
-Le fichier de trades et le fichier de frais partagent une clé cachée qui permet de rattacher chaque commission au bon trade. Une fois la jonction faite, ton P&L net devient exact au centime. Pas une estimation, pas un total réparti au pif : la vraie somme que Tradovate t'a prélevée.
+Le fichier de trades et le fichier de frais contiennent assez d'informations (horodatage, contrat, identifiants) pour rattacher chaque frais au bon trade. Une fois la jonction faite, ton P&L net devient exact au centime. Pas une estimation, pas un total réparti au pif : la vraie somme que Tradovate t'a prélevée.
 </p>
 <p>
 Un piège à connaître si tu scalpes : certains ordres servent à la fois à clôturer une position et à en ouvrir une autre. Si on additionne bêtement les commissions, on compte deux fois. La bonne logique déduplique. C'est le genre de détail qu'on ne voit que quand on a mis les mains dedans avec de vrais fichiers, et c'est exactement pour ça que beaucoup d'outils te sortent un chiffre approximatif.
