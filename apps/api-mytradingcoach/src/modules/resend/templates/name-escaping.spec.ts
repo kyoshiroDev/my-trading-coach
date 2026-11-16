@@ -7,6 +7,7 @@
 import { describe, it, expect } from 'vitest';
 import * as T from './index';
 import { CAMPAIGNS } from '../campaigns/campaign-registry';
+import { freezeClock } from '../../../test/freeze-clock';
 
 const EVIL = '<img/src=x/onerror=alert(1)>';
 const d = new Date('2026-12-01T10:00:00Z');
@@ -31,6 +32,7 @@ const transactional: [string, () => { html: string }][] = [
 ];
 
 describe('nom de l’utilisateur échappé dans tous les e-mails (S1 #1063)', () => {
+  freezeClock('2026-11-16T10:00:00Z');
   it.each(transactional)('%s', (_, build) => {
     const { html } = build();
     expect(html).not.toContain('<img/src=x');
@@ -43,16 +45,17 @@ describe('nom de l’utilisateur échappé dans tous les e-mails (S1 #1063)', ()
       propFirmCount: 12, firstWeek: { trades: 3, days: 2, pnl: '+10 $' }, trial: { endsAt: d },
     });
     expect(html).not.toContain('<img/src=x');
+    expect(html).toContain('&lt;img/src=x/onerror=alert(1)&gt;');
   });
 
-  it('nom avec « & » : échappé une seule fois (jamais « &amp;amp; »)', () => {
-    const notice = CAMPAIGNS.find((c) => c.key === 'legal_notice');
-    for (const c of [notice, ...CAMPAIGNS].filter(Boolean)) {
-      const { html } = c!.build({
+  it('nom avec « & » : échappé une seule fois (« &amp; », jamais « &amp;amp; »)', () => {
+    for (const c of CAMPAIGNS) {
+      const { html } = c.build({
         userName: 'Jean&Co', appUrl: 'https://app', unsubUrl: 'https://u', seatsLeft: 1, seatsTotal: 1,
         propFirmCount: 1, firstWeek: { trades: 1, days: 1, pnl: '0' }, trial: { endsAt: d },
       });
-      expect(html).not.toContain('&amp;amp;');
+      expect(html, c.key).not.toContain('&amp;amp;');
+      expect(html, c.key).toContain('Jean&amp;Co');
     }
   });
 });

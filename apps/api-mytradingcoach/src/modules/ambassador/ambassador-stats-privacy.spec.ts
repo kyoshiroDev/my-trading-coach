@@ -5,6 +5,7 @@
  */
 import { describe, it, expect, vi } from 'vitest';
 import { AmbassadorService } from './ambassador.service';
+import { freezeClock } from '../../test/freeze-clock';
 
 function service() {
   const prisma = {
@@ -22,6 +23,7 @@ function service() {
 }
 
 describe('stats ambassadeur : filleuls masqués (S2 #1063)', () => {
+  freezeClock('2026-11-16T10:00:00Z');
   it('vue ambassadeur : pseudo masqué, ni id, ni nom, ni e-mail', async () => {
     const stats = await service().getStats('amb');
     const [f] = stats.referrals;
