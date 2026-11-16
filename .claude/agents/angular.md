@@ -26,6 +26,9 @@ Angular 22 · Signals · Standalone Components · @lucide/angular · Vitest · N
   l'attribut `class` à chaque rendu : pas de `[class.x]` sur l'icône, passer par `[class]`.
 - CSS dans `.css` uniquement — jamais inline dans `.ts`
 - `OnPush` sur les composants sans signals
+- `resource.value()` / `httpResource.value()` LÈVE quand la requête a échoué (Angular 22) : dans un
+  `computed`, lire `resourceValue(res)` (`core/utils/resource-value.ts`, `undefined` sans valeur) ;
+  toute resource affichée doit être dans `loadError` et `reload()` de la page (F1 #1047).
 
 ## Budget du bundle initial (règle du 2026-10-26)
 

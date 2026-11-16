@@ -10,12 +10,14 @@ import {
   untracked,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { finalize } from 'rxjs';
+import { finalize, Subscription } from 'rxjs';
 import { ECO_GAP_LABEL, EcoCalendarApi, EcoResultAnalysis } from '../../core/api/eco-calendar.api';
 import { translateEcoEvent } from '../../core/data/eco-event-translations';
 
 import { UserStore } from '../../core/stores/user.store';
 import { ToastService } from '../../core/services/toast.service';
+import { parisWeekMonday } from './eco-week';
+import { apiErrorMessage } from '../../core/utils/api-error';
 import { toParisDateStr, todayParis } from '@mtc/shared';
 import type { EcoEvent } from '@mtc/shared';
 import { ErrorStateComponent } from '@mtc/front-ui';
@@ -429,6 +431,9 @@ export class EcoCalendarComponent implements OnInit {
 
   private loadAnalysis(name: string, userAsked: boolean): void {
     if (this.analyses().has(name) || this.loadingAnalyses().has(name)) return; // déjà chargé ou en cours
+    // F17 (#1047) : en démo, POST analyze-result est refusé (lecture seule) ; le panneau déplié dit
+    // « indisponible », sans requête vouée au 403 ni double message.
+    if (this.userStore.user()?.isDemo === true) return;
     this.setLoading(name, true);
     this.api.analyzeResult(name)
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -481,7 +486,12 @@ export class EcoCalendarComponent implements OnInit {
     this.loadWeek(this.currentWeekStart());
   }
 
+  /** Chargement de semaine en cours : annulé par le suivant (F9 #1047). */
+  private weekSub?: Subscription;
+
   private loadWeek(monday: Date): void {
+    // Semaine précédemment demandée : sa réponse ne s'affiche plus sous le titre de la nouvelle.
+    this.weekSub?.unsubscribe();
     this.isLoading.set(true);
     this.loadError.set(false);
     const from = toParisDateStr(monday);
@@ -489,7 +499,7 @@ export class EcoCalendarComponent implements OnInit {
     friday.setDate(friday.getDate() + 4);
     const to = toParisDateStr(friday);
 
-    this.api.getEventsRange(from, to)
+    this.weekSub = this.api.getEventsRange(from, to)
       .pipe(
         takeUntilDestroyed(this.destroyRef),
         finalize(() => this.isLoading.set(false)),
@@ -515,7 +525,8 @@ export class EcoCalendarComponent implements OnInit {
 
   protected togglePin(event: EcoEvent): void {
     const key = `${event.name}:${event.currency}`;
-    const pins = new Set(this.pinnedEvents());
+    const previous = this.pinnedEvents();
+    const pins = new Set(previous);
     if (pins.has(key)) { pins.delete(key); } else { pins.add(key); }
     this.pinnedEvents.set(pins);
 
@@ -524,8 +535,12 @@ export class EcoCalendarComponent implements OnInit {
       .pipe(finalize(() => this.isSavingPins.set(false)))
       .subscribe({
         next: () => this.loadPinnedUpcoming(),
-        // AVANT : échec muet, l'épingle affichée ne correspondait plus au serveur.
-        error: () => this.toast.error('Épinglage non enregistré. Réessaie.'),
+        error: (err: unknown) => {
+          // F10 (#1047) : l'épingle reprend l'état du serveur. Message de l'API d'abord : en démo,
+          // « mode démo » est déjà couvert par l'invite (filtré par ToastService, pas de doublon).
+          this.pinnedEvents.set(previous);
+          this.toast.error(apiErrorMessage(err, 'Épinglage non enregistré. Réessaie.'));
+        },
       });
   }
 
@@ -634,16 +649,6 @@ export class EcoCalendarComponent implements OnInit {
   }
 
   private getMonday(d: Date): Date {
-    const parisStr = d.toLocaleDateString('en-US', { timeZone: 'Europe/Paris', weekday: 'short' });
-    const map: Record<string, number> = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
-    const day = map[parisStr] ?? d.getDay();
-    let diff: number;
-    if (day === 0) diff = 1;
-    else if (day === 6) diff = 2;
-    else diff = 1 - day;
-    const monday = new Date(d);
-    monday.setDate(d.getDate() + diff);
-    monday.setHours(0, 0, 0, 0);
-    return monday;
+    return parisWeekMonday(d);
   }
 }

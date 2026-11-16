@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
@@ -262,6 +263,28 @@ describe('PushService réglages et appareils', () => {
     expect(api.removeDevice).toHaveBeenCalledWith('d1', expect.anything());
     expect(sub.unsubscribe).toHaveBeenCalledOnce();
     expect(service.state()).toBe('supported');
+  });
+
+  it('F12 (#1047) : appareil déjà supprimé côté serveur (404) = retiré, et désabonné ici si c’est celui-ci', async () => {
+    const sub = fakeSub();
+    const { service, api } = setup({ sub });
+    await service.init();
+    api.removeDevice.mockRejectedValueOnce(new HttpErrorResponse({ status: 404, statusText: 'Not Found' }));
+    const readsBefore = api.settings.mock.calls.length;
+
+    expect(await service.removeDevice('d1')).toBe(true);
+    expect(sub.unsubscribe).toHaveBeenCalledOnce();
+    expect(api.settings.mock.calls.length).toBe(readsBefore + 1); // réglages relus après le retrait
+  });
+
+  it('F12 (#1047) : autre erreur (500) : échec, rien n’est désabonné', async () => {
+    const sub = fakeSub();
+    const { service, api } = setup({ sub });
+    await service.init();
+    api.removeDevice.mockRejectedValueOnce(new HttpErrorResponse({ status: 500, statusText: 'Server Error' }));
+
+    expect(await service.removeDevice('d1')).toBe(false);
+    expect(sub.unsubscribe).not.toHaveBeenCalled();
   });
 
   it('retirer un AUTRE appareil : cet appareil reste abonné', async () => {

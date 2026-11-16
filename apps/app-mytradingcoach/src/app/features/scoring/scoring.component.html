@@ -69,7 +69,7 @@
                 font-size="34"
                 fill="#e2eaf5"
               >
-                {{ globalScore() }}
+                {{ globalScore() ?? '—' }}
               </text>
               <text
                 x="80"
@@ -90,7 +90,7 @@
                 font-size="12"
                 fill="#60a5fa"
               >
-                {{ scoreLabel(globalScore()) }}
+                {{ globalScore() === null ? 'Pas encore de score' : scoreLabel(globalScore()!) }}
               </text>
             </svg>
           </div>

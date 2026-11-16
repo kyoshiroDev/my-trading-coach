@@ -246,7 +246,7 @@ describe('EcoCalendarComponent', () => {
   });
 
   describe('analyse sans clic · compte démo (#920)', () => {
-    it("démo : aucun chargement ni dépliage d'office (POST refusé en lecture seule), le clic reste possible", () => {
+    it("démo : aucun chargement ni dépliage d'office (POST refusé en lecture seule), le clic déplie sans appel (F17 #1047)", () => {
       vi.useFakeTimers({ toFake: ['Date'] });
       vi.setSystemTime(new Date('2026-06-11T16:00:00Z'));
       try {
@@ -255,7 +255,8 @@ describe('EcoCalendarComponent', () => {
         expect(api.analyzeResult).not.toHaveBeenCalled();
         expect(cmp.isOpen(nfp)).toBe(false);
         cmp.toggleAnalysis(nfp);
-        expect(api.analyzeResult).toHaveBeenCalledTimes(1);
+        expect(cmp.isOpen(nfp)).toBe(true); // panneau « indisponible »
+        expect(api.analyzeResult).not.toHaveBeenCalled();
       } finally {
         vi.useRealTimers();
       }

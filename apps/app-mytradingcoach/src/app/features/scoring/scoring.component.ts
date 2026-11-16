@@ -27,6 +27,7 @@ import type { Trade as ApiTrade } from '@mtc/shared';
 import { ErrorStateComponent } from '@mtc/front-ui';
 import { calculerStreak, decalerJour, joursOuvres } from './streak';
 import { PaywallCtaService } from '@app/core/services/paywall-cta.service';
+import { resourceValue } from '@app/core/utils/resource-value';
 
 /** Champs du trade utilisés par le calcul du score. */
 type Trade = Pick<ApiTrade, 'pnl' | 'commission' | 'riskReward' | 'emotion' | 'effectiveEmotion' | 'setupId' | 'tradedAt'>;
@@ -44,14 +45,17 @@ interface ScoreBar {
 export const RISK_UNMEASURED_HINT =
   'Non mesurée : aucun trade avec un R/R connu. Ajoute ton stop et ton objectif dans le Journal pour la calculer.';
 
-/** Score global = moyenne des seules barres mesurées (une barre « — » ne compte pas pour 0). */
-export function globalScoreOf(bars: ScoreBar[]): number {
+/**
+ * Score global = moyenne des seules barres mesurées (une barre « — » ne compte pas pour 0). Aucune
+ * barre mesurée (aucun trade) → `null` : « Pas encore de score », jamais « 0 · Critique » (F13 #1047).
+ */
+export function globalScoreOf(bars: ScoreBar[]): number | null {
   const measured = bars.filter((b): b is ScoreBar & { score: number } => b.score !== null);
-  return measured.length ? Math.round(measured.reduce((sum, b) => sum + b.score, 0) / measured.length) : 0;
+  return measured.length ? Math.round(measured.reduce((sum, b) => sum + b.score, 0) / measured.length) : null;
 }
 
 export function computeScore(trades: Trade[]): ScoreBar[] {
-  if (!trades.length) return defaultBars(0);
+  if (!trades.length) return unmeasuredBars();
 
   const closed = trades.filter((t) => t.pnl !== null);
   // Win rate via le helper unique (BE exclus du dénominateur).
@@ -126,14 +130,12 @@ export function computeScore(trades: Trade[]): ScoreBar[] {
   ];
 }
 
-function defaultBars(score: number): ScoreBar[] {
-  return [
-    { name: 'Discipline', score, color: barColor(score) },
-    { name: 'Performance', score, color: barColor(score) },
-    { name: 'Psychologie', score, color: barColor(score) },
-    { name: 'Gestion risque', score, color: barColor(score) },
-    { name: 'Consistance', score, color: barColor(score) },
-  ];
+/** Aucun trade : les cinq barres « — » (non mesurées), pas 0 (F13 #1047, règle #930). */
+function unmeasuredBars(): ScoreBar[] {
+  const hint = 'Pas encore de trade : le score se calcule dès tes premiers trades.';
+  return ['Discipline', 'Performance', 'Psychologie', 'Gestion risque', 'Consistance'].map((name) => ({
+    name, score: null, color: 'transparent', hint,
+  }));
 }
 
 function barColor(score: number): string {
@@ -203,7 +205,7 @@ export class ScoringComponent {
     this.tradesResource.isLoading(),
   );
   private readonly trades = computed(
-    () => this.tradesResource.value()?.data.data ?? [],
+    () => resourceValue(this.tradesResource)?.data.data ?? [],
   );
 
   protected readonly bars = computed(() => computeScore(this.trades()));
@@ -231,7 +233,7 @@ export class ScoringComponent {
   }
   // Pastilles (niveau 0 à 4 → classe niveau-N, couleurs --streak-N de theme.css) et série actuelle.
   protected readonly streak = computed(() =>
-    calculerStreak(this.activiteResource.value()?.data.days ?? [], this.aujourdhui, this.joursSerie),
+    calculerStreak(resourceValue(this.activiteResource)?.data.days ?? [], this.aujourdhui, this.joursSerie),
   );
 
   protected titrePastille(p: { date: string; trades: number }): string {
@@ -241,7 +243,7 @@ export class ScoringComponent {
 
   protected ringDash(): string {
     const circumference = 2 * Math.PI * 65;
-    const filled = (this.globalScore() / 100) * circumference;
+    const filled = ((this.globalScore() ?? 0) / 100) * circumference;
     return `${filled} ${circumference - filled}`;
   }
 }
