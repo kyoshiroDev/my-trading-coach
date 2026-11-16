@@ -144,7 +144,6 @@ export class AmbassadorComponent implements OnInit {
   }
 
   protected avatar(u: ReferralUser): string {
-    const base = u.name ?? u.email;
-    return base.slice(0, 2).toUpperCase();
+    return u.pseudo.slice(0, 2).toUpperCase();
   }
 }

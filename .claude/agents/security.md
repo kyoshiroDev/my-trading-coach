@@ -354,3 +354,10 @@ passe par `escapeHtml` / `greetingName` (`resend/templates/index.ts`) : jamais t
 des campagnes rend ce HTML (nom du 1er destinataire réel) dans une `<iframe [srcdoc]>` en
 `sandbox=""` (aucun script, origine opaque). Nom borné à 100 caractères (inscription, modale admin, Google).
 
+## Filleuls vus par un parrain ou un ambassadeur (S2 #1063, 2026-11-16)
+
+Un parrain ou un ambassadeur (tiers externe) ne voit de ses filleuls qu'un pseudo masqué
+(`referral/mask-pseudo.ts`, 2 lettres + étoiles) : jamais l'id, le nom ni l'e-mail. `GET /ambassador/stats`
+(vue ambassadeur) et le parrainage grand public appliquent la règle ; seule la vue admin
+(`GET /admin/ambassadors/:id/stats`, ou `?userId=` pour un ADMIN) garde le détail.
+
