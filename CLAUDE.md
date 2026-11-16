@@ -8,7 +8,8 @@
 
 ## 🎯 Vision produit
 
-**MyTradingCoach** — SaaS freemium de journal de trading intelligent pour traders particuliers (crypto, forex, actions). L'IA analyse émotions et comportements pour aider les traders à progresser.
+**MyTradingCoach** — SaaS freemium de journal de trading intelligent pour le **trader futures francophone, souvent en évaluation ou en compte financé chez une prop firm** (Tradovate / NinjaTrader), qui trade lui-même. L'IA analyse émotions et comportements pour l'aider à tenir ses règles sous pression. L'app calcule aussi le forex et la crypto, mais ce n'est pas la cible.
+➡️ **Cible, ton, interdits et offre : `.claude/contexte-com.md`** (fait foi pour tout texte visible).
 
 **Plans** — 2 paliers (PROMPT-169) : FREE (0€, trades illimités, IA mutualisée), PREMIUM (49€/mois · 490€/an, IA personnelle). 14 jours de Premium offerts à l'inscription, sans carte, puis retour au gratuit (#769) ; ensuite aucun essai Stripe (mensuel prélevé à la souscription).
 ➡️ **Source de vérité plans / prix / features / gating / coût IA : `.claude/agents/plans.md`.** Ne pas dupliquer ni redéfinir les règles de plan ici.
@@ -18,11 +19,13 @@
 ## 🏗️ Monorepo
 
 ```
-.claude/agents/     ← agents spécialisés (lire le pertinent avant de coder)
+.claude/agents/     ← agents spécialisés (règles + checklist de vérification)
+.claude/reference/  ← détail par domaine et fonctionnalités transverses (commun/)
+.claude/commands/   ← commande /tache (circuit d'un prompt)
 apps/
 ├── app-mytradingcoach/     ← Angular 22 (port 4200)
 ├── admin-mytradingcoach/   ← Angular 22 (back-office, accès ADMIN)
-├── api-mytradingcoach/     ← NestJS 11 (port 3000)
+├── api-mytradingcoach/     ← NestJS 11 (port 3000 par défaut / conteneur, 3001 en dev local)
 └── landing-mytradingcoach/ ← Astro 7 (port 4321)
 prisma/schema.prisma
 
@@ -50,31 +53,57 @@ Pour l'app **admin**, la maquette `admin-mytradingcoach.html` (racine) reste LA 
 
 ---
 
+## 🧭 Agents à suivre selon la tâche (OBLIGATOIRE)
+
+Avant de coder : lire les agents de la 2ᵉ colonne pour **chaque** ligne qui correspond au diff prévu (plusieurs lignes peuvent s'appliquer). Après : appeler **en parallèle** les vérificateurs de la 3ᵉ colonne sur le diff réel, puis **toujours en dernier le `relecteur`**, quel que soit le domaine.
+
+| Si la tâche touche… | Agents à lire avant de coder | Agents vérificateurs après |
+|---|---|---|
+| `apps/api-mytradingcoach/**` | nestjs | nestjs, security (si auth, guards, secrets, données perso), tests |
+| `prisma/schema.prisma`, `prisma/migrations/**` | prisma, nestjs | prisma, security |
+| `prisma/seed*.ts` (seed démo, e2e, admin local) | prisma, nestjs | prisma, nestjs |
+| `apps/app-mytradingcoach/**` | angular, design | angular, design, tests |
+| `apps/admin-mytradingcoach/**` | angular, design (+ `admin-mytradingcoach.html`) | angular, design |
+| `apps/landing-mytradingcoach/**` | astro, design | astro, design |
+| `libs/shared/**` (`@mtc/shared` : contrats, calculs, constantes) | nestjs, angular | nestjs, angular, tests (+ plans si prix, durée, quota ou `PLAN_BENEFITS`) |
+| `libs/front/auth/**` (`@mtc/front-auth`) | angular, security | angular, security |
+| `libs/front/ui/**` (`@mtc/front-ui`) | angular, design | angular, design |
+| prix, plans, essai, gating, quotas, offre fondateur, codes partenaires, e-mails liés aux plans | plans (+ le domaine du fichier) | plans |
+| calculs de P&L, instruments, frais, R/R, drawdown | instruments (+ domaine) | instruments, tests |
+| auth, JWT, OAuth broker, permissions, `.env`, rate limiting | security (+ domaine) | security |
+| `.github/workflows/**`, `docker-compose*.yml`, `infra/**`, `tools/load/**`, `tools/load-tests/**`, `tools/scripts/**`, déploiement | deploy | deploy |
+| textes visibles par les traders, e-mails, landing, posts | `.claude/contexte-com.md` (+ domaine) | relecteur (contenu) |
+| tests ajoutés ou corrigés (`*.spec.ts`, `*.int-spec.ts`, `apps/*-e2e/**`) | tests | tests |
+| `.claude/**`, `CLAUDE.md`, `CONTRIBUTING.md` (documentation, agents) | — | relecteur seul |
+
+- Un agent se lit en entier (règles + checklist + index) ; ses fichiers `.claude/reference/…` seulement quand l'index dit qu'ils concernent la tâche.
+- `decisions.md` fait foi sur les agents ; `contexte-com.md` fait foi sur les textes.
+
+---
+
 ## 🚦 Workflow obligatoire
 
-### Branche de départ (demander avant toute tâche de code)
-Demander d'abord : **nouvelle feature ou pas ?** (sauf si le prompt le précise déjà)
-- **Nouvelle feature** → branche depuis `dev`, livrée sur `dev`, puis `dev` → `main`. Ne passe pas par beta.
-- **Tout le reste** (bug, optimisation, perf, refactor, dette, docs, CI…) → branche depuis `dev`, livrée sur `dev`. Ne passe pas par beta.
+### Branche de départ
+- **Tout** (feature, bug, optimisation, perf, refactor, dette, docs, CI…) → branche depuis `origin/dev` à jour (worktree dédié), livrée sur `dev`, puis `dev` → `main`. `beta` n'est plus utilisée pour les fonctionnalités (décision du 2026-11-08) : inutile de demander « nouvelle feature ou pas ? ».
 - **Tout prompt passe par l'agent `relecteur`** : il valide, fait corriger et dirige la session (et les autres agents). **Aucun push tant qu'il n'a pas rendu « OK à 100 % »** (aucune correction restante, aucune question ouverte pour Greg). À 100 % → on pousse et on ouvre la PR vers `dev`, sans attendre de « OK push » de Greg. La PR `dev` → `main` n'est ouverte que sur demande explicite de Greg. **Seul Greg merge** (merge commit, jamais squash).
 
 ### Avant de coder
 0. Prompt collé par Greg → l'enregistrer tel quel dans `.claude/prompts/PROMPT-<nom-du-prompt>.md` (texte exact, compléments ajoutés à la suite) et le commiter avec le travail : le relecteur lit ce texte-là.
-1. Lire l'agent pertinent dans `.claude/agents/`
+1. Lire les agents « avant de coder » donnés par le tableau **« Agents à suivre selon la tâche »** (ci-dessous)
 2. Lire `admin-mytradingcoach.html` avant tout travail sur l'app admin
 3. Lire la maquette dédiée (`maquette-*.html`) si elle existe pour la vue concernée
 4. Toute tâche touchant prix / features gated / accès par plan → lire `.claude/agents/plans.md` (cohérence obligatoire aux 4 points : landing, front, guard, cron).
 
 ### Pendant
-4. Builder après chaque partie — zéro erreur avant de continuer
-5. Ne jamais `npm` / `npx` → toujours `pnpm` / `pnpm dlx`
+5. Builder après chaque partie — zéro erreur avant de continuer
+6. Ne jamais `npm` / `npx` → toujours `pnpm` / `pnpm dlx`
 
 ### Avant chaque arrêt pour Greg
 **Rapport d'étape 0, questions, captures, fin de tâche** : appelle l'agent `relecteur` avec le prompt de la tâche, ton rapport et tes questions. Applique ses « Corrections à faire maintenant » et ses réponses, puis n'envoie à Greg **que** sa section « Pour Greg » avec ton résumé en 5 lignes maximum. Quand Greg prend une nouvelle décision, ajoute-la en haut de `.claude/decisions.md` (dans le même commit que le travail concerné). Quand Greg donne une nouvelle règle de com ou un nouveau chiffre qui change la stratégie, ajoute-le à `.claude/contexte-com.md` dans le même commit.
 
 ### Après
-6. Commit atomique : `feat(scope):` / `fix(scope):` / `perf(scope):`
-7. Mettre à jour l'agent concerné dans `.claude/agents/` dès qu'une feature ou un correctif change le comportement/les règles : schéma & migrations → `prisma.md` · DTO/back → `nestjs.md` · calcul P&L / instruments → `instruments.md` · plans/prix/gating/coût IA → `plans.md` · front → `angular.md` · landing → `astro.md` · déploiement → `deploy.md` · design → `design.md` · sécurité → `security.md` · tests → `tests.md`. Un agent périmé est pire que pas d'agent.
+7. Commit atomique : `feat(scope):` / `fix(scope):` / `perf(scope):`
+8. Mettre à jour l'agent concerné dans `.claude/agents/` dès qu'une feature ou un correctif change le comportement/les règles : schéma & migrations → `prisma.md` · DTO/back → `nestjs.md` · calcul P&L / instruments → `instruments.md` · plans/prix/gating/coût IA → `plans.md` · front → `angular.md` · landing → `astro.md` · déploiement → `deploy.md` · design → `design.md` · sécurité → `security.md` · tests → `tests.md`. Un agent périmé est pire que pas d'agent.
 
 ---
 
