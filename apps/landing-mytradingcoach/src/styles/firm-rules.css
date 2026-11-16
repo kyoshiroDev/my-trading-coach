@@ -42,9 +42,9 @@
 .fr-sources ul { list-style: none; padding: 0; margin: 10px 0 0; display: flex; flex-direction: column; gap: 6px; }
 .fr-sources a { color: var(--blue2); font-size: 13.5px; overflow-wrap: anywhere; }
 
-.fr-firms { list-style: none; padding: 0; margin: 12px 0 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 10px; }
+.fr-sec .fr-firms { list-style: none; padding: 0; margin: 12px 0 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 10px; }
 .fr-firms a { display: block; background: var(--card); border: 1px solid var(--b); border-radius: 12px; padding: 14px 16px; text-decoration: none; }
-.fr-firms a:hover, .fr-firms a:focus-visible { border-color: var(--b2); }
+.fr-firms a:hover { border-color: var(--b2); }
 .fr-firm-name { display: block; font-family: var(--disp); font-weight: 600; color: var(--txt); font-size: 16px; }
 .fr-firm-meta { display: block; font-family: var(--mono); font-variant-numeric: tabular-nums; color: var(--txt3); font-size: 12.5px; margin-top: 4px; }
 
@@ -53,8 +53,18 @@
 .fr-faq-item p { margin: 0; }
 
 .fr-cta { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 16px; }
-.fr-btn { font-family: var(--disp); font-weight: 600; font-size: 14px; padding: 12px 20px; border-radius: 10px; background: var(--blue); color: var(--on-blue); text-decoration: none; }
+/* Texte foncé sur le bleu : 5,5:1 (le blanc n'y fait que 3,7:1, mesuré par Lighthouse). */
+.fr-btn { font-family: var(--disp); font-weight: 600; font-size: 14px; padding: 12px 20px; border-radius: 10px; background: var(--blue); color: var(--bg); text-decoration: none; }
 .fr-btn.ghost { background: transparent; border: 2px solid var(--blue); color: var(--txt); }
 .fr-link { color: var(--blue2); }
+.fr-answer .fr-num { font-family: var(--mono); font-variant-numeric: tabular-nums; font-weight: 600; }
+
+/* Focus visible (même motif que PfRules / PfPricing). */
+.fr-firms a:focus-visible,
+.fr-btn:focus-visible,
+.fr-sources summary:focus-visible,
+.fr-sources a:focus-visible,
+.fr-link:focus-visible,
+.fr-crumbs a:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
 .fr-example + p { margin-top: 14px; }
 .fr-sec p + p { margin-top: 10px; }

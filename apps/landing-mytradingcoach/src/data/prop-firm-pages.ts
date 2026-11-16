@@ -4,7 +4,7 @@
  * vérifiés seulement). Mise en forme des plans : la vue compacte déjà utilisée par la landing
  * (`buildPropFirmCatalog`), donc les mêmes libellés que le sélecteur de /prop-firm et que l'app.
  */
-import { PROP_FIRM_CATALOG_FILES, drawdownFloor, firmRulePages, type FirmRulePage } from '@mtc/shared';
+import { FIRM_PAGE_EXAMPLE_PEAK, PROP_FIRM_CATALOG_FILES, drawdownFloor, firmRulePages, type FirmRulePage } from '@mtc/shared';
 import { buildPropFirmCatalog } from './prop-firm-catalog';
 import { money, type CompactPlan } from './prop-firm-rules-view';
 
@@ -56,7 +56,8 @@ export function marginExample(plan: CompactPlan): MarginExample | null {
   if (!dd || (dd.type !== 'static' && dd.type !== 'trailing_eod' && dd.type !== 'trailing_intraday')) return null;
   const start = plan.size;
   const rule = { kind: dd.type, amount: dd.amount, startingBalance: start, locksAt: null, lockedFloor: null } as const;
-  const peakProfit = 1_000;
+  // Aucun plan publié ne fige son plancher avant ce gain (vérifié par firm-pages.spec.ts).
+  const peakProfit = FIRM_PAGE_EXAMPLE_PEAK;
   const startFloor = drawdownFloor(rule, 0).floor;
   const floorAfterPeak = drawdownFloor(rule, peakProfit).floor;
   const balance = start + 400;

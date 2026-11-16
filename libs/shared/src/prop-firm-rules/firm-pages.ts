@@ -10,6 +10,12 @@
  * de vérification valide, n'a pas de page (donc rien dans le sitemap).
  */
 export const FIRM_PAGE_ACCOUNT_SIZE = 50_000;
+/**
+ * Gain d'illustration de l'exemple de marge des pages (plus haut au-dessus du départ). Le test
+ * `firm-pages.spec.ts` vérifie qu'aucun plan publié ne fige son plancher avant ce gain : sinon
+ * l'exemple, calculé sans verrouillage, serait faux.
+ */
+export const FIRM_PAGE_EXAMPLE_PEAK = 1_000;
 
 const DRAWDOWN_KINDS = new Set(['static', 'trailing_eod', 'trailing_intraday']);
 

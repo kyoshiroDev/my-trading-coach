@@ -33,13 +33,22 @@ const ddText: Record<string, string> = {
   trailing_intraday: 'qui suit ton plus haut solde en temps réel',
   static: 'fixe',
 };
-const parts: string[] = [];
-if (firstPhase.target !== null) parts.push(`un objectif de ${m(firstPhase.target)}`);
-if (firstPhase.dd) parts.push(`une règle de drawdown de ${m(firstPhase.dd.amount)} ${ddText[firstPhase.dd.type] ?? ''}`.trim());
-parts.push(firstPhase.dll ? `une perte du jour limitée à ${m(firstPhase.dll.amount)}` : 'pas de perte du jour maximale');
-const intro = page.plans.length > 1
-  ? `${page.firmName} propose ${page.plans.length} plans en ${size}. Par exemple, « ${first.label} » demande en ${PHASE_LABEL[firstPhase.phase].toLowerCase()} ${parts.join(', ')}.`
-  : `En ${size}, « ${first.label} » de ${page.firmName} demande en ${PHASE_LABEL[firstPhase.phase].toLowerCase()} ${parts.join(', ')}.`;
+// Réponse directe en segments : les montants sont rendus en police mono (.fr-num).
+type Seg = { text: string; num?: string };
+const rules: Seg[][] = [];
+if (firstPhase.target !== null) rules.push([{ text: 'un objectif de ' }, { text: '', num: m(firstPhase.target) }]);
+if (firstPhase.dd) rules.push([{ text: 'une règle de drawdown de ' }, { text: '', num: m(firstPhase.dd.amount) }, { text: ` ${ddText[firstPhase.dd.type] ?? ''}`.trimEnd() }]);
+rules.push(firstPhase.dll ? [{ text: 'une perte du jour limitée à ' }, { text: '', num: m(firstPhase.dll.amount) }] : [{ text: 'pas de perte du jour maximale' }]);
+const phaseName = PHASE_LABEL[firstPhase.phase].toLowerCase();
+const lead = page.plans.length > 1
+  ? `${page.firmName} propose ${page.plans.length} plans en ${size}. Par exemple, « ${first.label} » prévoit, en phase ${phaseName}${NB}: `
+  : `En ${size}, « ${first.label} » de ${page.firmName} prévoit, en phase ${phaseName}${NB}: `;
+const introSegs: Seg[] = [{ text: lead }];
+rules.forEach((r, k) => {
+  if (k > 0) introSegs.push({ text: k === rules.length - 1 ? ' et ' : ', ' });
+  introSegs.push(...r);
+});
+introSegs.push({ text: '.' });
 
 const example = marginExample(first);
 const kinds = [...new Set(page.plans.flatMap((p) => p.phases.map((ph) => ph.dd?.type).filter(Boolean)))] as string[];
@@ -73,7 +82,7 @@ const schema = [webPage(canonical, title, description), breadcrumb(crumbs), ORGA
 
     <header class="fr-hero">
       <h1>Règles {page.firmName} en {size}</h1>
-      <p class="fr-answer">{intro}</p>
+      <p class="fr-answer">{introSegs.map((seg) => (seg.num ? <span class="fr-num">{seg.num}</span> : seg.text))}</p>
       <p class="fr-meta">Règles relevées le {date} sur les pages officielles de la firme.</p>
       <p class="fr-disclaimer">{FIRM_RULES_DISCLAIMER}</p>
     </header>

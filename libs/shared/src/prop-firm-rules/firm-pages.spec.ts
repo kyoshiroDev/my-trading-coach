@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { PROP_FIRM_CATALOG_FILES } from './catalog';
-import { FIRM_PAGE_ACCOUNT_SIZE, firmPlanExclusionReason, firmRulePages } from './firm-pages';
+import { FIRM_PAGE_ACCOUNT_SIZE, FIRM_PAGE_EXAMPLE_PEAK, firmPlanExclusionReason, firmRulePages } from './firm-pages';
 
 const phase = (over: Record<string, unknown> = {}) => ({
   phase: 'evaluation',
@@ -92,6 +92,18 @@ describe('catalogue réel : pages publiées', () => {
         const raw = byId.get(id) as Parameters<typeof firmPlanExclusionReason>[0];
         expect(raw.account_size, id).toBe(FIRM_PAGE_ACCOUNT_SIZE);
         expect(firmPlanExclusionReason(raw), id).toBeNull();
+      }
+    }
+  });
+  it("l'exemple de marge reste juste : aucun plan publié ne se fige avant le gain d'exemple, départ = taille", () => {
+    type Ph = { phase: string; starting_balance?: number | null; max_drawdown: { locks_at?: number | null; platform_overrides?: Record<string, { locks_at?: number | null }> | null } };
+    for (const p of pages) {
+      for (const id of p.planIds) {
+        const raw = byId.get(id) as unknown as { phases: Ph[] };
+        const ph = raw.phases.find((x) => x.phase === 'evaluation') ?? raw.phases[0];
+        expect(ph.starting_balance ?? FIRM_PAGE_ACCOUNT_SIZE, id).toBe(FIRM_PAGE_ACCOUNT_SIZE);
+        const locks = [ph.max_drawdown.locks_at, ...Object.values(ph.max_drawdown.platform_overrides ?? {}).map((o) => o.locks_at)];
+        for (const l of locks) if (l != null) expect(l, id).toBeGreaterThan(FIRM_PAGE_ACCOUNT_SIZE + FIRM_PAGE_EXAMPLE_PEAK);
       }
     }
   });
