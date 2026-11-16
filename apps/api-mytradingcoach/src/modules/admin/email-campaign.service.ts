@@ -1,4 +1,5 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { randomUUID } from 'node:crypto';
+import { BadRequestException, ConflictException, Injectable } from '@nestjs/common';
 import { createHash } from 'crypto';
 import { Prisma, Role } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -124,6 +125,9 @@ export interface CampaignMeta extends CampaignPresentation {
 // campagnes, #823). Différent de REAL_USERS_WHERE (statistiques). Verrouillé par campaign-audience.spec.ts.
 const REAL_USERS: Prisma.UserWhereInput = { isDemo: false, role: { not: Role.ADMIN } };
 
+/** Verrou d'envoi d'une campagne : couvre largement un envoi manuel (150 ms par destinataire). */
+const SEND_LOCK_TTL_S = 2 * 60 * 60;
+
 @Injectable()
 export class EmailCampaignService {
   constructor(
@@ -135,6 +139,23 @@ export class EmailCampaignService {
   ) {}
 
   private get redis() { return this.redisService.client; }
+
+  /** `SET NX EX` ; Redis indisponible : 'OK' (on n'empêche pas l'envoi, comportement d'avant). */
+  private async takeSendLock(key: string, token: string): Promise<string | null> {
+    try {
+      return await this.redis.set(key, token, 'EX', SEND_LOCK_TTL_S, 'NX');
+    } catch {
+      return 'OK';
+    }
+  }
+
+  private async releaseSendLock(key: string, token: string): Promise<void> {
+    try {
+      if ((await this.redis.get(key)) === token) await this.redis.del(key);
+    } catch {
+      /* Redis indisponible : le verrou expirera seul */
+    }
+  }
 
   private get appUrl(): string {
     return process.env['FRONTEND_URL'] ?? 'https://app.mytradingcoach.app';
@@ -360,57 +381,69 @@ export class EmailCampaignService {
         `Envoie d'abord un test à ${testEmail()} : aucun test n'a été fait sur le contenu actuel.`,
       );
     }
-    const now = new Date();
-    const recipients = await this.prisma.user.findMany({
-      where: this.segmentWhere(c, now),
-      select: { id: true, email: true, name: true, marketingConsent: true, serviceEmailsOptOutAt: true, unsubToken: true },
-    });
-
-    // Données par destinataire (bilan, places, firmes), chargées par pages de 500 comme le cron.
-    let contexts: CampaignContextMap | null = null;
-    if (c.loadContext) {
-      contexts = new Map();
-      for (let i = 0; i < recipients.length; i += SEND_PAGE_SIZE) {
-        const ids = recipients.slice(i, i + SEND_PAGE_SIZE).map((u) => u.id);
-        for (const [id, ctx] of await c.loadContext(this.loadDeps, ids, now)) contexts.set(id, ctx);
-      }
+    // Un seul envoi à la fois par type (#1063) : `canSend` lit `emailSend` avant d'écrire et l'envoi
+    // dure 150 ms par destinataire ; deux clics ou une relance envoyaient deux fois le même e-mail.
+    const lockKey = `email-campaign:send:${type}`;
+    const lockToken = randomUUID();
+    if ((await this.takeSendLock(lockKey, lockToken)) !== 'OK') {
+      throw new ConflictException('Envoi déjà en cours pour cette campagne. Réessaie quand il sera terminé.');
     }
+    try {
+      const now = new Date();
+      const recipients = await this.prisma.user.findMany({
+        where: this.segmentWhere(c, now),
+        select: { id: true, email: true, name: true, marketingConsent: true, serviceEmailsOptOutAt: true, unsubToken: true },
+      });
 
-    let success = 0;
-    let errors = 0;
-    let skipped = 0;
+      // Données par destinataire (bilan, places, firmes), chargées par pages de 500 comme le cron.
+      let contexts: CampaignContextMap | null = null;
+      if (c.loadContext) {
+        contexts = new Map();
+        for (let i = 0; i < recipients.length; i += SEND_PAGE_SIZE) {
+          const ids = recipients.slice(i, i + SEND_PAGE_SIZE).map((u) => u.id);
+          for (const [id, ctx] of await c.loadContext(this.loadDeps, ids, now)) contexts.set(id, ctx);
+        }
+      }
 
-    for (const user of recipients) {
-      const extra = contexts ? contexts.get(user.id) : { seatsLeft };
-      if (!extra || !(await this.dispatch.canSend(c, user, { force }))) {
-        skipped++; // sans objet pour cette personne (pas de trade, offre fermée…) ou non autorisé
-        continue;
+      let success = 0;
+      let errors = 0;
+      let skipped = 0;
+
+      for (const user of recipients) {
+        const extra = contexts ? contexts.get(user.id) : { seatsLeft };
+        if (!extra || !(await this.dispatch.canSend(c, user, { force }))) {
+          skipped++; // sans objet pour cette personne (pas de trade, offre fermée…) ou non autorisé
+          continue;
+        }
+        try {
+          // Annonce, information : contenu fourni par l'admin (override), construit par le dispatch une
+          // fois le jeton de désinscription créé (un compte sans jeton recevait un lien `?token=` mort, #747).
+          const override = FREE_CONTENT.has(type)
+            ? (unsubUrl: string) => this.render(type, { userName: user.name ?? '', unsubUrl }, subject, body)
+            : undefined;
+          await this.dispatch.dispatch(c, user, override, extra);
+          success++;
+          await new Promise((r) => setTimeout(r, 150));
+        } catch {
+          errors++;
+        }
       }
-      try {
-        // Annonce, information : contenu fourni par l'admin (override), construit par le dispatch une
-        // fois le jeton de désinscription créé (un compte sans jeton recevait un lien `?token=` mort, #747).
-        const override = FREE_CONTENT.has(type)
-          ? (unsubUrl: string) => this.render(type, { userName: user.name ?? '', unsubUrl }, subject, body)
-          : undefined;
-        await this.dispatch.dispatch(c, user, override, extra);
-        success++;
-        await new Promise((r) => setTimeout(r, 150));
-      } catch {
-        errors++;
-      }
+
+      await this.prisma.emailCampaignLog.create({
+        data: {
+          type,
+          subject: subject ?? null,
+          sentBy: adminId,
+          targetCount: recipients.length,
+          successCount: success,
+          errorCount: errors,
+        },
+      });
+      return { success, errors, skipped };
+    } finally {
+      // Rendu seulement s'il est encore le nôtre (un envoi plus long que le TTL ne libère pas celui d'un autre).
+      await this.releaseSendLock(lockKey, lockToken);
     }
-
-    await this.prisma.emailCampaignLog.create({
-      data: {
-        type,
-        subject: subject ?? null,
-        sentBy: adminId,
-        targetCount: recipients.length,
-        successCount: success,
-        errorCount: errors,
-      },
-    });
-    return { success, errors, skipped };
   }
 
 }
