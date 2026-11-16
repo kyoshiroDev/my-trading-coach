@@ -167,13 +167,16 @@
 
 /* ─── Stats ─── */
 .stats-row {
-  display: flex;
+  /* F16 (#1047) : une colonne égale et compressible par carte (plus de débordement à 360 px). */
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
   gap: 12px;
   margin-bottom: 20px;
 }
 
 .stat-card {
-  flex: 1;
+  min-width: 0;
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: 10px;
@@ -418,7 +421,20 @@
 
 @media (max-width: 768px) {
   .two-cols {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
+  }
+  /* F16 (#1047) : marge et montants réduits pour tenir trois cartes à 360 px. */
+  .content {
+    padding: 16px;
+  }
+  .stats-row {
+    gap: 8px;
+  }
+  .stat-card {
+    padding: 12px;
+  }
+  .stat-value {
+    font-size: 18px;
   }
 }
 
