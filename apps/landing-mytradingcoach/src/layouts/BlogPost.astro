@@ -80,7 +80,7 @@ const schema = [
       <ol>
         <li><a href="/prop-firm">Accueil</a></li>
         <li><a href="/blog">Blog</a></li>
-        <li aria-current="page">{title}</li>
+        <li aria-current="page"><span class="crumb-current">{title}</span></li>
       </ol>
     </nav>
 
@@ -191,12 +191,17 @@ const schema = [
     text-decoration: underline;
   }
 
-  /* Titre de l'article dans le fil : une ligne, coupé proprement (jamais de défilement horizontal). */
+  /* Titre de l'article dans le fil : une ligne terminée par « … » (jamais de défilement horizontal).
+     L'ellipse se pose sur le texte (span), pas sur le li en inline-flex. */
   .crumbs li[aria-current] {
+    max-width: 100%;
+  }
+
+  .crumb-current {
+    min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    max-width: 100%;
   }
 
   /* ── Article header ── */

@@ -43,6 +43,11 @@
 - Vérification locale : propriétés requises, `@id` résolus, FAQ et fil visibles dans la page (script de
   la phase 1, pas de service externe).
 
+## Mesures locales
+- Lighthouse, captures : builder avec `PUBLIC_API_URL=http://127.0.0.1:9/api`, sinon chaque chargement
+  de la preview appelle `/public/visit` en prod (incident du 2026-11-16 : préflight seulement, POST
+  bloqué par CORS, a priori rien d'enregistré).
+
 ## robots.txt et llms.txt
 - `public/robots.txt` : rien de bloqué (les CSS/JS de `/_assets/` servent au rendu), robots de
   recherche et d'IA nommés et autorisés (GPTBot, ClaudeBot, PerplexityBot, Google-Extended, bingbot…).

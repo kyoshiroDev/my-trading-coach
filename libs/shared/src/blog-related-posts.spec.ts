@@ -75,6 +75,11 @@ describe('landing · SEO (#1071)', () => {
     expect(schema).not.toMatch(/price:\s*['"`]?[1-9]/);
   });
 
+  it("/prop-firm, page indexée : aucune plateforme autre que NinjaTrader / Tradovate (contexte-com)", () => {
+    const page = read('src/pages/prop-firm.astro');
+    for (const name of ['Binance', 'Bybit', 'MetaTrader', 'IBKR', 'MEXC']) expect(page, name).not.toContain(name);
+  });
+
   it('/prop-firm est indexable et dans le sitemap ; /accueil et `/` restent dehors', () => {
     expect(read('src/pages/prop-firm.astro')).not.toMatch(/\bnoindex\b/);
     const config = read('astro.config.mjs');
