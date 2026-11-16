@@ -2,6 +2,7 @@
 // Index des pages « règles des prop firms » (SEO phase 3, #1071) : seulement les firmes publiées
 // par `firmPages()` (plans 50K publics et vérifiés). FAQ affichée ET reprise dans le FAQPage.
 import '../../styles/firm-rules.css';
+import { ACCOUNT_LIMITS } from '@mtc/shared';
 import Base from '../../layouts/Base.astro';
 import Nav from '../../components/Nav.astro';
 import Footer from '../../components/Footer.astro';
@@ -30,7 +31,7 @@ const faq = [
   },
   {
     question: `Comment suivre ma marge avant le plancher pendant la séance${NB}?`,
-    answer: `Avec MyTradingCoach, tu choisis ta firme et ton plan, tu connectes ton compte Tradovate en lecture seule, et ta marge avant le plancher est suivie en direct pendant la séance. C'est inclus dans le plan gratuit pour un compte.`,
+    answer: `Avec MyTradingCoach, tu choisis ta firme et ton plan, tu connectes ton compte Tradovate en lecture seule, et ta marge avant le plancher est suivie en direct pendant la séance. C'est inclus dans le plan gratuit, pour ${ACCOUNT_LIMITS.free} compte.`,
   },
 ];
 
@@ -97,7 +98,7 @@ const schema = [webPage(canonical, title, description), breadcrumb(crumbs), faqP
       </p>
       <div class="fr-cta">
         <a class="fr-btn" href={`${APP_URL}/demo`} data-ga-event="cta_demo" data-ga-place="regles-index">Voir la démo</a>
-        <a class="fr-btn ghost" href="/prop-firm">Découvrir MyTradingCoach</a>
+        <a class="fr-btn ghost" href={`${APP_URL}/register`} data-ga-event="cta_signup" data-ga-place="regles-index">Commencer gratuitement</a>
       </div>
     </section>
 
