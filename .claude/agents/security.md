@@ -361,3 +361,9 @@ Un parrain ou un ambassadeur (tiers externe) ne voit de ses filleuls qu'un pseud
 (vue ambassadeur) et le parrainage grand public appliquent la règle ; seule la vue admin
 (`GET /admin/ambassadors/:id/stats`, ou `?userId=` pour un ADMIN) garde le détail.
 
+## Routes qui envoient un e-mail ou un push à l'équipe (S3, S4 #1063)
+
+Toujours un `@Throttle` dédié, et une limite `ip` quand la route est publique : la clé par défaut
+(ip + empreinte de l'e-mail du corps) se contourne en changeant d'adresse. Candidature ambassadeur
+publique : 5/min + `ip` 10/h ; connectée : 3/h.
+
