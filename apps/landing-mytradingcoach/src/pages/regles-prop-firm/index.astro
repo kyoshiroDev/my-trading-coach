@@ -1,0 +1,117 @@
+---
+// Index des pages « règles des prop firms » (SEO phase 3, #1071) : seulement les firmes publiées
+// par `firmPages()` (plans 50K publics et vérifiés). FAQ affichée ET reprise dans le FAQPage.
+import '../../styles/firm-rules.css';
+import { ACCOUNT_LIMITS } from '@mtc/shared';
+import Base from '../../layouts/Base.astro';
+import Nav from '../../components/Nav.astro';
+import Footer from '../../components/Footer.astro';
+import { APP_URL } from '../../config';
+import { ORGANIZATION, SITE, WEBSITE, breadcrumb, faqPage, webPage } from '../../data/schema';
+import { FIRM_RULES_DISCLAIMER, firmPages, frDate } from '../../data/prop-firm-pages';
+
+const NB = ' ';
+const pages = firmPages();
+const canonical = `${SITE}/regles-prop-firm`;
+const title = `Règles des prop firms futures en 50K${NB}: drawdown, objectif`;
+const description = `Règles de ${pages.length} prop firms futures en 50K${NB}: taille et type de drawdown, objectif, perte du jour, consistency. Relevées sur les pages officielles et datées.`;
+
+const faq = [
+  {
+    question: `Qu'est-ce que la règle de drawdown d'une prop firm${NB}?`,
+    answer: `C'est la baisse maximale autorisée depuis ton solde de départ ou depuis ton plus haut. Elle fixe un plancher${NB}: si ton solde passe dessous, la firme considère la règle comme cassée et le compte est perdu.`,
+  },
+  {
+    question: `Quelle différence entre un drawdown EOD et un drawdown intraday${NB}?`,
+    answer: `Un drawdown EOD (fin de journée) suit ton plus haut solde de clôture. Un drawdown intraday suit ton plus haut solde en temps réel, gains latents compris. Un drawdown statique ne bouge pas.`,
+  },
+  {
+    question: `Les règles affichées ici sont-elles officielles${NB}?`,
+    answer: `Elles sont relevées sur les pages officielles de chaque firme, avec la date du relevé et les liens consultés. Les firmes changent parfois leurs règles${NB}: vérifie toujours auprès de la firme. MyTradingCoach n'est affilié à aucune prop firm.`,
+  },
+  {
+    question: `Comment suivre ma marge avant le plancher pendant la séance${NB}?`,
+    answer: `Avec MyTradingCoach, tu choisis ta firme et ton plan, tu connectes ton compte Tradovate en lecture seule, et ta marge avant le plancher est suivie en direct pendant la séance. C'est inclus dans le plan gratuit, pour ${ACCOUNT_LIMITS.free} compte.`,
+  },
+];
+
+const crumbs = [
+  { name: 'Accueil', url: `${SITE}/prop-firm` },
+  { name: 'Règles des prop firms', url: canonical },
+];
+const schema = [webPage(canonical, title, description), breadcrumb(crumbs), faqPage(faq), ORGANIZATION, WEBSITE];
+---
+
+<Base
+  title={title}
+  description={description}
+  canonical={canonical}
+  ogImage="/og/regles-prop-firm.jpg"
+  ogImageAlt="Règles des prop firms futures relevées par MyTradingCoach"
+  schema={schema}
+>
+  <Nav />
+
+  <main class="fr-page">
+    <nav class="fr-crumbs" aria-label="Fil d'Ariane">
+      <ol>
+        <li><a href="/prop-firm">Accueil</a></li>
+        <li aria-current="page">Règles des prop firms</li>
+      </ol>
+    </nav>
+
+    <header class="fr-hero">
+      <h1>Règles des prop firms futures en 50K</h1>
+      <p class="fr-answer">
+        Voici les règles de {pages.length} prop firms futures pour un compte de 50K&nbsp;: taille et
+        type de drawdown, objectif, perte du jour et consistency, plan par plan. Chaque page donne la
+        date du relevé et les pages officielles consultées.
+      </p>
+      <p class="fr-disclaimer">{FIRM_RULES_DISCLAIMER}</p>
+    </header>
+
+    <section class="fr-sec">
+      <h2>Choisis ta prop firm</h2>
+      <ul class="fr-firms">
+        {pages.map((p) => (
+          <li>
+            <a href={`/regles-prop-firm/${p.slug}`}>
+              <span class="fr-firm-name">{p.firmName} {p.accountSize / 1000}K</span>
+              <span class="fr-firm-meta">{p.plans.length} plan{p.plans.length > 1 ? 's' : ''} · relevé le {frDate(p.verifiedAt)}</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+      <p>
+        Un plan n'apparaît ici que si ses données sont complètes et vérifiées. Les plans en cours de
+        revérification ou qui ne sont plus vendus au public ne sont pas affichés.
+      </p>
+    </section>
+
+    <section class="fr-sec">
+      <h2>Ta marge avant le plancher, en direct</h2>
+      <p>
+        Connaître la règle ne suffit pas&nbsp;: ce qui compte en séance, c'est ce qu'il te reste avant
+        le plancher. Avec ton compte Tradovate connecté en lecture seule, MyTradingCoach applique les
+        règles de ton plan et suit ta marge pendant que tu trades. Le calcul est indicatif, la
+        plateforme de ta firme fait toujours foi.
+      </p>
+      <div class="fr-cta">
+        <a class="fr-btn" href={`${APP_URL}/demo`} data-ga-event="cta_demo" data-ga-place="regles-index">Voir la démo</a>
+        <a class="fr-btn ghost" href={`${APP_URL}/register`} data-ga-event="cta_signup" data-ga-place="regles-index">Commencer gratuitement</a>
+      </div>
+    </section>
+
+    <section class="fr-sec" aria-labelledby="fr-faq-title">
+      <h2 id="fr-faq-title">Questions fréquentes</h2>
+      {faq.map((f) => (
+        <div class="fr-faq-item">
+          <h3>{f.question}</h3>
+          <p>{f.answer}</p>
+        </div>
+      ))}
+    </section>
+  </main>
+
+  <Footer />
+</Base>

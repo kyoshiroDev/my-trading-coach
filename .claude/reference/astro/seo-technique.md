@@ -63,3 +63,20 @@
   `FEATURES.multiAccounts`.
 - Pied de page : Blog, Journal prop firm (si multiAccounts), Ambassadeurs (si referral).
 - Liens internes vers l'accueil : `/prop-firm` directement, jamais `/` (302).
+
+## Pages « règles des prop firms » (phase 3, 2026-11-16)
+- URLs : `/regles-prop-firm` (index) et `/regles-prop-firm/<firm.id>-50k`, générées AU BUILD.
+- Sélection : `firmRulePages()` de `@mtc/shared` (`prop-firm-rules/firm-pages.ts`) : taille 50K seulement
+  (décision de Greg du 2026-11-16), plans `public`, sans `needs_review`, drawdown chiffré à chaque phase,
+  objectif à l'évaluation. Aucun seuil d'ancienneté : la date `verified_at` est affichée. Une firme sans
+  plan publiable n'a pas de page (donc pas d'URL au sitemap).
+- Contenu : `src/data/prop-firm-pages.ts` (vue compacte `buildPropFirmCatalog`, libellés `ruleRows`),
+  exemple de marge calculé par `drawdownFloor`, sources = `help_center` + `source_urls` des plans publiés.
+  Mention obligatoire `FIRM_RULES_DISCLAIMER` (« MyTradingCoach n'est affilié à aucune prop firm… »).
+  Pas de logo de firme. FAQ visible + FAQPage sur l'index.
+- Sitemap : `lastmod` = `verified_at` de la firme (index : la plus récente), lus dans les JSON du catalogue
+  par `astro.config.mjs`.
+- Styles : `src/styles/firm-rules.css` (tokens de la landing).
+- Tests : `libs/shared/src/prop-firm-rules/firm-pages.spec.ts` (sélection, catalogue réel, invariants
+  des pages).
+- Lien vers le calculateur de marge : à ajouter avec la phase 4 (outils).
