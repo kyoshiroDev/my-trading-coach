@@ -89,7 +89,7 @@ Avant de coder : lire les agents de la 2ᵉ colonne pour **chaque** ligne qui co
 
 ### Avant de coder
 0. Prompt collé par Greg → l'enregistrer tel quel dans `.claude/prompts/PROMPT-<nom-du-prompt>.md` (texte exact, compléments ajoutés à la suite) et le commiter avec le travail : le relecteur lit ce texte-là.
-1. Lire les agents « avant de coder » donnés par le tableau **« Agents à suivre selon la tâche »** (ci-dessous)
+1. Lire les agents « avant de coder » donnés par le tableau **« Agents à suivre selon la tâche »** (ci-dessus)
 2. Lire `admin-mytradingcoach.html` avant tout travail sur l'app admin
 3. Lire la maquette dédiée (`maquette-*.html`) si elle existe pour la vue concernée
 4. Toute tâche touchant prix / features gated / accès par plan → lire `.claude/agents/plans.md` (cohérence obligatoire aux 4 points : landing, front, guard, cron).
@@ -98,8 +98,15 @@ Avant de coder : lire les agents de la 2ᵉ colonne pour **chaque** ligne qui co
 5. Builder après chaque partie — zéro erreur avant de continuer
 6. Ne jamais `npm` / `npx` → toujours `pnpm` / `pnpm dlx`
 
-### Avant chaque arrêt pour Greg
-**Rapport d'étape 0, questions, captures, fin de tâche** : appelle l'agent `relecteur` avec le prompt de la tâche, ton rapport et tes questions. Applique ses « Corrections à faire maintenant » et ses réponses, puis n'envoie à Greg **que** sa section « Pour Greg » avec ton résumé en 5 lignes maximum. Quand Greg prend une nouvelle décision, ajoute-la en haut de `.claude/decisions.md` (dans le même commit que le travail concerné). Quand Greg donne une nouvelle règle de com ou un nouveau chiffre qui change la stratégie, ajoute-le à `.claude/contexte-com.md` dans le même commit.
+### Circuit de chaque prompt (détail : `.claude/commands/tache.md`, suivi même sans `/tache`)
+1. Prompt enregistré, branche depuis `origin/dev`, issue de suivi ; domaines routés par le tableau ; agents « avant » lus.
+2. Travail, build après chaque partie.
+3. **Vérificateurs en parallèle** (3ᵉ colonne du tableau) sur le diff réel → corrections appliquées et revérifiées.
+4. **`relecteur` en dernier**, à chaque arrêt (rapport d'étape, questions, captures, fin) : prompt + résumé + verdicts des vérificateurs + questions. Il tranche les désaccords ; pas de « OK à 100 % » sans le verdict de chaque domaine touché.
+5. Boucle corrections → vérificateurs → relecteur jusqu'à « OK à 100 % » (ou un point pour Greg) → conflits vérifiés, push, PR vers `dev` (section « Vérificateurs »), CI suivie jusqu'au vert.
+6. À Greg : **uniquement** la section « Pour Greg » du relecteur + 5 lignes de résumé maximum.
+
+Quand Greg prend une nouvelle décision, ajoute-la en haut de `.claude/decisions.md` (dans le même commit que le travail concerné). Quand Greg donne une nouvelle règle de com ou un nouveau chiffre qui change la stratégie, ajoute-le à `.claude/contexte-com.md` dans le même commit.
 
 ### Après
 7. Commit atomique : `feat(scope):` / `fix(scope):` / `perf(scope):`

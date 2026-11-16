@@ -114,3 +114,13 @@ description: "Schéma Prisma et migrations : conventions, index, compte démo. �
 description: "Sécurité : authentification, JWT, guards, variables d'environnement, rate limiting. À lire avant de toucher à l'auth, aux permissions ou aux secrets."
 description: "Tests Vitest et Playwright : où les écrire, comment les lancer, pièges connus. À lire avant d'ajouter ou de corriger des tests."
 ```
+
+## Règles du relecteur complétées (étape 4)
+
+**Raison** : prompt PROMPT-orchestration-agents, étape 4 : « OK à 100 % » impossible sans le verdict revérifié de chaque
+domaine touché ; le relecteur lit le tableau de routage et les références. Lignes d'origine de `relecteur.md` :
+
+```text
+2. `CLAUDE.md`, puis les agents concernés dans `.claude/agents/` (plans, angular, nestjs, astro, prisma, design, security, tests, deploy, instruments).
+- Donner « OK à 100 % » s'il reste la moindre correction, un test non lancé ou une décision « Pour Greg » en attente ; merger ou approuver une PR, ouvrir une PR vers `main` sans demande explicite (voir « Ouverture des PR »).
+```
