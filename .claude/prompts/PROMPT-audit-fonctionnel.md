@@ -57,3 +57,21 @@ Constats du lot 3 (#1044) : audit en lecture par les agents nestjs (IA, crons), 
 Réponse de Greg aux recommandations du relecteur (texte exact) :
 
 > ok pour tout ce que recommande le relecteur
+
+## Complément lot 4 (2026-11-16)
+
+Texte exact de Greg pour lancer le lot 4, après le merge du lot 3 :
+
+> ok continue
+
+Constats du lot 4 (#1062) : audit en lecture par les agents angular (admin), nestjs (admin et démo), astro (landing) et security, trié par le relecteur. Découpage en 5 sous-lots, une sous-issue de #1062 et une PR vers dev chacun :
+- 4a (#1063), sécurité de l'API : S1 (nom non échappé dans les e-mails et l'aperçu admin), S2, S3, S4, S6/B4, verrou d'envoi de campagne, échappement de la recherche, plafond de liste, longueur du nom ;
+- 4b (#1064), effets métier de l'admin : A1, B2, A2/B3, A6, B9, démo protégée, B10 ;
+- 4c (#1065), admin, affichage et erreurs : A3 à A5, A7 à A22 sauf A6, jwt-refresh.interceptor ;
+- 4d (#1066), compte démo : B5, B6, B7 ;
+- 4e (#1067), landing : L1, L2, L3, L4, L5, L6.
+Tickets à part : #1068 (CSP admin et app), #1069 (corps validé de DELETE /users/me, lot 1).
+
+Réponse de Greg aux trois recommandations du relecteur (texte exact) :
+
+> 1 OK, 2 OK, 3 OK
