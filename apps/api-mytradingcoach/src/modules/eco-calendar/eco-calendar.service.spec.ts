@@ -175,6 +175,25 @@ describe('EcoCalendarService', () => {
       expect(mockPrisma.ecoEvent.upsert).toHaveBeenCalledTimes(2);
     });
 
+    it('C6 (#1046) : PMI flash FR, DE et zone euro (même libellé, EUR) = 3 lignes, une par pays', async () => {
+      process.env['FMP_API_KEY'] = 'test-key';
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+        status: 200,
+        ok: true,
+        json: vi.fn().mockResolvedValue(['FR', 'DE', 'EU'].map((country, i) =>
+          makeFmpEvent({ date: '2026-05-26 07:15:00', event: 'HCOB Manufacturing PMI Flash', impact: 'Medium', currency: 'EUR', country, actual: 48 + i }),
+        )),
+      }));
+      mockPrisma.ecoEvent.upsert.mockImplementation(({ create }) => Promise.resolve({ ...create, id: 'id-1' }));
+
+      await service.fetchAndStoreEvents('2026-05-26');
+
+      const keys = mockPrisma.ecoEvent.upsert.mock.calls.map((c) => c[0].where.date_name_currency_country);
+      expect(keys).toEqual(['FR', 'DE', 'EU'].map((country) => ({
+        date: '2026-05-26', name: 'HCOB Manufacturing PMI Flash', currency: 'EUR', country,
+      })));
+    });
+
     it('convertit le time UTC en heure Paris', async () => {
       process.env['FMP_API_KEY'] = 'test-key';
       // 13:30 UTC = 15:30 Paris (CEST +2)
@@ -298,6 +317,23 @@ describe('EcoCalendarService', () => {
     });
   });
 
+  describe('getPinnedUpcoming : une épingle couvre toutes les annonces de ce nom et de cette devise (C6 #1046)', () => {
+    it('3 PMI flash EUR (FR, DE, zone euro) et 1 épingle → 3 éléments, triés par heure', async () => {
+      const today = todayParis();
+      mockPrisma.user.findUnique.mockResolvedValue({ pinnedEcoEvents: ['PMI Flash:EUR'], pinnedEcoDate: today });
+      mockPrisma.ecoEvent.findMany.mockResolvedValue(
+        [['DE', '09:30'], ['FR', '09:15'], ['EU', '10:00']].map(([country, time]) => ({
+          date: today, time, name: 'PMI Flash', nameFr: null, country, currency: 'EUR', impact: 'medium',
+          actual: null, estimate: 48, previous: 47, isReleased: false, unit: null,
+        })),
+      );
+
+      const pinned = await service.getPinnedUpcoming('u1');
+
+      expect(pinned.map((e) => e.country)).toEqual(['FR', 'DE', 'EU']);
+    });
+  });
+
   // ── getEventsFromDb ───────────────────────────────────────────────────────
 
   describe('getEventsFromDb', () => {
@@ -400,6 +436,20 @@ describe('EcoCalendarService', () => {
       expect(newEvents).toHaveLength(1);
       expect(newEvents[0].name).toBe('NFP');
       expect(fetchSpy).toHaveBeenCalledWith('2026-05-26');
+    });
+
+    it('C6 (#1046) : même libellé et même devise, autre pays publié ensuite → détecté comme nouveau', async () => {
+      const pmi = (country: string, actual: number | null) => ({
+        ...dbRow(actual), name: 'PMI Flash', currency: 'EUR', country, time: '09:30',
+      });
+      mockPrisma.ecoEvent.findMany
+        .mockResolvedValueOnce([pmi('FR', 48.1), pmi('DE', null)])  // avant : France publiée
+        .mockResolvedValueOnce([pmi('FR', 48.1), pmi('DE', 47.5)]); // après : Allemagne aussi
+      vi.spyOn(service, 'fetchAndStoreEvents').mockResolvedValue([]);
+
+      const { newEvents } = await service.checkNewReleases('2026-05-26');
+
+      expect(newEvents.map((e) => e.country)).toEqual(['DE']);
     });
 
     it('ne re-détecte pas un event déjà released', async () => {

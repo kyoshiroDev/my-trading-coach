@@ -27,6 +27,7 @@ import { MoodState } from '@app/core/api/session.api';
 import { DebriefApi, DebriefObjective } from '@app/core/api/debrief.api';
 import { UserStore } from '@app/core/stores/user.store';
 import { ToastService } from '@app/core/services/toast.service';
+import { apiErrorMessage } from '@app/core/utils/api-error';
 import { PremiumLockComponent } from '@app/shared/components/premium-lock/premium-lock.component';
 import { MoneyPipe } from '@app/shared/pipes';
 import { eventKey, normalizeEventKey } from '@mtc/shared';
@@ -199,7 +200,13 @@ export class SessionMorningComponent {
     // Persistance backend (même API que eco-calendar)
     this.ecoApi.savePins(next)
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({ error: () => this.toast.error('Désépinglage non enregistré. Réessaie.') });
+      .subscribe({
+        error: (err: unknown) => {
+          // F10 (#1047) : l'annonce revient (état du serveur) ; en démo, message couvert par l'invite.
+          this.freshPins.set(rawPins);
+          this.toast.error(apiErrorMessage(err, 'Désépinglage non enregistré. Réessaie.'));
+        },
+      });
   }
 
   protected readonly dayLabel = computed(() => {

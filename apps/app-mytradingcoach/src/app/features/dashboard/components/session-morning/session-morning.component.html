@@ -220,7 +220,7 @@
 
       @if (ecoBriefing().length) {
         <ul class="eco-briefing" aria-label="Annonces à fort impact à venir">
-          @for (line of ecoBriefing(); track line.time + line.name + line.currency) {
+          @for (line of ecoBriefing(); track $index) {
             <li>{{ line.text }}</li>
           }
         </ul>
@@ -278,7 +278,7 @@
           </div>
         }
 
-        @for (event of agendaEvents(); track event.name) {
+        @for (event of agendaEvents(); track event.name + event.currency + event.country + event.time) {
           <div class="eco-event"
                [class.dim]="isOutsideSession(event.time)"
                [class.released]="event.isReleased">

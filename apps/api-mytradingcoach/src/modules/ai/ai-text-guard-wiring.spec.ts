@@ -17,7 +17,7 @@ function makeService() {
   const debriefAgent = { generate: vi.fn() };
   const prisma = {
     user: { findUnique: vi.fn().mockResolvedValue(null) },
-    trade: { findMany: vi.fn().mockResolvedValue([]) },
+    trade: { findMany: vi.fn().mockResolvedValue([]), count: vi.fn().mockResolvedValue(3) },
     tradingAccount: { count: vi.fn().mockResolvedValue(1) },
   };
   const redis = { client: { get: vi.fn().mockResolvedValue(null), incr: vi.fn().mockResolvedValue(1), expire: vi.fn(), decr: vi.fn() } };

@@ -124,7 +124,8 @@ export class DiscordLinkService {
       await this.guild.removePlanRoles(linked.discordId);
     }
     const premium = isPremiumAccess(linked);
-    await this.guild.setPlanRole(discordId, premium);
+    // La liaison est faite : un échec Discord ne la bloque pas (resynchronisation admin ensuite).
+    await this.guild.setPlanRole(discordId, premium).catch(() => undefined);
     this.logger.log(`Discord relié par code | user: ${userId}, premium: ${premium}`);
     return { status: 'linked', premium };
   }

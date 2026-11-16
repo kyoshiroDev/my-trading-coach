@@ -153,12 +153,15 @@ export class AiInsightsComponent implements AfterViewChecked {
     // sinon 403 inutile (les non-premium voient le paywall).
     if (this.userStore.isPremium()) {
       this.aiApi
-        .cooldown()
+        .cooldown<InsightsResponse>()
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe({
           next: (res) => {
             const secs = res.data?.cooldownSeconds ?? 0;
             if (secs > 0) this.cooldownUntil.set(Date.now() + secs * 1000);
+            // Dernière analyse gardée par l'API (C4 #1046) : retrouvée en revenant sur la page.
+            const kept = res.data?.insights;
+            if (kept && !this.insights()) this.insights.set(kept);
           },
         });
     }

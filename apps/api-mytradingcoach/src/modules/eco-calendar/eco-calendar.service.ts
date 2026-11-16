@@ -159,9 +159,9 @@ export class EcoCalendarService {
         };
 
         // FMP révise après coup l'heure, les prévisions ou l'impact : on resynchronise
-        // tout sauf la clé (date, nom, devise), pas seulement `actual`.
+        // tout sauf la clé (date, nom, devise, pays : C6 #1046), pas seulement `actual`.
         const row = await this.prisma.ecoEvent.upsert({
-          where: { date_name_currency: { date: parisDate, name: e.event, currency: e.currency } },
+          where: { date_name_currency_country: { date: parisDate, name: e.event, currency: e.currency, country: e.country } },
           update: {
             time: mapped.time,
             impact: mapped.impact,
@@ -374,7 +374,7 @@ export class EcoCalendarService {
     const prevSet = new Set(
       before
         .filter((e) => e.isReleased)
-        .map((e) => normalizeEventKey(`${e.name}:${e.currency}`)),
+        .map((e) => `${normalizeEventKey(`${e.name}:${e.currency}`)}:${e.country}`),
     );
 
     // Fetch + upsert (met aussi à jour nameFr en prod)
@@ -386,7 +386,7 @@ export class EcoCalendarService {
     const brandNew = after.filter(
       (e) =>
         e.isReleased &&
-        !prevSet.has(normalizeEventKey(`${e.name}:${e.currency}`)),
+        !prevSet.has(`${normalizeEventKey(`${e.name}:${e.currency}`)}:${e.country}`),
     );
 
     return { hasNew: brandNew.length > 0, newEvents: brandNew };
@@ -883,10 +883,9 @@ export class EcoCalendarService {
 
   // ── getPinnedUpcoming : les épinglés du JOUR (sélection quotidienne) ──────────
   // La sélection est remise à zéro chaque jour (reset paresseux dans getUserPins).
-  // On renvoie donc une entrée par pin correspondant exactement à un event
-  // d'aujourd'hui : plus de scan multi-jours ni de matching par type. Ainsi le
-  // compteur du bandeau et la liste « Ma sélection » partagent une source unique
-  // et restent toujours cohérents (compteur = items = taille de la sélection).
+  // On renvoie donc les events d'aujourd'hui dont la clé est épinglée : plus de scan
+  // multi-jours ni de matching par type. Le compteur du bandeau et la liste « Ma
+  // sélection » partagent une source unique (compteur = nombre d'éléments affichés).
 
   async getPinnedUpcoming(userId: string): Promise<EcoEvent[]> {
     const pins = await this.getUserPins(userId);
@@ -902,11 +901,12 @@ export class EcoCalendarService {
       }
     }
 
-    // Une entrée par pin (clé exacte name:currency), dans l'ordre des pins.
-    const byKey = new Map(events.map((e) => [`${e.name}:${e.currency}`, e]));
-    return pins
-      .map((pin) => byKey.get(pin))
-      .filter((e): e is EcoEvent => !!e)
+    // Toutes les annonces du jour dont la clé `nom:devise` est épinglée (C6 #1046 : les PMI flash
+    // France, Allemagne et zone euro partagent la clé ; l'écran les marque toutes épinglées, la
+    // sélection les montre toutes). Le compteur du bandeau = nombre d'éléments renvoyés.
+    const pinned = new Set(pins);
+    return events
+      .filter((e) => pinned.has(`${e.name}:${e.currency}`))
       .map((e) => ({ ...e, date: today }))
       .sort((a, b) => (a.time ?? '').localeCompare(b.time ?? ''));
   }

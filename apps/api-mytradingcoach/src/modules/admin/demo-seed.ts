@@ -492,7 +492,7 @@ async function seedFakeEcoEvents(prisma: PrismaClient, today: string): Promise<s
       actual: e.actual, estimate: e.estimate, previous: e.previous, isReleased: e.actual !== null, unit: e.unit,
     };
     await prisma.ecoEvent.upsert({
-      where: { date_name_currency: { date: today, name: e.name, currency: e.currency } },
+      where: { date_name_currency_country: { date: today, name: e.name, currency: e.currency, country: e.country } },
       update: data,
       create: { date: today, name: e.name, currency: e.currency, ...data },
     });
@@ -517,7 +517,7 @@ async function seedFakePastRelease(prisma: PrismaClient, userId: string, now: Da
   for (const e of events) {
     const data = { time: e.time, nameFr: e.nameFr, country: 'US', impact: e.impact, actual: e.actual, estimate: e.estimate, previous: e.previous, isReleased: true, unit: e.unit };
     await prisma.ecoEvent.upsert({
-      where: { date_name_currency: { date, name: e.name, currency: 'USD' } },
+      where: { date_name_currency_country: { date, name: e.name, currency: 'USD', country: 'US' } },
       update: data,
       create: { date, name: e.name, currency: 'USD', ...data },
     });

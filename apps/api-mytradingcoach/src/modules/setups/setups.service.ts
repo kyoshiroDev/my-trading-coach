@@ -1,8 +1,10 @@
-import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException, Optional } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateSetupDto } from './dto/create-setup.dto';
 import { UpdateSetupDto } from './dto/update-setup.dto';
 import { seedDefaultSetups } from './setups.defaults';
+import { RedisService } from '../infra/redis.service';
+import { bumpAnalyticsVersion } from '../analytics/analytics-cache';
 
 /** Titre du setup où atterrissent les trades importés sans setup choisi. */
 export const IMPORT_SETUP_TITLE = 'Sans setup';
@@ -11,7 +13,18 @@ export const IMPORT_SETUP_TITLE = 'Sans setup';
 export class SetupsService {
   private readonly logger = new Logger(SetupsService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    @Optional() private readonly redis?: RedisService,
+  ) {}
+
+  /**
+   * Titre, couleur et archivage d'un setup sont dans le cache des statistiques par setup (5 min) :
+   * sans nouvelle version, l'ancien nom restait affiché (C12 #1046).
+   */
+  private async invalidateStats(userId: string): Promise<void> {
+    if (this.redis) await bumpAnalyticsVersion(this.redis.client, userId);
+  }
 
   /** Crée les 6 setups par défaut pour un nouvel utilisateur (idempotent). */
   seedDefaults(userId: string): Promise<boolean> {
@@ -55,7 +68,7 @@ export class SetupsService {
 
   async update(userId: string, id: string, dto: UpdateSetupDto) {
     await this.assertOwned(userId, id);
-    return this.prisma.setup.update({
+    const setup = await this.prisma.setup.update({
       where: { id },
       data: {
         ...(dto.title !== undefined ? { title: dto.title.trim() } : {}),
@@ -63,16 +76,22 @@ export class SetupsService {
         ...(dto.description !== undefined ? { description: dto.description?.trim() || null } : {}),
       },
     });
+    await this.invalidateStats(userId);
+    return setup;
   }
 
   async archive(userId: string, id: string) {
     await this.assertOwned(userId, id);
-    return this.prisma.setup.update({ where: { id }, data: { archived: true } });
+    const setup = await this.prisma.setup.update({ where: { id }, data: { archived: true } });
+    await this.invalidateStats(userId);
+    return setup;
   }
 
   async restore(userId: string, id: string) {
     await this.assertOwned(userId, id);
-    return this.prisma.setup.update({ where: { id }, data: { archived: false } });
+    const setup = await this.prisma.setup.update({ where: { id }, data: { archived: false } });
+    await this.invalidateStats(userId);
+    return setup;
   }
 
   /** Suppression franche : autorisée uniquement si le setup n'a aucun trade rattaché. */

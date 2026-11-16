@@ -1,9 +1,38 @@
 ---
 name: security
-description: "Sécurité : authentification, JWT, guards, variables d'environnement, rate limiting. À lire avant de toucher à l'auth, aux permissions ou aux secrets."
+description: "À appeler pour vérifier un diff qui touche l'authentification, les JWT, l'OAuth broker ou Google, les guards, les permissions, les secrets, les variables d'environnement, le rate limiting ou des données personnelles."
+tools: Read, Grep, Glob, Bash
 ---
 
 # Agent Security — Auth, Guards, JWT, Variables d'env
+
+## Vérification d'un diff
+
+Appelé comme vérificateur : tu lis seulement le diff de ton domaine (`git diff origin/dev...HEAD -- apps/api-mytradingcoach libs/front/auth`), les règles de cet agent et, dans l'index en bas, les seules références utiles au diff. Pas les agents des autres domaines. Tu ne modifies rien. Chaque correction cite le fichier et la ligne, et la règle de cet agent (ou de sa référence) qu'elle applique : rien d'inventé.
+
+1. Mots de passe : Argon2id (jamais Bcrypt).
+2. Guards : `JwtAuthGuard` sur toute route protégée, `PremiumGuard` pour l'IA et les analytics avancés, `DemoReadOnlyGuard` laissé actif sur les mutations.
+3. Tout `@Body()` est une classe DTO ; e-mail normalisé (`emailTransform`, `emailEquals`), jokers `_` et `%` échappés.
+4. Rate limiting : limites dédiées sur l'auth, jamais de 429 sur les routes de santé, `trust proxy` à 1.
+5. Tokens broker chiffrés (AES-256-GCM), mot de passe broker jamais vu, `state` OAuth signé.
+6. Canaux temps réel authentifiés.
+7. Webhook Stripe : signature vérifiée sur le corps brut.
+8. Aucun secret en dur ni `.env` lu ; nouvelle variable documentée.
+9. Rien de la liste « Ne jamais exposer » dans une réponse ou un log.
+10. Helmet + CORS inchangés sans raison.
+11. Nouvelle donnée personnelle ou nouveau traitement : politique de confidentialité à jour (`reference/security/donnees-perso.md`).
+12. Dépendance ajoutée sans vulnérabilité connue.
+
+Réponse, toujours ce format, court :
+```
+Domaine : security
+Verdict : conforme | corrections nécessaires | bloquant
+Corrections : liste numérotée (fichier:ligne, règle, correction)
+Points pour le relecteur : ce qui sort de mon domaine ou demande un arbitrage
+```
+« bloquant » = règle non négociable violée (sécurité, argent, données, démo, prod) ; « corrections nécessaires » = écart à corriger avant push ; « conforme » = rien à corriger dans ton domaine.
+
+---
 
 ## Stack sécurité
 Argon2 · JWT (Passport) · Helmet · CORS · HTTPS only · Variables d'env Bitwarden
@@ -297,172 +326,23 @@ const user = await prisma.user.findUnique({
   seulement en 7.2.8 → montée majeure), `sharp` 0.35 (0.x, mineure cassante), `deepmerge-ts` 8
   (majeure, CLI Prisma), `extract-zip` et `image-size` 2 (aucun correctif publié).
 
-## Hash des mots de passe — argon2 OWASP (SCA-B0-03, 2026-09-30)
+---
 
-- **Toujours** `hashPassword()` de `modules/auth/password-hashing.ts`, jamais `argon2.hash()` nu :
-  paramètres `ARGON2_OPTIONS` = argon2id, `memoryCost 19456` (19 Mio), `timeCost 2`,
-  `parallelism 1`, le minimum OWASP. Les défauts de la lib (64 Mio, 4 threads) faisaient tomber
-  le conteneur API à l'OOM dès quelques inscriptions simultanées.
-- Les anciens hashs restent vérifiables ; `login` les remplace via `needsPasswordRehash()`, dans
-  la même écriture que `lastLoginAt` (pas de requête supplémentaire).
+## Détail déplacé (résumé)
 
-## Rate limiting par IP seule sur l'auth (SCA-B0-04, 2026-09-30)
+- **Durcissements SCA** (argon2 OWASP, rate limiting par IP sur l'auth, `LOAD_TEST_KEY`, cache de l'utilisateur) : `reference/security/durcissements.md`.
 
-La clé « IP + empreinte d'e-mail » (`EmailAwareThrottlerGuard`) se contourne en changeant
-d'e-mail à chaque requête. Un second throttler nommé **`ip`** compte par IP seule :
+---
 
-| Route | IP + e-mail (`default`) | IP seule (`ip`) |
-|---|---|---|
-| `POST /auth/register` | 5 / min | **10 / h** |
-| `POST /auth/login` | 10 / min | **30 / 10 min** |
-| `POST /auth/forgot-password` | 3 / min | **10 / h** |
+## Index des références (`.claude/reference/`)
 
-Le throttler `ip` est **neutre par défaut** (`IP_THROTTLER_OFF`, jamais compté, aucun aller-retour
-Redis) : il ne s'active que via `@Throttle({ ip: { ttl, limit } })`. Verrouillé par
-`register-ip-throttle.int-spec.ts` (11 e-mails distincts depuis une IP → la 11ᵉ reçoit 429).
+Contenu déplacé à l'identique le 2026-11-16. Lire un fichier seulement quand la tâche correspond à « quand le lire ».
 
-## PgBouncer : authentification SCRAM obligatoire (SCA-B7-02, 2026-10-01)
-
-Jusqu'au 2026-10-01, `auth_type = any` (défaut de l'image `pgbouncer/pgbouncer`) : tout conteneur
-du réseau `mtc_network` (dont Traefik, exposé à Internet) ouvrait une session sur les 3 bases sans
-mot de passe. Désormais `scram-sha-256` avec un `userlist.txt` (empreinte SCRAM, pas le mot de
-passe) ; sans mot de passe ou avec un mauvais → refus, vérifié. Console admin réservée à
-`mtc_user`. Procédure de régénération si le mot de passe change : `deploy.md`.
-Leçon : une image configurée par variables d'environnement peut **ignorer en silence** des
-variables mal nommées — contrôler la config effective (`SHOW CONFIG`), jamais le compose.
-
-## Clé de test de charge `LOAD_TEST_KEY` (SCA-B9, 2026-10-01)
-
-`common/throttler/load-test-tracker.ts` : avec la clé (≥ 32 car., comparée en temps constant),
-le throttler compte par `x-load-client` (borné `[a-z0-9-]{1,64}`) au lieu de l'IP. Ne lève
-**aucune** limite (elles s'appliquent par client) mais permet à qui détient la clé de répartir
-ses requêtes sur des compteurs arbitraires : **jamais en prod** (désactivée par le code si la base
-est `mytradingcoach_prod`), et retirée de `.env.beta` après chaque test.
-
-## Cache de l'utilisateur authentifié (SCA-B3-01, 2026-10-03)
-
-`JwtStrategy.validate` lit l'utilisateur via `AuthUserCacheService` (modules/infra, global) :
-Redis 60 s, clé **versionnée** `authuser:<id>:<version>` (la version `authuser:v:<id>` est
-incrémentée par `invalidate`, ce qui ferme la course lecture-avant / écriture-après). Redis en panne
-→ lecture en base.
-**Règle : après TOUTE écriture d'un champ relu par le JWT (plan, rôle, essai, `isDemo`, nom,
-e-mail, suppression), appeler `userCache.invalidate(id)`.** Déjà fait dans `users.service`
-(admin, rôle, essai, Premium, `updateMe`, suppression), `stripe-subscription.service` (sync de
-l'abonnement), `stripe-webhook.service` (résiliation, client supprimé), `ambassador.service`.
-Un oubli = jusqu'à 60 s de plan / rôle périmé (ex. Premium payé mais refusé). Les tests qui
-modifient ces champs directement en base doivent aussi invalider. Verrouillé par
-`auth-user-cache.int-spec.ts` (plan changé → effet immédiat, compte supprimé → 401 immédiat).
-
-## Route publique de l'offre fondateur (#525)
-
-`GET /api/pricing/founder` : `@Public`, 60 req/min/IP, `Cache-Control: public, max-age=60` (60 s max,
-derrière nginx et Traefik), lecture seule, **aucune donnée personnelle** (état de l'offre, places,
-prix). CORS : origines globales (`CORS_ORIGINS` doit inclure `https://www.mytradingcoach.app`).
-
-`GET /api/pricing/partner/:code` : `@Public`, **20 req/min/IP** (anti-énumération), paramètre tronqué à
-40 caractères, ne renvoie ni le libellé (nom du partenaire) ni le nombre d'utilisations.
-
-
-## Connexion Google (#618, 2026-10-18)
-
-- **Vérification** : `GoogleIdTokenVerifier` (`modules/auth/google-id-token.verifier.ts`,
-  `google-auth-library` épinglée) : signature, `aud` = `GOOGLE_CLIENT_ID` de l'environnement,
-  `iss`, expiration, puis `email_verified === true`. Message de la lib jamais relayé. Spec avec
-  une vraie clé RSA de test (seuls les certificats Google sont remplacés).
-- **Flag** : `resolveGoogleAuthConfig` (`config/google-auth-config.ts`) : actif seulement si
-  `FEATURE_GOOGLE_AUTH=true` ET `GOOGLE_CLIENT_ID` défini, sinon `POST /auth/google` → 404.
-  `GET /auth/google/config` (`@Public`, cache 5 min) donne `{ enabled, clientId }` au front : rien
-  en dur dans les `environment.*.ts`.
-- **Liaison sur un compte jamais vérifié** (aucune vérification d'e-mail à l'inscription classique) :
-  mot de passe supprimé + `tokenVersion` incrémenté (`passwordCleared: true` dans la réponse). Sans
-  ça, un tiers ayant pré-créé un compte sur l'adresse garderait son mot de passe et sa session.
-- **Refresh token** : porte `tv` (version) ; `refresh` refuse une version ≠ `User.tokenVersion`
-  (jeton sans `tv` = version 0). Incrémenter `tokenVersion` = déconnecter toutes les sessions.
-  Incrémenté aussi à la réinitialisation du mot de passe (#994). Chaque refresh porte un `jti` et
-  une famille `fid` (une par connexion, gardée à chaque refresh, #1002), suivie dans le hash Redis
-  `auth:refresh-family:<fid>` (script Lua de `auth/refresh-rotation.ts`, TTL 7 j) : un `jti` déjà
-  renouvelé et rejoué plus de 60 s après (`REFRESH_REUSE_GRACE_MS`) = copie du cookie → famille
-  entière coupée (log « Refresh déjà renouvelé puis rejoué »). Les 60 s couvrent les onglets qui
-  renouvellent en même temps (cookie partagé) et la réponse perdue rejouée. `POST /auth/logout`
-  coupe la famille du refresh présenté ; les autres appareils restent connectés. Jeton sans `fid`
-  (d'avant #1002) : famille `j:<jti>` ; liste noire `auth:revoked-refresh:<jti>` des anciennes
-  déconnexions encore lue (à retirer 7 j après la mise en prod de #1002). Redis en panne : refresh accepté (fail-open voulu).
-  Connexion : e-mail inconnu ou compte sans mot de passe → argon2 vérifie un hash factice
-  (`dummyPasswordHash`), même coût qu'un mauvais mot de passe (anti-énumération par le temps).
-- **Retour après connexion** (front, `core/auth/return-url.ts`, #994) : liste blanche — chemin
-  interne seulement (`/…`), jamais `//hote`, `\`, URL absolue ni page d'auth (login, register,
-  forgot / reset-password) : pas de redirection ouverte. Stocké en `sessionStorage`.
-- **Mot de passe oublié** : l'API répond 204 pour toute adresse ; le front n'affiche le succès que
-  sur 204 et un message sur 429 / 400 / panne (#994) — aucune réponse ne révèle un compte.
-- **Exclus** : comptes `isDemo` et `ADMIN` (403 `GOOGLE_NOT_ALLOWED`), en connexion comme en liaison.
-  Une liaison existante n'est jamais remplacée par un autre `sub` (409 `GOOGLE_ALREADY_LINKED`).
-- **Délier** (`DELETE /auth/google`) refusé sans mot de passe (400 `PASSWORD_REQUIRED`).
-- **Mot de passe oublié** d'un compte sans mot de passe : même 204, e-mail « Connexion à ton
-  compte » qui rappelle Google et sert à définir un mot de passe (`googleOnly`).
-- **Rate limit** `POST /auth/google` : 10/min (`default`, par IP faute d'e-mail dans le corps) +
-  30/10 min (`ip`). **Logs** : issue (`created | linked | login`, raison d'un refus) + id interne
-  seulement, jamais le jeton, l'e-mail ni le `sub`.
-
-## Push et autopsie déclarés dans la politique de confidentialité (2026-10-25)
-
-La page `politique-confidentialite.astro` déclare, alignée sur le code :
-- **Push des traders (#666)** : 1.g (champs de `UserPushDevice` : endpoint, `p256dh`/`auth`, `userAgent`
-  d'où le libellé est déduit, `createdAt`, `lastSuccessAt` ; 10 appareils max ; `TraderPushPreference`),
-  base légale consentement, destinataire « service de notification de l'éditeur du navigateur »
-  (liste blanche `push-endpoint.ts` : Google FCM, Mozilla, Apple, Microsoft), durées (retrait,
-  déconnexion via `PushLogout`, suppression du compte, 404/410 supprimés à l'envoi). Le cadre de
-  transfert hors UE n'est PAS cité (commentaire HTML « à vérifier avec le conseil juridique »).
-- **Autopsie (#669)** : ligne Anthropic (faits de `buildIncidentPrompt` seulement : type d'incident,
-  devise, trades de la séance, alertes, comparaisons ; ni note, ni libellé, ni firm) et durée :
-  `aiAnalysis` vit avec le `TradingAccount` (cascade) ; « Retirer cette autopsie » pose `dismissedAt`,
-  n'efface pas le texte.
-Toute évolution de ces champs, du payload push ou du prompt d'autopsie → mettre la page à jour.
-
-## Événements d'usage rattachés au compte (2026-10-25)
-
-`ProductEventDaily` porte le `userId` : ces compteurs ne sont PAS anonymes (≠ `LandingVisitDaily` et
-parcours d'inscription, sans identifiant). La politique (1.d, 2, 3) les déclare : offre Premium,
-installation de l'app, activation des notifications, plateforme seule (`android`, `ios`, `ios-other`,
-`desktop`) ou écran ; base intérêt légitime ; **13 mois, puis effacement automatique, ou à la
-suppression du compte** (purge quotidienne `RetentionCron.scheduledDailyPurge`, cascade
-`onDelete: Cascade`, `retention.int-spec.ts`). Les choix « Plus tard » / « Ne plus me proposer »
-restent dans le navigateur. Nouvel événement → liste blanche `PRODUCT_EVENTS` ET la page.
-Journal de `ProductEventsService.record` : nom de l'erreur seulement, jamais `err.message` (une
-erreur Prisma recopie la requête, donc l'identifiant du compte) ; testé avec contre-épreuve.
-
-## Identifiants Stripe des places et remises sans compte (#826, 2026-11-01)
-
-`FounderSeat` et `PartnerRedemption` gardent `stripeSubscriptionId` après la suppression du compte
-(`userId` passe à null par `onDelete: SetNull`). Règle : **effacement par le cron à 180 jours**,
-jamais à la suppression du compte ni dans le webhook (`releaseUnpaid`, `markLost` et
-`PartnerCodeService.end` retrouvent la ligne par cet identifiant tant qu'elle est ACTIVE).
-`RetentionCron.detachStripeIds`, appelé par la purge mensuelle (1er du mois, 4 h 30) : efface quand
-`userId` nul, statut ≠ ACTIVE et `endedAt` de plus de 180 jours (`STRIPE_IDS_RETENTION_DAYS`, délai des
-litiges tardifs). Jamais touchées, seulement comptées et signalées (`warn`) : ligne ACTIVE sans compte
-(webhook de fin jamais traité) et ligne terminée sans `endedAt`. Une place RELEASED d'un compte vivant
-(`releaseUnpaid` détache la place) suit la même règle. Couvert par `retention.cron.spec.ts` et
-`retention.int-spec.ts` (179/181 j, ACTIVE, sans fin, compte lié, rejeu).
-
-## Liaison Discord par code à usage unique (#741, 2026-10-25)
-
-Avant : `/verify email:` reliait au Discord de l'appelant le compte dont on tapait l'e-mail, sans
-preuve (le secret du bot prouve seulement que l'appel vient du bot). Désormais :
-- `POST /discord/link-code` (connecté, `@Throttle` 5 / h par compte, bloqué en démo) → code de 8 signes
-  Crockford (2^40), 10 min, stocké HACHÉ (sha256) dans Redis, un nouveau code efface le précédent.
-- `POST /discord/link` (`@Public`, secret du bot comparé en temps constant) : `GETDEL` du code (usage
-  unique même en concurrence) ; 5 essais / min et 20 / h par identifiant Discord (`SET NX EX` + `INCR`
-  en MULTI, le compteur naît avec son expiration) ; code inconnu, expiré ou déjà utilisé = MÊME réponse.
-  Réponse : `{ linked, plan }`, jamais de nom ni d'e-mail.
-- `GET /discord/verify` (ancien bot) ne lit plus la base et répond pareil quelle que soit l'adresse.
-- Détachements : l'ancien Discord du compte perd ses rôles ; un Discord relié à un autre compte en est
-  détaché (`updateMany` dans la même transaction, plus d'erreur d'unicité) ; rôles retirés à la
-  suppression du compte (`DiscordGuildClient`, module feuille importé par `UsersModule`).
-Verrouillé par `discord-link.service.spec.ts` (7 mutations détectées) et `discord.controller.spec.ts`
-(échoue sur l'ancien contrôleur : `verified: true` sur un e-mail tapé par un tiers).
-- Délier (`DELETE /discord/link`, connecté, `@Throttle` 5 / h par compte, bloqué en démo) : rôles
-  Membre et Premium retirés d'abord par `DiscordGuildClient.tryRemovePlanRoles`, qui, lui, rend `false`
-  au moindre échec (réseau, délai, HTTP en erreur, env absente ; 404 = membre parti = réussi). Échec →
-  503 avec message clair et liaison GARDÉE (effacée seule, elle laisserait un rôle que plus rien ne
-  retire). Puis `updateMany` conditionné à l'identifiant lu (un Discord relié entre-temps reste).
-  Journaux : nom de l'erreur ou statut HTTP seulement, jamais l'identifiant Discord, l'URL ni le code.
-- Le bouton « Copier » du Profil copie le code seul (plus la commande `/verify code:`).
+| Fichier | Quand le lire |
+|---|---|
+| `security/donnees-perso.md` | données personnelles, politique de confidentialité, Stripe sans compte |
+| `security/durcissements.md` | argon2, rate limiting IP, `LOAD_TEST_KEY`, cache de l'utilisateur |
+| `commun/connexion-google.md` | connexion / inscription Google, OAuth, liaison de compte |
+| `commun/liaison-discord.md` | liaison Discord par code |
+| `commun/offre-fondateur.md` | offre fondateur, places, codes partenaires, route publique `/pricing/founder` |
+| `commun/pgbouncer.md` | pool Postgres, PgBouncer, SCRAM |

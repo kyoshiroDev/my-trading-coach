@@ -37,11 +37,11 @@ function inMemoryEcoEvents(rows: Row[]) {
         .sort((a, b) => a.time.localeCompare(b.time))
         .map((r) => ({ ...r }))),
     upsert: vi.fn(async ({ where, update, create }: {
-      where: { date_name_currency: { date: string; name: string; currency: string } };
+      where: { date_name_currency_country: { date: string; name: string; currency: string; country: string } };
       update: Partial<Row>; create: Row;
     }) => {
-      const k = where.date_name_currency;
-      const existing = rows.find((r) => r.date === k.date && r.name === k.name && r.currency === k.currency);
+      const k = where.date_name_currency_country;
+      const existing = rows.find((r) => r.date === k.date && r.name === k.name && r.currency === k.currency && r.country === k.country);
       if (existing) { Object.assign(existing, update); return { ...existing }; }
       const row = { ...create };
       rows.push(row);

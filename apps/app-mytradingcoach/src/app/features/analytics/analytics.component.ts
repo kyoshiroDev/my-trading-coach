@@ -10,7 +10,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { httpResource } from '@angular/common/http';
-import { finalize, forkJoin } from 'rxjs';
+import { finalize, forkJoin, Subscription } from 'rxjs';
 import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
 import { PnlFormatPipe, SessionLabelPipe } from '../../shared/pipes';
 import { UserStore } from '../../core/stores/user.store';
@@ -42,6 +42,7 @@ import { isInactiveStatus } from '../../core/utils/account-status.util';
 import { rollingRange } from '../../core/utils/rolling-period.util';
 import { NO_AUTO_PERIOD, periodChosenByUser, periodOnSelection, type AutoPeriodState } from '../../core/utils/inactive-period.util';
 import { PaywallCtaService } from '@app/core/services/paywall-cta.service';
+import { resourceValue } from '@app/core/utils/resource-value';
 
 const MOCK_HEATMAP_CELLS = [
   0.75, 0.45, 0.8, 0.3, 0.65, 0.55, 0.2, 0.6, 0.7, 0.35, 0.85, 0.5, 0.4, 0.72,
@@ -104,6 +105,11 @@ export class AnalyticsComponent {
   protected readonly calMonth = signal(new Date().getMonth() + 1);
   protected readonly calData = signal<MonthlyActivitySummary | null>(null);
   protected readonly calLoading = signal(false);
+  /** Le calendrier n'a pas pu être chargé (F7 #1047) : compté dans `loadError`. */
+  private readonly calError = signal(false);
+  /** Chargements en cours des courbes et du calendrier : annulés par le suivant (F7 #1047). */
+  private equitySub?: Subscription;
+  private calSub?: Subscription;
 
   // ── Période equity curve ─────────────────────────────────────────────────
   protected readonly equityPeriod = signal<'1m' | '3m' | '6m' | 'all'>('1m');
@@ -147,7 +153,7 @@ export class AnalyticsComponent {
 
   // ── Computed dérivés des resources ──────────────────────────────────────
   protected readonly summary = computed(
-    () => this.summaryResource.value()?.data ?? null,
+    () => resourceValue(this.summaryResource)?.data ?? null,
   );
   /** Points de la période, payouts reçus insérés (déduits des courbes de solde, pas du P&L). */
   protected readonly equityCurve = computed(() =>
@@ -212,13 +218,13 @@ export class AnalyticsComponent {
     planObjectiveLine(this.selectedAccount.selected(), this.equityCurve()),
   );
   protected readonly heatmapData = computed(
-    () => this.heatmapResource.value()?.data ?? [],
+    () => resourceValue(this.heatmapResource)?.data ?? [],
   );
   protected readonly topAssets = computed(
-    () => this.topAssetsResource.value()?.data ?? [],
+    () => resourceValue(this.topAssetsResource)?.data ?? [],
   );
   protected readonly setupData = computed(
-    () => this.setupResource.value()?.data ?? [],
+    () => resourceValue(this.setupResource)?.data ?? [],
   );
 
   private readonly equityError = signal(false);
@@ -234,7 +240,7 @@ export class AnalyticsComponent {
         this.heatmapResource.error() ||
         this.topAssetsResource.error() ||
         this.setupResource.error()
-      ) || this.equityError(),
+      ) || this.equityError() || this.calError(),
   );
 
   /** Relance tous les chargements de la page (bouton « Réessayer »). */
@@ -244,6 +250,8 @@ export class AnalyticsComponent {
     this.topAssetsResource.reload();
     this.setupResource.reload();
     this.loadEquityCurve();
+    // F8 (#1047) : le calendrier aussi (compte devenu échoué ou archivé, « Réessayer »).
+    if (this.userStore.isPremium()) this.loadCalendar(this.calYear(), this.calMonth());
   }
 
   protected readonly isLoading = computed(
@@ -315,12 +323,14 @@ export class AnalyticsComponent {
 
   protected loadEquityCurve(): void {
     if (!this.userStore.isPremium()) return;
+    // Réponse en retard d'un autre compte ou d'une autre période : annulée, jamais affichée.
+    this.equitySub?.unsubscribe();
     this.equityLoading.set(true);
     this.equityError.set(false);
     const { from, to } = this.equityDateRange();
     const accountId = this.selectedAccount.accountParam();
     const includeInactive = this.selectedAccount.inactiveIncluded();
-    forkJoin([
+    this.equitySub = forkJoin([
       this.analyticsApi.getDailyEquityCurve({ from, to, accountId, includeInactive }),
       this.analyticsApi.getTradesEquityCurve({ from, to, accountId, includeInactive }),
     ])
@@ -388,15 +398,23 @@ export class AnalyticsComponent {
   }
 
   private loadCalendar(year: number, month: number): void {
+    this.calSub?.unsubscribe(); // mois ou compte précédent : sa réponse ne s'affiche plus
     this.calLoading.set(true);
-    this.analyticsApi.getMonthActivity(year, month, this.selectedAccount.accountParam(), this.selectedAccount.inactiveIncluded())
+    this.calError.set(false);
+    this.calSub = this.analyticsApi
+      .getMonthActivity(year, month, this.selectedAccount.accountParam(), this.selectedAccount.inactiveIncluded())
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (res) => {
           this.calData.set(res.data);
           this.calLoading.set(false);
         },
-        error: () => this.calLoading.set(false),
+        error: () => {
+          // Plus les données de l'ancien choix sous le nouveau titre : vide + « Réessayer ».
+          this.calData.set(null);
+          this.calError.set(true);
+          this.calLoading.set(false);
+        },
       });
   }
 

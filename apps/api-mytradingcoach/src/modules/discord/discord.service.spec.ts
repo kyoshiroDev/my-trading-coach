@@ -99,9 +99,9 @@ describe('DiscordService', () => {
     expect(mockFetch.mock.calls[0][0]).toContain('/members/discord-123/roles/');
   });
 
-  it('erreur réseau Discord : ne lève pas (une liaison ou une suppression ne doit pas échouer)', async () => {
+  it('erreur réseau Discord : removePlanRoles ne lève pas (suppression), mais signale l’échec (N2 #1046)', async () => {
     mockFetch.mockRejectedValueOnce(new Error('ECONNRESET'));
-    await expect(new DiscordGuildClient().removePlanRoles('discord-123')).resolves.toBeUndefined();
+    await expect(new DiscordGuildClient().removePlanRoles('discord-123')).resolves.toBe(false);
   });
 
   it('env vars manquantes → skip sans appel fetch', async () => {

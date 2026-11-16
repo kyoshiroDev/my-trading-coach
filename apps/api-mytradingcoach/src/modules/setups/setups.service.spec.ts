@@ -3,6 +3,13 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { SetupsService } from './setups.service';
 import { PrismaService } from '../../prisma/prisma.service';
+import { RedisService } from '../infra/redis.service';
+
+// Version du cache analytics (bumpAnalyticsVersion : MULTI INCR + EXPIRE).
+const multi = { incr: vi.fn(), expire: vi.fn(), exec: vi.fn().mockResolvedValue([]) };
+multi.incr.mockReturnValue(multi);
+multi.expire.mockReturnValue(multi);
+const mockRedis = { client: { multi: vi.fn(() => multi) } };
 
 const mockPrisma = {
   setup: {
@@ -29,9 +36,33 @@ describe('SetupsService', () => {
       providers: [
         SetupsService,
         { provide: PrismaService, useValue: mockPrisma },
+        { provide: RedisService, useValue: mockRedis },
       ],
     }).compile();
     service = module.get(SetupsService);
+    multi.incr.mockReturnValue(multi);
+    multi.expire.mockReturnValue(multi);
+  });
+
+  describe('cache des statistiques vidé (C12 #1046)', () => {
+    it.each([
+      ['update', (svc: SetupsService) => svc.update('user-1', 's1', { title: 'BO' })],
+      ['archive', (svc: SetupsService) => svc.archive('user-1', 's1')],
+      ['restore', (svc: SetupsService) => svc.restore('user-1', 's1')],
+    ])('%s : nouvelle version du cache analytics de l’utilisateur', async (_, run) => {
+      mockPrisma.setup.findFirst.mockResolvedValue({ id: 's1' });
+      mockPrisma.setup.update.mockResolvedValue({ id: 's1' });
+
+      await run(service);
+
+      expect(multi.incr).toHaveBeenCalledWith('analytics:v:user-1');
+    });
+
+    it('setup d’un autre compte : 404, rien n’est invalidé', async () => {
+      mockPrisma.setup.findFirst.mockResolvedValue(null);
+      await expect(service.update('user-1', 's1', { title: 'BO' })).rejects.toBeInstanceOf(NotFoundException);
+      expect(multi.incr).not.toHaveBeenCalled();
+    });
   });
 
   describe('seedDefaults', () => {

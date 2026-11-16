@@ -256,7 +256,7 @@
             <span class="eco-session-cnt">{{ pinnedUpcoming().length }}</span>
           </div>
           <div class="eco-selection-body">
-            @for (event of pinnedUpcoming(); track event.name + event.currency + event.date) {
+            @for (event of pinnedUpcoming(); track event.name + event.currency + event.country + event.date) {
               <div class="sel-item" [class.high]="event.impact === 'high'">
                 <span class="sel-flag">{{ getFlag(event) }}</span>
                 <div class="sel-bdy">

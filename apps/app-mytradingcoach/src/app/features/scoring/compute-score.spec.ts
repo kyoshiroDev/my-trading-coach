@@ -69,3 +69,20 @@ describe('computeScore — consistance : win rate par setup comme partout (#947)
     ])).toBe(100);
   });
 });
+
+// F13 (#1047) : sans trade, le Score affichait « 0 · Critique » et cinq barres à 0 (dont « Gestion
+// risque », contraire à la règle #930 : non mesuré = « — », jamais 0).
+describe('Score sans trade (F13 #1047)', () => {
+  it('cinq barres non mesurées (« — »), score global absent', () => {
+    const bars = computeScore([]);
+    expect(bars).toHaveLength(5);
+    expect(bars.every((b) => b.score === null)).toBe(true);
+    expect(globalScoreOf(bars)).toBeNull();
+  });
+
+  it('libellé neutre à la place de « Critique »', async () => {
+    const TEMPLATE = (await import('./scoring.component.html?raw')).default;
+    expect(TEMPLATE).toContain("globalScore() === null ? 'Pas encore de score' : scoreLabel(globalScore()!)");
+    expect(TEMPLATE).toContain("{{ globalScore() ?? '—' }}");
+  });
+});
