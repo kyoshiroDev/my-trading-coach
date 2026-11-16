@@ -1,5 +1,6 @@
 ---
 title: "Journal de Trading pour Débutants : Guide Complet 2026"
+seoTitle: "Journal de trading pour débutants : guide complet"
 description: "Tenir un journal de trading qui te fait vraiment progresser : quoi noter, comment analyser tes trades, et avancer plus vite."
 publishDate: 2026-04-01
 tags: ["journal de trading", "débutant", "guide"]

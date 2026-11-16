@@ -12,7 +12,11 @@
       "executor": "nx:run-commands",
       "cache": true,
       "inputs": [
-        "default"
+        "default",
+        "{workspaceRoot}/apps/landing-mytradingcoach/src/**/*",
+        "{workspaceRoot}/apps/landing-mytradingcoach/public/robots.txt",
+        "{workspaceRoot}/apps/landing-mytradingcoach/public/og/**/*",
+        "{workspaceRoot}/apps/landing-mytradingcoach/astro.config.mjs"
       ],
       "options": {
         "command": "vitest run --config vitest.config.mts",

@@ -1,7 +1,7 @@
 ---
 title: "Calendrier économique gratuit : t'en servir sans te faire surprendre"
 seoTitle: "Calendrier économique gratuit pour le trading"
-description: "À quoi sert un calendrier économique quand on trade (NFP, FOMC, CPI), comment l'utiliser avant la séance, et pourquoi un calendrier générique ne suffit pas."
+description: "À quoi sert un calendrier économique quand on trade (NFP, FOMC, CPI), comment l'utiliser avant la séance et pourquoi un calendrier générique ne suffit pas."
 publishDate: 2026-07-23
 tags: ["calendrier économique", "news", "gratuit"]
 ---

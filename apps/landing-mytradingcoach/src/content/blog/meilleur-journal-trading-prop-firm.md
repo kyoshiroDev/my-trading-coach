@@ -1,7 +1,7 @@
 ---
 title: "Choisir un journal de trading quand on est en prop firm"
 seoTitle: "Meilleur journal de trading pour prop firm (FTMO, Apex, Topstep)"
-description: "Les critères qui comptent vraiment pour un journal de trading en prop firm : multi-comptes, règles de drawdown, import broker. Ce qu'un journal généraliste rate."
+description: "Les critères qui comptent pour un journal de trading en prop firm : multi-comptes, règles de drawdown, import broker. Ce qu'un journal généraliste rate."
 publishDate: 2026-07-16
 tags: ["prop firm", "journal de trading", "ftmo", "apex"]
 ---

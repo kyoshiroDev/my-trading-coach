@@ -1,7 +1,20 @@
+# Accès ouvert à tous les robots, moteurs de recherche et assistants IA compris (SEO phase 1).
+# Rien n'est bloqué : les CSS, scripts et polices (/_assets/) servent au rendu des pages.
 User-agent: *
 Allow: /
 
-Disallow: /api/
-Disallow: /_assets/
+# Robots nommés, explicitement autorisés (mêmes règles que ci-dessus).
+User-agent: Googlebot
+User-agent: Google-Extended
+User-agent: bingbot
+User-agent: GPTBot
+User-agent: OAI-SearchBot
+User-agent: ChatGPT-User
+User-agent: ClaudeBot
+User-agent: Claude-SearchBot
+User-agent: Claude-User
+User-agent: PerplexityBot
+User-agent: Perplexity-User
+Allow: /
 
 Sitemap: https://www.mytradingcoach.app/sitemap-index.xml

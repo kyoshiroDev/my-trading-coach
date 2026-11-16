@@ -57,7 +57,7 @@ src/
 ├── config.ts                    ← APP_URL, API_URL, FEATURES (flags de publication)
 ├── data/
 │   ├── faq.ts                   ← FAQ de la home : texte affiché ET JSON-LD FAQPage
-│   └── schema.ts                ← JSON-LD (home : SoftwareApplication + FAQPage ; autres : Organization + WebSite)
+│   └── schema.ts                ← JSON-LD (/prop-firm : SoftwareApplication + FAQPage ; autres : Organization + WebSite ; règles : reference/astro/seo-technique.md)
 ├── content/blog/<slug>.md       ← UN fichier par article (le slug = nom du fichier)
 ├── content.config.ts            ← schéma du frontmatter blog
 ├── pages/
@@ -179,4 +179,5 @@ Contenu déplacé à l'identique le 2026-11-16. Lire un fichier seulement quand 
 | `astro/prop-firm.md` | page `/prop-firm`, redirection de l'accueil |
 | `astro/regles-contenu.md` | tout contenu de la landing (prix, liens, JSON-LD, sections de la home, tarifs) |
 | `astro/seo-blog.md` | nouvel article de blog |
+| `astro/seo-technique.md` | titres, meta, Open Graph, JSON-LD, sitemap, robots.txt, llms.txt, maillage, images de partage |
 | `commun/essai-premium.md` | essai d'inscription 14 j, essai Stripe 30 j, fin d'essai, libellés d'essai |

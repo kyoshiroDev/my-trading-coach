@@ -1,9 +1,9 @@
 ---
 // /prop-firm : landing épurée pour les traders futures en prop firm (test publicitaire, oct. 2026).
 // Maquettes : maquettes/maquette-landing-prop-firm-{mobile,desktop}.html (gitignorées, locales).
-// Page à part : noindex, hors sitemap et hors navigation, seuls ceux qui ont le lien (pub) y
-// arrivent. Rien d'autre n'en dépend : la supprimer = ce fichier + components/prop-firm-page/ +
-// la ligne du filtre sitemap (astro.config.mjs). Même layout que la home : script d'acquisition
+// Page d'entrée du site depuis le 2026-11-08 (`/` y redirige en 302) et INDEXABLE depuis le
+// 2026-11-16 (SEO phase 1, option a de Greg) : canonical vers elle-même, dans le sitemap,
+// SoftwareApplication + FAQPage de la FAQ affichée. Même layout que la home : script d'acquisition
 // (UTM, /public/visit, cta_click), bandeau cookies, mode interne. Pas d'emoji hors footer.
 import { PREMIUM_SIGNUP_TRIAL_DAYS, PROP_FIRM_CATALOG_FILES } from '@mtc/shared';
 import { APP_URL } from '../config';
@@ -15,7 +15,7 @@ import DemoVideo from '../components/DemoVideo.astro';
 import PfHeader from '../components/prop-firm-page/PfHeader.astro';
 import PfRules from '../components/prop-firm-page/PfRules.astro';
 import PfPricing from '../components/prop-firm-page/PfPricing.astro';
-import { ORGANIZATION } from '../data/schema';
+import { ORGANIZATION, SOFTWARE_APPLICATION, WEBSITE, faqPage, webPage } from '../data/schema';
 import { TEMOIGNAGES } from '../data/temoignages';
 import { founderOpenAtBuild } from '../lib/founder-build';
 
@@ -37,23 +37,36 @@ const extras = [
   { title: 'Un coach IA qui connaît ta stratégie', text: 'Il prépare ta séance, repère tes erreurs qui reviennent et fait le débrief de ta semaine.' },
   { title: 'Calendrier économique filtré', text: 'Seulement les annonces qui touchent tes actifs, analysées quand elles tombent.' },
   { title: 'Journal complet', text: 'Émotions, setups et notes, pour comprendre ce qui marche vraiment pour toi.' },
-  { title: 'Pas sur Tradovate ?', text: 'Importe tes trades en CSV : Binance, Bybit, MetaTrader 4/5, IBKR et MEXC sont reconnus d’office. Autre plateforme : l’import IA lit ton fichier (Premium).' },
+  { title: 'Pas sur Tradovate ?', text: 'Importe tes trades en CSV : plusieurs formats d’export courants (crypto, forex, actions) sont reconnus d’office. Sinon, l’import IA lit ton fichier (Premium).' },
 ];
 // Réponses alignées sur la FAQ de la home (src/data/faq.ts) et plans.md.
 const faq = [
   { q: "C'est vraiment gratuit ?", a: `Oui. Le plan Gratuit n'a pas de limite de durée et ne demande aucune carte bancaire. À l'inscription, tu as en plus ${PREMIUM_SIGNUP_TRIAL_DAYS} jours de Premium offerts, puis tu repasses en Gratuit automatiquement.` },
   { q: 'MyTradingCoach peut-il toucher à mon compte ?', a: "Non. La connexion est en lecture seule : aucun ordre, aucun mouvement d'argent." },
-  { q: 'Je ne suis pas sur Tradovate.', a: 'Tu peux importer tes trades en CSV. Binance, Bybit, MetaTrader 4/5, IBKR et MEXC sont reconnus automatiquement, en gratuit. Pour une autre plateforme, l’import IA lit ton fichier tel quel : il est réservé au Premium.' },
+  { q: 'Je ne suis pas sur Tradovate.', a: 'Tu peux importer tes trades en CSV. Plusieurs formats d’export courants (crypto, forex, actions) sont reconnus automatiquement, en gratuit. Pour un autre format, l’import IA lit ton fichier tel quel : il est réservé au Premium.' },
   { q: 'Le calcul remplace la plateforme de ma firme ?', a: 'Non, il est indicatif : la plateforme de ta firme fait toujours foi.' },
+];
+
+const canonical = 'https://www.mytradingcoach.app/prop-firm';
+const title = 'Journal de trading prop firm en direct · MyTradingCoach';
+const description = `Trader futures en prop firm : connecte Tradovate et suis en direct ta marge avant le plancher de ta firme. Règles de ${firmCount} prop firms. Gratuit, sans carte.`;
+// FAQPage = la FAQ affichée plus bas, mot pour mot.
+const schema = [
+  webPage(canonical, title, description),
+  SOFTWARE_APPLICATION,
+  ORGANIZATION,
+  WEBSITE,
+  faqPage(faq.map((f) => ({ question: f.q, answer: f.a }))),
 ];
 ---
 
 <Base
-  title="MyTradingCoach · Ta marge prop firm en direct"
-  description={`Trader futures en prop firm : connecte Tradovate et vois en direct ce qu'il te reste avant de perdre ton compte. Règles de ${firmCount} prop firms. Gratuit, sans carte.`}
-  canonical="https://www.mytradingcoach.app/prop-firm"
-  noindex
-  schema={[ORGANIZATION]}
+  title={title}
+  description={description}
+  canonical={canonical}
+  ogImage="/og/prop-firm.jpg"
+  ogImageAlt="MyTradingCoach : suis ta marge avant la limite de ta prop firm"
+  schema={schema}
 >
   <PfHeader />
 
@@ -172,7 +185,7 @@ const faq = [
       </section>
     )}
 
-    {/* 9. Et aussi (c'est ici, et seulement ici, que crypto et forex apparaissent). */}
+    {/* 9. Et aussi : avec la FAQ, seul endroit où crypto et forex apparaissent (reference/astro/prop-firm.md). */}
     <section class="pf-sec pf-extras">
       <div class="pf-in pf-extras-grid">
         <div>
