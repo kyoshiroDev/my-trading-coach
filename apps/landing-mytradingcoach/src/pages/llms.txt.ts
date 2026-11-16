@@ -1,17 +1,20 @@
 import type { APIRoute } from 'astro';
-import { PREMIUM_PRICE_EUR, PREMIUM_SIGNUP_TRIAL_DAYS, PROP_FIRM_CATALOG_FILES } from '@mtc/shared';
+import { PLAN_BENEFITS, PREMIUM_PRICE_EUR, PREMIUM_SIGNUP_TRIAL_DAYS, PROP_FIRM_CATALOG_FILES } from '@mtc/shared';
 import { FEATURES } from '../config';
 
 /**
  * /llms.txt (SEO phase 1) : résumé court et factuel du site pour les assistants IA qui le lisent.
- * Généré au build pour que prix, durée d'essai et nombre de firmes viennent de `@mtc/shared`
- * (jamais en dur). Aucun effet prouvé sur les moteurs : c'est une convention proposée, pas un standard.
+ * Généré au build pour que prix, durée d'essai, nombre de firmes et contenu des plans (`PLAN_BENEFITS`,
+ * ligne `accounts` masquée tant que `FEATURES.multiAccounts` est éteint) viennent de `@mtc/shared`. Aucun effet prouvé sur les moteurs : c'est une convention proposée, pas un standard.
  * Pas de nom de courtier hors Tradovate, aucune promesse de résultat (contexte-com.md, AMF).
  */
 const SITE = 'https://www.mytradingcoach.app';
 
 export const GET: APIRoute = () => {
   const { monthly, annual } = PREMIUM_PRICE_EUR;
+  const shown = (b: { id: string }) => b.id !== 'accounts' || FEATURES.multiAccounts;
+  const list = (items: readonly { id: string; text: string }[]) =>
+    items.filter(shown).map((b) => `  - ${b.text.replace(/\u00a0/g, ' ')}`).join('\n');
   const pages = [
     `- [Accueil : suivre sa marge avant la limite de sa prop firm](${SITE}/prop-firm)`,
     ...(FEATURES.multiAccounts ? [`- [Journal de trading prop firm et multi-comptes](${SITE}/journal-trading-prop-firm)`] : []),
@@ -40,9 +43,11 @@ export const GET: APIRoute = () => {
 - MyTradingCoach ne trade pas à la place du trader et n'est affilié à aucune prop firm.
 
 ## Offre
-- Gratuit : trades illimités, sans carte bancaire.
+- Gratuit, sans carte bancaire :
+${list(PLAN_BENEFITS.free)}
+- Premium, ${monthly} € par mois ou ${annual} € par an. Tout le Gratuit, plus :
+${list(PLAN_BENEFITS.premium)}
 - ${PREMIUM_SIGNUP_TRIAL_DAYS} jours de Premium offerts à l'inscription, sans carte, puis retour au plan Gratuit.
-- Premium : ${monthly} € par mois ou ${annual} € par an. Ajoute le coach IA personnel, le débrief hebdomadaire, les alertes prop firm en direct, les analytics avancés et les comptes illimités.
 
 ## Pages clés
 ${pages.join('\n')}
