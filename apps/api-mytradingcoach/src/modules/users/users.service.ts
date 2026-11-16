@@ -24,7 +24,7 @@ import { RedisService } from '../infra/redis.service';
 import { billingCacheKey } from '../stripe/stripe.helpers';
 import { REAL_USERS_WHERE } from '../../common/stats/real-users';
 import { premiumAccessWhere, subscriptionStateWhere, subscriptionStatesWhere } from '../../common/stats/subscription-state-where';
-import { emailEquals } from '../../common/utils/email.util';
+import { emailEquals, escapeLike } from '../../common/utils/email.util';
 
 /** Résiliation Stripe impossible : rien n'est supprimé, l'utilisateur peut réessayer. */
 export const BILLING_CLOSURE_FAILED_MESSAGE =
@@ -162,10 +162,11 @@ export class UsersService {
     // Hors démo (cohérence avec le KPI « Utilisateurs » du dashboard).
     const where: Prisma.UserWhereInput = {
       isDemo: false,
+      // Jokers `_` et `%` échappés (#1063) : `contains` de Prisma ne le fait pas (règle #999).
       ...(search && {
         OR: [
-          { email: { contains: search, mode: 'insensitive' } },
-          { name: { contains: search, mode: 'insensitive' } },
+          { email: { contains: escapeLike(search), mode: 'insensitive' } },
+          { name: { contains: escapeLike(search), mode: 'insensitive' } },
         ],
       }),
       ...utmWhere(utm),

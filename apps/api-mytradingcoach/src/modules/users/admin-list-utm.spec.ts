@@ -64,3 +64,14 @@ describe('AdminListQueryDto — UTM normalisés comme à l’inscription', () =>
     expect(await validate(dto)).not.toHaveLength(0);
   });
 });
+
+// #1063 (doute promu) : `contains` de Prisma n'échappe pas `_` et `%` (règle du 14/11, #999).
+describe('UsersService.adminFindAll — recherche sans joker (#1063)', () => {
+  it('« a_b% » cherche ces caractères tels quels', async () => {
+    await service.adminFindAll(1, 20, 'a_b%');
+    expect(where().OR).toEqual([
+      { email: { contains: 'a\\_b\\%', mode: 'insensitive' } },
+      { name: { contains: 'a\\_b\\%', mode: 'insensitive' } },
+    ]);
+  });
+});
