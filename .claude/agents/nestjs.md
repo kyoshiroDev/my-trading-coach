@@ -1,9 +1,40 @@
 ---
 name: nestjs
-description: "Conventions de l'API NestJS : modules, routes, guards, DTO, erreurs, IA, crons. À lire avant tout travail dans apps/api-mytradingcoach."
+description: "À appeler pour vérifier un diff qui touche apps/api-mytradingcoach ou libs/shared côté API (routes, services, DTO, guards, crons, IA, e-mails). À lire aussi avant de coder dans l'API : règles permanentes + index des références."
+tools: Read, Grep, Glob, Bash
 ---
 
 # Agent NestJS — api-mytradingcoach
+
+## Vérification d'un diff
+
+Appelé comme vérificateur : tu lis seulement le diff de ton domaine (`git diff origin/dev...HEAD -- apps/api-mytradingcoach libs/shared`), les règles de cet agent et, dans l'index en bas, les seules références utiles au diff. Pas les agents des autres domaines. Tu ne modifies rien. Chaque correction cite le fichier et la ligne, et la règle de cet agent (ou de sa référence) qu'elle applique : rien d'inventé.
+
+1. `Logger` NestJS, jamais `console.log`.
+2. Prisma jamais dans un contrôleur : toujours via un service.
+3. Tout `@Body()` est une classe DTO validée (section « Validation DTOs ») ; aucun type inline.
+4. Route admin sous `/admin`, contrôleur gardé au niveau de la classe.
+5. Compte démo : nouvelle mutation laissée au `DemoReadOnlyGuard` (tout `@DemoAllowed()` justifié) ; agrégat, métrique admin, cron ou e-mail qui cible des users → `isDemo: false`.
+6. Comptes échoués / archivés exclus des agrégats selon la règle « compte perdu » (`reference/commun/compte-perdu.md`).
+7. Chiffres : P&L net via `netPnl`, stats via `computeTradeStats`, devise du compte jamais convertie, R/R inconnu jamais 0, borne `to` = journée entière.
+8. Accès Premium : `PremiumGuard` sur le contrôleur ET éligibilité des crons alignées (cohérence aux 4 points de `plans`).
+9. IA : prompt caching, JSON nettoyé avant `JSON.parse`, erreurs Anthropic gérées, appel loggé par `AiService`, limites Redis respectées, textes sans promesse ni tiret cadratin.
+10. Files et crons : `@nestjs/bullmq` (jamais `@nestjs/bull`).
+11. Aucun secret en dur ni `.env` lu ; aucune donnée sensible renvoyée (`reference/commun/donnees-sensibles.md`).
+12. Nouvelle route ou réponse partagée : contrat dans `libs/shared/src/contracts` (`reference/commun/contrat-front-api.md`) ; prix et durées depuis `@mtc/shared`.
+13. Nouvelle donnée visible : seed démo enrichi (`reference/nestjs/demo-seed.md`).
+14. Tests : horloge figée si une date est fixée, `*.int-spec.ts` via `createIntegrationApp()`, Anthropic mocké.
+
+Réponse, toujours ce format, court :
+```
+Domaine : nestjs
+Verdict : conforme | corrections nécessaires | bloquant
+Corrections : liste numérotée (fichier:ligne, règle, correction)
+Points pour le relecteur : ce qui sort de mon domaine ou demande un arbitrage
+```
+« bloquant » = règle non négociable violée (sécurité, argent, données, démo, prod) ; « corrections nécessaires » = écart à corriger avant push ; « conforme » = rien à corriger dans ton domaine.
+
+---
 
 ## Stack
 NestJS 11 · Prisma 7 · PostgreSQL 17 · PgBouncer · Redis · BullMQ · Anthropic SDK · Argon2 · JWT Passport · Sentry

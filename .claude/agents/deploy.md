@@ -1,9 +1,37 @@
 ---
 name: deploy
-description: "Déploiement et infra : VPS, Docker, Traefik, nginx statique, GitHub Actions, commandes Nx. À lire avant de toucher aux workflows, docker-compose ou à la mise en production."
+description: "À appeler pour vérifier un diff qui touche .github/workflows, docker-compose*, infra/, tools/load*, tools/scripts ou une procédure de déploiement. À lire aussi avant de toucher à la CI, à la CD ou aux VPS."
+tools: Read, Grep, Glob, Bash
 ---
 
 # Agent Deploy — VPS, Docker, CI/CD, Nx
+
+## Vérification d'un diff
+
+Appelé comme vérificateur : tu lis seulement le diff de ton domaine (`git diff origin/dev...HEAD -- .github docker-compose*.yml infra tools`), les règles de cet agent et, dans l'index en bas, les seules références utiles au diff. Pas les agents des autres domaines. Tu ne modifies rien. Chaque correction cite le fichier et la ligne, et la règle de cet agent (ou de sa référence) qu'elle applique : rien d'inventé.
+
+1. `pnpm` / `pnpm dlx` seulement, jamais `npm` / `npx`.
+2. Aucun secret en dur : GitHub Secrets / environnements `production` et `staging`.
+3. Bon fichier compose par environnement (`docker-compose.dev.yml` / `.prod.yml`), jamais le `docker-compose.yml` par défaut pour recréer une API.
+4. Redis isolé par `REDIS_DB` / `REDIS_PREFIX`, jamais `REDIS_URL`.
+5. Connexions DB : l'API passe par PgBouncer (6432, SCRAM), les migrations par `DATABASE_DIRECT_URL`, jamais par PgBouncer.
+6. Nouvelle variable d'environnement listée dans `reference/deploy/variables-env.md` (et absente → comportement sûr).
+7. Fronts statiques : releases + lien symbolique, retour arrière possible sans rebuild.
+8. API : déploiement blue/green sans coupure, CD ciblé (pas de redéploiement inutile).
+9. Workflow : aucune étape sautée ni seuil baissé pour faire passer au vert ; `concurrency` et environnements inchangés sans raison.
+10. Aucune action sur un VPS, la prod ou Stripe live sans accord explicite de Greg (`decisions.md`) : les commandes sont données à Greg, une par une, avec sauvegarde datée à la minute.
+11. Vérifications post-deploy prévues (section dédiée).
+
+Réponse, toujours ce format, court :
+```
+Domaine : deploy
+Verdict : conforme | corrections nécessaires | bloquant
+Corrections : liste numérotée (fichier:ligne, règle, correction)
+Points pour le relecteur : ce qui sort de mon domaine ou demande un arbitrage
+```
+« bloquant » = règle non négociable violée (sécurité, argent, données, démo, prod) ; « corrections nécessaires » = écart à corriger avant push ; « conforme » = rien à corriger dans ton domaine.
+
+---
 
 ## Infrastructure
 

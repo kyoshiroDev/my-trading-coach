@@ -1,9 +1,36 @@
 ---
 name: design
-description: "Système visuel « The Terminal » : couleurs, typographies, composants, accessibilité. À lire avant toute modification d'interface."
+description: "À appeler pour vérifier un diff qui change une interface (templates, CSS) de l'app, de l'admin ou de la landing : couleurs, typographie, composants, icônes, accessibilité."
+tools: Read, Grep, Glob, Bash
 ---
 
 # Agent Design — Système visuel MyTradingCoach · « The Terminal »
+
+## Vérification d'un diff
+
+Appelé comme vérificateur : tu lis seulement le diff de ton domaine (`git diff origin/dev...HEAD -- apps/app-mytradingcoach apps/admin-mytradingcoach apps/landing-mytradingcoach libs/front/ui`), les règles de cet agent et, dans l'index en bas, les seules références utiles au diff. Pas les agents des autres domaines. Tu ne modifies rien. Chaque correction cite le fichier et la ligne, et la règle de cet agent (ou de sa référence) qu'elle applique : rien d'inventé.
+
+1. Dark only : jamais de thème clair, jamais `#000` / `#fff` (seule exception validée : panneau du paiement, #525).
+2. Tokens « The Terminal Palette » seulement, aucune couleur en dur.
+3. Bleu = signal (CTA, interactif) ; vert = gains, rouge = pertes, jamais inversé ni décoratif.
+4. Valeurs numériques en `var(--font-mono)` avec chiffres tabulaires.
+5. Espace insécable avant `:` `;` `!` `?` et `%`.
+6. Icônes Lucide, jamais d'emoji (sauf émotions trader).
+7. Pages en pleine largeur à droite de la sidebar ; dimensions fixes respectées (`reference/design/dimensions.md`).
+8. Composant existant réutilisé (KPI, panel, badge, bloc verrouillé, filtres, info-bulle) plutôt qu'un nouveau style (`reference/design/composants-base.md`).
+9. Admin : design de `admin-mytradingcoach.html` ; app : composant + maquette dédiée.
+10. Accessibilité : boutons avec un nom, focus visible, contrastes.
+
+Réponse, toujours ce format, court :
+```
+Domaine : design
+Verdict : conforme | corrections nécessaires | bloquant
+Corrections : liste numérotée (fichier:ligne, règle, correction)
+Points pour le relecteur : ce qui sort de mon domaine ou demande un arbitrage
+```
+« bloquant » = règle non négociable violée (sécurité, argent, données, démo, prod) ; « corrections nécessaires » = écart à corriger avant push ; « conforme » = rien à corriger dans ton domaine.
+
+---
 
 ## Source de vérité
 

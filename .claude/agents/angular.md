@@ -1,9 +1,40 @@
 ---
 name: angular
-description: "Conventions de l'app et de l'admin Angular (signals, zoneless, libs front partagées, modales, erreurs, routes). À lire avant tout travail dans apps/app-mytradingcoach ou apps/admin-mytradingcoach."
+description: "À appeler pour vérifier un diff qui touche apps/app-mytradingcoach, apps/admin-mytradingcoach ou libs/front (composants, stores, routes, styles). À lire aussi avant de coder dans l'app ou l'admin : règles permanentes + index des références."
+tools: Read, Grep, Glob, Bash
 ---
 
 # Agent Angular — app-mytradingcoach
+
+## Vérification d'un diff
+
+Appelé comme vérificateur : tu lis seulement le diff de ton domaine (`git diff origin/dev...HEAD -- apps/app-mytradingcoach apps/admin-mytradingcoach libs/front`), les règles de cet agent et, dans l'index en bas, les seules références utiles au diff. Pas les agents des autres domaines. Tu ne modifies rien. Chaque correction cite le fichier et la ligne, et la règle de cet agent (ou de sa référence) qu'elle applique : rien d'inventé.
+
+1. Templates : `@if` / `@for` / `@switch`, jamais `*ngIf` / `*ngFor`.
+2. Standalone, préfixe `mtc-`, `inject()`, signals (`signal`, `computed`, `effect`, `toSignal`), `DestroyRef`, `OnPush` sans signals.
+3. CSS dans le `.css`, jamais inline dans le `.ts` ; couleurs et espacements par variables du thème (`var(--…)`), aucune valeur en dur.
+4. Icônes `@lucide/angular` seulement (motif `<svg [lucideIcon]>`), cadenas = icône `Lock`, jamais d'emoji.
+5. Responsive : `input/select/textarea` 16 px sous 768 px, `min-width: 0`, `minmax(0, 1fr)`, un seul scroll vertical, safe-area, testé à 360 et 390 px.
+6. `data-testid` sur les éléments interactifs nouveaux (liste de la section « data-testid obligatoires »).
+7. Erreurs : toute mutation a une branche `error` avec message affiché, `404` de suppression = succès, toute donnée chargée affiche son échec (`mtc-error-state`).
+8. Polling : `visibleInterval` (app) / `visiblePoll` (admin), jamais `interval()` / `setInterval()` ; socket avec `SOCKET_RECONNECT_OPTIONS`.
+9. Montants : pipes / `MoneyService`, devise du compte, P&L net (`netPnl`) ; capital, courbe et drawdown par la définition unique.
+10. Paywalls : `isPremium()` et libellé unique `PaywallCtaService` ; prix, durées et avantages depuis `@mtc/shared` / `PRICING`.
+11. Jamais `window.confirm()` (`ConfirmService`) ; toute modale avec `mtcDialog`.
+12. Bundle initial sous le budget (marge à surveiller) : composant lourd en `@defer`.
+13. Admin : conforme à la maquette `admin-mytradingcoach.html` ; app : conforme au composant et à la maquette `maquette-*.html` si elle existe.
+14. Compte démo : affichage vérifié (lecture seule, données du seed).
+
+Réponse, toujours ce format, court :
+```
+Domaine : angular
+Verdict : conforme | corrections nécessaires | bloquant
+Corrections : liste numérotée (fichier:ligne, règle, correction)
+Points pour le relecteur : ce qui sort de mon domaine ou demande un arbitrage
+```
+« bloquant » = règle non négociable violée (sécurité, argent, données, démo, prod) ; « corrections nécessaires » = écart à corriger avant push ; « conforme » = rien à corriger dans ton domaine.
+
+---
 
 ## Stack
 Angular 22 · Signals · Standalone Components · @lucide/angular · Vitest · Nx 23 · TypeScript 6.0

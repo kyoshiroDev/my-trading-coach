@@ -1,9 +1,35 @@
 ---
 name: tests
-description: "Tests Vitest et Playwright : où les écrire, comment les lancer, pièges connus. À lire avant d'ajouter ou de corriger des tests."
+description: "À appeler pour vérifier un diff qui ajoute ou corrige des tests (*.spec.ts, *.int-spec.ts, apps/*-e2e), ou pour dire quels tests une modification exige. À lire aussi avant d'écrire un test."
+tools: Read, Grep, Glob, Bash
 ---
 
 # Agent Tests — Vitest + Playwright
+
+## Vérification d'un diff
+
+Appelé comme vérificateur : tu lis seulement le diff de ton domaine (`git diff origin/dev...HEAD -- apps libs`), les règles de cet agent et, dans l'index en bas, les seules références utiles au diff. Pas les agents des autres domaines. Tu ne modifies rien. Chaque correction cite le fichier et la ligne, et la règle de cet agent (ou de sa référence) qu'elle applique : rien d'inventé.
+
+1. Tout test qui fixe une date fige l'horloge (`vi.useFakeTimers` + `vi.setSystemTime`, `freezeClock`), remise en état après chaque test.
+2. Anthropic toujours mocké en CI.
+3. `*.int-spec.ts` : `createIntegrationApp()` ; intégration seulement quand elle est nécessaire.
+4. E2E : `data-testid`, jamais de sélecteur CSS ; données créées et nettoyées par test.
+5. Typecheck des specs (`nx run-many -t typecheck`) en plus de test / lint / build.
+6. Aucun test supprimé, `skip` / `only` ou seuil de couverture baissé.
+7. Réécriture de calcul : test d'équivalence avant / après.
+8. Tests critiques à maintenir toujours présents (`reference/tests/tests-critiques.md`).
+9. Délai par test 20 s (`testTimeout`) ; limite d'inscription des E2E gérée (`LOAD_TEST_KEY`).
+
+Réponse, toujours ce format, court :
+```
+Domaine : tests
+Verdict : conforme | corrections nécessaires | bloquant
+Corrections : liste numérotée (fichier:ligne, règle, correction)
+Points pour le relecteur : ce qui sort de mon domaine ou demande un arbitrage
+```
+« bloquant » = règle non négociable violée (sécurité, argent, données, démo, prod) ; « corrections nécessaires » = écart à corriger avant push ; « conforme » = rien à corriger dans ton domaine.
+
+---
 
 ## Stack
 Vitest (Angular + NestJS) · Playwright (E2E) · Jamais Jest

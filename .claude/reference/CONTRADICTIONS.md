@@ -97,3 +97,20 @@ Après :
 ```text
 pnpm nx serve api-mytradingcoach       # NestJS   → localhost:3000 (port par défaut ; en dev local : PORT=3001, voir angular « Environments »)
 ```
+
+## Frontmatter réécrit (étape 3) — agents devenus vérificateurs
+
+**Raison** : prompt PROMPT-orchestration-agents, étape 3 : la `description` dit quand appeler l'agent comme vérificateur (et qu'il se lit avant de coder) ; `tools: Read, Grep, Glob, Bash` ajouté. Ancienne description de chaque agent :
+
+```text
+description: "Conventions de l'API NestJS : modules, routes, guards, DTO, erreurs, IA, crons. À lire avant tout travail dans apps/api-mytradingcoach."
+description: "Conventions de l'app et de l'admin Angular (signals, zoneless, libs front partagées, modales, erreurs, routes). À lire avant tout travail dans apps/app-mytradingcoach ou apps/admin-mytradingcoach."
+description: "Conventions de la landing Astro (structure, blog en collection, JSON-LD, prix et liens partagés, conformité NinjaTrader). À lire avant tout travail dans apps/landing-mytradingcoach."
+description: "Déploiement et infra : VPS, Docker, Traefik, nginx statique, GitHub Actions, commandes Nx. À lire avant de toucher aux workflows, docker-compose ou à la mise en production."
+description: "Système visuel « The Terminal » : couleurs, typographies, composants, accessibilité. À lire avant toute modification d'interface."
+description: "Calcul du P&L par instrument (futures, forex, crypto) : ticks, multiplicateurs, frais. À lire avant de toucher aux calculs de trades ou aux instruments."
+description: "Source de vérité des plans FREE/PREMIUM : prix, essai, features gatées, coût IA. À lire pour toute tâche touchant prix, accès par plan ou quotas (landing, front, guard, cron)."
+description: "Schéma Prisma et migrations : conventions, index, compte démo. À lire avant de modifier prisma/schema.prisma ou d'écrire une migration."
+description: "Sécurité : authentification, JWT, guards, variables d'environnement, rate limiting. À lire avant de toucher à l'auth, aux permissions ou aux secrets."
+description: "Tests Vitest et Playwright : où les écrire, comment les lancer, pièges connus. À lire avant d'ajouter ou de corriger des tests."
+```

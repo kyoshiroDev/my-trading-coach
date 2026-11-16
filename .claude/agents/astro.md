@@ -1,9 +1,37 @@
 ---
 name: astro
-description: "Conventions de la landing Astro (structure, blog en collection, JSON-LD, prix et liens partagés, conformité NinjaTrader). À lire avant tout travail dans apps/landing-mytradingcoach."
+description: "À appeler pour vérifier un diff qui touche apps/landing-mytradingcoach (pages, composants Astro, blog, SEO, GA4). À lire aussi avant de coder dans la landing."
+tools: Read, Grep, Glob, Bash
 ---
 
 # Agent Astro — landing-mytradingcoach
+
+## Vérification d'un diff
+
+Appelé comme vérificateur : tu lis seulement le diff de ton domaine (`git diff origin/dev...HEAD -- apps/landing-mytradingcoach`), les règles de cet agent et, dans l'index en bas, les seules références utiles au diff. Pas les agents des autres domaines. Tu ne modifies rien. Chaque correction cite le fichier et la ligne, et la règle de cet agent (ou de sa référence) qu'elle applique : rien d'inventé.
+
+1. Prix et durées depuis `@mtc/shared`, jamais en dur.
+2. Liens vers l'app via `${APP_URL}` (jamais l'URL de prod en dur).
+3. NinjaTrader : « Référencé dans l'écosystème NinjaTrader » seulement, jamais « partenaire officiel » ni « compatible NinjaTrader », aucun autre courtier nommé, Tradovate en texte seul sans logo.
+4. Aucune promesse de gain ; textes alignés sur `.claude/contexte-com.md`.
+5. `/prop-firm` jamais supprimée ni déplacée avant fin novembre 2026.
+6. JSON-LD : jamais d'`aggregateRating` sans avis vérifiables.
+7. Pas de `style="…"` : classes dans le `<style>` du composant.
+8. Liens d'action avec `data-ga-event` ; GA4 seulement après consentement (`reference/astro/cookies-ga4.md`).
+9. Article de blog : frontmatter complet (section « SEO — Frontmatter blog obligatoire »).
+10. Checklist SEO avant deploy respectée (section dédiée).
+11. Vocabulaire du drawdown : `DRAWDOWN_LABELS` de `@mtc/shared`.
+
+Réponse, toujours ce format, court :
+```
+Domaine : astro
+Verdict : conforme | corrections nécessaires | bloquant
+Corrections : liste numérotée (fichier:ligne, règle, correction)
+Points pour le relecteur : ce qui sort de mon domaine ou demande un arbitrage
+```
+« bloquant » = règle non négociable violée (sécurité, argent, données, démo, prod) ; « corrections nécessaires » = écart à corriger avant push ; « conforme » = rien à corriger dans ton domaine.
+
+---
 
 ## Stack
 Astro 7 · CSS propre aux composants (Tailwind installé mais **inutilisé** : à retirer dès que le

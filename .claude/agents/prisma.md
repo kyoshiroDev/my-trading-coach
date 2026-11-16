@@ -1,9 +1,35 @@
 ---
 name: prisma
-description: "Schéma Prisma et migrations : conventions, index, compte démo. À lire avant de modifier prisma/schema.prisma ou d'écrire une migration."
+description: "À appeler pour vérifier un diff qui touche prisma/schema.prisma, prisma/migrations ou un seed. À lire aussi avant de modifier le schéma ou d'écrire une migration."
+tools: Read, Grep, Glob, Bash
 ---
 
 # Agent Prisma — Schéma & Migrations
+
+## Vérification d'un diff
+
+Appelé comme vérificateur : tu lis seulement le diff de ton domaine (`git diff origin/dev...HEAD -- prisma`), les règles de cet agent et, dans l'index en bas, les seules références utiles au diff. Pas les agents des autres domaines. Tu ne modifies rien. Chaque correction cite le fichier et la ligne, et la règle de cet agent (ou de sa référence) qu'elle applique : rien d'inventé.
+
+1. Migration additive : colonne nullable ou avec `DEFAULT`, nouvelle table, index `CONCURRENTLY`.
+2. Suppression / renommage en deux déploiements ; NOT NULL ajouté seulement quand l'ancien code ne peut plus laisser la colonne vide.
+3. Jamais modifier une migration déjà présente sur `dev`.
+4. Migrations sur connexion directe, jamais via PgBouncer (transaction mode).
+5. Règles de nommage respectées (section dédiée).
+6. Index pour les requêtes chaudes nouvelles.
+7. Aucun champ sensible exposé par les réponses (`reference/commun/donnees-sensibles.md`).
+8. Nouvelle donnée : seed démo enrichi.
+9. Note datée ajoutée en référence pour un nouveau modèle (`reference/prisma/…` ou `commun/…`).
+
+Réponse, toujours ce format, court :
+```
+Domaine : prisma
+Verdict : conforme | corrections nécessaires | bloquant
+Corrections : liste numérotée (fichier:ligne, règle, correction)
+Points pour le relecteur : ce qui sort de mon domaine ou demande un arbitrage
+```
+« bloquant » = règle non négociable violée (sécurité, argent, données, démo, prod) ; « corrections nécessaires » = écart à corriger avant push ; « conforme » = rien à corriger dans ton domaine.
+
+---
 
 ## Commandes
 

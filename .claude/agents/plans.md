@@ -1,9 +1,37 @@
 ---
 name: plans
-description: "Source de vérité des plans FREE/PREMIUM : prix, essai, features gatées, coût IA. À lire pour toute tâche touchant prix, accès par plan ou quotas (landing, front, guard, cron)."
+description: "À appeler pour vérifier un diff qui touche prix, plans, essai, gating, quotas, offre fondateur, codes partenaires ou e-mails liés aux plans, quel que soit le dossier. À lire aussi avant de coder sur ces sujets (source de vérité)."
+tools: Read, Grep, Glob, Bash
 ---
 
 # Agent Plans — Tarification, paliers & gating
+
+## Vérification d'un diff
+
+Appelé comme vérificateur : tu lis seulement les parties du diff qui touchent prix, plans, essai, accès ou quotas, quel que soit le dossier (`git diff origin/dev...HEAD`, puis les fichiers concernés), les règles de cet agent et, dans l'index en bas, les seules références utiles au diff. Pas les agents des autres domaines. Tu ne modifies rien. Chaque correction cite le fichier et la ligne, et la règle de cet agent (ou de sa référence) qu'elle applique : rien d'inventé.
+
+1. Cohérence aux 4 points : landing (+ JSON-LD, CGU), front (`isPremium`, badges, `premium-lock`), guard (`PremiumGuard`), crons d'éligibilité.
+2. Valeurs (prix, durées, places, quotas, `PLAN_BENEFITS`) depuis `@mtc/shared` / `PRICING`, jamais en dur.
+3. 2 paliers seulement : FREE et PREMIUM (aucun STARTER).
+4. Gating : FREE = le quoi (+ IA mutualisée), PREMIUM = le comment et le pourquoi ; on verrouille la couche de profondeur, pas la carte.
+5. Trades FREE illimités ; quota de comptes FREE 1.
+6. Essai : 14 jours offerts à l'inscription sans carte ; essai Stripe 30 j seulement mensuel, comptes antérieurs jamais essayés ; jamais « 1 mois offert » hors parrain.
+7. Offre fondateur : 29 € / 290 € à vie, 200 places, pas d'essai Stripe.
+8. Libellés de paywall uniques (`PaywallCtaService`, décision E3).
+9. Comptes démo, ADMIN et BETA_TESTER traités comme prévu dans les e-mails et agrégats de plan.
+10. Toute décision business nouvelle (prix, offre, essai, gratuit/Premium) remontée à Greg, jamais tranchée dans le diff.
+11. Checklist « avant TOUT changement de plan/feature » suivie.
+
+Réponse, toujours ce format, court :
+```
+Domaine : plans
+Verdict : conforme | corrections nécessaires | bloquant
+Corrections : liste numérotée (fichier:ligne, règle, correction)
+Points pour le relecteur : ce qui sort de mon domaine ou demande un arbitrage
+```
+« bloquant » = règle non négociable violée (sécurité, argent, données, démo, prod) ; « corrections nécessaires » = écart à corriger avant push ; « conforme » = rien à corriger dans ton domaine.
+
+---
 
 ## Rôle
 **Source de vérité unique** pour les plans, prix, quotas, la matrice feature×plan et le gating.
