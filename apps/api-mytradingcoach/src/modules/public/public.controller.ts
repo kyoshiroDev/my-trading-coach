@@ -23,9 +23,13 @@ export class PublicController {
     return { traders: await this.publicService.getTradersCount() };
   }
 
-  /** Candidature ambassadeur depuis la landing (publique). Anti-spam : 5 / minute. */
+  /**
+   * Candidature ambassadeur depuis la landing (publique). Anti-spam : 5 / minute, et 10 / heure
+   * par IP quel que soit l'e-mail du corps (S3 #1063 : la clé ip + e-mail se contournait en
+   * changeant d'adresse ; chaque appel envoie un e-mail et un push à l'équipe).
+   */
   @Public()
-  @Throttle({ default: { ttl: 60_000, limit: 5 } })
+  @Throttle({ default: { ttl: 60_000, limit: 5 }, ip: { ttl: 3_600_000, limit: 10 } })
   @Post('ambassador-apply')
   async applyAmbassador(@Body() dto: PublicAmbassadorApplyDto): Promise<{ success: boolean }> {
     return this.publicService.applyAmbassador(dto);

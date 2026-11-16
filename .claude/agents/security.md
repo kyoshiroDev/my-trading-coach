@@ -346,3 +346,33 @@ Contenu déplacé à l'identique le 2026-11-16. Lire un fichier seulement quand 
 | `commun/liaison-discord.md` | liaison Discord par code |
 | `commun/offre-fondateur.md` | offre fondateur, places, codes partenaires, route publique `/pricing/founder` |
 | `commun/pgbouncer.md` | pool Postgres, PgBouncer, SCRAM |
+
+## Texte d'utilisateur dans un e-mail HTML (S1 #1063, 2026-11-16)
+
+Tout texte saisi par un utilisateur (nom à l'inscription, nom Google) inséré dans un gabarit d'e-mail
+passe par `escapeHtml` / `greetingName` (`resend/templates/index.ts`) : jamais tel quel. L'aperçu admin
+des campagnes rend ce HTML (nom du 1er destinataire réel) dans une `<iframe [srcdoc]>` en
+`sandbox=""` (aucun script, origine opaque). Nom borné à 100 caractères (inscription, modale admin, Google).
+
+## Filleuls vus par un parrain ou un ambassadeur (S2 #1063, 2026-11-16)
+
+Un parrain ou un ambassadeur (tiers externe) ne voit de ses filleuls qu'un pseudo masqué
+(`referral/mask-pseudo.ts`, 2 lettres + étoiles) : jamais l'id, le nom ni l'e-mail. `GET /ambassador/stats`
+(vue ambassadeur) et le parrainage grand public appliquent la règle ; seule la vue admin
+(`GET /admin/ambassadors/:id/stats`, ou `?userId=` pour un ADMIN) garde le détail.
+
+## Routes qui envoient un e-mail ou un push à l'équipe (S3, S4 #1063)
+
+Toujours un `@Throttle` dédié, et une limite `ip` quand la route est publique : la clé par défaut
+(ip + empreinte de l'e-mail du corps) se contourne en changeant d'adresse. Candidature ambassadeur
+publique : 5/min + `ip` 10/h ; connectée : 3/h.
+
+## IP réelle derrière Traefik (#1063, question de Greg du 16/11)
+
+`configureProxy(app)` (`src/config/proxy.ts`, appelé par main.ts et par les tests d'intégration) pose
+`trust proxy = 1` : `req.ip` = dernière adresse de `X-Forwarded-For`, celle que Traefik ajoute ; une
+adresse forgée en tête est ignorée. Le limiteur `ip` lit `req.ip`. Prouvé par
+`public/ambassador-apply-ip.int-spec.ts` (10 envois passent, le 11e est refusé, un autre visiteur passe,
+une IP forgée ne contourne pas). À passer à 2 seulement si un autre proxy HTTP est placé devant
+l'API ; le relais TCP de l'ancien VPS (PROXY protocol) ne compte pas comme un saut.
+

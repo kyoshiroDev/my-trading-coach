@@ -4,10 +4,9 @@ import { Observable } from 'rxjs';
 import { environment } from '@app/environments/environment';
 import type { Plan } from '@mtc/shared';
 
+/** Filleul vu par l'ambassadeur : pseudo masqué, ni nom ni e-mail (S2 #1063). */
 export interface ReferralUser {
-  id: string;
-  name: string | null;
-  email: string;
+  pseudo: string;
   plan: Plan;
   createdAt: string;
   isActive: boolean;
