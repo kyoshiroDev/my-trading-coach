@@ -81,7 +81,7 @@ interface CampaignPresentation {
 const PRESENTATION: CampaignPresentation[] = [
   { type: 'connect_tradovate', emoji: '🔌', desc: 'Suite d’onboarding : relier Tradovate (e-mail de service)', targetDesc: 'Inscrits de 1 à 14 j sans connexion broker ni trade' },
   { type: 'prop_firm_rules',   emoji: '📐', desc: 'Suite d’onboarding : choisir sa firme et son plan (e-mail de service)', targetDesc: 'Inscrits de 4 à 21 j avec un compte prop firm sans plan' },
-  { type: 'first_week_recap',  emoji: '🗓️', desc: 'Suite d’onboarding : bilan J0-J7 puis ce que Premium ajoute', targetDesc: 'FREE de 7 à 14 j qui ont tradé la 1re semaine' },
+  { type: 'first_week_recap',  emoji: '🗓️', desc: 'Bilan J0-J7 (hors envoi automatique, à repenser : #1058)', targetDesc: 'FREE de 7 à 14 j hors essai en cours, qui ont tradé la 1re semaine' },
   { type: 'founder_followup',  emoji: '🔥', desc: 'Suite d’onboarding : offre fondateur (si ouverte avec des places)', targetDesc: 'FREE non abonnés de 10 à 30 j, sans founder_launch reçu' },
   { type: 'first_trade_nudge', emoji: '📈', desc: 'Relance premier trade (remplacée par connect_tradovate)', targetDesc: 'Inscrits de 1 à 14 j sans trade' },
   { type: 'discord_invite',   emoji: '💬', desc: 'Inviter les users à rejoindre le Discord',          targetDesc: 'Users sans Discord lié' },

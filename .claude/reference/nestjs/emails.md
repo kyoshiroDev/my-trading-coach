@@ -77,13 +77,18 @@ décision), cron `AutoCampaignsCron` (10 h Paris, prod, worker cron), journal `E
   seule campagne par personne et par passage.
 - **Suite** (priorité · type · fenêtre d'âge) : `connect_tradovate` 100 · service · J1-J14 (aucune
   connexion broker CONNECTED ni trade) ; `prop_firm_rules` 90 · service · J4-J21 (compte ACTIVE
-  EVALUATION/FUNDED sans plan, `planLinkChoice` null ou LATER) ; `first_week_recap` 80 · marketing ·
-  J7-J14 (FREE, bilan J0-J7 depuis l'inscription) ; `founder_followup` 60 · marketing · J10-J30
+  EVALUATION/FUNDED sans plan, `planLinkChoice` null ou LATER) ; `founder_followup` 60 · marketing · J10-J30
   (exclusions de `founder_launch` + FREE + pas de `founder_launch` reçu ; offre ouverte avec places
   vérifiée À L'ENVOI) ; `profile_reminder` 45 · J3-J14 ; `discord_invite` 40 · J5-J21.
   **Essai Premium en cours exclu** (#769, `notInTrial(now)` : `trialEndsAt` nul ou passé) de
   `first_week_recap`, `founder_followup` et `premium_upsell` : le plan reste FREE pendant l'essai.
-  `first_trade_nudge` : `automated: false` (admin seulement). Bienvenue (`welcomeFreeTemplate`,
+  `first_trade_nudge` : `automated: false` (admin seulement). `first_week_recap` (80 · marketing · J7-J14,
+  FREE hors essai, bilan J0-J7) : `automated: false` depuis le 16/11 (N3 #1048) : avec l'essai de
+  14 jours, elle ne visait plus personne ; admin seulement, à repenser (#1058).
+- **« Notifications email » (Profil, `notificationsEmail`)** commande 3 e-mails : le débrief hebdo,
+  le récap de 17h30 (N1 #1048) et le rappel « Ton Premium se termine le {date} » (J-7, `resend.cron`).
+  « Alertes importantes » du libellé = ce rappel. Paiement, essai et campagnes n'en dépendent pas : un
+  nouvel e-mail ne s'y rattache pas par défaut. Bienvenue (`welcomeFreeTemplate`,
   transactionnel, envoyée par `createAccount` : e-mail ET Google) = 3 étapes.
 - **Toute campagne automatique a une fenêtre d'âge** (`ageWindow(now, min, max)`, borne basse ET
   haute) : jamais d'envoi en masse vers d'anciens inscrits. Les 4 nouvelles exigent en plus
