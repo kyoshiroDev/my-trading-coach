@@ -19,7 +19,7 @@ export class AdminUpdateUserDto {
 export class AdminListQueryDto {
   @IsOptional() @IsString() search?: string;
   @IsOptional() @Type(() => Number) @Min(1) page?: number;
-  @IsOptional() @Type(() => Number) @Min(1) limit?: number;
+  @IsOptional() @Type(() => Number) @Min(1) @Max(100) limit?: number; // #1063 : plus de table entière
   /**
    * Inscrits d'une campagne (#625) : égalité exacte, normalisée comme à l'inscription.
    * `-` (`UTM_NONE`) = non renseigné. Cf. `@mtc/shared` acquisition-filter.
