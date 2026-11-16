@@ -1,7 +1,7 @@
 ---
 title: "Journal de Trading Crypto : Suivre et Analyser ses Trades BTC/ETH"
 seoTitle: "Journal de trading crypto (BTC, ETH) | MyTradingCoach"
-description: "Comment tenir un journal de trading crypto efficace. Suivez vos trades Bitcoin, Ethereum et altcoins pour améliorer vos performances."
+description: "Comment tenir un journal de trading crypto utile : suivre tes trades Bitcoin, Ethereum et altcoins pour comprendre ce qui marche pour toi."
 publishDate: 2026-04-20
 tags: ["journal trading crypto", "crypto", "BTC", "ETH"]
 ---

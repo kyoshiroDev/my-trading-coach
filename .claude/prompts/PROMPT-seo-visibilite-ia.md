@@ -82,3 +82,9 @@ Verdict du relecteur, fichiers, mesures avant/après, pages ou données exclues 
 4. Demander au support NinjaTrader un lien depuis leur annuaire ou leur newsletter.
 5. Mesure mensuelle : poser les mêmes 10 questions à ChatGPT, Perplexity, Gemini et Claude, noter qui est cité.
 6. Valider les brouillons et la page de comparaison avant toute mise en ligne.
+
+---
+
+## Compléments de Greg
+
+- 2026-11-16, après le rapport de la phase 0 : « GO phase 1, option a, sameAs vide pour l'instant »

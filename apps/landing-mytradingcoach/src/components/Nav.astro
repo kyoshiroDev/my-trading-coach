@@ -23,7 +23,7 @@ const links = home
 <FounderBanner href={home ? '#pricing' : '/prop-firm#tarifs'} />
 <div class="nav-bar">
   <a href="/prop-firm" class="nav-logo">
-    <img src="/icon/logo-navbar.svg" alt="MyTradingCoach : Journal de trading IA" height="32" style="display:block" />
+    <img class="nav-logo-img" src="/icon/logo-navbar.svg" alt="MyTradingCoach : Journal de trading IA" width="200" height="32" />
   </a>
 
   <nav id="nav-links" class="nav-links">
@@ -128,6 +128,13 @@ const links = home
     color: var(--txt);
     flex-shrink: 0;
     z-index: 201;
+  }
+
+  /* Dimensions dans le HTML (place réservée, aucun décalage) ; affichage inchangé. */
+  .nav-logo-img {
+    display: block;
+    height: 32px;
+    width: auto;
   }
 
   /* ── Desktop nav ── (à partir de 1024 px : en tablette, les 5 liens + le CTA ne tiennent pas) */

@@ -1,5 +1,6 @@
 ---
 title: "Win Rate en Trading : Comment le Calculer et l'Améliorer"
+seoTitle: "Win rate en trading : comment le calculer et le lire"
 description: "Le win rate seul ne suffit pas. Calcule ton taux de réussite et comprends pourquoi le ratio R/R est décisif."
 publishDate: 2026-04-15
 tags: ["win rate", "statistiques", "performance", "risk reward"]

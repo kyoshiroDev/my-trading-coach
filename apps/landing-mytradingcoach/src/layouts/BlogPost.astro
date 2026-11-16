@@ -1,8 +1,14 @@
 ---
-import { APP_URL } from '../config';
+import { APP_URL, FEATURES } from '../config';
 import Base from './Base.astro';
 import Nav from '../components/Nav.astro';
 import Footer from '../components/Footer.astro';
+import { ORGANIZATION, ORGANIZATION_REF, SITE, breadcrumb } from '../data/schema';
+
+export interface RelatedPost {
+  slug: string;
+  title: string;
+}
 
 interface Props {
   title: string;
@@ -11,12 +17,27 @@ interface Props {
   publishDate: Date;
   updatedDate?: Date;
   tags?: string[];
+  /** Nom du fichier de l'article : image de partage `/og/blog/<slug>.jpg`. */
+  slug: string;
+  /** Articles liés (calculés par `pages/blog/[slug].astro`). */
+  related?: RelatedPost[];
 }
 
-const { title, seoTitle, description, publishDate, updatedDate, tags = [] } = Astro.props;
+const { title, seoTitle, description, publishDate, updatedDate, tags = [], slug, related = [] } = Astro.props;
 
 // trailingSlash: 'never' → canonical sans slash de dossier (`/blog/x/` servi comme `/blog/x`).
-const canonical = `https://www.mytradingcoach.app${Astro.url.pathname.replace(/(.)\/$/, '$1')}`;
+const canonical = `${SITE}${Astro.url.pathname.replace(/(.)\/$/, '$1')}`;
+const ogImage = `/og/blog/${slug}.jpg`;
+const published = publishDate.toISOString();
+const modified = updatedDate?.toISOString() ?? published;
+
+// Fil d'Ariane : « Accueil » = /prop-firm, la page d'entrée (`/` y redirige en 302 depuis le
+// 2026-11-08). Le fil visible et le BreadcrumbList ont les MÊMES étapes.
+const crumbs = [
+  { name: 'Accueil', url: `${SITE}/prop-firm` },
+  { name: 'Blog', url: `${SITE}/blog` },
+  { name: title, url: canonical },
+];
 
 const schema = [
   {
@@ -24,34 +45,44 @@ const schema = [
     "@type": "Article",
     "headline": title,
     "description": description,
-    "datePublished": publishDate.toISOString(),
-    "dateModified": updatedDate?.toISOString() ?? publishDate.toISOString(),
-    "author": { "@type": "Organization", "name": "MyTradingCoach" },
-    "publisher": {
-      "@type": "Organization",
-      "name": "MyTradingCoach",
-      "logo": { "@type": "ImageObject", "url": "https://www.mytradingcoach.app/logo.svg" },
-    },
+    "image": `${SITE}${ogImage}`,
+    "inLanguage": "fr",
+    "datePublished": published,
+    "dateModified": modified,
+    "author": ORGANIZATION_REF,
+    "publisher": ORGANIZATION_REF,
     "mainEntityOfPage": { "@type": "WebPage", "@id": canonical },
     "url": canonical,
+    ...(tags.length > 0 && { "keywords": tags.join(', ') }),
   },
-  {
-    "@context": "https://schema.org",
-    "@type": "BreadcrumbList",
-    "itemListElement": [
-      { "@type": "ListItem", "position": 1, "name": "Accueil", "item": "https://www.mytradingcoach.app" },
-      { "@type": "ListItem", "position": 2, "name": "Blog", "item": "https://www.mytradingcoach.app/blog" },
-      { "@type": "ListItem", "position": 3, "name": title, "item": canonical },
-    ],
-  },
+  breadcrumb(crumbs),
+  // Cible des références `@id` (auteur, éditeur) : présente sur la page même.
+  ORGANIZATION,
 ];
 ---
 
-<Base title={seoTitle ?? title} description={description} canonical={canonical} ogUrl={canonical} schema={schema as unknown as Record<string, unknown>}>
+<Base
+  title={seoTitle ?? title}
+  description={description}
+  canonical={canonical}
+  ogUrl={canonical}
+  ogType="article"
+  ogImage={ogImage}
+  ogImageAlt={title}
+  publishedTime={published}
+  modifiedTime={modified}
+  schema={schema}
+>
   <Nav />
 
   <main class="article-wrap">
-    <a href="/blog" class="back-btn">← Retour au blog</a>
+    <nav class="crumbs" aria-label="Fil d'Ariane">
+      <ol>
+        <li><a href="/prop-firm">Accueil</a></li>
+        <li><a href="/blog">Blog</a></li>
+        <li aria-current="page">{title}</li>
+      </ol>
+    </nav>
 
     <article>
       <header class="article-header">
@@ -72,6 +103,20 @@ const schema = [
       <div class="prose">
         <slot />
       </div>
+
+      {related.length > 0 && (
+        <aside class="article-related" aria-labelledby="related-title">
+          <h2 id="related-title" class="related-title">À lire aussi</h2>
+          <ul class="related-list">
+            {related.map((r) => (
+              <li><a href={`/blog/${r.slug}`}>{r.title}</a></li>
+            ))}
+            {FEATURES.multiAccounts && (
+              <li><a href="/journal-trading-prop-firm">Le journal de trading prop firm et multi-comptes</a></li>
+            )}
+          </ul>
+        </aside>
+      )}
 
       <div class="article-cta">
         <p>Prêt à améliorer ton trading ?</p>
@@ -106,22 +151,51 @@ const schema = [
     }
   }
 
-  /* ── Back button ── */
-  .back-btn {
-    display: inline-block;
+  /* ── Fil d'Ariane (mêmes étapes que le BreadcrumbList) ── */
+  .crumbs {
+    margin-bottom: 2rem;
+    font-size: 0.875rem;
+  }
+
+  .crumbs ol {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    color: var(--txt3);
+  }
+
+  .crumbs li {
+    display: inline-flex;
+    gap: 6px;
+    min-width: 0;
+  }
+
+  .crumbs li + li::before {
+    content: '›';
+    color: var(--txt3);
+  }
+
+  .crumbs a {
     color: var(--txt2);
     text-decoration: none;
-    font-size: 0.875rem;
-    margin-bottom: 2rem;
     transition: color 0.2s;
   }
 
-  .back-btn:visited {
-    color: var(--txt2);
+  .crumbs a:hover,
+  .crumbs a:focus-visible {
+    color: var(--txt);
+    text-decoration: underline;
   }
 
-  .back-btn:hover {
-    color: var(--txt);
+  /* Titre de l'article dans le fil : une ligne, coupé proprement (jamais de défilement horizontal). */
+  .crumbs li[aria-current] {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
   }
 
   /* ── Article header ── */
@@ -165,6 +239,42 @@ const schema = [
     color: var(--txt2);
     font-size: 0.875rem;
     font-family: var(--mono);
+  }
+
+  /* ── Articles liés ── */
+  .article-related {
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--b);
+  }
+
+  .related-title {
+    font-family: var(--disp);
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--txt);
+    margin: 0 0 1rem;
+  }
+
+  .related-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .related-list a {
+    color: var(--blue2);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    font-size: 15px;
+    line-height: 1.5;
+  }
+
+  .related-list a:hover {
+    color: var(--txt);
   }
 
   /* ── CTA ── */

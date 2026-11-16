@@ -31,6 +31,7 @@ export * from './prop-firm-rules/plan-link';
 export * from './prop-firm-rules/alert-levels';
 export * from './signup-funnel';
 export * from './landing-engagement';
+export * from './blog-related-posts';
 export * from './acquisition-filter';
 export * from './test-acquisition';
 export * from './demo-cta';

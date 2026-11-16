@@ -14,11 +14,12 @@ l'admin : **seul le lien de la pub** y pointe (UTM dédiées), la home ne change
 
 - Fichiers : `src/pages/prop-firm.astro` + `src/components/prop-firm-page/` (`PfHeader`, `PfRules`,
   `PfPricing`). Maquettes : `maquettes/maquette-landing-prop-firm-{mobile,desktop}.html` (locales).
-  **Rien d'autre n'en dépend** : la supprimer = ces fichiers + la ligne `/prop-firm` du filtre sitemap
-  (`astro.config.mjs`).
-- **`noindex`** + canonical vers elle-même (`Base.astro` émet le canonical d'une page noindex seulement
-  s'il est passé explicitement ; la 404 n'en a toujours pas), absente du sitemap et de la navigation.
-  JSON-LD : `ORGANIZATION` seul (le `WEBSITE` par défaut dit « crypto et forex »).
+  Page d'entrée du site tant que `/` y redirige : ne pas la supprimer (et jamais avant fin novembre 2026).
+- **Indexable depuis le 2026-11-16** (SEO phase 1, #1071, option a de Greg) : plus de `noindex`,
+  canonical vers elle-même, dans le sitemap (priorité 1.0, `astro.config.mjs`). Avant : noindex et
+  hors sitemap (page de test publicitaire). JSON-LD : `WebPage` + `SoftwareApplication` +
+  `Organization` + `WebSite` + `FAQPage` construite depuis le tableau `faq` AFFICHÉ (même texte).
+  Image de partage `/og/prop-firm.jpg`. Détail SEO : `reference/astro/seo-technique.md`.
 - Même `Base.astro` (UTM, `/public/visit`, `cta_click`, bandeau cookies, mode interne) et même
   `Footer.astro`. En-tête propre (logo `logo-navbar.svg`, ancres + inscription sur ordinateur,
   « Se connecter » seul en mobile), sans barre sticky. **Même `FounderBanner`** que l'accueil
@@ -99,12 +100,11 @@ newsletter.
   (`/prop-firm#tarifs`), logo de `PfHeader`, « ← Retour » des pages 404, légales, ambassadeur et
   journal-trading-prop-firm (dont les `/#pricing` → `/prop-firm#tarifs`). `<Nav home />` sur
   `/accueil` : ancres sur la page même (`#journee`, `#features`, `#pricing`, `#faq`).
-- **Sitemap** : `/` et `/accueil` exclus (`astro.config.mjs`). /prop-firm reste noindex et hors sitemap.
+- **Sitemap** : `/` et `/accueil` exclus (`astro.config.mjs`). /prop-firm y est et est indexable depuis le 2026-11-16.
 - Liens externes inchangés (passent par la 302) : e-mails, liens de parrainage
   `https://mytradingcoach.app?ref=CODE` (308 Traefik vers www, puis 302 → `/prop-firm?ref=CODE`, le
   `ref` est capté par `Base.astro`), liens de l'app.
-- **Point ouvert** : noindex de /prop-firm et canonical à traiter dans la refonte de l'accueil après
-  la newsletter (vers le 15/11). D'ici là, la home n'a plus de page indexable servie en direct : ne
-  pas laisser durer.
+- **Point ouvert réglé le 2026-11-16** (option a) : /prop-firm indexable, la 302 de `/` gardée telle
+  quelle. La refonte de l'accueil (contenu servi sur `/` sans 302) reste possible plus tard.
 - **Retrait** : supprimer les deux blocs nginx (deploy.md), remettre `accueil.astro` en `index.astro`
   (canonical `/`, sans `noindex`, `<Nav />` sans `home`), restaurer les liens `/` et le filtre sitemap.

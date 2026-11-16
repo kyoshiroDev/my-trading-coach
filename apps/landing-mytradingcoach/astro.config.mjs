@@ -34,8 +34,7 @@ export default defineConfig({
       priority: 0.7,
       filter: (page) => {
         if (page.includes('/404') || page.includes('/confidentialite')) return false;
-        // Page de test publicitaire (noindex), accessible par le lien de la pub seulement.
-        if (/\/prop-firm\/?$/.test(page)) return false;
+        // /prop-firm, page d'entrée, y est depuis le 2026-11-16 (SEO phase 1, option a de Greg).
         // Redirection temporaire de l'accueil (2026-11-08) : `/` part en 302 vers /prop-firm et
         // l'ancienne accueil vit sur /accueil (noindex). Ni l'une ni l'autre dans le sitemap.
         // Retrait : supprimer ces deux lignes avec la redirection (astro.md, « Accueil → /prop-firm »).
@@ -54,6 +53,10 @@ export default defineConfig({
         // SEO de toute façon : la racine nue et `/` sont la même URL pour Google.
         if (item.url === 'https://www.mytradingcoach.app' || item.url === 'https://www.mytradingcoach.app/') {
           return { ...item, priority: 1.0, changefreq: 'daily' };
+        }
+        // Page d'entrée tant que `/` redirige vers elle (2026-11-08).
+        if (item.url === 'https://www.mytradingcoach.app/prop-firm') {
+          return { ...item, priority: 1.0, changefreq: 'weekly' };
         }
         // Page blog index
         if (item.url === 'https://www.mytradingcoach.app/blog') {
