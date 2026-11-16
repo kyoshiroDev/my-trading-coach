@@ -187,20 +187,20 @@ describe('suite d’onboarding : calendrier simulé des 6 profils sur 21 jours',
 
     expect(calendar).toEqual({
       'p1-rien': ['J1 connect_tradovate', 'J5 profile_reminder', 'J9 discord_invite', 'J13 founder_followup'],
+      // first_week_recap hors du cron (N3 #1048) : ces profils sans essai le recevaient, les vrais
+      // inscrits (essai de 14 jours) jamais.
       'p2-tradovate': [
         'J3 profile_reminder',
         'J7 prop_firm_rules', // plus prioritaire que le précédent : la tolérance évite J8
-        'J11 first_week_recap',
-        'J15 founder_followup',
-        'J19 discord_invite',
+        'J11 founder_followup',
+        'J15 discord_invite',
       ],
-      'p3-tradovate-plan': ['J3 profile_reminder', 'J7 first_week_recap', 'J11 founder_followup', 'J15 discord_invite'],
+      'p3-tradovate-plan': ['J3 profile_reminder', 'J7 discord_invite', 'J11 founder_followup'],
       'p4-csv': [
         'J3 profile_reminder',
         'J7 prop_firm_rules',
-        'J11 first_week_recap',
-        'J15 founder_followup',
-        'J19 discord_invite',
+        'J11 founder_followup',
+        'J15 discord_invite',
       ],
       'p5-sans-consentement': ['J1 connect_tradovate', 'J5 prop_firm_rules'],
       'p6-ancien': [],
