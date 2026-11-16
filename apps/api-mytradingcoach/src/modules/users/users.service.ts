@@ -443,6 +443,11 @@ export class UsersService {
       select: { email: true, role: true },
     });
     if (!current) throw new NotFoundException('Utilisateur introuvable');
+    // S6 (#1063) : un administrateur n'est jamais rétrogradé par l'API (ni un autre, ni soi-même),
+    // comme adminUpdate et adminDelete.
+    if (current.role === Role.ADMIN) {
+      throw new ForbiddenException('Impossible de modifier le rôle d’un administrateur');
+    }
 
     // Promotion : promote() génère le code s'il manque, et réutilise l'existant sinon.
     if (role === Role.AMBASSADOR) {
@@ -466,6 +471,22 @@ export class UsersService {
       data: { role },
     });
     await this.userCache?.invalidate(targetUserId);
+  }
+
+  /**
+   * « Retirer bêta » (S6 #1063) : seulement un BETA_TESTER repasse USER. Avant, la route appelait
+   * `setRole(USER)` sur n'importe quel rôle : un AMBASSADOR y perdait son code (`revoke`).
+   */
+  async removeBetaRole(targetUserId: string): Promise<void> {
+    const current = await this.prisma.user.findUnique({
+      where: { id: targetUserId },
+      select: { role: true },
+    });
+    if (!current) throw new NotFoundException('Utilisateur introuvable');
+    if (current.role !== Role.BETA_TESTER) {
+      throw new ConflictException('Ce compte n’est pas bêta-testeur');
+    }
+    await this.setRole(targetUserId, Role.USER);
   }
 
   /**

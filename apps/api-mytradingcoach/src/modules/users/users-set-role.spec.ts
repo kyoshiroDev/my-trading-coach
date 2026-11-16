@@ -7,7 +7,7 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Test } from '@nestjs/testing';
-import { ForbiddenException, NotFoundException } from '@nestjs/common';
+import { ConflictException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { StripeAccountClosureService } from '../stripe/stripe-account-closure.service';
 import { AmbassadorService } from '../ambassador/ambassador.service';
@@ -37,6 +37,31 @@ describe('UsersService.setRole — invariant code ambassadeur', () => {
       ],
     }).compile();
     service = moduleRef.get(UsersService);
+  });
+
+  it('S6 (#1063) : cible ADMIN → 403, rien n’est écrit (un admin ne rétrograde pas un admin, ni lui-même)', async () => {
+    prisma.user.findUnique.mockResolvedValue({ email: 'admin@x.com', role: 'ADMIN' });
+
+    await expect(service.setRole('a1', 'USER' as never)).rejects.toBeInstanceOf(ForbiddenException);
+    await expect(service.setRole('a1', 'BETA_TESTER' as never)).rejects.toBeInstanceOf(ForbiddenException);
+    expect(prisma.user.update).not.toHaveBeenCalled();
+    expect(ambassador.revoke).not.toHaveBeenCalled();
+  });
+
+  it('S6 (#1063) : « retirer bêta » sur un AMBASSADOR → 409, son code n’est pas retiré', async () => {
+    prisma.user.findUnique.mockResolvedValue({ email: 'amb@x.com', role: 'AMBASSADOR' });
+
+    await expect(service.removeBetaRole('u2')).rejects.toBeInstanceOf(ConflictException);
+    expect(ambassador.revoke).not.toHaveBeenCalled();
+    expect(prisma.user.update).not.toHaveBeenCalled();
+  });
+
+  it('S6 (#1063) : « retirer bêta » sur un BETA_TESTER → USER', async () => {
+    prisma.user.findUnique.mockResolvedValue({ email: 'b@x.com', role: 'BETA_TESTER' });
+
+    await service.removeBetaRole('u3');
+
+    expect(prisma.user.update).toHaveBeenCalledWith({ where: { id: 'u3' }, data: { role: 'USER' } });
   });
 
   it('promotion en AMBASSADOR → passe par promote() (donc génère le code)', async () => {

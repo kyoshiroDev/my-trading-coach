@@ -96,7 +96,7 @@ export class AdminUsersController {
 
   @Delete(':id/beta')
   async removeBetaRole(@Param('id') id: string) {
-    await this.usersService.setRole(id, 'USER');
+    await this.usersService.removeBetaRole(id);
     return { id, role: 'USER' };
   }
 }
