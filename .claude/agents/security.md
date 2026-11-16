@@ -367,3 +367,11 @@ Toujours un `@Throttle` dédié, et une limite `ip` quand la route est publique 
 (ip + empreinte de l'e-mail du corps) se contourne en changeant d'adresse. Candidature ambassadeur
 publique : 5/min + `ip` 10/h ; connectée : 3/h.
 
+## IP réelle derrière Traefik (#1063, question de Greg du 16/11)
+
+`configureProxy(app)` (`src/config/proxy.ts`, appelé par main.ts et par les tests d'intégration) pose
+`trust proxy = 1` : `req.ip` = dernière adresse de `X-Forwarded-For`, celle que Traefik ajoute ; une
+adresse forgée en tête est ignorée. Le limiteur `ip` lit `req.ip`. Prouvé par
+`public/ambassador-apply-ip.int-spec.ts` (10 envois passent, le 11e est refusé, un autre visiteur passe,
+une IP forgée ne contourne pas). À passer à 2 si un autre proxy est placé devant l'API.
+
