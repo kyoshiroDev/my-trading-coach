@@ -117,10 +117,20 @@ title: "Titre affiché avec mot-clé principal"
 seoTitle: "Titre de l'onglet / Google (optionnel)"
 description: "Description 155 caractères max avec mot-clé"
 publishDate: 2026-04-01
-updatedDate: 2026-05-01   # optionnel, alimente lastmod du sitemap
+updatedDate: 2026-05-01   # date réelle de la dernière mise à jour, alimente lastmod du sitemap
 tags: ["trading", "journal", "psychologie"]
+faq:                      # 3 à 5 vraies questions, affichées ET reprises dans le FAQPage
+  - question: "…"
+    answer: "…"
+sources:                  # source officielle de chaque fait affirmé (optionnel sans fait chiffré)
+  - title: "…"
+    url: "https://…"
+    consulted: 2026-11-16
 ---
 ```
+
+Réponse directe dans les deux premières lignes (paragraphe en gras), aucun chiffre sans source, aucun
+vocabulaire de gain : détail dans `reference/astro/seo-blog.md` (vérifié par `blog-related-posts.spec.ts`).
 
 Le corps peut être du Markdown ou du HTML (les articles migrés gardent leur HTML d'origine).
 

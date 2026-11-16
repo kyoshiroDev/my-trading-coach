@@ -15,3 +15,26 @@
 | `revenge-trading.md` | revenge trading (faible concurrence) |
 | `win-rate-trading.md` | win rate trading calculer |
 | `journal-trading-crypto.md` | journal trading crypto 2026 |
+
+<!-- Ajout : PROMPT-seo-visibilite-ia, phase 2 · 2026-11-16 -->
+## Format d'un article (phase 2 SEO, 2026-11-16)
+
+- **Réponse directe** en tête : un paragraphe en gras de deux phrases au plus qui répond à la question du titre.
+- **FAQ** : champ `faq` du frontmatter (3 à 5 vraies questions). `BlogPost.astro` l'affiche en bas
+  de l'article (« Questions fréquentes ») et la reprend mot pour mot dans le JSON-LD `FAQPage`.
+  Ne pas écrire de FAQ dans le corps en plus (doublon).
+- **Sources** : champ `sources` (titre, URL officielle, date de consultation) pour chaque fait affirmé
+  (calendrier d'une publication, étude, règle). Affichées en bas de l'article. Pas de source vérifiable
+  → reformuler sans le fait ou le chiffre.
+- **Chiffres** : jamais de statistique « interne » ou « observée chez nos utilisateurs » sans source
+  publiée. Un chiffre d'illustration est marqué « exemple » ou « exemple fictif ».
+- **AMF (#881)** : ni « rentable », ni « profitable », ni « edge », ni promesse de résultat, ni
+  prévision de marché, ni consigne d'achat ou de vente. Les règles de discipline sont présentées
+  comme des exemples à adapter.
+- **Plateformes** : aucune autre que NinjaTrader / Tradovate (contexte-com).
+- **Fonctions du produit** : dire « en Premium » pour ce qui l'est (`PLAN_BENEFITS`,
+  `reference/plans/matrice-features.md`).
+- **Typographie** : espace insécable avant `:` `;` `!` `?` `%`, pas de tiret long, pas de `style="…"`.
+- **updatedDate** : date réelle de la dernière modification du fond.
+- Vérifié par `libs/shared/src/blog-related-posts.spec.ts` (updatedDate, FAQ 3 à 5, vocabulaire
+  interdit, plateformes, style inline, tiret long).
