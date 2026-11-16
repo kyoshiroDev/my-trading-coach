@@ -290,7 +290,10 @@ export const CAMPAIGNS: EmailCampaign[] = [
     description: 'Bilan J0-J7 des inscrits FREE qui ont tradé, puis ce que Premium ajoute.',
     kind: 'marketing',
     requiresConsent: true,
-    automated: true,
+    // N3 (#1048) : hors du cron. Depuis l'essai d'inscription de 14 jours (#769), tout inscrit est en
+    // essai de J0 à J14 : la fenêtre J7-J14 avec `notInTrial` ne visait plus personne. Gardée pour
+    // l'admin (aperçu, envoi manuel) ; à repenser autour de l'essai (ticket à part).
+    automated: false,
     priority: 80,
     segment: (now) => ({
       AND: [sinceOnboardingStart(), ageWindow(now, 7, 14), { plan: Plan.FREE }, notInTrial(now), notBetaTester, { trades: { some: {} } }],

@@ -32,6 +32,7 @@ import { accountKeys, analysesById, tradesByKey } from './debrief-account-keys';
 import { activeAccountsWhere, inactiveAccountsTradeWhere } from '../accounts/account-status-scope';
 import type { DebriefAccountSection, DebriefBadgeItem, DebriefObjective } from '@mtc/shared';
 import { debriefStats } from './debrief-stats';
+import { parisWallTimeToUtc } from '../eco-calendar/eco-calendar.schedule';
 
 @Injectable()
 export class DebriefService {
@@ -113,7 +114,13 @@ export class DebriefService {
     const existing = await this.prisma.weeklyDebrief.findUnique({
       where: { userId_weekNumber_year: { userId, weekNumber, year } },
     });
-    if (existing && !opts?.force) {
+    // C1 (#1048) : un débrief généré AVANT le dimanche 23:00 de sa semaine (bouton « Générer » en
+    // milieu de semaine) ne couvre que quelques jours. Une fois ce seuil passé, le cron et le
+    // rattrapage le refont sur la semaine complète (created=true → l'e-mail « débrief prêt » part).
+    // Un débrief produit par le cron (≥ 23:00) n'est jamais refait : pas de 2e e-mail le lundi.
+    const cutoff = this.weeklyCutoff(opts?.refDate ?? new Date());
+    const partial = !!existing && existing.generatedAt < cutoff && Date.now() >= cutoff.getTime();
+    if (existing && !opts?.force && !partial) {
       return { debrief: existing, created: false };
     }
 
@@ -136,11 +143,15 @@ export class DebriefService {
       // Émotion effective (override sinon humeur de session ; null = non renseignée).
     ).map((t) => ({ ...t, setup: t.setup?.title ?? null, emotion: effectiveEmotion(t) }));
 
-    // C8 (#1046) : semaine sans trade (lundi matin) → pas d'appel IA facturé ni de débrief vide qui
-    // remplacerait à l'écran le vrai débrief de la semaine passée.
-    if (trades.length === 0) {
+    // Trades clôturés seulement pour les stats par compte et l'IA (C13 #1046, convention #947) :
+    // une position ouverte gonflait « N trades » sans résultat.
+    const closedTrades = trades.filter((t) => t.pnl !== null);
+
+    // C8 (#1046, #1056) : semaine sans trade clôturé (lundi matin, positions encore ouvertes) → pas
+    // d'appel IA facturé ni de débrief vide qui remplacerait à l'écran le vrai débrief de la semaine passée.
+    if (closedTrades.length === 0) {
       throw new BadRequestException(
-        'Aucun trade cette semaine pour l’instant. Le débrief se génère dès ton premier trade de la semaine.',
+        'Aucun trade clôturé cette semaine pour l’instant. Le débrief se génère dès ton premier trade clôturé de la semaine.',
       );
     }
 
@@ -153,10 +164,6 @@ export class DebriefService {
       },
       orderBy: [{ status: 'asc' }, { createdAt: 'asc' }],
     });
-
-    // Trades clôturés seulement pour les stats par compte et l'IA (C13 #1046, convention #947) :
-    // une position ouverte gonflait « N trades » sans résultat.
-    const closedTrades = trades.filter((t) => t.pnl !== null);
 
     // Trades groupés par compte (accountId null → bucket « unassigned »).
     const tradesByAccount: Record<string, typeof trades> = {};
@@ -353,9 +360,9 @@ export class DebriefService {
    * → plan PREMIUM, rôle ADMIN/BETA_TESTER, ou essai (trial) en cours.
    */
   /**
-   * Destinataires du débrief automatique de la semaine de `refDate` : seulement ceux qui ont tradé
-   * cette semaine-là (SCA-B5-08, décision du 2026-10-07) — une semaine vide coûtait un appel IA et
-   * un e-mail sans contenu. Mêmes bornes que `generate` (getWeekInfo).
+   * Destinataires du débrief automatique de la semaine de `refDate` : seulement ceux qui ont clôturé
+   * un trade cette semaine-là (SCA-B5-08, décision du 2026-10-07 ; clôturé : #1056) — une semaine vide
+   * coûtait un appel IA et un e-mail sans contenu. Mêmes bornes que `generate` (getWeekInfo).
    */
   getEligibleUsers(refDate: Date) {
     const { startDate, endDate } = this.getWeekInfo(refDate);
@@ -369,9 +376,12 @@ export class DebriefService {
           { role: Role.BETA_TESTER },
           { trialEndsAt: { gt: new Date() } },
         ],
-        // Même filtre que `generate` (comptes perdus exclus, #681) : un trader dont tous les trades de
-        // la semaine sont sur un compte échoué ou archivé recevait un débrief à 0 trade (#947).
-        trades: { some: { tradedAt: { gte: startDate, lte: endDate }, ...inactiveAccountsTradeWhere() } },
+        // Même filtre que `generate` (comptes perdus exclus, #681 ; trades clôturés seulement, #1056) :
+        // un trader dont tous les trades de la semaine sont sur un compte échoué ou archivé, ou encore
+        // ouverts, recevait un débrief à 0 trade (#947).
+        trades: {
+          some: { tradedAt: { gte: startDate, lte: endDate }, pnl: { not: null }, ...inactiveAccountsTradeWhere() },
+        },
       },
       select: { id: true },
     });
@@ -502,6 +512,18 @@ export class DebriefService {
         tradedAt: t.tradedAt.toISOString(),
       })),
     };
+  }
+
+  /**
+   * Dimanche 23:00 HEURE DE PARIS de la semaine de `date` : l'heure du cron hebdo
+   * (`@Cron('0 23 * * 0', { timeZone: 'Europe/Paris' })`), quel que soit le fuseau du serveur. En
+   * heure locale, une API en UTC aurait placé le seuil après le cron, et le rattrapage du lundi
+   * aurait refait (et re-mailé) tous les débriefs du dimanche.
+   */
+  weeklyCutoff(date: Date): Date {
+    const sunday = this.getWeekInfo(date).endDate;
+    const day = `${sunday.getFullYear()}-${String(sunday.getMonth() + 1).padStart(2, '0')}-${String(sunday.getDate()).padStart(2, '0')}`;
+    return parisWallTimeToUtc(day, '23:00') ?? new Date(sunday.getTime() - 59 * 60_000 - 59_999);
   }
 
   getWeekInfo(date: Date) {

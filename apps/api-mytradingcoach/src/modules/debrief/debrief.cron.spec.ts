@@ -7,6 +7,7 @@ const mockService = {
   getEligibleUsers: vi.fn(),
   lastCompletedWeekRef: vi.fn(),
   getWeekInfo: vi.fn(),
+  weeklyCutoff: vi.fn(),
 };
 
 const cron = new DebriefCron(
@@ -22,6 +23,7 @@ describe('DebriefCron — rattrapage lundi', () => {
     vi.clearAllMocks();
     mockService.lastCompletedWeekRef.mockReturnValue(ref);
     mockService.getWeekInfo.mockReturnValue({ weekNumber: 26, year: 2026 });
+    mockService.weeklyCutoff.mockReturnValue(new Date('2026-06-28T23:00:00'));
   });
 
   it('enqueue uniquement les éligibles SANS débrief de la semaine passée', async () => {
@@ -29,7 +31,7 @@ describe('DebriefCron — rattrapage lundi', () => {
       { id: 'u1', email: 'a@x' },
       { id: 'u2', email: 'b@x' },
     ]);
-    mockPrisma.weeklyDebrief.findMany.mockResolvedValue([{ userId: 'u1' }]); // u1 déjà servi
+    mockPrisma.weeklyDebrief.findMany.mockResolvedValue([{ userId: 'u1', generatedAt: new Date('2026-06-28T23:00:30') }]); // u1 déjà servi
 
     await cron.catchUpMissedDebriefs();
     expect(mockService.getEligibleUsers).toHaveBeenLastCalledWith(ref); // semaine passée
@@ -44,11 +46,25 @@ describe('DebriefCron — rattrapage lundi', () => {
 
   it('tout le monde a déjà son débrief → aucun job', async () => {
     mockService.getEligibleUsers.mockResolvedValue([{ id: 'u1', email: 'a@x' }]);
-    mockPrisma.weeklyDebrief.findMany.mockResolvedValue([{ userId: 'u1' }]);
+    mockPrisma.weeklyDebrief.findMany.mockResolvedValue([{ userId: 'u1', generatedAt: new Date('2026-06-28T23:00:30') }]);
 
     await cron.catchUpMissedDebriefs();
 
     expect(mockQueue.add).not.toHaveBeenCalled();
+  });
+
+  it('C1 (#1048) : débrief manuel de milieu de semaine (avant dimanche 23:00) → refait par le rattrapage', async () => {
+    mockService.getEligibleUsers.mockResolvedValue([{ id: 'u1', email: 'a@x' }]);
+    mockPrisma.weeklyDebrief.findMany.mockResolvedValue([{ userId: 'u1', generatedAt: new Date('2026-06-24T10:00:00') }]);
+
+    await cron.catchUpMissedDebriefs();
+
+    expect(mockService.weeklyCutoff).toHaveBeenCalledWith(ref); // seuil de la semaine PASSÉE
+    expect(mockQueue.add).toHaveBeenCalledWith(
+      'generate',
+      { userId: 'u1', refDate: ref.toISOString(), force: false },
+      expect.anything(),
+    );
   });
 
   it('aucun éligible → aucun job, pas de requête débrief', async () => {

@@ -12,7 +12,7 @@
 // Cooldown 4h — insights : réservé en UNE opération (SET NX EX, S4 #1045), retiré si
 // l'analyse échoue ou si le quota mensuel est atteint (C3 #1045, releaseInsightsCooldown).
 async checkInsightsCooldown(userId: string) {
-  const key = `ai:cooldown:insights:${userId}`;
+  const key = insightsCooldownKey(userId); // `ai:cooldown:insights:${userId}` (insights-cache-keys.ts, #1056)
   const reserved = await this.redis.set(key, '1', 'EX', 60 * 60 * 4, 'NX');
   if (reserved !== 'OK') {
     const ttl = await this.redis.ttl(key);

@@ -8,19 +8,10 @@ import { buildUserTradingContext } from '../user-context.builder';
 import { effectiveEmotion } from '@api/common/utils/effective-emotion.util';
 import { userAmountsCurrency } from '@api/common/utils/user-currency.util';
 import { inactiveAccountsTradeWhere } from '@api/modules/accounts/account-status-scope';
+import type { InsightItem, InsightsResponse } from '@mtc/shared';
 
-export interface InsightItem {
-  type: 'strength' | 'weakness' | 'pattern';
-  title: string;
-  description: string;
-  badge: string;
-}
-
-export interface InsightsFlowResult {
-  insights: InsightItem[];
-  topPattern: string;
-  emotionInsight: string;
-}
+/** Réponse de `POST /ai/insights` : forme partagée avec le front (`@mtc/shared`). */
+export type InsightsFlowResult = InsightsResponse;
 
 /**
  * Orchestrator : zero direct Anthropic calls.

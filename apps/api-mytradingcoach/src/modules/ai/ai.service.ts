@@ -29,12 +29,13 @@ import { buildUserTradingContext, UserTradingProfile } from './user-context.buil
 import { inactiveAccountsTradeWhere } from '../accounts/account-status-scope';
 
 import { AI_MODELS } from '../infra/ai-pricing.const';
-import type { EcoAnalysis } from '@mtc/shared';
+import { insightsCooldownKey, insightsKeptKey } from './insights-cache-keys';
+import type { EcoAnalysis, InsightsCooldownResponse, InsightsResponse } from '@mtc/shared';
 
 const AI_MONTHLY_QUOTA = 100;
 
 // Contenu IA figé pour le compte démo : AUCUN appel modèle (coût zéro).
-const DEMO_INSIGHTS = {
+const DEMO_INSIGHTS: InsightsResponse = {
   // Aligné sur le seed démo : qualitatif, sans pourcentage figé (les chiffres du
   // seed varient légèrement selon le jour du run).
   // Passé et comportement seulement (#881) : aucun setup présenté comme une source de profit.
@@ -54,8 +55,6 @@ const DEMO_CHAT_REPLY =
 
 /** Fenêtre entre deux analyses d'insights (4 h). */
 const INSIGHTS_COOLDOWN_S = 60 * 60 * 4;
-/** Dernière analyse d'insights réussie, relue à l'ouverture de l'écran (C4 #1046). */
-const insightsKeptKey = (userId: string) => `ai:insights:last:${userId}`;
 
 @Injectable()
 export class AiService {
@@ -71,7 +70,7 @@ export class AiService {
 
   // ── Insights : delegates to orchestrator ──────────────────────────────────
 
-  async getInsights(userId: string, role: Role, isDemo = false) {
+  async getInsights(userId: string, role: Role, isDemo = false): Promise<InsightsResponse> {
     if (isDemo) return DEMO_INSIGHTS; // données figées, zéro appel modèle
     // C9 (#1046) : sans trade clôturé, deux appels IA sur un résumé vide et 4 h de délai pour rien.
     const closed = await this.prisma.trade.count({
@@ -575,17 +574,17 @@ Génère un JSON strict (pas de markdown, pas de texte autour) :
   async getInsightsCooldown(
     userId: string,
     isDemo = false,
-  ): Promise<{ cooldownSeconds: number; insights: unknown }> {
+  ): Promise<InsightsCooldownResponse> {
     if (isDemo) return { cooldownSeconds: 0, insights: null }; // pas de cooldown en démo
-    const key = `ai:cooldown:insights:${userId}`;
+    const key = insightsCooldownKey(userId);
     const [ttl, kept] = await Promise.all([
       this.redisService.client.ttl(key),
       this.redisService.client.get(insightsKeptKey(userId)),
     ]);
-    let insights: unknown = null;
+    let insights: InsightsResponse | null = null;
     if (kept) {
       try {
-        insights = JSON.parse(kept);
+        insights = JSON.parse(kept) as InsightsResponse;
       } catch {
         insights = null;
       }
@@ -594,7 +593,7 @@ Génère un JSON strict (pas de markdown, pas de texte autour) :
   }
 
   /** Garde la dernière analyse réussie aussi longtemps que le délai (C4 #1046). */
-  private async keepInsights(userId: string, result: unknown): Promise<void> {
+  private async keepInsights(userId: string, result: InsightsResponse): Promise<void> {
     try {
       await this.redisService.client.setex(insightsKeptKey(userId), INSIGHTS_COOLDOWN_S, JSON.stringify(result));
     } catch {
@@ -607,7 +606,7 @@ Génère un JSON strict (pas de markdown, pas de texte autour) :
    * laissait passer une rafale de requêtes simultanées (S4 #1045). Déjà réservée → 429.
    */
   async checkInsightsCooldown(userId: string): Promise<void> {
-    const key = `ai:cooldown:insights:${userId}`;
+    const key = insightsCooldownKey(userId);
     const reserved = await this.redisService.client.set(key, '1', 'EX', INSIGHTS_COOLDOWN_S, 'NX');
     if (reserved !== 'OK') {
       const ttl = await this.redisService.client.ttl(key);
@@ -623,7 +622,7 @@ Génère un JSON strict (pas de markdown, pas de texte autour) :
 
   private async releaseInsightsCooldown(userId: string): Promise<void> {
     try {
-      await this.redisService.client.del(`ai:cooldown:insights:${userId}`);
+      await this.redisService.client.del(insightsCooldownKey(userId));
     } catch {
       this.logger.warn('Redis unavailable, délai des insights non retiré');
     }

@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '@app/environments/environment';
+import type { InsightsCooldownResponse, InsightsResponse } from '@mtc/shared';
 
 /** Message d'historique envoyé au chat IA (6 derniers échanges). */
 export interface AiChatTurn {
@@ -9,22 +10,19 @@ export interface AiChatTurn {
   content: string;
 }
 
-/**
- * Appels IA (Premium). Le type de réponse des insights reste celui de l'écran qui l'affiche
- * (`T`), pour ne pas coupler la couche API à un composant.
- */
+/** Appels IA (Premium). Formes des réponses : contrat `@mtc/shared` (`contracts/ai.ts`). */
 @Injectable({ providedIn: 'root' })
 export class AiApi {
   private readonly http = inject(HttpClient);
   private readonly base = `${environment.apiUrl}/ai`;
 
   /** Délai restant et dernière analyse réussie, gardée par l'API pendant le délai (C4 #1046). */
-  cooldown<T>(): Observable<{ data: { cooldownSeconds: number; insights?: T | null } }> {
-    return this.http.get<{ data: { cooldownSeconds: number; insights?: T | null } }>(`${this.base}/cooldown`);
+  cooldown(): Observable<{ data: InsightsCooldownResponse }> {
+    return this.http.get<{ data: InsightsCooldownResponse }>(`${this.base}/cooldown`);
   }
 
-  insights<T>(): Observable<{ data: T }> {
-    return this.http.post<{ data: T }>(`${this.base}/insights`, {});
+  insights(): Observable<{ data: InsightsResponse }> {
+    return this.http.post<{ data: InsightsResponse }>(`${this.base}/insights`, {});
   }
 
   chat(message: string, history: readonly AiChatTurn[]): Observable<{ data: { response: string } }> {

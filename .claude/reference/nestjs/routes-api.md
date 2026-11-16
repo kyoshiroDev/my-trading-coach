@@ -78,8 +78,8 @@ GET    /api/eco-calendar/range?from&to JWT → vue semaine ; AAAA-MM-JJ, from �
        Écrites au clic ET par la génération automatique (`ensureReleasedAnalysis`, même `assetsSignature`
        dédoublonnée que la clé Redis).
 
-GET    /api/ai/cooldown                PREMIUM → { cooldownSeconds, insights } (dernière analyse réussie gardée 4 h, null sinon) (C4 #1046)
-POST   /api/ai/insights                PREMIUM → cooldown 4h par user (posé atomiquement, retiré si l'analyse échoue) ; 0 trade clôturé → 400 « Ajoute au moins un trade clôturé… » (C9 #1046)
+GET    /api/ai/cooldown                PREMIUM → { cooldownSeconds, insights } (dernière analyse réussie gardée 4 h, null sinon) (C4 #1046) ; forme : `InsightsCooldownResponse` (`@mtc/shared`, #1056)
+POST   /api/ai/insights                PREMIUM → cooldown 4h par user (posé atomiquement, retiré si l'analyse échoue) ; 0 trade clôturé → 400 « Ajoute au moins un trade clôturé… » (C9 #1046) ; forme : `InsightsResponse` (`@mtc/shared`)
 POST   /api/ai/chat                    PREMIUM → 50 messages/jour par user
 
 POST   /api/trades/import              PREMIUM → CSV parsing via Claude SDK
@@ -96,7 +96,7 @@ GET    /api/debrief/:year/:week        PREMIUM
 GET    /api/debrief/:year/:week/pdf    PREMIUM → export PDF via puppeteer ; @Throttle 5/min, file par process ≤ 10 rendus (`PDF_QUEUE_MAX`) sinon 503 (S3 #1045)
 PATCH  /api/debrief/:debriefId/objectives/:index/note PREMIUM → `ObjectiveNoteDto` (texte ≤ 1000, réinjecté dans le prompt suivant) (C11 #1045)
 GET    /api/debrief/history            PREMIUM
-POST   /api/debrief/generate           PREMIUM → 1/jour par user (rendue si l IA échoue) ; semaine sans trade → 400 « Aucun trade cette semaine pour l’instant… » (C8 #1046)
+POST   /api/debrief/generate           PREMIUM → 1/jour par user (rendue si l IA échoue) ; semaine sans trade clôturé → 400 « Aucun trade clôturé cette semaine pour l’instant… » (C8 #1046, #1056)
 
 GET    /api/vps/servers                ADMIN → serveurs du sélecteur Surveillance [{id,label,readOnly}]
 GET    /api/vps/stats                  ADMIN → stats système SSH

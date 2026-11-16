@@ -58,12 +58,15 @@ describe('registre : suite automatique', () => {
       ['trial_ended', 110, 'service', false],
       ['connect_tradovate', 100, 'service', false],
       ['prop_firm_rules', 90, 'service', false],
-      ['first_week_recap', 80, 'marketing', true],
       ['founder_followup', 60, 'marketing', true],
       ['profile_reminder', 45, 'marketing', true],
       ['discord_invite', 40, 'marketing', true],
     ]);
     expect(auto.every((c) => c.recurringCooldownDays === undefined)).toBe(true); // tous oneShot
+  });
+
+  it('N3 (#1048) : first_week_recap sort du cron (gardée pour l’admin), elle ne visait plus personne', () => {
+    expect(CAMPAIGNS_BY_KEY.get('first_week_recap')).toMatchObject({ automated: false });
   });
 
   it('first_trade_nudge sort du cron (gardée pour l’admin)', () => {

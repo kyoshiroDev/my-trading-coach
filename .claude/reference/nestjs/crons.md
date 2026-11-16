@@ -10,8 +10,16 @@
 
 `DebriefCron` (dimanche 23 h Paris, rattrapage lundi 8 h) enfile un job `generate` par utilisateur
 de `debriefService.getEligibleUsers(refDate)` : Premium / admin / bêta / essai, débrief automatique
-activé, non démo, **et au moins un trade dans la semaine de `refDate`** (SCA-B5-08). Le cron ne
+activé, non démo, **et au moins un trade clôturé dans la semaine de `refDate`** (SCA-B5-08 ; clôturé :
+#1056, une semaine de positions ouvertes ne coûte pas d'appel IA). Le cron ne
 journalise que le nombre de jobs, jamais les adresses. 3 essais, échecs gardés 7 j.
+
+**Débrief manuel de milieu de semaine (C1 #1048, 2026-11-16)** : un débrief généré avant le dimanche
+23:00 de sa semaine (`weeklyCutoff`, explicitement en heure de Paris, bouton « Générer le débrief de cette semaine ») est REFAIT par le
+cron du dimanche et, à défaut, par le rattrapage du lundi, sur la semaine complète : `created=true`,
+donc l'e-mail « débrief prêt » part. Un débrief produit par le cron (≥ 23:00) n'est jamais refait :
+pas de 2e e-mail le lundi (test « anti double e-mail »). Le débrief est refait même si
+`notificationsEmail` est faux (un appel IA, sans e-mail) : l'écran couvre alors toute la semaine.
 
 **Comptes désignés à l'IA par une clé courte** (`debrief/debrief-account-keys.ts`, 2026-10-23) :
 `compte-1`, `compte-2`… dans l'ordre des comptes, `unassigned` inchangé ; jamais l'identifiant
@@ -26,7 +34,7 @@ débrief stocké garde les vrais ids (onglets, PDF).
 
 | Cron | Planning | Rôle |
 |---|---|---|
-| `DailyRecapCron` | `30 17 * * 1-5` Paris | Génère recap + envoie email aux users actifs du jour |
+| `DailyRecapCron` | `30 17 * * 1-5` Paris | Génère recap + envoie email aux users actifs du jour, seulement si `notificationsEmail` (N1 #1048) ; push RECAP selon ses propres réglages |
 | `EcoCalendarCron` | `0 7 * * 1-5` Paris | Pré-génère le calendrier pour tous les users Premium |
 | `SessionCloseCron` | `5 17 * * *` **America/Chicago** | Bascule CME : clôture les sessions `ACTIVE` d'une journée précédente (`startedAt < tradingDayStart(now)`, même fonction que `activeSessionWhere`), `endedAt` = fin de leur journée, totaux sur leurs propres trades (`autoCloseData`, `session-totals.ts`), `moodEnd` vide, hors démo (#595). Clôture ponctuelle par id : `scripts/close-sessions.ts` (même logique, dry-run sans `--apply`) |
 | `TrialEndService` | `30 0 * * *` Paris | Fins de `trialEndsAt` passées (essai d'inscription ou Premium offert, #769) : rôle Discord réaligné, `trialEndHandledAt` posé (retraité si `trialEndsAt` est repoussé ensuite), hors démo. Journal : des nombres seulement. `DiscordGuildClient.setPlanRole` lève sur HTTP en erreur (hors 404) ou panne réseau : `discordFailed` compte vraiment, `trialEndHandledAt` reste posé (resynchronisation admin). `removePlanRoles` ne lève pas, renvoie `false` ; suppression de compte → `warn` avec le discordId pour un retrait à la main (N2 #1046) |

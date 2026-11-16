@@ -18,6 +18,7 @@ import { UsersApi } from '../../core/api/users.api';
 import { TradesApi } from '../../core/api/trades.api';
 import { SetupsStore } from '../../core/stores/setups.store';
 import { AnalyticsApi } from '../../core/api/analytics.api';
+import TEMPLATE from './profile.component.html?raw';
 
 type Prefs = { currency: string; notificationsEmail: boolean; debriefAutomatic: boolean; marketingConsent: boolean };
 
@@ -68,5 +69,12 @@ describe('Profil : préférences e-mail non enregistrées (F14 #1047)', () => {
     user.set({ ...user(), notificationsEmail: false });
     fixture.detectChanges();
     expect(cmp.prefNotifications()).toBe(false);
+  });
+});
+
+// N1 (#1048) : la case couvre aussi le récap du soir (17h30), qui la respecte désormais.
+describe('Profil : texte de « Notifications email » (N1 #1048)', () => {
+  it('nomme les débriefs hebdo, les récaps du soir et les alertes importantes', () => {
+    expect(TEMPLATE).toContain('Débriefs hebdo, récaps du soir et alertes importantes');
   });
 });

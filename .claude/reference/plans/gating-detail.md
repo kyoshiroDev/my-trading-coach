@@ -24,7 +24,8 @@
 - **Weekly Debrief** : controller `PremiumGuard` **ET** cron `getEligibleUsers()` doivent matcher → `plan === PREMIUM` ou `role ∈ {ADMIN, BETA_TESTER}` ou essai.
   Le débrief **automatique** (cron dimanche + rattrapage lundi + régénération admin « tous ») ne vise
   que ceux qui ont **tradé dans la semaine** (`getEligibleUsers(refDate)`, SCA-B5-08, décision du
-  2026-10-07) : semaine vide = ni appel IA ni e-mail. La génération manuelle depuis l'app reste ouverte.
+  2026-10-07) : semaine vide = ni appel IA ni e-mail. Trade = trade **clôturé** (#1056) : une semaine
+  de positions ouvertes compte comme vide. La génération manuelle depuis l'app reste ouverte.
 - **Notifications push des traders (#666)** : les plans ne changent pas, le push relaie seulement
   ce que le plan donne déjà. Types `PROP_RULES`, `BEHAVIOR`, `RECAP` = Premium (`PUSH_PREMIUM_TYPES`,
   `@mtc/shared`), `CONNECTION` (connexion Tradovate à renouveler) = **gratuit**, la synchro Tradovate
