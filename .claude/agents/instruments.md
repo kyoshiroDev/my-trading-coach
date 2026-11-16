@@ -8,7 +8,7 @@ tools: Read, Grep, Glob, Bash
 
 ## Vérification d'un diff
 
-Appelé comme vérificateur : tu lis seulement le diff de ton domaine (`git diff origin/dev...HEAD -- libs/shared apps/api-mytradingcoach/src/modules/trades apps/api-mytradingcoach/src/modules/analytics`), les règles de cet agent et, dans l'index en bas, les seules références utiles au diff. Pas les agents des autres domaines. Tu ne modifies rien. Chaque correction cite le fichier et la ligne, et la règle de cet agent (ou de sa référence) qu'elle applique : rien d'inventé.
+Appelé comme vérificateur : tu lis seulement les parties du diff qui calculent un P&L, des frais, un R/R, un drawdown ou des stats de trades, quel que soit le module (souvent `libs/shared`, et dans `apps/api-mytradingcoach/src/modules/` : `trades`, `analytics`, `debrief`, `session`, `accounts` ; `git diff origin/dev...HEAD` puis les fichiers concernés), et les règles de cet agent (pas de fichier de référence propre : l'agent est entier). Pas les agents des autres domaines. Tu ne modifies rien. Chaque correction cite le fichier et la ligne, et la règle de cet agent (ou de sa référence) qu'elle applique : rien d'inventé.
 
 1. P&L stocké brut, net calculé à la lecture (`netPnl`) ; jamais les frais comptés deux fois.
 2. Le P&L réalisé du broker prime sur le recalcul.

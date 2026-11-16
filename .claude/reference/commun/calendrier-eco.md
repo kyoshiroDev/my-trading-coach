@@ -13,7 +13,7 @@
   `getEventsFromDb` le masque aussi à la lecture (lignes déjà en base). `isReleased` = `actual !== null`
   après ce filtre.
 - L'upsert resynchronise heure, impact, prévision, précédent, unité et `actual` (pas seulement `actual`) :
-  FMP révise ses prévisions après coup. La clé reste `(date, name, currency)`.
+  FMP révise ses prévisions après coup. La clé est `(date, name, currency, country)` depuis C6 (#1046, décision du 2026-11-15 : clé élargie au pays, historique fusionné gardé tel quel).
 - Traduction des libellés (`translateEventNames`) **par lots de 15**, `max_tokens: 1024` par lot. Un seul
   appel à 300 tokens tronquait le JSON des journées chargées → rien traduit et nouvel appel à chaque
   polling (toutes les minutes). Un lot illisible n'empêche pas les autres.

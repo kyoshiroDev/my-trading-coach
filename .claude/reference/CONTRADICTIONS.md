@@ -124,3 +124,11 @@ domaine touché ; le relecteur lit le tableau de routage et les références. Li
 2. `CLAUDE.md`, puis les agents concernés dans `.claude/agents/` (plans, angular, nestjs, astro, prisma, design, security, tests, deploy, instruments).
 - Donner « OK à 100 % » s'il reste la moindre correction, un test non lancé ou une décision « Pour Greg » en attente ; merger ou approuver une PR, ouvrir une PR vers `main` sans demande explicite (voir « Ouverture des PR »).
 ```
+
+## Référence périmée corrigée pendant le test à blanc (étape 5)
+
+**Raison** : décision du 2026-11-15 (lot 3, C6 : clé unique `EcoEvent` élargie au pays, migration `20261116090000_eco_event_country_key`). Ligne d'origine (`nestjs.md`, « Calendrier éco : données FMP… ») :
+
+```text
+FMP révise ses prévisions après coup. La clé reste `(date, name, currency)`.
+```
