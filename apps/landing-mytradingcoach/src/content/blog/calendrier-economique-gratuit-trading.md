@@ -3,7 +3,7 @@ title: "Calendrier économique gratuit : t'en servir sans te faire surprendre"
 seoTitle: "Calendrier économique gratuit pour le trading"
 description: "À quoi sert un calendrier économique quand on trade (NFP, FOMC, CPI), comment l'utiliser avant la séance et pourquoi un calendrier générique ne suffit pas."
 publishDate: 2026-07-23
-updatedDate: 2026-11-16
+updatedDate: 2026-11-17
 tags: ["calendrier économique", "news", "gratuit"]
 faq:
   - question: "À quoi sert un calendrier économique en trading ?"
@@ -12,6 +12,8 @@ faq:
     answer: "Les plus suivies sont le rapport sur l'emploi (NFP), les décisions de taux de la Fed (FOMC) et l'inflation (CPI). Selon ton actif, d'autres comptent aussi : PMI, ventes au détail, inscriptions au chômage."
   - question: "À quelle heure tombe le NFP ?"
     answer: "En général le premier vendredi du mois, à 8h30 heure de New York, ce qui fait souvent 14h30 à Paris. Vérifie toujours la date sur le calendrier officiel du Bureau of Labor Statistics."
+  - question: "Quelle publication compte pour les futures sur le pétrole ?"
+    answer: "Le rapport hebdomadaire de l'EIA sur les stocks de pétrole, publié en général le mercredi à 10h30 heure de New York (souvent 16h30 à Paris), est suivi par les traders de pétrole, en plus des annonces macro générales."
   - question: "Le calendrier économique de MyTradingCoach est-il gratuit ?"
     answer: "Oui. Il est filtré sur les actifs que tu déclares et inclus dans le plan gratuit, sans carte bancaire."
 sources:
@@ -24,6 +26,9 @@ sources:
   - title: "Federal Reserve, calendrier des réunions du FOMC"
     url: "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm"
     consulted: 2026-11-16
+  - title: "EIA, calendrier du rapport hebdomadaire sur le pétrole (Weekly Petroleum Status Report)"
+    url: "https://www.eia.gov/petroleum/supply/weekly/schedule.php"
+    consulted: 2026-11-17
 ---
 
 <p>
@@ -47,6 +52,16 @@ Un calendrier économique liste les publications de données macro et les évén
 </ul>
 <p>
 Il y en a d'autres (PMI, ventes au détail, chômage hebdomadaire), mais si tu ne devais en retenir que trois, ce sont ceux-là.
+</p>
+
+<h2>Selon ton contrat futures</h2>
+<ul>
+<li><strong>Indices (Nasdaq, S&P 500, Dow, Russell)</strong> : emploi (NFP), inflation (CPI) et décisions de la Fed (FOMC) sont les rendez-vous les plus suivis.</li>
+<li><strong>Pétrole (CL, MCL)</strong> : en plus des annonces macro, le rapport hebdomadaire de l'EIA sur les stocks de pétrole, en général le mercredi à 10h30 heure de New York (souvent 16h30 à Paris), avec des exceptions les semaines de jours fériés.</li>
+<li><strong>Or (GC, MGC) et devises (6E, 6B…)</strong> : souvent suivis autour des mêmes publications macro américaines ; pour les devises, les annonces de la banque centrale du pays concerné comptent aussi.</li>
+</ul>
+<p>
+Le calendrier dit quand tombe une publication, pas dans quel sens le marché va bouger.
 </p>
 
 <h2>L'utiliser, ce n'est pas trader la news</h2>

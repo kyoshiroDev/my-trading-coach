@@ -3,7 +3,7 @@ title: "Importer ses trades Tradovate dans un journal (sans se prendre la tête 
 seoTitle: "Importer ses trades Tradovate dans un journal de trading"
 description: "Comment exporter ses trades depuis Tradovate et les importer proprement dans un journal, avec les frais exacts. La méthode que peu de gens expliquent."
 publishDate: 2026-07-14
-updatedDate: 2026-11-16
+updatedDate: 2026-11-17
 tags: ["tradovate", "import", "prop firm", "futures"]
 faq:
   - question: "Comment importer ses trades Tradovate dans un journal ?"
@@ -14,6 +14,8 @@ faq:
     answer: "Souvent parce que la période choisie n'affichait aucune ligne au moment de l'export. Vérifie que la table montre bien tes trades avant de télécharger le fichier."
   - question: "L'import Tradovate est-il gratuit dans MyTradingCoach ?"
     answer: "Oui. L'import CSV Tradovate et la synchro Tradovate en lecture seule sont inclus dans le plan gratuit, avec trades illimités."
+  - question: "Faut-il choisir entre la synchro et l'export CSV ?"
+    answer: "Non. La synchro est la plus simple au quotidien : tes trades arrivent seuls, avec leurs frais. L'export CSV reste utile pour reprendre un historique ou si tu préfères ne pas connecter ton compte."
 ---
 
 <p>
@@ -62,6 +64,18 @@ Petit avertissement qui m'a fait perdre du temps : si tu exportes sans vérifie
 <h2>Et si tu ne mets pas de stop loss ?</h2>
 <p>
 Beaucoup de scalpeurs entrent et sortent à la main, sans stop ni take profit posés. Dans ce cas, aucun export ne pourra te donner un ratio risque/rendement, puisqu'il n'y a jamais eu de stop. C'est normal, ce n'est pas un bug de l'import. Un bon journal doit au moins te le dire clairement au lieu d'afficher des cases vides sans explication.
+</p>
+
+<h2>Synchro ou export CSV : lequel choisir</h2>
+<p>
+Tu as deux façons de faire entrer tes trades Tradovate dans un journal. Elles ne s'excluent pas.
+</p>
+<ul>
+<li><strong>La synchro en lecture seule</strong> : tu connectes ton compte une fois, puis tes trades arrivent seuls, avec les frais de chaque exécution. Rien à faire après chaque séance, et en prop firm ta marge avant le plancher est suivie pendant la séance. Limite : il faut accepter de connecter ton compte (la connexion ne peut passer aucun ordre et ne voit jamais ton mot de passe).</li>
+<li><strong>L'export CSV</strong> : aucune connexion à ton compte, utile pour reprendre un historique. Limite : à refaire à chaque fois, en pensant aux deux fichiers (Performance et Cash history).</li>
+</ul>
+<p>
+Si tu trades tous les jours, la synchro t'évite l'oubli et la corvée. Si tu veux analyser une période passée, ou si tu préfères ne rien connecter, l'export suffit. Dans les deux cas, vérifie que ton journal compte les frais.
 </p>
 
 <h2>Ce que j'en ai fait dans MyTradingCoach</h2>

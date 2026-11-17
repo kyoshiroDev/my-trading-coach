@@ -96,3 +96,5 @@ Verdict du relecteur, fichiers, mesures avant/après, pages ou données exclues 
 - 2026-11-17, après la PR #1080 (phase 3, mergée) : « continue », pris comme « GO phase 4 » (même lecture que pour la phase 2, validée par le relecteur).
 
 - 2026-11-17, après la PR #1081 (phase 4, mergée) : « continue », pris comme « GO phase 5 » (même lecture que pour les phases 2 et 4).
+
+- 2026-11-17, après la PR #1082 (phase 5) : « pourquoi faire des brouillons d'articles non publiés explique moi ne code rien », puis « supprime les 4 brouillons » (interrompu), « si on fusionner leur contenu dans les articles existants ça ameliore la SEO? », puis « fusionne Tradovate et calendrier, supprime les deux autres ».
