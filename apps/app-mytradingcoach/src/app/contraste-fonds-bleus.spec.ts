@@ -54,17 +54,21 @@ describe('Contraste du texte sur les fonds bleus (#1085)', () => {
     expect(fautifs, 'texte clair sur un fond bleu : utiliser var(--primary)').toEqual([]);
   });
 
+  // Fond au repos sur --primary, fond au survol sur --primary-hover (le défaut d'origine était un survol
+  // en --blue-bright, couleur du texte héritée de la règle de base).
   it.each([
-    ['features/accounts/account-plan-wizard/account-plan-wizard.component.css', '.apw-card.primary'],
-    ['features/dashboard/components/session-live/components/live-prop-firm/live-prop-firm.component.css', '.pf-plan-cta-btn'],
-    ['shared/components/premium-lock/premium-lock.component.css', '.pl-btn'],
-    ['features/today-session/results-share/results-share.component.css', '.rs-primary'],
-    ['features/checkout/checkout-page.component.css', '.pay'],
-  ])('%s : %s sur --primary', (fichier, selecteur) => {
+    ['features/accounts/account-plan-wizard/account-plan-wizard.component.css', '.apw-card.primary', '.apw-card.primary:hover:not(:disabled)'],
+    ['features/dashboard/components/session-live/components/live-prop-firm/live-prop-firm.component.css', '.pf-plan-cta-btn', '.pf-plan-cta-btn:hover'],
+    ['shared/components/premium-lock/premium-lock.component.css', '.pl-btn', '.pl-btn:hover'],
+    ['features/today-session/results-share/results-share.component.css', '.rs-primary', '.rs-primary:hover:not(:disabled)'],
+    ['features/checkout/checkout-page.component.css', '.pay', '.pay:hover:not(:disabled)'],
+  ])('%s : %s sur --primary, survol sur --primary-hover', (fichier, repos, survol) => {
     const css = sansCommentaires(readFileSync(join(__dirname, fichier), 'utf-8'));
-    const echappe = selecteur.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const corps = css.match(new RegExp(`(?:^|\\})\\s*${echappe}\\s*\\{([^}]*)\\}`))?.[1] ?? '';
-    expect(corps, `${selecteur} introuvable`).not.toBe('');
-    expect(corps).toMatch(/background\s*:\s*var\(--primary\)/);
+    const regle = (selecteur: string) => {
+      const echappe = selecteur.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      return css.match(new RegExp(`(?:^|\\})\\s*${echappe}\\s*\\{([^}]*)\\}`))?.[1] ?? '';
+    };
+    expect(regle(repos), `${repos} introuvable`).toMatch(/background\s*:\s*var\(--primary\)/);
+    expect(regle(survol), `${survol} introuvable`).toMatch(/background\s*:\s*var\(--primary-hover\)/);
   });
 });
