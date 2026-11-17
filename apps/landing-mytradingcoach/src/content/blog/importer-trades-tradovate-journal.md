@@ -83,7 +83,7 @@ Si tu trades tous les jours, la synchro t'évite l'oubli et la corvée. Si tu ve
 J'ai construit l'import Tradovate autour de ce constat : les frais doivent être exacts, pas devinés. Tu déposes ton fichier Performance, tu ajoutes ton Cash history, et le calcul se fait tout seul. Zéro saisie manuelle, même sur des centaines de trades.
 </p>
 <p>
-Encore plus simple : la synchro Tradovate. Tu connectes ton compte en lecture seule (MyTradingCoach ne peut passer aucun ordre), et tes trades arrivent tout seuls avec leurs frais, sans fichier. Le reste de l'app (journal, historique par semaine, note d'exécution, marge avant le plancher de ta prop firm) tourne ensuite sur ces données propres.
+Tu peux aussi connecter ton compte (voir plus haut) : le reste de l'app (journal, historique par semaine, note d'exécution, marge avant le plancher de ta prop firm) tourne ensuite sur ces données propres.
 </p>
 <p>
 C'est gratuit, sans limite de trades, et tu peux <a href="{APP_URL}/register">tester avec ton propre export</a> en deux minutes. Si tu veux comprendre pourquoi un journal fiable change ta lecture des chiffres, jette un œil à mon article sur <a href="/blog/win-rate-trading">le win rate et ce qu'il cache</a>.

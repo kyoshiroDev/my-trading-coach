@@ -56,7 +56,7 @@ Il y en a d'autres (PMI, ventes au détail, chômage hebdomadaire), mais si tu n
 
 <h2>Selon ton contrat futures</h2>
 <ul>
-<li><strong>Indices (Nasdaq, S&P 500, Dow, Russell)</strong> : emploi (NFP), inflation (CPI) et décisions de la Fed (FOMC) sont les rendez-vous les plus suivis.</li>
+<li><strong>Indices (Nasdaq, S&P 500, Dow, Russell)</strong> : les trois rendez-vous ci-dessus (NFP, CPI, FOMC).</li>
 <li><strong>Pétrole (CL, MCL)</strong> : en plus des annonces macro, le rapport hebdomadaire de l'EIA sur les stocks de pétrole, en général le mercredi à 10h30 heure de New York (souvent 16h30 à Paris), avec des exceptions les semaines de jours fériés.</li>
 <li><strong>Or (GC, MGC) et devises (6E, 6B…)</strong> : souvent suivis autour des mêmes publications macro américaines ; pour les devises, les annonces de la banque centrale du pays concerné comptent aussi.</li>
 </ul>
