@@ -88,6 +88,13 @@ export class AdminUsersController {
     return this.usersService.offerPremium(id, dto.days, admin.id);
   }
 
+  /** Retire un Premium offert par l'admin en cours (B10 #1064) ; jamais un abonnement Stripe. */
+  @Delete(':id/offer-premium')
+  @HttpCode(HttpStatus.OK)
+  removeOfferedPremium(@Param('id') id: string, @CurrentUser() admin: { id: string }) {
+    return this.usersService.removeOfferedPremium(id, admin.id);
+  }
+
   @Post(':id/beta')
   async assignBetaRole(@Param('id') id: string) {
     await this.usersService.setRole(id, 'BETA_TESTER');

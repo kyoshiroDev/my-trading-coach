@@ -302,6 +302,10 @@ export class AdminApi {
   offerPremium(id: string, days?: number) {
     return this.http.post<{ data: { trialEndsAt: string } }>(`${this.usersBase}/${id}/offer-premium`, days ? { days } : {});
   }
+  /** Retire un Premium offert par l'admin en cours (B10 #1064) ; `trialEndsAt` = essai d'inscription rendu, sinon null. */
+  removeOfferedPremium(id: string) {
+    return this.http.delete<{ data: { trialEndsAt: string | null } }>(`${this.usersBase}/${id}/offer-premium`);
+  }
   stats()               { return this.http.get<{ data: AdminStats }>(`${this.usersBase}/stats`); }
 
   // Offre fondateur et codes partenaires (#525)

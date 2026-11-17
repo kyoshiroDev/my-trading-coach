@@ -266,3 +266,43 @@ describe('Fiche admin — date de fin annoncée (A6 #1064)', () => {
   });
 });
 
+/** B10 (#1064, décision du 16/11) : « Retirer le Premium offert », seulement pour un Premium offert par l'admin. */
+describe('Fiche admin — retirer le Premium offert (B10 #1064)', () => {
+  beforeEach(() => { TestBed.resetTestingModule(); vi.clearAllMocks(); });
+  const offeredData = () => makeData({
+    trialEndsAt: new Date(Date.now() + 20 * DAY_MS).toISOString(), trialSource: 'ADMIN', offeredPremium: true,
+  });
+  const removeBtn = (el: HTMLElement) => el.querySelector('[data-testid="remove-offer"]') as HTMLButtonElement | null;
+
+  it('sans Premium offert (gratuit, essai d’inscription) : aucun bouton', async () => {
+    expect(removeBtn((await render(makeData())).el)).toBeNull();
+    TestBed.resetTestingModule();
+    const signup = makeData({ trialEndsAt: new Date(Date.now() + 4 * DAY_MS).toISOString(), trialSource: 'SIGNUP' });
+    expect(removeBtn((await render(signup)).el)).toBeNull();
+  });
+
+  it('Premium offert : confirmation, DELETE, toast et rafraîchissement', async () => {
+    confirm.ask.mockResolvedValue(true);
+    const { fixture, httpMock, el } = await render(offeredData());
+    removeBtn(el)!.click();
+    await fixture.whenStable();
+    expect(confirm.ask).toHaveBeenCalledWith(expect.objectContaining({ title: 'Retirer le Premium offert ?' }));
+    const req = httpMock.expectOne(`${URL}/offer-premium`);
+    expect(req.request.method).toBe('DELETE');
+    req.flush({ data: { trialEndsAt: null } });
+    fixture.detectChanges();
+    httpMock.expectOne(URL).flush({ data: makeData() });
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(el.textContent).toContain('Premium offert retiré');
+  });
+
+  it('annuler la confirmation : aucun appel', async () => {
+    confirm.ask.mockResolvedValue(false);
+    const { fixture, httpMock, el } = await render(offeredData());
+    removeBtn(el)!.click();
+    await fixture.whenStable();
+    httpMock.expectNone(`${URL}/offer-premium`);
+  });
+});
+

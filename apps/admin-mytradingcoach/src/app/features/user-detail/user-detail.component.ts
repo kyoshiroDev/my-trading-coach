@@ -260,6 +260,36 @@ export class UserDetailComponent {
     });
   }
 
+  // ── Retirer le Premium offert (B10 #1064) ──
+  protected readonly removingOffer = signal(false);
+
+  protected async removeOfferedPremium(): Promise<void> {
+    const i = this.data()?.identity;
+    if (!i || !this.offeredUntil() || this.removingOffer()) return;
+    const confirmed = await this.confirm.ask({
+      title: 'Retirer le Premium offert\u00a0?',
+      message: `${i.email} perd tout de suite les jours offerts depuis l’admin. Un essai d’inscription encore en cours est gardé.`,
+      confirmLabel: 'Retirer',
+      danger: true,
+    });
+    if (!confirmed) return;
+    this.removingOffer.set(true);
+    this.api.removeOfferedPremium(i.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (res) => {
+        this.removingOffer.set(false);
+        const until = res.data.trialEndsAt;
+        this.showToast(until
+          ? `Premium offert retiré, essai d’inscription jusqu’au ${frDate(new Date(until))}`
+          : 'Premium offert retiré, compte en gratuit');
+        this.detail.reload();
+      },
+      error: (err) => {
+        this.removingOffer.set(false);
+        this.showToast(apiErrorMessage(err, 'Le Premium offert n’a pas pu être retiré. Réessaie.'), true);
+      },
+    });
+  }
+
   // ── Compte interne (#823) ──
   /** Les comptes ADMIN sont déjà hors statistiques, et l'API refuse de les modifier. */
   protected readonly internalBlocked = computed(() =>

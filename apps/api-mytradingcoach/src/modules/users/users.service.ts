@@ -192,7 +192,7 @@ export class UsersService {
 
   // ── Admin : modale « Modifier » (nom, compte interne) ─────────────────────
 
-  /** Ni rôle ni plan ici (A1/B2 #1064) : voir `setRole` et `offerPremium`. */
+  /** Ni rôle ni plan ici (A1/B2 #1064) : voir `setRole`, `offerPremium`, `removeOfferedPremium`. */
   async adminUpdate(targetId: string, dto: { name?: string; isInternal?: boolean }) {
     const target = await this.prisma.user.findUnique({
       where: { id: targetId },
@@ -580,6 +580,45 @@ export class UsersService {
       `Premium offert | admin: ${adminId ?? 'inconnu'}, user: ${userId}, fin: ${trialEndsAt.toISOString()}`,
     );
     return { trialEndsAt: trialEndsAt.toISOString() };
+  }
+
+  /**
+   * « Retirer le Premium offert » (B10 #1064, décision du 16/11) : seulement un Premium offert par
+   * l'admin encore en cours (`trialSource` ADMIN, `trialEndsAt` futur), jamais un abonnement Stripe
+   * (même en pause). L'accès tombe tout de suite (`trialEndsAt` = maintenant) ; si l'offre prolongeait
+   * l'essai d'inscription encore en cours, l'essai d'inscription est rendu (`signupTrialEndsAt`, intact
+   * depuis #769) : seuls les jours offerts par l'admin sont retirés.
+   */
+  async removeOfferedPremium(userId: string, adminId?: string): Promise<{ trialEndsAt: string | null }> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        isDemo: true, trialSource: true, trialEndsAt: true, signupTrialEndsAt: true,
+        stripeSubscriptionStatus: true,
+      },
+    });
+    if (!user) throw new NotFoundException('Utilisateur introuvable');
+    if (user.isDemo) throw new ConflictException(DEMO_ACCOUNT_LOCKED);
+    const status = user.stripeSubscriptionStatus;
+    if (hasActiveStripeSubscription(status) || status === 'past_due' || status === 'unpaid') {
+      throw new ConflictException('Abonnement Stripe\u00a0: jamais modifié à la main.');
+    }
+    const now = new Date();
+    if (user.trialSource !== TrialSource.ADMIN || !user.trialEndsAt || user.trialEndsAt <= now) {
+      throw new ConflictException('Aucun Premium offert en cours.');
+    }
+
+    const signupEnd = user.signupTrialEndsAt && user.signupTrialEndsAt > now ? user.signupTrialEndsAt : null;
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: signupEnd ? { trialEndsAt: signupEnd, trialSource: TrialSource.SIGNUP } : { trialEndsAt: now },
+    });
+    await this.userCache?.invalidate(userId); // accès relu tout de suite par le JWT
+    await this.realignPremiumAccess(userId);
+    this.logger.log(
+      `Premium offert retiré | admin: ${adminId ?? 'inconnu'}, user: ${userId}, essai d'inscription rendu: ${signupEnd ? signupEnd.toISOString() : 'non'}`,
+    );
+    return { trialEndsAt: signupEnd ? signupEnd.toISOString() : null };
   }
 
   async upgradeToPremium(userId: string) {
