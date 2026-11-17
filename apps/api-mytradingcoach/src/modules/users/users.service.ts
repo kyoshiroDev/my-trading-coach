@@ -23,6 +23,7 @@ import { DiscordGuildClient } from '../discord/discord-guild.client';
 import { RedisService } from '../infra/redis.service';
 import { insightsCooldownKey, insightsKeptKey } from '../ai/insights-cache-keys';
 import { billingCacheKey } from '../stripe/stripe.helpers';
+import { isPremiumAccess } from '../discord/discord-access.util';
 import { REAL_USERS_WHERE } from '../../common/stats/real-users';
 import { premiumAccessWhere, subscriptionStateWhere, subscriptionStatesWhere } from '../../common/stats/subscription-state-where';
 import { emailEquals, escapeLike } from '../../common/utils/email.util';
@@ -453,28 +454,51 @@ export class UsersService {
       throw new ForbiddenException('Impossible de modifier le rôle d’un administrateur');
     }
 
-    // Promotion : promote() génère le code s'il manque, et réutilise l'existant sinon.
     if (role === Role.AMBASSADOR) {
+      // Promotion : promote() génère le code s'il manque, et réutilise l'existant sinon.
       await this.ambassador.promote(current.email);
-      return;
-    }
-
-    // Rétrogradation depuis AMBASSADOR : revoke() vide le code (comportement inchangé).
-    // revoke() force USER ; si la cible est un autre rôle, on l'applique ensuite.
-    if (current.role === Role.AMBASSADOR) {
+    } else if (current.role === Role.AMBASSADOR) {
+      // Rétrogradation depuis AMBASSADOR : revoke() vide le code (comportement inchangé).
+      // revoke() force USER ; si la cible est un autre rôle, on l'applique ensuite.
       await this.ambassador.revoke(current.email);
       if (role !== Role.USER) {
         await this.prisma.user.update({ where: { id: targetUserId }, data: { role } });
       }
       await this.userCache?.invalidate(targetUserId);
-      return;
+    } else {
+      await this.prisma.user.update({
+        where: { id: targetUserId },
+        data: { role },
+      });
+      await this.userCache?.invalidate(targetUserId);
     }
+    // A2/B3 (#1064) : le rôle BETA_TESTER donne le Premium ; tout changement de rôle réaligne
+    // le statut de facturation et le rôle Discord, comme offerPremium.
+    await this.realignPremiumAccess(targetUserId);
+  }
 
-    await this.prisma.user.update({
-      where: { id: targetUserId },
-      data: { role },
+  /**
+   * Après un changement d'accès Premium hors Stripe (rôle, Premium offert retiré) : statut de
+   * facturation relu tout de suite (cache de 5 min vidé) et rôle Discord recalculé. Un échec Redis
+   * ou Discord ne bloque pas l'action : Discord se réaligne à la prochaine liaison ou par la
+   * resynchronisation admin.
+   */
+  private async realignPremiumAccess(userId: string): Promise<void> {
+    try {
+      await this.redisService?.client.del(billingCacheKey(userId));
+    } catch (err: unknown) {
+      this.logger.warn(`Cache de facturation non vidé (user ${userId}) : ${err instanceof Error ? err.message : String(err)}`);
+    }
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { discordId: true, plan: true, role: true, trialEndsAt: true },
     });
-    await this.userCache?.invalidate(targetUserId);
+    if (!user?.discordId || !this.discordGuild) return;
+    try {
+      await this.discordGuild.setPlanRole(user.discordId, isPremiumAccess(user));
+    } catch (err: unknown) {
+      this.logger.warn(`Rôle Discord non réaligné (user ${userId}) : ${err instanceof Error ? err.message : String(err)}`);
+    }
   }
 
   /**
