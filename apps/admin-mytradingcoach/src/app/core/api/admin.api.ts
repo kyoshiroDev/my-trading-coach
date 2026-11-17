@@ -306,6 +306,11 @@ export class AdminApi {
   removeOfferedPremium(id: string) {
     return this.http.delete<{ data: { trialEndsAt: string | null } }>(`${this.usersBase}/${id}/offer-premium`);
   }
+  /** Rôle bêta-testeur (Premium permanent) : POST pour le donner, DELETE pour le retirer (#1064). */
+  setBeta(id: string, on: boolean) {
+    const url = `${this.usersBase}/${id}/beta`;
+    return on ? this.http.post<{ data: { id: string; role: string } }>(url, {}) : this.http.delete<{ data: { id: string; role: string } }>(url);
+  }
   stats()               { return this.http.get<{ data: AdminStats }>(`${this.usersBase}/stats`); }
 
   // Offre fondateur et codes partenaires (#525)

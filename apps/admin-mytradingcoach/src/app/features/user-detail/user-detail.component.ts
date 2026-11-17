@@ -71,6 +71,16 @@ export function offerEndDate(i: Pick<UserDetailData['identity'], 'trialEndsAt'>,
 }
 
 /**
+ * Bouton bêta-testeur désactivé (#1064) : raison, sinon null. Un ambassadeur perdrait son code
+ * (setRole révoque d'abord) : son rôle se retire depuis la page Ambassadeurs. Pure, testable.
+ */
+export function betaBlockReason(i: UserDetailData['identity']): string | null {
+  if (i.isDemo) return 'Compte démo';
+  if (i.role === 'AMBASSADOR') return 'Ambassadeur\u00a0: retirer d’abord le rôle depuis la page Ambassadeurs';
+  return null;
+}
+
+/**
  * Message affiché sous le bouton quand l'offre est impossible : la réservation fondateur en cours
  * (#769) est nommée, avec la date du premier prélèvement quand elle est connue ; sinon la raison du
  * refus. `null` si l'offre est possible. Pure, testable.
@@ -286,6 +296,36 @@ export class UserDetailComponent {
       error: (err) => {
         this.removingOffer.set(false);
         this.showToast(apiErrorMessage(err, 'Le Premium offert n’a pas pu être retiré. Réessaie.'), true);
+      },
+    });
+  }
+
+  // ── Rôle bêta-testeur (#1064) : la modale « Modifier » ne change plus le rôle ──
+  protected readonly isBeta = computed(() => this.data()?.identity.role === 'BETA_TESTER');
+  protected readonly betaBlocked = computed(() => {
+    const i = this.data()?.identity;
+    return i ? betaBlockReason(i) : null;
+  });
+  protected readonly betaSaving = signal(false);
+
+  protected async toggleBeta(): Promise<void> {
+    const i = this.data()?.identity;
+    if (!i || i.role === 'ADMIN' || this.betaBlocked() || this.betaSaving()) return;
+    const on = !this.isBeta();
+    const confirmed = await this.confirm.ask(on
+      ? { title: 'Passer bêta-testeur\u00a0?', message: `${i.email} aura le Premium tant que le compte garde ce rôle. Aucun prélèvement.`, confirmLabel: 'Confirmer' }
+      : { title: 'Retirer le rôle bêta-testeur\u00a0?', message: `${i.email} repasse utilisateur standard et perd le Premium lié au rôle (un essai, un Premium offert ou un abonnement en cours restent).`, confirmLabel: 'Retirer', danger: true });
+    if (!confirmed) return;
+    this.betaSaving.set(true);
+    this.api.setBeta(i.id, on).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: () => {
+        this.betaSaving.set(false);
+        this.showToast(on ? 'Compte passé bêta-testeur' : 'Rôle bêta-testeur retiré');
+        this.detail.reload();
+      },
+      error: (err) => {
+        this.betaSaving.set(false);
+        this.showToast(apiErrorMessage(err, 'Le rôle n’a pas pu être modifié. Réessaie.'), true);
       },
     });
   }

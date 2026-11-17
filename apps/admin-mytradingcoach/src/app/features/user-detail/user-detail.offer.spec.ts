@@ -306,3 +306,51 @@ describe('Fiche admin — retirer le Premium offert (B10 #1064)', () => {
   });
 });
 
+/**
+ * Rôle bêta-testeur depuis la fiche (#1064) : la modale « Modifier » ne change plus le rôle
+ * (décision du 16/11) ; les routes POST/DELETE :id/beta existaient sans bouton.
+ */
+describe('Fiche admin — rôle bêta-testeur (#1064)', () => {
+  beforeEach(() => { TestBed.resetTestingModule(); vi.clearAllMocks(); });
+  const betaBtn = (el: HTMLElement) => el.querySelector('[data-testid="beta-toggle"]') as HTMLButtonElement;
+
+  it('USER : « Passer bêta-testeur » → confirmation puis POST', async () => {
+    confirm.ask.mockResolvedValue(true);
+    const { fixture, httpMock, el } = await render(makeData());
+    expect(betaBtn(el).textContent?.trim()).toBe('Passer bêta-testeur');
+    betaBtn(el).click();
+    await fixture.whenStable();
+    const req = httpMock.expectOne(`${URL}/beta`);
+    expect(req.request.method).toBe('POST');
+    req.flush({ data: { id: 'u1', role: 'BETA_TESTER' } });
+    fixture.detectChanges();
+    httpMock.expectOne(URL).flush({ data: makeData({ role: 'BETA_TESTER' }) });
+  });
+
+  it('BETA_TESTER : « Retirer bêta » → confirmation puis DELETE', async () => {
+    confirm.ask.mockResolvedValue(true);
+    const { fixture, httpMock, el } = await render(makeData({ role: 'BETA_TESTER' }));
+    expect(betaBtn(el).textContent?.trim()).toBe('Retirer bêta');
+    betaBtn(el).click();
+    await fixture.whenStable();
+    const req = httpMock.expectOne(`${URL}/beta`);
+    expect(req.request.method).toBe('DELETE');
+    req.flush({ data: { id: 'u1', role: 'USER' } });
+    fixture.detectChanges();
+    httpMock.expectOne(URL).flush({ data: makeData() });
+  });
+
+  it.each([
+    ['ambassadeur (le code serait retiré)', { role: 'AMBASSADOR' as const }],
+    ['démo', { isDemo: true }],
+  ])('bouton désactivé avec info-bulle : %s', async (_l, patch) => {
+    const { el } = await render(makeData(patch));
+    expect(betaBtn(el).disabled).toBe(true);
+    expect(betaBtn(el).getAttribute('title')).toBeTruthy();
+  });
+
+  it('ADMIN : aucun bouton', async () => {
+    const { el } = await render(makeData({ role: 'ADMIN' }));
+    expect(betaBtn(el)).toBeNull();
+  });
+});

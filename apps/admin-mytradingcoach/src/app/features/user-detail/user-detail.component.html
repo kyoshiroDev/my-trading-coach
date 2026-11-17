@@ -123,6 +123,16 @@
                   (click)="removeOfferedPremium()">{{ removingOffer() ? 'En cours…' : 'Retirer le Premium offert' }}</button>
               </div>
             }
+            @if (d.identity.role !== 'ADMIN') {
+              <!-- Rôle bêta-testeur (#1064) : la modale « Modifier » ne change plus le rôle -->
+              <div class="srow ud-offer">
+                <span class="s-l">Bêta-testeur <span class="ud-internal-hint">Premium tant que le rôle est gardé</span></span>
+                <button type="button" class="btn" data-testid="beta-toggle"
+                  [disabled]="!!betaBlocked() || betaSaving()"
+                  [attr.title]="betaBlocked()"
+                  (click)="toggleBeta()">{{ betaSaving() ? 'En cours…' : (isBeta() ? 'Retirer bêta' : 'Passer bêta-testeur') }}</button>
+              </div>
+            }
             <!-- Compte interne (#823) : tests de l'équipe, exclus des statistiques admin -->
             <div class="srow ud-internal">
               <span class="s-l">Compte interne <span class="ud-internal-hint">hors statistiques</span></span>
