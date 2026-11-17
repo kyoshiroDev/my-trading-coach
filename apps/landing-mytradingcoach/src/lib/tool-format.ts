@@ -10,9 +10,10 @@ export function parseAmount(raw: string | null | undefined): number | null {
   return /^-?\d*\.?\d+$/.test(s) ? Number(s) : Number.NaN;
 }
 
-const NNBSP = ' ';
+// Espace insécable classique : l'espace fine (U+202F) est quasi invisible en Inter dans les phrases.
+const NNBSP = '\u00a0';
 
-/** 1234.5 → « 1 234,5 $ » (deux décimales au plus, espace fine insécable). */
+/** 1234.5 → « 1 234,5 $ » (deux décimales au plus, espaces insécables). */
 export function formatAmount(n: number, currency = '$'): string {
   const v = n.toLocaleString('fr-FR', { maximumFractionDigits: 2 }).replace(/[\s  ]/g, NNBSP);
   return `${v}${NNBSP}${currency}`;
