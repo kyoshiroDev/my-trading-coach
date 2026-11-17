@@ -116,10 +116,10 @@ h1 { font-family: var(--font-display); font-weight: 700; font-size: 28px; letter
 
 .pay {
   display: block; width: 100%; border: 0; border-radius: 12px; padding: 14px 18px;
-  background: var(--blue); color: #fff; font-family: var(--font-body); font-weight: 600; font-size: 15px;
+  background: var(--primary); color: #fff; font-family: var(--font-body); font-weight: 600; font-size: 15px; /* 5,2:1, sur --blue 3,7:1 (#1085) */
   text-align: center; text-decoration: none; cursor: pointer; transition: background 0.15s, transform 0.15s;
 }
-.pay:hover:not(:disabled) { background: #2f74e8; transform: translateY(-1px); }
+.pay:hover:not(:disabled) { background: var(--primary-hover); transform: translateY(-1px); }
 .pay:disabled { opacity: 0.55; cursor: not-allowed; }
 .error { color: var(--pay-danger); font-size: 13px; margin: 12px 0 0; min-height: 1em; }
 .error:empty { margin: 0; }

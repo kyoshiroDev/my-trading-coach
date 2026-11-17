@@ -160,6 +160,9 @@
   de 360 à 1024 px.
 - **Contrastes** : texte blanc sur un fond plein → `background: var(--primary)` (survol
   `--primary-hover`), jamais `var(--blue)` / `var(--blue-bright)` (trop clairs sous du blanc).
+  Verrouillé dans l'app par `src/app/contraste-fonds-bleus.spec.ts` (#1085) : aucun texte clair
+  (`--text*`, blanc) dans une règle à fond `--blue` / `--blue-bright` plein, et Payer, cadenas Premium,
+  partage de résultats, assistant de plan et plan en séance live sur `--primary` / `--primary-hover`.
 - Les couleurs restent propres à chaque app : l'admin suit sa maquette (teal, Geist), seules la
   structure et l'accessibilité sont partagées.
 - Tests : `pnpm nx test front-ui` / `pnpm nx test front-auth` (config Vitest propre à chaque lib :
