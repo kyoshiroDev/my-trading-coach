@@ -188,12 +188,10 @@ export class UsersService {
     return { users, total, page, limit };
   }
 
-  // ── Admin : update plan/role/name ─────────────────────────────────────────
+  // ── Admin : modale « Modifier » (nom, compte interne) ─────────────────────
 
-  async adminUpdate(
-    targetId: string,
-    dto: { name?: string; plan?: Plan; role?: Role; isInternal?: boolean },
-  ) {
+  /** Ni rôle ni plan ici (A1/B2 #1064) : voir `setRole` et `offerPremium`. */
+  async adminUpdate(targetId: string, dto: { name?: string; isInternal?: boolean }) {
     const target = await this.prisma.user.findUnique({
       where: { id: targetId },
       select: { role: true },
@@ -202,17 +200,12 @@ export class UsersService {
     if (target.role === Role.ADMIN) {
       throw new ForbiddenException('Impossible de modifier un administrateur');
     }
-    if (dto.role === Role.ADMIN) {
-      throw new ForbiddenException(
-        'Promotion au rôle ADMIN impossible via API',
-      );
-    }
     const updated = await this.prisma.user.update({
       where: { id: targetId },
-      data: dto,
+      data: { name: dto.name, isInternal: dto.isInternal },
       select: ADMIN_USER_SELECT,
     });
-    await this.userCache?.invalidate(targetId); // plan / rôle relus par le JWT (SCA-B3-01)
+    await this.userCache?.invalidate(targetId); // nom relu par le JWT (SCA-B3-01)
     return updated;
   }
 

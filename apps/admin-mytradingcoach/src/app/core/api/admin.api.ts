@@ -19,6 +19,8 @@ export interface AdminUser {
   lastSeenAt: string | null; lastLoginAt: string | null; createdAt: string;
   /** UTM d'inscription (#625), null = non renseigné. */
   acquisitionSource?: string | null; acquisitionMedium?: string | null; acquisitionCampaign?: string | null;
+  /** Compte interne (#823), exclu des statistiques : renvoyé par la liste (`ADMIN_USER_SELECT`). */
+  isInternal?: boolean;
   /** Abonnés Stripe seulement (#525) : place fondateur et code partenaire, pour le montant réel. */
   founderSeat?: { number: number; status: FounderSeatStatus } | null;
   partnerRedemption?: {
@@ -291,7 +293,8 @@ export class AdminApi {
     }
     return this.http.get<{ data: { users: AdminUser[]; total: number } }>(this.usersBase, { params });
   }
-  update(id: string, dto: { name?: string; plan?: Plan; role?: 'USER' | 'BETA_TESTER' | 'AMBASSADOR'; isInternal?: boolean }) {
+  /** Modale « Modifier » et interrupteur « Compte interne » : ni rôle ni plan (A1/B2 #1064). */
+  update(id: string, dto: { name?: string; isInternal?: boolean }) {
     return this.http.patch<{ data: AdminUser }>(`${this.usersBase}/${id}`, dto);
   }
   delete(id: string)    { return this.http.delete<void>(`${this.usersBase}/${id}`); }

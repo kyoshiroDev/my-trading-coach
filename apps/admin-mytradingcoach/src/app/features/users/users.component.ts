@@ -22,8 +22,7 @@ import {
 } from '@lucide/angular';
 import { AdminApi, AdminUser, AdminStats } from '../../core/api/admin.api';
 import { TableSort } from '../../shared/tables/table-sort';
-import { PRICING_EUR } from '../../core/constants/pricing.const';
-import { acquisitionLabel, subscriptionState, type AcquisitionUtm, type Plan } from '@mtc/shared';
+import { acquisitionLabel, subscriptionState, type AcquisitionUtm } from '@mtc/shared';
 import { DialogDirective } from '@mtc/front-ui';
 
 @Component({
@@ -38,7 +37,6 @@ export class UsersComponent implements OnInit {
   protected readonly PencilIcon      = Pencil;
   protected readonly XIcon           = X;
   protected readonly ShieldCheckIcon = ShieldCheck;
-  protected readonly pricing = PRICING_EUR;
 
   private readonly api = inject(AdminApi);
   private readonly router = inject(Router);
@@ -83,9 +81,13 @@ export class UsersComponent implements OnInit {
   );
   protected readonly sortedUsers = this.sort.connect(this.users);
 
+  /**
+   * Modale « Modifier » (A1/B2 #1064) : nom et compte interne seulement. Le rôle passe par la fiche
+   * (bêta) ou la page Ambassadeurs, le plan par « Offrir Premium » ; un abonné Stripe n'est jamais
+   * modifié à la main.
+   */
   protected editName = '';
-  protected editPlan: Plan = 'FREE';
-  protected editRole: 'USER' | 'BETA_TESTER' | 'AMBASSADOR' = 'USER';
+  protected editInternal = false;
 
   ngOnInit() {
     // 1er chargement + chaque changement du filtre de campagne dans l'URL.
@@ -186,16 +188,21 @@ export class UsersComponent implements OnInit {
   protected openEdit(user: AdminUser) {
     this.editUser.set(user);
     this.editName = user.name ?? '';
-    this.editPlan = user.plan;
-    this.editRole = user.role === 'BETA_TESTER' ? 'BETA_TESTER' : user.role === 'AMBASSADOR' ? 'AMBASSADOR' : 'USER';
+    this.editInternal = !!user.isInternal;
   }
   protected closeEdit() { this.editUser.set(null); }
 
   protected saveEdit() {
     const user = this.editUser();
     if (!user) return;
+    // Seulement ce qui a changé ; rien de changé → aucun appel.
+    const dto: { name?: string; isInternal?: boolean } = {};
+    const name = this.editName.trim();
+    if (name && name !== (user.name ?? '')) dto.name = name;
+    if (this.editInternal !== !!user.isInternal) dto.isInternal = this.editInternal;
+    if (Object.keys(dto).length === 0) { this.closeEdit(); return; }
     this.saving.set(true);
-    this.api.update(user.id, { name: this.editName || undefined, plan: this.editPlan, role: this.editRole })
+    this.api.update(user.id, dto)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (r) => { this.users.update((list) => list.map((u) => (u.id === r.data.id ? r.data : u))); this.saving.set(false); this.closeEdit(); },
