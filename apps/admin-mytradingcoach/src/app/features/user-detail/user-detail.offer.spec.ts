@@ -245,3 +245,24 @@ describe('offerBlockReason', () => {
     expect(offerBlockReason(makeData({ subscriptionStatus: 'canceled' }).identity)).toBeNull();
   });
 });
+
+const DAY_MS = 86_400_000;
+const fr = (ms: number) => new Date(ms).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+
+/**
+ * A6 (#1064) : offrir 1 mois pendant l'essai d'inscription annonçait « fin le » maintenant + 30 j,
+ * alors que l'API prolonge à partir de la fin de l'essai (`trialEndsAt`).
+ */
+describe('Fiche admin — date de fin annoncée (A6 #1064)', () => {
+  beforeEach(() => { TestBed.resetTestingModule(); vi.clearAllMocks(); });
+
+  it('essai d’inscription en cours : fin = fin de l’essai + 30 jours, comme l’API', async () => {
+    confirm.ask.mockResolvedValue(false);
+    const trialEnd = Date.now() + 4 * DAY_MS;
+    const { fixture, button } = await render(makeData({ trialEndsAt: new Date(trialEnd).toISOString(), trialSource: 'SIGNUP' }));
+    button().click();
+    await fixture.whenStable();
+    expect(confirm.ask.mock.calls[0][0].message).toContain(`Fin le ${fr(trialEnd + 30 * DAY_MS)}.`);
+  });
+});
+

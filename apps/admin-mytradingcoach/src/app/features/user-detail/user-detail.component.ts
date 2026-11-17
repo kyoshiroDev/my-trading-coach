@@ -62,6 +62,15 @@ export function offerBlockReason(i: UserDetailData['identity']): string | null {
 }
 
 /**
+ * Fin annoncée d'un Premium offert (A6 #1064) : même calcul que `UsersService.offerPremium`,
+ * à partir de `trialEndsAt` s'il est futur (essai d'inscription compris), sinon de maintenant. Pure.
+ */
+export function offerEndDate(i: Pick<UserDetailData['identity'], 'trialEndsAt'>, now = Date.now()): Date {
+  const from = Math.max(now, i.trialEndsAt ? Date.parse(i.trialEndsAt) : 0);
+  return new Date(from + OFFER_DAYS * DAY_MS);
+}
+
+/**
  * Message affiché sous le bouton quand l'offre est impossible : la réservation fondateur en cours
  * (#769) est nommée, avec la date du premier prélèvement quand elle est connue ; sinon la raison du
  * refus. `null` si l'offre est possible. Pure, testable.
@@ -230,8 +239,7 @@ export class UserDetailComponent {
   protected async offerPremium(): Promise<void> {
     const i = this.data()?.identity;
     if (!i || this.offerBlocked() || this.offering()) return;
-    const from = Math.max(Date.now(), this.offeredUntil() ? Date.parse(this.offeredUntil()!) : 0);
-    const end = frDate(new Date(from + OFFER_DAYS * DAY_MS));
+    const end = frDate(offerEndDate(i));
     const confirmed = await this.confirm.ask({
       title: this.offeredUntil() ? 'Prolonger le Premium offert\u00a0?' : 'Offrir 1 mois de Premium\u00a0?',
       message: `Offrir ${OFFER_DAYS} jours de Premium à ${i.email}\u00a0? Fin le ${end}. Aucun prélèvement.`,
