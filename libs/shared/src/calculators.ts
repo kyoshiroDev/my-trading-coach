@@ -62,7 +62,9 @@ export function propFirmMargin(input: PropFirmMarginInput): CalcResult<PropFirmM
   let peak = Math.max(rule.startingBalance, balance);
   if (input.peakBalance != null) {
     if (!finite(input.peakBalance) || input.peakBalance < 0 || tooBig(input.peakBalance)) return fail('Le plus haut solde doit être un montant positif.');
-    if (input.peakBalance < balance) return fail('Le plus haut solde ne peut pas être inférieur au solde actuel.');
+    // Intraday : le plus haut inclut le solde en direct, il ne peut pas être sous le solde actuel.
+    // EOD : le plus haut est une clôture, le solde en séance peut le dépasser (journée gagnante).
+    if (rule.kind === 'trailing_intraday' && input.peakBalance < balance) return fail('Le plus haut solde ne peut pas être inférieur au solde actuel.');
     peak = Math.max(rule.startingBalance, input.peakBalance);
   }
   const { floor, locked } = drawdownFloor(rule, peak - rule.startingBalance);
@@ -123,10 +125,11 @@ export function positionSize(input: PositionSizeInput): CalcResult<PositionSizeR
     riskAmount = (size * risk) / 100;
   }
   riskAmount = roundCents(riskAmount);
-  const riskPerContract = roundCents(stopTicks * tickValue);
+  // Valeur exacte (ZT 7,8125 $ le tick) : l'arrondi au centime ne s'applique qu'aux montants affichés.
+  const exactPerContract = stopTicks * tickValue;
   // Petite marge d'arrondi : 2 contrats × 100,00 $ = 200,00 $ ne doit pas devenir 1,99999.
-  const contracts = Math.floor(riskAmount / riskPerContract + 1e-9);
-  return ok({ riskAmount, riskPerContract, contracts, actualRisk: roundCents(contracts * riskPerContract) });
+  const contracts = Math.floor(riskAmount / exactPerContract + 1e-9);
+  return ok({ riskAmount, riskPerContract: roundCents(exactPerContract), contracts, actualRisk: roundCents(contracts * exactPerContract) });
 }
 
 // ── Risque / rendement ───────────────────────────────────────────────────────────────────────────

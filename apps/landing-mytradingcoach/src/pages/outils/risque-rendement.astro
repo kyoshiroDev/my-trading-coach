@@ -60,7 +60,7 @@ const faq = [
 
     <div class="tl-result" id="tl-result" role="status" aria-live="polite" aria-atomic="true"></div>
     <p class="tl-next" id="tl-next" hidden>
-      Pour comparer ton R/R prévu à ton R/R réel sur tous tes trades&nbsp;:
+      Pour garder le R/R prévu de chaque trade dans ton journal&nbsp;:
       <a href={`${APP_URL}/demo`} data-ga-event="cta_demo" data-ga-place="outil-rr">voir la démo</a> ou
       <a href={`${APP_URL}/register`} data-ga-event="cta_signup" data-ga-place="outil-rr">créer un compte gratuit</a>.
     </p>
@@ -131,7 +131,9 @@ const faq = [
     next.hidden = false;
   }
 
-  document.getElementById('tl-rr-form')?.addEventListener('input', compute);
+  // Recalcul après une courte pause de frappe : le résultat (aria-live) n'est pas relu à chaque caractère.
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  document.getElementById('tl-rr-form')?.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(compute, 300); });
   document.getElementById('tl-rr-form')?.addEventListener('submit', (e) => e.preventDefault());
   compute();
 </script>

@@ -14,7 +14,7 @@ const marginLabel = DRAWDOWN_LABELS.margin.label;
 const faq = [
   {
     question: `Comment se calcule la marge avant le plancher${NB}?`,
-    answer: `Marge = solde actuel − plancher. Le plancher vaut le solde de départ moins la règle de drawdown, puis il monte avec ton plus haut solde si le drawdown est trailing, jusqu'à se figer quand la firme le prévoit.`,
+    answer: `Marge = solde actuel − plancher. Le plancher vaut le solde de départ moins la règle de drawdown, puis il monte avec ton plus haut solde si le drawdown est trailing, jusqu'à se figer quand la firme le prévoit (pris en compte avec les règles du catalogue, pas en saisie manuelle).`,
   },
   {
     question: `Quel plus haut solde dois-je saisir${NB}?`,
@@ -100,7 +100,7 @@ const faq = [
 
     <div class="tl-result" id="tl-result" role="status" aria-live="polite" aria-atomic="true"></div>
     <p class="tl-next" id="tl-next" hidden>
-      Pour suivre cette marge en direct pendant ta séance, avec ton compte Tradovate connecté en lecture seule&nbsp;:
+      Pour suivre ta marge avant le plancher en direct pendant ta séance, avec ton compte Tradovate connecté en lecture seule&nbsp;:
       <a href={`${APP_URL}/demo`} data-ga-event="cta_demo" data-ga-place="outil-marge">voir la démo</a> ou
       <a href={`${APP_URL}/register`} data-ga-event="cta_signup" data-ga-place="outil-marge">créer un compte gratuit</a>.
     </p>
@@ -122,7 +122,7 @@ const faq = [
   import { formatAmount, parseAmount } from '../../lib/tool-format';
 
   type Rule = [string, number, number, number | null, number | null];
-  type Firm = { n: string; pl: { id: string; l: string; ph: { n: string; r: Rule; d: number | null; p: boolean }[] }[] };
+  type Firm = { n: string; pl: { id: string; l: string; ph: { n: string; r: Rule; d: number | null; p: boolean; v: boolean }[] }[] };
 
   const firms: Firm[] = JSON.parse(document.getElementById('tl-plans')?.textContent ?? '[]');
   const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -175,6 +175,7 @@ const faq = [
     balance.value = String(start);
     peak.value = String(start);
     day.value = '';
+    peakHelp.textContent = HELP[kind] ?? '';
   }
 
   function onFirm() {
@@ -244,6 +245,7 @@ const faq = [
         ? `La limite la plus proche est la perte du jour\u00a0: encore ${formatAmount(v.nearest)} avant de l’atteindre.`
         : `La limite la plus proche est le plancher\u00a0: encore ${formatAmount(v.nearest)} avant de l’atteindre.`;
     const parts: Node[] = [label, big, list, msg];
+    if (ph?.v && v.dailyRemaining !== null) parts.push(Object.assign(document.createElement('p'), { className: 'tl-note', textContent: 'La perte du jour de ce plan évolue (paliers ou règle variable)\u00a0: le calcul utilise sa valeur de départ.' }));
     if (ph?.p) parts.push(Object.assign(document.createElement('p'), { className: 'tl-note', textContent: 'Chez cette firme, le moment où le plancher se fige dépend de la plateforme\u00a0: la règle de base est appliquée.' }));
     show(v.breached ? 'alert' : 'ok', parts);
   }
@@ -251,7 +253,9 @@ const faq = [
   firmSel.addEventListener('change', onFirm);
   planSel.addEventListener('change', onPlan);
   phaseSel.addEventListener('change', () => { applyPhase(); compute(); });
-  document.getElementById('tl-margin')?.addEventListener('input', compute);
+  // Recalcul après une courte pause de frappe : le résultat (aria-live) n'est pas relu à chaque caractère.
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  document.getElementById('tl-margin')?.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(compute, 300); });
   document.getElementById('tl-margin')?.addEventListener('submit', (e) => e.preventDefault());
   compute();
 </script>

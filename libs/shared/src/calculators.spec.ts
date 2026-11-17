@@ -19,6 +19,14 @@ describe('propFirmMargin', () => {
     // Sans plus haut saisi : plus grand du départ et du solde.
     expect(val(propFirmMargin({ rule: eod, balance: 50_400 })).floor).toBe(48_400);
   });
+  it('EOD : le solde en séance peut dépasser le plus haut de clôture ; intraday : refusé', () => {
+    expect(val(propFirmMargin({ rule: eod, balance: 50_800, peakBalance: 50_500 }))).toMatchObject({ floor: 48_500, marginToFloor: 2300 });
+    expect(propFirmMargin({ rule: { ...eod, kind: 'trailing_intraday' }, balance: 50_800, peakBalance: 50_500 }).ok).toBe(false);
+    expect(val(propFirmMargin({ rule: { ...eod, kind: 'trailing_intraday' }, balance: 50_400, peakBalance: 51_000 })).floor).toBe(49_000);
+  });
+  it('résultat du jour invalide refusé même sans perte du jour max', () => {
+    expect(propFirmMargin({ rule: eod, balance: 50_000, dayResult: Number.NaN }).ok).toBe(false);
+  });
   it('plancher figé au verrouillage', () => {
     const r = val(propFirmMargin({ rule: { ...eod, locksAt: 52_100, lockedFloor: 50_100 }, balance: 52_500, peakBalance: 53_000 }));
     expect(r).toMatchObject({ floor: 50_100, locked: true, marginToFloor: 2400 });
@@ -44,7 +52,8 @@ describe('propFirmMargin', () => {
     bad({ rule: eod, balance: Number.NaN });
     bad({ rule: eod, balance: Number.POSITIVE_INFINITY });
     bad({ rule: eod, balance: CALCULATOR_MAX_AMOUNT + 1 });
-    bad({ rule: eod, balance: 50_000, peakBalance: 49_000 });
+    bad({ rule: { ...eod, kind: 'trailing_intraday' }, balance: 50_000, peakBalance: 49_000 });
+    bad({ rule: eod, balance: 50_000, peakBalance: -1 });
     bad({ rule: eod, balance: 50_000, dailyLossLimit: 0 });
     bad({ rule: eod, balance: 50_000, dailyLossLimit: -5 });
     bad({ rule: eod, balance: 50_000, dayResult: Number.NaN });
@@ -64,6 +73,12 @@ describe('positionSize', () => {
   });
   it('risque plus petit qu’un contrat : 0 contrat, pas une erreur', () => {
     expect(val(positionSize({ mode: 'amount', risk: 50, stopTicks: 20, tickValue: 5 })).contracts).toBe(0);
+  });
+  it('valeur du tick à plus de 2 décimales : contrats calculés sur la valeur exacte (ZT 7,8125 $)', () => {
+    expect(val(positionSize({ mode: 'amount', risk: 234.38, stopTicks: 3, tickValue: 7.8125 }))).toEqual({ riskAmount: 234.38, riskPerContract: 23.44, contracts: 10, actualRisk: 234.38 });
+  });
+  it('compte trop grand en mode pourcentage : refusé', () => {
+    expect(positionSize({ mode: 'percent', risk: 1, accountSize: CALCULATOR_MAX_AMOUNT * 2, stopTicks: 10, tickValue: 1 }).ok).toBe(false);
   });
   it('pas d’erreur d’arrondi flottant (0,1 + 0,2)', () => {
     expect(val(positionSize({ mode: 'amount', risk: 0.3, stopTicks: 1, tickValue: 0.1 })).contracts).toBe(3);

@@ -15,6 +15,8 @@ export interface ToolPhase {
   d: number | null;
   /** Le verrouillage du plancher dépend de la plateforme (règle de base affichée). */
   p: boolean;
+  /** Perte du jour qui évolue (paliers ou règle variable) : `d` est la valeur de départ. */
+  v: boolean;
 }
 export interface ToolPlan {
   id: string;
@@ -30,7 +32,7 @@ interface RawPhase {
   phase: PhaseKind;
   starting_balance?: number | null;
   max_drawdown: PropFirmMaxDrawdown;
-  daily_loss_limit: { amount: number | null } | null;
+  daily_loss_limit: { amount: number | null; tiers?: unknown[] | null; scaling_rule?: unknown } | null;
 }
 interface RawFile {
   firm: { id: string; name: string };
@@ -59,6 +61,7 @@ export function marginToolFirms(): ToolFirm[] {
               r: [r.rule.kind, r.rule.amount, r.rule.startingBalance, r.rule.locksAt, r.rule.lockedFloor],
               d: ph.daily_loss_limit?.amount ?? null,
               p: r.platformChoices.length > 0,
+              v: (ph.daily_loss_limit?.tiers?.length ?? 0) > 1 || ph.daily_loss_limit?.scaling_rule != null,
             }];
           }),
         }))
