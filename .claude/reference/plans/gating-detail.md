@@ -16,7 +16,11 @@
   `plan = PREMIUM` + `stripeSubscriptionStatus = trialing`). « Offert » = `trialEndsAt` futur **et** pas
   d'abonnement Stripe actif/trialing (`isOfferedPremium`, `users/premium-offer.util.ts`). Refusé (409) si
   abonnement Stripe en cours, plan PREMIUM, rôle ADMIN/BETA_TESTER ou compte démo. `trialUsed = true` →
-  pas de second essai de 30 j au checkout. Stats admin : ces comptes sont comptés en `freeUsers`, **pas**
+  pas de second essai de 30 j au checkout. **Retrait** (B10 #1064, décision du 16/11) :
+  `DELETE /admin/users/:id/offer-premium` (bouton « Retirer le Premium offert » de la fiche), seulement
+  `trialSource = ADMIN` avec `trialEndsAt` futur et sans abonnement Stripe (même en pause) : `trialEndsAt`
+  = maintenant, ou la fin de l'essai d'inscription s'il court encore (`trialSource` repasse SIGNUP).
+  La modale « Modifier » ne change plus le plan ni le rôle (A1/B2 #1064). Stats admin : ces comptes sont comptés en `freeUsers`, **pas**
   en `trials` (qui exige `plan = PREMIUM`) ni dans le MRR.
 - **IA mutualisée (contexte marché, news, calendrier éco bull/bear)** : **FREE** — aucun guard (juste `JwtAuthGuard`).
 - **Analytics avancés** (`by-setup`, `by-hour`) : `PremiumGuard`.
