@@ -1,0 +1,137 @@
+---
+// Calculateur de risque/rendement (SEO phase 4, #1071). Calcul `riskReward` de @mtc/shared (même
+// R/R prévu que l'app : plannedRiskReward, contrôles de stopPlacementError), dans le navigateur.
+import ToolLayout from '../../components/ToolLayout.astro';
+import { APP_URL } from '../../config';
+
+const NB = ' ';
+const faq = [
+  {
+    question: `Comment calculer le ratio risque/rendement d'un trade${NB}?`,
+    answer: `R/R = distance entre l'entrée et l'objectif ÷ distance entre l'entrée et le stop. Un R/R de 2 veut dire que l'objectif est deux fois plus loin que le stop.`,
+  },
+  {
+    question: `Qu'est-ce que le taux de réussite d'équilibre${NB}?`,
+    answer: `C'est la part de trades gagnants à partir de laquelle les gains compensent les pertes avec ce R/R, frais non compris${NB}: 1 ÷ (1 + R/R). Avec un R/R de 2, il faut un tiers de trades gagnants pour être à l'équilibre.`,
+  },
+  {
+    question: `Un R/R élevé garantit-il un bon trade${NB}?`,
+    answer: `Non. Un objectif lointain est souvent moins probable. Le R/R se lit avec ton taux de trades gagnants réel, mesuré dans ton journal.`,
+  },
+  {
+    question: `Pourquoi l'outil refuse mon stop${NB}?`,
+    answer: `Sur un achat, le stop doit être sous le prix d'entrée et l'objectif au-dessus. Sur une vente, c'est l'inverse. Un stop égal à l'entrée donne un risque nul, donc pas de ratio.`,
+  },
+];
+---
+
+<ToolLayout
+  slug="risque-rendement"
+  title={`Calculateur de risque/rendement (R/R)${NB}: gratuit`}
+  description={`Calcule gratuitement le ratio risque/rendement d'un trade${NB}: entrée, stop, objectif, sens. Avec le taux de réussite d'équilibre. Calcul dans ton navigateur.`}
+  h1="Calculateur de risque/rendement"
+  crumb="Risque/rendement"
+  answer={`Le ratio risque/rendement se calcule ainsi${NB}: distance entrée → objectif ÷ distance entrée → stop. Entre le sens, l'entrée, le stop et l'objectif${NB}: tu obtiens le R/R et le taux de trades gagnants qui équilibre gains et pertes.`}
+  faq={faq}
+>
+  <section class="fr-sec" aria-labelledby="tl-title">
+    <h2 id="tl-title">Calcule ton R/R</h2>
+    <form class="tl-form" id="tl-rr-form" novalidate>
+      <fieldset class="tl-field tl-wide">
+        <legend class="tl-legend">Sens du trade</legend>
+        <div class="tl-choices">
+          <label class="tl-choice"><input type="radio" name="tl-side" value="LONG" checked /><span>Achat (long)</span></label>
+          <label class="tl-choice"><input type="radio" name="tl-side" value="SHORT" /><span>Vente (short)</span></label>
+        </div>
+      </fieldset>
+      <div class="tl-field">
+        <label for="tl-entry">Prix d'entrée</label>
+        <input class="tl-input" id="tl-entry" inputmode="decimal" autocomplete="off" value="21000" />
+      </div>
+      <div class="tl-field">
+        <label for="tl-stop">Stop</label>
+        <input class="tl-input" id="tl-stop" inputmode="decimal" autocomplete="off" value="20980" />
+      </div>
+      <div class="tl-field">
+        <label for="tl-target">Objectif</label>
+        <input class="tl-input" id="tl-target" inputmode="decimal" autocomplete="off" value="21040" />
+      </div>
+    </form>
+
+    <div class="tl-result" id="tl-result" role="status" aria-live="polite" aria-atomic="true"></div>
+    <p class="tl-next" id="tl-next" hidden>
+      Pour comparer ton R/R prévu à ton R/R réel sur tous tes trades&nbsp;:
+      <a href={`${APP_URL}/demo`} data-ga-event="cta_demo" data-ga-place="outil-rr">voir la démo</a> ou
+      <a href={`${APP_URL}/register`} data-ga-event="cta_signup" data-ga-place="outil-rr">créer un compte gratuit</a>.
+    </p>
+  </section>
+
+  <section class="fr-sec">
+    <h2>Lire le résultat</h2>
+    <p>
+      Le R/R décrit un trade prévu, pas son issue. Il prend son sens avec ton taux de trades gagnants
+      mesuré sur un historique suffisant. L'article sur le <a class="fr-link" href="/blog/win-rate-trading">win rate et l'espérance</a>
+      explique comment les lire ensemble.
+    </p>
+  </section>
+</ToolLayout>
+
+<script>
+  import { riskReward } from '@mtc/shared';
+  import { formatPercent, formatRatio, parseAmount } from '../../lib/tool-format';
+
+  const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
+  const entry = $<HTMLInputElement>('tl-entry');
+  const stop = $<HTMLInputElement>('tl-stop');
+  const target = $<HTMLInputElement>('tl-target');
+  const out = $('tl-result');
+  const next = $('tl-next');
+  const sides = Array.from(document.querySelectorAll<HTMLInputElement>('input[name="tl-side"]'));
+  const num = (n: number) => n.toLocaleString('fr-FR', { maximumFractionDigits: 6 });
+
+  function line(label: string, value: string) {
+    const li = document.createElement('li');
+    const b = document.createElement('b');
+    b.textContent = value;
+    li.append(`${label} `, b);
+    return li;
+  }
+
+  function compute() {
+    const side = (sides.find((s) => s.checked)?.value ?? 'LONG') as 'LONG' | 'SHORT';
+    const r = riskReward({
+      side,
+      entry: parseAmount(entry.value) ?? Number.NaN,
+      stop: parseAmount(stop.value) ?? Number.NaN,
+      target: parseAmount(target.value) ?? Number.NaN,
+    });
+    out.replaceChildren();
+    if (!r.ok) {
+      out.dataset.state = 'error';
+      out.append(Object.assign(document.createElement('p'), { className: 'tl-msg', textContent: r.error }));
+      next.hidden = true;
+      return;
+    }
+    const v = r.value;
+    out.dataset.state = 'ok';
+    const list = document.createElement('ul');
+    list.className = 'tl-lines';
+    list.append(
+      line('Distance au stop', num(v.risk)),
+      line('Distance à l’objectif', num(v.reward)),
+      line('Taux de trades gagnants d’équilibre', formatPercent(v.breakEvenWinRate)),
+    );
+    const note = Object.assign(document.createElement('p'), { className: 'tl-note', textContent: 'Frais non compris. Le ratio décrit le trade prévu, pas son issue.' });
+    out.append(
+      Object.assign(document.createElement('span'), { className: 'tl-big-label', textContent: 'Ratio risque/rendement' }),
+      Object.assign(document.createElement('span'), { className: 'tl-big', textContent: `1 : ${formatRatio(v.ratio)}` }),
+      list,
+      note,
+    );
+    next.hidden = false;
+  }
+
+  document.getElementById('tl-rr-form')?.addEventListener('input', compute);
+  document.getElementById('tl-rr-form')?.addEventListener('submit', (e) => e.preventDefault());
+  compute();
+</script>

@@ -79,4 +79,23 @@
 - Styles : `src/styles/firm-rules.css` (tokens de la landing).
 - Tests : `libs/shared/src/prop-firm-rules/firm-pages.spec.ts` (sélection, catalogue réel, invariants
   des pages).
-- Lien vers le calculateur de marge : à ajouter avec la phase 4 (outils).
+- Lien vers le calculateur de marge (`/outils/marge-prop-firm`) depuis l'index et chaque page de firme.
+
+## Outils gratuits sans compte (phase 4, 2026-11-17)
+- URLs : `/outils` (index), `/outils/marge-prop-firm`, `/outils/taille-de-position`, `/outils/risque-rendement`.
+- Gabarit commun `src/components/ToolLayout.astro` : fil d'Ariane visible = BreadcrumbList, réponse directe,
+  mention `TOOL_DISCLAIMER` (« Outil de calcul à titre informatif, pas un conseil d'investissement. »),
+  FAQ visible + FAQPage, image `og/outils.jpg`. Styles `src/styles/tools.css` (+ `firm-rules.css`).
+- Calculs : `libs/shared/src/calculators.ts` (`propFirmMargin`, `positionSize`, `riskReward`), purs,
+  sur `drawdownFloor`, `plannedRiskReward`, `stopPlacementError`, `roundCents`. Résultat ou message
+  d'erreur en français, jamais NaN ; plafond `CALCULATOR_MAX_AMOUNT`. Tests : `calculators.spec.ts`.
+- Exécution dans le navigateur (script Astro bundlé) : aucun envoi, aucun stockage, aucun cookie
+  (vérifié par test). Saisie : virgule ou point (`src/lib/tool-format.ts`).
+- Marge : règles du catalogue embarquées en JSON (`src/data/margin-tool-plans.ts`, même filtre
+  `firmPlanExclusionReason` que les pages règles, toutes tailles, règle de base par
+  `planDrawdownRule` sans plateforme). Phases au solde de départ différent de la taille (funded à 0 $)
+  non proposées. Perte du jour : perte max − perte du jour, gains du jour non comptés.
+- Taille de position : valeur du tick saisie par le trader (la table des instruments reste dans
+  l'API, `instruments.const.ts` ; pas de recopie dans la landing).
+- Résultat annoncé aux lecteurs d'écran (`role="status"`, `aria-live="polite"`), lien discret vers la
+  démo et l'inscription après le résultat.
