@@ -71,4 +71,16 @@ describe('Contraste du texte sur les fonds bleus (#1085)', () => {
     expect(regle(repos), `${repos} introuvable`).toMatch(/background\s*:\s*var\(--primary\)/);
     expect(regle(survol), `${survol} introuvable`).toMatch(/background\s*:\s*var\(--primary-hover\)/);
   });
+
+  // Contour de focus clavier visible sur les boutons sur --primary qui n'en avaient pas (#1087).
+  it.each([
+    ['features/checkout/checkout-page.component.css', '.pay:focus-visible', 'var(--primary)'],
+    ['shared/components/premium-lock/premium-lock.component.css', '.pl-btn:focus-visible', 'var(--blue-bright)'],
+    ['features/today-session/results-share/results-share.component.css', '.rs-primary:focus-visible', 'var(--blue-bright)'],
+  ])('%s : %s avec un contour de 2px', (fichier, selecteur, couleur) => {
+    const css = sansCommentaires(readFileSync(join(__dirname, fichier), 'utf-8'));
+    const echappe = selecteur.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const corps = css.match(new RegExp(`(?:^|\\})\\s*${echappe}\\s*\\{([^}]*)\\}`))?.[1] ?? '';
+    expect(corps, `${selecteur} introuvable`).toContain(`outline: 2px solid ${couleur}`);
+  });
 });

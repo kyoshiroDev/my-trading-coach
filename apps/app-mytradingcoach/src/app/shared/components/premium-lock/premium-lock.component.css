@@ -60,3 +60,4 @@
 }
 
 .pl-btn:hover { background: var(--primary-hover); }
+.pl-btn:focus-visible { outline: 2px solid var(--blue-bright); outline-offset: 2px; } /* 6,7:1 sur la carte (#1087) */
