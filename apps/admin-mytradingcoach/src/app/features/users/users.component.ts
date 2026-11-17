@@ -22,7 +22,7 @@ import {
 } from '@lucide/angular';
 import { AdminApi, AdminUser, AdminStats } from '../../core/api/admin.api';
 import { TableSort } from '../../shared/tables/table-sort';
-import { acquisitionLabel, subscriptionState, type AcquisitionUtm } from '@mtc/shared';
+import { acquisitionLabel, apiErrorMessage, subscriptionState, type AcquisitionUtm } from '@mtc/shared';
 import { DialogDirective } from '@mtc/front-ui';
 
 @Component({
@@ -53,6 +53,8 @@ export class UsersComponent implements OnInit {
   protected readonly search      = signal('');
   protected readonly editUser    = signal<AdminUser | null>(null);
   protected readonly deleteModal = signal<AdminUser | null>(null);
+  /** Erreur de la modale « Modifier » (nom vide, refus de l'API). */
+  protected readonly editError = signal<string | null>(null);
   /** Inscrits d'une campagne (#625) : `?source=&medium=&campaign=` (lien depuis Acquisition ou la fiche). */
   protected readonly utm = signal<Partial<AcquisitionUtm>>({});
   protected readonly utmLabel = computed(() => {
@@ -189,6 +191,7 @@ export class UsersComponent implements OnInit {
     this.editUser.set(user);
     this.editName = user.name ?? '';
     this.editInternal = !!user.isInternal;
+    this.editError.set(null);
   }
   protected closeEdit() { this.editUser.set(null); }
 
@@ -198,6 +201,7 @@ export class UsersComponent implements OnInit {
     // Seulement ce qui a changé ; rien de changé → aucun appel.
     const dto: { name?: string; isInternal?: boolean } = {};
     const name = this.editName.trim();
+    if (!name && user.name) { this.editError.set('Le nom ne peut pas être vide.'); return; }
     if (name && name !== (user.name ?? '')) dto.name = name;
     if (this.editInternal !== !!user.isInternal) dto.isInternal = this.editInternal;
     if (Object.keys(dto).length === 0) { this.closeEdit(); return; }
@@ -206,7 +210,10 @@ export class UsersComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (r) => { this.users.update((list) => list.map((u) => (u.id === r.data.id ? r.data : u))); this.saving.set(false); this.closeEdit(); },
-        error: () => this.saving.set(false),
+        error: (err) => {
+          this.saving.set(false);
+          this.editError.set(apiErrorMessage(err, 'La modification n’a pas pu être enregistrée. Réessaie.'));
+        },
       });
   }
 

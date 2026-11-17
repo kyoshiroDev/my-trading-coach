@@ -196,6 +196,30 @@ describe('UsersComponent — modale « Modifier » (A1/B2 #1064)', () => {
     req.flush({ data: user({ isInternal: true }) });
   });
 
+  it('refus de l’API : message dans la modale, qui reste ouverte', async () => {
+    const { fixture, http, modal } = await openModal({ isInternal: false });
+    (modal.querySelector('#edit-internal') as HTMLInputElement).click();
+    fixture.detectChanges();
+    (modal.querySelector('.btn-save') as HTMLButtonElement).click();
+    http.expectOne((r) => r.method === 'PATCH').flush(
+      { message: 'Compte démo : action impossible depuis l’admin.' }, { status: 409, statusText: 'Conflict' });
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('[data-testid="edit-error"]')?.textContent).toContain('Compte démo');
+    expect(fixture.nativeElement.querySelector('[role="dialog"]')).not.toBeNull();
+  });
+
+  it('nom vidé : message, aucun appel', async () => {
+    const { fixture, http, modal } = await openModal();
+    const input = modal.querySelector('#edit-name') as HTMLInputElement;
+    input.value = '  ';
+    input.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    (modal.querySelector('.btn-save') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    http.expectNone((r) => r.method === 'PATCH');
+    expect(fixture.nativeElement.querySelector('[data-testid="edit-error"]')?.textContent).toContain('Le nom ne peut pas être vide.');
+  });
+
   it('rien de modifié : aucun appel, la modale se ferme', async () => {
     const { fixture, http, modal } = await openModal();
     (modal.querySelector('.btn-save') as HTMLButtonElement).click();

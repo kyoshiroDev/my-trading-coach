@@ -56,7 +56,8 @@
 /* Modale « Modifier » (A1/B2 #1064) : case « Compte interne » et renvoi vers la fiche. */
 .field-check { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; font-size: 12px; color: var(--text); cursor: pointer; }
 .field-check input { width: 14px; height: 14px; accent-color: var(--teal); }
-.field-hint { font-size: var(--fs-2xs); font-family: var(--mono); color: var(--text3); }
+.field-hint { margin-left: 6px; font-size: 11px; color: var(--text3); } /* même rendu que .ud-internal-hint de la fiche */
+.modal-error { margin: 0 0 10px; padding: 8px 10px; border-left: 2px solid var(--red); background: var(--red-dim); font-size: 12px; color: var(--text2); line-height: 1.5; }
 .modal-note { font-size: var(--fs-2xs); color: var(--text3); line-height: 1.5; margin: 0; }
 .delete-msg { font-size: 12px; color: var(--text2); line-height: 1.6; }
 .delete-msg strong { color: var(--text); }

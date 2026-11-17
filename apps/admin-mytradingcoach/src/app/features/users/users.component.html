@@ -117,6 +117,7 @@
             <input id="edit-internal" type="checkbox" [(ngModel)]="editInternal" />
             <span>Compte interne <span class="field-hint">hors statistiques</span></span>
           </label>
+          @if (editError(); as err) { <p class="modal-error" role="alert" data-testid="edit-error">{{ err }}</p> }
           <p class="modal-note">Rôle et plan&nbsp;: depuis la fiche de l'utilisateur (bêta-testeur, Premium offert) ou la page Ambassadeurs.</p>
         </div>
         <div class="modal-footer">
