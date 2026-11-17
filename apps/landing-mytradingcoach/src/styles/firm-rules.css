@@ -53,8 +53,8 @@
 .fr-faq-item p { margin: 0; }
 
 .fr-cta { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 16px; }
-/* Texte foncé sur le bleu : environ 5,2:1 (le blanc n’y fait que 3,7:1, mesuré par Lighthouse). */
-.fr-btn { font-family: var(--disp); font-weight: 600; font-size: 14px; padding: 12px 20px; border-radius: 10px; background: var(--blue); color: var(--bg); text-decoration: none; }
+/* Texte foncé sur le bleu (--on-blue, #1079) : 5,4:1, le blanc n’y fait que 3,7:1. */
+.fr-btn { font-family: var(--disp); font-weight: 600; font-size: 14px; padding: 12px 20px; border-radius: 10px; background: var(--blue); color: var(--on-blue); text-decoration: none; }
 .fr-btn.ghost { background: transparent; border: 2px solid var(--blue); color: var(--txt); }
 .fr-link { color: var(--blue2); }
 .fr-answer .fr-num { font-family: var(--mono); font-variant-numeric: tabular-nums; font-weight: 600; }
