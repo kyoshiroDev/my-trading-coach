@@ -62,3 +62,10 @@
 - **Adresse de contact publique unique : `support@mytradingcoach.app`** (#747) : pied de page, pages
   légales, JSON-LD. Plus de `contact@` (boîte non vérifiée) ni de `hello@` (adresse interne, jamais
   montrée aux utilisateurs).
+
+## Contraste des boutons bleus (#1079, 2026-11-17)
+
+- **Texte sur un fond bleu plein** (boutons, CTA de la nav, barre sticky mobile, bandeau fondateur, onglets actifs) : toujours `color: var(--on-blue)`, jamais `#fff` ni `white`. `--on-blue` vaut `var(--bg)` : 5,4:1 sur `--blue`, 7,8:1 sur `--blue2` (survols, bouton de la 404). Le blanc n'y faisait que 3,7:1 et 2,5:1, sous le minimum de 4,5:1.
+- Dégradés `--blue` → `#6366f1` (Pricing, Testimonials, bandeau fondateur) : environ 4,9:1 au centre du bouton, 4,46:1 à l'extrémité indigo, là où il n'y a pas de texte.
+- Mention « Lien affilié » du pied de page : `var(--txt3)` sans opacité (5,9:1 sur le fond). Avec `opacity: 0.75`, elle tombait à 3,8:1.
+- Vérification : Lighthouse en accessibilité (audit `color-contrast`), sur un build local relié à une API morte (`seo-technique.md`).
