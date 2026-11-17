@@ -24,6 +24,7 @@ import { RedisService } from '../infra/redis.service';
 import { insightsCooldownKey, insightsKeptKey } from '../ai/insights-cache-keys';
 import { billingCacheKey } from '../stripe/stripe.helpers';
 import { isPremiumAccess } from '../discord/discord-access.util';
+import { DEMO_ACCOUNT_LOCKED } from './demo-account-locked';
 import { REAL_USERS_WHERE } from '../../common/stats/real-users';
 import { premiumAccessWhere, subscriptionStateWhere, subscriptionStatesWhere } from '../../common/stats/subscription-state-where';
 import { emailEquals, escapeLike } from '../../common/utils/email.util';
@@ -195,12 +196,13 @@ export class UsersService {
   async adminUpdate(targetId: string, dto: { name?: string; isInternal?: boolean }) {
     const target = await this.prisma.user.findUnique({
       where: { id: targetId },
-      select: { role: true },
+      select: { role: true, isDemo: true },
     });
     if (!target) throw new NotFoundException('Utilisateur introuvable');
     if (target.role === Role.ADMIN) {
       throw new ForbiddenException('Impossible de modifier un administrateur');
     }
+    if (target.isDemo) throw new ConflictException(DEMO_ACCOUNT_LOCKED);
     const updated = await this.prisma.user.update({
       where: { id: targetId },
       data: { name: dto.name, isInternal: dto.isInternal },
@@ -215,12 +217,14 @@ export class UsersService {
   async adminDelete(targetId: string): Promise<void> {
     const target = await this.prisma.user.findUnique({
       where: { id: targetId },
-      select: { role: true },
+      select: { role: true, isDemo: true },
     });
     if (!target) throw new NotFoundException('Utilisateur introuvable');
     if (target.role === Role.ADMIN) {
       throw new ForbiddenException('Impossible de supprimer un administrateur');
     }
+    // Sinon : une ligne DeletedAccount comptée et la vitrine cassée jusqu'au prochain re-seed.
+    if (target.isDemo) throw new ConflictException(DEMO_ACCOUNT_LOCKED);
     await this.archiveAndDelete(targetId, 'admin');
   }
 
@@ -445,9 +449,10 @@ export class UsersService {
 
     const current = await this.prisma.user.findUnique({
       where: { id: targetUserId },
-      select: { email: true, role: true },
+      select: { email: true, role: true, isDemo: true },
     });
     if (!current) throw new NotFoundException('Utilisateur introuvable');
+    if (current.isDemo) throw new ConflictException(DEMO_ACCOUNT_LOCKED);
     // S6 (#1063) : un administrateur n'est jamais rétrogradé par l'API (ni un autre, ni soi-même),
     // comme adminUpdate et adminDelete.
     if (current.role === Role.ADMIN) {
