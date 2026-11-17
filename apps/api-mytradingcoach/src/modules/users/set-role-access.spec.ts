@@ -27,7 +27,7 @@ const after = (role: string, discordId: string | null = 'd-1') =>
   ({ discordId, plan: 'FREE', role, trialEndsAt: null });
 
 beforeEach(() => {
-  vi.clearAllMocks();
+  vi.resetAllMocks(); // vide aussi les files mockResolvedValueOnce d'un test interrompu
   prisma.user.update.mockResolvedValue({});
   discord.setPlanRole.mockResolvedValue(undefined);
   redis.client.del.mockResolvedValue(1);
@@ -55,6 +55,14 @@ describe('UsersService.setRole — accès Premium réaligné (A2/B3 #1064)', () 
     prisma.user.findUnique.mockResolvedValueOnce(target('USER')).mockResolvedValueOnce(after('AMBASSADOR'));
     await service.setRole('u1', 'AMBASSADOR' as never);
     expect(ambassador.promote).toHaveBeenCalledWith('b@x.com');
+    expect(discord.setPlanRole).toHaveBeenCalledWith('d-1', false);
+  });
+
+  it('AMBASSADOR → USER (revoke) : réalignée aussi', async () => {
+    prisma.user.findUnique.mockResolvedValueOnce(target('AMBASSADOR')).mockResolvedValueOnce(after('USER'));
+    await service.setRole('u1', 'USER' as never);
+    expect(ambassador.revoke).toHaveBeenCalledWith('b@x.com');
+    expect(redis.client.del).toHaveBeenCalledWith('billing:status:u1');
     expect(discord.setPlanRole).toHaveBeenCalledWith('d-1', false);
   });
 

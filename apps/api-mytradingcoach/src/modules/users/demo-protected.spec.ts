@@ -2,6 +2,7 @@ import 'reflect-metadata';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { ConflictException } from '@nestjs/common';
 import { UsersService } from './users.service';
+import { DEMO_ACCOUNT_LOCKED } from './demo-account-locked';
 import { AmbassadorService } from '../ambassador/ambassador.service';
 import type { PrismaService } from '../../prisma/prisma.service';
 
@@ -24,13 +25,14 @@ const service = new UsersService(
 const demo = { email: 'demo@mytradingcoach.app', role: 'USER', isDemo: true };
 
 beforeEach(() => {
-  vi.clearAllMocks();
+  vi.resetAllMocks(); // vide aussi les files mockResolvedValueOnce d'un test interrompu
   prisma.user.findUnique.mockResolvedValue(demo);
 });
 
 describe('compte démo protégé des actions admin (B9 #1064)', () => {
   it('suppression refusée (409), rien d’archivé ni supprimé', async () => {
     await expect(service.adminDelete('demo')).rejects.toBeInstanceOf(ConflictException);
+    await expect(service.adminDelete('demo')).rejects.toThrow(DEMO_ACCOUNT_LOCKED);
     expect(prisma.$transaction).not.toHaveBeenCalled();
     expect(prisma.user.delete).not.toHaveBeenCalled();
   });
@@ -50,7 +52,7 @@ describe('compte démo protégé des actions admin (B9 #1064)', () => {
   it('promotion ambassadeur par e-mail refusée (409)', async () => {
     prisma.user.findFirst.mockResolvedValue({ id: 'demo', name: 'Démo', referralCode: null, ...demo });
     const amb = new AmbassadorService(prisma as never);
-    await expect(amb.promote(demo.email)).rejects.toBeInstanceOf(ConflictException);
+    await expect(amb.promote(demo.email)).rejects.toThrow(DEMO_ACCOUNT_LOCKED);
     expect(prisma.user.update).not.toHaveBeenCalled();
   });
 });
