@@ -95,7 +95,7 @@ const { href = '/#pricing' } = Astro.props;
     align-items: center;
     justify-content: center;
     padding: 0 40px;
-    background: linear-gradient(90deg, var(--blue), #6366f1); /* opaque : le texte et le × restent à 4,5:1 minimum (#1079) */
+    background: linear-gradient(90deg, var(--blue), #6366f1); /* opaque (#1079) : texte centré ~4,8:1 ; le × en grand texte gras (seuil 3:1) fait ~4,4:1 au bord indigo */
     color: var(--on-blue);
     font-size: 13px;
     line-height: 1;
@@ -118,11 +118,13 @@ const { href = '/#pricing' } = Astro.props;
     border: none;
     background: transparent;
     color: var(--on-blue);
-    font-size: 18px;
+    font-size: 19px;
+    font-weight: 700;
     line-height: 1;
     cursor: pointer;
   }
-  .offer-close:hover { background: color-mix(in srgb, var(--on-blue) 12%, transparent); border-radius: 6px; }
+  .offer-close:hover { background: color-mix(in srgb, var(--txt) 20%, transparent); border-radius: 6px; }
+  .offer-close:focus-visible { outline: 2px solid var(--on-blue); outline-offset: 1px; border-radius: 6px; }
   .offer-progress {
     position: absolute;
     left: 0; right: 0; bottom: 0;
