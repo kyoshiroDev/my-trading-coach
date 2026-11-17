@@ -47,12 +47,12 @@
 .apw-card:disabled { opacity: .55; cursor: default; }
 .apw-card.primary {
   justify-content: center;
-  border-color: var(--blue);
-  background: var(--blue);
-  color: var(--text);
+  border-color: var(--primary);
+  background: var(--primary); /* texte clair sur --blue = 3:1, sur --primary 5,2:1 (#1085) */
+  color: #fff;
   font-weight: 600;
 }
-.apw-card.primary:hover:not(:disabled) { background: var(--blue-bright); border-color: var(--blue-bright); }
+.apw-card.primary:hover:not(:disabled) { background: var(--primary-hover); border-color: var(--primary-hover); }
 .apw-card.mono { justify-content: center; font: 600 15px var(--font-mono); font-variant-numeric: tabular-nums; }
 .apw-card-name { min-width: 0; overflow-wrap: anywhere; }
 .apw-card-meta { flex-shrink: 0; font: 11px var(--font-mono); color: var(--text-3); }

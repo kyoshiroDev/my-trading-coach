@@ -124,13 +124,14 @@
   padding: 13px 0;
   border: none;
   border-radius: 10px;
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  background: var(--primary); /* blanc sur le dégradé bleu-violet = 3,7:1, sur --primary 5,2:1 (#1085) */
   color: #fff;
   font-family: var(--font-body);
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
 }
+.rs-primary:hover:not(:disabled) { background: var(--primary-hover); }
 .rs-primary:disabled { opacity: 0.5; cursor: wait; }
 .rs-pair { display: flex; gap: 8px; }
 .rs-secondary {

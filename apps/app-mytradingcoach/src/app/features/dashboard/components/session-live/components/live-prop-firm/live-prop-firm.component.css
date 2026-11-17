@@ -87,10 +87,10 @@
 }
 .pf-plan-cta-text { margin: 0; font: 14px/1.5 var(--font-body); color: var(--text); }
 .pf-plan-cta-btn {
-  min-height: 44px; padding: 0 16px; border: 1px solid var(--blue); border-radius: var(--radius-btn);
-  background: var(--blue); color: var(--text); font: 600 14px var(--font-body); cursor: pointer;
+  min-height: 44px; padding: 0 16px; border: 1px solid var(--primary); border-radius: var(--radius-btn);
+  background: var(--primary); color: #fff; /* contraste 5,2:1 (#1085) */ font: 600 14px var(--font-body); cursor: pointer;
 }
-.pf-plan-cta-btn:hover { background: var(--blue-bright); border-color: var(--blue-bright); }
+.pf-plan-cta-btn:hover { background: var(--primary-hover); border-color: var(--primary-hover); }
 .pf-plan-cta-btn:focus-visible { outline: 2px solid var(--blue-bright); outline-offset: 2px; }
 
 /* Modale « Quel est ce compte ? » : palier 1000 (au-dessus de la session plein écran), feuille en mobile. */
