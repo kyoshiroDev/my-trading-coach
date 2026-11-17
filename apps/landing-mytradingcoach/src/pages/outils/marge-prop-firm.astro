@@ -1,0 +1,261 @@
+---
+// Calculateur de marge avant la limite d'une prop firm (SEO phase 4, #1071). Règles du catalogue
+// (marginToolFirms, embarquées en JSON) ou saisie manuelle ; calcul `propFirmMargin` de @mtc/shared,
+// exécuté dans le navigateur. Aucune donnée envoyée, aucun stockage, aucun cookie.
+import { DRAWDOWN_LABELS } from '@mtc/shared';
+import ToolLayout from '../../components/ToolLayout.astro';
+import { APP_URL } from '../../config';
+import { marginToolFirms } from '../../data/margin-tool-plans';
+
+const NB = ' ';
+const firms = marginToolFirms();
+const data = JSON.stringify(firms);
+const marginLabel = DRAWDOWN_LABELS.margin.label;
+const faq = [
+  {
+    question: `Comment se calcule la marge avant le plancher${NB}?`,
+    answer: `Marge = solde actuel − plancher. Le plancher vaut le solde de départ moins la règle de drawdown, puis il monte avec ton plus haut solde si le drawdown est trailing, jusqu'à se figer quand la firme le prévoit (pris en compte avec les règles du catalogue, pas en saisie manuelle).`,
+  },
+  {
+    question: `Quel plus haut solde dois-je saisir${NB}?`,
+    answer: `Pour un drawdown de fin de journée (EOD), ton plus haut solde de clôture. Pour un drawdown intraday, ton plus haut solde atteint en séance, gains latents compris. Pour un drawdown statique, il n'est pas utilisé.`,
+  },
+  {
+    question: `Comment la perte du jour est-elle comptée${NB}?`,
+    answer: `L'outil retire ta perte du jour de la perte du jour maximale du plan, sans compter les gains du jour. Les règles exactes varient selon les firmes (paliers, base du calcul)${NB}: vérifie la tienne auprès de la firme.`,
+  },
+  {
+    question: `Le résultat remplace-t-il la plateforme de ma firme${NB}?`,
+    answer: `Non. Le calcul est indicatif et la plateforme de ta firme fait toujours foi. Pour suivre ta marge en direct pendant la séance, MyTradingCoach se connecte à ton compte Tradovate en lecture seule.`,
+  },
+];
+---
+
+<ToolLayout
+  slug="marge-prop-firm"
+  title={`Calculateur de marge avant la limite prop firm${NB}: gratuit`}
+  description={`Calcule gratuitement ta marge avant le plancher de drawdown de ta prop firm${NB}: solde, plus haut, perte du jour. Règles de ${firms.length} firmes ou saisie libre.`}
+  h1="Calculateur de marge avant la limite de ta prop firm"
+  crumb="Marge avant la limite"
+  answer={`La ${marginLabel.toLowerCase()}, c'est l'écart entre ton solde et le plancher de drawdown de ta prop firm. Choisis ta firme et ton plan, ou saisis la règle, puis entre ton solde${NB}: le calcul se fait tout de suite, dans ton navigateur.`}
+  faq={faq}
+>
+  <section class="fr-sec" aria-labelledby="tl-title">
+    <h2 id="tl-title">Calcule ta marge</h2>
+    <script type="application/json" id="tl-plans" is:inline set:html={data} />
+    <form class="tl-form" id="tl-margin" novalidate>
+      <div class="tl-field">
+        <label for="tl-firm">Prop firm</label>
+        <select class="tl-select" id="tl-firm">
+          <option value="">Saisie manuelle</option>
+          {firms.map((f, i) => <option value={String(i)}>{f.n}</option>)}
+        </select>
+      </div>
+      <div class="tl-field" id="tl-plan-field" hidden>
+        <label for="tl-plan">Plan</label>
+        <select class="tl-select" id="tl-plan"></select>
+      </div>
+      <div class="tl-field" id="tl-phase-field" hidden>
+        <label for="tl-phase">Phase</label>
+        <select class="tl-select" id="tl-phase"></select>
+      </div>
+
+      <div class="tl-field">
+        <label for="tl-size">Taille du compte ($)</label>
+        <input class="tl-input" id="tl-size" inputmode="decimal" autocomplete="off" value="50000" />
+      </div>
+      <fieldset class="tl-field tl-wide">
+        <legend class="tl-legend">Type de drawdown</legend>
+        <div class="tl-choices">
+          <label class="tl-choice"><input type="radio" name="tl-kind" value="trailing_eod" checked /><span>Trailing fin de journée (EOD)</span></label>
+          <label class="tl-choice"><input type="radio" name="tl-kind" value="trailing_intraday" /><span>Trailing intraday</span></label>
+          <label class="tl-choice"><input type="radio" name="tl-kind" value="static" /><span>Statique</span></label>
+        </div>
+      </fieldset>
+      <div class="tl-field">
+        <label for="tl-amount">{DRAWDOWN_LABELS.rule.label} ($)</label>
+        <input class="tl-input" id="tl-amount" inputmode="decimal" autocomplete="off" value="2000" />
+      </div>
+      <div class="tl-field">
+        <label for="tl-dll">Perte du jour max ($)</label>
+        <input class="tl-input" id="tl-dll" inputmode="decimal" autocomplete="off" placeholder="Aucune" />
+        <small>Laisse vide si ton plan n'en a pas.</small>
+      </div>
+
+      <div class="tl-field">
+        <label for="tl-balance">Solde actuel ($)</label>
+        <input class="tl-input" id="tl-balance" inputmode="decimal" autocomplete="off" value="50400" />
+      </div>
+      <div class="tl-field">
+        <label for="tl-peak">Plus haut solde retenu ($)</label>
+        <input class="tl-input" id="tl-peak" inputmode="decimal" autocomplete="off" value="51000" />
+        <small id="tl-peak-help">Ton plus haut solde de clôture.</small>
+      </div>
+      <div class="tl-field">
+        <label for="tl-day">Résultat du jour ($)</label>
+        <input class="tl-input" id="tl-day" inputmode="decimal" autocomplete="off" placeholder="0" />
+        <small>Négatif pour une perte, par exemple -300.</small>
+      </div>
+    </form>
+
+    <div class="tl-result" id="tl-result" role="status" aria-live="polite" aria-atomic="true"></div>
+    <p class="tl-next" id="tl-next" hidden>
+      Pour suivre ta marge avant le plancher en direct pendant ta séance, avec ton compte Tradovate connecté en lecture seule&nbsp;:
+      <a href={`${APP_URL}/demo`} data-ga-event="cta_demo" data-ga-place="outil-marge">voir la démo</a> ou
+      <a href={`${APP_URL}/register`} data-ga-event="cta_signup" data-ga-place="outil-marge">créer un compte gratuit</a>.
+    </p>
+  </section>
+
+  <section class="fr-sec">
+    <h2>Les règles viennent d'où{NB}?</h2>
+    <p>
+      Les règles proposées sont celles des plans publics et vérifiés de notre catalogue, relevées sur
+      les pages officielles des firmes. Le détail de chaque firme en 50K est sur les
+      <a class="fr-link" href="/regles-prop-firm">pages des règles des prop firms</a>. Quand une règle
+      dépend de la plateforme, l'outil applique la règle de base et le signale.
+    </p>
+  </section>
+</ToolLayout>
+
+<script>
+  import { DRAWDOWN_LABELS, propFirmMargin } from '@mtc/shared';
+  import { formatAmount, parseAmount } from '../../lib/tool-format';
+
+  type Rule = [string, number, number, number | null, number | null];
+  type Firm = { n: string; pl: { id: string; l: string; ph: { n: string; r: Rule; d: number | null; p: boolean; v: boolean }[] }[] };
+
+  const firms: Firm[] = JSON.parse(document.getElementById('tl-plans')?.textContent ?? '[]');
+  const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
+  const firmSel = $<HTMLSelectElement>('tl-firm');
+  const planSel = $<HTMLSelectElement>('tl-plan');
+  const phaseSel = $<HTMLSelectElement>('tl-phase');
+  const planField = $('tl-plan-field');
+  const phaseField = $('tl-phase-field');
+  const size = $<HTMLInputElement>('tl-size');
+  const amount = $<HTMLInputElement>('tl-amount');
+  const dll = $<HTMLInputElement>('tl-dll');
+  const balance = $<HTMLInputElement>('tl-balance');
+  const peak = $<HTMLInputElement>('tl-peak');
+  const day = $<HTMLInputElement>('tl-day');
+  const peakHelp = $('tl-peak-help');
+  const out = $('tl-result');
+  const next = $('tl-next');
+  const kinds = Array.from(document.querySelectorAll<HTMLInputElement>('input[name="tl-kind"]'));
+  const HELP: Record<string, string> = {
+    trailing_eod: 'Ton plus haut solde de clôture.',
+    trailing_intraday: 'Ton plus haut solde atteint en séance, latent compris.',
+    static: 'Non utilisé pour un drawdown statique.',
+  };
+
+  const option = (value: string, label: string) => Object.assign(document.createElement('option'), { value, textContent: label });
+  const fill = (sel: HTMLSelectElement, items: string[]) => sel.replaceChildren(...items.map((l, i) => option(String(i), l)));
+
+  function selected() {
+    const f = firms[Number(firmSel.value)];
+    if (firmSel.value === '' || !f) return null;
+    const plan = f.pl[Number(planSel.value)] ?? f.pl[0];
+    return plan?.ph[Number(phaseSel.value)] ?? plan?.ph[0] ?? null;
+  }
+
+  function lockInputs(lock: boolean) {
+    for (const el of [size, amount, dll]) el.readOnly = lock;
+    for (const k of kinds) k.disabled = lock;
+  }
+
+  function applyPhase() {
+    const ph = selected();
+    lockInputs(!!ph);
+    if (!ph) return;
+    const [kind, amt, start] = ph.r;
+    size.value = String(start);
+    amount.value = String(amt);
+    dll.value = ph.d != null ? String(ph.d) : '';
+    for (const k of kinds) k.checked = k.value === kind;
+    // Nouveau plan : solde et plus haut repartent du solde de départ de ce plan (à ajuster ensuite).
+    balance.value = String(start);
+    peak.value = String(start);
+    day.value = '';
+    peakHelp.textContent = HELP[kind] ?? '';
+  }
+
+  function onFirm() {
+    const f = firms[Number(firmSel.value)];
+    planField.hidden = phaseField.hidden = firmSel.value === '' || !f;
+    if (f) { fill(planSel, f.pl.map((p) => p.l)); onPlan(); } else { lockInputs(false); compute(); }
+  }
+  function onPlan() {
+    const f = firms[Number(firmSel.value)];
+    const plan = f?.pl[Number(planSel.value)];
+    if (plan) fill(phaseSel, plan.ph.map((p) => p.n));
+    applyPhase();
+    compute();
+  }
+
+  function line(label: string, value: string) {
+    const li = document.createElement('li');
+    const b = document.createElement('b');
+    b.textContent = value;
+    li.append(`${label} `, b);
+    return li;
+  }
+
+  function show(state: 'ok' | 'alert' | 'error', parts: Node[]) {
+    out.dataset.state = state;
+    out.replaceChildren(...parts);
+    next.hidden = state === 'error';
+  }
+
+  function compute() {
+    const kind = kinds.find((k) => k.checked)?.value ?? 'trailing_eod';
+    peakHelp.textContent = HELP[kind];
+    const ph = selected();
+    const start = parseAmount(size.value);
+    const amt = parseAmount(amount.value);
+    const bal = parseAmount(balance.value);
+    if (start === null || amt === null || bal === null) {
+      const p = Object.assign(document.createElement('p'), { className: 'tl-msg', textContent: 'Renseigne la taille du compte, la règle de drawdown et ton solde.' });
+      return show('error', [p]);
+    }
+    const rule = ph
+      ? { kind: ph.r[0] as 'static', amount: ph.r[1], startingBalance: ph.r[2], locksAt: ph.r[3], lockedFloor: ph.r[4] }
+      : { kind: kind as 'static', amount: amt, startingBalance: start, locksAt: null, lockedFloor: null };
+    const r = propFirmMargin({
+      rule,
+      balance: bal,
+      peakBalance: kind === 'static' ? null : parseAmount(peak.value),
+      dailyLossLimit: parseAmount(dll.value),
+      dayResult: parseAmount(day.value),
+    });
+    if (!r.ok) {
+      const p = Object.assign(document.createElement('p'), { className: 'tl-msg', textContent: r.error });
+      return show('error', [p]);
+    }
+    const v = r.value;
+    const label = Object.assign(document.createElement('span'), { className: 'tl-big-label', textContent: DRAWDOWN_LABELS.margin.label });
+    const big = Object.assign(document.createElement('span'), { className: 'tl-big', textContent: formatAmount(v.marginToFloor) });
+    const list = document.createElement('ul');
+    list.className = 'tl-lines';
+    list.append(line(`Plancher${v.locked ? ' (figé)' : ''}`, formatAmount(v.floor)));
+    if (v.dailyRemaining !== null) list.append(line('Perte encore possible aujourd’hui', formatAmount(v.dailyRemaining)));
+    const msg = document.createElement('p');
+    msg.className = 'tl-note';
+    msg.textContent = v.breached
+      ? (v.limitedBy === 'daily' ? 'La perte du jour maximale est atteinte avec ces chiffres.' : 'Le plancher est atteint avec ces chiffres.')
+      : v.limitedBy === 'daily'
+        ? `La limite la plus proche est la perte du jour\u00a0: encore ${formatAmount(v.nearest)} avant de l’atteindre.`
+        : `La limite la plus proche est le plancher\u00a0: encore ${formatAmount(v.nearest)} avant de l’atteindre.`;
+    const parts: Node[] = [label, big, list, msg];
+    if (ph?.v && v.dailyRemaining !== null) parts.push(Object.assign(document.createElement('p'), { className: 'tl-note', textContent: 'La perte du jour de ce plan évolue (paliers ou règle variable)\u00a0: le calcul utilise sa valeur de départ.' }));
+    if (ph?.p) parts.push(Object.assign(document.createElement('p'), { className: 'tl-note', textContent: 'Chez cette firme, le moment où le plancher se fige dépend de la plateforme\u00a0: la règle de base est appliquée.' }));
+    show(v.breached ? 'alert' : 'ok', parts);
+  }
+
+  firmSel.addEventListener('change', onFirm);
+  planSel.addEventListener('change', onPlan);
+  phaseSel.addEventListener('change', () => { applyPhase(); compute(); });
+  // Recalcul après une courte pause de frappe : le résultat (aria-live) n'est pas relu à chaque caractère.
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  document.getElementById('tl-margin')?.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(compute, 300); });
+  document.getElementById('tl-margin')?.addEventListener('submit', (e) => e.preventDefault());
+  compute();
+</script>

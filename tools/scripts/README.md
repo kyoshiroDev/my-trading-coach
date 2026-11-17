@@ -13,6 +13,7 @@ Typecheck : `pnpm nx typecheck tools-scripts`.
 | `backfill/ambassador-codes.ts` | Garantit un code à chaque ambassadeur (idempotent). | idem, `backfill/ambassador-codes.ts` |
 | `backfill/snapshot-signups.ts` | Recalcule les inscriptions du jour des snapshots de métriques (`--dry-run` pour voir sans écrire). | idem, `backfill/snapshot-signups.ts [--dry-run]` |
 | `backfill/signup-trial-existing.ts` | Offre l'essai Premium d'inscription (14 j) aux inscrits gratuits qui n'ont jamais eu d'essai ni d'abonnement (#769). **Lancé par Greg seulement.** | idem, `backfill/signup-trial-existing.ts --dry-run` |
+| `generate-og-images.mjs` | Images de partage (Open Graph) de la landing, une par page et par article, + logo carré 512 px. À relancer après un nouvel article ou un titre modifié. | `node tools/scripts/generate-og-images.mjs` |
 | `validate-prop-firm-rules.ts` | Valide le catalogue des règles prop firm (schéma + contrôles métier). | `pnpm prop-firms:validate` |
 | `watch-prop-firm-sources.ts` | Veille des sources du catalogue prop firm (articles modifiés, firms à revérifier) ; `--update` enregistre le relevé. Lancé chaque lundi par le workflow « Veille règles prop firm ». | `pnpm prop-firms:watch [--update]` |
 | `ops/ensure-referral-coupon.ts` | Crée (idempotent) les deux coupons de parrainage dans Stripe. | idem, `ops/ensure-referral-coupon.ts` |

@@ -1,0 +1,46 @@
+/* Outils gratuits sans compte (/outils/*). Mise en page commune : firm-rules.css (fr-page, fr-sec…).
+   Tokens de la landing seulement, dark only. Formulaires lisibles à 360 px, focus visible. */
+.tl-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 14px 16px; margin-top: 16px; }
+.tl-field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+fieldset.tl-field { border: 0; padding: 0; margin: 0; min-inline-size: 0; }
+.tl-field label, .tl-legend { font-size: 14px; color: var(--txt2); font-weight: 500; }
+.tl-legend { padding: 0; margin-bottom: 6px; }
+.tl-field small { font-size: 12.5px; color: var(--txt3); line-height: 1.5; }
+.tl-input, .tl-select {
+  width: 100%; min-width: 0; font-family: var(--mono); font-variant-numeric: tabular-nums; font-size: 16px;
+  color: var(--txt); background: var(--bg3); border: 1px solid var(--b2); border-radius: 10px; padding: 11px 12px;
+}
+.tl-select { font-family: var(--body); }
+/* Champs fixés par le plan choisi : lisibles mais visiblement non modifiables. */
+.tl-input:read-only { color: var(--txt3); background: var(--bg2); border-style: dashed; }
+.tl-choice input:disabled + span { color: var(--txt3); border-style: dashed; cursor: not-allowed; }
+.tl-input:focus-visible, .tl-select:focus-visible, .tl-choice input:focus-visible + span { outline: 2px solid var(--blue); outline-offset: 2px; }
+.tl-wide { grid-column: 1 / -1; }
+
+.tl-choices { display: flex; flex-wrap: wrap; gap: 8px; border: 0; padding: 0; margin: 0; }
+.tl-choice { position: relative; }
+.tl-choice input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.tl-choice span { display: inline-block; font-size: 14px; color: var(--txt2); border: 1px solid var(--b2); border-radius: 999px; padding: 8px 14px; cursor: pointer; }
+.tl-choice input:checked + span { color: var(--txt); border-color: var(--blue); background: var(--bg3); }
+
+.tl-result { margin-top: 20px; background: var(--card); border: 1px solid var(--b2); border-radius: 12px; padding: 16px; }
+.tl-result[data-state='error'] { border-left: 3px solid var(--yel); }
+.tl-result[data-state='alert'] { border-left: 3px solid var(--yel); }
+.tl-big { display: block; font-family: var(--mono); font-variant-numeric: tabular-nums; font-size: clamp(26px, 6vw, 34px); font-weight: 600; color: var(--txt); line-height: 1.2; }
+.tl-big-label { display: block; font-size: 13px; color: var(--txt3); font-family: var(--mono); margin-bottom: 4px; }
+.fr-sec .tl-lines { list-style: none; padding: 0; margin: 12px 0 0; display: flex; flex-direction: column; gap: 6px; }
+.tl-lines li { display: flex; justify-content: space-between; gap: 12px; font-size: 14.5px; color: var(--txt2); flex-wrap: wrap; }
+.tl-lines b { font-family: var(--mono); font-variant-numeric: tabular-nums; font-weight: 500; color: var(--txt); }
+.tl-msg { margin: 0; color: var(--txt2); font-size: 15px; line-height: 1.6; }
+.tl-note { margin: 12px 0 0; color: var(--txt3); font-size: 13px; line-height: 1.6; }
+
+.tl-next { margin-top: 14px; font-size: 14px; color: var(--txt3); }
+.tl-next a { color: var(--blue2); }
+.tl-next a:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+
+.fr-sec .tl-cards { list-style: none; padding: 0; margin: 12px 0 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 10px; }
+.tl-cards a { display: block; height: 100%; background: var(--card); border: 1px solid var(--b); border-radius: 12px; padding: 16px; text-decoration: none; }
+.tl-cards a:hover { border-color: var(--b2); }
+.tl-cards a:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+.tl-card-name { display: block; font-family: var(--disp); font-weight: 600; font-size: 16px; color: var(--txt); }
+.tl-card-text { display: block; font-size: 14px; color: var(--txt2); margin-top: 6px; line-height: 1.55; }

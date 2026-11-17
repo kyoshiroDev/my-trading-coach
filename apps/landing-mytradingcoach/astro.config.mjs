@@ -16,6 +16,19 @@ const ARTICLE_DATES = Object.fromEntries(
     }),
 );
 
+// lastmod des pages « règles des prop firms » (SEO phase 3) : date du relevé de la firme
+// (`verified_at` du catalogue), lue dans les fichiers JSON de libs/shared. La page index prend la
+// plus récente. Seules les pages réellement générées (firmRulePages) arrivent au sitemap.
+const CATALOG_DIR = new URL('../../libs/shared/src/prop-firm-rules/', import.meta.url);
+const FIRM_VERIFIED = Object.fromEntries(
+  readdirSync(CATALOG_DIR)
+    .filter((f) => f.endsWith('.json') && f !== 'schema.json')
+    .map((f) => JSON.parse(readFileSync(new URL(f, CATALOG_DIR), 'utf8')))
+    .filter((j) => j?.firm?.id && j.verified_at)
+    .map((j) => [j.firm.id, j.verified_at]),
+);
+const LATEST_FIRM_CHECK = Object.values(FIRM_VERIFIED).sort().at(-1);
+
 // Mêmes flags que src/config.ts, lus au build (process.env.PUBLIC_*). Une page
 // gatée ne doit JAMAIS être listée dans le sitemap tant que sa feature est OFF
 // (sinon Google crawle une URL qui redirige → « Page avec redirection »).
@@ -34,8 +47,7 @@ export default defineConfig({
       priority: 0.7,
       filter: (page) => {
         if (page.includes('/404') || page.includes('/confidentialite')) return false;
-        // Page de test publicitaire (noindex), accessible par le lien de la pub seulement.
-        if (/\/prop-firm\/?$/.test(page)) return false;
+        // /prop-firm, page d'entrée, y est depuis le 2026-11-16 (SEO phase 1, option a de Greg).
         // Redirection temporaire de l'accueil (2026-11-08) : `/` part en 302 vers /prop-firm et
         // l'ancienne accueil vit sur /accueil (noindex). Ni l'une ni l'autre dans le sitemap.
         // Retrait : supprimer ces deux lignes avec la redirection (astro.md, « Accueil → /prop-firm »).
@@ -54,6 +66,19 @@ export default defineConfig({
         // SEO de toute façon : la racine nue et `/` sont la même URL pour Google.
         if (item.url === 'https://www.mytradingcoach.app' || item.url === 'https://www.mytradingcoach.app/') {
           return { ...item, priority: 1.0, changefreq: 'daily' };
+        }
+        // Page d'entrée tant que `/` redirige vers elle (2026-11-08).
+        if (item.url === 'https://www.mytradingcoach.app/prop-firm') {
+          return { ...item, priority: 1.0, changefreq: 'weekly' };
+        }
+        // Règles des prop firms : lastmod = date du relevé (firme), ou la plus récente pour l'index.
+        if (item.url === 'https://www.mytradingcoach.app/regles-prop-firm') {
+          return { ...item, priority: 0.8, changefreq: 'weekly', ...(LATEST_FIRM_CHECK && { lastmod: new Date(LATEST_FIRM_CHECK).toISOString() }) };
+        }
+        if (item.url.includes('/regles-prop-firm/')) {
+          const firmId = item.url.split('/regles-prop-firm/')[1].replace(/-\d+k$/, '');
+          const date = FIRM_VERIFIED[firmId];
+          return { ...item, priority: 0.7, changefreq: 'weekly', ...(date && { lastmod: new Date(date).toISOString() }) };
         }
         // Page blog index
         if (item.url === 'https://www.mytradingcoach.app/blog') {

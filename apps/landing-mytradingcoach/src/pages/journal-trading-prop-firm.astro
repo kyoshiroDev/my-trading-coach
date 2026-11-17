@@ -3,6 +3,7 @@ import Base from '../layouts/Base.astro';
 import Nav from '../components/Nav.astro';
 import Footer from '../components/Footer.astro';
 import { FEATURES, APP_URL } from '../config';
+import { ORGANIZATION, WEBSITE, faqPage, webPage } from '../data/schema';
 
 // Gating publication : page en ligne seulement quand le multi-comptes est en prod.
 if (!FEATURES.multiAccounts) return Astro.redirect('/');
@@ -10,7 +11,7 @@ if (!FEATURES.multiAccounts) return Astro.redirect('/');
 const faq = [
   {
     q: 'Comment suivre plusieurs comptes prop firm au même endroit ?',
-    a: "Tu crées un compte par éval ou funded (Apex, Lucide, Topstep, FTMO...) plus tes comptes perso. Chaque compte garde son capital de départ, ses trades et ses stats. Le sélecteur en haut de l'app filtre le journal, les analytics et les sessions sur le compte choisi, ou affiche l'ensemble.",
+    a: "Tu crées un compte par éval ou funded (Apex, Lucid, Topstep, FTMO...) plus tes comptes perso. Chaque compte garde son capital de départ, ses trades et ses stats. Le sélecteur en haut de l'app filtre le journal, les analytics et les sessions sur le compte choisi, ou affiche l'ensemble.",
   },
   {
     q: "Le suivi du drawdown et de l'objectif est-il fiable ?",
@@ -30,23 +31,20 @@ const faq = [
   },
 ];
 
-const faqSchema = {
-  '@context': 'https://schema.org',
-  '@type': 'FAQPage',
-  mainEntity: faq.map((f) => ({
-    '@type': 'Question',
-    name: f.q,
-    acceptedAnswer: { '@type': 'Answer', text: f.a },
-  })),
-};
+const canonical = 'https://www.mytradingcoach.app/journal-trading-prop-firm';
+const title = 'Journal de trading prop firm multi-comptes | MyTradingCoach';
+const description = "Journal de trading pour prop firm : suis tes comptes Apex, Lucid, Topstep et perso sans les mélanger, avec analyse IA et suivi du drawdown par compte.";
+// FAQPage = la FAQ affichée plus bas, mot pour mot.
+const schema = [webPage(canonical, title, description), ORGANIZATION, WEBSITE, faqPage(faq.map((f) => ({ question: f.q, answer: f.a })))];
 ---
 
 <Base
-  title="Journal de trading prop firm multi-comptes | MyTradingCoach"
-  description="Le journal de trading pensé pour les traders prop firm : suis tous tes comptes Apex, Lucide, Topstep et perso, avec analyse IA par compte et suivi estimé du drawdown et de l'objectif."
-  canonical="https://www.mytradingcoach.app/journal-trading-prop-firm"
-  ogUrl="https://www.mytradingcoach.app/journal-trading-prop-firm"
-  schema={faqSchema}
+  title={title}
+  description={description}
+  canonical={canonical}
+  ogImage="/og/journal-trading-prop-firm.jpg"
+  ogImageAlt="Le journal de trading prop firm et multi-comptes de MyTradingCoach"
+  schema={schema}
 >
   <Nav />
 
@@ -59,7 +57,7 @@ const faqSchema = {
       <p class="pf-lead">
         Évals, comptes funded, comptes perso : suis-les tous au même endroit, sans les
         mélanger. Chaque compte garde ses stats, son suivi de drawdown estimé et sa
-        propre analyse IA. Pensé pour les traders Apex, Lucide, Topstep, FTMO et les
+        propre analyse IA. Pensé pour les traders Apex, Lucid, Topstep, FTMO et les
         autres firmes.
       </p>
       <div class="pf-cta-row">
@@ -71,7 +69,7 @@ const faqSchema = {
     <section class="pf-sec">
       <h2>Un compte par éval, sans rien mélanger</h2>
       <p>
-        Tu passes une éval Apex, tu gères un funded Lucide et tu trades aussi un compte
+        Tu passes une éval Apex, tu gères un funded Lucid et tu trades aussi un compte
         perso ? Crée un compte par environnement. Chacun a son capital de départ, ses
         trades, son win rate et son P&amp;L. Fini l'éval et le funded confondus dans la
         même moyenne. Le sélecteur de compte filtre tout le journal, les analytics et

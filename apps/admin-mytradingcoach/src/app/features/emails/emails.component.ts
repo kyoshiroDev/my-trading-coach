@@ -68,6 +68,8 @@ export class EmailsComponent {
 
   // HTML renvoyé par l'API = celui réellement envoyé (même template backend), pour tous les types.
   protected readonly safePreviewHtml = computed<SafeHtml>(() =>
+    // HTML du serveur (vrai gabarit) : l'iframe est en `sandbox=""` (aucun script, origine opaque),
+    // le nom des destinataires est échappé côté API (S1 #1063).
     this.sanitizer.bypassSecurityTrustHtml(this.previewHtml()),
   );
 

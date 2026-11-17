@@ -45,6 +45,18 @@ describe('EmailsComponent — aperçu', () => {
     expect(iframe.getAttribute('srcdoc')).toBe('<p id="srv">rendu serveur</p>');
   });
 
+  it('S1 (#1063) : l’aperçu est isolé (sandbox vide) : un script du HTML ne s’exécute pas dans l’admin', async () => {
+    const { fixture, cmp } = setup();
+    cmp.openPreview(ANNOUNCEMENT);
+    await vi.advanceTimersByTimeAsync(0);
+    http.expectOne(PREVIEW_URL).flush({ data: { html: '<img src=x onerror="parent.pwned=1">', recipients: [] } });
+    fixture.detectChanges();
+
+    const iframe = (fixture.nativeElement as HTMLElement).querySelector('iframe')!;
+    expect(iframe.hasAttribute('sandbox')).toBe(true);
+    expect(iframe.getAttribute('sandbox')).toBe('');
+  });
+
   it('frappe : un seul appel après la pause, avec le dernier objet saisi', async () => {
     const { cmp } = setup();
     cmp.openPreview(ANNOUNCEMENT);

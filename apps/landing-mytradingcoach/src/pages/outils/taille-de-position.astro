@@ -1,0 +1,151 @@
+---
+// Calculateur de taille de position selon un risque en $ ou en % (SEO phase 4, #1071). Calcul
+// `positionSize` de @mtc/shared, exécuté dans le navigateur. La valeur du tick est saisie par le
+// trader : aucune table d'instruments recopiée ici (la source de vérité reste celle de l'app).
+import ToolLayout from '../../components/ToolLayout.astro';
+import { APP_URL } from '../../config';
+
+const NB = ' ';
+const faq = [
+  {
+    question: `Comment calculer le nombre de contrats selon mon risque${NB}?`,
+    answer: `Nombre de contrats = risque en dollars ÷ (distance du stop en ticks × valeur d'un tick), arrondi vers le bas. Avec un risque en pourcentage, le risque en dollars vaut la taille du compte × le pourcentage.`,
+  },
+  {
+    question: `Où trouver la valeur du tick de mon contrat${NB}?`,
+    answer: `Sur la fiche du contrat chez la bourse (CME pour les futures américains) ou dans ta plateforme. Par exemple, un tick vaut 0,50 $ sur le MNQ et 5 $ sur le NQ.`,
+  },
+  {
+    question: `Pourquoi le résultat est-il arrondi vers le bas${NB}?`,
+    answer: `Pour que la perte au stop reste dans le risque choisi. Arrondir vers le haut ferait dépasser ce risque.`,
+  },
+  {
+    question: `Les frais sont-ils compris${NB}?`,
+    answer: `Non. Le calcul porte sur la distance du stop seulement. Les commissions s'ajoutent à la perte si le stop est touché.`,
+  },
+];
+---
+
+<ToolLayout
+  slug="taille-de-position"
+  title={`Calculateur de taille de position futures${NB}: gratuit`}
+  description={`Calcule gratuitement combien de contrats prendre selon ton risque en $ ou en %${NB}: distance du stop en ticks et valeur du tick. Calcul dans ton navigateur.`}
+  h1="Calculateur de taille de position"
+  crumb="Taille de position"
+  answer={`Le nombre de contrats se calcule ainsi${NB}: risque en dollars ÷ (distance du stop en ticks × valeur d'un tick), arrondi vers le bas. Entre ton risque, ton stop et la valeur du tick de ton contrat, le résultat s'affiche tout de suite.`}
+  faq={faq}
+>
+  <section class="fr-sec" aria-labelledby="tl-title">
+    <h2 id="tl-title">Calcule ta taille de position</h2>
+    <form class="tl-form" id="tl-size-form" novalidate>
+      <fieldset class="tl-field tl-wide">
+        <legend class="tl-legend">Risque exprimé en</legend>
+        <div class="tl-choices">
+          <label class="tl-choice"><input type="radio" name="tl-mode" value="amount" checked /><span>Dollars</span></label>
+          <label class="tl-choice"><input type="radio" name="tl-mode" value="percent" /><span>Pourcentage du compte</span></label>
+        </div>
+      </fieldset>
+      <div class="tl-field">
+        <label for="tl-risk" id="tl-risk-label">Risque par trade ($)</label>
+        <input class="tl-input" id="tl-risk" inputmode="decimal" autocomplete="off" value="200" />
+      </div>
+      <div class="tl-field" id="tl-account-field" hidden>
+        <label for="tl-account">Taille du compte ($)</label>
+        <input class="tl-input" id="tl-account" inputmode="decimal" autocomplete="off" value="50000" />
+      </div>
+      <div class="tl-field">
+        <label for="tl-ticks">Distance du stop (ticks)</label>
+        <input class="tl-input" id="tl-ticks" inputmode="decimal" autocomplete="off" value="40" />
+      </div>
+      <div class="tl-field">
+        <label for="tl-tick">Valeur d'un tick par contrat ($)</label>
+        <input class="tl-input" id="tl-tick" inputmode="decimal" autocomplete="off" value="0,5" />
+        <small>Par exemple 0,50 $ sur le MNQ, 5 $ sur le NQ.</small>
+      </div>
+    </form>
+
+    <div class="tl-result" id="tl-result" role="status" aria-live="polite" aria-atomic="true"></div>
+    <p class="tl-next" id="tl-next" hidden>
+      Pour garder une trace de ta taille et de ton risque à chaque trade&nbsp;:
+      <a href={`${APP_URL}/demo`} data-ga-event="cta_demo" data-ga-place="outil-taille">voir la démo</a> ou
+      <a href={`${APP_URL}/register`} data-ga-event="cta_signup" data-ga-place="outil-taille">créer un compte gratuit</a>.
+    </p>
+  </section>
+
+  <section class="fr-sec">
+    <h2>Avant d'appliquer le résultat</h2>
+    <p>
+      Le nombre de contrats affiché respecte le risque que tu as choisi, au stop, hors frais. Il ne dit
+      rien de l'intérêt du trade. En prop firm, compare aussi ce risque à ta marge avant le plancher
+      avec le <a class="fr-link" href="/outils/marge-prop-firm">calculateur de marge</a>.
+    </p>
+  </section>
+</ToolLayout>
+
+<script>
+  import { positionSize } from '@mtc/shared';
+  import { formatAmount, parseAmount } from '../../lib/tool-format';
+
+  const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
+  const risk = $<HTMLInputElement>('tl-risk');
+  const riskLabel = $('tl-risk-label');
+  const account = $<HTMLInputElement>('tl-account');
+  const accountField = $('tl-account-field');
+  const ticks = $<HTMLInputElement>('tl-ticks');
+  const tick = $<HTMLInputElement>('tl-tick');
+  const out = $('tl-result');
+  const next = $('tl-next');
+  const modes = Array.from(document.querySelectorAll<HTMLInputElement>('input[name="tl-mode"]'));
+  const NB = ' ';
+
+  function line(label: string, value: string) {
+    const li = document.createElement('li');
+    const b = document.createElement('b');
+    b.textContent = value;
+    li.append(`${label} `, b);
+    return li;
+  }
+
+  function compute() {
+    const mode = (modes.find((m) => m.checked)?.value ?? 'amount') as 'amount' | 'percent';
+    accountField.hidden = mode !== 'percent';
+    riskLabel.textContent = mode === 'percent' ? 'Risque par trade (% du compte)' : 'Risque par trade ($)';
+    const r = positionSize({
+      mode,
+      risk: parseAmount(risk.value) ?? Number.NaN,
+      accountSize: mode === 'percent' ? parseAmount(account.value) : null,
+      stopTicks: parseAmount(ticks.value) ?? Number.NaN,
+      tickValue: parseAmount(tick.value) ?? Number.NaN,
+    });
+    out.replaceChildren();
+    if (!r.ok) {
+      out.dataset.state = 'error';
+      out.append(Object.assign(document.createElement('p'), { className: 'tl-msg', textContent: r.error }));
+      next.hidden = true;
+      return;
+    }
+    const v = r.value;
+    out.dataset.state = 'ok';
+    const list = document.createElement('ul');
+    list.className = 'tl-lines';
+    list.append(line('Risque visé', formatAmount(v.riskAmount)), line('Perte au stop pour 1 contrat', formatAmount(v.riskPerContract)), line(`Perte au stop avec ${v.contracts} contrat${v.contracts > 1 ? 's' : ''}`, formatAmount(v.actualRisk)));
+    const note = document.createElement('p');
+    note.className = 'tl-note';
+    note.textContent = v.contracts === 0
+      ? `Un seul contrat perdrait ${formatAmount(v.riskPerContract)} au stop, plus que le risque visé.`
+      : 'Arrondi vers le bas pour rester dans le risque visé. Frais non compris.';
+    out.append(
+      Object.assign(document.createElement('span'), { className: 'tl-big-label', textContent: 'Nombre de contrats' }),
+      Object.assign(document.createElement('span'), { className: 'tl-big', textContent: `${v.contracts}${NB}contrat${v.contracts > 1 ? 's' : ''}` }),
+      list,
+      note,
+    );
+    next.hidden = false;
+  }
+
+  // Recalcul après une courte pause de frappe : le résultat (aria-live) n'est pas relu à chaque caractère.
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  document.getElementById('tl-size-form')?.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(compute, 300); });
+  document.getElementById('tl-size-form')?.addEventListener('submit', (e) => e.preventDefault());
+  compute();
+</script>

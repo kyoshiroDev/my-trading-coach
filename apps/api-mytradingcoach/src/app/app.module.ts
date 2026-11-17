@@ -62,7 +62,7 @@ import { RedisService } from '../modules/infra/redis.service';
       ],
     }),
     // Limite par défaut : 300 requêtes / minute par UTILISATEUR connecté, 60 / minute / IP sinon
-    // (SCA-B3-03 ; IP réelle : `trust proxy` dans main.ts). Compteurs Redis communs aux workers.
+    // (SCA-B3-03 ; IP réelle : `trust proxy`, config/proxy.ts). Compteurs Redis communs aux workers.
     ThrottlerModule.forRootAsync({
       imports: [InfraModule],
       inject: [RedisService],

@@ -1,0 +1,168 @@
+---
+// Règles d'une prop firm en 50K (SEO phase 3, #1071), générées AU BUILD depuis le catalogue
+// (`firmPages()`). Une firme sans plan 50K publiable n'a pas de page (donc rien dans le sitemap).
+// Aucun chiffre écrit ici : tout vient du catalogue ou de `drawdownFloor` (@mtc/shared).
+import '../../styles/firm-rules.css';
+import { DRAWDOWN_LABELS } from '@mtc/shared';
+import Base from '../../layouts/Base.astro';
+import Nav from '../../components/Nav.astro';
+import Footer from '../../components/Footer.astro';
+import { APP_URL } from '../../config';
+import { ORGANIZATION, SITE, WEBSITE, breadcrumb, webPage } from '../../data/schema';
+import { FIRM_RULES_DISCLAIMER, firmPages, frDate, marginExample, money, type FirmPageData } from '../../data/prop-firm-pages';
+import { PHASE_LABEL, ruleRows } from '../../data/prop-firm-rules-view';
+
+export function getStaticPaths() {
+  return firmPages().map((page) => ({ params: { slug: page.slug }, props: { page } }));
+}
+
+const { page } = Astro.props as { page: FirmPageData };
+const NB = ' ';
+const size = `${page.accountSize / 1000}K`;
+const date = frDate(page.verifiedAt);
+const canonical = `${SITE}/regles-prop-firm/${page.slug}`;
+const title = `Règles ${page.firmName} ${size}${NB}: drawdown et objectif`;
+const description = `Règles ${page.firmName} en ${size}, relevées le ${date}${NB}: type et taille du drawdown, objectif, perte du jour, calcul de ta marge.`;
+
+// Réponse directe : le premier plan publié, phase d'évaluation (sinon sa première phase).
+const first = page.plans[0];
+const firstPhase = first.phases.find((p) => p.phase === 'evaluation') ?? first.phases[0];
+const m = (n: number) => money(n, first.currency);
+const ddText: Record<string, string> = {
+  trailing_eod: 'qui suit ton plus haut solde de fin de journée',
+  trailing_intraday: 'qui suit ton plus haut solde en temps réel',
+  static: 'fixe',
+};
+// Réponse directe en segments : les montants sont rendus en police mono (.fr-num).
+type Seg = { text: string; num?: string };
+const rules: Seg[][] = [];
+if (firstPhase.target !== null) rules.push([{ text: 'un objectif de ' }, { text: '', num: m(firstPhase.target) }]);
+if (firstPhase.dd) rules.push([{ text: 'une règle de drawdown de ' }, { text: '', num: m(firstPhase.dd.amount) }, { text: ` ${ddText[firstPhase.dd.type] ?? ''}`.trimEnd() }]);
+rules.push(firstPhase.dll ? [{ text: 'une perte du jour limitée à ' }, { text: '', num: m(firstPhase.dll.amount) }] : [{ text: 'pas de perte du jour maximale' }]);
+const phaseName = PHASE_LABEL[firstPhase.phase].toLowerCase();
+const lead = page.plans.length > 1
+  ? `${page.firmName} propose ${page.plans.length} plans en ${size}. Par exemple, « ${first.label} » prévoit, en phase ${phaseName}${NB}: `
+  : `En ${size}, « ${first.label} » de ${page.firmName} prévoit, en phase ${phaseName}${NB}: `;
+const introSegs: Seg[] = [{ text: lead }];
+rules.forEach((r, k) => {
+  if (k > 0) introSegs.push({ text: k === rules.length - 1 ? ' et ' : ', ' });
+  introSegs.push(...r);
+});
+introSegs.push({ text: '.' });
+
+const example = marginExample(first);
+const kinds = [...new Set(page.plans.flatMap((p) => p.phases.map((ph) => ph.dd?.type).filter(Boolean)))] as string[];
+
+const crumbs = [
+  { name: 'Accueil', url: `${SITE}/prop-firm` },
+  { name: 'Règles des prop firms', url: `${SITE}/regles-prop-firm` },
+  { name: `${page.firmName} ${size}`, url: canonical },
+];
+const schema = [webPage(canonical, title, description), breadcrumb(crumbs), ORGANIZATION, WEBSITE];
+---
+
+<Base
+  title={title}
+  description={description}
+  canonical={canonical}
+  ogImage="/og/regles-prop-firm.jpg"
+  ogImageAlt={`Règles ${page.firmName} ${size} relevées par MyTradingCoach`}
+  schema={schema}
+>
+  <Nav />
+
+  <main class="fr-page">
+    <nav class="fr-crumbs" aria-label="Fil d'Ariane">
+      <ol>
+        <li><a href="/prop-firm">Accueil</a></li>
+        <li><a href="/regles-prop-firm">Règles des prop firms</a></li>
+        <li aria-current="page">{page.firmName} {size}</li>
+      </ol>
+    </nav>
+
+    <header class="fr-hero">
+      <h1>Règles {page.firmName} en {size}</h1>
+      <p class="fr-answer">{introSegs.map((seg) => (seg.num ? <span class="fr-num">{seg.num}</span> : seg.text))}</p>
+      <p class="fr-meta">Règles relevées le {date} sur les pages officielles de la firme.</p>
+      <p class="fr-disclaimer">{FIRM_RULES_DISCLAIMER}</p>
+    </header>
+
+    {page.plans.map((plan) => (
+      <section class="fr-sec fr-plan">
+        <h2>{plan.label}</h2>
+        {plan.phases.map((phase) => (
+          <div class="fr-table-wrap">
+            <table class="fr-table">
+              <caption>{PHASE_LABEL[phase.phase]}</caption>
+              <tbody>
+                {ruleRows(phase, plan.currency).map((row) => (
+                  <tr>
+                    <th scope="row">{row.label}</th>
+                    <td>{row.value}{row.detail && <small>{row.detail}</small>}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ))}
+      </section>
+    ))}
+
+    <section class="fr-sec">
+      <h2>Comment se calcule ta {DRAWDOWN_LABELS.margin.label.toLowerCase()}</h2>
+      <p>
+        Le plancher est le solde sous lequel la firme considère la règle de drawdown comme cassée.
+        Ta marge, c'est l'écart entre ton solde et ce plancher. Au départ, le plancher vaut le solde
+        de départ moins la règle de drawdown.
+      </p>
+      <ul>
+        {kinds.includes('static') && <li><strong>Drawdown statique</strong>&nbsp;: le plancher ne bouge jamais.</li>}
+        {kinds.includes('trailing_eod') && <li><strong>Trailing de fin de journée (EOD)</strong>&nbsp;: le plancher monte quand ton solde de clôture fait un nouveau plus haut, et ne redescend jamais.</li>}
+        {kinds.includes('trailing_intraday') && <li><strong>Trailing intraday</strong>&nbsp;: le plancher suit ton plus haut solde en temps réel, gains latents compris, et ne redescend jamais.</li>}
+      </ul>
+      {example && (
+        <div class="fr-example">
+          <p>
+            Exemple avec les règles de « {first.label} » (soldes d'illustration)&nbsp;: départ à
+            <span class="fr-num"> {money(example.start, example.currency)}</span>, règle de
+            <span class="fr-num"> {money(example.amount, example.currency)}</span>, donc plancher de départ à
+            <span class="fr-num"> {money(example.startFloor, example.currency)}</span>.
+            {example.kind === 'static'
+              ? <> Même après un gain de <span class="fr-num">{money(example.peakProfit, example.currency)}</span>, le plancher reste à <span class="fr-num">{money(example.floorAfterPeak, example.currency)}</span>.</>
+              : <> Si ton plus haut monte de <span class="fr-num">{money(example.peakProfit, example.currency)}</span>, le plancher passe à <span class="fr-num">{money(example.floorAfterPeak, example.currency)}</span> (tant qu'il n'est pas figé).</>}
+            {' '}Avec un solde de <span class="fr-num">{money(example.balance, example.currency)}</span>, ta marge est de
+            <span class="fr-num"> {money(example.marginAtBalance, example.currency)}</span>.
+          </p>
+        </div>
+      )}
+      {page.platformDependent && (
+        <p>Chez {page.firmName}, le moment où le plancher se fige peut dépendre de la plateforme utilisée. Vérifie la règle de ta plateforme auprès de la firme.</p>
+      )}
+      <p>
+        Ce calcul est indicatif&nbsp;: la plateforme de ta firme fait toujours foi. Dans MyTradingCoach,
+        ta marge avant le plancher est suivie en direct pendant la séance avec ton compte Tradovate
+        connecté, en lecture seule.
+      </p>
+      <div class="fr-cta">
+        <a class="fr-btn" href={`${APP_URL}/demo`} data-ga-event="cta_demo" data-ga-place="regles-firme">Voir la démo</a>
+        <a class="fr-btn ghost" href={`${APP_URL}/register`} data-ga-event="cta_signup" data-ga-place="regles-firme">Commencer gratuitement</a>
+      </div>
+    </section>
+
+    <section class="fr-sec fr-sources">
+      <h2>Sources</h2>
+      <p>Règles relevées le {date} sur les pages officielles de {page.firmName}.</p>
+      <details>
+        <summary>Voir les {page.sources.length} pages consultées</summary>
+        <ul>
+          {page.sources.map((url) => (
+            <li><a href={url} rel="nofollow noopener" target="_blank">{url}</a></li>
+          ))}
+        </ul>
+      </details>
+      <p><a class="fr-link" href="/outils/marge-prop-firm">Calculer ta marge avec ces règles</a> · <a class="fr-link" href="/regles-prop-firm">Voir les règles des autres prop firms</a></p>
+    </section>
+  </main>
+
+  <Footer />
+</Base>

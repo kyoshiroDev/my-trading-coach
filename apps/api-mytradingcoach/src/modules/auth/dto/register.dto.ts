@@ -18,6 +18,7 @@ export class RegisterDto {
 
   @IsString()
   @IsOptional()
+  @MaxLength(100) // comme UpdateMeDto et le nom Google (S1 #1063)
   name?: string;
 
   @IsOptional()

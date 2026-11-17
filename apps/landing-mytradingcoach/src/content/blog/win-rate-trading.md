@@ -1,116 +1,116 @@
 ---
-title: "Win Rate en Trading : Comment le Calculer et l'Améliorer"
+title: "Win Rate en Trading : Comment le Calculer et l'Améliorer"
+seoTitle: "Win rate en trading : comment le calculer et le lire"
 description: "Le win rate seul ne suffit pas. Calcule ton taux de réussite et comprends pourquoi le ratio R/R est décisif."
 publishDate: 2026-04-15
+updatedDate: 2026-11-16
 tags: ["win rate", "statistiques", "performance", "risk reward"]
+faq:
+  - question: "Comment calculer son win rate en trading ?"
+    answer: "Win rate = nombre de trades gagnants ÷ (gagnants + perdants). Les trades à l'équilibre (break-even) sont mis de côté : ils ne sont ni des gains ni des pertes."
+  - question: "Un win rate de 70 % suffit-il ?"
+    answer: "Non, pas seul. Si tes pertes moyennes sont beaucoup plus grosses que tes gains moyens, tu peux perdre de l'argent avec 70 % de trades gagnants. Il faut toujours lire le win rate avec le gain moyen et la perte moyenne."
+  - question: "Qu'est-ce que l'espérance d'un trader ?"
+    answer: "C'est le résultat moyen attendu par trade sur un grand nombre de trades : win rate × gain moyen − (1 − win rate) × perte moyenne. Elle décrit tes résultats passés, elle ne prédit rien."
+  - question: "Combien de trades faut-il pour qu'un win rate veuille dire quelque chose ?"
+    answer: "Sur quelques trades, le hasard domine. Il faut plusieurs dizaines de trades comparables (même setup, même marché) avant de tirer une conclusion, et davantage pour comparer des segments entre eux."
 ---
 
 <p>
-"Mon win rate est de 70%." Ça semble excellent. Mais si tu gagnes en moyenne $50 sur tes trades gagnants et tu perds $200 sur tes trades perdants, tu es en train de perdre de l'argent. Le win rate seul ne signifie rien. Voici ce qui compte vraiment.
+<strong>Le win rate se calcule ainsi : trades gagnants ÷ (gagnants + perdants). Mais seul, il ne dit pas si tu gagnes de l'argent : il faut le lire avec ton gain moyen et ta perte moyenne.</strong> Un win rate de 70 % peut cacher un compte qui baisse.
+</p>
+<p>
+Exemple : si tu gagnes en moyenne 50 $ sur tes trades gagnants et perds 200 $ sur tes trades perdants, tu perds de l'argent avec 70 % de trades gagnants. Voici comment lire le chiffre correctement.
 </p>
 
-<h2>Le win rate sans le Risk/Reward, c'est incomplet</h2>
+<h2>Le win rate sans le risque/rendement, c'est incomplet</h2>
 <p>
-La formule de l'espérance mathématique d'un trader :
-</p>
-<p style="font-family:var(--mono); background:rgba(255,255,255,0.03); padding:1rem; border-radius:0.5rem; border:1px solid var(--border);">
-Espérance = (Win Rate × Gain moyen) - ((1 - Win Rate) × Perte moyenne)
+La formule de l'espérance d'un trader, c'est-à-dire son résultat moyen par trade :
 </p>
 <p>
-Exemples concrets :
+<code>Espérance = (win rate × gain moyen) − ((1 − win rate) × perte moyenne)</code>
+</p>
+<p>
+Exemples chiffrés, en multiples de risque (R) :
 </p>
 <ul>
-<li>Win rate 70% avec R/R de 0.5 : espérance = (0.7 × 1) - (0.3 × 2) = 0.7 - 0.6 = <strong>+0.1R</strong> (légèrement positif)</li>
-<li>Win rate 40% avec R/R de 2 : espérance = (0.4 × 2) - (0.6 × 1) = 0.8 - 0.6 = <strong>+0.2R</strong> (plus profitable)</li>
-<li>Win rate 60% avec R/R de 0.3 : espérance = (0.6 × 0.3) - (0.4 × 1) = 0.18 - 0.4 = <strong>-0.22R</strong> (perdant)</li>
+<li>Win rate 70 %, gain moyen 0,5R, perte moyenne 1R : 0,7 × 0,5 − 0,3 × 1 = <strong>+0,05R</strong> par trade.</li>
+<li>Win rate 40 %, gain moyen 2R, perte moyenne 1R : 0,4 × 2 − 0,6 × 1 = <strong>+0,2R</strong> par trade.</li>
+<li>Win rate 60 %, gain moyen 0,3R, perte moyenne 1R : 0,6 × 0,3 − 0,4 × 1 = <strong>−0,22R</strong> par trade.</li>
 </ul>
-
-<h2>Les 5 métriques qui comptent vraiment</h2>
-
-<h3>1. L'espérance mathématique (Expected Value)</h3>
 <p>
-C'est la combinaison win rate + R/R. Si ton espérance est positive, tu es profitable sur le long terme, quelle que soit ta série en cours.
+Ces calculs décrivent un historique. Ils ne garantissent rien pour les trades à venir.
+</p>
+
+<h2>Les 5 métriques à lire avec le win rate</h2>
+
+<h3>1. L'espérance</h3>
+<p>
+C'est la combinaison du win rate et du rapport entre gains et pertes. Une espérance positive sur ton historique veut dire que, sur cette période, tes gains ont dépassé tes pertes. Elle ne dit rien de certain sur la suite.
 </p>
 
 <h3>2. Le R/R moyen réalisé</h3>
 <p>
-La différence entre le R/R planifié et le R/R réalisé révèle un problème fréquent : les traders coupent leurs gains trop tôt et laissent courir leurs pertes. Si tu planifies du 1:2 mais réalises du 1:0.8 en moyenne, tu as un problème de gestion de position.
+L'écart entre le R/R prévu et le R/R réalisé révèle un problème fréquent : couper ses gains trop tôt et laisser courir ses pertes. Si tu prévois du 1:2 mais réalises du 1:0,8 en moyenne, c'est ta gestion de position qu'il faut regarder.
 </p>
 
-<h3>3. Le Profit Factor</h3>
+<h3>3. Le profit factor</h3>
 <p>
-Total des gains / Total des pertes. Sous 1 = perdant. Entre 1 et 1.5 = marginalement rentable. Au-dessus de 1.5 = système solide. Au-dessus de 2 = excellent.
+Total des gains ÷ total des pertes. Sous 1, tes pertes ont dépassé tes gains sur la période. Au-dessus de 1, c'est l'inverse. Plus l'échantillon est petit, moins ce chiffre est fiable.
 </p>
 
-<h3>4. Le Max Drawdown</h3>
+<h3>4. Le drawdown maximal</h3>
 <p>
-La perte maximale depuis un pic. Un trader avec 60% de win rate peut avoir un drawdown catastrophique s'il n'a pas de gestion des risques. Le max drawdown détermine si tu peux psychologiquement tenir ton système.
+La plus forte baisse depuis un sommet. Un trader avec 60 % de win rate peut subir un drawdown profond s'il ne gère pas son risque. En prop firm, c'est souvent lui qui décide de la survie du compte.
 </p>
 
 <h3>5. Le win rate par setup</h3>
 <p>
-Ton win rate global est une moyenne. Masqué dedans : peut-être que tes BREAKOUT ont 75% de win rate et tes REVERSAL ont 35%. Si tu ne segmentes pas par setup, tu ne sais pas lesquels abandonner.
+Ton win rate global est une moyenne. Il peut cacher un setup qui te réussit et un autre qui te coûte. Tant que tu ne segmentes pas, tu ne sais pas lequel est lequel.
 </p>
 
-<h2>Comment analyser ses propres métriques</h2>
+<h2>Comment analyser tes propres métriques</h2>
 <p>
-MyTradingCoach calcule automatiquement toutes ces métriques à partir de tes trades enregistrés. La vue Analytics décompose ton win rate par setup, par émotion, par session de trading et par heure. En quelques minutes, tu sais exactement quelles conditions de trading sont profitables pour toi, et lesquelles ne le sont pas.
+MyTradingCoach calcule ces métriques à partir de tes trades. Le plan gratuit donne ton win rate, ton P&L et la répartition par émotion et par setup ; le détail par setup et la heatmap par heure font partie des analyses avancées du Premium. Tu vois quelles conditions ont donné tes meilleurs et tes pires résultats.
 </p>
 
-<blockquote>
-"Un trader avec 40% de win rate et une bonne gestion du risque surpasse régulièrement un trader avec 70% de win rate et une gestion catastrophique."
-</blockquote>
-
-<h2>Win rate par setup : l'analyse qui change tout</h2>
+<h2>Win rate par setup : un exemple</h2>
 <p>
-Ton win rate global de 52% cache probablement une réalité plus nuancée. Voici ce que révèle typiquement la décomposition par setup chez les traders qui utilisent MyTradingCoach :
+Voici un <strong>exemple fictif</strong>, pour montrer ce que peut cacher un win rate global de 52 %. Les chiffres sont inventés pour l'illustration, ce ne sont pas des statistiques d'utilisateurs :
 </p>
 <ul>
-<li><strong>BREAKOUT :</strong> souvent 45-55% de win rate mais R/R élevé (2:1 ou plus) : profitable sur la durée</li>
-<li><strong>REVERSAL :</strong> win rate variable selon le timeframe : dangereux sans confirmation multiple</li>
-<li><strong>PULLBACK :</strong> généralement le setup le plus régulier pour les traders disciplinés (60-70%)</li>
-<li><strong>SCALPING :</strong> souvent 70%+ de win rate mais R/R très faible : une seule grosse perte peut effacer des semaines</li>
-<li><strong>NEWS :</strong> imprévisible, souvent à éviter pour les traders qui ne maîtrisent pas l'analyse fondamentale</li>
+<li><strong>Cassure :</strong> 48 % de trades gagnants, gains moyens deux fois plus gros que les pertes ;</li>
+<li><strong>Pullback :</strong> 62 % de trades gagnants, gains et pertes de taille proche ;</li>
+<li><strong>Retournement :</strong> 30 % de trades gagnants, gain moyen à peine supérieur à la perte moyenne.</li>
 </ul>
 <p>
-Si tu identifies que tes REVERSAL ont 30% de win rate avec un R/R moyen de 1:1.2, tu perds de l'argent sur ce setup. La solution n'est pas de "t'améliorer sur les reversals", c'est de les arrêter et de te concentrer sur tes setups profitables.
+Dans cet exemple, le retournement coûte de l'argent sur la période. La question à te poser n'est pas « comment devenir meilleur en retournement » mais « est-ce que je continue à le trader ».
 </p>
 
-<h2>Win rate émotionnel : la métrique que personne ne surveille</h2>
+<h2>Win rate par émotion : la métrique que personne ne regarde</h2>
 <p>
-La décomposition du win rate par état émotionnel est l'une des analyses les plus révélatrices. Pour la majorité des traders, les résultats ressemblent à ça :
-</p>
-<ul>
-<li><strong>FOCUSED :</strong> 65-75% de win rate</li>
-<li><strong>CONFIDENT :</strong> 55-65% de win rate</li>
-<li><strong>NEUTRAL :</strong> 50-60% de win rate</li>
-<li><strong>STRESSED :</strong> 35-45% de win rate</li>
-<li><strong>REVENGE :</strong> 20-30% de win rate</li>
-<li><strong>FEAR :</strong> 25-40% de win rate (mais souvent pertes coupées trop tôt)</li>
-</ul>
-<p>
-Si tes trades REVENGE ont 25% de win rate et représentent 15% de ton volume mensuel, ils détruisent ta performance globale. Éliminer ce seul segment pourrait augmenter ton win rate de 5 à 8 points.
+Découper ton win rate par état émotionnel est souvent la lecture la plus parlante. Fais le test sur tes propres trades : compare tes trades pris concentré, stressé ou en revenge. Si les trades « revenge » ont un win rate nettement plus bas et pèsent lourd dans ton volume, tu sais où regarder en premier. L'article sur le <a href="/blog/revenge-trading">revenge trading</a> détaille comment le repérer.
 </p>
 
-<h2>Streak : interpréter les séries gagnantes et perdantes</h2>
+<h2>Séries gagnantes et perdantes</h2>
 <p>
-Un win rate de 55% ne signifie pas une alternance régulière gain/perte. En réalité, les trades se regroupent en séries. Une série perdante de 5 trades est statistiquement normale avec 55% de win rate. Savoir ça évite de changer de système après 3-4 pertes consécutives : une des erreurs les plus courantes.
+Un win rate de 55 % ne veut pas dire une alternance régulière gain, perte, gain. Les trades se regroupent en séries, et une série de plusieurs pertes d'affilée arrive normalement, même avec un win rate supérieur à 50 %. Le savoir évite de changer de méthode après trois ou quatre pertes de suite.
 </p>
 <p>
-La règle : ne change ton système que si tes statistiques sur 50+ trades montrent une dégradation, pas sur la base d'une série de 5-10 trades.
+Un repère raisonnable : ne remets ta méthode en cause que si tes statistiques se dégradent sur un échantillon suffisant (plusieurs dizaines de trades), pas sur une série de cinq.
 </p>
 
-<h2>Comment améliorer son win rate efficacement</h2>
+<h2>Lire son win rate pour progresser</h2>
 <p>
-L'amélioration du win rate ne vient pas de l'"expérience" accumulée dans le flou. Elle vient d'un processus itératif :
+La progression ne vient pas de l'expérience accumulée dans le flou. Elle vient d'un processus simple et répété :
 </p>
 <ol>
-<li>Analyse tes 50 derniers trades sur MyTradingCoach</li>
-<li>Identifie les 2-3 segments avec le win rate le plus bas (setup, émotion, session)</li>
-<li>Suspends temporairement ces conditions de trading</li>
-<li>Analyse les 50 suivants : est-ce que le win rate global s'est amélioré ?</li>
-<li>Répète chaque trimestre</li>
+<li>Relis tes cinquante derniers trades.</li>
+<li>Repère les deux ou trois segments (setup, émotion, session) aux plus mauvais résultats.</li>
+<li>Décide quoi faire de ces conditions : les mettre de côté, réduire ta taille, ou les retravailler.</li>
+<li>Relis les cinquante suivants et compare.</li>
+<li>Recommence chaque trimestre.</li>
 </ol>
 <p>
-C'est une amélioration par soustraction, pas par addition. Tu ne cherches pas à apprendre de nouvelles techniques, tu cherches à éliminer tes conditions les moins profitables.
+C'est un travail par soustraction : tu identifies ce qui te coûte avant de chercher de nouvelles techniques. Et vérifie d'abord que ton win rate est bien calculé : l'article sur <a href="/blog/win-rate-break-even">le win rate et les break-even</a> montre l'erreur la plus courante.
 </p>

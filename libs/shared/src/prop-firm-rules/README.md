@@ -4,6 +4,11 @@ Règles de trading des prop firms (objectif, drawdown journalier, drawdown max, 
 
 Statut : **en base**, tables `PropFirm` / `PropFirmPlan`, synchronisées depuis ces fichiers à chaque démarrage de l'API (`apps/api-mytradingcoach/src/modules/prop-firms/`). Pas encore d'UI ni de calcul de l'état du compte. Lire `EXTRACTION-REPORT.md` avant d'utiliser un plan marqué `needs_review`.
 
+**Pages publiques** : la landing publie au build une page par firme pour la taille 50K
+(`/regles-prop-firm/<firm.id>-50k`, sélection dans `firm-pages.ts`). Modifier, ajouter ou retirer un plan
+50K (ou `verified_at`, `needs_review`, `availability`) change donc une page indexée après le prochain
+déploiement de la landing.
+
 ## Emplacement
 
 `libs/shared/src/prop-firm-rules/`, dans la lib partagée `@mtc/shared`, parce que :

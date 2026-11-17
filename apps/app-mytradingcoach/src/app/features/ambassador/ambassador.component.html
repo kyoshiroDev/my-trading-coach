@@ -103,12 +103,12 @@
         <div class="empty">Partage ton lien pour voir tes filleuls ici.</div>
       } @else {
         <div class="f-list">
-          @for (u of s.referrals; track u.id) {
+          @for (u of s.referrals; track $index) {
             <div class="f-row">
               <div class="f-av">{{ avatar(u) }}</div>
               <div class="f-mid">
                 <div class="f-name">
-                  {{ u.name ?? u.email }}
+                  {{ u.pseudo }}
                   @if (u.plan !== 'FREE') { <span class="f-plan">{{ u.plan | titlecase }}</span> }
                   <span class="f-status" [class.st-paid]="isPaid(u)" [class.st-signed]="!isPaid(u)">{{ isPaid(u) ? 'Payant' : 'Inscrit' }}</span>
                 </div>

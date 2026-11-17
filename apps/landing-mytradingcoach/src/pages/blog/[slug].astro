@@ -2,19 +2,36 @@
 import { getCollection } from 'astro:content';
 import BlogPost from '../../layouts/BlogPost.astro';
 import { APP_URL } from '../../config';
+import { relatedBlogPosts } from '@mtc/shared';
 
 // Une page par fichier de src/content/blog : l'URL reste /blog/<nom-du-fichier>.
 export async function getStaticPaths() {
-  const posts = await getCollection('blog');
-  return posts.map((post) => ({ params: { slug: post.id }, props: { post } }));
+  // Brouillons (`draft: true`) jamais publiés : ni page, ni article lié.
+  const posts = await getCollection('blog', ({ data }) => !data.draft);
+  const all = posts.map((p) => ({ slug: p.id, title: p.data.title, tags: p.data.tags, publishDate: p.data.publishDate }));
+  return posts.map((post) => ({
+    params: { slug: post.id },
+    props: { post, related: relatedBlogPosts(post.id, all, 3) },
+  }));
 }
 
-const { post } = Astro.props;
-const { title, seoTitle, description, publishDate, updatedDate, tags } = post.data;
+const { post, related } = Astro.props;
+const { title, seoTitle, description, publishDate, updatedDate, tags, faq, sources } = post.data;
 // Markdown ne sait pas lire une variable : les liens vers l'app s'écrivent `{APP_URL}/…`.
 const html = (post.rendered?.html ?? '').replaceAll('{APP_URL}', APP_URL);
 ---
 
-<BlogPost title={title} seoTitle={seoTitle} description={description} publishDate={publishDate} updatedDate={updatedDate} tags={tags}>
+<BlogPost
+  title={title}
+  seoTitle={seoTitle}
+  description={description}
+  publishDate={publishDate}
+  updatedDate={updatedDate}
+  tags={tags}
+  slug={post.id}
+  related={related}
+  faq={faq}
+  sources={sources}
+>
   <Fragment set:html={html} />
 </BlogPost>

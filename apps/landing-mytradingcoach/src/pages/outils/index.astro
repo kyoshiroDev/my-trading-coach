@@ -1,0 +1,51 @@
+---
+// Index des outils gratuits sans compte (SEO phase 4, #1071).
+import ToolLayout from '../../components/ToolLayout.astro';
+import { DRAWDOWN_LABELS } from '@mtc/shared';
+
+const NB = ' ';
+const tools = [
+  { href: '/outils/marge-prop-firm', name: 'Marge avant la limite d’une prop firm', text: `${DRAWDOWN_LABELS.margin.label} et perte du jour encore possible, avec les règles de ta firme.` },
+  { href: '/outils/taille-de-position', name: 'Taille de position', text: 'Nombre de contrats selon ton risque en dollars ou en pourcentage du compte.' },
+  { href: '/outils/risque-rendement', name: 'Risque/rendement', text: 'Ratio R/R d’un trade et taux de trades gagnants qui équilibre gains et pertes.' },
+];
+const faq = [
+  {
+    question: `Les outils sont-ils gratuits et sans inscription${NB}?`,
+    answer: `Oui. Ils s'utilisent sans compte et se calculent dans ton navigateur${NB}: aucune donnée n'est envoyée ni enregistrée.`,
+  },
+  {
+    question: `Les résultats sont-ils des conseils${NB}?`,
+    answer: `Non. Ce sont des calculs à titre informatif. Ils ne disent pas quoi acheter ou vendre, et la plateforme de ta firme fait toujours foi pour ses règles.`,
+  },
+  {
+    question: `D'où viennent les règles des prop firms${NB}?`,
+    answer: `Du catalogue de MyTradingCoach, relevé sur les pages officielles des firmes et daté. Le détail est sur les pages des règles des prop firms.`,
+  },
+];
+---
+
+<ToolLayout
+  slug=""
+  title={`Outils gratuits pour traders futures${NB}: marge, taille, R/R`}
+  description={`Calculateurs gratuits et sans compte pour traders futures en prop firm${NB}: marge avant la limite, taille de position, risque/rendement. Dans ton navigateur.`}
+  h1="Outils gratuits pour traders futures"
+  crumb="Outils"
+  answer={`Trois calculateurs gratuits, sans compte${NB}: ta marge avant la limite de ta prop firm, ta taille de position selon ton risque, et le ratio risque/rendement d'un trade.`}
+  faq={faq}
+>
+  <section class="fr-sec">
+    <h2>Choisis un outil</h2>
+    <ul class="tl-cards">
+      {tools.map((t) => (
+        <li>
+          <a href={t.href}>
+            <span class="tl-card-name">{t.name}</span>
+            <span class="tl-card-text">{t.text}</span>
+          </a>
+        </li>
+      ))}
+    </ul>
+    <p>Les règles des firmes, plan par plan, sont sur les <a class="fr-link" href="/regles-prop-firm">pages des règles des prop firms</a>.</p>
+  </section>
+</ToolLayout>

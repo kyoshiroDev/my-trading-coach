@@ -57,7 +57,7 @@ src/
 ├── config.ts                    ← APP_URL, API_URL, FEATURES (flags de publication)
 ├── data/
 │   ├── faq.ts                   ← FAQ de la home : texte affiché ET JSON-LD FAQPage
-│   └── schema.ts                ← JSON-LD (home : SoftwareApplication + FAQPage ; autres : Organization + WebSite)
+│   └── schema.ts                ← JSON-LD (/prop-firm : SoftwareApplication + FAQPage ; autres : Organization + WebSite ; règles : reference/astro/seo-technique.md)
 ├── content/blog/<slug>.md       ← UN fichier par article (le slug = nom du fichier)
 ├── content.config.ts            ← schéma du frontmatter blog
 ├── pages/
@@ -117,10 +117,20 @@ title: "Titre affiché avec mot-clé principal"
 seoTitle: "Titre de l'onglet / Google (optionnel)"
 description: "Description 155 caractères max avec mot-clé"
 publishDate: 2026-04-01
-updatedDate: 2026-05-01   # optionnel, alimente lastmod du sitemap
+updatedDate: 2026-05-01   # date réelle de la dernière mise à jour, alimente lastmod du sitemap
 tags: ["trading", "journal", "psychologie"]
+faq:                      # 3 à 5 vraies questions, affichées ET reprises dans le FAQPage
+  - question: "…"
+    answer: "…"
+sources:                  # source officielle de chaque fait affirmé (optionnel sans fait chiffré)
+  - title: "…"
+    url: "https://…"
+    consulted: 2026-11-16
 ---
 ```
+
+Réponse directe dans les deux premières lignes (paragraphe en gras), aucun chiffre sans source, aucun
+vocabulaire de gain : détail dans `reference/astro/seo-blog.md` (vérifié par `blog-related-posts.spec.ts`).
 
 Le corps peut être du Markdown ou du HTML (les articles migrés gardent leur HTML d'origine).
 
@@ -179,4 +189,5 @@ Contenu déplacé à l'identique le 2026-11-16. Lire un fichier seulement quand 
 | `astro/prop-firm.md` | page `/prop-firm`, redirection de l'accueil |
 | `astro/regles-contenu.md` | tout contenu de la landing (prix, liens, JSON-LD, sections de la home, tarifs) |
 | `astro/seo-blog.md` | nouvel article de blog |
+| `astro/seo-technique.md` | titres, meta, Open Graph, JSON-LD, sitemap, robots.txt, llms.txt, maillage, images de partage |
 | `commun/essai-premium.md` | essai d'inscription 14 j, essai Stripe 30 j, fin d'essai, libellés d'essai |
