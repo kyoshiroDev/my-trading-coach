@@ -1,0 +1,68 @@
+---
+// Gabarit des outils gratuits (/outils/*, SEO phase 4, #1071) : fil d'Ariane visible identique au
+// BreadcrumbList, réponse directe, mention « à titre informatif », FAQ affichée ET reprise dans le
+// FAQPage. Tout se calcule dans le navigateur : aucune donnée envoyée ni stockée.
+import '../styles/firm-rules.css';
+import '../styles/tools.css';
+import Base from '../layouts/Base.astro';
+import Nav from './Nav.astro';
+import Footer from './Footer.astro';
+import { ORGANIZATION, SITE, WEBSITE, breadcrumb, faqPage, webPage } from '../data/schema';
+
+export const TOOL_DISCLAIMER = 'Outil de calcul à titre informatif, pas un conseil d’investissement.';
+
+interface Props {
+  /** Segment d'URL sous /outils, vide pour l'index. */
+  slug: string;
+  title: string;
+  description: string;
+  h1: string;
+  /** Nom court dans le fil d'Ariane. */
+  crumb: string;
+  answer: string;
+  faq: { question: string; answer: string }[];
+}
+
+const { slug, title, description, h1, crumb, answer, faq } = Astro.props;
+const canonical = slug ? `${SITE}/outils/${slug}` : `${SITE}/outils`;
+const crumbs = [
+  { name: 'Accueil', url: `${SITE}/prop-firm` },
+  ...(slug ? [{ name: 'Outils', url: `${SITE}/outils` }] : []),
+  { name: crumb, url: canonical },
+];
+const schema = [webPage(canonical, title, description), breadcrumb(crumbs), faqPage(faq), ORGANIZATION, WEBSITE];
+---
+
+<Base title={title} description={description} canonical={canonical} ogImage="/og/outils.jpg" ogImageAlt={`${crumb}, outil gratuit de MyTradingCoach`} schema={schema}>
+  <Nav />
+
+  <main class="fr-page">
+    <nav class="fr-crumbs" aria-label="Fil d'Ariane">
+      <ol>
+        <li><a href="/prop-firm">Accueil</a></li>
+        {slug && <li><a href="/outils">Outils</a></li>}
+        <li aria-current="page">{crumb}</li>
+      </ol>
+    </nav>
+
+    <header class="fr-hero">
+      <h1>{h1}</h1>
+      <p class="fr-answer">{answer}</p>
+      <p class="fr-disclaimer">{TOOL_DISCLAIMER} Tout est calculé dans ton navigateur&nbsp;: aucune donnée n’est envoyée ni enregistrée.</p>
+    </header>
+
+    <slot />
+
+    <section class="fr-sec" aria-labelledby="tl-faq-title">
+      <h2 id="tl-faq-title">Questions fréquentes</h2>
+      {faq.map((f) => (
+        <div class="fr-faq-item">
+          <h3>{f.question}</h3>
+          <p>{f.answer}</p>
+        </div>
+      ))}
+    </section>
+  </main>
+
+  <Footer />
+</Base>

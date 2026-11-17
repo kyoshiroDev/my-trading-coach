@@ -19,6 +19,7 @@ export const GET: APIRoute = () => {
     `- [Accueil : suivre sa marge avant la limite de sa prop firm](${SITE}/prop-firm)`,
     ...(FEATURES.multiAccounts ? [`- [Journal de trading prop firm et multi-comptes](${SITE}/journal-trading-prop-firm)`] : []),
     `- [Règles des prop firms futures en 50K, relevées et datées](${SITE}/regles-prop-firm)`,
+    `- [Outils gratuits sans compte : marge avant la limite, taille de position, risque/rendement](${SITE}/outils)`,
     `- [Blog : guides sur le journal de trading, le win rate, la psychologie](${SITE}/blog)`,
     `- [Avertissement financier](${SITE}/disclaimer)`,
     `- [Conditions générales d'utilisation](${SITE}/cgu)`,

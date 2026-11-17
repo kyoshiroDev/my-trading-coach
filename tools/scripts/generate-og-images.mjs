@@ -77,6 +77,7 @@ const pages = [
   { file: 'blog.jpg', label: 'Blog', title: 'Journal de trading, prop firm, psychologie : les guides' },
   { file: 'ambassadeur.jpg', label: 'Programme ambassadeur', title: 'Recommande MyTradingCoach à ta communauté' },
   { file: 'regles-prop-firm.jpg', label: 'Règles des prop firms', title: 'Règles des prop firms futures en 50K' },
+  { file: 'outils.jpg', label: 'Outils gratuits', title: 'Marge, taille de position, risque/rendement : calcule en un instant' },
 ];
 const blogDir = join(landing, 'src/content/blog');
 for (const f of (await readdir(blogDir)).filter((n) => n.endsWith('.md')).sort()) {
