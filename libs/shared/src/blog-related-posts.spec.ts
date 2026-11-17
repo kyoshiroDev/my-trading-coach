@@ -55,7 +55,10 @@ describe('landing · SEO (#1071)', () => {
   });
 
   it("chaque article a son image de partage (sinon : node tools/scripts/generate-og-images.mjs)", () => {
-    const slugs = readdirSync(resolve(landing, 'src/content/blog')).filter((f) => f.endsWith('.md')).map((f) => f.replace(/\.md$/, ''));
+    const blogDir = resolve(landing, 'src/content/blog');
+    const slugs = readdirSync(blogDir)
+      .filter((f) => f.endsWith('.md') && !/^draft:\s*true\s*$/m.test(readFileSync(resolve(blogDir, f), 'utf8').split('---')[1] ?? ''))
+      .map((f) => f.replace(/\.md$/, ''));
     expect(slugs.length).toBeGreaterThan(0);
     for (const slug of slugs) expect(existsSync(resolve(landing, `public/og/blog/${slug}.jpg`)), slug).toBe(true);
     for (const f of ['default', 'prop-firm', 'journal-trading-prop-firm', 'blog', 'ambassadeur']) {
@@ -107,6 +110,17 @@ describe('landing · SEO (#1071)', () => {
         expect(md, f).not.toMatch(/[\u2013\u2014]/);
       }
     });
+  });
+
+  it('brouillons (draft: true) jamais publiés : exclus des pages, de la liste et des images de partage', () => {
+    expect(read('src/content.config.ts')).toContain('draft: z.boolean().default(false)');
+    expect(read('src/pages/blog/[slug].astro')).toContain("getCollection('blog', ({ data }) => !data.draft)");
+    expect(read('src/pages/blog/index.astro')).toContain("getCollection('blog', ({ data }) => !data.draft)");
+    const blogDir = resolve(landing, 'src/content/blog');
+    for (const f of readdirSync(blogDir).filter((n) => n.endsWith('.md'))) {
+      const draft = /^draft:\s*true\s*$/m.test(readFileSync(resolve(blogDir, f), 'utf8').split('---')[1] ?? '');
+      if (draft) expect(existsSync(resolve(landing, `public/og/blog/${f.replace(/\.md$/, '.jpg')}`)), f).toBe(false);
+    }
   });
 
   it('/prop-firm est indexable et dans le sitemap ; /accueil et `/` restent dehors', () => {

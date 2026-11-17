@@ -38,3 +38,15 @@
 - **updatedDate** : date réelle de la dernière modification du fond.
 - Vérifié par `libs/shared/src/blog-related-posts.spec.ts` (updatedDate, FAQ 3 à 5, vocabulaire
   interdit, plateformes, style inline, tiret long).
+
+<!-- Ajout : PROMPT-seo-visibilite-ia, phase 5 · 2026-11-17 -->
+## Brouillons d'articles (phase 5 SEO, 2026-11-17)
+
+- Champ `draft: true` dans le frontmatter : l'article n'est JAMAIS publié (exclu de `/blog/<slug>`, de la
+  liste `/blog`, des articles liés, du sitemap et des images de partage). Le blog publie toute date telle
+  quelle, une date future ne suffit donc pas à cacher un article.
+- Publier un brouillon = décision de Greg : retirer `draft: true`, mettre `publishDate`/`updatedDate` réels,
+  relancer `node tools/scripts/generate-og-images.mjs`, revérifier les chiffres et sources.
+- Pages hors blog en préparation (ex. comparatif concurrents) : dans `maquettes/` à la racine (gitignoré,
+  jamais commité : le dépôt GitHub est public).
+- Vérifié par `libs/shared/src/blog-related-posts.spec.ts` (filtre `!data.draft`, aucune image de partage).
