@@ -82,6 +82,7 @@ const pages = [
 const blogDir = join(landing, 'src/content/blog');
 for (const f of (await readdir(blogDir)).filter((n) => n.endsWith('.md')).sort()) {
   const fm = (await readFile(join(blogDir, f), 'utf8')).split('---')[1] ?? '';
+  if (/^draft:\s*true\s*$/m.test(fm)) continue; // brouillon : pas d'image tant qu'il n'est pas publié
   const title = fm.match(/^title:\s*"(.*)"\s*$/m)?.[1];
   if (!title) throw new Error(`title introuvable dans ${f}`);
   pages.push({ file: `blog/${f.replace(/\.md$/, '.jpg')}`, label: 'Blog', title: title.replace(/\\"/g, '"') });

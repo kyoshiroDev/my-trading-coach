@@ -9,6 +9,8 @@ import { glob } from 'astro/loaders';
  * Le corps peut contenir du HTML ; lien vers l'app : `href="{APP_URL}/register"` (remplacé au rendu).
  * `faq` : questions affichées en bas de l'article ET reprises dans le JSON-LD FAQPage (même texte).
  * `sources` : sources officielles des faits affirmés, affichées avec leur date de consultation.
+ * `draft: true` : brouillon, JAMAIS publié (exclu des pages, de la liste, du sitemap et des images de
+ * partage). Une date future ne suffit pas : le blog publie toute date telle quelle.
  */
 const blog = defineCollection({
   loader: glob({ pattern: '**/*.md', base: './src/content/blog' }),
@@ -22,6 +24,7 @@ const blog = defineCollection({
     tags: z.array(z.string()),
     author: z.string().default('MyTradingCoach'),
     image: z.string().optional(),
+    draft: z.boolean().default(false),
     faq: z
       .array(z.object({ question: z.string().min(1), answer: z.string().min(1) }))
       .min(3)

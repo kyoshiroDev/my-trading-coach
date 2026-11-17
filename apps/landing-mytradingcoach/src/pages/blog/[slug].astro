@@ -6,7 +6,8 @@ import { relatedBlogPosts } from '@mtc/shared';
 
 // Une page par fichier de src/content/blog : l'URL reste /blog/<nom-du-fichier>.
 export async function getStaticPaths() {
-  const posts = await getCollection('blog');
+  // Brouillons (`draft: true`) jamais publiés : ni page, ni article lié.
+  const posts = await getCollection('blog', ({ data }) => !data.draft);
   const all = posts.map((p) => ({ slug: p.id, title: p.data.title, tags: p.data.tags, publishDate: p.data.publishDate }));
   return posts.map((post) => ({
     params: { slug: post.id },
