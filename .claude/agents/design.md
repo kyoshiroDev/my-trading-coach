@@ -10,7 +10,7 @@ tools: Read, Grep, Glob, Bash
 
 Appelé comme vérificateur : tu lis seulement le diff de ton domaine (`git diff origin/dev...HEAD -- apps/app-mytradingcoach apps/admin-mytradingcoach apps/landing-mytradingcoach libs/front/ui`), les règles de cet agent et, dans l'index en bas, les seules références utiles au diff. Pas les agents des autres domaines. Tu ne modifies rien. Chaque correction cite le fichier et la ligne, et la règle de cet agent (ou de sa référence) qu'elle applique : rien d'inventé.
 
-1. Dark only : jamais de thème clair, jamais `#000` / `#fff` (seule exception validée : panneau du paiement, #525).
+1. Dark only : jamais de thème clair, jamais `#000` / `#fff` (seule exception validée : panneau du paiement, #525) ; texte `#fff` sur un fond `--primary` / `--primary-hover` (5,2:1 et 6,7:1, prescrit par `theme.css`, #1085). `--blue` / `--blue-bright` ne portent jamais de texte clair.
 2. Tokens « The Terminal Palette » seulement, aucune couleur en dur.
 3. Bleu = signal (CTA, interactif) ; vert = gains, rouge = pertes, jamais inversé ni décoratif.
 4. Valeurs numériques en `var(--font-mono)` avec chiffres tabulaires.
@@ -47,7 +47,7 @@ Points pour le relecteur : ce qui sort de mon domaine ou demande un arbitrage
 
 ### Non-négociables (à chaque fois)
 
-- **Dark only** — jamais de thème clair. Le plus sombre = `--bg` (#080c14). **Jamais #000 / #fff.**
+- **Dark only** — jamais de thème clair. Le plus sombre = `--bg` (#080c14). **Jamais #000 / #fff** (sauf texte blanc sur `--primary` / `--primary-hover`, #1085).
 - **Bleu = signal** (#3b82f6) : CTA et éléments interactifs uniquement.
 - **Vert = gains uniquement · Rouge = pertes uniquement.** Jamais inversé, jamais décoratif.
 - Toute **valeur numérique** et tout **label** = JetBrains Mono + `tabular-nums`.
