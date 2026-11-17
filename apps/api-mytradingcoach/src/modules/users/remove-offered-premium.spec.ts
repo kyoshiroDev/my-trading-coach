@@ -33,7 +33,7 @@ const offered = (over: object = {}) => ({
 
 freezeClock(NOW);
 beforeEach(() => {
-  vi.clearAllMocks();
+  vi.resetAllMocks(); // vide aussi les files mockResolvedValueOnce d'un test interrompu
   prisma.user.update.mockResolvedValue({});
   discord.setPlanRole.mockResolvedValue(undefined);
   redis.client.del.mockResolvedValue(1);
@@ -52,6 +52,14 @@ describe('UsersService.removeOfferedPremium (B10 #1064)', () => {
     expect(discord.setPlanRole).toHaveBeenCalledWith('d-1', false);
   });
 
+  it('ancien Premium offert sans origine enregistrée (trialSource null) : retiré aussi', async () => {
+    prisma.user.findUnique
+      .mockResolvedValueOnce(offered({ trialSource: null }))
+      .mockResolvedValueOnce({ discordId: null, plan: 'FREE', role: 'USER', trialEndsAt: NOW });
+    await expect(service.removeOfferedPremium('u1')).resolves.toEqual({ trialEndsAt: null });
+    expect(prisma.user.update).toHaveBeenCalledWith({ where: { id: 'u1' }, data: { trialEndsAt: NOW } });
+  });
+
   it('offert pendant l’essai d’inscription encore en cours : l’essai d’inscription est rendu, pas coupé', async () => {
     const signupEnd = new Date(NOW.getTime() + 5 * DAY);
     prisma.user.findUnique
@@ -62,6 +70,14 @@ describe('UsersService.removeOfferedPremium (B10 #1064)', () => {
       where: { id: 'u1' }, data: { trialEndsAt: signupEnd, trialSource: 'SIGNUP' },
     });
     expect(res).toEqual({ trialEndsAt: signupEnd.toISOString() });
+  });
+
+  it('essai d’inscription déjà terminé : fin ramenée à maintenant, pas à l’ancienne fin d’essai', async () => {
+    prisma.user.findUnique
+      .mockResolvedValueOnce(offered({ signupTrialEndsAt: new Date(NOW.getTime() - 3 * DAY) }))
+      .mockResolvedValueOnce({ discordId: null, plan: 'FREE', role: 'USER', trialEndsAt: NOW });
+    await expect(service.removeOfferedPremium('u1')).resolves.toEqual({ trialEndsAt: null });
+    expect(prisma.user.update).toHaveBeenCalledWith({ where: { id: 'u1' }, data: { trialEndsAt: NOW } });
   });
 
   it.each([
@@ -82,7 +98,7 @@ describe('UsersService.removeOfferedPremium (B10 #1064)', () => {
 
   it('compte démo : 409 ; inconnu : 404', async () => {
     prisma.user.findUnique.mockResolvedValueOnce(offered({ isDemo: true }));
-    await expect(service.removeOfferedPremium('u1')).rejects.toBeInstanceOf(ConflictException);
+    await expect(service.removeOfferedPremium('u1')).rejects.toThrow('Compte démo');
     prisma.user.findUnique.mockResolvedValueOnce(null);
     await expect(service.removeOfferedPremium('u1')).rejects.toBeInstanceOf(NotFoundException);
     expect(prisma.user.update).not.toHaveBeenCalled();

@@ -272,10 +272,15 @@ export class UserDetailComponent {
 
   // ── Retirer le Premium offert (B10 #1064) ──
   protected readonly removingOffer = signal(false);
+  /** Même condition que l'API : Premium offert en cours, jamais pendant une pause Stripe. */
+  protected readonly canRemoveOffer = computed(() => {
+    const st = this.data()?.identity.subscriptionStatus;
+    return !!this.offeredUntil() && st !== 'past_due' && st !== 'unpaid';
+  });
 
   protected async removeOfferedPremium(): Promise<void> {
     const i = this.data()?.identity;
-    if (!i || !this.offeredUntil() || this.removingOffer()) return;
+    if (!i || !this.canRemoveOffer() || this.removingOffer()) return;
     const confirmed = await this.confirm.ask({
       title: 'Retirer le Premium offert\u00a0?',
       message: `${i.email} perd tout de suite les jours offerts depuis l’admin. Un essai d’inscription encore en cours est gardé.`,

@@ -114,7 +114,7 @@
             @if (offerWarning(); as w) {
               <p class="ud-offer-warn" data-testid="offer-warning">{{ w }}</p>
             }
-            @if (offeredUntil()) {
+            @if (canRemoveOffer()) {
               <!-- B10 (#1064) : seulement un Premium offert par l'admin, jamais un abonnement Stripe -->
               <div class="srow ud-offer">
                 <span class="s-l">Jours offerts par l'admin</span>

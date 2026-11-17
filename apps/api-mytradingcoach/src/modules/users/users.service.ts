@@ -584,7 +584,7 @@ export class UsersService {
 
   /**
    * « Retirer le Premium offert » (B10 #1064, décision du 16/11) : seulement un Premium offert par
-   * l'admin encore en cours (`trialSource` ADMIN, `trialEndsAt` futur), jamais un abonnement Stripe
+   * l'admin encore en cours (`trialSource` ADMIN ou absent, `trialEndsAt` futur), jamais un abonnement Stripe
    * (même en pause). L'accès tombe tout de suite (`trialEndsAt` = maintenant) ; si l'offre prolongeait
    * l'essai d'inscription encore en cours, l'essai d'inscription est rendu (`signupTrialEndsAt`, intact
    * depuis #769) : seuls les jours offerts par l'admin sont retirés.
@@ -604,7 +604,9 @@ export class UsersService {
       throw new ConflictException('Abonnement Stripe\u00a0: jamais modifié à la main.');
     }
     const now = new Date();
-    if (user.trialSource !== TrialSource.ADMIN || !user.trialEndsAt || user.trialEndsAt <= now) {
+    // Origine absente = Premium offert d'avant `trialSource` (même règle que isOfferedPremium) ;
+    // seul l'essai d'inscription (SIGNUP) n'est jamais un Premium offert.
+    if (user.trialSource === TrialSource.SIGNUP || !user.trialEndsAt || user.trialEndsAt <= now) {
       throw new ConflictException('Aucun Premium offert en cours.');
     }
 

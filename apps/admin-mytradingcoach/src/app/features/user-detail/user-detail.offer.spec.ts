@@ -255,6 +255,7 @@ const fr = (ms: number) => new Date(ms).toLocaleDateString('fr-FR', { day: '2-di
  */
 describe('Fiche admin — date de fin annoncée (A6 #1064)', () => {
   beforeEach(() => { TestBed.resetTestingModule(); vi.clearAllMocks(); });
+  afterEach(() => TestBed.inject(HttpTestingController).verify());
 
   it('essai d’inscription en cours : fin = fin de l’essai + 30 jours, comme l’API', async () => {
     confirm.ask.mockResolvedValue(false);
@@ -269,6 +270,7 @@ describe('Fiche admin — date de fin annoncée (A6 #1064)', () => {
 /** B10 (#1064, décision du 16/11) : « Retirer le Premium offert », seulement pour un Premium offert par l'admin. */
 describe('Fiche admin — retirer le Premium offert (B10 #1064)', () => {
   beforeEach(() => { TestBed.resetTestingModule(); vi.clearAllMocks(); });
+  afterEach(() => TestBed.inject(HttpTestingController).verify());
   const offeredData = () => makeData({
     trialEndsAt: new Date(Date.now() + 20 * DAY_MS).toISOString(), trialSource: 'ADMIN', offeredPremium: true,
   });
@@ -279,6 +281,11 @@ describe('Fiche admin — retirer le Premium offert (B10 #1064)', () => {
     TestBed.resetTestingModule();
     const signup = makeData({ trialEndsAt: new Date(Date.now() + 4 * DAY_MS).toISOString(), trialSource: 'SIGNUP' });
     expect(removeBtn((await render(signup)).el)).toBeNull();
+  });
+
+  it('Premium offert pendant une pause Stripe (past_due) : aucun bouton, comme l’API', async () => {
+    const paused = { ...offeredData(), identity: { ...offeredData().identity, subscriptionStatus: 'past_due' } };
+    expect(removeBtn((await render(paused)).el)).toBeNull();
   });
 
   it('Premium offert : confirmation, DELETE, toast et rafraîchissement', async () => {
@@ -312,6 +319,7 @@ describe('Fiche admin — retirer le Premium offert (B10 #1064)', () => {
  */
 describe('Fiche admin — rôle bêta-testeur (#1064)', () => {
   beforeEach(() => { TestBed.resetTestingModule(); vi.clearAllMocks(); });
+  afterEach(() => TestBed.inject(HttpTestingController).verify());
   const betaBtn = (el: HTMLElement) => el.querySelector('[data-testid="beta-toggle"]') as HTMLButtonElement;
 
   it('USER : « Passer bêta-testeur » → confirmation puis POST', async () => {
