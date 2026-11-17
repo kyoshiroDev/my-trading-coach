@@ -341,3 +341,24 @@ export interface AdminPlanLinkStats {
   /** Réponses « Ma firm n'est pas dans la liste » (tous comptes réels), regroupées par nom. */
   unlistedFirms: { name: string; count: number; lastAt: string }[];
 }
+
+// ── Premium offert et rôle bêta depuis la fiche admin (#1064) ─────────────────
+
+/** `POST /admin/users/:id/offer-premium` : nouvelle fin du Premium offert (ISO). */
+export interface AdminOfferPremiumResponse {
+  trialEndsAt: string;
+}
+
+/**
+ * `DELETE /admin/users/:id/offer-premium` (B10) : fin de l'essai d'inscription rendu s'il court
+ * encore (ISO), sinon `null` (compte en gratuit tout de suite).
+ */
+export interface AdminRemoveOfferedPremiumResponse {
+  trialEndsAt: string | null;
+}
+
+/** `POST|DELETE /admin/users/:id/beta` : rôle après l'action. */
+export interface AdminBetaRoleResponse {
+  id: string;
+  role: 'BETA_TESTER' | 'USER';
+}

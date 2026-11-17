@@ -8,7 +8,7 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { Plan, Role, Prisma, TrialSource } from '@prisma/client';
-import { UTM_NONE, type AcquisitionUtm } from '@mtc/shared';
+import { UTM_NONE, type AcquisitionUtm, type AdminOfferPremiumResponse, type AdminRemoveOfferedPremiumResponse } from '@mtc/shared';
 import { PrismaService } from '../../prisma/prisma.service';
 import { closedTradeStats } from '../analytics/analytics.sql';
 import { AmbassadorService } from '../ambassador/ambassador.service';
@@ -532,7 +532,7 @@ export class UsersService {
     userId: string,
     days = OFFER_PREMIUM_DEFAULT_DAYS,
     adminId?: string,
-  ): Promise<{ trialEndsAt: string }> {
+  ): Promise<AdminOfferPremiumResponse> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       select: {
@@ -589,7 +589,7 @@ export class UsersService {
    * l'essai d'inscription encore en cours, l'essai d'inscription est rendu (`signupTrialEndsAt`, intact
    * depuis #769) : seuls les jours offerts par l'admin sont retirés.
    */
-  async removeOfferedPremium(userId: string, adminId?: string): Promise<{ trialEndsAt: string | null }> {
+  async removeOfferedPremium(userId: string, adminId?: string): Promise<AdminRemoveOfferedPremiumResponse> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       select: {

@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '@admin/environments/environment';
-import type { AcquisitionUtm, AdminAcquisitionData, AdminLandingEngagementData, AdminFunnelData, AdminPlanLinkStats, AdminSignupFunnelData, AdminSignupMethodsData, AdminUserDetail as UserDetailData, Plan, Role, TrialSource } from '@mtc/shared';
+import type { AcquisitionUtm, AdminAcquisitionData, AdminBetaRoleResponse, AdminOfferPremiumResponse, AdminRemoveOfferedPremiumResponse, AdminLandingEngagementData, AdminFunnelData, AdminPlanLinkStats, AdminSignupFunnelData, AdminSignupMethodsData, AdminUserDetail as UserDetailData, Plan, Role, TrialSource } from '@mtc/shared';
 export type { AdminPlanLinkStats };
 export type { UserDetailData };
 
@@ -300,16 +300,16 @@ export class AdminApi {
   delete(id: string)    { return this.http.delete<void>(`${this.usersBase}/${id}`); }
   /** Premium offert sans abonnement Stripe (défaut 30 j côté API) ; prolonge un mois en cours. */
   offerPremium(id: string, days?: number) {
-    return this.http.post<{ data: { trialEndsAt: string } }>(`${this.usersBase}/${id}/offer-premium`, days ? { days } : {});
+    return this.http.post<{ data: AdminOfferPremiumResponse }>(`${this.usersBase}/${id}/offer-premium`, days ? { days } : {});
   }
   /** Retire un Premium offert par l'admin en cours (B10 #1064) ; `trialEndsAt` = essai d'inscription rendu, sinon null. */
   removeOfferedPremium(id: string) {
-    return this.http.delete<{ data: { trialEndsAt: string | null } }>(`${this.usersBase}/${id}/offer-premium`);
+    return this.http.delete<{ data: AdminRemoveOfferedPremiumResponse }>(`${this.usersBase}/${id}/offer-premium`);
   }
   /** Rôle bêta-testeur (Premium permanent) : POST pour le donner, DELETE pour le retirer (#1064). */
   setBeta(id: string, on: boolean) {
     const url = `${this.usersBase}/${id}/beta`;
-    return on ? this.http.post<{ data: { id: string; role: string } }>(url, {}) : this.http.delete<{ data: { id: string; role: string } }>(url);
+    return on ? this.http.post<{ data: AdminBetaRoleResponse }>(url, {}) : this.http.delete<{ data: AdminBetaRoleResponse }>(url);
   }
   stats()               { return this.http.get<{ data: AdminStats }>(`${this.usersBase}/stats`); }
 
