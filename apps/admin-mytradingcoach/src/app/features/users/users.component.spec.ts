@@ -228,3 +228,41 @@ describe('UsersComponent — modale « Modifier » (A1/B2 #1064)', () => {
     expect(fixture.nativeElement.querySelector('[role="dialog"]')).toBeNull();
   });
 });
+
+/**
+ * A3 (#1065) : suppression en échec (ex. 503 résiliation Stripe) sans aucun message ; un 404 (compte
+ * déjà supprimé ailleurs) laissait la ligne affichée au lieu de valoir succès.
+ */
+describe('UsersComponent — suppression (A3 #1065)', () => {
+  beforeEach(() => {
+    TestBed.resetTestingModule();
+    query = new BehaviorSubject(convertToParamMap({}));
+  });
+  afterEach(() => TestBed.inject(HttpTestingController).verify());
+
+  async function openDelete() {
+    const { fixture, http } = setup();
+    await flushList(fixture, http, [user(), user({ id: 'u2', email: 'b@test.local' })]);
+    (fixture.nativeElement.querySelector('button[aria-label="Supprimer"]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    (fixture.nativeElement.querySelector('.danger-btn') as HTMLButtonElement).click();
+    return { fixture, req: http.expectOne((r) => r.method === 'DELETE' && r.url === `${USERS_URL}/u1`) };
+  }
+
+  it('échec (503) : message affiché, modale ouverte, ligne gardée', async () => {
+    const { fixture, req } = await openDelete();
+    req.flush({ message: 'La résiliation de ton abonnement a échoué.' }, { status: 503, statusText: 'Unavailable' });
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('[data-testid="delete-error"]')?.textContent).toContain('La résiliation');
+    expect(fixture.nativeElement.querySelector('[role="dialog"]')).not.toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('a@test.local');
+  });
+
+  it('404 (déjà supprimé) : vaut succès, la ligne disparaît', async () => {
+    const { fixture, req } = await openDelete();
+    req.flush({ message: 'Utilisateur introuvable' }, { status: 404, statusText: 'Not Found' });
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('[role="dialog"]')).toBeNull();
+    expect(fixture.nativeElement.querySelector('tbody').textContent).not.toContain('a@test.local');
+  });
+});

@@ -139,6 +139,7 @@
         </div>
         <div class="modal-body">
           <p class="delete-msg">Supprimer définitivement <strong>{{ deleteModal()!.email }}</strong> ainsi que tous ses trades et debriefs ? Cette action est irréversible.</p>
+          @if (deleteError(); as err) { <p class="modal-error" role="alert" data-testid="delete-error">{{ err }}</p> }
         </div>
         <div class="modal-footer">
           <button class="btn-cancel" (click)="closeDeleteModal()">Annuler</button>

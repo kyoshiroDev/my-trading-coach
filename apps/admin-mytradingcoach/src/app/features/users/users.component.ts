@@ -217,16 +217,30 @@ export class UsersComponent implements OnInit {
       });
   }
 
-  protected openDeleteModal(user: AdminUser) { this.deleteModal.set(user); }
+  /** Erreur de la suppression (ex. 503 résiliation Stripe), affichée dans la modale (A3 #1065). */
+  protected readonly deleteError = signal<string | null>(null);
+
+  protected openDeleteModal(user: AdminUser) { this.deleteError.set(null); this.deleteModal.set(user); }
   protected closeDeleteModal() { this.deleteModal.set(null); }
 
   protected confirmDelete() {
     const user = this.deleteModal();
     if (!user) return;
     this.saving.set(true);
+    const removed = () => {
+      this.users.update((list) => list.filter((u) => u.id !== user.id));
+      this.total.update((t) => t - 1);
+      this.saving.set(false);
+      this.closeDeleteModal();
+    };
     this.api.delete(user.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: () => { this.users.update((list) => list.filter((u) => u.id !== user.id)); this.total.update((t) => t - 1); this.saving.set(false); this.closeDeleteModal(); },
-      error: () => this.saving.set(false),
+      next: removed,
+      error: (err: { status?: number }) => {
+        // 404 = déjà supprimé (autre onglet, autre admin) : même effet qu'un succès.
+        if (err?.status === 404) { removed(); return; }
+        this.saving.set(false);
+        this.deleteError.set(apiErrorMessage(err, 'La suppression a échoué. Réessaie.'));
+      },
     });
   }
 
