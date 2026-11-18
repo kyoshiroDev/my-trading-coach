@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import type { Prisma } from '@prisma/client';
 
 export interface DefaultSetup {
   title: string;
@@ -29,7 +29,7 @@ export const SETUP_PALETTE = [
  * Réutilisé par le signup (SetupsService), la démo (demo-seed) : la migration
  * fait l'équivalent en SQL pour les users existants.
  */
-export async function seedDefaultSetups(prisma: PrismaClient, userId: string): Promise<boolean> {
+export async function seedDefaultSetups(prisma: Prisma.TransactionClient, userId: string): Promise<boolean> {
   const existing = await prisma.setup.count({ where: { userId } });
   if (existing > 0) return false;
   await prisma.setup.createMany({
