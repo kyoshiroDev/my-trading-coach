@@ -53,11 +53,6 @@ export class VpsApi {
   createBackup(target: 'bdd_prod' | 'bdd_dev' | 'bdd_beta' | 'api_prod' | 'api_dev') {
     return this.http.post<{ data: Backup }>(`${this.base}/vps/backups`, { target });
   }
-  restoreBackup(filename: string) {
-    return this.http.post<{ success: boolean; message: string }>(
-      `${this.base}/vps/backups/${filename}/restore`, {},
-    );
-  }
   deleteBackup(f: string) { return this.http.delete(`${this.base}/vps/backups/${f}`); }
 
   logsUrl(container: string, token: string, server: VpsServerId = 'principal'): string {

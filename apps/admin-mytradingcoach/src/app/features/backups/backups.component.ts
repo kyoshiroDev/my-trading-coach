@@ -9,7 +9,6 @@ import {
   LucideRefreshCw as RefreshCw,
   LucidePlus as Plus,
   LucideTrash2 as Trash2,
-  LucideRotateCcw as RotateCcw,
   LucideX as X,
   LucideAlertTriangle as AlertTriangle,
 } from '@lucide/angular';
@@ -40,7 +39,6 @@ export class BackupsComponent {
   protected readonly RefreshIcon = RefreshCw;
   protected readonly PlusIcon = Plus;
   protected readonly TrashIcon = Trash2;
-  protected readonly RestoreIcon = RotateCcw;
   protected readonly XIcon = X;
   protected readonly AlertIcon = AlertTriangle;
 
@@ -50,12 +48,9 @@ export class BackupsComponent {
   protected readonly loading = signal(true);
   protected readonly backups = signal<Backup[]>([]);
   protected readonly backingUp = signal<BackupTarget | null>(null);
-  protected readonly restoring = signal<string | null>(null);
   protected readonly showModal = signal(false);
   protected readonly selectedTarget = signal<BackupTarget | null>(null);
-  protected readonly restoreTarget = signal<Backup | null>(null);
   protected readonly deleteTarget = signal<Backup | null>(null);
-  protected readonly restoreConfirmInput = signal('');
 
   protected readonly targetEntries = Object.entries(TARGET_CONFIG).map(([key, val]) => ({ key: key as BackupTarget, ...val }));
 
@@ -106,15 +101,6 @@ export class BackupsComponent {
     this.quickBackup(target);
     this.showModal.set(false);
     this.selectedTarget.set(null);
-  }
-
-  confirmRestore(b: Backup): void { this.restoreTarget.set(b); this.restoreConfirmInput.set(''); }
-  doRestore(): void {
-    const b = this.restoreTarget();
-    if (!b || this.restoreConfirmInput() !== 'RESTAURER') return;
-    this.restoring.set(b.filename);
-    this.vpsApi.restoreBackup(b.filename).pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({ next: () => { this.restoring.set(null); this.restoreTarget.set(null); }, error: () => this.restoring.set(null) });
   }
 
   confirmDeleteB(b: Backup): void { this.deleteTarget.set(b); }
