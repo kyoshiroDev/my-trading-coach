@@ -37,8 +37,7 @@ describe('EmailsComponent — erreurs (A19 #1065)', () => {
   it('aperçu en erreur : message, jamais « 0 destinataire »', async () => {
     const fixture = TestBed.createComponent(EmailsComponent);
     http.expectOne(LIST_URL).flush({ data: [ANNOUNCEMENT] });
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (fixture.componentInstance as any).openPreview(ANNOUNCEMENT);
+    (fixture.componentInstance as unknown as { openPreview(c: CampaignMeta): void }).openPreview(ANNOUNCEMENT);
     await vi.advanceTimersByTimeAsync(0);
     http.expectOne(`${LIST_URL}/announcement/preview`).flush({}, { status: 500, statusText: 'Error' });
     fixture.detectChanges();
