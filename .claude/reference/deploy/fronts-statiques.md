@@ -142,6 +142,16 @@ location = /journal-trading-prop-firm { return 301 /; }
 
 Retirer la ligne le jour où le flag passe à `true`, sinon la page publiée reste inaccessible.
 
+**Redirections 301 de la landing (#1067, L2).** Le slash final (`location ~ ^/(.+)/$`) et
+`/confidentialite` redirigent en **Location relative** avec la query string (`/$1$is_args$args`,
+`absolute_redirect off`). Avant, l'URL de prod était écrite en dur : la landing dev renvoyait vers la
+prod et les paramètres (`utm_*`, `ref`, `promo`) étaient perdus. Testé dans un conteneur
+`nginx:1.27-alpine` : `/blog/x/?utm_source=nt&promo=X` → 301 `/blog/x?utm_source=nt&promo=X`,
+`/confidentialite?ref=abc` → 301 `/politique-confidentialite?ref=abc`. Mise en place sur l'ancien
+VPS : même procédure que la redirection de l'accueil ci-dessous (scp, sauvegarde datée, `diff` qui
+ne montre que ces deux blocs, réécriture en place, `nginx -t` + reload), avec
+`grep -c 'return 301 /\$1\$is_args\$args'` comme contrôle.
+
 **Redirection temporaire de l'accueil (2026-11-08, newsletter NinjaTrader).** `landing-releases.conf`
 envoie `/` et `/index.html` en **302** vers `/prop-firm`, query string conservée, Location relative
 (`absolute_redirect off` : sinon nginx, en http derrière Traefik, écrirait `http://<hôte>/…`). Vaut
