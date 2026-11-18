@@ -10,6 +10,8 @@
   <!-- A15 (#1065, décision du 16/11) : aucune route de restauration côté API, le bouton est retiré. -->
   <p class="page-note" data-testid="restore-note">Restauration manuelle sur le serveur&nbsp;: aucune restauration depuis l’admin.</p>
 
+  @if (actionError(); as err) { <p class="err-text" role="alert" data-testid="backup-error">{{ err }}</p> }
+
   @if (backupStale()) {
     <div class="backup-alert" [class.critical]="lastBackupAt() === null">
       <svg [lucideIcon]="AlertIcon" [size]="18"></svg>
@@ -31,6 +33,8 @@
 
   @if (loading()) {
     <div class="card"><div class="empty">Chargement des sauvegardes…</div></div>
+  } @else if (loadError()) {
+    <mtc-error-state message="Sauvegardes indisponibles : la liste n’a pas pu être lue sur le serveur." (retry)="load()" />
   } @else if (backups().length === 0) {
     <div class="card"><div class="empty">Aucune sauvegarde trouvée.<br /><button class="btn btn-primary" style="margin-top:12px" (click)="showModal.set(true)">Créer la première sauvegarde</button></div></div>
   } @else {
@@ -115,7 +119,7 @@
         <div class="modal-body"><p class="modal-desc">Supprimer définitivement :<br /><strong>{{ deleteTarget()!.filename }}</strong></p></div>
         <div class="modal-footer">
           <button class="btn" (click)="deleteTarget.set(null)">Annuler</button>
-          <button class="btn btn-danger" (click)="doDelete()">Supprimer</button>
+          <button class="btn btn-danger" [disabled]="deleting()" (click)="doDelete()">{{ deleting() ? 'Suppression…' : 'Supprimer' }}</button>
         </div>
       </div>
     </div>

@@ -13,21 +13,21 @@ import {
   LucideAlertTriangle as AlertTriangle,
 } from '@lucide/angular';
 import { VpsApi, Backup } from '../../core/api/vps.api';
-import { DialogDirective } from '@mtc/front-ui';
+import { DialogDirective, ErrorStateComponent } from '@mtc/front-ui';
+import { apiErrorMessage } from '@mtc/shared';
 
-type BackupTarget = 'bdd_prod' | 'bdd_dev' | 'bdd_beta' | 'api_prod' | 'api_dev';
+/** Cibles d'un backup manuel. « Config API » (api_*) retirées (A16 #1065) : l'API les refusait toujours (400). */
+type BackupTarget = 'bdd_prod' | 'bdd_dev' | 'bdd_beta';
 
 const TARGET_CONFIG: Record<BackupTarget, { label: string; color: string; icon: string; desc: string }> = {
   bdd_prod: { label: 'BDD Production', color: '#00d4aa', icon: '🗄️', desc: 'PostgreSQL · mytradingcoach_prod' },
   bdd_dev:  { label: 'BDD Dev',        color: '#4a9eff', icon: '🗄️', desc: 'PostgreSQL · mytradingcoach_dev' },
   bdd_beta: { label: 'BDD Beta',       color: '#e879f9', icon: '🗄️', desc: 'PostgreSQL · mytradingcoach_beta' },
-  api_prod: { label: 'Config API Prod',color: '#f5a623', icon: '📦', desc: 'docker-compose.prod.yml' },
-  api_dev:  { label: 'Config API Dev', color: '#8b5cf6', icon: '📦', desc: 'docker-compose.dev.yml' },
 };
 
 @Component({
   selector: 'mtc-admin-backups',
-  imports: [DialogDirective, DatePipe, LucideDynamicIcon],
+  imports: [DialogDirective, DatePipe, ErrorStateComponent, LucideDynamicIcon],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './backups.component.css',
   templateUrl: './backups.component.html',
@@ -46,6 +46,11 @@ export class BackupsComponent {
   protected readonly staleThresholdH = 48;
 
   protected readonly loading = signal(true);
+  /** Liste non chargée (A16 #1065) : « indisponible », jamais la fausse alerte « Aucune sauvegarde ». */
+  protected readonly loadError = signal(false);
+  /** Échec d'un backup manuel ou d'une suppression (A16 #1065), affiché en haut de page. */
+  protected readonly actionError = signal<string | null>(null);
+  protected readonly deleting = signal(false);
   protected readonly backups = signal<Backup[]>([]);
   protected readonly backingUp = signal<BackupTarget | null>(null);
   protected readonly showModal = signal(false);
@@ -70,7 +75,7 @@ export class BackupsComponent {
     return last ? Math.floor((Date.now() - last.getTime()) / 3_600_000) : null;
   });
   protected readonly backupStale = computed<boolean>(() => {
-    if (this.loading()) return false;
+    if (this.loading() || this.loadError()) return false;
     const h = this.hoursSinceLastBackup();
     return h === null || h > this.staleThresholdH;
   });
@@ -85,14 +90,23 @@ export class BackupsComponent {
 
   load(): void {
     this.loading.set(true);
-    this.vpsApi.listBackups().pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({ next: (r) => { this.backups.set(r.data ?? []); this.loading.set(false); }, error: () => this.loading.set(false) });
+    this.loadError.set(false);
+    this.vpsApi.listBackups().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (r) => { this.backups.set(r.data ?? []); this.loading.set(false); },
+      error: () => { this.loading.set(false); this.loadError.set(true); },
+    });
   }
 
   quickBackup(target: BackupTarget): void {
     this.backingUp.set(target);
-    this.vpsApi.createBackup(target).pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({ next: (r) => { this.backups.update((list) => [r.data, ...list]); this.backingUp.set(null); }, error: () => this.backingUp.set(null) });
+    this.actionError.set(null);
+    this.vpsApi.createBackup(target).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (r) => { this.backups.update((list) => [r.data, ...list]); this.backingUp.set(null); },
+      error: (err) => {
+        this.backingUp.set(null);
+        this.actionError.set(apiErrorMessage(err, 'Le backup n’a pas pu être lancé. Réessaie.'));
+      },
+    });
   }
 
   startBackup(): void {
@@ -106,8 +120,22 @@ export class BackupsComponent {
   confirmDeleteB(b: Backup): void { this.deleteTarget.set(b); }
   doDelete(): void {
     const b = this.deleteTarget();
-    if (!b) return;
-    this.vpsApi.deleteBackup(b.filename).pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({ next: () => { this.backups.update((list) => list.filter((x) => x.filename !== b.filename)); this.deleteTarget.set(null); } });
+    if (!b || this.deleting()) return; // double clic : une seule suppression
+    this.deleting.set(true);
+    this.actionError.set(null);
+    const removed = () => {
+      this.backups.update((list) => list.filter((x) => x.filename !== b.filename));
+      this.deleting.set(false);
+      this.deleteTarget.set(null);
+    };
+    this.vpsApi.deleteBackup(b.filename).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: removed,
+      error: (err: { status?: number }) => {
+        if (err?.status === 404) { removed(); return; } // déjà supprimé
+        this.deleting.set(false);
+        this.deleteTarget.set(null);
+        this.actionError.set(apiErrorMessage(err, 'La suppression a échoué. Réessaie.'));
+      },
+    });
   }
 }

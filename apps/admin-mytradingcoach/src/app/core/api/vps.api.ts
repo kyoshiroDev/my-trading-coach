@@ -50,7 +50,8 @@ export class VpsApi {
   deleteContainer(id: string)  { return this.http.delete(`${this.base}/docker/containers/${id}`); }
 
   listBackups() { return this.http.get<{ data: Backup[] }>(`${this.base}/vps/backups`); }
-  createBackup(target: 'bdd_prod' | 'bdd_dev' | 'bdd_beta' | 'api_prod' | 'api_dev') {
+  /** Backup manuel d'une base (A16 #1065 : cibles api_* retirées, toujours refusées par l'API). */
+  createBackup(target: 'bdd_prod' | 'bdd_dev' | 'bdd_beta') {
     return this.http.post<{ data: Backup }>(`${this.base}/vps/backups`, { target });
   }
   deleteBackup(f: string) { return this.http.delete(`${this.base}/vps/backups/${f}`); }
