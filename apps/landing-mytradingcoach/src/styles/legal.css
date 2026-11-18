@@ -36,7 +36,7 @@
   border-radius: 12px; margin-bottom: 2rem;
 }
 .legal-box.summary {
-  background: rgba(59, 130, 246, 0.06); border: 1px solid rgba(59, 130, 246, 0.2);
+  background: color-mix(in srgb, var(--blue) 6%, transparent); border: 1px solid color-mix(in srgb, var(--blue) 20%, transparent);
   border-radius: 10px; margin-top: 2.5rem;
 }
 .legal-box-title { font-weight: 600; margin: 0 0 8px; }

@@ -76,7 +76,7 @@ const firmCount = PROP_FIRM_CATALOG_FILES.length;
   .features { padding: 80px 5%; }
   .head { text-align: center; max-width: 600px; margin: 0 auto; }
   /* Fond de l'icône de chaque carte */
-  .ic-blue { background: rgba(59,130,246,.09); }
+  .ic-blue { background: color-mix(in srgb, var(--blue) 9%, transparent); }
   .ic-green { background: rgba(16,185,129,.09); }
   .ic-purple { background: rgba(139,92,246,.09); }
   .ic-sky { background: rgba(99,155,255,.09); }
@@ -102,7 +102,7 @@ const firmCount = PROP_FIRM_CATALOG_FILES.length;
   }
 
   .feat-card:hover { border-color: var(--b2); transform: translateY(-3px); }
-  .feat-card.featured { border-color: rgba(34,211,238,.25); background: linear-gradient(135deg,rgba(34,211,238,.04),rgba(59,130,246,.04)); }
+  .feat-card.featured { border-color: rgba(34,211,238,.25); background: linear-gradient(135deg,rgba(34,211,238,.04),color-mix(in srgb, var(--blue) 4%, transparent)); }
 
   .feat-num {
     font-family: var(--mono);
@@ -146,7 +146,7 @@ const firmCount = PROP_FIRM_CATALOG_FILES.length;
     font-weight: 500;
   }
   .tag-free    { background: rgba(16,185,129,.1);  color: var(--green); border: 1px solid rgba(16,185,129,.2); }
-  .tag-prem    { background: rgba(59,130,246,.1);  color: var(--blue2); border: 1px solid rgba(59,130,246,.2); }
+  .tag-prem    { background: color-mix(in srgb, var(--blue) 10%, transparent);  color: var(--blue2); border: 1px solid color-mix(in srgb, var(--blue) 20%, transparent); }
   .tag-new  { background: rgba(245,158,11,.1);  color: var(--yel);   border: 1px solid rgba(245,158,11,.2); }
 
   /*

@@ -235,7 +235,7 @@ const data = JSON.stringify(catalog).replace(/</g, '\\u003c');
   }
   .pfr-chip[hidden] { display: none; }
   .pfr-chip:hover { border-color: var(--blue); color: var(--txt); }
-  .pfr-chip.on { background: rgba(59, 130, 246, 0.18); border-color: var(--blue2); color: var(--txt); }
+  .pfr-chip.on { background: color-mix(in srgb, var(--blue) 18%, transparent); border-color: var(--blue2); color: var(--txt); }
   .pfr-chip:focus-visible,
   .pfr-plan select:focus-visible,
   .pfr-phases :global(button:focus-visible) { outline: 2px solid var(--blue); outline-offset: 2px; }
