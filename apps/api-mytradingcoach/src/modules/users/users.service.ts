@@ -737,7 +737,7 @@ export class UsersService {
     const stripeWhere: Prisma.UserWhereInput = { isDemo: false, role: { not: Role.ADMIN }, ...subscriptionStateWhere('paying', now) };
     // Essais et offerts (#828) : essai d'inscription, essai d'abonnement, Premium offert par l'admin.
     const trialWhere: Prisma.UserWhereInput = {
-      AND: [{ isDemo: false }, subscriptionStatesWhere(['signup_trial', 'subscription_trial', 'offered'], now)],
+      AND: [{ isDemo: false }, { role: { not: Role.ADMIN } }, subscriptionStatesWhere(['signup_trial', 'subscription_trial', 'offered'], now)],
     };
     // « Accès manuels » (A10 #1065) = Premium sans abonnement ni essai : rôle bêta-testeur (quel que
     // soit le plan) ou plan PREMIUM accordé à la main, mêmes états que subscriptionState. Hors démo et

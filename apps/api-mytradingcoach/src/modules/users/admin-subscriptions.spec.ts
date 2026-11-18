@@ -63,4 +63,11 @@ describe('UsersService.adminSubscriptions (#1065)', () => {
     expect(paying.where.role).toEqual({ not: 'ADMIN' });
     expect(prisma.user.count.mock.calls[0][0].where.role).toEqual({ not: 'ADMIN' });
   });
+
+  it('essais et offerts : jamais un ADMIN', async () => {
+    await service.adminSubscriptions();
+    expect(prisma.user.findMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: { AND: [{ isDemo: false }, { role: { not: 'ADMIN' } }, subscriptionStatesWhere(['signup_trial', 'subscription_trial', 'offered'], NOW)] },
+    }));
+  });
 });
