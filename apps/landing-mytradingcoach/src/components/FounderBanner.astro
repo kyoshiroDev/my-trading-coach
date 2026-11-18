@@ -25,7 +25,7 @@ const { href = '/#pricing' } = Astro.props;
     </span>
     <span class="offer-short">🔥 Fondateur {FOUNDER_OFFER.priceMonthlyEur} €/mois · <span data-offer-left-short></span> →</span>
   </a>
-  <button type="button" class="offer-close" aria-label="Fermer le bandeau de l'offre fondateur">×</button>
+  <button type="button" class="offer-close" aria-label="Fermer le bandeau de l'offre fondateur"><svg class="offer-close-ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg></button>
   <span class="offer-progress" aria-hidden="true"><span class="offer-progress-fill"></span></span>
 </div>
 </template>
@@ -95,7 +95,7 @@ const { href = '/#pricing' } = Astro.props;
     align-items: center;
     justify-content: center;
     padding: 0 40px;
-    background: linear-gradient(90deg, var(--blue), #6366f1); /* opaque (#1079) : texte centré ~4,8:1 ; le × en grand texte gras (seuil 3:1) fait ~4,4:1 au bord indigo */
+    background: linear-gradient(90deg, var(--blue), var(--indigo)); /* opaque (#1079) : texte centré ~4,8:1 ; icône × (graphique, seuil 3:1) ~4,4:1 au bord indigo */
     color: var(--on-blue);
     font-size: 13px;
     line-height: 1;
@@ -118,11 +118,13 @@ const { href = '/#pricing' } = Astro.props;
     border: none;
     background: transparent;
     color: var(--on-blue);
-    font-size: 19px;
-    font-weight: 700;
-    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
     cursor: pointer;
   }
+  .offer-close-ic { display: block; flex-shrink: 0; }
   .offer-close:hover { background: color-mix(in srgb, var(--txt) 20%, transparent); border-radius: 6px; }
   .offer-close:focus-visible { outline: 2px solid var(--on-blue); outline-offset: 1px; border-radius: 6px; }
   .offer-progress {
