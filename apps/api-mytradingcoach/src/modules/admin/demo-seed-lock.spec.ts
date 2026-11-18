@@ -86,3 +86,17 @@ describe('DemoSeedService : re-seed en une transaction (B6 #1066)', () => {
     expect(seedDemo).toHaveBeenCalledWith(tx);
   });
 });
+
+/** B7 (#1066) : le re-seed ne vidait pas le cache analytics de la démo (300 s de chiffres anciens). */
+describe('DemoSeedService : cache des statistiques vidé après le re-seed (B7 #1066)', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('version du cache analytics du compte démo incrémentée après le commit', async () => {
+    const { service, redis } = setup();
+    const multi = { incr: vi.fn().mockReturnThis(), expire: vi.fn().mockReturnThis(), exec: vi.fn().mockResolvedValue([]) };
+    (redis.client as Record<string, unknown>).multi = vi.fn(() => multi);
+    await service.run('admin');
+    expect(multi.incr).toHaveBeenCalledWith('analytics:v:demo');
+    expect(multi.exec).toHaveBeenCalled();
+  });
+});

@@ -6,6 +6,7 @@ import { RedisService } from '../infra/redis.service';
 import { DEMO_EMAIL, seedDemo, DemoSeedResult } from './demo-seed';
 import { demoTodaySlot } from './demo-data/generate';
 import { activeSessionWhere } from '../session/active-session';
+import { bumpAnalyticsVersion } from '../analytics/analytics-cache';
 
 /** Un seul re-seed à la fois dans tout le cluster (connexions démo simultanées, cron, boot). */
 export const DEMO_RESEED_LOCK = 'demo:reseed-lock';
@@ -57,6 +58,9 @@ export class DemoSeedService {
       timeout: SEED_TX_TIMEOUT_MS,
       maxWait: 10_000,
     });
+    // Statistiques en cache (300 s) recalculées sur les nouvelles données (B7 #1066).
+    const demo = await this.prisma.user.findUnique({ where: { email: DEMO_EMAIL }, select: { id: true } });
+    if (demo) await bumpAnalyticsVersion(this.redis.client, demo.id);
     this.logger.log(
       `Compte démo seedé (${reason}) : ${res.trades} trades sur ${res.accounts} comptes · WR net ${res.winRate}% · brut ${res.grossPnl} $ · frais ${res.fees} $ · net ${res.pnl} $ · ${res.redDays}/${res.tradingDays} jours rouges`,
     );
