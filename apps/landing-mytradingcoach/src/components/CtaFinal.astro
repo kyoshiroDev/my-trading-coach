@@ -85,13 +85,13 @@ import { PREMIUM_SIGNUP_TRIAL_DAYS } from '@mtc/shared';
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    box-shadow: 0 0 28px var(--blue-glow);
+    box-shadow: 0 0 28px var(--blue-halo);
     transition: background .2s, transform .2s, box-shadow .2s;
     border: none;
     cursor: pointer;
     font-family: var(--disp);
   }
-  .btn-p:hover { background: var(--blue2); transform: translateY(-2px); box-shadow: 0 0 44px rgba(59,130,246,.55); }
+  .btn-p:hover { background: var(--blue2); transform: translateY(-2px); box-shadow: 0 0 44px var(--blue-halo-strong); }
 
   @media (max-width: 768px) {
     .cta-final { padding: 80px 16px; }
