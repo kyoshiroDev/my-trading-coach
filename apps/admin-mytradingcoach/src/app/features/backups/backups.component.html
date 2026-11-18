@@ -34,7 +34,7 @@
   @if (loading()) {
     <div class="card"><div class="empty">Chargement des sauvegardes…</div></div>
   } @else if (loadError()) {
-    <mtc-error-state message="Sauvegardes indisponibles : la liste n’a pas pu être lue sur le serveur." (retry)="load()" />
+    <mtc-error-state message="Sauvegardes indisponibles : la liste n’a pas pu être lue sur le serveur." (retry)="load()" />
   } @else if (backups().length === 0) {
     <div class="card"><div class="empty">Aucune sauvegarde trouvée.<br /><button class="btn btn-primary" style="margin-top:12px" (click)="showModal.set(true)">Créer la première sauvegarde</button></div></div>
   } @else {

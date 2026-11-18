@@ -90,4 +90,4 @@
 .signup-link:hover { text-decoration: underline; }
 
 /* Bloc qui n’a pas pu être chargé (A20 #1065). */
-.err-text { color: var(--red, #ef4444); font-size: 12px; margin: 0 0 12px; }
+.err-text { margin: 0 0 12px; }
