@@ -38,7 +38,7 @@
   --green: #10b981;
   --red: #ef4444;
   --yel: #f59e0b;
-  --purple: #8b5cf6; /* moments « après », comptes perso : mêmes noms que l'app (#1098) */
+  --purple: #8b5cf6; /* réservé comme dans l'app : logo mark, avatars, badge beta (#1098) ; aucun usage sur la landing depuis #1100 */
   --purple-bright: #a78bfa;
   --reflet: var(--txt); /* reflets et séparateurs translucides seulement (color-mix de 4 à 14 %), jamais un fond ni un texte (#1098) */
   --txt: #e2eaf5;
