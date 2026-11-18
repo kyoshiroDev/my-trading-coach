@@ -13,7 +13,7 @@ import type { AmbassadorService } from '../ambassador/ambassador.service';
  */
 const DAY = 86_400_000;
 const NOW = new Date('2026-11-17T12:00:00.000Z');
-const prisma = { user: { findUnique: vi.fn(), update: vi.fn() } };
+const prisma = { user: { findUnique: vi.fn(), update: vi.fn(), updateMany: vi.fn() } };
 const cache = { invalidate: vi.fn() };
 const discord = { setPlanRole: vi.fn() };
 const redis = { client: { del: vi.fn() } };
@@ -35,6 +35,7 @@ freezeClock(NOW);
 beforeEach(() => {
   vi.resetAllMocks(); // vide aussi les files mockResolvedValueOnce d'un test interrompu
   prisma.user.update.mockResolvedValue({});
+  prisma.user.updateMany.mockResolvedValue({ count: 1 });
   discord.setPlanRole.mockResolvedValue(undefined);
   redis.client.del.mockResolvedValue(1);
 });
@@ -45,7 +46,7 @@ describe('UsersService.removeOfferedPremium (B10 #1064)', () => {
       .mockResolvedValueOnce(offered())
       .mockResolvedValueOnce({ discordId: 'd-1', plan: 'FREE', role: 'USER', trialEndsAt: NOW });
     const res = await service.removeOfferedPremium('u1', 'admin-1');
-    expect(prisma.user.update).toHaveBeenCalledWith({ where: { id: 'u1' }, data: { trialEndsAt: NOW } });
+    expect(prisma.user.updateMany).toHaveBeenCalledWith(expect.objectContaining({ data: { trialEndsAt: NOW } }));
     expect(res).toEqual({ trialEndsAt: null });
     expect(cache.invalidate).toHaveBeenCalledWith('u1');
     expect(redis.client.del).toHaveBeenCalledWith('billing:status:u1');
@@ -57,7 +58,7 @@ describe('UsersService.removeOfferedPremium (B10 #1064)', () => {
       .mockResolvedValueOnce(offered({ trialSource: null }))
       .mockResolvedValueOnce({ discordId: null, plan: 'FREE', role: 'USER', trialEndsAt: NOW });
     await expect(service.removeOfferedPremium('u1')).resolves.toEqual({ trialEndsAt: null });
-    expect(prisma.user.update).toHaveBeenCalledWith({ where: { id: 'u1' }, data: { trialEndsAt: NOW } });
+    expect(prisma.user.updateMany).toHaveBeenCalledWith(expect.objectContaining({ data: { trialEndsAt: NOW } }));
   });
 
   it('offert pendant l’essai d’inscription encore en cours : l’essai d’inscription est rendu, pas coupé', async () => {
@@ -66,9 +67,9 @@ describe('UsersService.removeOfferedPremium (B10 #1064)', () => {
       .mockResolvedValueOnce(offered({ trialEndsAt: new Date(signupEnd.getTime() + 30 * DAY), signupTrialEndsAt: signupEnd }))
       .mockResolvedValueOnce({ discordId: null, plan: 'FREE', role: 'USER', trialEndsAt: signupEnd });
     const res = await service.removeOfferedPremium('u1');
-    expect(prisma.user.update).toHaveBeenCalledWith({
-      where: { id: 'u1' }, data: { trialEndsAt: signupEnd, trialSource: 'SIGNUP' },
-    });
+    expect(prisma.user.updateMany).toHaveBeenCalledWith(expect.objectContaining({
+      data: { trialEndsAt: signupEnd, trialSource: 'SIGNUP' },
+    }));
     expect(res).toEqual({ trialEndsAt: signupEnd.toISOString() });
   });
 
@@ -77,7 +78,30 @@ describe('UsersService.removeOfferedPremium (B10 #1064)', () => {
       .mockResolvedValueOnce(offered({ signupTrialEndsAt: new Date(NOW.getTime() - 3 * DAY) }))
       .mockResolvedValueOnce({ discordId: null, plan: 'FREE', role: 'USER', trialEndsAt: NOW });
     await expect(service.removeOfferedPremium('u1')).resolves.toEqual({ trialEndsAt: null });
-    expect(prisma.user.update).toHaveBeenCalledWith({ where: { id: 'u1' }, data: { trialEndsAt: NOW } });
+    expect(prisma.user.updateMany).toHaveBeenCalledWith(expect.objectContaining({ data: { trialEndsAt: NOW } }));
+  });
+
+  // Relecteur (#1064) : un webhook Stripe qui arrive entre la lecture et l'écriture ne doit jamais
+  // voir son abonnement écrasé. L'écriture refait les contrôles dans son where.
+  it('écriture conditionnelle : l’état a changé depuis la lecture (count 0) → 409, rien réaligné', async () => {
+    prisma.user.findUnique.mockResolvedValueOnce(offered());
+    prisma.user.updateMany.mockResolvedValueOnce({ count: 0 });
+    await expect(service.removeOfferedPremium('u1')).rejects.toThrow('Aucun Premium offert en cours.');
+    expect(prisma.user.updateMany).toHaveBeenCalledWith({
+      where: {
+        id: 'u1',
+        trialEndsAt: { gt: NOW },
+        AND: [
+          { OR: [{ trialSource: null }, { trialSource: 'ADMIN' }] },
+          { OR: [{ stripeSubscriptionStatus: null }, { stripeSubscriptionStatus: { notIn: ['active', 'trialing', 'past_due', 'unpaid'] } }] },
+        ],
+      },
+      data: { trialEndsAt: NOW },
+    });
+    expect(prisma.user.update).not.toHaveBeenCalled();
+    expect(cache.invalidate).not.toHaveBeenCalled();
+    expect(redis.client.del).not.toHaveBeenCalled();
+    expect(discord.setPlanRole).not.toHaveBeenCalled();
   });
 
   it.each([
@@ -87,13 +111,13 @@ describe('UsersService.removeOfferedPremium (B10 #1064)', () => {
   ])('rien à retirer (%s) : 409, rien d’écrit', async (_l, over) => {
     prisma.user.findUnique.mockResolvedValueOnce(offered(over));
     await expect(service.removeOfferedPremium('u1')).rejects.toBeInstanceOf(ConflictException);
-    expect(prisma.user.update).not.toHaveBeenCalled();
+    expect(prisma.user.updateMany).not.toHaveBeenCalled();
   });
 
   it.each(['active', 'trialing', 'past_due', 'unpaid'])('abonnement Stripe (%s) : 409, jamais modifié à la main', async (status) => {
     prisma.user.findUnique.mockResolvedValueOnce(offered({ stripeSubscriptionStatus: status }));
     await expect(service.removeOfferedPremium('u1')).rejects.toBeInstanceOf(ConflictException);
-    expect(prisma.user.update).not.toHaveBeenCalled();
+    expect(prisma.user.updateMany).not.toHaveBeenCalled();
   });
 
   it('compte démo : 409 ; inconnu : 404', async () => {
@@ -101,6 +125,6 @@ describe('UsersService.removeOfferedPremium (B10 #1064)', () => {
     await expect(service.removeOfferedPremium('u1')).rejects.toThrow('Compte démo');
     prisma.user.findUnique.mockResolvedValueOnce(null);
     await expect(service.removeOfferedPremium('u1')).rejects.toBeInstanceOf(NotFoundException);
-    expect(prisma.user.update).not.toHaveBeenCalled();
+    expect(prisma.user.updateMany).not.toHaveBeenCalled();
   });
 });

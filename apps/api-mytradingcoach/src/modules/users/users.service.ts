@@ -63,6 +63,12 @@ const USER_SELECT = {
   createdAt: true,
 } as const;
 
+/**
+ * Abonnement Stripe en cours (actif, essai Stripe) ou en pause (past_due, unpaid) : un Premium offert
+ * ne se retire jamais par-dessus (B10 #1064).
+ */
+const BLOCKING_STRIPE_STATUSES: readonly string[] = ['active', 'trialing', 'past_due', 'unpaid'];
+
 /** Page Abonnements : essais et offerts listés (les plus récents d'abord). */
 const TRIAL_LIST_MAX = 200;
 
@@ -600,7 +606,7 @@ export class UsersService {
     if (!user) throw new NotFoundException('Utilisateur introuvable');
     if (user.isDemo) throw new ConflictException(DEMO_ACCOUNT_LOCKED);
     const status = user.stripeSubscriptionStatus;
-    if (hasActiveStripeSubscription(status) || status === 'past_due' || status === 'unpaid') {
+    if (status && BLOCKING_STRIPE_STATUSES.includes(status)) {
       throw new ConflictException('Abonnement Stripe\u00a0: jamais modifié à la main.');
     }
     const now = new Date();
@@ -611,10 +617,21 @@ export class UsersService {
     }
 
     const signupEnd = user.signupTrialEndsAt && user.signupTrialEndsAt > now ? user.signupTrialEndsAt : null;
-    await this.prisma.user.update({
-      where: { id: userId },
+    // Écriture conditionnelle : les contrôles ci-dessus sont refaits dans le where, pour qu'un webhook
+    // Stripe arrivé entre la lecture et l'écriture ne soit jamais écrasé. Jamais `not: SIGNUP` :
+    // en SQL, il écarterait aussi les `trialSource` null (offerts d'avant #769).
+    const { count } = await this.prisma.user.updateMany({
+      where: {
+        id: userId,
+        trialEndsAt: { gt: now },
+        AND: [
+          { OR: [{ trialSource: null }, { trialSource: TrialSource.ADMIN }] },
+          { OR: [{ stripeSubscriptionStatus: null }, { stripeSubscriptionStatus: { notIn: [...BLOCKING_STRIPE_STATUSES] } }] },
+        ],
+      },
       data: signupEnd ? { trialEndsAt: signupEnd, trialSource: TrialSource.SIGNUP } : { trialEndsAt: now },
     });
+    if (count === 0) throw new ConflictException('Aucun Premium offert en cours.');
     await this.userCache?.invalidate(userId); // accès relu tout de suite par le JWT
     await this.realignPremiumAccess(userId);
     this.logger.log(
