@@ -193,10 +193,10 @@
     z-index: 1;
     margin-top: 3px;
   }
-  .day-dot.green  { border-color: var(--green);  background: rgba(16,185,129,.15); }
+  .day-dot.green  { border-color: var(--green);  background: color-mix(in srgb, var(--green) 15%, transparent); }
   .day-dot.blue   { border-color: var(--blue);   background: color-mix(in srgb, var(--blue) 15%, transparent); }
-  .day-dot.purple { border-color: #8b5cf6;       background: rgba(139,92,246,.15); }
-  .day-dot.yel    { border-color: var(--yel);    background: rgba(245,158,11,.15); }
+  .day-dot.purple { border-color: var(--purple);       background: color-mix(in srgb, var(--purple) 15%, transparent); }
+  .day-dot.yel    { border-color: var(--yel);    background: color-mix(in srgb, var(--yel) 15%, transparent); }
 
   .day-line {
     flex: 1;
@@ -221,7 +221,7 @@
   }
   .day-tag.avant   { color: var(--green); }
   .day-tag.pendant { color: var(--blue2); }
-  .day-tag.apres   { color: #a78bfa; }
+  .day-tag.apres   { color: var(--purple-bright); }
   .day-tag.alerte  { color: var(--yel); }
 
   .day-content h3 {
@@ -255,10 +255,10 @@
     padding: 3px 9px;
     border-radius: 5px;
   }
-  .day-pill.g { background: rgba(16,185,129,.08);  color: var(--green); border: 1px solid rgba(16,185,129,.15); }
+  .day-pill.g { background: color-mix(in srgb, var(--green) 8%, transparent);  color: var(--green); border: 1px solid color-mix(in srgb, var(--green) 15%, transparent); }
   .day-pill.b { background: color-mix(in srgb, var(--blue) 8%, transparent);  color: var(--blue2); border: 1px solid color-mix(in srgb, var(--blue) 15%, transparent); }
-  .day-pill.p { background: rgba(139,92,246,.08);  color: #a78bfa;      border: 1px solid rgba(139,92,246,.15); }
-  .day-pill.y { background: rgba(245,158,11,.08);  color: var(--yel);   border: 1px solid rgba(245,158,11,.15); }
+  .day-pill.p { background: color-mix(in srgb, var(--purple) 8%, transparent);  color: var(--purple-bright);      border: 1px solid color-mix(in srgb, var(--purple) 15%, transparent); }
+  .day-pill.y { background: color-mix(in srgb, var(--yel) 8%, transparent);  color: var(--yel);   border: 1px solid color-mix(in srgb, var(--yel) 15%, transparent); }
 
   @media (max-width: 768px) {
     .day-section { padding: 64px 16px; }

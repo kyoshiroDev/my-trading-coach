@@ -221,25 +221,25 @@ const merge = (row: Row): Cell => {
   .comp-table th:first-child { text-align: left; }
   .comp-table th.hl { color: var(--pulse); }
   /* En-tete a deux niveaux : « MyTradingCoach » couvre Gratuit + Premium. */
-  .comp-table th.th-group { padding-bottom: 6px; border-bottom-color: rgba(34,211,238,.25); }
+  .comp-table th.th-group { padding-bottom: 6px; border-bottom-color: color-mix(in srgb, var(--pulse) 25%, transparent); }
   .comp-table th.th-plan { padding-top: 6px; font-size: 9px; }
 
   .comp-table td {
     padding: 12px 18px;
-    border-bottom: 1px solid rgba(99,155,255,.05);
+    border-bottom: 1px solid color-mix(in srgb, var(--edge) 5%, transparent);
     color: var(--txt2);
     text-align: center;
   }
   .comp-table td:first-child { text-align: left; color: var(--txt); font-weight: 400; }
   .comp-table tr:last-child td { border-bottom: none; }
-  .comp-table tr:hover td { background: rgba(99,155,255,.02); }
+  .comp-table tr:hover td { background: color-mix(in srgb, var(--edge) 2%, transparent); }
   /* Colonnes MTC teintees : elles se lisent comme un bloc. */
-  .comp-table td.c-mtc { background: rgba(34,211,238,.03); }
+  .comp-table td.c-mtc { background: color-mix(in srgb, var(--pulse) 3%, transparent); }
   /* Colonnes de meme largeur : sinon la largeur suit le contenu (prix, paliers). */
   .comp-table td.c-mtc { width: 10%; }
   .comp-table td.c-rival { width: 15%; }
 
-  .row-hl { background: rgba(34,211,238,.02); }
+  .row-hl { background: color-mix(in srgb, var(--pulse) 2%, transparent); }
   .comp-table .row-hl .cell-hl { font-weight: 500; color: var(--txt); }
 
   /* Colonne agregee « Les autres » : absente en desktop, elle remplace les trois
