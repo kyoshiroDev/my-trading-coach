@@ -5,7 +5,7 @@ import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { httpResource } from '@angular/common/http';
 import { map } from 'rxjs';
 import { environment } from '@admin/environments/environment';
-import { ConfirmService, PctPipe } from '@mtc/front-ui';
+import { ConfirmService, ErrorStateComponent, PctPipe } from '@mtc/front-ui';
 import { acquisitionLabel, acquisitionQueryParams, apiErrorMessage, formatMoney, subscriptionState } from '@mtc/shared';
 import { AdminApi, UserDetailData } from '../../core/api/admin.api';
 import { ActivityCalendarComponent } from './activity-calendar.component';
@@ -148,7 +148,7 @@ import { activeTrial } from '../../core/utils/trial.util';
 
 @Component({
   selector: 'mtc-admin-user-detail',
-  imports: [PctPipe, DatePipe, RouterLink, ActivityCalendarComponent],
+  imports: [PctPipe, DatePipe, RouterLink, ActivityCalendarComponent, ErrorStateComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './user-detail.component.css',
   templateUrl: './user-detail.component.html',
@@ -172,7 +172,10 @@ export class UserDetailComponent {
     return id ? `${environment.apiUrl}/admin/users/${id}` : undefined;
   });
 
-  protected readonly data = computed(() => this.detail.value()?.data ?? null);
+  // `value()` LÈVE quand la requête a échoué (Angular 22) : lue seulement si la fiche a une valeur.
+  protected readonly data = computed(() => (this.detail.hasValue() ? this.detail.value()?.data ?? null : null));
+  /** A7 (#1065) : seul un 404 est « introuvable » ; toute autre erreur propose de réessayer. */
+  protected readonly notFound = computed(() => (this.detail.error() as { status?: number } | undefined)?.status === 404);
 
   protected readonly initials = computed(() => {
     const i = this.data()?.identity;
