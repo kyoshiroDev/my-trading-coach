@@ -40,7 +40,7 @@
   --yel: #f59e0b;
   --purple: #8b5cf6; /* moments « après », comptes perso : mêmes noms que l'app (#1098) */
   --purple-bright: #a78bfa;
-  --white: #fff; /* reflets et séparateurs translucides seulement, jamais un fond plein (#1098) */
+  --reflet: var(--txt); /* reflets et séparateurs translucides seulement (color-mix de 4 à 14 %), jamais un fond ni un texte (#1098) */
   --txt: #e2eaf5;
   --txt2: #9db4ce;
   --txt3: #7090b0;
