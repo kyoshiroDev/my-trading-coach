@@ -1,4 +1,5 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { ConflictException, Injectable, Logger } from '@nestjs/common';
+import { randomUUID } from 'node:crypto';
 import { SessionStatus } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../infra/redis.service';
@@ -9,6 +10,9 @@ import { activeSessionWhere } from '../session/active-session';
 /** Un seul re-seed à la fois dans tout le cluster (connexions démo simultanées, cron, boot). */
 export const DEMO_RESEED_LOCK = 'demo:reseed-lock';
 const LOCK_TTL_S = 120;
+/** Rend le verrou seulement s'il porte encore notre jeton (un seed plus long que le TTL ne libère
+ * jamais le verrou pris entre-temps par un autre). */
+const RELEASE_LOCK_LUA = "if redis.call('get', KEYS[1]) == ARGV[1] then return redis.call('del', KEYS[1]) else return 0 end";
 /** Âge maximal de la position ouverte de la vitrine avant re-seed (marché ouvert, en semaine). */
 export const OPEN_TRADE_MAX_AGE_MS = 45 * 60_000;
 
@@ -21,8 +25,30 @@ export class DemoSeedService {
     private readonly redis: RedisService,
   ) {}
 
-  /** Seed/refresh idempotent du compte démo (admin, cron, connexion démo). */
+  /**
+   * Re-seed du compte démo demandé par l'admin ou le cron, sous le même verrou que la connexion démo
+   * (B5 #1066 : sans verrou, deux purges/recréations concurrentes pouvaient dupliquer les données).
+   * Verrou déjà pris → 409 : un re-seed est en cours, il n'y a rien à refaire.
+   */
   async run(reason = 'admin'): Promise<DemoSeedResult> {
+    const res = await this.runLocked(reason);
+    if (!res) throw new ConflictException('Re-seed de la démo déjà en cours. Réessaie dans quelques instants.');
+    return res;
+  }
+
+  /** Seed sous verrou ; `null` si un autre re-seed le tient. */
+  private async runLocked(reason: string): Promise<DemoSeedResult | null> {
+    const token = randomUUID();
+    const locked = await this.redis.client.set(DEMO_RESEED_LOCK, token, 'EX', LOCK_TTL_S, 'NX');
+    if (locked !== 'OK') return null;
+    try {
+      return await this.seed(reason);
+    } finally {
+      await this.redis.client.eval(RELEASE_LOCK_LUA, 1, DEMO_RESEED_LOCK, token).catch(() => undefined);
+    }
+  }
+
+  private async seed(reason: string): Promise<DemoSeedResult> {
     const res = await seedDemo(this.prisma);
     this.logger.log(
       `Compte démo seedé (${reason}) : ${res.trades} trades sur ${res.accounts} comptes · WR net ${res.winRate}% · brut ${res.grossPnl} $ · frais ${res.fees} $ · net ${res.pnl} $ · ${res.redDays}/${res.tradingDays} jours rouges`,
@@ -87,13 +113,6 @@ export class DemoSeedService {
    */
   async ensureFresh(reason: string): Promise<boolean> {
     if (!(await this.isStale())) return false;
-    const locked = await this.redis.client.set(DEMO_RESEED_LOCK, '1', 'EX', LOCK_TTL_S, 'NX');
-    if (locked !== 'OK') return false;
-    try {
-      await this.run(reason);
-      return true;
-    } finally {
-      await this.redis.client.del(DEMO_RESEED_LOCK).catch(() => undefined);
-    }
+    return (await this.runLocked(reason)) !== null;
   }
 }

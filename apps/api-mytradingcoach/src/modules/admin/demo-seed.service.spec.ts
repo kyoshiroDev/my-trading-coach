@@ -14,9 +14,10 @@ function setup(lastTrade: Date | null, user = true, live = true, open: Date | nu
       }),
     },
   };
-  const redis = { client: { set: vi.fn().mockResolvedValue('OK'), del: vi.fn().mockResolvedValue(1) } };
+  const redis = { client: { set: vi.fn().mockResolvedValue('OK'), eval: vi.fn().mockResolvedValue(1) } };
   const service = new DemoSeedService(prisma as never, redis as never);
-  const run = vi.spyOn(service, 'run').mockResolvedValue({} as never);
+  // Le seed lui-même (sous verrou) : `run` est réservé à l'admin et au cron (B5 #1066).
+  const run = vi.spyOn(service as unknown as { seed(reason: string): Promise<unknown> }, 'seed').mockResolvedValue({});
   return { service, redis, run };
 }
 
@@ -38,9 +39,10 @@ describe('DemoSeedService.ensureFresh', () => {
   it('démo périmée (dernier trade il y a des mois) → re-seed sous verrou, verrou rendu', async () => {
     const { service, run, redis } = setup(new Date('2026-06-07T08:00:00Z'));
     expect(await service.ensureFresh('connexion démo')).toBe(true);
-    expect(redis.client.set).toHaveBeenCalledWith(DEMO_RESEED_LOCK, '1', 'EX', 120, 'NX');
+    expect(redis.client.set).toHaveBeenCalledWith(DEMO_RESEED_LOCK, expect.any(String), 'EX', 120, 'NX');
     expect(run).toHaveBeenCalledWith('connexion démo');
-    expect(redis.client.del).toHaveBeenCalledWith(DEMO_RESEED_LOCK);
+    // Verrou rendu seulement s'il porte encore notre jeton (B5 #1066).
+    expect(redis.client.eval).toHaveBeenCalledWith(expect.any(String), 1, DEMO_RESEED_LOCK, redis.client.set.mock.calls[0][1]);
   });
 
   it('démo absente → re-seed', async () => {
