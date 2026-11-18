@@ -170,23 +170,23 @@ import { PREMIUM_SIGNUP_TRIAL_DAYS } from '@mtc/shared';
     display: flex; align-items: center; justify-content: center;
     font-size: 12px; font-weight: 700; flex-shrink: 0;
   }
-  .bad-ic  { background: rgba(239,68,68,.15); color: #ef4444; }
-  .good-ic { background: rgba(16,185,129,.15); color: #10b981; }
+  .bad-ic  { background: color-mix(in srgb, var(--red) 15%, transparent); color: var(--red); }
+  .good-ic { background: color-mix(in srgb, var(--green) 15%, transparent); color: var(--green); }
 
   .coach-bubble {
     border-radius: 14px; padding: 18px;
     display: flex; gap: 14px; align-items: flex-start;
   }
-  .bad-bubble  { background: rgba(239,68,68,.05); border: 1px solid rgba(239,68,68,.15); }
-  .good-bubble { background: rgba(16,185,129,.05); border: 1px solid rgba(16,185,129,.2); }
+  .bad-bubble  { background: color-mix(in srgb, var(--red) 5%, transparent); border: 1px solid color-mix(in srgb, var(--red) 15%, transparent); }
+  .good-bubble { background: color-mix(in srgb, var(--green) 5%, transparent); border: 1px solid color-mix(in srgb, var(--green) 20%, transparent); }
 
   .coach-avatar {
     width: 36px; height: 36px; border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
     font-size: 18px; flex-shrink: 0;
   }
-  .bad-av  { background: rgba(239,68,68,.1); }
-  .good-av { background: rgba(16,185,129,.1); }
+  .bad-av  { background: color-mix(in srgb, var(--red) 10%, transparent); }
+  .good-av { background: color-mix(in srgb, var(--green) 10%, transparent); }
 
   .coach-msg { flex: 1; }
   .coach-msg p { font-size: 13px; line-height: 1.6; color: var(--txt2); margin-bottom: 10px; }
@@ -196,8 +196,8 @@ import { PREMIUM_SIGNUP_TRIAL_DAYS } from '@mtc/shared';
     font-size: 10px; font-family: var(--mono); padding: 2px 8px;
     border-radius: 100px; font-weight: 600;
   }
-  .bad-tag  { background: rgba(239,68,68,.1); color: #ef4444; }
-  .good-tag { background: rgba(16,185,129,.1); color: #10b981; }
+  .bad-tag  { background: color-mix(in srgb, var(--red) 10%, transparent); color: var(--red); }
+  .good-tag { background: color-mix(in srgb, var(--green) 10%, transparent); color: var(--green); }
 
   .coach-col-note {
     font-size: 12px; color: var(--txt3); line-height: 1.5;

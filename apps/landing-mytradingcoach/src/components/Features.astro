@@ -77,11 +77,11 @@ const firmCount = PROP_FIRM_CATALOG_FILES.length;
   .head { text-align: center; max-width: 600px; margin: 0 auto; }
   /* Fond de l'icône de chaque carte */
   .ic-blue { background: color-mix(in srgb, var(--blue) 9%, transparent); }
-  .ic-green { background: rgba(16,185,129,.09); }
-  .ic-purple { background: rgba(139,92,246,.09); }
-  .ic-sky { background: rgba(99,155,255,.09); }
-  .ic-cyan { background: rgba(34,211,238,.09); }
-  .ic-amber { background: rgba(245,166,35,.09); }
+  .ic-green { background: color-mix(in srgb, var(--green) 9%, transparent); }
+  .ic-purple { background: color-mix(in srgb, var(--purple) 9%, transparent); }
+  .ic-sky { background: color-mix(in srgb, var(--edge) 9%, transparent); }
+  .ic-cyan { background: color-mix(in srgb, var(--pulse) 9%, transparent); }
+  .ic-amber { background: color-mix(in srgb, var(--yel) 9%, transparent); }
   .feat-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -102,7 +102,7 @@ const firmCount = PROP_FIRM_CATALOG_FILES.length;
   }
 
   .feat-card:hover { border-color: var(--b2); transform: translateY(-3px); }
-  .feat-card.featured { border-color: rgba(34,211,238,.25); background: linear-gradient(135deg,rgba(34,211,238,.04),color-mix(in srgb, var(--blue) 4%, transparent)); }
+  .feat-card.featured { border-color: color-mix(in srgb, var(--pulse) 25%, transparent); background: linear-gradient(135deg,color-mix(in srgb, var(--pulse) 4%, transparent),color-mix(in srgb, var(--blue) 4%, transparent)); }
 
   .feat-num {
     font-family: var(--mono);
@@ -145,9 +145,9 @@ const firmCount = PROP_FIRM_CATALOG_FILES.length;
     margin-top: 14px;
     font-weight: 500;
   }
-  .tag-free    { background: rgba(16,185,129,.1);  color: var(--green); border: 1px solid rgba(16,185,129,.2); }
+  .tag-free    { background: color-mix(in srgb, var(--green) 10%, transparent);  color: var(--green); border: 1px solid color-mix(in srgb, var(--green) 20%, transparent); }
   .tag-prem    { background: color-mix(in srgb, var(--blue) 10%, transparent);  color: var(--blue2); border: 1px solid color-mix(in srgb, var(--blue) 20%, transparent); }
-  .tag-new  { background: rgba(245,158,11,.1);  color: var(--yel);   border: 1px solid rgba(245,158,11,.2); }
+  .tag-new  { background: color-mix(in srgb, var(--yel) 10%, transparent);  color: var(--yel);   border: 1px solid color-mix(in srgb, var(--yel) 20%, transparent); }
 
   /*
    * `.btn-p` est redefini dans CHAQUE composant qui l'utilise (Hero, CoachIA, CtaFinal) :

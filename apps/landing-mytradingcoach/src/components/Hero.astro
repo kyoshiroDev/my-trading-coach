@@ -126,8 +126,8 @@ const firmCount = PROP_FIRM_CATALOG_FILES.length;
 <style>
   /* ── BANNER ── */
   .banner {
-    background: rgba(16,185,129,.06);
-    border-bottom: 1px solid rgba(16,185,129,.12);
+    background: color-mix(in srgb, var(--green) 6%, transparent);
+    border-bottom: 1px solid color-mix(in srgb, var(--green) 12%, transparent);
     padding: 8px 5%;
     text-align: center;
     font-size: 11px;
@@ -231,14 +231,14 @@ const firmCount = PROP_FIRM_CATALOG_FILES.length;
     position: absolute;
     top: 50%; left: 50%;
     transform: translate(-50%,-50%);
-    border: 1px solid rgba(34,211,238,.05);
+    border: 1px solid color-mix(in srgb, var(--pulse) 5%, transparent);
     border-radius: 50%;
     pointer-events: none;
     animation: rpulse 4s ease-in-out infinite;
   }
   .pulse-ring:nth-child(2) { width:500px; height:500px; }
-  .pulse-ring:nth-child(3) { width:800px; height:800px; animation-delay:1.3s; border-color:rgba(34,211,238,.03); }
-  .pulse-ring:nth-child(4) { width:1100px; height:1100px; animation-delay:2.6s; border-color:rgba(34,211,238,.02); }
+  .pulse-ring:nth-child(3) { width:800px; height:800px; animation-delay:1.3s; border-color:color-mix(in srgb, var(--pulse) 3%, transparent); }
+  .pulse-ring:nth-child(4) { width:1100px; height:1100px; animation-delay:2.6s; border-color:color-mix(in srgb, var(--pulse) 2%, transparent); }
 
   /* Le tiret de « multi-marché » était un point de coupure sur 375 px. */
   .nowrap { white-space: nowrap; }
@@ -247,8 +247,8 @@ const firmCount = PROP_FIRM_CATALOG_FILES.length;
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    background: rgba(34,211,238,.07);
-    border: 1px solid rgba(34,211,238,.2);
+    background: color-mix(in srgb, var(--pulse) 7%, transparent);
+    border: 1px solid color-mix(in srgb, var(--pulse) 20%, transparent);
     color: var(--pulse);
     font-size: 11px;
     font-family: var(--mono);
@@ -337,9 +337,9 @@ const firmCount = PROP_FIRM_CATALOG_FILES.length;
     align-items: center;
     gap: 6px;
   }
-  .hero-moment.avant  { background: rgba(16,185,129,.08);  color: var(--green); border: 1px solid rgba(16,185,129,.2); }
+  .hero-moment.avant  { background: color-mix(in srgb, var(--green) 8%, transparent);  color: var(--green); border: 1px solid color-mix(in srgb, var(--green) 20%, transparent); }
   .hero-moment.pendant{ background: color-mix(in srgb, var(--blue) 8%, transparent);  color: var(--blue2); border: 1px solid color-mix(in srgb, var(--blue) 20%, transparent); }
-  .hero-moment.apres  { background: rgba(139,92,246,.08);  color: #a78bfa;      border: 1px solid rgba(139,92,246,.2); }
+  .hero-moment.apres  { background: color-mix(in srgb, var(--purple) 8%, transparent);  color: var(--purple-bright);      border: 1px solid color-mix(in srgb, var(--purple) 20%, transparent); }
   .hero-moment-sep    { color: var(--txt3); font-size: 11px; }
 
   .hero-actions {
@@ -391,7 +391,7 @@ const firmCount = PROP_FIRM_CATALOG_FILES.length;
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    border: 1px solid var(--border, rgba(255,255,255,.14));
+    border: 1px solid color-mix(in srgb, var(--reflet) 14%, transparent);
     transition: border-color .2s, background .2s, transform .2s;
     font-family: var(--disp);
   }
