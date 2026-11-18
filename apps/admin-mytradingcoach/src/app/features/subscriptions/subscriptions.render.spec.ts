@@ -167,10 +167,12 @@ describe('SubscriptionsComponent', () => {
       betaTesters: [
         { ...user('beta', null), plan: 'FREE', role: 'BETA_TESTER' },
         { ...user('offert', null), plan: 'PREMIUM', role: 'USER' },
+        // Bêta-testeur au plan PREMIUM : l'accès vient du rôle (subscriptionState teste le rôle d'abord).
+        { ...user('beta-premium', null), plan: 'PREMIUM', role: 'BETA_TESTER' },
       ],
     });
     const access = [...el.querySelectorAll('[data-testid="manual-access"]')].map((c) => c.textContent?.trim());
-    expect(access).toEqual(['Premium par le rôle bêta', 'Premium accordé']);
+    expect(access).toEqual(['Premium par le rôle bêta', 'Premium accordé', 'Premium par le rôle bêta']);
     expect(el.textContent).not.toContain('FREE');
   });
 

@@ -115,7 +115,7 @@
               <td data-label="Utilisateur"><div class="u-cell"><div class="u-av">{{ av(u.name, u.email) }}</div><div><div class="u-name">{{ u.name ?? '-' }}</div><div class="u-mail">{{ u.email }}</div></div></div></td>
               <td data-label="Rôle"><span class="role-tag purple">{{ u.role }}</span></td>
               <!-- Règle 9 de plans.md : un bêta-testeur au plan FREE a le Premium par son rôle. -->
-              <td data-label="Accès"><span class="badge b-premium" data-testid="manual-access">{{ u.plan === 'PREMIUM' ? 'Premium accordé' : 'Premium par le rôle bêta' }}</span></td>
+              <td data-label="Accès"><span class="badge b-premium" data-testid="manual-access">{{ manualAccess(u) }}</span></td>
               <td data-label="Depuis" class="td-mono muted">{{ u.createdAt | date:'dd/MM/yyyy' }}</td>
             </tr>
           } @empty { <tr><td colspan="4" class="empty">Aucun accès manuel</td></tr> }
