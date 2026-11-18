@@ -54,10 +54,6 @@ export class SubscriptionsComponent {
   protected readonly totalPages = computed(() => Math.max(1, Math.ceil(this.stripeTotal() / (this.data()?.limit || 20))));
 
   /**
-   * Statut et échéance d'un abonné payant (A9 #1065), lus par subscriptionState : une fin
-   * programmée = « résilié, fin le », jamais « actif » avec une date de renouvellement.
-   */
-  /**
    * Accès d'un compte de « Accès manuels » : la source retenue par subscriptionState (le rôle passe
    * avant le plan), jamais « FREE » en badge Premium (règle 9 de plans.md).
    */
@@ -65,6 +61,10 @@ export class SubscriptionsComponent {
     return subscriptionState(u).kind === 'role' ? 'Premium par le rôle bêta' : 'Premium accordé';
   }
 
+  /**
+   * Statut et échéance d'un abonné payant (A9 #1065), lus par subscriptionState : une fin
+   * programmée = « résilié, fin le », jamais « actif » avec une date de renouvellement.
+   */
   protected payingStatus(u: AdminUser): { label: string; ended: boolean; due: string | null } {
     const s = subscriptionState(u);
     if (s.cancelAt) return { label: 'résilié', ended: true, due: `fin le ${frDate(s.cancelAt)}` };
