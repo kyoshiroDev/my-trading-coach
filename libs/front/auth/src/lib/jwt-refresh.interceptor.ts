@@ -1,6 +1,6 @@
 import { HttpInterceptorFn } from '@angular/common/http';
 import { Injectable, InjectionToken, inject } from '@angular/core';
-import { BehaviorSubject, Observable, catchError, filter, switchMap, take, throwError } from 'rxjs';
+import { Observable, Subject, catchError, finalize, switchMap, take, throwError } from 'rxjs';
 
 /** Ce que l'intercepteur attend du service d'authentification de l'app (app ou admin). */
 export interface AuthTokenSource {
@@ -13,11 +13,18 @@ export interface AuthTokenSource {
 /** À fournir dans app.config : `{ provide: AUTH_TOKEN_SOURCE, useExisting: AuthService }`. */
 export const AUTH_TOKEN_SOURCE = new InjectionToken<AuthTokenSource>('AUTH_TOKEN_SOURCE');
 
-/** Renouvellement en cours : partagé par toutes les requêtes qui reçoivent un 401 en même temps. */
+/** Issue d'un renouvellement : le nouveau jeton, ou l'erreur du refresh. */
+export type RefreshOutcome = { ok: true; token: string } | { ok: false; error: unknown };
+
+/**
+ * Renouvellement en cours : partagé par toutes les requêtes qui reçoivent un 401 en même temps.
+ * `outcome$` émet l'issue du refresh, succès COMME échec : une requête en attente ne reste jamais
+ * en suspens (#1065).
+ */
 @Injectable({ providedIn: 'root' })
 export class AuthRefreshState {
   isRefreshing = false;
-  readonly token$ = new BehaviorSubject<string | null>(null);
+  readonly outcome$ = new Subject<RefreshOutcome>();
 }
 
 /** Routes d'authentification : jamais de token ajouté, jamais de refresh sur leur 401. */
@@ -56,27 +63,36 @@ export const jwtRefreshInterceptor: HttpInterceptorFn = (req, next) => {
       if (err.status !== 401 || isRefreshCall || isAuthCall) return throwError(() => err);
 
       if (state.isRefreshing) {
-        return state.token$.pipe(
-          filter((t): t is string => t !== null),
+        return state.outcome$.pipe(
           take(1),
-          switchMap((newToken) => next(withToken(newToken))),
+          switchMap((o) => (o.ok ? next(withToken(o.token)) : throwError(() => o.error))),
         );
       }
 
       state.isRefreshing = true;
-      state.token$.next(null);
       return auth.refreshToken().pipe(
+        take(1),
         switchMap(() => {
           state.isRefreshing = false;
           const newToken = auth.getAccessToken() ?? '';
-          state.token$.next(newToken);
+          state.outcome$.next({ ok: true, token: newToken });
           return next(withToken(newToken));
         }),
         catchError((refreshErr) => {
+          // Une erreur de la requête REJOUÉE passe aussi ici : seul l'échec du refresh déconnecte.
+          if (!state.isRefreshing) return throwError(() => refreshErr);
           state.isRefreshing = false;
-          state.token$.next(null);
+          state.outcome$.next({ ok: false, error: refreshErr });
           auth.logout();
           return throwError(() => refreshErr);
+        }),
+        // Requête à l'origine du refresh annulée en route (écran quitté) : le refresh est coupé avec
+        // elle. Sans ce filet, `isRefreshing` resterait vrai et tous les 401 suivants attendraient
+        // pour toujours. Les requêtes en attente reçoivent l'erreur d'origine, sans déconnexion.
+        finalize(() => {
+          if (!state.isRefreshing) return;
+          state.isRefreshing = false;
+          state.outcome$.next({ ok: false, error: err });
         }),
       );
     }),
