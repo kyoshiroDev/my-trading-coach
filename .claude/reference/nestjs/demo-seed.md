@@ -26,6 +26,18 @@ Filets posés par `DemoSeedCron` (`modules/admin/demo-seed.cron.ts`) :
   **dev** tourne sans cron (`IS_CRON_WORKER=false` dans `.env.dev`, process unique hors
   `NODE_ENV=production`) ; sa démo était restée au 2026-06-07 (aucun compte, session ouverte
   depuis 2 900 h). `DemoSeedService` vit dans `DemoSeedModule` (importé par Admin et Auth).
+- **Un seul re-seed à la fois, partout** (#1066, B5) : cron, `POST /admin/seed-demo` et connexion
+  démo prennent le même verrou `demo:reseed-lock`. Verrou pris → 409 côté admin, tour sauté (log)
+  côté cron, démo actuelle servie côté connexion. Le verrou porte un jeton aléatoire et n'est rendu
+  que s'il porte encore ce jeton (script Lua) : un seed plus long que le TTL ne libère jamais le
+  verrou d'un autre.
+- **Re-seed en une transaction** (#1066, B6) : `seedDemo` tourne dans `prisma.$transaction`
+  (délai 90 s, sous le TTL de 120 s du verrou). Un visiteur garde l'ancienne démo jusqu'au commit ;
+  sans transaction, il voyait 0 trade pendant la purge (mesuré sur banc local : 3 à 6 s par
+  re-seed). Les fonctions du seed prennent un `SeedDb` (= `Prisma.TransactionClient`, un
+  `PrismaClient` reste accepté). Ne jamais y appeler `$transaction` ni un service Nest.
+- **Cache des statistiques** (#1066, B7) : après le commit, `bumpAnalyticsVersion` du compte démo
+  (sinon 300 s de chiffres de l'ancienne démo).
 - **Session live présente EN SEMAINE** (vitrine, 2026-10-18 : « si le visiteur ne voit pas le live,
   c'est pas bon » ; plus le week-end depuis #977) : le seed crée à chaque run de semaine une session ACTIVE du jour sur Apex, avec une
   position saisie à la main **encore ouverte** (`DemoDay.openTrade`, MNQ, SL + TP, R/R 1 : 2, hors
