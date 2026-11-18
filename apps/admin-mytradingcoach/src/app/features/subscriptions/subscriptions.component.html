@@ -53,6 +53,9 @@
           }
         </tbody>
       </table>
+      @if (pageError(); as p) {
+        <p class="err-text" role="alert" data-testid="subs-page-error">La page {{ p }} n’a pas pu être chargée. Réessaie.</p>
+      }
       @if (totalPages() > 1) {
         <div class="pagination">
           <button type="button" class="btn-page" data-testid="subs-prev" [disabled]="page() === 1" (click)="changePage(page() - 1)">← Précédent</button>
@@ -121,6 +124,6 @@
     </div>
     }
   } @else {
-    <div class="card"><div class="empty">Abonnements indisponibles</div></div>
+    <mtc-error-state message="Abonnements indisponibles." (retry)="loadSubscriptions()" />
   }
 </div>

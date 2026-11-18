@@ -4,6 +4,7 @@
  */
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { TestBed } from '@angular/core/testing';
+import { ApplicationRef } from '@angular/core';
 import { provideHttpClient } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
@@ -78,9 +79,24 @@ describe('SubscriptionsComponent', () => {
     ]);
   });
 
-  it('panne de l’API : message explicite', async () => {
+  it('panne de l’API : message explicite, Réessayer recharge', async () => {
     const el = await render('error');
     expect(el.textContent).toContain('Abonnements indisponibles');
+    (el.querySelector('[data-testid="error-state-retry"]') as HTMLButtonElement).click();
+    http.expectOne((r) => r.url === `${environment.apiUrl}/admin/users/subscriptions`);
+  });
+
+  // Vérificateur angular (#1065) : page suivante en échec → l'ancienne page restait affichée sous le
+  // nouveau numéro, sans erreur.
+  it('A8 : page suivante en échec, numéro inchangé et erreur affichée', async () => {
+    const page1 = Array.from({ length: 20 }, (_, i) => user(`m${i}`, 'month'));
+    const el = await render({ stripeUsers: page1, stripeTotal: 57, betaTesters: [], total: 57, page: 1, limit: 20 });
+    (el.querySelector('[data-testid="subs-next"]') as HTMLButtonElement).click();
+    http.expectOne((r) => r.url === `${environment.apiUrl}/admin/users/subscriptions`)
+      .flush({}, { status: 500, statusText: 'Server Error' });
+    await TestBed.inject(ApplicationRef).whenStable();
+    expect(el.querySelector('.pagination')?.textContent).toContain('1 / 3');
+    expect(el.querySelector('[data-testid="subs-page-error"]')?.textContent).toContain('page 2');
   });
 
   it('montant RÉEL (#525) : fondateur 29 €, code partenaire en cours à son prix, avec leur étiquette', async () => {

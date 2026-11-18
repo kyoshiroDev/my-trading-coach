@@ -8,6 +8,7 @@ import { founderOfferState, realAmountLabel } from '../../core/utils/offers.util
 import { subscriptionState } from '@mtc/shared';
 import { FoundersTabComponent } from './founders-tab.component';
 import { PartnerCodesTabComponent } from './partner-codes-tab.component';
+import { ErrorStateComponent } from '@mtc/front-ui';
 
 const frDate = (d: Date) => d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'Europe/Paris' });
 
@@ -16,7 +17,7 @@ export type SubscriptionsTab = 'abonnements' | 'fondateurs' | 'codes';
 
 @Component({
   selector: 'mtc-admin-subscriptions',
-  imports: [DatePipe, FoundersTabComponent, PartnerCodesTabComponent],
+  imports: [DatePipe, ErrorStateComponent, FoundersTabComponent, PartnerCodesTabComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './subscriptions.component.css',
   templateUrl: './subscriptions.component.html',
@@ -64,8 +65,7 @@ export class SubscriptionsComponent {
 
   protected changePage(p: number): void {
     if (p < 1 || p > this.totalPages() || p === this.page()) return;
-    this.page.set(p);
-    this.loadSubscriptions();
+    this.loadSubscriptions(p);
   }
 
   protected readonly founderLabel = computed(() => {
@@ -81,11 +81,26 @@ export class SubscriptionsComponent {
       .subscribe((r) => this.founders.set(r?.data ?? null));
   }
 
-  private loadSubscriptions(): void {
+  /**
+   * Page demandée : `page` ne change qu'au succès. En échec, la page affichée garde son numéro et
+   * `pageError` le dit (#1065) ; sans données du tout, l'écran passe en erreur avec Réessayer.
+   */
+  protected loadSubscriptions(p = this.page()): void {
     this.subsRequest?.unsubscribe(); // une seule page à la fois : la plus récente gagne
-    this.subsRequest = this.adminApi.subscriptions(this.page()).pipe(catchError(() => of(null)), takeUntilDestroyed(this.destroyRef))
-      .subscribe((r) => { if (r) this.data.set(r.data); this.loading.set(false); });
+    this.pageError.set(null);
+    this.subsRequest = this.adminApi.subscriptions(p).pipe(catchError(() => of(null)), takeUntilDestroyed(this.destroyRef))
+      .subscribe((r) => {
+        if (r) {
+          this.data.set(r.data);
+          this.page.set(p);
+        } else if (this.data()) {
+          this.pageError.set(p);
+        }
+        this.loading.set(false);
+      });
   }
+  /** Page qui n'a pas pu être chargée (la page affichée reste la précédente). */
+  protected readonly pageError = signal<number | null>(null);
   private subsRequest?: Subscription;
 
   protected setTab(tab: SubscriptionsTab): void {
