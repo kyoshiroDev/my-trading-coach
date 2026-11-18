@@ -20,6 +20,12 @@ function fichiersCss(dossier: string): string[] {
   });
 }
 
+/** Corps de la règle CSS dont le sélecteur est exactement `selecteur` ('' si absente). */
+function regle(css: string, selecteur: string): string {
+  const echappe = selecteur.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return css.match(new RegExp(`(?:^|\\})\\s*${echappe}\\s*\\{([^}]*)\\}`))?.[1] ?? '';
+}
+
 function luminance(hex: string): number {
   const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255);
   const lin = (c: number) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
@@ -64,23 +70,23 @@ describe('Contraste du texte sur les fonds bleus (#1085)', () => {
     ['features/checkout/checkout-page.component.css', '.pay', '.pay:hover:not(:disabled)'],
   ])('%s : %s sur --primary, survol sur --primary-hover', (fichier, repos, survol) => {
     const css = sansCommentaires(readFileSync(join(__dirname, fichier), 'utf-8'));
-    const regle = (selecteur: string) => {
-      const echappe = selecteur.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      return css.match(new RegExp(`(?:^|\\})\\s*${echappe}\\s*\\{([^}]*)\\}`))?.[1] ?? '';
-    };
-    expect(regle(repos), `${repos} introuvable`).toMatch(/background\s*:\s*var\(--primary\)/);
-    expect(regle(survol), `${survol} introuvable`).toMatch(/background\s*:\s*var\(--primary-hover\)/);
+    expect(regle(css, repos), `${repos} introuvable`).toMatch(/background\s*:\s*var\(--primary\)/);
+    expect(regle(css, survol), `${survol} introuvable`).toMatch(/background\s*:\s*var\(--primary-hover\)/);
   });
 
-  // Contour de focus clavier visible sur les boutons sur --primary qui n'en avaient pas (#1087).
+});
+
+// Contour de focus clavier visible sur les boutons sur --primary qui n'en avaient pas (#1087), mesuré contre
+// le fond du conteneur grâce au décalage de 2px.
+describe('Contour de focus clavier (#1087)', () => {
   it.each([
-    ['features/checkout/checkout-page.component.css', '.pay:focus-visible', 'var(--primary)'],
-    ['shared/components/premium-lock/premium-lock.component.css', '.pl-btn:focus-visible', 'var(--blue-bright)'],
-    ['features/today-session/results-share/results-share.component.css', '.rs-primary:focus-visible', 'var(--blue-bright)'],
+    ['features/checkout/checkout-page.component.css', '.pay:focus-visible', '--primary'],
+    ['shared/components/premium-lock/premium-lock.component.css', '.pl-btn:focus-visible', '--blue-bright'],
+    ['features/today-session/results-share/results-share.component.css', '.rs-primary:focus-visible', '--blue-bright'],
   ])('%s : %s avec un contour de 2px', (fichier, selecteur, couleur) => {
     const css = sansCommentaires(readFileSync(join(__dirname, fichier), 'utf-8'));
-    const echappe = selecteur.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const corps = css.match(new RegExp(`(?:^|\\})\\s*${echappe}\\s*\\{([^}]*)\\}`))?.[1] ?? '';
-    expect(corps, `${selecteur} introuvable`).toContain(`outline: 2px solid ${couleur}`);
+    const corps = regle(css, selecteur);
+    expect(corps, `${selecteur} introuvable`).not.toBe('');
+    expect(corps).toMatch(new RegExp(`outline\\s*:\\s*2px\\s+solid\\s+var\\(${couleur}\\)`));
   });
 });
