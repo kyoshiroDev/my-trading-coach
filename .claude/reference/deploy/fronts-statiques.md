@@ -142,6 +142,26 @@ location = /journal-trading-prop-firm { return 301 /; }
 
 Retirer la ligne le jour où le flag passe à `true`, sinon la page publiée reste inaccessible.
 
+**Redirections 301 de la landing (#1067, L2).** Le slash final et `/confidentialite` redirigent en
+**Location relative** avec la query string (`/$1$is_args$args`, `absolute_redirect off`). Avant, l'URL
+de prod était écrite en dur : la landing dev renvoyait vers la prod et les paramètres (`utm_*`, `ref`,
+`promo`) étaient perdus. **La capture du slash final est une liste blanche**
+(`^/([A-Za-z0-9][A-Za-z0-9/_.-]*)/$`) : nginx décode `%5C` en `\` avant la capture, et avec `(.+)`
+`/%5Cevil.com/` donnait `Location: /\evil.com`, lu par les navigateurs comme `//evil.com`
+(redirection ouverte). Ne jamais revenir à `(.+)` avec une Location relative. Testé dans un conteneur
+`nginx:1.27-alpine` : `/blog/x/?utm_source=nt&promo=X` → 301 `/blog/x?utm_source=nt&promo=X`,
+`/confidentialite?ref=abc` → 301 `/politique-confidentialite?ref=abc`, `/%5Cevil.com/` → 404, la 302 de
+l'accueil inchangée.
+
+Mise en place sur l'ancien VPS, commandes données à Greg **une par une** (il colle la sortie avant la
+suivante) : relevé `nginx -v` des deux conteneurs ; `scp` du fichier en `.new` ; sauvegarde datée à la
+minute (`cp -pn` + `cmp`) ; `diff` qui ne montre que ces deux blocs et leurs commentaires ; réécriture en
+place (même inode) ; dans chaque conteneur `grep -cF 'A-Za-z0-9/_.-'` (1, sinon `docker restart`),
+`grep -c 'return 301 https://www'` (0), `nginx -t`, `nginx -s reload`. Vérifications : curl prod et dev
+(301 relative avec paramètres, `/confidentialite`, `/%5Cevil.com/` → 404, 302 de l'accueil, page 200).
+Retour arrière : `cat "$B" > "$F"`, `nginx -t` + reload dans les deux conteneurs ; les 301 relatives déjà
+servies restent en cache navigateur (même chemin, même hôte : sans gravité).
+
 **Redirection temporaire de l'accueil (2026-11-08, newsletter NinjaTrader).** `landing-releases.conf`
 envoie `/` et `/index.html` en **302** vers `/prop-firm`, query string conservée, Location relative
 (`absolute_redirect off` : sinon nginx, en http derrière Traefik, écrirait `http://<hôte>/…`). Vaut
