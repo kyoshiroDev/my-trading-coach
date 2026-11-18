@@ -365,19 +365,19 @@ const firmCount = PROP_FIRM_CATALOG_FILES.length;
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    box-shadow: 0 0 28px rgba(59,130,246,.4);
+    box-shadow: 0 0 28px var(--blue-halo);
     transition: background .2s, transform .2s, box-shadow .2s;
     border: none;
     cursor: pointer;
     font-family: var(--disp);
   }
 
-  .btn-p:hover { background: var(--blue2); transform: translateY(-2px); box-shadow: 0 0 44px rgba(59,130,246,.55); }
+  .btn-p:hover { background: var(--blue2); transform: translateY(-2px); box-shadow: 0 0 44px var(--blue-halo-strong); }
 
   .hero-cta-main {
     font-size: 16px !important;
     padding: 16px 32px !important;
-    box-shadow: 0 0 40px rgba(59,130,246,.5) !important;
+    box-shadow: 0 0 40px var(--blue-halo-hover) !important;
   }
 
   .btn-demo {
