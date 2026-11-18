@@ -56,7 +56,8 @@ export class LoginComponent {
     this.auth.login(this.email, this.password)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: () => this.router.navigate(['/dashboard']),
+        // Navigation refusée (garde) : le bouton ne reste jamais bloqué sur « Connexion… ».
+        next: () => void this.router.navigate(['/dashboard']).then((ok) => { if (!ok) this.loading.set(false); }),
         error: (err) => {
           this.error.set(apiErrorMessage(err, 'Identifiants incorrects'));
           this.loading.set(false);

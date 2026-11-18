@@ -1,7 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { tap } from 'rxjs/operators';
+import { catchError, of, switchMap, tap, throwError } from 'rxjs';
 import { environment } from '@admin/environments/environment';
 import type { Plan, Role } from '@mtc/shared';
 
@@ -9,6 +9,9 @@ export interface AdminAuthUser {
   id: string; email: string; name?: string;
   plan: Plan; role: Role;
 }
+
+/** Compte valide mais sans le rôle ADMIN (A18 #1065). */
+export const NOT_ADMIN_MESSAGE = 'Ce compte n’a pas accès à l’admin.';
 
 @Injectable({ providedIn: 'root' })
 export class AdminAuthService {
@@ -21,12 +24,31 @@ export class AdminAuthService {
 
   constructor() { this.loadFromStorage(); }
 
+  /**
+   * Connexion à l'admin. Un compte non ADMIN (A18 #1065) n'est jamais gardé : aucun jeton stocké, la
+   * session ouverte côté serveur (cookie de rafraîchissement) est fermée, et l'appel échoue avec
+   * `NOT_ADMIN_MESSAGE` (avant : bouton bloqué sur « Connexion… », jeton gardé).
+   */
   login(email: string, password: string) {
     return this.http.post<{ data: { access_token: string; user: AdminAuthUser } }>(
       `${environment.apiUrl}/auth/login`,
       { email, password },
       { withCredentials: true },
-    ).pipe(tap(res => this.handleAuth(res.data)));
+    ).pipe(
+      switchMap((res) => {
+        if (res.data.user?.role === 'ADMIN') {
+          this.handleAuth(res.data);
+          return of(res);
+        }
+        return this.http.post(`${environment.apiUrl}/auth/logout`, {}, {
+          withCredentials: true,
+          headers: { Authorization: `Bearer ${res.data.access_token}` },
+        }).pipe(
+          catchError(() => of(null)),
+          switchMap(() => throwError(() => ({ status: 403, error: { message: NOT_ADMIN_MESSAGE } }))),
+        );
+      }),
+    );
   }
 
   logout() {
