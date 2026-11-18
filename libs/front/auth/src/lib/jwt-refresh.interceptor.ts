@@ -69,10 +69,15 @@ export const jwtRefreshInterceptor: HttpInterceptorFn = (req, next) => {
         );
       }
 
+      // `owns` : propre à CE refresh. `state.isRefreshing` est commun : un second refresh peut avoir
+      // démarré pendant que la requête rejouée de celui-ci est encore en vol, et ne doit pas en subir
+      // l'issue (fausse déconnexion, requêtes en attente libérées en erreur).
+      let owns = true;
       state.isRefreshing = true;
       return auth.refreshToken().pipe(
         take(1),
         switchMap(() => {
+          owns = false;
           state.isRefreshing = false;
           const newToken = auth.getAccessToken() ?? '';
           state.outcome$.next({ ok: true, token: newToken });
@@ -80,7 +85,8 @@ export const jwtRefreshInterceptor: HttpInterceptorFn = (req, next) => {
         }),
         catchError((refreshErr) => {
           // Une erreur de la requête REJOUÉE passe aussi ici : seul l'échec du refresh déconnecte.
-          if (!state.isRefreshing) return throwError(() => refreshErr);
+          if (!owns) return throwError(() => refreshErr);
+          owns = false;
           state.isRefreshing = false;
           state.outcome$.next({ ok: false, error: refreshErr });
           auth.logout();
@@ -90,7 +96,8 @@ export const jwtRefreshInterceptor: HttpInterceptorFn = (req, next) => {
         // elle. Sans ce filet, `isRefreshing` resterait vrai et tous les 401 suivants attendraient
         // pour toujours. Les requêtes en attente reçoivent l'erreur d'origine, sans déconnexion.
         finalize(() => {
-          if (!state.isRefreshing) return;
+          if (!owns) return;
+          owns = false;
           state.isRefreshing = false;
           state.outcome$.next({ ok: false, error: err });
         }),

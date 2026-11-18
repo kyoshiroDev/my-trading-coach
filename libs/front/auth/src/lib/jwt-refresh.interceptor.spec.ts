@@ -71,8 +71,13 @@ describe('jwtRefreshInterceptor', () => {
   it('requête à l’origine du refresh annulée : l’état est libéré, le 401 suivant relance un refresh', () => {
     auth.refreshToken.mockReturnValueOnce(new Subject<unknown>());
     const sub = http.get('/api/trades').subscribe({ error: () => undefined });
+    let waiterStatus: number | undefined;
+    http.get('/api/waiter').subscribe({ error: (e) => (waiterStatus = e.status) });
     backend.expectOne('/api/trades').flush({}, { status: 401, statusText: 'Unauthorized' });
+    backend.expectOne('/api/waiter').flush({}, { status: 401, statusText: 'Unauthorized' });
     sub.unsubscribe();
+    // La requête qui attendait reçoit l'erreur d'origine au lieu de rester en suspens.
+    expect(waiterStatus).toBe(401);
 
     auth.refreshToken.mockImplementationOnce(() => {
       token = 'nouveau';
@@ -97,6 +102,38 @@ describe('jwtRefreshInterceptor', () => {
     backend.expectOne('/api/trades').flush({}, { status: 401, statusText: 'Unauthorized' });
     backend.expectOne('/api/trades').flush({}, { status: 500, statusText: 'Server Error' });
     expect(status).toBe(500);
+    expect(auth.logout).not.toHaveBeenCalled();
+  });
+
+  it('deux refresh qui se suivent : l’issue de la requête rejouée du 1er ne touche pas le 2e', () => {
+    const refreshB = new Subject<unknown>();
+    auth.refreshToken
+      .mockImplementationOnce(() => { token = 'jeton-a'; return of(true); })
+      .mockReturnValueOnce(refreshB);
+    let aStatus: number | undefined;
+    let waiter: unknown;
+    http.get('/api/a').subscribe({ error: (e) => (aStatus = e.status) });
+    http.get('/api/c').subscribe();
+    backend.expectOne('/api/a').flush({}, { status: 401, statusText: 'Unauthorized' });
+    const replayA = backend.expectOne('/api/a'); // refresh A réussi, requête rejouée en vol
+
+    // 401 tardif de C (parti avec l'ancien jeton) → refresh B ; D l'attend.
+    backend.expectOne('/api/c').flush({}, { status: 401, statusText: 'Unauthorized' });
+    http.get('/api/d').subscribe((r) => (waiter = r));
+    backend.expectOne('/api/d').flush({}, { status: 401, statusText: 'Unauthorized' });
+
+    replayA.flush({}, { status: 500, statusText: 'Server Error' });
+    expect(aStatus).toBe(500);
+    expect(auth.logout).not.toHaveBeenCalled();
+
+    token = 'jeton-b';
+    refreshB.next(true);
+    refreshB.complete();
+    backend.expectOne('/api/c').flush({});
+    const replayD = backend.expectOne('/api/d');
+    expect(replayD.request.headers.get('Authorization')).toBe('Bearer jeton-b');
+    replayD.flush({ ok: true });
+    expect(waiter).toEqual({ ok: true });
     expect(auth.logout).not.toHaveBeenCalled();
   });
 
