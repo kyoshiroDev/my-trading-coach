@@ -20,7 +20,7 @@
   @if (pollError(); as msg) {
     <div class="srv-alert" role="alert" data-testid="poll-error">
       ⚠ {{ msg }}
-      @if (lastOkAt(); as at) { Données affichées : dernière lecture réussie à {{ at | date:'HH:mm:ss' }}. }
+      @if (lastOkAt(); as at) { Données affichées&nbsp;: dernière lecture réussie à {{ at | date:'HH:mm:ss' }}. }
       @else { Aucune donnée lue pour l’instant. }
     </div>
   }
@@ -111,7 +111,7 @@
             <span><i class="ub-dot maint"></i> Maintenance</span>
           </div>
           @if (healthError()) {
-            <div class="uptime-note" role="alert" data-testid="health-error">L’historique de santé n’a pas pu être chargé. Recharge la page pour réessayer.</div>
+            <mtc-error-state message="L’historique de santé n’a pas pu être chargé." (retry)="loadHealth()" />
           } @else if (allUnknown()) {
             <div class="uptime-note">Pas encore de données : le suivi de santé démarre au prochain relevé quotidien.</div>
           }

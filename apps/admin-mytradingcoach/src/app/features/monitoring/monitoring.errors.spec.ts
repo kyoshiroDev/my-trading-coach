@@ -45,7 +45,9 @@ describe('Surveillance : erreurs hors 503 (A22 #1065)', () => {
   });
 
   it('historique de santé en erreur : message, pas une barre vide muette', async () => {
-    const { el } = await render(fail);
-    expect(el.querySelector('[data-testid="health-error"]')?.textContent).toContain('n’a pas pu être chargé');
+    const { el, api } = await render(fail);
+    expect(el.querySelector('[data-testid="error-state"]')?.textContent).toContain('n’a pas pu être chargé');
+    (el.querySelector('[data-testid="error-state-retry"]') as HTMLButtonElement).click();
+    expect(api.healthHistory).toHaveBeenCalledTimes(2);
   });
 });

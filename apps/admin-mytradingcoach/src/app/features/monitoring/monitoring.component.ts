@@ -15,7 +15,7 @@ import {
 } from '@lucide/angular';
 import { VpsApi, VpsStats, DockerContainer, HealthPoint, VpsServer, VpsServerId } from '../../core/api/vps.api';
 import { AdminAuthService } from '../../core/auth/admin-auth.service';
-import { DialogDirective } from '@mtc/front-ui';
+import { DialogDirective, ErrorStateComponent } from '@mtc/front-ui';
 import { visiblePoll, type PollResult } from '../../core/utils/visible-poll';
 
 type DockerAction = 'start' | 'stop' | 'restart';
@@ -33,7 +33,7 @@ function apiErrorCode(err: unknown): string | undefined {
 
 @Component({
   selector: 'mtc-admin-monitoring',
-  imports: [DatePipe, DialogDirective, DecimalPipe, LucideDynamicIcon],
+  imports: [DatePipe, DialogDirective, DecimalPipe, ErrorStateComponent, LucideDynamicIcon],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './monitoring.component.css',
   templateUrl: './monitoring.component.html',
@@ -110,6 +110,11 @@ export class MonitoringComponent implements OnDestroy {
       takeUntilDestroyed(this.destroyRef),
     ).subscribe((r) => { this.loadingContainers.set(false); this.onContainers(r); });
 
+    this.loadHealth();
+  }
+
+  protected loadHealth(): void {
+    this.healthError.set(false);
     this.vpsApi.healthHistory(90).pipe(catchError(() => of(null)), takeUntilDestroyed(this.destroyRef))
       .subscribe((r) => {
         if (r) this.health.set(r.data ?? []);
