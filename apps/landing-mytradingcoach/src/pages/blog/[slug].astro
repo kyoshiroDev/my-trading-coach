@@ -17,8 +17,11 @@ export async function getStaticPaths() {
 
 const { post, related } = Astro.props;
 const { title, seoTitle, description, publishDate, updatedDate, tags, faq, sources } = post.data;
-// Markdown ne sait pas lire une variable : les liens vers l'app s'écrivent `{APP_URL}/…`.
-const html = (post.rendered?.html ?? '').replaceAll('{APP_URL}', APP_URL);
+// Markdown ne sait pas lire une variable : les liens vers l'app s'écrivent `{APP_URL}/…`. Les liens
+// d'inscription écrits dans le texte sont suivis dans GA4 comme les autres boutons (#1067, L5).
+const html = (post.rendered?.html ?? '')
+  .replaceAll('href="{APP_URL}/register"', `href="${APP_URL}/register" data-ga-event="cta_signup" data-ga-place="article-texte"`)
+  .replaceAll('{APP_URL}', APP_URL);
 ---
 
 <BlogPost

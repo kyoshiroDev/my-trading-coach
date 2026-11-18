@@ -1,4 +1,4 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { ConflictException, Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { DemoSeedService } from './demo-seed.service';
 import { runsCrons } from '../../config/app-role';
@@ -48,6 +48,12 @@ export class DemoSeedCron implements OnModuleInit {
   }
 
   private async reseed(reason: string): Promise<void> {
-    await this.demoSeed.run(reason);
+    try {
+      await this.demoSeed.run(reason);
+    } catch (e) {
+      // Verrou pris (B5 #1066) : un re-seed est déjà en cours (connexion démo, admin), rien à refaire.
+      if (e instanceof ConflictException) this.logger.log(`Re-seed démo (${reason}) sauté : déjà en cours`);
+      else throw e;
+    }
   }
 }
