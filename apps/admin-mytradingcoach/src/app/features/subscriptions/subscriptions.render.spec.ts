@@ -140,6 +140,21 @@ describe('SubscriptionsComponent', () => {
     expect(rows[0].textContent).toContain('pause@example.com');
   });
 
+  // Règle 9 de plans.md : un bêta-testeur au plan FREE a l'accès Premium par son rôle ; jamais « FREE »
+  // dans un badge Premium.
+  it('A10 : accès manuels, accès réel affiché (rôle bêta ou Premium accordé)', async () => {
+    const el = await render({
+      stripeUsers: [], stripeTotal: 0, total: 2, page: 1, limit: 20,
+      betaTesters: [
+        { ...user('beta', null), plan: 'FREE', role: 'BETA_TESTER' },
+        { ...user('offert', null), plan: 'PREMIUM', role: 'USER' },
+      ],
+    });
+    const access = [...el.querySelectorAll('[data-testid="manual-access"]')].map((c) => c.textContent?.trim());
+    expect(access).toEqual(['Premium par le rôle bêta', 'Premium accordé']);
+    expect(el.textContent).not.toContain('FREE');
+  });
+
   // A11 (#1065) : interrupteur ouvert mais l'offre ne vend plus → « offre terminée », jamais « ouverte ».
   it('A11 : KPI Fondateurs « offre terminée » quand l’offre ne vend plus', async () => {
     FOUNDERS.offer = { ...FOUNDERS.offer, ended: true } as typeof FOUNDERS.offer;
