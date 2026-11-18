@@ -132,6 +132,7 @@
   cursor: pointer;
 }
 .rs-primary:hover:not(:disabled) { background: var(--primary-hover); }
+.rs-primary:focus-visible { outline: 2px solid var(--blue-bright); outline-offset: 2px; } /* 7,4:1 sur la feuille --bg-2 (#1087) */
 .rs-primary:disabled { opacity: 0.5; cursor: wait; }
 .rs-pair { display: flex; gap: 8px; }
 .rs-secondary {
