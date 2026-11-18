@@ -23,7 +23,7 @@ function pt(date: string, newSignups: number, mrr = 0): MetricsHistoryPoint {
   return { date, users: 0, mrr, newSignups };
 }
 
-function setup(stats: AdminStats, history: MetricsHistoryPoint[], over: Record<string, unknown> = {}) {
+function setup(stats: AdminStats, history: MetricsHistoryPoint[], over: Record<string, unknown> = {}, realTemplate = false) {
   const adminApi = {
     stats: vi.fn(() => of({ data: stats })),
     // Offre fondateur (#525) : KPI non testé ici.
@@ -45,13 +45,15 @@ function setup(stats: AdminStats, history: MetricsHistoryPoint[], over: Record<s
       { provide: VpsApi, useValue: vpsApi },
     ],
   });
-  TestBed.overrideComponent(DashboardComponent, {
-    set: { template: '<div></div>', styleUrls: [], styleUrl: undefined as unknown as string, schemas: [NO_ERRORS_SCHEMA] },
-  });
+  if (!realTemplate) {
+    TestBed.overrideComponent(DashboardComponent, {
+      set: { template: '<div></div>', styleUrls: [], styleUrl: undefined as unknown as string, schemas: [NO_ERRORS_SCHEMA] },
+    });
+  }
   const fixture = TestBed.createComponent(DashboardComponent);
   fixture.detectChanges();
    
-  return Object.assign(fixture.componentInstance as any, { __api: adminApi });
+  return Object.assign(fixture.componentInstance as any, { __api: adminApi, __fixture: fixture });
 }
 
 describe('DashboardComponent — graphe évolution', () => {
@@ -163,5 +165,18 @@ describe('DashboardComponent — temps réel et erreurs (A17 #1065)', () => {
     });
     expect(cmp.statsError()).toBe(true);
     expect(cmp.onlineError()).toBe(true);
+  });
+
+  // Vérificateur tests (#1065) : ce qui s'AFFICHE, pas seulement les signaux.
+  it('erreur des connectés et des KPI : page rendue avec les erreurs, jamais « Aucun utilisateur actif »', () => {
+    const cmp = setup(makeStats(), [], {
+      stats: vi.fn(() => throwError(() => new Error('500'))),
+      online: vi.fn(() => throwError(() => new Error('500'))),
+    }, true);
+    cmp.__fixture.detectChanges();
+    const el = cmp.__fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('[data-testid="online-error"]')).not.toBeNull();
+    expect(el.querySelector('[data-testid="error-state"]')).not.toBeNull();
+    expect(el.textContent).not.toContain('Aucun utilisateur actif');
   });
 });
