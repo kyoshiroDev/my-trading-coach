@@ -45,6 +45,8 @@ export class AmbassadorsComponent implements OnInit {
   // Retrait d'un ambassadeur
   protected readonly revokeTarget = signal<AdminAmbassador | null>(null);
   protected readonly revoking = signal(false);
+  /** Échec du retrait (A13 #1065), affiché dans la confirmation : avant, silencieux. */
+  protected readonly revokeError = signal<string | null>(null);
 
   protected readonly totalReferrals = computed(() => this.ambassadors().reduce((s, a) => s + a.totalReferrals, 0));
   protected readonly totalPremium = computed(() => this.ambassadors().reduce((s, a) => s + a.premiumReferrals, 0));
@@ -121,6 +123,7 @@ export class AmbassadorsComponent implements OnInit {
 
   // ── Retirer un ambassadeur ──────────────────────────────────────────────
   protected askRevoke(amb: AdminAmbassador): void {
+    this.revokeError.set(null);
     this.revokeTarget.set(amb);
   }
   protected cancelRevoke(): void {
@@ -136,7 +139,10 @@ export class AmbassadorsComponent implements OnInit {
         this.revokeTarget.set(null);
         this.loadAmbassadors();
       },
-      error: () => this.revoking.set(false),
+      error: (err) => {
+        this.revoking.set(false);
+        this.revokeError.set(apiErrorMessage(err, 'Le retrait n’a pas abouti. Réessaie.'));
+      },
     });
   }
 

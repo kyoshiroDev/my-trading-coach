@@ -129,7 +129,8 @@
       <div class="modal" role="dialog" aria-modal="true" mtcDialog (mtcDialogClose)="cancelRevoke()" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
         <div class="modal-head"><h3 class="modal-title">Retirer l'ambassadeur</h3><button aria-label="Fermer" class="modal-x" (click)="cancelRevoke()">✕</button></div>
         <div class="modal-body">
-          <p class="confirm-text">Retirer le statut ambassadeur de <strong>{{ target.name ?? target.email }}</strong> ? Son rôle repasse à <strong>USER</strong> et son code <strong>{{ target.referralCode }}</strong> est libéré. Les commissions déjà enregistrées sont conservées.</p>
+          <p class="confirm-text">Retirer le statut ambassadeur de <strong>{{ target.name ?? target.email }}</strong> ? Son rôle repasse à <strong>USER</strong> et son code <strong>{{ target.referralCode }}</strong> est retiré&nbsp;: il n’est jamais redonné à un autre compte. Les commissions déjà enregistrées sont conservées.</p>
+          @if (revokeError(); as err) { <p class="err-text" role="alert" data-testid="revoke-error">{{ err }}</p> }
         </div>
         <div class="modal-foot">
           <button class="btn" (click)="cancelRevoke()">Annuler</button>

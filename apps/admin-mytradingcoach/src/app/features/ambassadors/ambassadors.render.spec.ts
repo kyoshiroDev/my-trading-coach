@@ -83,4 +83,19 @@ describe('AmbassadorsComponent', () => {
     fixture.detectChanges();
     expect(el.querySelector('[data-testid="pay-error"]')?.textContent).toMatch(/19,60\s€/);
   });
+
+  // A13 (#1065) : retrait d'un ambassadeur en échec sans message ; texte « code libéré » faux
+  // (un code retiré n'est jamais redonné à un autre compte, A5 #1013).
+  it('A13 : retrait en échec, message affiché ; texte « jamais redonné »', async () => {
+    const { el, fixture } = await render();
+    el.querySelector<HTMLButtonElement>('.revoke-btn')!.click();
+    fixture.detectChanges();
+    const dialog = el.querySelector('[role="dialog"]')!;
+    expect(dialog.textContent).not.toContain('libéré');
+    expect(dialog.textContent).toContain('jamais redonné');
+    el.querySelector<HTMLButtonElement>('[data-testid="revoke-confirm"]')!.click();
+    http.expectOne(`${environment.apiUrl}/admin/ambassadors/revoke`).flush({ message: 'Ce compte n’est pas ambassadeur.' }, { status: 400, statusText: 'Bad Request' });
+    fixture.detectChanges();
+    expect(el.querySelector('[data-testid="revoke-error"]')?.textContent).toContain('pas ambassadeur');
+  });
 });
