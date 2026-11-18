@@ -1,4 +1,4 @@
-import type { PrismaClient } from '@prisma/client';
+import type { Prisma } from '@prisma/client';
 
 /**
  * Notifications push du compte démo (#666, revue phase 2 m9) : deux appareils et des heures
@@ -23,7 +23,7 @@ export const DEMO_PUSH_DEVICES = [
 /** Minutes depuis minuit, heure de Paris. */
 export const DEMO_QUIET_HOURS = { start: 22 * 60, end: 7 * 60 } as const;
 
-export async function seedDemoPush(prisma: PrismaClient, userId: string, now: Date): Promise<number> {
+export async function seedDemoPush(prisma: Prisma.TransactionClient, userId: string, now: Date): Promise<number> {
   await prisma.userPushDevice.deleteMany({ where: { userId } });
   await prisma.userPushDevice.createMany({
     data: DEMO_PUSH_DEVICES.map((d) => ({

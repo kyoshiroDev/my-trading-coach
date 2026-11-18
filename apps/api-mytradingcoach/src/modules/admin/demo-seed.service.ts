@@ -10,6 +10,8 @@ import { activeSessionWhere } from '../session/active-session';
 /** Un seul re-seed à la fois dans tout le cluster (connexions démo simultanées, cron, boot). */
 export const DEMO_RESEED_LOCK = 'demo:reseed-lock';
 const LOCK_TTL_S = 120;
+/** Délai de la transaction du seed : sous le TTL du verrou, pour qu'il ne puisse pas expirer avant. */
+const SEED_TX_TIMEOUT_MS = 90_000;
 /** Rend le verrou seulement s'il porte encore notre jeton (un seed plus long que le TTL ne libère
  * jamais le verrou pris entre-temps par un autre). */
 const RELEASE_LOCK_LUA = "if redis.call('get', KEYS[1]) == ARGV[1] then return redis.call('del', KEYS[1]) else return 0 end";
@@ -49,7 +51,12 @@ export class DemoSeedService {
   }
 
   private async seed(reason: string): Promise<DemoSeedResult> {
-    const res = await seedDemo(this.prisma);
+    // Une seule transaction (B6 #1066) : purge et recréation invisibles tant qu'elles ne sont pas
+    // validées. Avant, un visiteur pendant le re-seed voyait une démo vide ou partielle.
+    const res = await this.prisma.$transaction((tx) => seedDemo(tx), {
+      timeout: SEED_TX_TIMEOUT_MS,
+      maxWait: 10_000,
+    });
     this.logger.log(
       `Compte démo seedé (${reason}) : ${res.trades} trades sur ${res.accounts} comptes · WR net ${res.winRate}% · brut ${res.grossPnl} $ · frais ${res.fees} $ · net ${res.pnl} $ · ${res.redDays}/${res.tradingDays} jours rouges`,
     );

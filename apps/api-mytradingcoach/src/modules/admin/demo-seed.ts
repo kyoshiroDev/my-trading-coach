@@ -1,5 +1,11 @@
 import { hashPassword } from '../auth/password-hashing';
-import { PrismaClient, SessionStatus, AccountStatus, BrokerProvider, BrokerConnectionStatus } from '@prisma/client';
+import { Prisma, SessionStatus, AccountStatus, BrokerProvider, BrokerConnectionStatus } from '@prisma/client';
+
+/**
+ * Client du seed : PrismaClient, PrismaService ou le client d'une transaction (re-seed de la démo en
+ * une transaction, B6 #1066). Un PrismaClient est accepté tel quel.
+ */
+export type SeedDb = Prisma.TransactionClient;
 import { computeTradeStats, maxDrawdownOfTrades, type EcoResultAnalysis } from '@mtc/shared';
 import { seedDefaultSetups } from '../setups/setups.defaults';
 import { type AccountKey, APEX_DAILY_LOSS_LIMIT, DEMO_ACCOUNTS, DEMO_EMAIL, round2 } from './demo-data/config';
@@ -47,8 +53,8 @@ export interface DemoSeedResult {
   bySetup: DemoStats['bySetup']; byAccount: DemoStats['byAccount'];
 }
 
-/** Seed/refresh complet du compte démo. `prisma` = PrismaService ou PrismaClient adapter. */
-export async function seedDemo(prisma: PrismaClient, now: Date = new Date()): Promise<DemoSeedResult> {
+/** Seed/refresh complet du compte démo. `prisma` = PrismaService, PrismaClient adapter ou transaction. */
+export async function seedDemo(prisma: SeedDb, now: Date = new Date()): Promise<DemoSeedResult> {
   const dataset = buildDemoDataset(now);
   assertDemoCalendar(dataset.days); // aucune écriture si un trade tombe un week-end ou hors futures
   const password = await hashPassword(`demo-${Date.now()}-${Math.random()}`);
@@ -78,7 +84,7 @@ export interface SeedTradingDataOptions {
  * Réservé au compte démo et aux comptes de test (script `seed:user`, bases beta/locales uniquement).
  */
 export async function seedTradingData(
-  prisma: PrismaClient,
+  prisma: SeedDb,
   user: { id: string; email: string },
   now: Date = new Date(),
   opts: SeedTradingDataOptions = { brokerShowcase: false },
@@ -462,7 +468,7 @@ export async function seedTradingData(
 }
 
 /** Épingles démo = les 2 annonces les plus fortes du vrai calendrier du jour (clé affichée `nom:devise`). */
-async function pickRealEcoPins(prisma: PrismaClient, today: string): Promise<string[]> {
+async function pickRealEcoPins(prisma: SeedDb, today: string): Promise<string[]> {
   const rows = await prisma.ecoEvent.findMany({ where: { date: today }, orderBy: { time: 'asc' } });
   return rows
     .map((r) => ({
@@ -479,7 +485,7 @@ async function pickRealEcoPins(prisma: PrismaClient, today: string): Promise<str
 }
 
 /** Sans FMP (local, tests) : un faux calendrier du jour, aux libellés FMP anglais, pour que la démo reste peuplée. */
-async function seedFakeEcoEvents(prisma: PrismaClient, today: string): Promise<string[]> {
+async function seedFakeEcoEvents(prisma: SeedDb, today: string): Promise<string[]> {
   const ecoEvents = [
     { time: '01:30', name: 'Tokyo CPI YoY', nameFr: 'Inflation Tokyo', currency: 'JPY', country: 'JP', impact: 'medium', actual: 2.5, estimate: 2.4, previous: 2.6, unit: '%' },
     { time: '10:00', name: 'HCOB Manufacturing PMI', nameFr: 'PMI manufacturier', currency: 'EUR', country: 'EU', impact: 'medium', actual: 49.2, estimate: 49.0, previous: 48.8, unit: null },
@@ -505,7 +511,7 @@ async function seedFakeEcoEvents(prisma: PrismaClient, today: string): Promise<s
  * analyse déjà produite (`EcoReleaseAnalysis`, signature d'actifs du compte démo, format factuel
  * `{ interpretation, gap }`) : le calendrier d'un jour passé montre l'analyse, sans appel IA.
  */
-async function seedFakePastRelease(prisma: PrismaClient, userId: string, now: Date): Promise<void> {
+async function seedFakePastRelease(prisma: SeedDb, userId: string, now: Date): Promise<void> {
   const friday = new Date(now);
   do friday.setDate(friday.getDate() - 1); while (friday.getDay() !== 5);
   const date = friday.toLocaleDateString('fr-CA', { timeZone: 'Europe/Paris' });
