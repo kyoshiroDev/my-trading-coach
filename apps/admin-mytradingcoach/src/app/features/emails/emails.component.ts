@@ -16,7 +16,7 @@ import {
   LucideRefreshCw as RefreshCw,
 } from '@lucide/angular';
 import { AdminApi, CampaignMeta } from '../../core/api/admin.api';
-import { DialogDirective } from '@mtc/front-ui';
+import { DialogDirective, ErrorStateComponent } from '@mtc/front-ui';
 
 const PREVIEW_DEBOUNCE_MS = 400;
 /** Campagnes au contenu saisi ici (objet + corps) : annonce et information de service (#817). */
@@ -24,7 +24,7 @@ const FREE_CONTENT = new Set(['announcement', 'legal_notice']);
 
 @Component({
   selector: 'mtc-admin-emails',
-  imports: [DialogDirective, FormsModule, DatePipe, LucideDynamicIcon],
+  imports: [DialogDirective, ErrorStateComponent, FormsModule, DatePipe, LucideDynamicIcon],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './emails.component.css',
   templateUrl: './emails.component.html',
@@ -43,6 +43,10 @@ export class EmailsComponent {
   protected readonly campaigns          = signal<CampaignMeta[]>([]);
   protected readonly previewCampaign    = signal<CampaignMeta | null>(null);
   protected readonly previewLoading     = signal(false);
+  /** Aperçu non chargé (A19 #1065) : avant, « 0 destinataire » comme si personne n'était ciblé. */
+  protected readonly previewError       = signal(false);
+  /** Liste des campagnes non chargée (A19 #1065) : avant, « Aucune campagne ». */
+  protected readonly loadError          = signal(false);
   protected readonly previewHtml        = signal('');
   protected readonly previewRecipients  = signal<{ email: string; name: string | null }[]>([]);
   protected readonly sendCampaignModal  = signal<CampaignMeta | null>(null);
@@ -98,6 +102,7 @@ export class EmailsComponent {
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe(r => {
+        this.previewError.set(!r);
         if (r) {
           this.previewHtml.set(r.data.html);
           this.previewRecipients.set(r.data.recipients ?? []);
@@ -108,15 +113,20 @@ export class EmailsComponent {
 
   load(): void {
     this.loading.set(true);
+    this.loadError.set(false);
     this.adminApi.listCampaigns()
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({ next: r => { this.campaigns.set(r.data ?? []); this.loading.set(false); }, error: () => this.loading.set(false) });
+      .subscribe({
+        next: r => { this.campaigns.set(r.data ?? []); this.loading.set(false); },
+        error: () => { this.loading.set(false); this.loadError.set(true); },
+      });
   }
 
   openPreview(c: CampaignMeta): void {
     this.previewCampaign.set(c);
     this.previewHtml.set('');
     this.previewRecipients.set([]);
+    this.previewError.set(false);
     this.previewLoading.set(true);
     this.previewRequests.next({ campaign: c, debounced: false });
   }
