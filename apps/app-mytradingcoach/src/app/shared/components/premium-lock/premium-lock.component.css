@@ -44,8 +44,8 @@
 }
 
 .pl-btn {
-  background: linear-gradient(90deg, var(--blue), #6366f1);
-  color: white;
+  background: var(--primary); /* blanc sur le dégradé bleu-indigo = 3,7:1, sur --primary 5,2:1 (#1085) */
+  color: #fff;
   border-radius: 7px;
   padding: 7px 14px;
   font-size: 12px;
@@ -59,4 +59,5 @@
   cursor: pointer;
 }
 
-.pl-btn:hover { opacity: .9; }
+.pl-btn:hover { background: var(--primary-hover); }
+.pl-btn:focus-visible { outline: 2px solid var(--blue-bright); outline-offset: 2px; } /* 6,7:1 sur la carte (#1087) */

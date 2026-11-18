@@ -288,7 +288,7 @@ const data = JSON.stringify(catalog).replace(/</g, '\\u003c');
     cursor: pointer;
   }
   .pfr-phases :global(button:hover) { color: var(--txt); }
-  .pfr-phases :global(button.on) { background: var(--blue); color: #fff; }
+  .pfr-phases :global(button.on) { background: var(--blue); color: var(--on-blue); }
 
   /* Lignes de règles recréées par le script → :global(), bornées à la liste. */
   .pfr-rules { margin: 0; display: flex; flex-direction: column; }
