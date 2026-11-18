@@ -1,11 +1,5 @@
 import { hashPassword } from '../auth/password-hashing';
 import { Prisma, SessionStatus, AccountStatus, BrokerProvider, BrokerConnectionStatus } from '@prisma/client';
-
-/**
- * Client du seed : PrismaClient, PrismaService ou le client d'une transaction (re-seed de la démo en
- * une transaction, B6 #1066). Un PrismaClient est accepté tel quel.
- */
-export type SeedDb = Prisma.TransactionClient;
 import { computeTradeStats, maxDrawdownOfTrades, type EcoResultAnalysis } from '@mtc/shared';
 import { seedDefaultSetups } from '../setups/setups.defaults';
 import { type AccountKey, APEX_DAILY_LOSS_LIMIT, DEMO_ACCOUNTS, DEMO_EMAIL, round2 } from './demo-data/config';
@@ -21,6 +15,12 @@ import { assetsSignature } from '../eco-calendar/eco-release-analysis';
 import { releaseGap } from '../eco-calendar/eco-calendar.gap';
 import { seedDemoPush } from './demo-data/push';
 import { DEMO_INCIDENT_ANALYSIS, LOST_DEMO_ACCOUNTS, buildLostDemoIncident, buildLostDemoTrades } from './demo-data/lost-accounts';
+
+/**
+ * Client du seed : PrismaClient, PrismaService ou le client d'une transaction (re-seed de la démo en
+ * une transaction, B6 #1066). Un PrismaClient est accepté tel quel.
+ */
+export type SeedDb = Prisma.TransactionClient;
 
 
 /**
