@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { ConflictException, NotFoundException } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { freezeClock } from '../../test/freeze-clock';
+import { subscriptionStateWhere } from '../../common/stats/subscription-state-where';
 import type { PrismaService } from '../../prisma/prisma.service';
 import type { AmbassadorService } from '../ambassador/ambassador.service';
 
@@ -88,14 +89,7 @@ describe('UsersService.removeOfferedPremium (B10 #1064)', () => {
     prisma.user.updateMany.mockResolvedValueOnce({ count: 0 });
     await expect(service.removeOfferedPremium('u1')).rejects.toThrow('Aucun Premium offert en cours.');
     expect(prisma.user.updateMany).toHaveBeenCalledWith({
-      where: {
-        id: 'u1',
-        trialEndsAt: { gt: NOW },
-        AND: [
-          { OR: [{ trialSource: null }, { trialSource: 'ADMIN' }] },
-          { OR: [{ stripeSubscriptionStatus: null }, { stripeSubscriptionStatus: { notIn: ['active', 'trialing', 'past_due', 'unpaid'] } }] },
-        ],
-      },
+      where: { id: 'u1', ...subscriptionStateWhere('offered', NOW) },
       data: { trialEndsAt: NOW },
     });
     expect(prisma.user.update).not.toHaveBeenCalled();

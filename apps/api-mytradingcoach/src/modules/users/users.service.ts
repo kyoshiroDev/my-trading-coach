@@ -63,12 +63,6 @@ const USER_SELECT = {
   createdAt: true,
 } as const;
 
-/**
- * Abonnement Stripe en cours (actif, essai Stripe) ou en pause (past_due, unpaid) : un Premium offert
- * ne se retire jamais par-dessus (B10 #1064).
- */
-const BLOCKING_STRIPE_STATUSES: readonly string[] = ['active', 'trialing', 'past_due', 'unpaid'];
-
 /** Page Abonnements : essais et offerts listés (les plus récents d'abord). */
 const TRIAL_LIST_MAX = 200;
 
@@ -606,7 +600,7 @@ export class UsersService {
     if (!user) throw new NotFoundException('Utilisateur introuvable');
     if (user.isDemo) throw new ConflictException(DEMO_ACCOUNT_LOCKED);
     const status = user.stripeSubscriptionStatus;
-    if (status && BLOCKING_STRIPE_STATUSES.includes(status)) {
+    if (hasActiveStripeSubscription(status) || status === 'past_due' || status === 'unpaid') {
       throw new ConflictException('Abonnement Stripe\u00a0: jamais modifié à la main.');
     }
     const now = new Date();
@@ -617,18 +611,11 @@ export class UsersService {
     }
 
     const signupEnd = user.signupTrialEndsAt && user.signupTrialEndsAt > now ? user.signupTrialEndsAt : null;
-    // Écriture conditionnelle : les contrôles ci-dessus sont refaits dans le where, pour qu'un webhook
-    // Stripe arrivé entre la lecture et l'écriture ne soit jamais écrasé. Jamais `not: SIGNUP` :
-    // en SQL, il écarterait aussi les `trialSource` null (offerts d'avant #769).
+    // Écriture conditionnelle : le where refait les contrôles (état « offert » de subscriptionState,
+    // filtre partagé testé sur une vraie base), pour qu'un webhook Stripe arrivé entre la lecture et
+    // l'écriture ne soit jamais écrasé.
     const { count } = await this.prisma.user.updateMany({
-      where: {
-        id: userId,
-        trialEndsAt: { gt: now },
-        AND: [
-          { OR: [{ trialSource: null }, { trialSource: TrialSource.ADMIN }] },
-          { OR: [{ stripeSubscriptionStatus: null }, { stripeSubscriptionStatus: { notIn: [...BLOCKING_STRIPE_STATUSES] } }] },
-        ],
-      },
+      where: { id: userId, ...subscriptionStateWhere('offered', now) },
       data: signupEnd ? { trialEndsAt: signupEnd, trialSource: TrialSource.SIGNUP } : { trialEndsAt: now },
     });
     if (count === 0) throw new ConflictException('Aucun Premium offert en cours.');
