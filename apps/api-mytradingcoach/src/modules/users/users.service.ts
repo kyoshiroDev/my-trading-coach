@@ -732,7 +732,9 @@ export class UsersService {
     // Abonnés payants = abonnement Stripe `active` (hors démo, #828) : une réservation fondateur ou un
     // essai d'abonnement (`trialing`) ne paie pas encore, il va dans « Essais et offerts ».
     const now = new Date();
-    const stripeWhere: Prisma.UserWhereInput = { isDemo: false, ...subscriptionStateWhere('paying', now) };
+    // Hors ADMIN aussi (règle 9 de plans.md) : le KPI « Stripe actifs » et le MRR (REAL_USERS_WHERE)
+    // comptent les mêmes comptes.
+    const stripeWhere: Prisma.UserWhereInput = { isDemo: false, role: { not: Role.ADMIN }, ...subscriptionStateWhere('paying', now) };
     // Essais et offerts (#828) : essai d'inscription, essai d'abonnement, Premium offert par l'admin.
     const trialWhere: Prisma.UserWhereInput = {
       AND: [{ isDemo: false }, subscriptionStatesWhere(['signup_trial', 'subscription_trial', 'offered'], now)],
@@ -744,7 +746,7 @@ export class UsersService {
       AND: [{ isDemo: false }, { role: { not: Role.ADMIN } }, subscriptionStatesWhere(['role', 'manual'], now)],
     };
     // En pause (past_due / unpaid, A10) : n'apparaissaient nulle part.
-    const pausedWhere: Prisma.UserWhereInput = { isDemo: false, ...subscriptionStateWhere('paused', now) };
+    const pausedWhere: Prisma.UserWhereInput = { isDemo: false, role: { not: Role.ADMIN }, ...subscriptionStateWhere('paused', now) };
     const [stripeUsers, stripeTotal, betaTesters, trialUsers, pausedUsers] = await Promise.all([
       this.prisma.user.findMany({
         where: stripeWhere,

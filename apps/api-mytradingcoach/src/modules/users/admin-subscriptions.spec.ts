@@ -50,8 +50,17 @@ describe('UsersService.adminSubscriptions (#1065)', () => {
 
   it('A10 : abonnements en pause listés à part', async () => {
     prisma.user.findMany.mockImplementation(async (a: { where: unknown }) =>
-      JSON.stringify(a.where) === JSON.stringify({ isDemo: false, ...subscriptionStateWhere('paused', NOW) }) ? [{ id: 'p1' }] : []);
+      JSON.stringify(a.where) === JSON.stringify({ isDemo: false, role: { not: 'ADMIN' }, ...subscriptionStateWhere('paused', NOW) }) ? [{ id: 'p1' }] : []);
     const res = await service.adminSubscriptions();
     expect(res.pausedUsers).toEqual([{ id: 'p1' }]);
+  });
+
+  // Relecteur (#1065), règle 9 de plans.md : comme les accès manuels et le MRR (REAL_USERS_WHERE), les
+  // payants, leur total (KPI « Stripe actifs ») et les comptes en pause excluent les ADMIN.
+  it('payants, total et pause : jamais un ADMIN', async () => {
+    await service.adminSubscriptions();
+    const paying = callWhere((w) => JSON.stringify(w).includes('"stripeSubscriptionStatus":"active"'));
+    expect(paying.where.role).toEqual({ not: 'ADMIN' });
+    expect(prisma.user.count.mock.calls[0][0].where.role).toEqual({ not: 'ADMIN' });
   });
 });
