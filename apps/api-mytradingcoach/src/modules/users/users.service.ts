@@ -8,7 +8,7 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { Plan, Role, Prisma, TrialSource } from '@prisma/client';
-import { UTM_NONE, type AcquisitionUtm } from '@mtc/shared';
+import { UTM_NONE, type AcquisitionUtm, type AdminOfferPremiumResponse, type AdminRemoveOfferedPremiumResponse } from '@mtc/shared';
 import { PrismaService } from '../../prisma/prisma.service';
 import { closedTradeStats } from '../analytics/analytics.sql';
 import { AmbassadorService } from '../ambassador/ambassador.service';
@@ -23,6 +23,8 @@ import { DiscordGuildClient } from '../discord/discord-guild.client';
 import { RedisService } from '../infra/redis.service';
 import { insightsCooldownKey, insightsKeptKey } from '../ai/insights-cache-keys';
 import { billingCacheKey } from '../stripe/stripe.helpers';
+import { isPremiumAccess } from '../discord/discord-access.util';
+import { DEMO_ACCOUNT_LOCKED } from './demo-account-locked';
 import { REAL_USERS_WHERE } from '../../common/stats/real-users';
 import { premiumAccessWhere, subscriptionStateWhere, subscriptionStatesWhere } from '../../common/stats/subscription-state-where';
 import { emailEquals, escapeLike } from '../../common/utils/email.util';
@@ -188,31 +190,25 @@ export class UsersService {
     return { users, total, page, limit };
   }
 
-  // ── Admin : update plan/role/name ─────────────────────────────────────────
+  // ── Admin : modale « Modifier » (nom, compte interne) ─────────────────────
 
-  async adminUpdate(
-    targetId: string,
-    dto: { name?: string; plan?: Plan; role?: Role; isInternal?: boolean },
-  ) {
+  /** Ni rôle ni plan ici (A1/B2 #1064) : voir `setRole`, `offerPremium`, `removeOfferedPremium`. */
+  async adminUpdate(targetId: string, dto: { name?: string; isInternal?: boolean }) {
     const target = await this.prisma.user.findUnique({
       where: { id: targetId },
-      select: { role: true },
+      select: { role: true, isDemo: true },
     });
     if (!target) throw new NotFoundException('Utilisateur introuvable');
     if (target.role === Role.ADMIN) {
       throw new ForbiddenException('Impossible de modifier un administrateur');
     }
-    if (dto.role === Role.ADMIN) {
-      throw new ForbiddenException(
-        'Promotion au rôle ADMIN impossible via API',
-      );
-    }
+    if (target.isDemo) throw new ConflictException(DEMO_ACCOUNT_LOCKED);
     const updated = await this.prisma.user.update({
       where: { id: targetId },
-      data: dto,
+      data: { name: dto.name, isInternal: dto.isInternal },
       select: ADMIN_USER_SELECT,
     });
-    await this.userCache?.invalidate(targetId); // plan / rôle relus par le JWT (SCA-B3-01)
+    await this.userCache?.invalidate(targetId); // nom relu par le JWT (SCA-B3-01)
     return updated;
   }
 
@@ -221,12 +217,14 @@ export class UsersService {
   async adminDelete(targetId: string): Promise<void> {
     const target = await this.prisma.user.findUnique({
       where: { id: targetId },
-      select: { role: true },
+      select: { role: true, isDemo: true },
     });
     if (!target) throw new NotFoundException('Utilisateur introuvable');
     if (target.role === Role.ADMIN) {
       throw new ForbiddenException('Impossible de supprimer un administrateur');
     }
+    // Sinon : une ligne DeletedAccount comptée et la vitrine cassée jusqu'au prochain re-seed.
+    if (target.isDemo) throw new ConflictException(DEMO_ACCOUNT_LOCKED);
     await this.archiveAndDelete(targetId, 'admin');
   }
 
@@ -451,37 +449,61 @@ export class UsersService {
 
     const current = await this.prisma.user.findUnique({
       where: { id: targetUserId },
-      select: { email: true, role: true },
+      select: { email: true, role: true, isDemo: true },
     });
     if (!current) throw new NotFoundException('Utilisateur introuvable');
+    if (current.isDemo) throw new ConflictException(DEMO_ACCOUNT_LOCKED);
     // S6 (#1063) : un administrateur n'est jamais rétrogradé par l'API (ni un autre, ni soi-même),
     // comme adminUpdate et adminDelete.
     if (current.role === Role.ADMIN) {
       throw new ForbiddenException('Impossible de modifier le rôle d’un administrateur');
     }
 
-    // Promotion : promote() génère le code s'il manque, et réutilise l'existant sinon.
     if (role === Role.AMBASSADOR) {
+      // Promotion : promote() génère le code s'il manque, et réutilise l'existant sinon.
       await this.ambassador.promote(current.email);
-      return;
-    }
-
-    // Rétrogradation depuis AMBASSADOR : revoke() vide le code (comportement inchangé).
-    // revoke() force USER ; si la cible est un autre rôle, on l'applique ensuite.
-    if (current.role === Role.AMBASSADOR) {
+    } else if (current.role === Role.AMBASSADOR) {
+      // Rétrogradation depuis AMBASSADOR : revoke() vide le code (comportement inchangé).
+      // revoke() force USER ; si la cible est un autre rôle, on l'applique ensuite.
       await this.ambassador.revoke(current.email);
       if (role !== Role.USER) {
         await this.prisma.user.update({ where: { id: targetUserId }, data: { role } });
       }
       await this.userCache?.invalidate(targetUserId);
-      return;
+    } else {
+      await this.prisma.user.update({
+        where: { id: targetUserId },
+        data: { role },
+      });
+      await this.userCache?.invalidate(targetUserId);
     }
+    // A2/B3 (#1064) : le rôle BETA_TESTER donne le Premium ; tout changement de rôle réaligne
+    // le statut de facturation et le rôle Discord, comme offerPremium.
+    await this.realignPremiumAccess(targetUserId);
+  }
 
-    await this.prisma.user.update({
-      where: { id: targetUserId },
-      data: { role },
+  /**
+   * Après un changement d'accès Premium hors Stripe (rôle, Premium offert retiré) : statut de
+   * facturation relu tout de suite (cache de 5 min vidé) et rôle Discord recalculé. Un échec Redis
+   * ou Discord ne bloque pas l'action : Discord se réaligne à la prochaine liaison ou par la
+   * resynchronisation admin.
+   */
+  private async realignPremiumAccess(userId: string): Promise<void> {
+    try {
+      await this.redisService?.client.del(billingCacheKey(userId));
+    } catch (err: unknown) {
+      this.logger.warn(`Cache de facturation non vidé (user ${userId}) : ${err instanceof Error ? err.message : String(err)}`);
+    }
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { discordId: true, plan: true, role: true, trialEndsAt: true },
     });
-    await this.userCache?.invalidate(targetUserId);
+    if (!user?.discordId || !this.discordGuild) return;
+    try {
+      await this.discordGuild.setPlanRole(user.discordId, isPremiumAccess(user));
+    } catch (err: unknown) {
+      this.logger.warn(`Rôle Discord non réaligné (user ${userId}) : ${err instanceof Error ? err.message : String(err)}`);
+    }
   }
 
   /**
@@ -510,7 +532,7 @@ export class UsersService {
     userId: string,
     days = OFFER_PREMIUM_DEFAULT_DAYS,
     adminId?: string,
-  ): Promise<{ trialEndsAt: string }> {
+  ): Promise<AdminOfferPremiumResponse> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       select: {
@@ -558,6 +580,51 @@ export class UsersService {
       `Premium offert | admin: ${adminId ?? 'inconnu'}, user: ${userId}, fin: ${trialEndsAt.toISOString()}`,
     );
     return { trialEndsAt: trialEndsAt.toISOString() };
+  }
+
+  /**
+   * « Retirer le Premium offert » (B10 #1064, décision du 16/11) : seulement un Premium offert par
+   * l'admin encore en cours (`trialSource` ADMIN ou absent, `trialEndsAt` futur), jamais un abonnement Stripe
+   * (même en pause). L'accès tombe tout de suite (`trialEndsAt` = maintenant) ; si l'offre prolongeait
+   * l'essai d'inscription encore en cours, l'essai d'inscription est rendu (`signupTrialEndsAt`, intact
+   * depuis #769) : seuls les jours offerts par l'admin sont retirés.
+   */
+  async removeOfferedPremium(userId: string, adminId?: string): Promise<AdminRemoveOfferedPremiumResponse> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        isDemo: true, trialSource: true, trialEndsAt: true, signupTrialEndsAt: true,
+        stripeSubscriptionStatus: true,
+      },
+    });
+    if (!user) throw new NotFoundException('Utilisateur introuvable');
+    if (user.isDemo) throw new ConflictException(DEMO_ACCOUNT_LOCKED);
+    const status = user.stripeSubscriptionStatus;
+    if (hasActiveStripeSubscription(status) || status === 'past_due' || status === 'unpaid') {
+      throw new ConflictException('Abonnement Stripe\u00a0: jamais modifié à la main.');
+    }
+    const now = new Date();
+    // Origine absente = Premium offert d'avant `trialSource` (même règle que isOfferedPremium) ;
+    // seul l'essai d'inscription (SIGNUP) n'est jamais un Premium offert.
+    if (user.trialSource === TrialSource.SIGNUP || !user.trialEndsAt || user.trialEndsAt <= now) {
+      throw new ConflictException('Aucun Premium offert en cours.');
+    }
+
+    const signupEnd = user.signupTrialEndsAt && user.signupTrialEndsAt > now ? user.signupTrialEndsAt : null;
+    // Écriture conditionnelle : le where refait les contrôles (état « offert » de subscriptionState,
+    // filtre partagé testé sur une vraie base), pour qu'un webhook Stripe arrivé entre la lecture et
+    // l'écriture ne soit jamais écrasé.
+    const { count } = await this.prisma.user.updateMany({
+      where: { id: userId, ...subscriptionStateWhere('offered', now) },
+      data: signupEnd ? { trialEndsAt: signupEnd, trialSource: TrialSource.SIGNUP } : { trialEndsAt: now },
+    });
+    if (count === 0) throw new ConflictException('Aucun Premium offert en cours.');
+    await this.userCache?.invalidate(userId); // accès relu tout de suite par le JWT
+    await this.realignPremiumAccess(userId);
+    this.logger.log(
+      `Premium offert retiré | admin: ${adminId ?? 'inconnu'}, user: ${userId}, essai d'inscription rendu: ${signupEnd ? signupEnd.toISOString() : 'non'}`,
+    );
+    return { trialEndsAt: signupEnd ? signupEnd.toISOString() : null };
   }
 
   async upgradeToPremium(userId: string) {
@@ -665,27 +732,34 @@ export class UsersService {
     // Abonnés payants = abonnement Stripe `active` (hors démo, #828) : une réservation fondateur ou un
     // essai d'abonnement (`trialing`) ne paie pas encore, il va dans « Essais et offerts ».
     const now = new Date();
-    const stripeWhere: Prisma.UserWhereInput = { isDemo: false, ...subscriptionStateWhere('paying', now) };
+    // Hors ADMIN aussi (règle 9 de plans.md) : le KPI « Stripe actifs » et le MRR (REAL_USERS_WHERE)
+    // comptent les mêmes comptes.
+    const stripeWhere: Prisma.UserWhereInput = { isDemo: false, role: { not: Role.ADMIN }, ...subscriptionStateWhere('paying', now) };
     // Essais et offerts (#828) : essai d'inscription, essai d'abonnement, Premium offert par l'admin.
     const trialWhere: Prisma.UserWhereInput = {
-      AND: [{ isDemo: false }, subscriptionStatesWhere(['signup_trial', 'subscription_trial', 'offered'], now)],
+      AND: [{ isDemo: false }, { role: { not: Role.ADMIN } }, subscriptionStatesWhere(['signup_trial', 'subscription_trial', 'offered'], now)],
     };
-    // « Accès manuels » = accès Premium octroyé SANS abonnement Stripe
-    // (bêta, ambassadeur, comp) : pas seulement le rôle BETA_TESTER. Hors démo.
-    const manualWhere = {
-      isDemo: false,
-      plan: 'PREMIUM' as Plan,
-      stripeInterval: null,
+    // « Accès manuels » (A10 #1065) = Premium sans abonnement ni essai : rôle bêta-testeur (quel que
+    // soit le plan) ou plan PREMIUM accordé à la main, mêmes états que subscriptionState. Hors démo et
+    // hors ADMIN (l'équipe, déjà hors statistiques). Avant : plan PREMIUM exigé, bêtas FREE absents.
+    const manualWhere: Prisma.UserWhereInput = {
+      AND: [{ isDemo: false }, { role: { not: Role.ADMIN } }, subscriptionStatesWhere(['role', 'manual'], now)],
     };
-    const [stripeUsers, stripeTotal, betaTesters, trialUsers] = await Promise.all([
+    // En pause (past_due / unpaid, A10) : n'apparaissaient nulle part.
+    const pausedWhere: Prisma.UserWhereInput = { isDemo: false, role: { not: Role.ADMIN }, ...subscriptionStateWhere('paused', now) };
+    const [stripeUsers, stripeTotal, betaTesters, trialUsers, pausedUsers] = await Promise.all([
       this.prisma.user.findMany({
         where: stripeWhere,
         skip,
         take: limit,
         orderBy: { stripeCurrentPeriodEnd: 'desc' },
         // Montant réellement payé (#525) : place fondateur ou code partenaire de l'abonné.
+        // Fin programmée et statut (A9 #1065) : un abonné résilié n'est pas « actif, renouvelé le ».
         select: {
           ...userSelect,
+          stripeSubscriptionStatus: true,
+          stripeCancelAt: true,
+          trialSource: true,
           founderSeat: { select: { number: true, status: true } },
           partnerRedemption: {
             select: {
@@ -707,14 +781,23 @@ export class UsersService {
         take: TRIAL_LIST_MAX,
         select: { ...userSelect, trialSource: true, stripeSubscriptionStatus: true, stripeCancelAt: true },
       }),
+      this.prisma.user.findMany({
+        where: pausedWhere,
+        orderBy: { stripeCurrentPeriodEnd: 'desc' },
+        take: TRIAL_LIST_MAX,
+        select: { ...userSelect, trialSource: true, stripeSubscriptionStatus: true, stripeCancelAt: true },
+      }),
     ]);
 
     // Objet brut : l'intercepteur global ajoute `{ data }`. L'ancien `{ data: { … } }` donnait
     // `{ data: { data: … } }` et la page admin Abonnements lisait des champs vides (plantage).
     return {
       stripeUsers,
+      /** Abonnés payants au total (A8 #1065) : KPI et pagination, `stripeUsers` n'en est qu'une page. */
+      stripeTotal,
       betaTesters,
       trialUsers,
+      pausedUsers,
       total: stripeTotal + betaTesters.length,
       page,
       limit,

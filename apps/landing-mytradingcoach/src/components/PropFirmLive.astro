@@ -282,7 +282,7 @@ const data = JSON.stringify(catalog).replace(/</g, '\\u003c');
     font-family: var(--body);
   }
   .pfl-phases :global(button:hover) { border-color: var(--blue); color: var(--txt); }
-  .pfl-phases :global(button.on) { background: rgba(59,130,246,.16); border-color: var(--blue); color: var(--txt); }
+  .pfl-phases :global(button.on) { background: color-mix(in srgb, var(--blue) 16%, transparent); border-color: var(--blue); color: var(--txt); }
 
   .pfl-src { margin: 0; font-size: 11.5px; color: var(--txt3); font-family: var(--mono); }
 
@@ -292,7 +292,7 @@ const data = JSON.stringify(catalog).replace(/</g, '\\u003c');
     border: 1px solid var(--b2);
     border-radius: 16px;
     padding: 26px;
-    box-shadow: 0 24px 60px -30px rgba(59,130,246,.45);
+    box-shadow: 0 24px 60px -30px color-mix(in srgb, var(--blue) 45%, transparent);
   }
   .pfl-board-head {
     margin: 0 0 18px;
@@ -349,7 +349,7 @@ const data = JSON.stringify(catalog).replace(/</g, '\\u003c');
     font-family: var(--body);
   }
   .pfl-shots-tabs button:hover { border-color: var(--blue); color: var(--txt); }
-  .pfl-shots-tabs button.on { background: rgba(59,130,246,.16); border-color: var(--blue); color: var(--txt); }
+  .pfl-shots-tabs button.on { background: color-mix(in srgb, var(--blue) 16%, transparent); border-color: var(--blue); color: var(--txt); }
   .pfl-shots-tabs button:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
   .pfl-thumb { display: flex; flex-direction: column; gap: 8px; text-decoration: none; }
   .pfl-thumb[hidden] { display: none; }
@@ -358,7 +358,7 @@ const data = JSON.stringify(catalog).replace(/</g, '\\u003c');
     height: auto;
     border-radius: 14px;
     border: 1px solid var(--b2);
-    box-shadow: 0 30px 80px -40px rgba(59,130,246,.55);
+    box-shadow: 0 30px 80px -40px color-mix(in srgb, var(--blue) 55%, transparent);
     transition: border-color .2s, transform .2s;
   }
   .pfl-thumb:hover img { border-color: var(--blue); transform: translateY(-2px); }
@@ -372,7 +372,7 @@ const data = JSON.stringify(catalog).replace(/</g, '\\u003c');
     position: relative; padding-left: 24px;
     font-size: 15.5px; color: var(--txt2); line-height: 1.55;
   }
-  .pfl-points li::before { content: '✓'; position: absolute; left: 0; color: var(--green); font-weight: 700; }
+  .pfl-points li::before { content: '✓'; position: absolute; left: 0; color: var(--blue2); font-weight: 700; }
   .pfl-points strong { color: var(--txt); font-weight: 600; }
   .pfl-prem {
     font-family: var(--mono); font-size: 11px; color: var(--blue2);
@@ -387,7 +387,7 @@ const data = JSON.stringify(catalog).replace(/</g, '\\u003c');
     background: var(--blue); color: var(--on-blue); padding: 14px 28px;
     border-radius: 10px; font-size: 15px; font-weight: 600;
     text-decoration: none; display: inline-flex; align-items: center; gap: 8px;
-    box-shadow: 0 0 32px rgba(59,130,246,.4);
+    box-shadow: 0 0 32px var(--blue-halo);
     transition: background .2s, transform .2s, box-shadow .2s; font-family: var(--disp);
   }
   .btn-p:hover { background: var(--blue2); transform: translateY(-2px); }

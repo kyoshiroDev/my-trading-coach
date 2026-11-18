@@ -41,10 +41,13 @@ export class FounderAdminService {
       this.founders.seatsLeft(),
     ]);
     const count = (s: FounderSeatStatus) => byStatus.find((r) => r.status === s)?._count._all ?? 0;
+    // A11 (#1065) : interrupteur ouvert mais l'offre ne vend plus (date passée ou 0 place), même
+    // règle que la route publique (`publicState`). `open` reste l'interrupteur (bouton de la page).
+    const ended = config.open && (seatsLeft === 0 || (!!config.endsAt && config.endsAt <= new Date()));
     const active = count(FounderSeatStatus.ACTIVE);
     const lost = count(FounderSeatStatus.LOST);
     return {
-      offer: { open: config.open, endsAt: config.endsAt, seatsTotal: FOUNDER_OFFER.seats },
+      offer: { open: config.open, ended, endsAt: config.endsAt, seatsTotal: FOUNDER_OFFER.seats },
       totals: {
         taken: active + lost,
         active,

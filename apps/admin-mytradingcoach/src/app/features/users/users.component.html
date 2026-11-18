@@ -38,8 +38,11 @@
 
   @if (loading()) {
     <div class="card"><div class="empty">Chargement…</div></div>
+  } @else if (loadError()) {
+    <mtc-error-state message="La liste des utilisateurs n’a pas pu être chargée." (retry)="load()" />
   } @else if (sortedUsers().length === 0) {
-    <div class="card"><div class="empty">Aucun utilisateur trouvé.</div></div>
+    <!-- Pagination gardée sur une page vide (A4 #1065) : sinon plus aucun moyen d'en sortir. -->
+    <div class="card"><div class="empty">Aucun utilisateur trouvé.</div><ng-container [ngTemplateOutlet]="pagination" /></div>
   } @else {
     <div class="card fill">
       <table class="tbl">
@@ -88,15 +91,19 @@
           }
         </tbody>
       </table>
-      @if (totalPages() > 1) {
+      <ng-container [ngTemplateOutlet]="pagination" />
+    </div>
+  }
+
+  <ng-template #pagination>
+    @if (totalPages() > 1) {
         <div class="pagination">
           <button class="btn-page" [disabled]="page() === 1" (click)="changePage(page()-1)">← Précédent</button>
           <span class="td-mono muted">{{ page() }} / {{ totalPages() }}</span>
           <button class="btn-page" [disabled]="page() === totalPages()" (click)="changePage(page()+1)">Suivant →</button>
         </div>
       }
-    </div>
-  }
+  </ng-template>
 
   <!-- ── Modal édition ── -->
   @if (editUser()) {
@@ -113,21 +120,12 @@
             <label for="edit-name">Nom</label>
             <input id="edit-name" class="field-input" type="text" [(ngModel)]="editName" placeholder="Nom complet" />
           </div>
-          <div class="field">
-            <label for="modal-edit-plan">Plan</label>
-            <select id="modal-edit-plan" class="field-select" [(ngModel)]="editPlan">
-              <option value="FREE">FREE</option>
-              <option value="PREMIUM">PREMIUM · {{ pricing.PREMIUM.monthly }}€/mois</option>
-            </select>
-          </div>
-          <div class="field">
-            <label for="modal-edit-role">Rôle</label>
-            <select id="modal-edit-role" class="field-select" [(ngModel)]="editRole">
-              <option value="USER">USER · Utilisateur standard</option>
-              <option value="BETA_TESTER">BETA_TESTER · Premium offert</option>
-              <option value="AMBASSADOR">AMBASSADOR · Programme ambassadeur</option>
-            </select>
-          </div>
+          <label class="field-check" for="edit-internal">
+            <input id="edit-internal" type="checkbox" [(ngModel)]="editInternal" />
+            <span>Compte interne <span class="field-hint">hors statistiques</span></span>
+          </label>
+          @if (editError(); as err) { <p class="modal-error" role="alert" data-testid="edit-error">{{ err }}</p> }
+          <p class="modal-note">Rôle et plan&nbsp;: depuis la fiche de l'utilisateur (bêta-testeur, Premium offert) ou la page Ambassadeurs.</p>
         </div>
         <div class="modal-footer">
           <button class="btn-cancel" (click)="closeEdit()">Annuler</button>
@@ -148,6 +146,7 @@
         </div>
         <div class="modal-body">
           <p class="delete-msg">Supprimer définitivement <strong>{{ deleteModal()!.email }}</strong> ainsi que tous ses trades et debriefs ? Cette action est irréversible.</p>
+          @if (deleteError(); as err) { <p class="modal-error" role="alert" data-testid="delete-error">{{ err }}</p> }
         </div>
         <div class="modal-footer">
           <button class="btn-cancel" (click)="closeDeleteModal()">Annuler</button>

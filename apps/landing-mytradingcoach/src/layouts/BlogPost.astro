@@ -250,7 +250,7 @@ const schema = [
   }
 
   .article-tag {
-    background: rgba(59,130,246,0.1);
+    background: color-mix(in srgb, var(--blue) 10%, transparent);
     color: var(--blue2);
     padding: 0.25rem 0.75rem;
     border-radius: 9999px;
@@ -372,7 +372,7 @@ const schema = [
   .article-cta {
     margin-top: 3rem;
     padding: 2rem;
-    background: linear-gradient(135deg, rgba(59,130,246,0.1), rgba(34,211,238,0.05));
+    background: linear-gradient(135deg, color-mix(in srgb, var(--blue) 10%, transparent), color-mix(in srgb, var(--pulse) 5%, transparent));
     border: 1px solid var(--b2);
     border-radius: 1rem;
     text-align: center;
@@ -394,17 +394,17 @@ const schema = [
 
   .article-cta-btn {
     display: inline-block;
-    background: linear-gradient(135deg, #3b82f6, #22d3ee);
+    background: var(--blue); /* comme les autres CTA ; le cyan est réservé au direct et à l'IA (#1084) */
     color: var(--on-blue);
     padding: 0.75rem 2rem;
     border-radius: 0.5rem;
     font-weight: 700;
     text-decoration: none;
-    transition: opacity 0.2s;
+    transition: background 0.2s;
   }
 
   .article-cta-btn:hover {
-    opacity: 0.9;
+    background: var(--blue2);
   }
 
 </style>

@@ -237,9 +237,9 @@ const FounderWrap = founderOpen ? 'div' : 'template';
     max-width: 760px;
     margin: 32px auto 0;
     padding: 18px 22px;
-    border: 1px solid rgba(59,130,246,.35);
+    border: 1px solid color-mix(in srgb, var(--blue) 35%, transparent);
     border-radius: 14px;
-    background: rgba(59,130,246,.06);
+    background: color-mix(in srgb, var(--blue) 6%, transparent);
   }
   .plus-title {
     font-family: var(--mono);
@@ -296,9 +296,9 @@ const FounderWrap = founderOpen ? 'div' : 'template';
   }
 
   .price-card.feat {
-    border-color: rgba(59,130,246,.5);
-    background: linear-gradient(160deg, rgba(59,130,246,.1), rgba(139,92,246,.07));
-    box-shadow: 0 0 40px rgba(59,130,246,.12), inset 0 1px 0 rgba(255,255,255,.06);
+    border-color: color-mix(in srgb, var(--blue) 50%, transparent);
+    background: linear-gradient(160deg, color-mix(in srgb, var(--blue) 10%, transparent), color-mix(in srgb, var(--indigo) 7%, transparent));
+    box-shadow: 0 0 40px color-mix(in srgb, var(--blue) 12%, transparent), inset 0 1px 0 color-mix(in srgb, var(--reflet) 6%, transparent);
     position: relative;
   }
 
@@ -306,7 +306,7 @@ const FounderWrap = founderOpen ? 'div' : 'template';
     position: absolute;
     top: -14px; left: 50%;
     transform: translateX(-50%);
-    background: linear-gradient(90deg, var(--blue), #6366f1);
+    background: linear-gradient(90deg, var(--blue), var(--indigo));
     color: var(--on-blue);
     font-size: 11px;
     font-family: var(--mono);
@@ -315,7 +315,7 @@ const FounderWrap = founderOpen ? 'div' : 'template';
     border-radius: 100px;
     letter-spacing: .6px;
     white-space: nowrap;
-    box-shadow: 0 4px 14px rgba(59,130,246,.4);
+    box-shadow: 0 4px 14px var(--blue-halo);
   }
 
   .cta-main { display: block; font-size: 14px; font-weight: 600; }
@@ -363,7 +363,7 @@ const FounderWrap = founderOpen ? 'div' : 'template';
     margin: 16px 0 0;
     padding: 12px 14px;
     border-radius: 11px;
-    background: rgba(59,130,246,.12);
+    background: color-mix(in srgb, var(--blue) 12%, transparent);
     border: 1px solid var(--b);
     display: flex;
     align-items: center;
@@ -391,7 +391,7 @@ const FounderWrap = founderOpen ? 'div' : 'template';
     gap: 8px;
     line-height: 1.5;
   }
-  .price-feats li::before { content: '✓'; color: var(--green); flex-shrink: 0; font-weight: 600; margin-top: 1px; }
+  .price-feats li::before { content: '✓'; color: var(--blue2); flex-shrink: 0; font-weight: 600; margin-top: 1px; }
 
   .price-cta {
     display: block;
@@ -407,10 +407,10 @@ const FounderWrap = founderOpen ? 'div' : 'template';
     cursor: pointer;
     border: none;
   }
-  .price-cta.prim { background: linear-gradient(90deg, var(--blue), #6366f1); color: var(--on-blue); box-shadow: 0 0 28px rgba(59,130,246,.4); }
-  .price-cta.prim:hover { transform: translateY(-1px); box-shadow: 0 0 36px rgba(59,130,246,.5); }
+  .price-cta.prim { background: linear-gradient(90deg, var(--blue), var(--indigo)); color: var(--on-blue); box-shadow: 0 0 28px var(--blue-halo); }
+  .price-cta.prim:hover { transform: translateY(-1px); box-shadow: 0 0 36px var(--blue-halo-hover); }
   .price-cta.ghost { background: transparent; color: var(--txt2); border: 1px solid var(--b2); }
-  .price-cta.ghost:hover { color: var(--txt); border-color: var(--blue); background: rgba(59,130,246,.05); }
+  .price-cta.ghost:hover { color: var(--txt); border-color: var(--blue); background: color-mix(in srgb, var(--blue) 5%, transparent); }
 
   .pricing-guarantee {
     display: flex;
@@ -468,13 +468,13 @@ const FounderWrap = founderOpen ? 'div' : 'template';
     display: block;
     height: 6px;
     border-radius: 100px;
-    background: rgba(255,255,255,.08);
+    background: color-mix(in srgb, var(--reflet) 8%, transparent);
     overflow: hidden;
   }
   .founder-seats-fill {
     display: block;
     height: 100%;
-    background: linear-gradient(90deg, var(--blue), #6366f1);
+    background: linear-gradient(90deg, var(--blue), var(--indigo));
     transform: scaleX(0);
     transform-origin: left;
   }

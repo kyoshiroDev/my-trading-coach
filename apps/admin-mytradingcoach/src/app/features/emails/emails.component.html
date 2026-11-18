@@ -8,6 +8,8 @@
 
   @if (loading()) {
     <div class="card"><div class="empty">Chargement des campagnes…</div></div>
+  } @else if (loadError()) {
+    <mtc-error-state message="Les campagnes n’ont pas pu être chargées." (retry)="load()" />
   } @else {
     <div class="card fill">
       @for (c of campaigns(); track c.type) {
@@ -67,6 +69,8 @@
         }
         @if (previewLoading()) {
           <div class="loading-state">Chargement des destinataires...</div>
+        } @else if (previewError()) {
+          <p class="err-text" role="alert" data-testid="preview-error">L’aperçu n’a pas pu être chargé&nbsp;: destinataires inconnus. Ferme et rouvre l’aperçu pour réessayer.</p>
         } @else {
           <div class="preview-meta">
             <span class="preview-recipients">{{ previewRecipients().length }} destinataire{{ previewRecipients().length !== 1 ? 's' : '' }}</span>

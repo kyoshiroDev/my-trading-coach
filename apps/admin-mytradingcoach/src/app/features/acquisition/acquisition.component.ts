@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
+import { ErrorStateComponent } from '@mtc/front-ui';
 import { catchError, of } from 'rxjs';
 import { TEST_ACQUISITION_PATTERNS, acquisitionQueryParams } from '@mtc/shared';
 import type { ChartConfiguration } from 'chart.js';
@@ -17,7 +18,7 @@ import { CHART_COLORS, fade, gridAxis } from '../../shared/charts/chart-theme';
  */
 @Component({
   selector: 'mtc-admin-acquisition',
-  imports: [ChartCanvasComponent, RouterLink],
+  imports: [ChartCanvasComponent, ErrorStateComponent, RouterLink],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './acquisition.component.css',
   templateUrl: './acquisition.component.html',
@@ -37,10 +38,11 @@ export class AcquisitionComponent {
   protected readonly testPatterns = TEST_ACQUISITION_PATTERNS.join(', ');
 
   protected readonly data = signal<AcquisitionData | null>(null);
-  protected readonly error = signal<string | null>(null);
+  protected readonly error = signal(false);
 
   /** Entonnoir Premium (GET /admin/funnel) : chargé à part, une panne ne masque pas l'acquisition. */
   protected readonly funnel = signal<FunnelData | null>(null);
+  protected readonly funnelError = signal(false);
   protected readonly funnelSteps = computed(() => funnelRows(this.funnel()));
   protected readonly funnelPlaces = computed(() => placeRows(this.funnel()));
   /** Essai Premium de l'inscription (#769, B3). */
@@ -54,6 +56,7 @@ export class AcquisitionComponent {
 
   /** Inscriptions par méthode, e-mail / Google (GET /admin/signup-methods, #618) : chargé à part. */
   protected readonly methods = signal<SignupMethodsData | null>(null);
+  protected readonly methodsError = signal(false);
   protected readonly methodLabel = { EMAIL: 'Email', GOOGLE: 'Google' } as const;
 
   /** Parcours d'inscription par source (GET /admin/signup-funnel) : chargé à part, comme l'entonnoir. */
@@ -110,21 +113,58 @@ export class AcquisitionComponent {
   }
 
   private loadAll(): void {
-    const tests = this.includeTests();
     this.loadSignup(this.signupDays());
     this.loadEngagement(this.engagementDays());
+    this.loadMethods();
+    this.loadFunnel();
+    this.loadAcquisition();
+  }
+
+  /*
+   * A20 (#1065) : chaque bloc est vidé avant de recharger. Sans ça, une bascule « Inclure les tests »
+   * qui échoue laisse les chiffres de l'autre mode affichés comme s'ils étaient ceux du mode demandé.
+   * Une réponse arrivée après une nouvelle bascule est ignorée (succès comme erreur).
+   */
+  protected loadMethods(): void {
+    const tests = this.includeTests();
+    this.methods.set(null);
+    this.methodsError.set(false);
     this.api.signupMethods(tests).pipe(
       catchError(() => of(null)),
       takeUntilDestroyed(this.destroyRef),
-    ).subscribe((r) => { if (r && tests === this.includeTests()) this.methods.set(r.data); });
+    ).subscribe((r) => {
+      if (tests !== this.includeTests()) return;
+      this.methods.set(r?.data ?? null);
+      this.methodsError.set(!r);
+    });
+  }
+
+  protected loadFunnel(): void {
+    const tests = this.includeTests();
+    this.funnel.set(null);
+    this.funnelError.set(false);
     this.api.funnel(tests).pipe(
       catchError(() => of(null)),
       takeUntilDestroyed(this.destroyRef),
-    ).subscribe((r) => { if (r && tests === this.includeTests()) this.funnel.set(r.data); });
+    ).subscribe((r) => {
+      if (tests !== this.includeTests()) return;
+      this.funnel.set(r?.data ?? null);
+      this.funnelError.set(!r);
+    });
+  }
+
+  protected loadAcquisition(): void {
+    const tests = this.includeTests();
+    this.data.set(null);
+    this.error.set(false);
     this.api.acquisition(tests).pipe(
-      catchError((e: unknown) => { this.error.set(e instanceof Error ? e.message : 'Erreur de chargement'); return of(null); }),
+      catchError(() => of(null)),
       takeUntilDestroyed(this.destroyRef),
-    ).subscribe((r) => { if (r && tests === this.includeTests()) this.data.set(r.data); });
+    ).subscribe((r) => {
+      if (tests !== this.includeTests()) return;
+      this.data.set(r?.data ?? null);
+      this.error.set(!r);
+    });
   }
 
   protected loadSignup(days: 7 | 30): void {

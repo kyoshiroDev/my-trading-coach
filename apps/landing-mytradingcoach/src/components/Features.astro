@@ -18,42 +18,42 @@ const firmCount = PROP_FIRM_CATALOG_FILES.length;
     <div class="feat-grid rstag">
       <div class="feat-card featured">
         <span class="feat-num">01</span>
-        <div class="feat-ico ic-amber">📐</div>
+        <div class="feat-ico ic-regles">📐</div>
         <h3>Suivi prop firm en direct</h3>
         <p>Les règles officielles du plan de ta firme ({firmCount} firmes) appliquées à ton compte : marge avant le plancher sur ton solde broker réel, plus haut de clôture officiel, objectif et prochain payout, payouts détectés.</p>
         <span class="feat-tag tag-free">✓ Gratuit · alertes en Premium</span>
       </div>
       <div class="feat-card featured">
         <span class="feat-num">02</span>
-        <div class="feat-ico ic-sky">🔗</div>
+        <div class="feat-ico ic-neutre">🔗</div>
         <h3>Synchro Tradovate &amp; import CSV</h3>
         <p>Connecte Tradovate : ton historique remonte à la connexion, puis tes trades et leurs frais arrivent en direct, en lecture seule. Futures, crypto, forex : l'import CSV reconnaît Binance, Bybit, MetaTrader 4/5, IBKR et MEXC, P&amp;L exact en ticks. Autre broker : l'import IA (Premium) lit ton fichier.</p>
         <span class="feat-tag tag-free">✓ Gratuit</span>
       </div>
       <div class="feat-card featured">
         <span class="feat-num">03</span>
-        <div class="feat-ico ic-green">☀️</div>
+        <div class="feat-ico ic-neutre">☀️</div>
         <h3>Pré-session &amp; session live</h3>
         <p>Humeur, recap de la veille et objectifs avant de trader. Pendant : live feed de tes trades, trade rapide en 3 secondes, contexte marché et news.</p>
         <span class="feat-tag tag-free">✓ Gratuit</span>
       </div>
       <div class="feat-card">
         <span class="feat-num">04</span>
-        <div class="feat-ico ic-purple">📅</div>
+        <div class="feat-ico ic-neutre">📅</div>
         <h3>Calendrier éco IA</h3>
         <p>Les annonces filtrées pour tes actifs. Quand un résultat tombe, l'IA dit tout de suite comment il se lit : bull ou bear pour NQ, BTC, EUR/USD. Une lecture, pas une prévision.</p>
         <span class="feat-tag tag-free">✓ Gratuit</span>
       </div>
       <div class="feat-card">
         <span class="feat-num">05</span>
-        <div class="feat-ico ic-cyan">💬</div>
+        <div class="feat-ico ic-ia">💬</div>
         <h3>IA qui connaît ta stratégie</h3>
         <p>Weekly Debrief chaque dimanche, IA Insights sur tes patterns, recap email à 17h30 et coach : tout est analysé avec ton profil (scalper ICT, day trader SMC…), pas un trader moyen.</p>
         <span class="feat-tag tag-prem">★ Premium</span>
       </div>
       <div class="feat-card">
         <span class="feat-num">06</span>
-        <div class="feat-ico ic-blue">📊</div>
+        <div class="feat-ico ic-stats">📊</div>
         <h3>Analytics avancés &amp; score /100</h3>
         <p>Heatmap horaire, equity curve, performance par setup, anti-tilt en séance, et un score sur tes 100 derniers trades, sur 5 axes : discipline, risque, consistance, émotions, performance.</p>
         <span class="feat-tag tag-prem">★ Premium</span>
@@ -76,12 +76,10 @@ const firmCount = PROP_FIRM_CATALOG_FILES.length;
   .features { padding: 80px 5%; }
   .head { text-align: center; max-width: 600px; margin: 0 auto; }
   /* Fond de l'icône de chaque carte */
-  .ic-blue { background: rgba(59,130,246,.09); }
-  .ic-green { background: rgba(16,185,129,.09); }
-  .ic-purple { background: rgba(139,92,246,.09); }
-  .ic-sky { background: rgba(99,155,255,.09); }
-  .ic-cyan { background: rgba(34,211,238,.09); }
-  .ic-amber { background: rgba(245,166,35,.09); }
+  .ic-stats { background: color-mix(in srgb, var(--blue) 9%, transparent); }
+  .ic-neutre { background: color-mix(in srgb, var(--edge) 9%, transparent); }
+  .ic-ia { background: color-mix(in srgb, var(--pulse) 9%, transparent); }
+  .ic-regles { background: color-mix(in srgb, var(--yel) 9%, transparent); }
   .feat-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -102,7 +100,7 @@ const firmCount = PROP_FIRM_CATALOG_FILES.length;
   }
 
   .feat-card:hover { border-color: var(--b2); transform: translateY(-3px); }
-  .feat-card.featured { border-color: rgba(34,211,238,.25); background: linear-gradient(135deg,rgba(34,211,238,.04),rgba(59,130,246,.04)); }
+  .feat-card.featured { border-color: color-mix(in srgb, var(--pulse) 25%, transparent); background: linear-gradient(135deg,color-mix(in srgb, var(--pulse) 4%, transparent),color-mix(in srgb, var(--blue) 4%, transparent)); }
 
   .feat-num {
     font-family: var(--mono);
@@ -145,9 +143,9 @@ const firmCount = PROP_FIRM_CATALOG_FILES.length;
     margin-top: 14px;
     font-weight: 500;
   }
-  .tag-free    { background: rgba(16,185,129,.1);  color: var(--green); border: 1px solid rgba(16,185,129,.2); }
-  .tag-prem    { background: rgba(59,130,246,.1);  color: var(--blue2); border: 1px solid rgba(59,130,246,.2); }
-  .tag-new  { background: rgba(245,158,11,.1);  color: var(--yel);   border: 1px solid rgba(245,158,11,.2); }
+  .tag-free    { background: color-mix(in srgb, var(--edge) 10%, transparent);  color: var(--txt2); border: 1px solid var(--b2); }
+  .tag-prem    { background: color-mix(in srgb, var(--blue) 10%, transparent);  color: var(--blue2); border: 1px solid color-mix(in srgb, var(--blue) 20%, transparent); }
+  .tag-new  { background: color-mix(in srgb, var(--yel) 10%, transparent);  color: var(--yel);   border: 1px solid color-mix(in srgb, var(--yel) 20%, transparent); }
 
   /*
    * `.btn-p` est redefini dans CHAQUE composant qui l'utilise (Hero, CoachIA, CtaFinal) :
@@ -159,7 +157,7 @@ const firmCount = PROP_FIRM_CATALOG_FILES.length;
     background: var(--blue); color: var(--on-blue); padding: 14px 28px;
     border-radius: 10px; font-size: 15px; font-weight: 600;
     text-decoration: none; display: inline-flex; align-items: center; gap: 8px;
-    box-shadow: 0 0 32px rgba(59,130,246,.4);
+    box-shadow: 0 0 32px var(--blue-halo);
     transition: background .2s, transform .2s, box-shadow .2s; font-family: var(--disp);
   }
   .btn-p:hover { background: var(--blue2); transform: translateY(-2px); }

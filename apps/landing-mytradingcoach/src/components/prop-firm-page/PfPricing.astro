@@ -168,15 +168,15 @@ const premium = PLAN_BENEFITS.premium.filter((b) => b.id !== 'accounts' || FEATU
     transition: background 0.2s, border-color 0.2s;
   }
   .pp-cta.ghost,
-  .pp-cta-premium { border: 1px solid rgba(96, 165, 250, 0.5); color: var(--txt); }
+  .pp-cta-premium { border: 1px solid color-mix(in srgb, var(--blue2) 50%, transparent); color: var(--txt); }
   .pp-cta.ghost:hover,
-  .pp-cta-premium:hover { border-color: var(--blue2); background: rgba(59, 130, 246, 0.08); }
+  .pp-cta-premium:hover { border-color: var(--blue2); background: color-mix(in srgb, var(--blue) 8%, transparent); }
   .pp-cta.prim { background: var(--blue); color: var(--on-blue); }
   .pp-cta.prim:hover { background: var(--blue2); }
   .pp-cta:focus-visible { outline: 2px solid var(--blue2); outline-offset: 2px; }
   .pp-foot { text-align: center; font-size: 13px; color: var(--txt2); }
 
-  .pp-founder { background: var(--card2); border-color: rgba(34, 211, 238, 0.45); }
+  .pp-founder { background: var(--card2); border-color: color-mix(in srgb, var(--pulse) 45%, transparent); }
 
   /* Premium : mis en avant (« Recommandé », bouton plein) tant que la carte Fondateur est absente. */
   .pp-normal { display: none; }

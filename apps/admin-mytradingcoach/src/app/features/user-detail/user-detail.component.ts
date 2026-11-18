@@ -5,7 +5,7 @@ import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { httpResource } from '@angular/common/http';
 import { map } from 'rxjs';
 import { environment } from '@admin/environments/environment';
-import { ConfirmService, PctPipe } from '@mtc/front-ui';
+import { ConfirmService, ErrorStateComponent, PctPipe } from '@mtc/front-ui';
 import { acquisitionLabel, acquisitionQueryParams, apiErrorMessage, formatMoney, subscriptionState } from '@mtc/shared';
 import { AdminApi, UserDetailData } from '../../core/api/admin.api';
 import { ActivityCalendarComponent } from './activity-calendar.component';
@@ -58,6 +58,25 @@ export function offerBlockReason(i: UserDetailData['identity']): string | null {
   if (i.plan === 'PREMIUM') return 'Déjà Premium (accès manuel)';
   if (i.role === 'ADMIN' || i.role === 'BETA_TESTER') return 'Premium déjà inclus par le rôle';
   if (i.isDemo) return 'Compte démo';
+  return null;
+}
+
+/**
+ * Fin annoncée d'un Premium offert (A6 #1064) : même calcul que `UsersService.offerPremium`,
+ * à partir de `trialEndsAt` s'il est futur (essai d'inscription compris), sinon de maintenant. Pure.
+ */
+export function offerEndDate(i: Pick<UserDetailData['identity'], 'trialEndsAt'>, now = Date.now()): Date {
+  const from = Math.max(now, i.trialEndsAt ? Date.parse(i.trialEndsAt) : 0);
+  return new Date(from + OFFER_DAYS * DAY_MS);
+}
+
+/**
+ * Bouton bêta-testeur désactivé (#1064) : raison, sinon null. Un ambassadeur perdrait son code
+ * (setRole révoque d'abord) : son rôle se retire depuis la page Ambassadeurs. Pure, testable.
+ */
+export function betaBlockReason(i: UserDetailData['identity']): string | null {
+  if (i.isDemo) return 'Compte démo';
+  if (i.role === 'AMBASSADOR') return 'Ambassadeur\u00a0: retirer d’abord le rôle depuis la page Ambassadeurs';
   return null;
 }
 
@@ -129,7 +148,7 @@ import { activeTrial } from '../../core/utils/trial.util';
 
 @Component({
   selector: 'mtc-admin-user-detail',
-  imports: [PctPipe, DatePipe, RouterLink, ActivityCalendarComponent],
+  imports: [PctPipe, DatePipe, RouterLink, ActivityCalendarComponent, ErrorStateComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './user-detail.component.css',
   templateUrl: './user-detail.component.html',
@@ -153,7 +172,10 @@ export class UserDetailComponent {
     return id ? `${environment.apiUrl}/admin/users/${id}` : undefined;
   });
 
-  protected readonly data = computed(() => this.detail.value()?.data ?? null);
+  // `value()` LÈVE quand la requête a échoué (Angular 22) : lue seulement si la fiche a une valeur.
+  protected readonly data = computed(() => (this.detail.hasValue() ? this.detail.value()?.data ?? null : null));
+  /** A7 (#1065) : seul un 404 est « introuvable » ; toute autre erreur propose de réessayer. */
+  protected readonly notFound = computed(() => (this.detail.error() as { status?: number } | undefined)?.status === 404);
 
   protected readonly initials = computed(() => {
     const i = this.data()?.identity;
@@ -230,8 +252,7 @@ export class UserDetailComponent {
   protected async offerPremium(): Promise<void> {
     const i = this.data()?.identity;
     if (!i || this.offerBlocked() || this.offering()) return;
-    const from = Math.max(Date.now(), this.offeredUntil() ? Date.parse(this.offeredUntil()!) : 0);
-    const end = frDate(new Date(from + OFFER_DAYS * DAY_MS));
+    const end = frDate(offerEndDate(i));
     const confirmed = await this.confirm.ask({
       title: this.offeredUntil() ? 'Prolonger le Premium offert\u00a0?' : 'Offrir 1 mois de Premium\u00a0?',
       message: `Offrir ${OFFER_DAYS} jours de Premium à ${i.email}\u00a0? Fin le ${end}. Aucun prélèvement.`,
@@ -248,6 +269,71 @@ export class UserDetailComponent {
       error: (err) => {
         this.offering.set(false);
         this.showToast(apiErrorMessage(err, 'Le Premium n’a pas pu être offert. Réessaie.'), true);
+      },
+    });
+  }
+
+  // ── Retirer le Premium offert (B10 #1064) ──
+  protected readonly removingOffer = signal(false);
+  /** Même condition que l'API : Premium offert en cours, jamais pendant une pause Stripe. */
+  protected readonly canRemoveOffer = computed(() => {
+    const st = this.data()?.identity.subscriptionStatus;
+    return !!this.offeredUntil() && st !== 'past_due' && st !== 'unpaid';
+  });
+
+  protected async removeOfferedPremium(): Promise<void> {
+    const i = this.data()?.identity;
+    if (!i || !this.canRemoveOffer() || this.removingOffer()) return;
+    const confirmed = await this.confirm.ask({
+      title: 'Retirer le Premium offert\u00a0?',
+      message: `${i.email} perd tout de suite les jours offerts depuis l’admin. Un essai d’inscription encore en cours est gardé.`,
+      confirmLabel: 'Retirer',
+      danger: true,
+    });
+    if (!confirmed) return;
+    this.removingOffer.set(true);
+    this.api.removeOfferedPremium(i.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (res) => {
+        this.removingOffer.set(false);
+        const until = res.data.trialEndsAt;
+        this.showToast(until
+          ? `Premium offert retiré, essai d’inscription jusqu’au ${frDate(new Date(until))}`
+          : 'Premium offert retiré, compte en gratuit');
+        this.detail.reload();
+      },
+      error: (err) => {
+        this.removingOffer.set(false);
+        this.showToast(apiErrorMessage(err, 'Le Premium offert n’a pas pu être retiré. Réessaie.'), true);
+      },
+    });
+  }
+
+  // ── Rôle bêta-testeur (#1064) : la modale « Modifier » ne change plus le rôle ──
+  protected readonly isBeta = computed(() => this.data()?.identity.role === 'BETA_TESTER');
+  protected readonly betaBlocked = computed(() => {
+    const i = this.data()?.identity;
+    return i ? betaBlockReason(i) : null;
+  });
+  protected readonly betaSaving = signal(false);
+
+  protected async toggleBeta(): Promise<void> {
+    const i = this.data()?.identity;
+    if (!i || i.role === 'ADMIN' || this.betaBlocked() || this.betaSaving()) return;
+    const on = !this.isBeta();
+    const confirmed = await this.confirm.ask(on
+      ? { title: 'Passer bêta-testeur\u00a0?', message: `${i.email} aura le Premium tant que le compte garde ce rôle. Aucun prélèvement.`, confirmLabel: 'Confirmer' }
+      : { title: 'Retirer le rôle bêta-testeur\u00a0?', message: `${i.email} repasse utilisateur standard et perd le Premium lié au rôle (un essai, un Premium offert ou un abonnement en cours restent).`, confirmLabel: 'Retirer', danger: true });
+    if (!confirmed) return;
+    this.betaSaving.set(true);
+    this.api.setBeta(i.id, on).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: () => {
+        this.betaSaving.set(false);
+        this.showToast(on ? 'Compte passé bêta-testeur' : 'Rôle bêta-testeur retiré');
+        this.detail.reload();
+      },
+      error: (err) => {
+        this.betaSaving.set(false);
+        this.showToast(apiErrorMessage(err, 'Le rôle n’a pas pu être modifié. Réessaie.'), true);
       },
     });
   }

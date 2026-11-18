@@ -1,19 +1,19 @@
 <div class="screen">
   <div class="page-head">
     <div class="page-title">Abonnements</div>
-    @if (data(); as d) { <span class="page-meta">{{ d.stripeUsers.length }} actifs · {{ d.betaTesters.length }} accès manuels</span> }
+    @if (data(); as d) { <span class="page-meta">{{ stripeTotal() }} payants · {{ d.betaTesters.length }} accès manuels</span> }
   </div>
 
   @if (loading()) {
     <div class="card"><div class="empty">Chargement…</div></div>
   } @else if (data(); as d) {
     <div class="kpi-strip cols-5">
-      <div class="kpi"><div class="kpi-top teal"></div><div class="kpi-label">Stripe actifs</div><div class="kpi-value teal">{{ d.stripeUsers.length }}</div><div class="kpi-sub">payants</div></div>
+      <div class="kpi"><div class="kpi-top teal"></div><div class="kpi-label">Stripe actifs</div><div class="kpi-value teal" data-testid="kpi-stripe">{{ stripeTotal() }}</div><div class="kpi-sub">payants</div></div>
       <div class="kpi"><div class="kpi-top blue"></div><div class="kpi-label">En essai</div><div class="kpi-value blue">{{ stats()?.trials ?? 0 }}</div><div class="kpi-sub">+ {{ stats()?.offered ?? 0 }} offert{{ (stats()?.offered ?? 0) > 1 ? 's' : '' }}</div></div>
-      <div class="kpi"><div class="kpi-top purple"></div><div class="kpi-label">Accès manuels</div><div class="kpi-value purple">{{ d.betaTesters.length }}</div><div class="kpi-sub">bêta / ambassadeur</div></div>
+      <div class="kpi"><div class="kpi-top purple"></div><div class="kpi-label">Accès manuels</div><div class="kpi-value purple">{{ d.betaTesters.length }}</div><div class="kpi-sub">bêta / accordés</div></div>
       <div class="kpi"><div class="kpi-top amber"></div><div class="kpi-label">MRR Stripe</div><div class="kpi-value amber">{{ stats()?.mrr ?? 0 }}€</div><div class="kpi-sub">réel</div></div>
       <div class="kpi"><div class="kpi-top teal"></div><div class="kpi-label">Fondateurs</div><div class="kpi-value teal">{{ founderLabel() }}</div>
-        <div class="kpi-sub">@if (founders(); as f) { {{ f.totals.active }} actifs · {{ f.offer.open ? 'offre ouverte' : 'offre fermée' }} } @else { indisponible }</div></div>
+        <div class="kpi-sub">@if (founders(); as f) { {{ f.totals.active }} actifs · offre {{ offerState(f.offer).label }} } @else { indisponible }</div></div>
     </div>
 
     <div class="section-tabs" role="tablist" aria-label="Abonnements">
@@ -32,7 +32,7 @@
       <div class="card-head"><span class="card-label">Abonnements Stripe</span></div>
       <table class="tbl">
         <caption class="sr-only">Abonnements Stripe</caption>
-        <thead><tr><th scope="col">Utilisateur</th><th scope="col">Plan</th><th scope="col">Intervalle</th><th scope="col">Statut</th><th scope="col">Renouvellement</th><th scope="col" class="num">Montant</th></tr></thead>
+        <thead><tr><th scope="col">Utilisateur</th><th scope="col">Plan</th><th scope="col">Intervalle</th><th scope="col">Statut</th><th scope="col">Échéance</th><th scope="col" class="num">Montant</th></tr></thead>
         <tbody>
           @for (u of d.stripeUsers; track u.id) {
             <tr>
@@ -43,8 +43,9 @@
                 @else if (u.partnerRedemption?.status === 'ACTIVE') { <span class="badge b-beta offer-tag">Code {{ u.partnerRedemption?.partnerCode?.code }}</span> }
               </td>
               <td data-label="Intervalle" class="td-mono">{{ u.stripeInterval === 'month' ? 'Mensuel' : 'Annuel' }}</td>
-              <td data-label="Statut"><span class="badge b-ok">actif</span></td>
-              <td data-label="Renouvellement" class="td-mono muted">{{ u.stripeCurrentPeriodEnd ? (u.stripeCurrentPeriodEnd | date:'dd/MM/yyyy') : '-' }}</td>
+              @let st = payingStatus(u);
+              <td data-label="Statut"><span class="badge" [class.b-ok]="!st.ended" [class.b-free]="st.ended">{{ st.label }}</span></td>
+              <td data-label="Échéance" class="td-mono muted">{{ st.due ?? '-' }}</td>
               <td data-label="Montant" class="td-mono num">{{ amount(u) }}</td>
             </tr>
           } @empty {
@@ -52,7 +53,38 @@
           }
         </tbody>
       </table>
+      @if (pageError(); as p) {
+        <p class="err-text" role="alert" data-testid="subs-page-error">La page {{ p }} n’a pas pu être chargée. Réessaie.</p>
+      }
+      @if (totalPages() > 1) {
+        <div class="pagination">
+          <button type="button" class="btn-page" data-testid="subs-prev" [disabled]="page() === 1" (click)="changePage(page() - 1)">← Précédent</button>
+          <span class="td-mono muted">{{ page() }} / {{ totalPages() }}</span>
+          <button type="button" class="btn-page" data-testid="subs-next" [disabled]="page() === totalPages()" (click)="changePage(page() + 1)">Suivant →</button>
+        </div>
+      }
     </div>
+
+    @if (d.pausedUsers?.length) {
+      <!-- A10 (#1065) : paiement en attente (past_due / unpaid), accès Premium en pause -->
+      <div class="card">
+        <div class="card-head"><span class="card-label">En pause · paiement en attente</span><span class="card-label muted">{{ d.pausedUsers!.length }}</span></div>
+        <table class="tbl">
+          <caption class="sr-only">Abonnements en pause</caption>
+          <thead><tr><th scope="col">Utilisateur</th><th scope="col">Intervalle</th><th scope="col">Statut Stripe</th><th scope="col">Échéance</th></tr></thead>
+          <tbody>
+            @for (u of d.pausedUsers; track u.id) {
+              <tr data-testid="paused-row">
+                <td data-label="Utilisateur"><div class="u-cell"><div class="u-av">{{ av(u.name, u.email) }}</div><div><div class="u-name">{{ u.name ?? '-' }}</div><div class="u-mail">{{ u.email }}</div></div></div></td>
+                <td data-label="Intervalle" class="td-mono">{{ u.stripeInterval === 'year' ? 'Annuel' : 'Mensuel' }}</td>
+                <td data-label="Statut Stripe"><span class="badge b-free">{{ u.stripeSubscriptionStatus === 'unpaid' ? 'impayé' : 'paiement en retard' }}</span></td>
+                <td data-label="Échéance" class="td-mono muted">{{ u.stripeCurrentPeriodEnd ? (u.stripeCurrentPeriodEnd | date:'dd/MM/yyyy') : '-' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
 
     <div class="card">
       <div class="card-head"><span class="card-label">Essais et offerts</span><span class="card-label muted">{{ trialRows().length }}</span></div>
@@ -73,16 +105,17 @@
     </div>
 
     <div class="card fill">
-      <div class="card-head"><span class="card-label">Accès manuels (bêta &amp; ambassadeur)</span><span class="card-label muted">{{ d.betaTesters.length }}</span></div>
+      <div class="card-head"><span class="card-label">Accès manuels (bêta &amp; Premium accordé)</span><span class="card-label muted">{{ d.betaTesters.length }}</span></div>
       <table class="tbl">
-        <caption class="sr-only">Accès manuels (bêta &amp; ambassadeur)</caption>
-        <thead><tr><th scope="col">Utilisateur</th><th scope="col">Rôle</th><th scope="col">Plan accordé</th><th scope="col">Depuis</th></tr></thead>
+        <caption class="sr-only">Accès manuels (bêta &amp; Premium accordé)</caption>
+        <thead><tr><th scope="col">Utilisateur</th><th scope="col">Rôle</th><th scope="col">Accès</th><th scope="col">Depuis</th></tr></thead>
         <tbody>
           @for (u of d.betaTesters; track u.id) {
             <tr>
               <td data-label="Utilisateur"><div class="u-cell"><div class="u-av">{{ av(u.name, u.email) }}</div><div><div class="u-name">{{ u.name ?? '-' }}</div><div class="u-mail">{{ u.email }}</div></div></div></td>
               <td data-label="Rôle"><span class="role-tag purple">{{ u.role }}</span></td>
-              <td data-label="Plan accordé"><span class="badge b-premium">{{ u.plan }}</span></td>
+              <!-- Règle 9 de plans.md : un bêta-testeur au plan FREE a le Premium par son rôle. -->
+              <td data-label="Accès"><span class="badge b-premium" data-testid="manual-access">{{ manualAccess(u) }}</span></td>
               <td data-label="Depuis" class="td-mono muted">{{ u.createdAt | date:'dd/MM/yyyy' }}</td>
             </tr>
           } @empty { <tr><td colspan="4" class="empty">Aucun accès manuel</td></tr> }
@@ -91,6 +124,6 @@
     </div>
     }
   } @else {
-    <div class="card"><div class="empty">Abonnements indisponibles</div></div>
+    <mtc-error-state message="Abonnements indisponibles." (retry)="loadSubscriptions()" />
   }
 </div>

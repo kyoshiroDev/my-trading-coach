@@ -47,3 +47,27 @@ describe('AdminUpdateUserDto — isInternal', () => {
     expect((await errors({ isInternal: 1 }))[0]?.property).toBe('isInternal');
   });
 });
+
+/**
+ * A1 = S5 = B1 et B2 (#1064) : la modale « Modifier » écrivait le rôle et le plan en direct
+ * (`data: dto`). Un AMBASSADOR sans code, un abonné Stripe passé FREE alors que Stripe prélève…
+ * Décision du 16/11 : la modale ne garde que le nom et « compte interne ». Le rôle passe par
+ * setRole (promouvoir / retirer, bêta), le plan par « Offrir Premium » ou le rôle bêta.
+ */
+describe('AdminUpdateUserDto — ni rôle ni plan (A1/B2 #1064)', () => {
+  // Mêmes options que le ValidationPipe global (main.ts).
+  const errors = async (body: object) =>
+    validate(plainToInstance(AdminUpdateUserDto, body), { whitelist: true, forbidNonWhitelisted: true });
+
+  it('rôle refusé', async () => {
+    expect((await errors({ role: 'AMBASSADOR' })).map((e) => e.property)).toEqual(['role']);
+  });
+
+  it('plan refusé', async () => {
+    expect((await errors({ plan: 'FREE' })).map((e) => e.property)).toEqual(['plan']);
+  });
+
+  it('nom et compte interne acceptés', async () => {
+    expect(await errors({ name: 'Jean', isInternal: true })).toHaveLength(0);
+  });
+});

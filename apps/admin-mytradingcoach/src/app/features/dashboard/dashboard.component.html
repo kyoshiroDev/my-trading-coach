@@ -8,6 +8,9 @@
 
     <!-- KPIs : 2 premières colonnes seulement. La 3e (rail « connectés »)
          démarre à cette hauteur et descend jusqu'en bas de Docker. -->
+    @if (statsError()) {
+      <div class="dash-kpis"><mtc-error-state message="Les indicateurs n’ont pas pu être chargés." (retry)="loadStats()" /></div>
+    }
     @if (stats(); as s) {
     <div class="kpi-strip dash-kpis">
       <div class="kpi"><div class="kpi-top teal"></div><div class="kpi-label">MRR</div>
@@ -33,7 +36,7 @@
         <!-- Offre fondateur (#525) → onglet Fondateurs des abonnements. -->
         <a class="kpi kpi-link" routerLink="/subscriptions" [queryParams]="{ filtre: 'fondateurs' }" data-testid="kpi-founders">
           <div class="kpi-top teal"></div>
-          <div class="kpi-label">Fondateurs @if (!f.offer.open) { <span class="badge b-free kpi-flag">fermée</span> }</div>
+          <div class="kpi-label">Fondateurs @if (!offerState(f.offer).selling) { <span class="badge b-free kpi-flag" data-testid="founders-flag">{{ offerState(f.offer).label }}</span> }</div>
           <div class="kpi-value teal">{{ f.totals.taken }}<span class="kpi-of"> / {{ f.offer.seatsTotal }}</span></div>
           <div class="kpi-sub">{{ f.totals.active }} actifs · {{ f.totals.seatsLeft }} restantes</div>
           <span class="kpi-bar" aria-hidden="true"><span class="kpi-bar-fill" [style.transform]="founderFill()"></span></span>
@@ -101,8 +104,11 @@
         <div class="card-head"><span class="card-label">Utilisateurs connectés <span class="online-count">{{ onlineUsers().length }}</span></span>
           <span class="status-dot live">LIVE</span></div>
         <div class="card-body rail-body">
+          @if (onlineError()) {
+            <p class="err-text" role="alert" data-testid="online-error">Liste des connectés non rafraîchie, nouvel essai automatique.</p>
+          }
           @if (onlineUsers().length === 0) {
-            <div class="empty">Aucun utilisateur actif</div>
+            <div class="empty">{{ onlineError() ? 'Liste indisponible' : 'Aucun utilisateur actif' }}</div>
           } @else {
             <div class="online-list">
               @for (u of onlineUsers(); track u.id) {
@@ -129,8 +135,8 @@
       @if (retention(); as r) {
         <div class="card-body ret-grid funnel">
           <div class="ret-stat"><span class="kpi-label">Activation (ont tradé)</span><span class="v teal">{{ r.activation.rate }}%</span><span class="kpi-sub">{{ r.activation.activated }} / {{ r.activation.total }} · ≥1 trade</span></div>
-          <div class="ret-stat"><span class="kpi-label">Traders actifs 7j</span><span class="v blue">{{ stats()?.tradersActifs7d ?? 0 }}</span><span class="kpi-sub">≥1 trade sur 7 jours</span></div>
-          <div class="ret-stat"><span class="kpi-label">Traders actifs 30j</span><span class="v green">{{ stats()?.tradersActifs30d ?? 0 }}</span><span class="kpi-sub">≥1 trade sur 30 jours</span></div>
+          <div class="ret-stat"><span class="kpi-label">Traders actifs 7j</span><span class="v blue">{{ stats()?.tradersActifs7d ?? '-' }}</span><span class="kpi-sub">≥1 trade sur 7 jours</span></div>
+          <div class="ret-stat"><span class="kpi-label">Traders actifs 30j</span><span class="v green">{{ stats()?.tradersActifs30d ?? '-' }}</span><span class="kpi-sub">≥1 trade sur 30 jours</span></div>
           <div class="ret-stat"><span class="kpi-label">Reviennent à J+7</span><span class="v">{{ r.retentionD7.rate }}%</span><span class="kpi-sub">{{ r.retentionD7.retained }} / {{ r.retentionD7.eligible }} cohorte</span></div>
           <div class="ret-stat"><span class="kpi-label">Inscrits sans trade</span><span class="v red">{{ r.ghostUsers }}</span><span class="kpi-sub">fantômes (onboarding)</span></div>
           <a class="ret-stat ret-link" routerLink="/brokers" data-testid="kpi-plan-links">

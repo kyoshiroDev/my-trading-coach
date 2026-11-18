@@ -39,7 +39,7 @@
 .field-lbl .opt { color: var(--text3); }
 .field-input { width: 100%; background: var(--bg3); border: 1px solid var(--border2); border-radius: var(--r-sm); padding: 9px 11px; color: var(--text); font-family: var(--mono); font-size: 13px; }
 .field-input:focus { outline: none; border-color: var(--teal); }
-.err-text { color: var(--red, #ef4444); font-size: 12px; margin: 4px 0 0; }
+.err-text { margin: 4px 0 0; }
 .confirm-text { font-size: 13px; line-height: 1.6; color: var(--text2); margin: 0; }
 
 /* Résultat succès */

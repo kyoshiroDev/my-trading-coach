@@ -34,7 +34,6 @@
 }
 .card-head .field-select { width: auto; padding: 5px 9px; font-size: 11px; }
 .field-input:focus, .field-select:focus { outline: none; border-color: var(--teal); }
-.err-text { color: var(--red, #ef4444); font-size: 12px; margin: 0; }
 .ok-text { color: var(--teal); font-size: 12px; margin: 0; }
 
 .pager { display: flex; align-items: center; justify-content: center; gap: 12px; padding: 12px; }

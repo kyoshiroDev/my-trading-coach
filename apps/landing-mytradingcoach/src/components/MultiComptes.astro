@@ -25,21 +25,21 @@ const firmCount = PROP_FIRM_CATALOG_FILES.length;
     <div class="mc-grid reveal">
       <div class="mc-feats">
         <article class="mc-feat">
-          <div class="mc-ico ic-blue">🗂️</div>
+          <div class="mc-ico ic-comptes">🗂️</div>
           <div>
             <h3>Tes comptes ne se mélangent plus</h3>
             <p>Un compte perso, ton éval Apex, ton funded Lucid. Chacun avec son capital de départ et ses propres trades. Fini le mélange entre l'éval et le funded.</p>
           </div>
         </article>
         <article class="mc-feat">
-          <div class="mc-ico ic-cyan">💬</div>
+          <div class="mc-ico ic-ia">💬</div>
           <div>
             <h3>Une analyse IA par compte</h3>
             <p>Le débrief hebdo te sort un onglet par compte : forces, points faibles, objectifs. Du concret pour chaque compte, pas une moyenne de tout mélangé.</p>
           </div>
         </article>
         <article class="mc-feat">
-          <div class="mc-ico ic-amber">📐</div>
+          <div class="mc-ico ic-regles">📐</div>
           <div>
             <h3>Drawdown et objectif sous les yeux</h3>
             <p>Tu vois ta marge avant le plancher et ta progression vers l'objectif ou le prochain payout, compte par compte, et en direct pendant ta séance. Les règles sont celles de ta prop firm ({firmCount} firmes, dont Apex, Topstep, Lucid, Tradeify, Take Profit Trader et Bulenox), appliquées au plan de ton compte : pas des règles génériques.</p>
@@ -78,9 +78,9 @@ const firmCount = PROP_FIRM_CATALOG_FILES.length;
 </section>
 
 <style>
-  .ic-blue { background: rgba(59,130,246,.1); }
-  .ic-cyan { background: rgba(34,211,238,.1); }
-  .ic-amber { background: rgba(245,158,11,.1); }
+  .ic-comptes { background: color-mix(in srgb, var(--blue) 10%, transparent); }
+  .ic-ia { background: color-mix(in srgb, var(--pulse) 10%, transparent); }
+  .ic-regles { background: color-mix(in srgb, var(--yel) 10%, transparent); }
   .mc { padding: 80px 5%; border-top: 1px solid var(--b); }
   .mc-wrap { max-width: 1100px; margin: 0 auto; }
   .mc-head { max-width: 680px; margin: 0 auto 44px; text-align: center; }
@@ -100,20 +100,20 @@ const firmCount = PROP_FIRM_CATALOG_FILES.length;
   .acc-mock { background: var(--card); border: 1px solid var(--b); border-radius: 16px; padding: 18px; box-shadow: 0 30px 70px -30px rgba(0,0,0,.7); }
   .acc-mock-top { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
   .acc-tab { font-family: var(--mono); font-size: 11px; padding: 7px 11px; border-radius: 8px; border: 1px solid var(--b); color: var(--txt2); white-space: nowrap; }
-  .acc-tab.on { background: rgba(59,130,246,.15); border-color: var(--blue); color: var(--blue2); }
-  .acc-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-top: 1px solid rgba(255,255,255,.04); }
+  .acc-tab.on { background: color-mix(in srgb, var(--blue) 15%, transparent); border-color: var(--blue); color: var(--blue2); }
+  .acc-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-top: 1px solid color-mix(in srgb, var(--reflet) 4%, transparent); }
   .acc-row:first-of-type { border-top: none; }
   .acc-name { display: flex; align-items: center; gap: 9px; font-size: 13.5px; font-weight: 600; color: var(--txt); }
   .acc-badge { font-family: var(--mono); font-size: 9.5px; letter-spacing: .05em; padding: 2px 7px; border-radius: 5px; text-transform: uppercase; }
-  .b-eval { background: rgba(245,158,11,.14); color: var(--yel); }
-  .b-fund { background: rgba(16,185,129,.14); color: var(--green); }
-  .b-perso { background: rgba(139,92,246,.14); color: #a78bfa; }
+  .b-eval { background: color-mix(in srgb, var(--yel) 14%, transparent); color: var(--yel); }
+  .b-fund { background: color-mix(in srgb, var(--green) 14%, transparent); color: var(--green); }
+  .b-perso { background: var(--card2); color: var(--txt2); border: 1px solid var(--b); } /* comme le tag « perso » de l'app */
   .acc-stat { font-family: var(--mono); font-size: 13px; }
   .pos { color: var(--green); }
   .neg { color: var(--red); }
-  .acc-dd { margin-top: 14px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,.04); }
+  .acc-dd { margin-top: 14px; padding-top: 14px; border-top: 1px solid color-mix(in srgb, var(--reflet) 4%, transparent); }
   .dd-lbl { display: flex; justify-content: space-between; font-size: 11.5px; color: var(--txt2); margin-bottom: 6px; font-family: var(--mono); }
-  .dd-bar { height: 7px; border-radius: 4px; background: rgba(255,255,255,.06); overflow: hidden; }
+  .dd-bar { height: 7px; border-radius: 4px; background: color-mix(in srgb, var(--reflet) 6%, transparent); overflow: hidden; }
   .dd-fill { height: 100%; width: 62%; background: linear-gradient(90deg, var(--green), var(--yel)); }
 
   @media (max-width: 860px) {

@@ -161,13 +161,13 @@ const links = home
       border-radius: 7px;
       font-weight: 500 !important;
       font-size: 13px !important;
-      box-shadow: 0 0 20px rgba(59,130,246,.3);
+      box-shadow: 0 0 20px color-mix(in srgb, var(--blue) 30%, transparent);
       transition: background .2s, box-shadow .2s, transform .2s !important;
     }
 
     .nav-cta:hover {
       background: var(--blue2) !important;
-      box-shadow: 0 0 30px rgba(59,130,246,.5) !important;
+      box-shadow: 0 0 30px var(--blue-halo-hover) !important;
       transform: translateY(-1px);
     }
 
@@ -209,7 +209,7 @@ const links = home
     .nav-links a {
       font-size: 22px !important;
       font-weight: 600 !important;
-      color: #e2eaf5 !important;
+      color: var(--txt) !important;
       text-decoration: none !important;
       font-family: 'Inter', sans-serif !important;
     }
@@ -242,7 +242,7 @@ const links = home
       display: block;
       width: 22px;
       height: 2px;
-      background: #e2eaf5;
+      background: var(--txt);
       border-radius: 2px;
       transition: transform 0.25s ease, opacity 0.25s ease;
     }

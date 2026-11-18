@@ -59,7 +59,7 @@ const firmCount = PROP_FIRM_CATALOG_FILES.length;
     <div class="hero-moment-sep">·</div>
     <div class="hero-moment pendant">⚡ Marge et payout en direct</div>
     <div class="hero-moment-sep">·</div>
-    <div class="hero-moment apres">🚨 Alertes avant la casse</div>
+    <div class="hero-moment alerte">🚨 Alertes avant la casse</div>
   </div>
 
 
@@ -126,12 +126,12 @@ const firmCount = PROP_FIRM_CATALOG_FILES.length;
 <style>
   /* ── BANNER ── */
   .banner {
-    background: rgba(16,185,129,.06);
-    border-bottom: 1px solid rgba(16,185,129,.12);
+    background: color-mix(in srgb, var(--edge) 6%, transparent);
+    border-bottom: 1px solid var(--b);
     padding: 8px 5%;
     text-align: center;
     font-size: 11px;
-    color: var(--green);
+    color: var(--txt2);
     font-family: var(--mono);
     letter-spacing: .5px;
     position: relative;
@@ -223,7 +223,7 @@ const firmCount = PROP_FIRM_CATALOG_FILES.length;
     top: 20%; left: 50%;
     transform: translateX(-50%);
     width: 800px; height: 500px;
-    background: radial-gradient(ellipse, rgba(59,130,246,.1) 0%, transparent 70%);
+    background: radial-gradient(ellipse, color-mix(in srgb, var(--blue) 10%, transparent) 0%, transparent 70%);
     pointer-events: none;
   }
 
@@ -231,14 +231,14 @@ const firmCount = PROP_FIRM_CATALOG_FILES.length;
     position: absolute;
     top: 50%; left: 50%;
     transform: translate(-50%,-50%);
-    border: 1px solid rgba(34,211,238,.05);
+    border: 1px solid color-mix(in srgb, var(--pulse) 5%, transparent);
     border-radius: 50%;
     pointer-events: none;
     animation: rpulse 4s ease-in-out infinite;
   }
   .pulse-ring:nth-child(2) { width:500px; height:500px; }
-  .pulse-ring:nth-child(3) { width:800px; height:800px; animation-delay:1.3s; border-color:rgba(34,211,238,.03); }
-  .pulse-ring:nth-child(4) { width:1100px; height:1100px; animation-delay:2.6s; border-color:rgba(34,211,238,.02); }
+  .pulse-ring:nth-child(3) { width:800px; height:800px; animation-delay:1.3s; border-color:color-mix(in srgb, var(--pulse) 3%, transparent); }
+  .pulse-ring:nth-child(4) { width:1100px; height:1100px; animation-delay:2.6s; border-color:color-mix(in srgb, var(--pulse) 2%, transparent); }
 
   /* Le tiret de « multi-marché » était un point de coupure sur 375 px. */
   .nowrap { white-space: nowrap; }
@@ -247,8 +247,8 @@ const firmCount = PROP_FIRM_CATALOG_FILES.length;
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    background: rgba(34,211,238,.07);
-    border: 1px solid rgba(34,211,238,.2);
+    background: color-mix(in srgb, var(--pulse) 7%, transparent);
+    border: 1px solid color-mix(in srgb, var(--pulse) 20%, transparent);
     color: var(--pulse);
     font-size: 11px;
     font-family: var(--mono);
@@ -337,9 +337,9 @@ const firmCount = PROP_FIRM_CATALOG_FILES.length;
     align-items: center;
     gap: 6px;
   }
-  .hero-moment.avant  { background: rgba(16,185,129,.08);  color: var(--green); border: 1px solid rgba(16,185,129,.2); }
-  .hero-moment.pendant{ background: rgba(59,130,246,.08);  color: var(--blue2); border: 1px solid rgba(59,130,246,.2); }
-  .hero-moment.apres  { background: rgba(139,92,246,.08);  color: #a78bfa;      border: 1px solid rgba(139,92,246,.2); }
+  .hero-moment.avant  { background: color-mix(in srgb, var(--edge) 8%, transparent);  color: var(--txt2); border: 1px solid color-mix(in srgb, var(--edge) 20%, transparent); }
+  .hero-moment.pendant{ background: color-mix(in srgb, var(--blue) 8%, transparent);  color: var(--blue2); border: 1px solid color-mix(in srgb, var(--blue) 20%, transparent); }
+  .hero-moment.alerte { background: color-mix(in srgb, var(--yel) 8%, transparent); color: var(--yel); border: 1px solid color-mix(in srgb, var(--yel) 20%, transparent); }
   .hero-moment-sep    { color: var(--txt3); font-size: 11px; }
 
   .hero-actions {
@@ -365,19 +365,19 @@ const firmCount = PROP_FIRM_CATALOG_FILES.length;
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    box-shadow: 0 0 28px rgba(59,130,246,.4);
+    box-shadow: 0 0 28px var(--blue-halo);
     transition: background .2s, transform .2s, box-shadow .2s;
     border: none;
     cursor: pointer;
     font-family: var(--disp);
   }
 
-  .btn-p:hover { background: var(--blue2); transform: translateY(-2px); box-shadow: 0 0 44px rgba(59,130,246,.55); }
+  .btn-p:hover { background: var(--blue2); transform: translateY(-2px); box-shadow: 0 0 44px var(--blue-halo-strong); }
 
   .hero-cta-main {
     font-size: 16px !important;
     padding: 16px 32px !important;
-    box-shadow: 0 0 40px rgba(59,130,246,.5) !important;
+    box-shadow: 0 0 40px var(--blue-halo-hover) !important;
   }
 
   .btn-demo {
@@ -391,13 +391,13 @@ const firmCount = PROP_FIRM_CATALOG_FILES.length;
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    border: 1px solid var(--border, rgba(255,255,255,.14));
+    border: 1px solid color-mix(in srgb, var(--reflet) 14%, transparent);
     transition: border-color .2s, background .2s, transform .2s;
     font-family: var(--disp);
   }
-  .btn-demo:hover { border-color: var(--blue); background: rgba(59,130,246,.08); transform: translateY(-2px); }
+  .btn-demo:hover { border-color: var(--blue); background: color-mix(in srgb, var(--blue) 8%, transparent); transform: translateY(-2px); }
   /* Raccourci Fondateur : mobile seulement (au-delà, la carte est sur le même écran que les prix). */
-  .hero-cta-founder { display: none; border-color: rgba(59,130,246,.5); }
+  .hero-cta-founder { display: none; border-color: color-mix(in srgb, var(--blue) 50%, transparent); }
   @media (max-width: 979px) { .hero-cta-founder { display: inline-flex; } }
   /* Raccourci entièrement visible au-dessus du bandeau cookies (89 px) en 390×844 : bouton
      compact (46 px au lieu de 58) et 16 px de moins sous les puces, seulement quand il est là. */
@@ -497,6 +497,6 @@ const firmCount = PROP_FIRM_CATALOG_FILES.length;
     z-index: 1;
   }
   .hero-trust li { font-size: 12px; color: var(--txt2); font-family: var(--mono); display: flex; gap: 6px; }
-  .hero-trust li::before { content: '✓'; color: var(--green); }
+  .hero-trust li::before { content: '✓'; color: var(--blue2); }
   .hero-eco { display: flex; justify-content: center; margin-top: 18px; position: relative; z-index: 1; }
 </style>

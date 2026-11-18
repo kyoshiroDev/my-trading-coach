@@ -45,6 +45,8 @@
 /* Premium offert : ligne d'action dans la liste (bouton .btn global) */
 .ud-offer .btn:disabled { opacity: .5; cursor: not-allowed; }
 .ud-offer .btn:disabled:hover { color: var(--text2); border-color: var(--border2); }
+/* « Retirer le Premium offert » (B10 #1064) : action qui retire un accès, rouge au survol */
+.ud-offer .btn.danger:hover:not(:disabled) { color: var(--red); border-color: var(--red); background: var(--red-dim); }
 /* Raison visible quand l'offre est impossible (réservation fondateur, paiement en attente…). */
 .ud-offer-warn { margin: 6px 0 0; padding: 8px 10px; border-left: 2px solid var(--amber); background: var(--amber-dim); font-size: 12px; color: var(--text2); line-height: 1.5; }
 

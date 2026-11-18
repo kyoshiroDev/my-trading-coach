@@ -15,19 +15,23 @@ import {
 } from '../../core/api/admin.api';
 import { TRIAL_KPI_UNRELIABLE, isTrialKpiUnreliable } from '@mtc/shared';
 import { VpsApi, VpsStats, DockerContainer } from '../../core/api/vps.api';
+import { ErrorStateComponent } from '@mtc/front-ui';
 import { visiblePoll } from '../../core/utils/visible-poll';
+import { founderOfferState } from '../../core/utils/offers.util';
 import { ChartCanvasComponent } from '../../shared/components/chart-canvas/chart-canvas.component';
 import { RadialGaugeComponent } from '../../shared/components/radial-gauge/radial-gauge.component';
 import { CHART_COLORS, gridAxis, noLegend, type ChartTone } from '../../shared/charts/chart-theme';
 
 @Component({
   selector: 'mtc-admin-dashboard',
-  imports: [DatePipe, DecimalPipe, RouterLink, ChartCanvasComponent, RadialGaugeComponent],
+  imports: [DatePipe, DecimalPipe, ErrorStateComponent, RouterLink, ChartCanvasComponent, RadialGaugeComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './dashboard.component.css',
   templateUrl: './dashboard.component.html',
 })
 export class DashboardComponent {
+  /** État affiché de l'offre fondateur (A11 #1065). */
+  protected readonly offerState = founderOfferState;
   private readonly adminApi = inject(AdminApi);
   private readonly vpsApi = inject(VpsApi);
   private readonly destroyRef = inject(DestroyRef);
@@ -45,6 +49,10 @@ export class DashboardComponent {
   protected readonly planLinks = signal<AdminPlanLinkStats | null>(null);
   protected readonly history = signal<MetricsHistoryPoint[]>([]);
   protected readonly onlineUsers = signal<AdminOnlineUser[]>([]);
+  /** Connectés non rafraîchis (A17 #1065). */
+  protected readonly onlineError = signal(false);
+  /** KPI non chargés (A17 #1065). */
+  protected readonly statsError = signal(false);
   protected readonly vpsStats = signal<VpsStats | null>(null);
   protected readonly containers = signal<DockerContainer[]>([]);
 
@@ -192,13 +200,18 @@ export class DashboardComponent {
   });
 
   constructor() {
-    this.adminApi.stats().pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((r) => this.stats.set(r.data));
+    this.loadStats();
     this.adminApi.founders().pipe(catchError(() => of(null)), takeUntilDestroyed(this.destroyRef))
       .subscribe((r) => this.founders.set(r?.data ?? null));
 
-    this.adminApi.online().pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((r) => this.onlineUsers.set(r.data));
+    // « Connectés » en temps réel (A17 #1065) : avant, chargé une seule fois. Erreur signalée, la
+    // dernière liste reçue reste affichée.
+    visiblePoll(() => this.adminApi.online(), { periodMs: 30_000 })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((r) => {
+        this.onlineError.set(!r.ok);
+        if (r.ok) this.onlineUsers.set(r.value.data);
+      });
 
     this.adminApi.retention().pipe(catchError(() => of(null)), takeUntilDestroyed(this.destroyRef))
       .subscribe((r) => this.retention.set(r?.data ?? null));
@@ -216,6 +229,15 @@ export class DashboardComponent {
     visiblePoll(() => this.vpsApi.containers(), { periodMs: 10_000 })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((r) => this.containers.set(r.ok ? r.value.data ?? [] : []));
+  }
+
+  /** KPI (A17 #1065) : une erreur affiche « indisponible » avec Réessayer, jamais des zéros. */
+  protected loadStats(): void {
+    this.statsError.set(false);
+    this.adminApi.stats().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (r) => this.stats.set(r.data),
+      error: () => this.statsError.set(true),
+    });
   }
 
   // ── Helpers ────────────────────────────────────────────────────────────────

@@ -32,13 +32,13 @@
 /* Encadrés : avertissement (ambre) en tête, résumé (bleu) en fin de page. */
 .legal-box { padding: 20px 24px; }
 .legal-box.warning {
-  background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.3);
+  background: color-mix(in srgb, var(--yel) 8%, transparent); border: 1px solid color-mix(in srgb, var(--yel) 30%, transparent);
   border-radius: 12px; margin-bottom: 2rem;
 }
 .legal-box.summary {
-  background: rgba(59, 130, 246, 0.06); border: 1px solid rgba(59, 130, 246, 0.2);
+  background: color-mix(in srgb, var(--blue) 6%, transparent); border: 1px solid color-mix(in srgb, var(--blue) 20%, transparent);
   border-radius: 10px; margin-top: 2.5rem;
 }
 .legal-box-title { font-weight: 600; margin: 0 0 8px; }
-.legal-box.warning .legal-box-title { color: #f59e0b; font-weight: 700; font-size: 1rem; margin: 0 0 6px; }
+.legal-box.warning .legal-box-title { color: var(--yel); font-weight: 700; font-size: 1rem; margin: 0 0 6px; }
 .legal-box-text { font-size: 0.9rem; margin: 0; }

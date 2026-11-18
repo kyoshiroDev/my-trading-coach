@@ -10,22 +10,22 @@
     </div>
     <div class="prob-grid rstag">
       <div class="prob-item">
-        <div class="prob-icon ic-red">😤</div>
+        <div class="prob-icon ic-perte">😤</div>
         <h3>Le revenge trading</h3>
         <p>Après une perte, tu reviens trop vite avec une position trop grande. Ton compagnon le détecte et te le dit pendant que ça se passe, pas après.</p>
       </div>
       <div class="prob-item">
-        <div class="prob-icon ic-amber">📅</div>
+        <div class="prob-icon ic-alerte">📅</div>
         <h3>Les news que tu ignores</h3>
         <p>Le NFP tombe dans 20 minutes sur ton actif et tu n'es pas prêt. Ton compagnon filtre les events économiques pour tes marchés et t'informe chaque matin.</p>
       </div>
       <div class="prob-item">
-        <div class="prob-icon ic-blue">🔁</div>
+        <div class="prob-icon ic-stats">🔁</div>
         <h3>Les patterns invisibles</h3>
         <p>Tu perds presque toujours sur GBP/USD le jeudi. Tu n'as jamais calculé ça, et ton journal actuel non plus. Ton compagnon, si.</p>
       </div>
       <div class="prob-item">
-        <div class="prob-icon ic-green">🌙</div>
+        <div class="prob-icon ic-neutre">🌙</div>
         <h3>L'analyse qui arrive trop tard</h3>
         <p>Tu analyses tes trades le week-end, quand l'opportunité d'agir est passée. Ton compagnon t'envoie le recap à 17h30, quand tu peux encore corriger demain.</p>
       </div>
@@ -35,10 +35,10 @@
 
 <style>
   .head { text-align: center; max-width: 640px; margin: 0 auto; }
-  .ic-blue { background: rgba(59,130,246,.09); }
-  .ic-amber { background: rgba(245,158,11,.09); }
-  .ic-red { background: rgba(239,68,68,.09); }
-  .ic-green { background: rgba(16,185,129,.09); }
+  .ic-stats { background: color-mix(in srgb, var(--blue) 9%, transparent); }
+  .ic-alerte { background: color-mix(in srgb, var(--yel) 9%, transparent); }
+  .ic-perte { background: color-mix(in srgb, var(--red) 9%, transparent); }
+  .ic-neutre { background: color-mix(in srgb, var(--edge) 9%, transparent); }
   .prob {
     background: var(--bg2);
     border-top: 1px solid var(--b);

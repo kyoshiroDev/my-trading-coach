@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '@admin/environments/environment';
-import type { AcquisitionUtm, AdminAcquisitionData, AdminLandingEngagementData, AdminFunnelData, AdminPlanLinkStats, AdminSignupFunnelData, AdminSignupMethodsData, AdminUserDetail as UserDetailData, Plan, Role, TrialSource } from '@mtc/shared';
+import type { AcquisitionUtm, AdminAcquisitionData, AdminBetaRoleResponse, AdminOfferPremiumResponse, AdminRemoveOfferedPremiumResponse, AdminLandingEngagementData, AdminFunnelData, AdminPlanLinkStats, AdminSignupFunnelData, AdminSignupMethodsData, AdminUserDetail as UserDetailData, Plan, Role, TrialSource } from '@mtc/shared';
 export type { AdminPlanLinkStats };
 export type { UserDetailData };
 
@@ -19,6 +19,8 @@ export interface AdminUser {
   lastSeenAt: string | null; lastLoginAt: string | null; createdAt: string;
   /** UTM d'inscription (#625), null = non renseigné. */
   acquisitionSource?: string | null; acquisitionMedium?: string | null; acquisitionCampaign?: string | null;
+  /** Compte interne (#823), exclu des statistiques : renvoyé par la liste (`ADMIN_USER_SELECT`). */
+  isInternal?: boolean;
   /** Abonnés Stripe seulement (#525) : place fondateur et code partenaire, pour le montant réel. */
   founderSeat?: { number: number; status: FounderSeatStatus } | null;
   partnerRedemption?: {
@@ -55,7 +57,8 @@ export interface AdminStats {
 export type FounderSeatStatus = 'ACTIVE' | 'LOST' | 'REFUNDED' | 'RELEASED';
 
 export interface AdminFoundersData {
-  offer: { open: boolean; endsAt: string | null; seatsTotal: number };
+  /** `open` = interrupteur ; `ended` = ouverte mais ne vend plus, date passée ou complet (A11 #1065). */
+  offer: { open: boolean; ended?: boolean; endsAt: string | null; seatsTotal: number };
   totals: {
     taken: number; active: number; lost: number; refunded: number; released: number; seatsLeft: number;
     byCta: { cta: string | null; count: number }[];
@@ -116,8 +119,13 @@ export interface AiCostData {
 }
 
 export interface SubscriptionsData {
+  /** Une page des abonnés payants ; `stripeTotal` = leur nombre total (A8 #1065). */
   stripeUsers: AdminUser[];
+  stripeTotal?: number;
+  /** Accès manuels (A10 #1065) : rôle bêta-testeur ou plan PREMIUM accordé, sans abonnement ni essai. */
   betaTesters: AdminUser[];
+  /** Abonnements en pause, past_due / unpaid (A10 #1065). */
+  pausedUsers?: AdminUser[];
   /** Essais d'inscription, essais d'abonnement et Premium offerts en cours (#828). */
   trialUsers?: AdminUser[];
   total: number; page: number; limit: number;
@@ -291,13 +299,23 @@ export class AdminApi {
     }
     return this.http.get<{ data: { users: AdminUser[]; total: number } }>(this.usersBase, { params });
   }
-  update(id: string, dto: { name?: string; plan?: Plan; role?: 'USER' | 'BETA_TESTER' | 'AMBASSADOR'; isInternal?: boolean }) {
+  /** Modale « Modifier » et interrupteur « Compte interne » : ni rôle ni plan (A1/B2 #1064). */
+  update(id: string, dto: { name?: string; isInternal?: boolean }) {
     return this.http.patch<{ data: AdminUser }>(`${this.usersBase}/${id}`, dto);
   }
   delete(id: string)    { return this.http.delete<void>(`${this.usersBase}/${id}`); }
   /** Premium offert sans abonnement Stripe (défaut 30 j côté API) ; prolonge un mois en cours. */
   offerPremium(id: string, days?: number) {
-    return this.http.post<{ data: { trialEndsAt: string } }>(`${this.usersBase}/${id}/offer-premium`, days ? { days } : {});
+    return this.http.post<{ data: AdminOfferPremiumResponse }>(`${this.usersBase}/${id}/offer-premium`, days ? { days } : {});
+  }
+  /** Retire un Premium offert par l'admin en cours (B10 #1064) ; `trialEndsAt` = essai d'inscription rendu, sinon null. */
+  removeOfferedPremium(id: string) {
+    return this.http.delete<{ data: AdminRemoveOfferedPremiumResponse }>(`${this.usersBase}/${id}/offer-premium`);
+  }
+  /** Rôle bêta-testeur (Premium permanent) : POST pour le donner, DELETE pour le retirer (#1064). */
+  setBeta(id: string, on: boolean) {
+    const url = `${this.usersBase}/${id}/beta`;
+    return on ? this.http.post<{ data: AdminBetaRoleResponse }>(url, {}) : this.http.delete<{ data: AdminBetaRoleResponse }>(url);
   }
   stats()               { return this.http.get<{ data: AdminStats }>(`${this.usersBase}/stats`); }
 
@@ -321,7 +339,11 @@ export class AdminApi {
     return this.http.get<{ data: AdminPartnerCodeUsers }>(`${this.adminBase}/partner-codes/${id}/users`);
   }
   online()              { return this.http.get<{ data: AdminOnlineUser[] }>(`${this.usersBase}/online`); }
-  subscriptions()       { return this.http.get<{ data: SubscriptionsData }>(`${this.usersBase}/subscriptions`); }
+  /** Page `page` des abonnés payants (A8 #1065) ; paramètre envoyé seulement au-delà de la 1re page. */
+  subscriptions(page = 1) {
+    const params = page > 1 ? new HttpParams().set('page', page) : undefined;
+    return this.http.get<{ data: SubscriptionsData }>(`${this.usersBase}/subscriptions`, { params });
+  }
   aiCost()              { return this.http.get<{ data: AiCostData }>(`${this.adminBase}/ai-cost`); }
   refreshAiCost()       { return this.http.post<{ data: { ok: boolean; rows: number; total30d: number } }>(`${this.adminBase}/ai-cost/refresh`, {}); }
   retention()           { return this.http.get<{ data: RetentionData }>(`${this.adminBase}/retention`); }

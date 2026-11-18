@@ -4,7 +4,7 @@ import { RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { catchError, of } from 'rxjs';
 import { AdminApi, type AdminFoundersData, type FounderSeatStatus } from '../../core/api/admin.api';
-import { FOUNDER_STATUS_BADGE, FOUNDER_STATUS_LABEL, ctaRecap } from '../../core/utils/offers.util';
+import { FOUNDER_STATUS_BADGE, FOUNDER_STATUS_LABEL, ctaRecap, founderOfferState } from '../../core/utils/offers.util';
 
 /**
  * Onglet « Fondateurs » (#525) : interrupteur « Ouvrir l'offre » (confirmation dans la page),
@@ -23,6 +23,8 @@ export class FoundersTabComponent {
   /** Données rechargées : le parent met à jour son KPI. */
   readonly changed = output<AdminFoundersData>();
 
+  /** État affiché de l'offre (A11 #1065) : « terminée » si l'interrupteur est ouvert mais qu'elle ne vend plus. */
+  protected readonly offerState = founderOfferState;
   protected readonly STATUS_LABEL = FOUNDER_STATUS_LABEL;
   protected readonly STATUS_BADGE = FOUNDER_STATUS_BADGE;
   protected readonly STATUSES = Object.keys(FOUNDER_STATUS_LABEL) as FounderSeatStatus[];

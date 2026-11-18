@@ -89,9 +89,9 @@
   }
 
   .moment-card:hover { border-color: var(--b2); transform: translateY(-4px); }
-  .moment-card.avant   { border-top: 2px solid rgba(16,185,129,.5); }
-  .moment-card.pendant { border-top: 2px solid rgba(59,130,246,.5); }
-  .moment-card.apres   { border-top: 2px solid rgba(139,92,246,.5); }
+  .moment-card.avant   { border-top: 2px solid color-mix(in srgb, var(--edge) 50%, transparent); }
+  .moment-card.pendant { border-top: 2px solid color-mix(in srgb, var(--blue) 50%, transparent); }
+  .moment-card.apres   { border-top: 2px solid color-mix(in srgb, var(--pulse) 50%, transparent); }
 
   .moment-icon {
     width: 52px; height: 52px;
@@ -100,9 +100,9 @@
     font-size: 22px;
     margin-bottom: 20px;
   }
-  .moment-card.avant   .moment-icon { background: rgba(16,185,129,.1); }
-  .moment-card.pendant .moment-icon { background: rgba(59,130,246,.1); }
-  .moment-card.apres   .moment-icon { background: rgba(139,92,246,.1); }
+  .moment-card.avant   .moment-icon { background: color-mix(in srgb, var(--edge) 10%, transparent); }
+  .moment-card.pendant .moment-icon { background: color-mix(in srgb, var(--blue) 10%, transparent); }
+  .moment-card.apres   .moment-icon { background: color-mix(in srgb, var(--pulse) 10%, transparent); }
 
   .moment-time {
     font-family: var(--mono);
@@ -111,9 +111,9 @@
     text-transform: uppercase;
     margin-bottom: 6px;
   }
-  .moment-card.avant   .moment-time { color: var(--green); }
+  .moment-card.avant   .moment-time { color: var(--txt2); }
   .moment-card.pendant .moment-time { color: var(--blue2); }
-  .moment-card.apres   .moment-time { color: #a78bfa; }
+  .moment-card.apres   .moment-time { color: var(--pulse); }
 
   .moment-card h3 {
     font-family: var(--disp);
@@ -147,9 +147,9 @@
     flex-shrink: 0;
     margin-top: 6px;
   }
-  .moment-card.avant   .mf-dot { background: var(--green); }
+  .moment-card.avant   .mf-dot { background: var(--txt2); }
   .moment-card.pendant .mf-dot { background: var(--blue2); }
-  .moment-card.apres   .mf-dot { background: #a78bfa; }
+  .moment-card.apres   .mf-dot { background: var(--pulse); }
 
   @media (max-width: 1024px) and (min-width: 769px) {
     .moments-timeline { grid-template-columns: 1fr 1fr; gap: 14px; }

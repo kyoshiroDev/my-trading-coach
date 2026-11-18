@@ -80,7 +80,7 @@ import { GA_ID } from '../config';
     justify-content: center;
     gap: 24px;
     padding: 14px 5%;
-    background: rgba(8,12,20,0.85);
+    background: color-mix(in srgb, var(--bg2) 85%, transparent);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border-top: 1px solid var(--b);
@@ -121,14 +121,14 @@ import { GA_ID } from '../config';
   .cc-accept:hover {
     background: var(--blue2);
     border-color: var(--blue2);
-    box-shadow: 0 0 20px rgba(59,130,246,.3);
+    box-shadow: 0 0 20px color-mix(in srgb, var(--blue) 30%, transparent);
   }
   .cc-refuse {
     background: transparent;
     color: var(--txt);
     border: 1px solid var(--b2);
   }
-  .cc-refuse:hover { border-color: var(--blue); background: rgba(59,130,246,.05); }
+  .cc-refuse:hover { border-color: var(--blue); background: color-mix(in srgb, var(--blue) 5%, transparent); }
   .cc-btn:focus-visible { outline: 2px solid var(--blue2); outline-offset: 2px; }
 
   /* Mobile compact (≈ 90 px au lieu de 138) : texte à gauche, les deux boutons empilés à droite,

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { annualDurationHelp, ctaRecap, partnerConditions, partnerPreview, realAmountLabel, usageLabel } from './offers.util';
+import { annualDurationHelp, ctaRecap, founderOfferState, partnerConditions, partnerPreview, realAmountLabel, usageLabel } from './offers.util';
 
 describe('offers.util — libellés admin (#525)', () => {
   it('aperçu en une phrase avant validation (exemple de l’issue)', () => {
@@ -33,5 +33,18 @@ describe('offers.util — libellés admin (#525)', () => {
     const partner = { status: 'ACTIVE' as const, priceMonthlyEur: 29, priceAnnualEur: 290, durationMonths: 3, createdAt: '2026-01-01T00:00:00Z', partnerCode: { code: 'TRIO' } };
     expect(realAmountLabel({ stripeInterval: 'month', founderSeat: null, partnerRedemption: partner }, new Date('2026-02-01'))).toBe('29 €/mois');
     expect(realAmountLabel({ stripeInterval: 'month', founderSeat: null, partnerRedemption: partner }, new Date('2026-06-01'))).toBe('49 €/mois');
+  });
+});
+
+/** A11 (#1065) : l'état affiché de l'offre fondateur suit la vente réelle, pas l'interrupteur seul. */
+describe('founderOfferState (A11 #1065)', () => {
+  it('ouverte et en vente', () => {
+    expect(founderOfferState({ open: true, ended: false })).toEqual({ label: 'ouverte', selling: true });
+  });
+  it('interrupteur ouvert mais terminée (date passée ou complet)', () => {
+    expect(founderOfferState({ open: true, ended: true })).toEqual({ label: 'terminée', selling: false });
+  });
+  it('fermée', () => {
+    expect(founderOfferState({ open: false, ended: false })).toEqual({ label: 'fermée', selling: false });
   });
 });

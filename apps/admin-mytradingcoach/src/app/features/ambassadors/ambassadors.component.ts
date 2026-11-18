@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, inject, signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import type { Subscription } from 'rxjs';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import type { ChartConfiguration } from 'chart.js';
 import { AdminApi, AdminAmbassador, AdminAmbassadorDetail, AdminAmbassadorPromoteResult } from '../../core/api/admin.api';
@@ -45,6 +46,8 @@ export class AmbassadorsComponent implements OnInit {
   // Retrait d'un ambassadeur
   protected readonly revokeTarget = signal<AdminAmbassador | null>(null);
   protected readonly revoking = signal(false);
+  /** Échec du retrait (A13 #1065), affiché dans la confirmation : avant, silencieux. */
+  protected readonly revokeError = signal<string | null>(null);
 
   protected readonly totalReferrals = computed(() => this.ambassadors().reduce((s, a) => s + a.totalReferrals, 0));
   protected readonly totalPremium = computed(() => this.ambassadors().reduce((s, a) => s + a.premiumReferrals, 0));
@@ -66,7 +69,13 @@ export class AmbassadorsComponent implements OnInit {
   private loadAmbassadors(): void {
     this.loading.set(true);
     this.api.getAmbassadors().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: (res) => { this.ambassadors.set(res.data); this.loading.set(false); if (res.data.length > 0) this.selectAmbassador(res.data[0]); },
+      next: (res) => {
+        this.ambassadors.set(res.data);
+        this.loading.set(false);
+        // Sélection gardée après un paiement ou un retrait (A14 #1065) ; sinon le premier.
+        const keep = res.data.find((a) => a.id === this.selectedId()) ?? res.data[0];
+        if (keep) this.selectAmbassador(keep);
+      },
       error: () => this.loading.set(false),
     });
   }
@@ -75,8 +84,14 @@ export class AmbassadorsComponent implements OnInit {
     this.selectedId.set(amb.id);
     this.selectedAmbassador.set(amb);
     this.selectedDetail.set(null);
-    this.api.getAmbassadorDetail(amb.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({ next: (res) => this.selectedDetail.set(res.data) });
+    // Une seule requête de détail à la fois : la réponse de l'ambassadeur précédent ne s'affiche
+    // jamais sous le titre du suivant (A14 #1065).
+    this.detailRequest?.unsubscribe();
+    this.detailRequest = this.api.getAmbassadorDetail(amb.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (res) => { if (this.selectedId() === amb.id) this.selectedDetail.set(res.data); },
+    });
   }
+  private detailRequest?: Subscription;
 
   protected copyLink(code: string): void {
     navigator.clipboard.writeText(`https://mytradingcoach.app?ref=${code}`);
@@ -121,6 +136,7 @@ export class AmbassadorsComponent implements OnInit {
 
   // ── Retirer un ambassadeur ──────────────────────────────────────────────
   protected askRevoke(amb: AdminAmbassador): void {
+    this.revokeError.set(null);
     this.revokeTarget.set(amb);
   }
   protected cancelRevoke(): void {
@@ -136,7 +152,10 @@ export class AmbassadorsComponent implements OnInit {
         this.revokeTarget.set(null);
         this.loadAmbassadors();
       },
-      error: () => this.revoking.set(false),
+      error: (err) => {
+        this.revoking.set(false);
+        this.revokeError.set(apiErrorMessage(err, 'Le retrait n’a pas abouti. Réessaie.'));
+      },
     });
   }
 

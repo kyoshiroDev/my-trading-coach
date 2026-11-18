@@ -2,9 +2,8 @@
   <div class="card">
     <div class="card-head">
       <span class="card-label">Offre fondateur</span>
-      <span class="badge" [class.b-ok]="d.offer.open" [class.b-free]="!d.offer.open" data-testid="offer-state">
-        {{ d.offer.open ? 'ouverte' : 'fermée' }}
-      </span>
+      @let state = offerState(d.offer);
+      <span class="badge" [class.b-ok]="state.selling" [class.b-free]="!state.selling" data-testid="offer-state">{{ state.label }}</span>
     </div>
     <div class="card-body offer-head">
       <div class="offer-row">

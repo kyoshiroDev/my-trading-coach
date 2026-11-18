@@ -4,7 +4,11 @@
   @if (detail.isLoading()) {
     <div class="card"><div class="empty">Chargement…</div></div>
   } @else if (detail.error()) {
-    <div class="card"><div class="empty">⚠ Utilisateur introuvable</div></div>
+    @if (notFound()) {
+      <div class="card"><div class="empty">⚠ Utilisateur introuvable</div></div>
+    } @else {
+      <mtc-error-state message="La fiche n’a pas pu être chargée." (retry)="detail.reload()" />
+    }
   } @else if (data(); as d) {
 
     <!-- En-tête identité -->
@@ -113,6 +117,25 @@
             </div>
             @if (offerWarning(); as w) {
               <p class="ud-offer-warn" data-testid="offer-warning">{{ w }}</p>
+            }
+            @if (canRemoveOffer()) {
+              <!-- B10 (#1064) : seulement un Premium offert par l'admin, jamais un abonnement Stripe -->
+              <div class="srow ud-offer">
+                <span class="s-l">Jours offerts par l'admin</span>
+                <button type="button" class="btn danger" data-testid="remove-offer"
+                  [disabled]="removingOffer()"
+                  (click)="removeOfferedPremium()">{{ removingOffer() ? 'En cours…' : 'Retirer le Premium offert' }}</button>
+              </div>
+            }
+            @if (d.identity.role !== 'ADMIN') {
+              <!-- Rôle bêta-testeur (#1064) : la modale « Modifier » ne change plus le rôle -->
+              <div class="srow ud-offer">
+                <span class="s-l">Bêta-testeur <span class="ud-internal-hint">Premium tant que le rôle est gardé</span></span>
+                <button type="button" class="btn" data-testid="beta-toggle"
+                  [disabled]="!!betaBlocked() || betaSaving()"
+                  [attr.title]="betaBlocked()"
+                  (click)="toggleBeta()">{{ betaSaving() ? 'En cours…' : (isBeta() ? 'Retirer bêta' : 'Passer bêta-testeur') }}</button>
+              </div>
             }
             <!-- Compte interne (#823) : tests de l'équipe, exclus des statistiques admin -->
             <div class="srow ud-internal">
