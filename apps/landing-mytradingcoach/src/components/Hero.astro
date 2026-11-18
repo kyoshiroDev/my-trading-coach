@@ -223,7 +223,7 @@ const firmCount = PROP_FIRM_CATALOG_FILES.length;
     top: 20%; left: 50%;
     transform: translateX(-50%);
     width: 800px; height: 500px;
-    background: radial-gradient(ellipse, rgba(59,130,246,.1) 0%, transparent 70%);
+    background: radial-gradient(ellipse, color-mix(in srgb, var(--blue) 10%, transparent) 0%, transparent 70%);
     pointer-events: none;
   }
 
@@ -338,7 +338,7 @@ const firmCount = PROP_FIRM_CATALOG_FILES.length;
     gap: 6px;
   }
   .hero-moment.avant  { background: rgba(16,185,129,.08);  color: var(--green); border: 1px solid rgba(16,185,129,.2); }
-  .hero-moment.pendant{ background: rgba(59,130,246,.08);  color: var(--blue2); border: 1px solid rgba(59,130,246,.2); }
+  .hero-moment.pendant{ background: color-mix(in srgb, var(--blue) 8%, transparent);  color: var(--blue2); border: 1px solid color-mix(in srgb, var(--blue) 20%, transparent); }
   .hero-moment.apres  { background: rgba(139,92,246,.08);  color: #a78bfa;      border: 1px solid rgba(139,92,246,.2); }
   .hero-moment-sep    { color: var(--txt3); font-size: 11px; }
 
@@ -395,9 +395,9 @@ const firmCount = PROP_FIRM_CATALOG_FILES.length;
     transition: border-color .2s, background .2s, transform .2s;
     font-family: var(--disp);
   }
-  .btn-demo:hover { border-color: var(--blue); background: rgba(59,130,246,.08); transform: translateY(-2px); }
+  .btn-demo:hover { border-color: var(--blue); background: color-mix(in srgb, var(--blue) 8%, transparent); transform: translateY(-2px); }
   /* Raccourci Fondateur : mobile seulement (au-delà, la carte est sur le même écran que les prix). */
-  .hero-cta-founder { display: none; border-color: rgba(59,130,246,.5); }
+  .hero-cta-founder { display: none; border-color: color-mix(in srgb, var(--blue) 50%, transparent); }
   @media (max-width: 979px) { .hero-cta-founder { display: inline-flex; } }
   /* Raccourci entièrement visible au-dessus du bandeau cookies (89 px) en 390×844 : bouton
      compact (46 px au lieu de 58) et 16 px de moins sous les puces, seulement quand il est là. */

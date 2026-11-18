@@ -78,7 +78,7 @@ const firmCount = PROP_FIRM_CATALOG_FILES.length;
 </section>
 
 <style>
-  .ic-blue { background: rgba(59,130,246,.1); }
+  .ic-blue { background: color-mix(in srgb, var(--blue) 10%, transparent); }
   .ic-cyan { background: rgba(34,211,238,.1); }
   .ic-amber { background: rgba(245,158,11,.1); }
   .mc { padding: 80px 5%; border-top: 1px solid var(--b); }
@@ -100,7 +100,7 @@ const firmCount = PROP_FIRM_CATALOG_FILES.length;
   .acc-mock { background: var(--card); border: 1px solid var(--b); border-radius: 16px; padding: 18px; box-shadow: 0 30px 70px -30px rgba(0,0,0,.7); }
   .acc-mock-top { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
   .acc-tab { font-family: var(--mono); font-size: 11px; padding: 7px 11px; border-radius: 8px; border: 1px solid var(--b); color: var(--txt2); white-space: nowrap; }
-  .acc-tab.on { background: rgba(59,130,246,.15); border-color: var(--blue); color: var(--blue2); }
+  .acc-tab.on { background: color-mix(in srgb, var(--blue) 15%, transparent); border-color: var(--blue); color: var(--blue2); }
   .acc-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-top: 1px solid rgba(255,255,255,.04); }
   .acc-row:first-of-type { border-top: none; }
   .acc-name { display: flex; align-items: center; gap: 9px; font-size: 13.5px; font-weight: 600; color: var(--txt); }
