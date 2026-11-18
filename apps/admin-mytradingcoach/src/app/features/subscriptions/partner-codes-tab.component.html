@@ -102,6 +102,8 @@
                       <span class="badge" [class.b-ok]="r.status === 'ACTIVE'" [class.b-free]="r.status !== 'ACTIVE'">{{ r.status === 'ACTIVE' ? 'actif' : r.status === 'LOST' ? 'perdu' : 'rendu' }}</span>
                     </div>
                   } @empty { <span class="muted">Personne n'a encore utilisé ce code.</span> }
+                } @else if (usersError()) {
+                  <mtc-error-state message="Les abonnés de ce code n’ont pas pu être chargés." (retry)="loadUsers(c.id)" />
                 } @else { <span class="muted">Chargement…</span> }
               </div>
             </td></tr>

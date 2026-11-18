@@ -2,7 +2,8 @@ import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signa
 import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { catchError, of } from 'rxjs';
+import { ErrorStateComponent } from '@mtc/front-ui';
+import { catchError, of, type Subscription } from 'rxjs';
 import {
   AdminApi,
   type AdminPartnerCode,
@@ -21,7 +22,7 @@ const CODE_PATTERN = /^[A-Z0-9_-]{3,20}$/;
  */
 @Component({
   selector: 'mtc-admin-partner-codes-tab',
-  imports: [DatePipe, RouterLink],
+  imports: [DatePipe, ErrorStateComponent, RouterLink],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './offers-tabs.css',
   templateUrl: './partner-codes-tab.component.html',
@@ -174,10 +175,25 @@ export class PartnerCodesTabComponent {
       return;
     }
     this.openUsersId.set(c.id);
-    this.users.set(null);
-    this.adminApi
-      .partnerCodeUsers(c.id)
-      .pipe(catchError(() => of(null)), takeUntilDestroyed(this.destroyRef))
-      .subscribe((r) => this.users.set(r?.data ?? null));
+    this.loadUsers(c.id);
   }
+
+  /**
+   * Abonnés du code ouvert (A12 #1065) : erreur affichée avec Réessayer (avant : « Chargement… » à
+   * vie) ; la requête du code précédent est annulée, sa réponse ne s'affiche jamais sous un autre.
+   */
+  protected loadUsers(id: string): void {
+    this.usersRequest?.unsubscribe();
+    this.users.set(null);
+    this.usersError.set(false);
+    this.usersRequest = this.adminApi
+      .partnerCodeUsers(id)
+      .pipe(catchError(() => of(null)), takeUntilDestroyed(this.destroyRef))
+      .subscribe((r) => {
+        if (this.openUsersId() !== id) return;
+        if (r) this.users.set(r.data); else this.usersError.set(true);
+      });
+  }
+  private usersRequest?: Subscription;
+  protected readonly usersError = signal(false);
 }
