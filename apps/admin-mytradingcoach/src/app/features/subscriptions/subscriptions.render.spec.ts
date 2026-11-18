@@ -105,5 +105,38 @@ describe('SubscriptionsComponent', () => {
     expect(el.textContent).toContain('37 / 200');
     expect(el.textContent).toContain('35 actifs · offre ouverte');
   });
-});
 
+  // A8 (#1065) : 20 lignes renvoyées, KPI « Stripe actifs » = 20, aucune pagination.
+  it('A8 : KPI sur le total des abonnés, pagination vers la page 2', async () => {
+    const page1 = Array.from({ length: 20 }, (_, i) => user(`m${i}`, 'month'));
+    const el = await render({ stripeUsers: page1, stripeTotal: 57, betaTesters: [], total: 57, page: 1, limit: 20 });
+    expect(el.querySelector('[data-testid="kpi-stripe"]')?.textContent?.trim()).toBe('57');
+    (el.querySelector('[data-testid="subs-next"]') as HTMLButtonElement).click();
+    const req = http.expectOne((r) => r.url === `${environment.apiUrl}/admin/users/subscriptions`);
+    expect(req.request.params.get('page')).toBe('2');
+    req.flush({ data: { stripeUsers: [user('p2', 'year')], stripeTotal: 57, betaTesters: [], total: 57, page: 2, limit: 20 } });
+  });
+
+  // A9 (#1065) : abonné résilié affiché « actif » avec une date de « Renouvellement ».
+  it('A9 : abonné résilié = « résilié », fin affichée, jamais « actif »', async () => {
+    const end = '2099-12-01T00:00:00.000Z';
+    const el = await render({
+      stripeUsers: [{ ...user('r', 'month'), stripeSubscriptionStatus: 'active', stripeCancelAt: end }],
+      stripeTotal: 1, betaTesters: [], total: 1, page: 1, limit: 20,
+    });
+    const status = el.querySelector('td[data-label="Statut"]')?.textContent?.trim();
+    expect(status).toBe('résilié');
+    expect(el.querySelector('td[data-label="Échéance"]')?.textContent?.trim()).toBe('fin le 01/12/2099');
+  });
+
+  // A10 (#1065) : abonnements en pause nulle part.
+  it('A10 : bloc « En pause » avec les abonnements past_due / unpaid', async () => {
+    const el = await render({
+      stripeUsers: [], stripeTotal: 0, betaTesters: [], total: 0, page: 1, limit: 20,
+      pausedUsers: [{ ...user('pause', 'month'), stripeSubscriptionStatus: 'past_due' }],
+    });
+    const rows = el.querySelectorAll('[data-testid="paused-row"]');
+    expect(rows.length).toBe(1);
+    expect(rows[0].textContent).toContain('pause@example.com');
+  });
+});

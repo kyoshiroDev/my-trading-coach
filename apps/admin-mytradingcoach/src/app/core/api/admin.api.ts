@@ -118,8 +118,13 @@ export interface AiCostData {
 }
 
 export interface SubscriptionsData {
+  /** Une page des abonnés payants ; `stripeTotal` = leur nombre total (A8 #1065). */
   stripeUsers: AdminUser[];
+  stripeTotal?: number;
+  /** Accès manuels (A10 #1065) : rôle bêta-testeur ou plan PREMIUM accordé, sans abonnement ni essai. */
   betaTesters: AdminUser[];
+  /** Abonnements en pause, past_due / unpaid (A10 #1065). */
+  pausedUsers?: AdminUser[];
   /** Essais d'inscription, essais d'abonnement et Premium offerts en cours (#828). */
   trialUsers?: AdminUser[];
   total: number; page: number; limit: number;
@@ -333,7 +338,11 @@ export class AdminApi {
     return this.http.get<{ data: AdminPartnerCodeUsers }>(`${this.adminBase}/partner-codes/${id}/users`);
   }
   online()              { return this.http.get<{ data: AdminOnlineUser[] }>(`${this.usersBase}/online`); }
-  subscriptions()       { return this.http.get<{ data: SubscriptionsData }>(`${this.usersBase}/subscriptions`); }
+  /** Page `page` des abonnés payants (A8 #1065) ; paramètre envoyé seulement au-delà de la 1re page. */
+  subscriptions(page = 1) {
+    const params = page > 1 ? new HttpParams().set('page', page) : undefined;
+    return this.http.get<{ data: SubscriptionsData }>(`${this.usersBase}/subscriptions`, { params });
+  }
   aiCost()              { return this.http.get<{ data: AiCostData }>(`${this.adminBase}/ai-cost`); }
   refreshAiCost()       { return this.http.post<{ data: { ok: boolean; rows: number; total30d: number } }>(`${this.adminBase}/ai-cost/refresh`, {}); }
   retention()           { return this.http.get<{ data: RetentionData }>(`${this.adminBase}/retention`); }
