@@ -5,6 +5,7 @@ import { freezeClock } from '../../test/freeze-clock';
 import { subscriptionStateWhere, subscriptionStatesWhere } from '../../common/stats/subscription-state-where';
 import type { PrismaService } from '../../prisma/prisma.service';
 import type { AmbassadorService } from '../ambassador/ambassador.service';
+import { isDeepStrictEqual } from 'node:util';
 
 /**
  * Page Abonnements de l'admin (#1065) :
@@ -50,7 +51,7 @@ describe('UsersService.adminSubscriptions (#1065)', () => {
 
   it('A10 : abonnements en pause listés à part', async () => {
     prisma.user.findMany.mockImplementation(async (a: { where: unknown }) =>
-      JSON.stringify(a.where) === JSON.stringify({ isDemo: false, role: { not: 'ADMIN' }, ...subscriptionStateWhere('paused', NOW) }) ? [{ id: 'p1' }] : []);
+      isDeepStrictEqual(a.where, { isDemo: false, role: { not: 'ADMIN' }, ...subscriptionStateWhere('paused', NOW) }) ? [{ id: 'p1' }] : []);
     const res = await service.adminSubscriptions();
     expect(res.pausedUsers).toEqual([{ id: 'p1' }]);
   });
@@ -61,7 +62,8 @@ describe('UsersService.adminSubscriptions (#1065)', () => {
     await service.adminSubscriptions();
     const paying = callWhere((w) => JSON.stringify(w).includes('"stripeSubscriptionStatus":"active"'));
     expect(paying.where.role).toEqual({ not: 'ADMIN' });
-    expect(prisma.user.count.mock.calls[0][0].where.role).toEqual({ not: 'ADMIN' });
+    // Le KPI compte exactement les comptes de la liste.
+    expect(prisma.user.count).toHaveBeenCalledWith({ where: paying.where });
   });
 
   it('essais et offerts : jamais un ADMIN', async () => {
