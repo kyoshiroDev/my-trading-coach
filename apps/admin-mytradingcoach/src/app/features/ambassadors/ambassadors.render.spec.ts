@@ -98,4 +98,31 @@ describe('AmbassadorsComponent', () => {
     fixture.detectChanges();
     expect(el.querySelector('[data-testid="revoke-error"]')?.textContent).toContain('pas ambassadeur');
   });
+
+  // A14 (#1065) : clic sur A puis B, les chiffres de A s'affichaient sous le titre de B.
+  it('A14 : la réponse tardive du détail de A n’est pas affichée sous B ; sélection gardée après paiement', async () => {
+    const BOB = { ...AMB, id: 'amb2', name: 'Bob', email: 'bob@example.com', referralCode: 'BOB', pendingPayout: 5 };
+    const fixture = TestBed.createComponent(AmbassadorsComponent);
+    fixture.detectChanges();
+    http.expectOne(`${environment.apiUrl}/admin/ambassadors`).flush({ data: [AMB, BOB] });
+    const reqA = http.expectOne(`${environment.apiUrl}/admin/ambassadors/amb1/stats`);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    (el.querySelectorAll('tbody tr')[1] as HTMLElement).click();
+    const reqB = http.expectOne(`${environment.apiUrl}/admin/ambassadors/amb2/stats`);
+    if (!reqA.cancelled) reqA.flush({ data: DETAIL });
+    fixture.detectChanges();
+    expect(el.textContent).not.toContain('19.60€)');
+    reqB.flush({ data: { ...DETAIL, referralCode: 'BOB', pendingPayout: 5 } });
+    fixture.detectChanges();
+    expect(el.textContent).toContain('Détail · Bob');
+    // Paiement de Bob : après rechargement, Bob reste sélectionné (avant : retour au premier).
+    (el.querySelectorAll('.pay-btn')[1] as HTMLButtonElement).click();
+    await tick();
+    http.expectOne(`${environment.apiUrl}/admin/ambassadors/amb2/pay-all`).flush({ data: { success: true } });
+    http.expectOne(`${environment.apiUrl}/admin/ambassadors`).flush({ data: [AMB, { ...BOB, pendingPayout: 0 }] });
+    http.expectOne(`${environment.apiUrl}/admin/ambassadors/amb2/stats`).flush({ data: { ...DETAIL, pendingPayout: 0 } });
+    fixture.detectChanges();
+    expect(el.textContent).toContain('Détail · Bob');
+  });
 });
