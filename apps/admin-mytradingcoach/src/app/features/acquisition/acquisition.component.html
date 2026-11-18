@@ -165,6 +165,10 @@
     </div>
   }
 
+  @if (funnelError()) {
+    <p class="err-text" role="alert" data-testid="funnel-error">L’entonnoir Premium et l’installation de l’app n’ont pas pu être chargés.</p>
+  }
+
   @if (funnel(); as f) {
     <div class="card funnel-card">
       <div class="card-head">
@@ -285,6 +289,9 @@
       </div>
     </div>
 
+    @if (methodsError()) {
+      <p class="err-text" role="alert" data-testid="methods-error">Les inscriptions par méthode n’ont pas pu être chargées.</p>
+    }
     @if (methods(); as m) {
       <div class="card" data-testid="signup-methods">
         <div class="card-head"><span class="card-label">Inscriptions par méthode</span><span class="card-label muted">hors démo et admin</span></div>
@@ -405,7 +412,7 @@
       <b>Premium</b> = abonnement Stripe en cours. Inscrits hors compte démo et comptes admin.
     </p>
   } @else if (error()) {
-    <div class="card"><div class="empty">⚠ {{ error() }}</div></div>
+    <mtc-error-state message="Le trafic et l’acquisition par source n’ont pas pu être chargés." (retry)="loadAcquisition()" />
   } @else {
     <div class="card"><div class="empty">Chargement…</div></div>
   }
