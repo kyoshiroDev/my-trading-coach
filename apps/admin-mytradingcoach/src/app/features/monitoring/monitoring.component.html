@@ -17,6 +17,13 @@
   @if (unreachable(); as msg) {
     <div class="srv-alert" role="alert">⚠ {{ msg }}</div>
   }
+  @if (pollError(); as msg) {
+    <div class="srv-alert" role="alert" data-testid="poll-error">
+      ⚠ {{ msg }}
+      @if (lastOkAt(); as at) { Données affichées : dernière lecture réussie à {{ at | date:'HH:mm:ss' }}. }
+      @else { Aucune donnée lue pour l’instant. }
+    </div>
+  }
   @if (readOnly()) {
     <div class="srv-note">{{ serverLabel() }} : lecture seule. Actions et logs désactivés depuis l'admin.</div>
   }
@@ -103,7 +110,9 @@
             <span><i class="ub-dot incident"></i> Incident</span>
             <span><i class="ub-dot maint"></i> Maintenance</span>
           </div>
-          @if (allUnknown()) {
+          @if (healthError()) {
+            <div class="uptime-note" role="alert" data-testid="health-error">L’historique de santé n’a pas pu être chargé. Recharge la page pour réessayer.</div>
+          } @else if (allUnknown()) {
             <div class="uptime-note">Pas encore de données : le suivi de santé démarre au prochain relevé quotidien.</div>
           }
         </div>
