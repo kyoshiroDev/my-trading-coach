@@ -13,7 +13,7 @@
       <div class="kpi"><div class="kpi-top purple"></div><div class="kpi-label">Accès manuels</div><div class="kpi-value purple">{{ d.betaTesters.length }}</div><div class="kpi-sub">bêta / accordés</div></div>
       <div class="kpi"><div class="kpi-top amber"></div><div class="kpi-label">MRR Stripe</div><div class="kpi-value amber">{{ stats()?.mrr ?? 0 }}€</div><div class="kpi-sub">réel</div></div>
       <div class="kpi"><div class="kpi-top teal"></div><div class="kpi-label">Fondateurs</div><div class="kpi-value teal">{{ founderLabel() }}</div>
-        <div class="kpi-sub">@if (founders(); as f) { {{ f.totals.active }} actifs · {{ f.offer.open ? 'offre ouverte' : 'offre fermée' }} } @else { indisponible }</div></div>
+        <div class="kpi-sub">@if (founders(); as f) { {{ f.totals.active }} actifs · offre {{ offerState(f.offer).label }} } @else { indisponible }</div></div>
     </div>
 
     <div class="section-tabs" role="tablist" aria-label="Abonnements">

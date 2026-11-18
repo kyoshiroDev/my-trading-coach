@@ -4,7 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { catchError, of, type Subscription } from 'rxjs';
 import { AdminApi, AdminFoundersData, AdminStats, AdminUser, SubscriptionsData } from '../../core/api/admin.api';
-import { realAmountLabel } from '../../core/utils/offers.util';
+import { founderOfferState, realAmountLabel } from '../../core/utils/offers.util';
 import { subscriptionState } from '@mtc/shared';
 import { FoundersTabComponent } from './founders-tab.component';
 import { PartnerCodesTabComponent } from './partner-codes-tab.component';
@@ -22,6 +22,8 @@ export type SubscriptionsTab = 'abonnements' | 'fondateurs' | 'codes';
   templateUrl: './subscriptions.component.html',
 })
 export class SubscriptionsComponent {
+  /** État affiché de l'offre fondateur (A11 #1065). */
+  protected readonly offerState = founderOfferState;
   private readonly adminApi = inject(AdminApi);
   private readonly destroyRef = inject(DestroyRef);
   private readonly route = inject(ActivatedRoute);

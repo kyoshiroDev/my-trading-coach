@@ -16,6 +16,7 @@ import {
 import { TRIAL_KPI_UNRELIABLE, isTrialKpiUnreliable } from '@mtc/shared';
 import { VpsApi, VpsStats, DockerContainer } from '../../core/api/vps.api';
 import { visiblePoll } from '../../core/utils/visible-poll';
+import { founderOfferState } from '../../core/utils/offers.util';
 import { ChartCanvasComponent } from '../../shared/components/chart-canvas/chart-canvas.component';
 import { RadialGaugeComponent } from '../../shared/components/radial-gauge/radial-gauge.component';
 import { CHART_COLORS, gridAxis, noLegend, type ChartTone } from '../../shared/charts/chart-theme';
@@ -28,6 +29,8 @@ import { CHART_COLORS, gridAxis, noLegend, type ChartTone } from '../../shared/c
   templateUrl: './dashboard.component.html',
 })
 export class DashboardComponent {
+  /** État affiché de l'offre fondateur (A11 #1065). */
+  protected readonly offerState = founderOfferState;
   private readonly adminApi = inject(AdminApi);
   private readonly vpsApi = inject(VpsApi);
   private readonly destroyRef = inject(DestroyRef);

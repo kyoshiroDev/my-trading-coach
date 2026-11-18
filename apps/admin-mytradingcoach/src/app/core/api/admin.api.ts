@@ -57,7 +57,8 @@ export interface AdminStats {
 export type FounderSeatStatus = 'ACTIVE' | 'LOST' | 'REFUNDED' | 'RELEASED';
 
 export interface AdminFoundersData {
-  offer: { open: boolean; endsAt: string | null; seatsTotal: number };
+  /** `open` = interrupteur ; `ended` = ouverte mais ne vend plus, date passée ou complet (A11 #1065). */
+  offer: { open: boolean; ended?: boolean; endsAt: string | null; seatsTotal: number };
   totals: {
     taken: number; active: number; lost: number; refunded: number; released: number; seatsLeft: number;
     byCta: { cta: string | null; count: number }[];

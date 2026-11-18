@@ -139,4 +139,16 @@ describe('SubscriptionsComponent', () => {
     expect(rows.length).toBe(1);
     expect(rows[0].textContent).toContain('pause@example.com');
   });
+
+  // A11 (#1065) : interrupteur ouvert mais l'offre ne vend plus → « offre terminée », jamais « ouverte ».
+  it('A11 : KPI Fondateurs « offre terminée » quand l’offre ne vend plus', async () => {
+    FOUNDERS.offer = { ...FOUNDERS.offer, ended: true } as typeof FOUNDERS.offer;
+    try {
+      const el = await render({ stripeUsers: [], betaTesters: [], total: 0, page: 1, limit: 20 });
+      expect(el.textContent).toContain('offre terminée');
+      expect(el.textContent).not.toContain('offre ouverte');
+    } finally {
+      FOUNDERS.offer = { open: true, endsAt: null, seatsTotal: 200 };
+    }
+  });
 });
