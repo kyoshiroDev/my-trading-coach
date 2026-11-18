@@ -1,17 +1,21 @@
 import { IsBoolean, IsEnum, IsInt, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
 import { normalizeUtm } from '../../auth/dto/register.dto';
-import { Plan, Role } from '@prisma/client';
+import { Role } from '@prisma/client';
 
 export class SetRoleDto {
   @IsEnum(Role)
   role!: Role;
 }
 
+/**
+ * Modale « Modifier » de l'admin (A1/B2 #1064, décision du 16/11) : le nom et « compte interne »
+ * seulement. Le rôle passe par `PATCH :id/role` et les routes bêta (setRole garde l'invariant
+ * ambassadeur = code), le plan par « Offrir Premium » ou le rôle bêta ; un abonné Stripe n'est
+ * jamais modifié à la main. `role` ou `plan` envoyés → 400 (forbidNonWhitelisted).
+ */
 export class AdminUpdateUserDto {
   @IsOptional() @IsString() @MaxLength(100) name?: string;
-  @IsOptional() @IsEnum(Plan) plan?: Plan;
-  @IsOptional() @IsEnum(Role) role?: Role;
   /** Compte interne (#823) : exclu des statistiques admin. */
   @IsOptional() @IsBoolean() isInternal?: boolean;
 }

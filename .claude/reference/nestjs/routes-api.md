@@ -114,9 +114,13 @@ GET    /api/admin/users/stats          ADMIN → KPIs (MRR, inscrits, essais) �
 GET    /api/admin/users/online         ADMIN                                │ (littéraux AVANT :id)
 GET    /api/admin/users/subscriptions  ADMIN → abonnements                  │
 GET    /api/admin/users/:id            ADMIN → fiche (usage.currency + sessions[].currency, #947) │
-PATCH  /api/admin/users/:id(/role)     ADMIN · DELETE /api/admin/users/:id  │
+PATCH  /api/admin/users/:id            ADMIN → {name?, isInternal?} seulement (rôle/plan → 400, A1/B2 #1064) │
+PATCH  /api/admin/users/:id/role       ADMIN · DELETE /api/admin/users/:id (démo → 409, B9) │
 POST   /api/admin/users/:id/offer-premium ADMIN → Premium offert {days?} 1-90 │
-                                       (défaut 30, prolonge, 409 si Stripe/PREMIUM/rôle/démo) ┘
+                                       (défaut 30, prolonge, 409 si Stripe/PREMIUM/rôle/démo) │
+DELETE /api/admin/users/:id/offer-premium ADMIN → retire le Premium offert (B10 #1064) │
+                                       → {trialEndsAt} (essai d'inscription rendu) ou null ; 409 si Stripe/aucune offre/démo │
+POST|DELETE /api/admin/users/:id/beta  ADMIN → rôle bêta-testeur (boutons de la fiche) ┘
 GET    /api/admin/ambassadors          ADMIN → liste                        ┐
 GET    /api/admin/ambassadors/:id/stats ADMIN                               │ AdminAmbassadorsController
 PATCH  /api/admin/ambassadors/:id/pay-all ADMIN                             │

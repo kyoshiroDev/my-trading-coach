@@ -17,6 +17,7 @@ import { UsersService } from '../users/users.service';
 import { AdminListQueryDto, AdminUpdateUserDto, OfferPremiumDto, SetRoleDto } from '../users/dto/admin-user.dto';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { UserDetailService } from './user-detail.service';
+import type { AdminBetaRoleResponse } from '@mtc/shared';
 
 /**
  * Gestion des utilisateurs par l'admin : `/admin/users/*`.
@@ -88,14 +89,21 @@ export class AdminUsersController {
     return this.usersService.offerPremium(id, dto.days, admin.id);
   }
 
+  /** Retire un Premium offert par l'admin en cours (B10 #1064) ; jamais un abonnement Stripe. */
+  @Delete(':id/offer-premium')
+  @HttpCode(HttpStatus.OK)
+  removeOfferedPremium(@Param('id') id: string, @CurrentUser() admin: { id: string }) {
+    return this.usersService.removeOfferedPremium(id, admin.id);
+  }
+
   @Post(':id/beta')
-  async assignBetaRole(@Param('id') id: string) {
+  async assignBetaRole(@Param('id') id: string): Promise<AdminBetaRoleResponse> {
     await this.usersService.setRole(id, 'BETA_TESTER');
     return { id, role: 'BETA_TESTER' };
   }
 
   @Delete(':id/beta')
-  async removeBetaRole(@Param('id') id: string) {
+  async removeBetaRole(@Param('id') id: string): Promise<AdminBetaRoleResponse> {
     await this.usersService.removeBetaRole(id);
     return { id, role: 'USER' };
   }

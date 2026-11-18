@@ -103,7 +103,9 @@
   d'un code est faux (le bug : Lucas le compte démo et un BETA_TESTER remontaient dans
   la liste admin). Corollaire : un `AMBASSADOR` doit **toujours** avoir un code — les
   changements de rôle passent par `AmbassadorService.promote()` / `revoke()`, jamais par
-  un `user.update({ data: { role } })` direct. `UsersService.setRole` y délègue.
+  un `user.update({ data: { role } })` direct. `UsersService.setRole` y délègue ; la modale
+  « Modifier » de l'admin (`PATCH /admin/users/:id`) n'accepte plus `role` ni `plan` (A1/B2 #1064).
+  Compte démo : jamais supprimé, modifié, changé de rôle ni promu depuis l'admin (409, B9 #1064).
   `promote` refuse ADMIN / BETA_TESTER (400, jamais rétrogradés) ; `revoke` refuse tout rôle autre
   qu'AMBASSADOR (#1013 A6). `GET /ambassador/new-count?since=` invalide → 400.
   Compte démo : jamais parrain. `GET /referral/me` ne lui écrit pas de code (réponse vide), l'inscription

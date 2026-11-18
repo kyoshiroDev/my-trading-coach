@@ -113,21 +113,12 @@
             <label for="edit-name">Nom</label>
             <input id="edit-name" class="field-input" type="text" [(ngModel)]="editName" placeholder="Nom complet" />
           </div>
-          <div class="field">
-            <label for="modal-edit-plan">Plan</label>
-            <select id="modal-edit-plan" class="field-select" [(ngModel)]="editPlan">
-              <option value="FREE">FREE</option>
-              <option value="PREMIUM">PREMIUM · {{ pricing.PREMIUM.monthly }}€/mois</option>
-            </select>
-          </div>
-          <div class="field">
-            <label for="modal-edit-role">Rôle</label>
-            <select id="modal-edit-role" class="field-select" [(ngModel)]="editRole">
-              <option value="USER">USER · Utilisateur standard</option>
-              <option value="BETA_TESTER">BETA_TESTER · Premium offert</option>
-              <option value="AMBASSADOR">AMBASSADOR · Programme ambassadeur</option>
-            </select>
-          </div>
+          <label class="field-check" for="edit-internal">
+            <input id="edit-internal" type="checkbox" [(ngModel)]="editInternal" />
+            <span>Compte interne <span class="field-hint">hors statistiques</span></span>
+          </label>
+          @if (editError(); as err) { <p class="modal-error" role="alert" data-testid="edit-error">{{ err }}</p> }
+          <p class="modal-note">Rôle et plan&nbsp;: depuis la fiche de l'utilisateur (bêta-testeur, Premium offert) ou la page Ambassadeurs.</p>
         </div>
         <div class="modal-footer">
           <button class="btn-cancel" (click)="closeEdit()">Annuler</button>

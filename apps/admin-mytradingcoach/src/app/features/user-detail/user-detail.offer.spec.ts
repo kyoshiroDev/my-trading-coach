@@ -245,3 +245,120 @@ describe('offerBlockReason', () => {
     expect(offerBlockReason(makeData({ subscriptionStatus: 'canceled' }).identity)).toBeNull();
   });
 });
+
+const DAY_MS = 86_400_000;
+const fr = (ms: number) => new Date(ms).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+
+/**
+ * A6 (#1064) : offrir 1 mois pendant l'essai d'inscription annonçait « fin le » maintenant + 30 j,
+ * alors que l'API prolonge à partir de la fin de l'essai (`trialEndsAt`).
+ */
+describe('Fiche admin — date de fin annoncée (A6 #1064)', () => {
+  beforeEach(() => { TestBed.resetTestingModule(); vi.clearAllMocks(); });
+  afterEach(() => TestBed.inject(HttpTestingController).verify());
+
+  it('essai d’inscription en cours : fin = fin de l’essai + 30 jours, comme l’API', async () => {
+    confirm.ask.mockResolvedValue(false);
+    const trialEnd = Date.now() + 4 * DAY_MS;
+    const { fixture, button } = await render(makeData({ trialEndsAt: new Date(trialEnd).toISOString(), trialSource: 'SIGNUP' }));
+    button().click();
+    await fixture.whenStable();
+    expect(confirm.ask.mock.calls[0][0].message).toContain(`Fin le ${fr(trialEnd + 30 * DAY_MS)}.`);
+  });
+});
+
+/** B10 (#1064, décision du 16/11) : « Retirer le Premium offert », seulement pour un Premium offert par l'admin. */
+describe('Fiche admin — retirer le Premium offert (B10 #1064)', () => {
+  beforeEach(() => { TestBed.resetTestingModule(); vi.clearAllMocks(); });
+  afterEach(() => TestBed.inject(HttpTestingController).verify());
+  const offeredData = () => makeData({
+    trialEndsAt: new Date(Date.now() + 20 * DAY_MS).toISOString(), trialSource: 'ADMIN', offeredPremium: true,
+  });
+  const removeBtn = (el: HTMLElement) => el.querySelector('[data-testid="remove-offer"]') as HTMLButtonElement | null;
+
+  it('sans Premium offert (gratuit, essai d’inscription) : aucun bouton', async () => {
+    expect(removeBtn((await render(makeData())).el)).toBeNull();
+    TestBed.resetTestingModule();
+    const signup = makeData({ trialEndsAt: new Date(Date.now() + 4 * DAY_MS).toISOString(), trialSource: 'SIGNUP' });
+    expect(removeBtn((await render(signup)).el)).toBeNull();
+  });
+
+  it('Premium offert pendant une pause Stripe (past_due) : aucun bouton, comme l’API', async () => {
+    const paused = { ...offeredData(), identity: { ...offeredData().identity, subscriptionStatus: 'past_due' } };
+    expect(removeBtn((await render(paused)).el)).toBeNull();
+  });
+
+  it('Premium offert : confirmation, DELETE, toast et rafraîchissement', async () => {
+    confirm.ask.mockResolvedValue(true);
+    const { fixture, httpMock, el } = await render(offeredData());
+    removeBtn(el)!.click();
+    await fixture.whenStable();
+    expect(confirm.ask).toHaveBeenCalledWith(expect.objectContaining({ title: 'Retirer le Premium offert ?' }));
+    const req = httpMock.expectOne(`${URL}/offer-premium`);
+    expect(req.request.method).toBe('DELETE');
+    req.flush({ data: { trialEndsAt: null } });
+    fixture.detectChanges();
+    httpMock.expectOne(URL).flush({ data: makeData() });
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(el.textContent).toContain('Premium offert retiré');
+  });
+
+  it('annuler la confirmation : aucun appel', async () => {
+    confirm.ask.mockResolvedValue(false);
+    const { fixture, httpMock, el } = await render(offeredData());
+    removeBtn(el)!.click();
+    await fixture.whenStable();
+    httpMock.expectNone(`${URL}/offer-premium`);
+  });
+});
+
+/**
+ * Rôle bêta-testeur depuis la fiche (#1064) : la modale « Modifier » ne change plus le rôle
+ * (décision du 16/11) ; les routes POST/DELETE :id/beta existaient sans bouton.
+ */
+describe('Fiche admin — rôle bêta-testeur (#1064)', () => {
+  beforeEach(() => { TestBed.resetTestingModule(); vi.clearAllMocks(); });
+  afterEach(() => TestBed.inject(HttpTestingController).verify());
+  const betaBtn = (el: HTMLElement) => el.querySelector('[data-testid="beta-toggle"]') as HTMLButtonElement;
+
+  it('USER : « Passer bêta-testeur » → confirmation puis POST', async () => {
+    confirm.ask.mockResolvedValue(true);
+    const { fixture, httpMock, el } = await render(makeData());
+    expect(betaBtn(el).textContent?.trim()).toBe('Passer bêta-testeur');
+    betaBtn(el).click();
+    await fixture.whenStable();
+    const req = httpMock.expectOne(`${URL}/beta`);
+    expect(req.request.method).toBe('POST');
+    req.flush({ data: { id: 'u1', role: 'BETA_TESTER' } });
+    fixture.detectChanges();
+    httpMock.expectOne(URL).flush({ data: makeData({ role: 'BETA_TESTER' }) });
+  });
+
+  it('BETA_TESTER : « Retirer bêta » → confirmation puis DELETE', async () => {
+    confirm.ask.mockResolvedValue(true);
+    const { fixture, httpMock, el } = await render(makeData({ role: 'BETA_TESTER' }));
+    expect(betaBtn(el).textContent?.trim()).toBe('Retirer bêta');
+    betaBtn(el).click();
+    await fixture.whenStable();
+    const req = httpMock.expectOne(`${URL}/beta`);
+    expect(req.request.method).toBe('DELETE');
+    req.flush({ data: { id: 'u1', role: 'USER' } });
+    fixture.detectChanges();
+    httpMock.expectOne(URL).flush({ data: makeData() });
+  });
+
+  it.each([
+    ['ambassadeur (le code serait retiré)', { role: 'AMBASSADOR' as const }],
+    ['démo', { isDemo: true }],
+  ])('bouton désactivé avec info-bulle : %s', async (_l, patch) => {
+    const { el } = await render(makeData(patch));
+    expect(betaBtn(el).disabled).toBe(true);
+    expect(betaBtn(el).getAttribute('title')).toBeTruthy();
+  });
+
+  it('ADMIN : aucun bouton', async () => {
+    const { el } = await render(makeData({ role: 'ADMIN' }));
+    expect(betaBtn(el)).toBeNull();
+  });
+});

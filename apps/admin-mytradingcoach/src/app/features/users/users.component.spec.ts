@@ -155,3 +155,76 @@ describe('UsersComponent — inscrits d’une campagne', () => {
     expect(el.querySelector('[data-testid="badge-signup-trial"]')).toBeNull();
   });
 });
+
+/**
+ * A1 = S5 = B1 et B2 (#1064) : la modale « Modifier » envoyait toujours `role` et `plan`, écrits en
+ * direct par l'API (ambassadeur sans code, abonné Stripe passé FREE). Décision du 16/11 : la modale
+ * ne garde que le nom et « compte interne », et n'envoie que ce qui a changé.
+ */
+describe('UsersComponent — modale « Modifier » (A1/B2 #1064)', () => {
+  beforeEach(() => {
+    TestBed.resetTestingModule();
+    query = new BehaviorSubject(convertToParamMap({}));
+  });
+  afterEach(() => TestBed.inject(HttpTestingController).verify());
+
+  async function openModal(over: Partial<AdminUser> = {}) {
+    const { fixture, http } = setup();
+    await flushList(fixture, http, [user({ role: 'AMBASSADOR', plan: 'PREMIUM', ...over })]);
+    (fixture.nativeElement.querySelector('button[aria-label="Modifier"]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    return { fixture, http, modal: fixture.nativeElement.querySelector('[role="dialog"]') as HTMLElement };
+  }
+
+  it('ni plan ni rôle dans la modale ; nom et compte interne présents', async () => {
+    const { modal } = await openModal();
+    expect(modal.querySelector('#modal-edit-plan')).toBeNull();
+    expect(modal.querySelector('#modal-edit-role')).toBeNull();
+    expect(modal.querySelector('#edit-name')).not.toBeNull();
+    expect(modal.querySelector('#edit-internal')).not.toBeNull();
+  });
+
+  it('enregistrer : seulement les champs modifiés, jamais role ni plan', async () => {
+    const { fixture, http, modal } = await openModal({ isInternal: false });
+    const internal = modal.querySelector('#edit-internal') as HTMLInputElement;
+    internal.click();
+    fixture.detectChanges();
+    (modal.querySelector('.btn-save') as HTMLButtonElement).click();
+    const req = http.expectOne((r) => r.method === 'PATCH' && r.url === `${USERS_URL}/u1`);
+    expect(req.request.body).toEqual({ isInternal: true });
+    req.flush({ data: user({ isInternal: true }) });
+  });
+
+  it('refus de l’API : message dans la modale, qui reste ouverte', async () => {
+    const { fixture, http, modal } = await openModal({ isInternal: false });
+    (modal.querySelector('#edit-internal') as HTMLInputElement).click();
+    fixture.detectChanges();
+    (modal.querySelector('.btn-save') as HTMLButtonElement).click();
+    http.expectOne((r) => r.method === 'PATCH').flush(
+      { message: 'Compte démo : action impossible depuis l’admin.' }, { status: 409, statusText: 'Conflict' });
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('[data-testid="edit-error"]')?.textContent).toContain('Compte démo');
+    expect(fixture.nativeElement.querySelector('[role="dialog"]')).not.toBeNull();
+  });
+
+  it('nom vidé : message, aucun appel', async () => {
+    const { fixture, http, modal } = await openModal();
+    const input = modal.querySelector('#edit-name') as HTMLInputElement;
+    input.value = '  ';
+    input.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    (modal.querySelector('.btn-save') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    http.expectNone((r) => r.method === 'PATCH');
+    expect(fixture.nativeElement.querySelector('[data-testid="edit-error"]')?.textContent).toContain('Le nom ne peut pas être vide.');
+  });
+
+  it('rien de modifié : aucun appel, la modale se ferme', async () => {
+    const { fixture, http, modal } = await openModal();
+    (modal.querySelector('.btn-save') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    http.expectNone((r) => r.method === 'PATCH');
+    expect(fixture.nativeElement.querySelector('[role="dialog"]')).toBeNull();
+  });
+});

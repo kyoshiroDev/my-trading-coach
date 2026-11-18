@@ -84,7 +84,8 @@ canActivate(ctx: ExecutionContext): boolean {
   `cta` du checkout (`CreateCheckoutDto`) : une valeur hors `OFFER_CTAS` est IGNORÉE (`@Transform` →
   `undefined`), jamais un 400 qui bloque le paiement.
   Premium offert par l'admin (`offerPremium`) : pose le rôle Discord Premium (si Discord lié, panne non
-  bloquante) et vide `billing:status:<id>`. 409 si abonnement `active` / `trialing` (une réservation
+  bloquante) et vide `billing:status:<id>`. Même réalignement (`realignPremiumAccess`, A2/B3 #1064)
+  après tout `setRole` (bêta-testeur, ambassadeur) et après `removeOfferedPremium` (B10). 409 si abonnement `active` / `trialing` (une réservation
   est en `trialing`) ou `past_due` / `unpaid` (« Paiement Stripe en attente : régler d'abord
   l'abonnement »). La fiche admin (`GET /admin/users/:id`) expose `offer.founder.reserved` et
   `firstChargeAt` ; l'admin affiche la raison sous le bouton désactivé (réservation : date du premier

@@ -12,6 +12,7 @@ import { isPayingReferral, referralMonthlyCommission } from './ambassador-commis
 import { roundCents } from '@mtc/shared';
 import { emailEquals } from '../../common/utils/email.util';
 import { maskPseudo } from '../referral/mask-pseudo';
+import { DEMO_ACCOUNT_LOCKED } from '../users/demo-account-locked';
 
 // Lien de parrainage : même format que celui affiché par le dashboard ambassadeur.
 const REFERRAL_BASE = 'https://mytradingcoach.app';
@@ -88,10 +89,14 @@ export class AmbassadorService {
     const user = await this.prisma.user.findFirst({
       where: { email: emailEquals(email) },
       orderBy: { createdAt: 'asc' },
-      select: { id: true, name: true, email: true, referralCode: true, role: true },
+      select: { id: true, name: true, email: true, referralCode: true, role: true, isDemo: true },
     });
     if (!user) {
       throw new NotFoundException('Aucun utilisateur avec cet email');
+    }
+    // B9 (#1064) : le compte démo n'est jamais promu (même garde que setRole).
+    if (user.isDemo) {
+      throw new ConflictException(DEMO_ACCOUNT_LOCKED);
     }
     // Même garde que setRole (#993) : promouvoir un ADMIN ou un BETA_TESTER le rétrogradait.
     if (user.role === Role.ADMIN || user.role === Role.BETA_TESTER) {
