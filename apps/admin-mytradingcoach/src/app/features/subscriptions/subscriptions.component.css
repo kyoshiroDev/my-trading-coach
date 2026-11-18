@@ -5,3 +5,9 @@
 .offer-tag { margin-left: 4px; }
 .section-tabs { margin-bottom: 14px; }
 .section-tabs .tab { background: none; border-top: none; border-left: none; border-right: none; font-family: inherit; }
+
+/* Pagination des abonnés payants (A8 #1065) : même rendu que la liste Utilisateurs. */
+.pagination { display: flex; align-items: center; justify-content: center; gap: 16px; padding: 12px 16px; border-top: 1px solid var(--border); }
+.btn-page { background: var(--bg3); border: 1px solid var(--border); color: var(--text2); border-radius: 6px; padding: 5px 12px; font-size: 11px; font-family: var(--sans); cursor: pointer; transition: all .1s; }
+.btn-page:hover:not(:disabled) { border-color: var(--blue); color: var(--blue); }
+.btn-page:disabled { opacity: .4; cursor: not-allowed; }

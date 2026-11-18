@@ -4,7 +4,11 @@
   @if (detail.isLoading()) {
     <div class="card"><div class="empty">Chargement…</div></div>
   } @else if (detail.error()) {
-    <div class="card"><div class="empty">⚠ Utilisateur introuvable</div></div>
+    @if (notFound()) {
+      <div class="card"><div class="empty">⚠ Utilisateur introuvable</div></div>
+    } @else {
+      <mtc-error-state message="La fiche n’a pas pu être chargée." (retry)="detail.reload()" />
+    }
   } @else if (data(); as d) {
 
     <!-- En-tête identité -->

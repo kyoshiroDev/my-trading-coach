@@ -2,24 +2,29 @@ import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signa
 import { DatePipe } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { catchError, of } from 'rxjs';
+import { catchError, of, type Subscription } from 'rxjs';
 import { AdminApi, AdminFoundersData, AdminStats, AdminUser, SubscriptionsData } from '../../core/api/admin.api';
-import { realAmountLabel } from '../../core/utils/offers.util';
+import { founderOfferState, realAmountLabel } from '../../core/utils/offers.util';
 import { subscriptionState } from '@mtc/shared';
 import { FoundersTabComponent } from './founders-tab.component';
 import { PartnerCodesTabComponent } from './partner-codes-tab.component';
+import { ErrorStateComponent } from '@mtc/front-ui';
+
+const frDate = (d: Date) => d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'Europe/Paris' });
 
 /** Onglets de la page : `?filtre=fondateurs` (KPI du dashboard) ou `?filtre=codes`. */
 export type SubscriptionsTab = 'abonnements' | 'fondateurs' | 'codes';
 
 @Component({
   selector: 'mtc-admin-subscriptions',
-  imports: [DatePipe, FoundersTabComponent, PartnerCodesTabComponent],
+  imports: [DatePipe, ErrorStateComponent, FoundersTabComponent, PartnerCodesTabComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './subscriptions.component.css',
   templateUrl: './subscriptions.component.html',
 })
 export class SubscriptionsComponent {
+  /** État affiché de l'offre fondateur (A11 #1065). */
+  protected readonly offerState = founderOfferState;
   private readonly adminApi = inject(AdminApi);
   private readonly destroyRef = inject(DestroyRef);
   private readonly route = inject(ActivatedRoute);
@@ -43,19 +48,68 @@ export class SubscriptionsComponent {
     }),
   );
 
+  // ── Abonnés payants paginés (A8 #1065) ──
+  protected readonly page = signal(1);
+  protected readonly stripeTotal = computed(() => this.data()?.stripeTotal ?? this.data()?.stripeUsers.length ?? 0);
+  protected readonly totalPages = computed(() => Math.max(1, Math.ceil(this.stripeTotal() / (this.data()?.limit || 20))));
+
+  /**
+   * Accès d'un compte de « Accès manuels » : la source retenue par subscriptionState (le rôle passe
+   * avant le plan), jamais « FREE » en badge Premium (règle 9 de plans.md).
+   */
+  protected manualAccess(u: AdminUser): string {
+    return subscriptionState(u).kind === 'role' ? 'Premium par le rôle bêta' : 'Premium accordé';
+  }
+
+  /**
+   * Statut et échéance d'un abonné payant (A9 #1065), lus par subscriptionState : une fin
+   * programmée = « résilié, fin le », jamais « actif » avec une date de renouvellement.
+   */
+  protected payingStatus(u: AdminUser): { label: string; ended: boolean; due: string | null } {
+    const s = subscriptionState(u);
+    if (s.cancelAt) return { label: 'résilié', ended: true, due: `fin le ${frDate(s.cancelAt)}` };
+    return { label: 'actif', ended: false, due: u.stripeCurrentPeriodEnd ? frDate(new Date(u.stripeCurrentPeriodEnd)) : null };
+  }
+
+  protected changePage(p: number): void {
+    if (p < 1 || p > this.totalPages() || p === this.page()) return;
+    this.loadSubscriptions(p);
+  }
+
   protected readonly founderLabel = computed(() => {
     const f = this.founders();
     return f ? `${f.totals.taken} / ${f.offer.seatsTotal}` : '-';
   });
 
   constructor() {
-    this.adminApi.subscriptions().pipe(catchError(() => of(null)), takeUntilDestroyed(this.destroyRef))
-      .subscribe((r) => { if (r) this.data.set(r.data); this.loading.set(false); });
+    this.loadSubscriptions();
     this.adminApi.stats().pipe(catchError(() => of(null)), takeUntilDestroyed(this.destroyRef))
       .subscribe((r) => { if (r) this.stats.set(r.data); });
     this.adminApi.founders().pipe(catchError(() => of(null)), takeUntilDestroyed(this.destroyRef))
       .subscribe((r) => this.founders.set(r?.data ?? null));
   }
+
+  /**
+   * Page demandée : `page` ne change qu'au succès. En échec, la page affichée garde son numéro et
+   * `pageError` le dit (#1065) ; sans données du tout, l'écran passe en erreur avec Réessayer.
+   */
+  protected loadSubscriptions(p = this.page()): void {
+    this.subsRequest?.unsubscribe(); // une seule page à la fois : la plus récente gagne
+    this.pageError.set(null);
+    this.subsRequest = this.adminApi.subscriptions(p).pipe(catchError(() => of(null)), takeUntilDestroyed(this.destroyRef))
+      .subscribe((r) => {
+        if (r) {
+          this.data.set(r.data);
+          this.page.set(p);
+        } else if (this.data()) {
+          this.pageError.set(p);
+        }
+        this.loading.set(false);
+      });
+  }
+  /** Page qui n'a pas pu être chargée (la page affichée reste la précédente). */
+  protected readonly pageError = signal<number | null>(null);
+  private subsRequest?: Subscription;
 
   protected setTab(tab: SubscriptionsTab): void {
     this.tab.set(tab);

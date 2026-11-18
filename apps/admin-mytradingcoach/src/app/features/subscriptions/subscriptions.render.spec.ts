@@ -4,6 +4,7 @@
  */
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { TestBed } from '@angular/core/testing';
+import { ApplicationRef } from '@angular/core';
 import { provideHttpClient } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
@@ -78,9 +79,24 @@ describe('SubscriptionsComponent', () => {
     ]);
   });
 
-  it('panne de l’API : message explicite', async () => {
+  it('panne de l’API : message explicite, Réessayer recharge', async () => {
     const el = await render('error');
     expect(el.textContent).toContain('Abonnements indisponibles');
+    (el.querySelector('[data-testid="error-state-retry"]') as HTMLButtonElement).click();
+    http.expectOne((r) => r.url === `${environment.apiUrl}/admin/users/subscriptions`);
+  });
+
+  // Vérificateur angular (#1065) : page suivante en échec → l'ancienne page restait affichée sous le
+  // nouveau numéro, sans erreur.
+  it('A8 : page suivante en échec, numéro inchangé et erreur affichée', async () => {
+    const page1 = Array.from({ length: 20 }, (_, i) => user(`m${i}`, 'month'));
+    const el = await render({ stripeUsers: page1, stripeTotal: 57, betaTesters: [], total: 57, page: 1, limit: 20 });
+    (el.querySelector('[data-testid="subs-next"]') as HTMLButtonElement).click();
+    http.expectOne((r) => r.url === `${environment.apiUrl}/admin/users/subscriptions`)
+      .flush({}, { status: 500, statusText: 'Server Error' });
+    await TestBed.inject(ApplicationRef).whenStable();
+    expect(el.querySelector('.pagination')?.textContent).toContain('1 / 3');
+    expect(el.querySelector('[data-testid="subs-page-error"]')?.textContent).toContain('page 2');
   });
 
   it('montant RÉEL (#525) : fondateur 29 €, code partenaire en cours à son prix, avec leur étiquette', async () => {
@@ -105,5 +121,70 @@ describe('SubscriptionsComponent', () => {
     expect(el.textContent).toContain('37 / 200');
     expect(el.textContent).toContain('35 actifs · offre ouverte');
   });
-});
 
+  // A8 (#1065) : 20 lignes renvoyées, KPI « Stripe actifs » = 20, aucune pagination.
+  it('A8 : KPI sur le total des abonnés, pagination vers la page 2', async () => {
+    const page1 = Array.from({ length: 20 }, (_, i) => user(`m${i}`, 'month'));
+    const el = await render({ stripeUsers: page1, stripeTotal: 57, betaTesters: [], total: 57, page: 1, limit: 20 });
+    expect(el.querySelector('[data-testid="kpi-stripe"]')?.textContent?.trim()).toBe('57');
+    (el.querySelector('[data-testid="subs-next"]') as HTMLButtonElement).click();
+    const req = http.expectOne((r) => r.url === `${environment.apiUrl}/admin/users/subscriptions`);
+    expect(req.request.params.get('page')).toBe('2');
+    req.flush({ data: { stripeUsers: [user('p2', 'year')], stripeTotal: 57, betaTesters: [], total: 57, page: 2, limit: 20 } });
+  });
+
+  // A9 (#1065) : abonné résilié affiché « actif » avec une date de « Renouvellement ».
+  it('A9 : abonné résilié = « résilié », fin affichée, jamais « actif »', async () => {
+    const end = '2099-12-01T00:00:00.000Z';
+    const el = await render({
+      stripeUsers: [{ ...user('r', 'month'), stripeSubscriptionStatus: 'active', stripeCancelAt: end }],
+      stripeTotal: 1, betaTesters: [], total: 1, page: 1, limit: 20,
+    });
+    const status = el.querySelector('td[data-label="Statut"]')?.textContent?.trim();
+    expect(status).toBe('résilié');
+    expect(el.querySelector('td[data-label="Échéance"]')?.textContent?.trim()).toBe('fin le 01/12/2099');
+  });
+
+  // A10 (#1065) : abonnements en pause nulle part.
+  it('A10 : bloc « En pause » avec les abonnements past_due / unpaid', async () => {
+    const el = await render({
+      stripeUsers: [], stripeTotal: 0, betaTesters: [], total: 0, page: 1, limit: 20,
+      pausedUsers: [{ ...user('pause', 'month'), stripeSubscriptionStatus: 'past_due' }],
+    });
+    const rows = el.querySelectorAll('[data-testid="paused-row"]');
+    expect(rows.length).toBe(1);
+    expect(rows[0].textContent).toContain('pause@example.com');
+    // Libellé français, jamais la valeur Stripe brute (vérificateur design #1065).
+    expect(rows[0].textContent).toContain('paiement en retard');
+    expect(rows[0].textContent).not.toContain('past_due');
+  });
+
+  // Règle 9 de plans.md : un bêta-testeur au plan FREE a l'accès Premium par son rôle ; jamais « FREE »
+  // dans un badge Premium.
+  it('A10 : accès manuels, accès réel affiché (rôle bêta ou Premium accordé)', async () => {
+    const el = await render({
+      stripeUsers: [], stripeTotal: 0, total: 2, page: 1, limit: 20,
+      betaTesters: [
+        { ...user('beta', null), plan: 'FREE', role: 'BETA_TESTER' },
+        { ...user('offert', null), plan: 'PREMIUM', role: 'USER' },
+        // Bêta-testeur au plan PREMIUM : l'accès vient du rôle (subscriptionState teste le rôle d'abord).
+        { ...user('beta-premium', null), plan: 'PREMIUM', role: 'BETA_TESTER' },
+      ],
+    });
+    const access = [...el.querySelectorAll('[data-testid="manual-access"]')].map((c) => c.textContent?.trim());
+    expect(access).toEqual(['Premium par le rôle bêta', 'Premium accordé', 'Premium par le rôle bêta']);
+    expect(el.textContent).not.toContain('FREE');
+  });
+
+  // A11 (#1065) : interrupteur ouvert mais l'offre ne vend plus → « offre terminée », jamais « ouverte ».
+  it('A11 : KPI Fondateurs « offre terminée » quand l’offre ne vend plus', async () => {
+    FOUNDERS.offer = { ...FOUNDERS.offer, ended: true } as typeof FOUNDERS.offer;
+    try {
+      const el = await render({ stripeUsers: [], betaTesters: [], total: 0, page: 1, limit: 20 });
+      expect(el.textContent).toContain('offre terminée');
+      expect(el.textContent).not.toContain('offre ouverte');
+    } finally {
+      FOUNDERS.offer = { open: true, endsAt: null, seatsTotal: 200 };
+    }
+  });
+});

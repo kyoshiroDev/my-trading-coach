@@ -732,27 +732,34 @@ export class UsersService {
     // Abonnés payants = abonnement Stripe `active` (hors démo, #828) : une réservation fondateur ou un
     // essai d'abonnement (`trialing`) ne paie pas encore, il va dans « Essais et offerts ».
     const now = new Date();
-    const stripeWhere: Prisma.UserWhereInput = { isDemo: false, ...subscriptionStateWhere('paying', now) };
+    // Hors ADMIN aussi (règle 9 de plans.md) : le KPI « Stripe actifs » et le MRR (REAL_USERS_WHERE)
+    // comptent les mêmes comptes.
+    const stripeWhere: Prisma.UserWhereInput = { isDemo: false, role: { not: Role.ADMIN }, ...subscriptionStateWhere('paying', now) };
     // Essais et offerts (#828) : essai d'inscription, essai d'abonnement, Premium offert par l'admin.
     const trialWhere: Prisma.UserWhereInput = {
-      AND: [{ isDemo: false }, subscriptionStatesWhere(['signup_trial', 'subscription_trial', 'offered'], now)],
+      AND: [{ isDemo: false }, { role: { not: Role.ADMIN } }, subscriptionStatesWhere(['signup_trial', 'subscription_trial', 'offered'], now)],
     };
-    // « Accès manuels » = accès Premium octroyé SANS abonnement Stripe
-    // (bêta, ambassadeur, comp) : pas seulement le rôle BETA_TESTER. Hors démo.
-    const manualWhere = {
-      isDemo: false,
-      plan: 'PREMIUM' as Plan,
-      stripeInterval: null,
+    // « Accès manuels » (A10 #1065) = Premium sans abonnement ni essai : rôle bêta-testeur (quel que
+    // soit le plan) ou plan PREMIUM accordé à la main, mêmes états que subscriptionState. Hors démo et
+    // hors ADMIN (l'équipe, déjà hors statistiques). Avant : plan PREMIUM exigé, bêtas FREE absents.
+    const manualWhere: Prisma.UserWhereInput = {
+      AND: [{ isDemo: false }, { role: { not: Role.ADMIN } }, subscriptionStatesWhere(['role', 'manual'], now)],
     };
-    const [stripeUsers, stripeTotal, betaTesters, trialUsers] = await Promise.all([
+    // En pause (past_due / unpaid, A10) : n'apparaissaient nulle part.
+    const pausedWhere: Prisma.UserWhereInput = { isDemo: false, role: { not: Role.ADMIN }, ...subscriptionStateWhere('paused', now) };
+    const [stripeUsers, stripeTotal, betaTesters, trialUsers, pausedUsers] = await Promise.all([
       this.prisma.user.findMany({
         where: stripeWhere,
         skip,
         take: limit,
         orderBy: { stripeCurrentPeriodEnd: 'desc' },
         // Montant réellement payé (#525) : place fondateur ou code partenaire de l'abonné.
+        // Fin programmée et statut (A9 #1065) : un abonné résilié n'est pas « actif, renouvelé le ».
         select: {
           ...userSelect,
+          stripeSubscriptionStatus: true,
+          stripeCancelAt: true,
+          trialSource: true,
           founderSeat: { select: { number: true, status: true } },
           partnerRedemption: {
             select: {
@@ -774,14 +781,23 @@ export class UsersService {
         take: TRIAL_LIST_MAX,
         select: { ...userSelect, trialSource: true, stripeSubscriptionStatus: true, stripeCancelAt: true },
       }),
+      this.prisma.user.findMany({
+        where: pausedWhere,
+        orderBy: { stripeCurrentPeriodEnd: 'desc' },
+        take: TRIAL_LIST_MAX,
+        select: { ...userSelect, trialSource: true, stripeSubscriptionStatus: true, stripeCancelAt: true },
+      }),
     ]);
 
     // Objet brut : l'intercepteur global ajoute `{ data }`. L'ancien `{ data: { … } }` donnait
     // `{ data: { data: … } }` et la page admin Abonnements lisait des champs vides (plantage).
     return {
       stripeUsers,
+      /** Abonnés payants au total (A8 #1065) : KPI et pagination, `stripeUsers` n'en est qu'une page. */
+      stripeTotal,
       betaTesters,
       trialUsers,
+      pausedUsers,
       total: stripeTotal + betaTesters.length,
       page,
       limit,

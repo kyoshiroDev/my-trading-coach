@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { provideRouter } from '@angular/router';
 import { DashboardComponent } from './dashboard.component';
 import { AdminApi, AdminStats, MetricsHistoryPoint } from '../../core/api/admin.api';
@@ -23,7 +23,7 @@ function pt(date: string, newSignups: number, mrr = 0): MetricsHistoryPoint {
   return { date, users: 0, mrr, newSignups };
 }
 
-function setup(stats: AdminStats, history: MetricsHistoryPoint[]) {
+function setup(stats: AdminStats, history: MetricsHistoryPoint[], over: Record<string, unknown> = {}, realTemplate = false) {
   const adminApi = {
     stats: vi.fn(() => of({ data: stats })),
     // Offre fondateur (#525) : KPI non testé ici.
@@ -32,6 +32,7 @@ function setup(stats: AdminStats, history: MetricsHistoryPoint[]) {
     retention: vi.fn(() => of({ data: null })),
     planLinks: vi.fn(() => of({ data: null })),
     metricsHistory: vi.fn(() => of({ data: history })),
+    ...over,
   };
   const vpsApi = {
     stats: vi.fn(() => of({ data: null })),
@@ -44,13 +45,15 @@ function setup(stats: AdminStats, history: MetricsHistoryPoint[]) {
       { provide: VpsApi, useValue: vpsApi },
     ],
   });
-  TestBed.overrideComponent(DashboardComponent, {
-    set: { template: '<div></div>', styleUrls: [], styleUrl: undefined as unknown as string, schemas: [NO_ERRORS_SCHEMA] },
-  });
+  if (!realTemplate) {
+    TestBed.overrideComponent(DashboardComponent, {
+      set: { template: '<div></div>', styleUrls: [], styleUrl: undefined as unknown as string, schemas: [NO_ERRORS_SCHEMA] },
+    });
+  }
   const fixture = TestBed.createComponent(DashboardComponent);
   fixture.detectChanges();
    
-  return fixture.componentInstance as any;
+  return Object.assign(fixture.componentInstance as any, { __api: adminApi, __fixture: fixture });
 }
 
 describe('DashboardComponent — graphe évolution', () => {
@@ -133,5 +136,47 @@ describe('DashboardComponent — graphe évolution', () => {
     expect(s.churnedThisMonth).toBe(2);
     expect(s.comptesSupprimesMois).toBe(1);
     expect(s.comptesSupprimesTotal).toBe(5);
+  });
+});
+
+/**
+ * A17 (#1065) : « Connectés en temps réel » chargé une seule fois (jamais rafraîchi) ; erreurs des
+ * KPI et des connectés muettes (KPI à 0, « Aucun utilisateur actif »).
+ */
+describe('DashboardComponent — temps réel et erreurs (A17 #1065)', () => {
+  beforeEach(() => TestBed.resetTestingModule());
+
+  it('connectés rafraîchis périodiquement (visiblePoll)', () => {
+    vi.useFakeTimers();
+    try {
+      const cmp = setup(makeStats(), []);
+      expect(cmp.__api.online).toHaveBeenCalledTimes(1);
+      vi.advanceTimersByTime(31_000);
+      expect(cmp.__api.online).toHaveBeenCalledTimes(2);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('erreur des connectés et des KPI : signalée, jamais « 0 » ni « aucun »', () => {
+    const cmp = setup(makeStats(), [], {
+      stats: vi.fn(() => throwError(() => new Error('500'))),
+      online: vi.fn(() => throwError(() => new Error('500'))),
+    });
+    expect(cmp.statsError()).toBe(true);
+    expect(cmp.onlineError()).toBe(true);
+  });
+
+  // Vérificateur tests (#1065) : ce qui s'AFFICHE, pas seulement les signaux.
+  it('erreur des connectés et des KPI : page rendue avec les erreurs, jamais « Aucun utilisateur actif »', () => {
+    const cmp = setup(makeStats(), [], {
+      stats: vi.fn(() => throwError(() => new Error('500'))),
+      online: vi.fn(() => throwError(() => new Error('500'))),
+    }, true);
+    cmp.__fixture.detectChanges();
+    const el = cmp.__fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('[data-testid="online-error"]')).not.toBeNull();
+    expect(el.querySelector('[data-testid="error-state"]')).not.toBeNull();
+    expect(el.textContent).not.toContain('Aucun utilisateur actif');
   });
 });

@@ -88,3 +88,6 @@
 /* Inscrits d'une campagne → liste Utilisateurs filtrée (#625). */
 .signup-link { color: var(--teal); text-decoration: none; }
 .signup-link:hover { text-decoration: underline; }
+
+/* Bloc qui n’a pas pu être chargé (A20 #1065). */
+.err-text { margin: 0 0 12px; }

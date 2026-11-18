@@ -3,6 +3,8 @@ import { DatePipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { catchError, of } from 'rxjs';
+import { apiErrorMessage } from '@mtc/shared';
+import { ErrorStateComponent } from '@mtc/front-ui';
 import type { BrokerMappingColumns as ChampsColonnes } from '../../core/api/admin.api';
 import { PlanLinksCardComponent } from './plan-links-card/plan-links-card.component';
 import {
@@ -27,7 +29,7 @@ import {
  */
 @Component({
   selector: 'mtc-admin-broker-mappings',
-  imports: [FormsModule, DatePipe, DecimalPipe, PlanLinksCardComponent],
+  imports: [FormsModule, DatePipe, DecimalPipe, ErrorStateComponent, PlanLinksCardComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './broker-mappings.component.css',
   templateUrl: './broker-mappings.component.html',
@@ -38,6 +40,11 @@ export class BrokerMappingsComponent {
 
   protected readonly fiches = signal<BrokerMappingRow[]>([]);
   protected readonly chargement = signal(true);
+  /** A21 (#1065) : liste non chargée → erreur, pas « Aucune fiche ». */
+  protected readonly chargeErreur = signal(false);
+  /** Désactivation / réactivation refusée, et fiche en cours de bascule (garde contre le double clic). */
+  protected readonly basculeErreur = signal<string | null>(null);
+  protected readonly basculeEnCours = signal<string | null>(null);
 
   protected readonly sample = signal('');
   protected readonly brokerName = signal('');
@@ -116,12 +123,14 @@ export class BrokerMappingsComponent {
     this.recharger();
   }
 
-  private recharger(): void {
+  protected recharger(): void {
     this.chargement.set(true);
+    this.chargeErreur.set(false);
     this.api.brokerMappings()
-      .pipe(catchError(() => of({ data: [] as BrokerMappingRow[] })), takeUntilDestroyed(this.destroyRef))
+      .pipe(catchError(() => of(null)), takeUntilDestroyed(this.destroyRef))
       .subscribe((r) => {
-        this.fiches.set(r.data);
+        if (r) this.fiches.set(r.data);
+        this.chargeErreur.set(!r);
         this.chargement.set(false);
       });
   }
@@ -191,9 +200,21 @@ export class BrokerMappingsComponent {
   }
 
   protected basculer(f: BrokerMappingRow): void {
+    if (this.basculeEnCours()) return;
+    this.basculeEnCours.set(f.id);
+    this.basculeErreur.set(null);
     this.api.setBrokerMappingEnabled(f.id, !f.enabled)
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => this.recharger());
+      .subscribe({
+        next: () => {
+          this.basculeEnCours.set(null);
+          this.recharger();
+        },
+        error: (e: unknown) => {
+          this.basculeEnCours.set(null);
+          this.basculeErreur.set(apiErrorMessage(e, `« ${f.brokerName} » n’a pas pu être modifiée. Réessaie.`));
+        },
+      });
   }
 
   // ── Édition d'un champ de la fiche ──────────────────────────────────────────

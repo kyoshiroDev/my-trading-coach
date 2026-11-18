@@ -2,7 +2,7 @@ import {
   ChangeDetectionStrategy, Component, DestroyRef, ElementRef,
   OnDestroy, computed, inject, signal, viewChild,
 } from '@angular/core';
-import { DecimalPipe } from '@angular/common';
+import { DatePipe, DecimalPipe } from '@angular/common';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { catchError, of, switchMap } from 'rxjs';
 import { apiErrorMessage } from '@mtc/shared';
@@ -15,7 +15,7 @@ import {
 } from '@lucide/angular';
 import { VpsApi, VpsStats, DockerContainer, HealthPoint, VpsServer, VpsServerId } from '../../core/api/vps.api';
 import { AdminAuthService } from '../../core/auth/admin-auth.service';
-import { DialogDirective } from '@mtc/front-ui';
+import { DialogDirective, ErrorStateComponent } from '@mtc/front-ui';
 import { visiblePoll, type PollResult } from '../../core/utils/visible-poll';
 
 type DockerAction = 'start' | 'stop' | 'restart';
@@ -33,7 +33,7 @@ function apiErrorCode(err: unknown): string | undefined {
 
 @Component({
   selector: 'mtc-admin-monitoring',
-  imports: [DialogDirective, DecimalPipe, LucideDynamicIcon],
+  imports: [DatePipe, DialogDirective, DecimalPipe, ErrorStateComponent, LucideDynamicIcon],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './monitoring.component.css',
   templateUrl: './monitoring.component.html',
@@ -62,6 +62,15 @@ export class MonitoringComponent implements OnDestroy {
   // Raison de l'indisponibilité du serveur affiché (503 VPS_UNREACHABLE), affichée en bandeau.
   protected readonly unreachable = signal<string | null>(null);
   protected readonly actionError = signal<string | null>(null);
+  /*
+   * A22 (#1065) : erreur autre que 503 VPS_UNREACHABLE (500, 401, réseau…). Les dernières données
+   * restent affichées, mais marquées comme celles de la dernière lecture réussie.
+   */
+  private readonly statsError = signal<string | null>(null);
+  private readonly containersError = signal<string | null>(null);
+  protected readonly pollError = computed(() => this.statsError() ?? this.containersError());
+  protected readonly lastOkAt = signal<Date | null>(null);
+  protected readonly healthError = signal(false);
 
   protected readonly stats = signal<VpsStats | null>(null);
   protected readonly allContainers = signal<DockerContainer[]>([]);
@@ -101,8 +110,16 @@ export class MonitoringComponent implements OnDestroy {
       takeUntilDestroyed(this.destroyRef),
     ).subscribe((r) => { this.loadingContainers.set(false); this.onContainers(r); });
 
+    this.loadHealth();
+  }
+
+  protected loadHealth(): void {
+    this.healthError.set(false);
     this.vpsApi.healthHistory(90).pipe(catchError(() => of(null)), takeUntilDestroyed(this.destroyRef))
-      .subscribe((r) => { if (r) this.health.set(r.data ?? []); });
+      .subscribe((r) => {
+        if (r) this.health.set(r.data ?? []);
+        this.healthError.set(!r);
+      });
   }
 
   protected selectServer(id: VpsServerId): void {
@@ -110,6 +127,9 @@ export class MonitoringComponent implements OnDestroy {
     this.stats.set(null);
     this.allContainers.set([]);
     this.unreachable.set(null);
+    this.statsError.set(null);
+    this.containersError.set(null);
+    this.lastOkAt.set(null);
     this.loadingStats.set(true);
     this.loadingContainers.set(true);
     this.server.set(id);
@@ -133,26 +153,39 @@ export class MonitoringComponent implements OnDestroy {
   private onStats(r: PollResult<{ data: VpsStats }>): void {
     if (r.ok) {
       this.unreachable.set(null);
+      this.statsError.set(null);
       this.stats.set(r.value.data);
+      this.lastOkAt.set(new Date());
     } else if (this.markUnreachable(r.error)) {
+      this.statsError.set(null);
       this.stats.set(null);
+    } else {
+      this.statsError.set(this.pollErrorMessage(r.error));
     }
   }
 
   private onContainers(r: PollResult<{ data: DockerContainer[] }>): void {
     if (r.ok) {
       this.unreachable.set(null);
+      this.containersError.set(null);
       this.allContainers.set(r.value.data ?? []);
     } else if (this.markUnreachable(r.error)) {
+      this.containersError.set(null);
       this.allContainers.set([]);
+    } else {
+      this.containersError.set(this.pollErrorMessage(r.error));
     }
   }
 
-  /** 503 VPS_UNREACHABLE → bandeau avec la raison donnée par l'API ; les autres erreurs sont ignorées. */
+  /** 503 VPS_UNREACHABLE → bandeau avec la raison donnée par l'API ; les autres erreurs → `pollError`. */
   private markUnreachable(err: unknown): boolean {
     if (apiErrorCode(err) !== 'VPS_UNREACHABLE') return false;
     this.unreachable.set(apiErrorMessage(err, `${this.serverLabel()} injoignable en SSH.`));
     return true;
+  }
+
+  private pollErrorMessage(err: unknown): string {
+    return apiErrorMessage(err, `Les données de ${this.serverLabel()} n’ont pas pu être mises à jour.`);
   }
 
   // ── Actions par type de container (logs toujours dispo, rendu à part) ──────

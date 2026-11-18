@@ -101,3 +101,13 @@ export function partnerConditions(p: { priceMonthlyEur: number; priceAnnualEur: 
   const base = `${p.priceMonthlyEur} €/mois ou ${p.priceAnnualEur} €/an`;
   return p.durationMonths === null ? `${base}, à vie` : `${base}, pendant ${p.durationMonths} mois puis prix normal`;
 }
+
+/**
+ * État affiché de l'offre fondateur (A11 #1065) : « ouverte » seulement si elle vend encore.
+ * Interrupteur ouvert mais date passée ou complet = « terminée ». Pure.
+ */
+export function founderOfferState(offer: { open: boolean; ended?: boolean }): { label: string; selling: boolean } {
+  if (!offer.open) return { label: 'fermée', selling: false };
+  if (offer.ended) return { label: 'terminée', selling: false };
+  return { label: 'ouverte', selling: true };
+}

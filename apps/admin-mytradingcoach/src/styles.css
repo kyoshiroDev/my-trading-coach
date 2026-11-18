@@ -150,6 +150,8 @@ router-outlet { display: none; }
 .page-meta { font-family: var(--mono); font-size: 11px; color: var(--text3); }
 .page-note { font-family: var(--mono); font-size: var(--fs-2xs); color: var(--text3); margin-top: 4px; }
 .page-note b { color: var(--text2); font-weight: 500; }
+/* Message d'erreur d'un bloc (role="alert") ; marge ajustée par composant si besoin (#1065). */
+.err-text { color: var(--red); font-size: var(--fs-xs); margin: 0; }
 .refresh-tag { font-family: var(--mono); font-size: var(--fs-2xs); color: var(--text3); display: inline-flex; gap: 6px; align-items: center; }
 
 .card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r-lg); }

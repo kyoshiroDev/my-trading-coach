@@ -8,11 +8,11 @@ import {
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { DatePipe } from '@angular/common';
+import { DatePipe, NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { activeTrial } from '../../core/utils/trial.util';
-import { debounceTime, distinctUntilChanged, Subject } from 'rxjs';
+import { catchError, debounceTime, distinctUntilChanged, map, of, Subject, switchMap } from 'rxjs';
 import {
   LucideDynamicIcon,
   LucideTrash2 as Trash2,
@@ -23,11 +23,11 @@ import {
 import { AdminApi, AdminUser, AdminStats } from '../../core/api/admin.api';
 import { TableSort } from '../../shared/tables/table-sort';
 import { acquisitionLabel, apiErrorMessage, subscriptionState, type AcquisitionUtm } from '@mtc/shared';
-import { DialogDirective } from '@mtc/front-ui';
+import { DialogDirective, ErrorStateComponent } from '@mtc/front-ui';
 
 @Component({
   selector: 'mtc-admin-users',
-  imports: [DialogDirective, DatePipe, FormsModule, LucideDynamicIcon],
+  imports: [DialogDirective, DatePipe, ErrorStateComponent, FormsModule, LucideDynamicIcon, NgTemplateOutlet],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './users.component.css',
   templateUrl: './users.component.html',
@@ -43,11 +43,15 @@ export class UsersComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
   private readonly search$ = new Subject<string>();
+  /** Chaque demande de liste ; switchMap annule la précédente (A5 #1065). */
+  private readonly reload$ = new Subject<void>();
 
   protected readonly users       = signal<AdminUser[]>([]);
   protected readonly total       = signal(0);
   protected readonly page        = signal(1);
   protected readonly loading     = signal(false);
+  /** Liste non chargée (A4 #1065) : message + Réessayer, jamais « Aucun utilisateur ». */
+  protected readonly loadError   = signal(false);
   protected readonly saving      = signal(false);
   protected readonly stats       = signal<AdminStats | null>(null);
   protected readonly search      = signal('');
@@ -92,6 +96,24 @@ export class UsersComponent implements OnInit {
   protected editInternal = false;
 
   ngOnInit() {
+    // Une seule liste à la fois : une réponse ancienne (page, recherche, filtre) ne remplace jamais
+    // la plus récente (A5 #1065).
+    this.reload$.pipe(
+      switchMap(() => {
+        this.loading.set(true);
+        this.loadError.set(false);
+        return this.api.list(this.page(), 20, this.search() || undefined, this.utm()).pipe(
+          map((r) => r.data),
+          catchError(() => of(null)),
+        );
+      }),
+      takeUntilDestroyed(this.destroyRef),
+    ).subscribe((data) => {
+      this.loading.set(false);
+      if (!data) { this.loadError.set(true); return; }
+      this.users.set(data.users);
+      this.total.set(data.total);
+    });
     // 1er chargement + chaque changement du filtre de campagne dans l'URL.
     this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((q) => {
       const pick = (k: keyof AcquisitionUtm) => q.get(k)?.trim().toLowerCase() || undefined;
@@ -217,24 +239,36 @@ export class UsersComponent implements OnInit {
       });
   }
 
-  protected openDeleteModal(user: AdminUser) { this.deleteModal.set(user); }
+  /** Erreur de la suppression (ex. 503 résiliation Stripe), affichée dans la modale (A3 #1065). */
+  protected readonly deleteError = signal<string | null>(null);
+
+  protected openDeleteModal(user: AdminUser) { this.deleteError.set(null); this.deleteModal.set(user); }
   protected closeDeleteModal() { this.deleteModal.set(null); }
 
   protected confirmDelete() {
     const user = this.deleteModal();
     if (!user) return;
     this.saving.set(true);
+    const removed = () => {
+      this.users.update((list) => list.filter((u) => u.id !== user.id));
+      this.total.update((t) => t - 1);
+      this.saving.set(false);
+      this.closeDeleteModal();
+      // Dernière ligne de la page supprimée : page précédente, sinon page vide sans pagination (A4).
+      if (this.users().length === 0 && this.page() > 1) { this.page.update((p) => p - 1); this.load(); }
+    };
     this.api.delete(user.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: () => { this.users.update((list) => list.filter((u) => u.id !== user.id)); this.total.update((t) => t - 1); this.saving.set(false); this.closeDeleteModal(); },
-      error: () => this.saving.set(false),
+      next: removed,
+      error: (err: { status?: number }) => {
+        // 404 = déjà supprimé (autre onglet, autre admin) : même effet qu'un succès.
+        if (err?.status === 404) { removed(); return; }
+        this.saving.set(false);
+        this.deleteError.set(apiErrorMessage(err, 'La suppression a échoué. Réessaie.'));
+      },
     });
   }
 
-  private load() {
-    this.loading.set(true);
-    this.api.list(this.page(), 20, this.search() || undefined, this.utm()).pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({ next: (r) => { this.users.set(r.data.users); this.total.set(r.data.total); this.loading.set(false); }, error: () => this.loading.set(false) });
-  }
+  protected load() { this.reload$.next(); }
   private loadStats() {
     this.api.stats().pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({ next: (r) => this.stats.set(r.data), error: () => undefined });

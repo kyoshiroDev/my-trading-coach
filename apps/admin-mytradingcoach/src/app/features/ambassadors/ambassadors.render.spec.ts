@@ -83,4 +83,46 @@ describe('AmbassadorsComponent', () => {
     fixture.detectChanges();
     expect(el.querySelector('[data-testid="pay-error"]')?.textContent).toMatch(/19,60\s€/);
   });
+
+  // A13 (#1065) : retrait d'un ambassadeur en échec sans message ; texte « code libéré » faux
+  // (un code retiré n'est jamais redonné à un autre compte, A5 #1013).
+  it('A13 : retrait en échec, message affiché ; texte « jamais redonné »', async () => {
+    const { el, fixture } = await render();
+    el.querySelector<HTMLButtonElement>('.revoke-btn')!.click();
+    fixture.detectChanges();
+    const dialog = el.querySelector('[role="dialog"]')!;
+    expect(dialog.textContent).not.toContain('libéré');
+    expect(dialog.textContent).toContain('jamais redonné');
+    el.querySelector<HTMLButtonElement>('[data-testid="revoke-confirm"]')!.click();
+    http.expectOne(`${environment.apiUrl}/admin/ambassadors/revoke`).flush({ message: 'Ce compte n’est pas ambassadeur.' }, { status: 400, statusText: 'Bad Request' });
+    fixture.detectChanges();
+    expect(el.querySelector('[data-testid="revoke-error"]')?.textContent).toContain('pas ambassadeur');
+  });
+
+  // A14 (#1065) : clic sur A puis B, les chiffres de A s'affichaient sous le titre de B.
+  it('A14 : la réponse tardive du détail de A n’est pas affichée sous B ; sélection gardée après paiement', async () => {
+    const BOB = { ...AMB, id: 'amb2', name: 'Bob', email: 'bob@example.com', referralCode: 'BOB', pendingPayout: 5 };
+    const fixture = TestBed.createComponent(AmbassadorsComponent);
+    fixture.detectChanges();
+    http.expectOne(`${environment.apiUrl}/admin/ambassadors`).flush({ data: [AMB, BOB] });
+    const reqA = http.expectOne(`${environment.apiUrl}/admin/ambassadors/amb1/stats`);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    (el.querySelectorAll('tbody tr')[1] as HTMLElement).click();
+    const reqB = http.expectOne(`${environment.apiUrl}/admin/ambassadors/amb2/stats`);
+    if (!reqA.cancelled) reqA.flush({ data: DETAIL });
+    fixture.detectChanges();
+    expect(el.textContent).not.toContain('19.60€)');
+    reqB.flush({ data: { ...DETAIL, referralCode: 'BOB', pendingPayout: 5 } });
+    fixture.detectChanges();
+    expect(el.textContent).toContain('Détail · Bob');
+    // Paiement de Bob : après rechargement, Bob reste sélectionné (avant : retour au premier).
+    (el.querySelectorAll('.pay-btn')[1] as HTMLButtonElement).click();
+    await tick();
+    http.expectOne(`${environment.apiUrl}/admin/ambassadors/amb2/pay-all`).flush({ data: { success: true } });
+    http.expectOne(`${environment.apiUrl}/admin/ambassadors`).flush({ data: [AMB, { ...BOB, pendingPayout: 0 }] });
+    http.expectOne(`${environment.apiUrl}/admin/ambassadors/amb2/stats`).flush({ data: { ...DETAIL, pendingPayout: 0 } });
+    fixture.detectChanges();
+    expect(el.textContent).toContain('Détail · Bob');
+  });
 });

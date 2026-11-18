@@ -160,7 +160,18 @@ Test de charge B9 : le polling faisait **la moitié** des requêtes de l'API. R�
 - **Admin** : `visiblePoll(request, { periodMs })` (`apps/admin-mytradingcoach/src/app/core/utils/visible-poll.ts`) :
   aucune requête onglet caché (une tout de suite au retour), espacement ×2, ×4, ×8 après échec, jamais
   deux requêtes en parallèle ; émet `{ ok, value | error }` sans terminer le flux. Utilisé par
-  Surveillance (15 s, bandeau `VPS_UNREACHABLE`, boutons masqués si `readOnly`) et le dashboard (10 s).
+  Surveillance (15 s, bandeau `VPS_UNREACHABLE`, boutons masqués si `readOnly`) et le dashboard (VPS 10 s,
+  connectés 30 s). Une erreur émise ne s'ignore jamais : hors 503, Surveillance garde les dernières données
+  mais affiche un bandeau avec l'heure de la dernière lecture réussie (#1065, A22).
+- **Écran admin en erreur** : jamais un état vide trompeur (« Aucune campagne », « 0 destinataire »,
+  « Aucune fiche », chiffres de l'autre mode) à la place d'une erreur. Liste principale →
+  `mtc-error-state` (`@mtc/front-ui`) avec Réessayer ; bloc secondaire → message `err-text`
+  `role="alert"`. Un rechargement vide d'abord le bloc, et une réponse arrivée après un changement de
+  paramètre (page, mode, sélection) est ignorée (#1065).
+- **Renouvellement du jeton** (`libs/front/auth` `jwt-refresh.interceptor.ts`, app et admin) : un seul
+  refresh partagé ; `AuthRefreshState.outcome$` émet l'issue (jeton OU erreur), donc les requêtes en
+  attente échouent avec le refresh au lieu de rester en suspens. Seul l'échec du refresh déconnecte
+  (pas une erreur de la requête rejouée) ; requête d'origine annulée → état libéré (#1065).
 - **Tout nouveau socket** (`io(...)`) étale ses reconnexions avec `...SOCKET_RECONNECT_OPTIONS`
   (`core/services/socket-reconnect.ts`, SCA-B4-07) : 1er essai entre 1 et 9 s, plafond 60 s. Sans ça,
   tous les onglets reviennent ensemble après un redémarrage de l'API.

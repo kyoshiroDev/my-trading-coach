@@ -362,3 +362,44 @@ describe('Fiche admin — rôle bêta-testeur (#1064)', () => {
     expect(betaBtn(el)).toBeNull();
   });
 });
+
+/** A7 (#1065) : toute erreur de la fiche (500, réseau) s'affichait « Utilisateur introuvable ». */
+describe('Fiche admin — erreur de chargement (A7 #1065)', () => {
+  beforeEach(() => { TestBed.resetTestingModule(); vi.clearAllMocks(); });
+  afterEach(() => TestBed.inject(HttpTestingController).verify());
+
+  async function renderError(status: number) {
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(), provideHttpClientTesting(),
+        { provide: ConfirmService, useValue: confirm },
+        { provide: ActivatedRoute, useValue: { paramMap: of<ParamMap>(convertToParamMap({ id: 'u1' })) } },
+      ],
+    });
+    const fixture = TestBed.createComponent(UserDetailComponent);
+    fixture.detectChanges();
+    const httpMock = TestBed.inject(HttpTestingController);
+    httpMock.expectOne(URL).flush({ message: 'x' }, { status, statusText: 'x' });
+    await fixture.whenStable();
+    fixture.detectChanges();
+    return { fixture, httpMock, el: fixture.nativeElement as HTMLElement };
+  }
+
+  it('404 : « Utilisateur introuvable », sans Réessayer', async () => {
+    const { el } = await renderError(404);
+    expect(el.textContent).toContain('Utilisateur introuvable');
+    expect(el.querySelector('[data-testid="error-state"]')).toBeNull();
+  });
+
+  it('500 : message d’erreur avec Réessayer, qui recharge la fiche', async () => {
+    const { fixture, httpMock, el } = await renderError(500);
+    expect(el.textContent).not.toContain('Utilisateur introuvable');
+    (el.querySelector('[data-testid="error-state-retry"]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    httpMock.expectOne(URL).flush({ data: makeData() });
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(el.querySelector('[data-testid="error-state"]')).toBeNull();
+    expect(el.textContent).toContain('alex@test.com');
+  });
+});
