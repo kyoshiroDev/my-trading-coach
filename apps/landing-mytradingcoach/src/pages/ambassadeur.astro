@@ -57,8 +57,8 @@ const COMMUNITIES = ['YouTube', 'X / Twitter', 'Discord', 'Twitch', 'Formation',
       <h2 class="amb-t">Ta commission</h2>
       <div class="amb-rew">
         <article class="amb-rew-card">
-          <span class="amb-rew-num green">Sur chaque abonnement</span>
-          <div class="amb-rew-amt green">20 % récurrent</div>
+          <span class="amb-rew-num gain">Sur chaque abonnement</span>
+          <div class="amb-rew-amt gain">20 % récurrent</div>
           <p>Tu touches 20 % sur chaque abonnement souscrit via ton lien, mensuel ou annuel.</p>
         </article>
         <article class="amb-rew-card">
@@ -198,7 +198,7 @@ const COMMUNITIES = ['YouTube', 'X / Twitter', 'Discord', 'Twitch', 'Formation',
 </script>
 
 <style>
-  .green { color: var(--green); }
+  .gain { color: var(--green); } /* commission en euros : un gain (#1104) */
   .blue { color: var(--blue2); }
   .no-border { border-bottom: none; }
   .amb { max-width: 880px; margin: 0 auto; padding: 0 5% 40px; }
@@ -250,7 +250,7 @@ const COMMUNITIES = ['YouTube', 'X / Twitter', 'Discord', 'Twitch', 'Formation',
   .amb-btn:disabled { opacity: .6; cursor: default; }
   .amb-small { font-size: 12px; color: var(--txt3); text-align: center; margin-top: 14px; line-height: 1.5; }
   .amb-form-msg { font-size: 13px; text-align: center; min-height: 18px; margin-top: 8px; }
-  .amb-form-msg.ok { color: var(--green); }
+  .amb-form-msg.ok { color: var(--txt); }
   .amb-form-msg.err { color: var(--red); }
 
   @media (max-width: 720px) {
