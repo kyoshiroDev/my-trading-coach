@@ -99,8 +99,9 @@
   `cta_trial`, `cta_founder`, `cta_login` pour le bouton « Ouvrir l'app » de la 404) et `data-ga-place`
   envoie un événement GA4, SEULEMENT si GA est chargé (après consentement). Nouveau CTA d'inscription →
   ajouter les deux attributs (fin d'article `article`, témoignages `temoignages`,
-  /journal-trading-prop-firm `jtp-hero` et `jtp-final` depuis #1067). Les liens Markdown écrits dans le
-  texte des articles n'en portent pas.
+  /journal-trading-prop-firm `jtp-hero` et `jtp-final` depuis #1067). Les liens d'inscription écrits dans
+  le texte d'un article (`<a href="{APP_URL}/register">`) reçoivent les attributs au rendu
+  (`pages/blog/[slug].astro`, place `article-texte`) : garder cette forme exacte dans le Markdown.
 - **Tarifs (`Pricing.astro`, `PfPricing.astro`)** : les cartes Gratuit / Fondateur / Premium lisent
   `PLAN_BENEFITS` (`@mtc/shared`, liste partagée avec l'app et les e-mails, cf. plans.md « Avantages
   affichés ») ; jamais de liste d'avantages écrite dans la carte. Le bloc « Ce que Premium ajoute au
