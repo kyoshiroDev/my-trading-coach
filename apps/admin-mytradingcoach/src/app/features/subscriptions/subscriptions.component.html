@@ -77,7 +77,7 @@
               <tr data-testid="paused-row">
                 <td data-label="Utilisateur"><div class="u-cell"><div class="u-av">{{ av(u.name, u.email) }}</div><div><div class="u-name">{{ u.name ?? '-' }}</div><div class="u-mail">{{ u.email }}</div></div></div></td>
                 <td data-label="Intervalle" class="td-mono">{{ u.stripeInterval === 'year' ? 'Annuel' : 'Mensuel' }}</td>
-                <td data-label="Statut Stripe"><span class="badge b-free">{{ u.stripeSubscriptionStatus }}</span></td>
+                <td data-label="Statut Stripe"><span class="badge b-free">{{ u.stripeSubscriptionStatus === 'unpaid' ? 'impayé' : 'paiement en retard' }}</span></td>
                 <td data-label="Échéance" class="td-mono muted">{{ u.stripeCurrentPeriodEnd ? (u.stripeCurrentPeriodEnd | date:'dd/MM/yyyy') : '-' }}</td>
               </tr>
             }

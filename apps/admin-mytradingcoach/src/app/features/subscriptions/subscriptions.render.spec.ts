@@ -154,6 +154,9 @@ describe('SubscriptionsComponent', () => {
     const rows = el.querySelectorAll('[data-testid="paused-row"]');
     expect(rows.length).toBe(1);
     expect(rows[0].textContent).toContain('pause@example.com');
+    // Libellé français, jamais la valeur Stripe brute (vérificateur design #1065).
+    expect(rows[0].textContent).toContain('paiement en retard');
+    expect(rows[0].textContent).not.toContain('past_due');
   });
 
   // Règle 9 de plans.md : un bêta-testeur au plan FREE a l'accès Premium par son rôle ; jamais « FREE »
