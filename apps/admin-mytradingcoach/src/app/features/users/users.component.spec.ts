@@ -266,3 +266,70 @@ describe('UsersComponent — suppression (A3 #1065)', () => {
     expect(fixture.nativeElement.querySelector('tbody').textContent).not.toContain('a@test.local');
   });
 });
+
+/**
+ * A4 (#1065) : supprimer la dernière ligne de la dernière page laissait une page vide sans
+ * pagination (elle était dans le `@else` de la liste) ; un chargement en échec s'affichait
+ * « Aucun utilisateur trouvé ».
+ */
+describe('UsersComponent — page vide et erreur de chargement (A4 #1065)', () => {
+  beforeEach(() => {
+    TestBed.resetTestingModule();
+    query = new BehaviorSubject(convertToParamMap({}));
+  });
+  afterEach(() => TestBed.inject(HttpTestingController).verify());
+
+  it('chargement en échec : message d’erreur avec Réessayer, jamais « Aucun utilisateur »', async () => {
+    const { fixture, http } = setup();
+    http.expectOne((r) => r.url === USERS_URL).flush({}, { status: 500, statusText: 'Error' });
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('[data-testid="error-state"]')).not.toBeNull();
+    expect(el.textContent).not.toContain('Aucun utilisateur trouvé');
+    (el.querySelector('[data-testid="error-state-retry"]') as HTMLButtonElement).click();
+    await flushList(fixture, http, [user()]);
+    expect(el.querySelector('[data-testid="error-state"]')).toBeNull();
+  });
+
+  it('dernière ligne de la dernière page supprimée : retour à la page précédente', async () => {
+    const { fixture, http } = setup();
+    const req = http.expectOne((r) => r.url === USERS_URL);
+    req.flush({ data: { users: Array.from({ length: 20 }, (_, i) => user({ id: `p1-${i}`, email: `p1-${i}@test.local` })), total: 21 } });
+    await fixture.whenStable();
+    fixture.detectChanges();
+    (fixture.nativeElement.querySelector('.pagination .btn-page:last-child') as HTMLButtonElement).click();
+    await flushList(fixture, http, [user({ id: 'last', email: 'last@test.local' })]);
+    (fixture.nativeElement.querySelector('button[aria-label="Supprimer"]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    (fixture.nativeElement.querySelector('.danger-btn') as HTMLButtonElement).click();
+    http.expectOne((r) => r.method === 'DELETE').flush(null);
+    fixture.detectChanges();
+    const params = await flushList(fixture, http, Array.from({ length: 20 }, (_, i) => user({ id: `p1-${i}`, email: `p1-${i}@test.local` })));
+    expect(params.get('page')).toBe('1');
+  });
+});
+
+/** A5 (#1065) : recherche et pagination sans annulation, une réponse ancienne écrasait la liste. */
+describe('UsersComponent — réponse ancienne ignorée (A5 #1065)', () => {
+  beforeEach(() => {
+    TestBed.resetTestingModule();
+    query = new BehaviorSubject(convertToParamMap({}));
+  });
+  afterEach(() => TestBed.inject(HttpTestingController).verify());
+
+  it('page 1 puis page 2 : la réponse tardive de la page 1 n’écrase pas la page 2', async () => {
+    const { fixture, http } = setup();
+    const first = http.expectOne((r) => r.url === USERS_URL);
+    first.flush({ data: { users: [user()], total: 40 } });
+    await fixture.whenStable();
+    fixture.detectChanges();
+    (fixture.nativeElement.querySelector('.pagination .btn-page:last-child') as HTMLButtonElement).click();
+    // Pendant le chargement la liste (et ses boutons) est remplacée : retour à la page 1 par le composant.
+    (fixture.componentInstance as unknown as { changePage(p: number): void }).changePage(1);
+    const pending = http.match((r) => r.url === USERS_URL);
+    // La requête de la page 2 est annulée par la demande suivante (page 1) : une seule reste active.
+    expect(pending.filter((r) => !r.cancelled).length).toBe(1);
+    pending.filter((r) => !r.cancelled).forEach((r) => r.flush({ data: { users: [user({ id: 'z', email: 'z@test.local' })], total: 40 } }));
+  });
+});
