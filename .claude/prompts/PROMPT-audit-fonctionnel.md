@@ -91,3 +91,9 @@ Texte de Greg : « ok, ferme les issues livrées puis #1069 »
 Texte de Greg : « ok, on passe à #1103 »
 
 #1103 est une suite du 4c (#1065, lot 4 #1062) : refresh de l'admin sans contrôle du rôle ADMIN, et refresh de l'intercepteur `jwt-refresh` coupé avec la requête qui l'a lancé.
+
+## Complément #1133 (2026-11-19)
+
+Texte de Greg : « ok, on passe à #1133 »
+
+#1133 est issu de la vérification tests de #1103 (lot 4 #1062) : les specs de l'admin et de front-auth gardent le délai Vitest par défaut (5 s) et échouent sous charge, alors que l'app et l'API sont à 20 s (#689).
