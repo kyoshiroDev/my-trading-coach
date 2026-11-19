@@ -348,8 +348,8 @@ const FounderWrap = founderOpen ? 'div' : 'template';
     justify-content: center;
   }
 
-  .price-amt-num { font-family: var(--disp); font-size: 56px; font-weight: 800; letter-spacing: -2px; color: var(--txt); }
-  .price-amt-cur { font-family: var(--disp); font-size: 22px; font-weight: 600; color: var(--txt2); }
+  .price-amt-num { font-family: var(--mono); font-size: 56px; font-weight: 600; letter-spacing: -2px; font-variant-numeric: tabular-nums; color: var(--txt); }
+  .price-amt-cur { font-family: var(--mono); font-size: 22px; font-weight: 500; color: var(--txt2); }
   .price-amt-per { font-size: 14px; color: var(--txt3); }
 
   .price-period {
@@ -369,7 +369,7 @@ const FounderWrap = founderOpen ? 'div' : 'template';
     align-items: center;
     gap: 10px;
   }
-  .acct-n { font-family: var(--disp); font-weight: 700; font-size: 20px; color: var(--blue2); }
+  .acct-n { font-family: var(--mono); font-weight: 600; font-size: 20px; font-variant-numeric: tabular-nums; color: var(--blue2); }
   .acct-t { font-size: 12.5px; color: var(--txt); line-height: 1.35; }
 
   .price-divider { height: 1px; background: var(--b); margin: 20px 0; }
