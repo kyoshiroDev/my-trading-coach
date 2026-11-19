@@ -97,3 +97,9 @@ Texte de Greg : « ok, on passe à #1103 »
 Texte de Greg : « ok, on passe à #1133 »
 
 #1133 est issu de la vérification tests de #1103 (lot 4 #1062) : les specs de l'admin et de front-auth gardent le délai Vitest par défaut (5 s) et échouent sous charge, alors que l'app et l'API sont à 20 s (#689).
+
+## Complément #1137 (2026-11-19)
+
+Texte de Greg : « continue » (après la proposition de passer à #1137).
+
+#1137 est issu de la vérification deploy de #1133 (lot 4 #1062) : le filtre `API_PATHS` de `cd.yml` redéploie l'API pour tout changement sous `libs/`, y compris les libs front que l'API n'importe pas.
