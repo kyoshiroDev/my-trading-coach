@@ -106,7 +106,7 @@ const COMMUNITIES = ['YouTube', 'X / Twitter', 'Discord', 'Twitch', 'Formation',
           <input id="amb-name" name="name" type="text" required maxlength="80" placeholder="Ton nom de créateur" />
         </div>
         <div class="amb-field">
-          <label for="amb-email">Email</label>
+          <label for="amb-email">E-mail</label>
           <input id="amb-email" name="email" type="email" required placeholder="toi@exemple.com" />
         </div>
 
@@ -166,7 +166,7 @@ const COMMUNITIES = ['YouTube', 'X / Twitter', 'Discord', 'Twitch', 'Formation',
       );
 
       if (name.length < 2 || !email) {
-        msg.textContent = 'Renseigne au moins ton nom et un email valide.';
+        msg.textContent = 'Renseigne au moins ton nom et un e-mail valide.';
         msg.className = 'amb-form-msg err';
         return;
       }

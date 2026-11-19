@@ -17,6 +17,7 @@
 - Chiffres concrets présentés comme des exemples ; sur les visuels, mention « Données de démonstration » ou « exemple ».
 - Emojis rares (🧵 pour un fil X, 👇 pour inviter à répondre).
 - Libellés de l'app à reprendre tels quels : « Marge avant le plancher », « $… dispo » ; jamais « Il te reste … avant la limite » (le seul « il te reste » de l'app concerne l'objectif de profit).
+- Orthographe : « e-mail » (jamais « email » ni « Email ») et « récap » accentué, comme dans l'app (« Récap du jour »). Les identifiants de code (`type="email"`, `cta=email`…) ne changent pas.
 
 ## Interdits absolus
 - Promesse de gain, gros gain mis en avant, faux témoignage, fausse interface présentée comme réelle.
