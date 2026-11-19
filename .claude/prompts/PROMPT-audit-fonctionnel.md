@@ -97,3 +97,9 @@ Texte de Greg : « ok, on passe à #1103 »
 Texte de Greg : « ok, on passe à #1133 »
 
 #1133 est issu de la vérification tests de #1103 (lot 4 #1062) : les specs de l'admin et de front-auth gardent le délai Vitest par défaut (5 s) et échouent sous charge, alors que l'app et l'API sont à 20 s (#689).
+
+## Complément #1132 (2026-11-20)
+
+Texte de Greg : « oki continue ton travail alors » (après la proposition de la suite : #1132).
+
+#1132 est issu de la vérification security de #1103 (lot 4 #1062) : `POST /auth/refresh` sans limite de débit dédiée. Analyse du vérificateur security : aucune protection réelle à gagner, limite par défaut gardée exprès et verrouillée par un test.
