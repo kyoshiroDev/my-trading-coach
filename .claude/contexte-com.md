@@ -18,7 +18,7 @@
 - Emojis rares (🧵 pour un fil X, 👇 pour inviter à répondre).
 - Libellés de l'app à reprendre tels quels : « Marge avant le plancher », « $… dispo » ; jamais « Il te reste … avant la limite » (le seul « il te reste » de l'app concerne l'objectif de profit).
 - Orthographe : « e-mail » (jamais « email » ni « Email ») et « récap » accentué, comme dans l'app (« Récap du jour »). Les identifiants de code (`type="email"`, `cta=email`…) ne changent pas.
-- Le débrief de la semaine s'appelle « Débrief hebdo », comme dans l'app (jamais « Weekly Debrief ») ; « débrief » et « débriefer » s'écrivent avec l'accent (« il débriefe »).
+- Le débrief de la semaine s'appelle « Débrief hebdo », avec la majuscule même en milieu de phrase (« ton Débrief hebdo »), comme dans l'app (jamais « Weekly Debrief ») ; « un débrief » reste en minuscule quand c'est le nom commun ; « débrief » et « débriefer » s'écrivent avec l'accent (« il débriefe »).
 
 ## Interdits absolus
 - Promesse de gain, gros gain mis en avant, faux témoignage, fausse interface présentée comme réelle.
