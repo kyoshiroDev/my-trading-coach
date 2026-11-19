@@ -30,7 +30,7 @@ const premium = PLAN_BENEFITS.premium.filter((b) => b.id !== 'accounts' || FEATU
 
       <div class="pp-card">
         <span class="pp-eyebrow">Pour commencer</span>
-        <div class="pp-price"><span class="pp-name">Gratuit</span><span class="pp-amt">0 €</span></div>
+        <div class="pp-price"><span class="pp-name">Gratuit</span><span class="pp-amt">0<span class="pp-cur">€</span></span></div>
         <ul class="pp-feats">{free.map((f) => <li>{f}</li>)}</ul>
         <a href={`${APP_URL}/register`} class="pp-cta ghost" data-cta="free" data-ga-event="cta_signup" data-ga-place="pf-pricing-free">Commencer gratuitement</a>
         <span class="pp-foot">Sans carte bancaire</span>
@@ -46,7 +46,7 @@ const premium = PLAN_BENEFITS.premium.filter((b) => b.id !== 'accounts' || FEATU
         </span>
         <div class="pp-price">
           <span class="pp-name">Premium</span>
-          <span><span class="pp-amt">{FOUNDER_OFFER.priceMonthlyEur} €</span><span class="pp-per">/mois</span></span>
+          <span><span class="pp-amt">{FOUNDER_OFFER.priceMonthlyEur}<span class="pp-cur">€</span></span><span class="pp-per">/mois</span></span>
         </div>
         <p class="pp-sub">
           <strong>ou {FOUNDER_OFFER.priceAnnualEur} €/an</strong>, au lieu de {PREMIUM_PRICE_EUR.monthly} €/mois.
@@ -63,7 +63,7 @@ const premium = PLAN_BENEFITS.premium.filter((b) => b.id !== 'accounts' || FEATU
         <span class="pp-eyebrow"><span class="pp-rec">Recommandé</span><span class="pp-normal">Prix normal</span></span>
         <div class="pp-price">
           <span class="pp-name">Premium</span>
-          <span><span class="pp-amt">{PREMIUM_PRICE_EUR.monthly} €</span><span class="pp-per">/mois</span></span>
+          <span><span class="pp-amt">{PREMIUM_PRICE_EUR.monthly}<span class="pp-cur">€</span></span><span class="pp-per">/mois</span></span>
         </div>
         <p class="pp-sub">ou {PREMIUM_PRICE_EUR.annual} €/an, tu économises {PREMIUM_ANNUAL_SAVINGS_EUR} €. {PREMIUM_SIGNUP_TRIAL_DAYS} jours offerts à l'inscription.</p>
         <p class="pp-lead">Tout le Gratuit, plus :</p>
@@ -128,6 +128,7 @@ const premium = PLAN_BENEFITS.premium.filter((b) => b.id !== 'accounts' || FEATU
   .pp-price { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
   .pp-name { font-size: 19px; font-weight: 600; }
   .pp-amt { font-family: var(--mono); font-size: 30px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .pp-cur { font-size: 20px; font-weight: 500; margin-left: 4px; color: var(--txt2); }
   .pp-per { font-size: 14px; color: var(--txt2); }
   .pp-sub { margin: 0; font-size: 14px; line-height: 1.5; color: var(--txt2); }
   .pp-sub strong { color: var(--txt); font-weight: 600; }
@@ -195,5 +196,6 @@ const premium = PLAN_BENEFITS.premium.filter((b) => b.id !== 'accounts' || FEATU
     .has-founder .pp-grid { grid-template-columns: minmax(0, 1fr); gap: 16px; }
     .pp-card { padding: 22px; }
     .pp-amt { font-size: 26px; }
+    .pp-cur { font-size: 18px; }
   }
 </style>
