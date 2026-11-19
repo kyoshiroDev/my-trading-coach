@@ -717,7 +717,7 @@ export class UsersService {
   }
 
   async deleteMe(userId: string, reason?: string): Promise<void> {
-    // Corps non validé : une raison non textuelle est ignorée, la suppression passe (#994).
+    // Corps validé par DeleteMeDto (#1069) ; le garde reste pour les appels internes au service.
     await this.archiveAndDelete(userId, 'self', typeof reason === 'string' ? reason : undefined);
   }
 

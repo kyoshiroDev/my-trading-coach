@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { HttpClient, provideHttpClient, withInterceptors } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { Subject, of, throwError } from 'rxjs';
+import { EMPTY, Subject, of, throwError } from 'rxjs';
 import { AUTH_TOKEN_SOURCE, jwtRefreshInterceptor } from './jwt-refresh.interceptor';
 
 describe('jwtRefreshInterceptor', () => {
@@ -68,28 +68,85 @@ describe('jwtRefreshInterceptor', () => {
     expect(auth.logout).toHaveBeenCalledOnce();
   });
 
-  it('requête à l’origine du refresh annulée : l’état est libéré, le 401 suivant relance un refresh', () => {
-    auth.refreshToken.mockReturnValueOnce(new Subject<unknown>());
+  /**
+   * #1103 : le refresh était coupé avec la requête qui l'avait lancé (écran quitté). Le serveur avait
+   * pu faire tourner le cookie entre-temps : les requêtes en attente recevaient une erreur et le
+   * refresh suivant présentait un cookie déjà consommé. Le refresh va maintenant au bout, partagé.
+   */
+  it('requête à l’origine du refresh annulée : le refresh va au bout, la requête en attente est rejouée', () => {
+    const refresh = new Subject<unknown>();
+    auth.refreshToken.mockReturnValue(refresh);
     const sub = http.get('/api/trades').subscribe({ error: () => undefined });
-    let waiterStatus: number | undefined;
-    http.get('/api/waiter').subscribe({ error: (e) => (waiterStatus = e.status) });
+    let waiter: unknown;
+    http.get('/api/waiter').subscribe((r) => (waiter = r));
     backend.expectOne('/api/trades').flush({}, { status: 401, statusText: 'Unauthorized' });
     backend.expectOne('/api/waiter').flush({}, { status: 401, statusText: 'Unauthorized' });
     sub.unsubscribe();
-    // La requête qui attendait reçoit l'erreur d'origine au lieu de rester en suspens.
-    expect(waiterStatus).toBe(401);
+    expect(refresh.observed).toBe(true); // refresh toujours en vol, pas coupé
 
-    auth.refreshToken.mockImplementationOnce(() => {
-      token = 'nouveau';
-      return of(true);
-    });
-    let result: unknown;
-    http.get('/api/stats').subscribe((r) => (result = r));
-    backend.expectOne('/api/stats').flush({}, { status: 401, statusText: 'Unauthorized' });
-    backend.expectOne('/api/stats').flush({ ok: true });
-    expect(result).toEqual({ ok: true });
-    expect(auth.refreshToken).toHaveBeenCalledTimes(2);
+    token = 'nouveau';
+    refresh.next(true);
+    refresh.complete();
+    const retry = backend.expectOne('/api/waiter');
+    expect(retry.request.headers.get('Authorization')).toBe('Bearer nouveau');
+    retry.flush({ ok: true });
+    expect(waiter).toEqual({ ok: true });
+    backend.expectNone('/api/trades'); // la requête annulée n'est pas rejouée
+    expect(auth.refreshToken).toHaveBeenCalledOnce();
     expect(auth.logout).not.toHaveBeenCalled();
+  });
+
+  it('seule requête annulée : le refresh va au bout ; un 401 arrivé pendant ce temps le rejoint', () => {
+    const refresh = new Subject<unknown>();
+    auth.refreshToken.mockReturnValue(refresh);
+    const sub = http.get('/api/trades').subscribe({ error: () => undefined });
+    backend.expectOne('/api/trades').flush({}, { status: 401, statusText: 'Unauthorized' });
+    sub.unsubscribe();
+    expect(refresh.observed).toBe(true);
+
+    let stats: unknown;
+    http.get('/api/stats').subscribe((r) => (stats = r));
+    backend.expectOne('/api/stats').flush({}, { status: 401, statusText: 'Unauthorized' });
+    expect(auth.refreshToken).toHaveBeenCalledOnce(); // pas de second refresh sur le même cookie
+
+    token = 'nouveau';
+    refresh.next(true);
+    refresh.complete();
+    backend.expectOne('/api/stats').flush({ ok: true });
+    expect(stats).toEqual({ ok: true });
+
+    // Refresh terminé : le 401 suivant (jeton expiré plus tard) en relance un nouveau.
+    auth.refreshToken.mockImplementationOnce(() => { token = 'encore'; return of(true); });
+    http.get('/api/later').subscribe();
+    backend.expectOne('/api/later').flush({}, { status: 401, statusText: 'Unauthorized' });
+    expect(backend.expectOne('/api/later').request.headers.get('Authorization')).toBe('Bearer encore');
+    expect(auth.refreshToken).toHaveBeenCalledTimes(2);
+  });
+
+  it('requête d’origine annulée puis refresh en échec : déconnexion quand même', () => {
+    const refresh = new Subject<unknown>();
+    auth.refreshToken.mockReturnValue(refresh);
+    const sub = http.get('/api/trades').subscribe({ error: () => undefined });
+    backend.expectOne('/api/trades').flush({}, { status: 401, statusText: 'Unauthorized' });
+    sub.unsubscribe();
+    refresh.error({ status: 401 });
+    expect(auth.logout).toHaveBeenCalledOnce();
+  });
+
+  it('refresh terminé sans jeton (déconnexion pendant le refresh) : rien n’est rejoué, pas de 2e déconnexion', () => {
+    auth.refreshToken.mockReturnValueOnce(EMPTY);
+    let outcome = 'en attente';
+    http.get('/api/trades').subscribe({ next: () => (outcome = 'next'), error: () => (outcome = 'error'), complete: () => (outcome = 'complete') });
+    backend.expectOne('/api/trades').flush({}, { status: 401, statusText: 'Unauthorized' });
+    expect(outcome).toBe('complete');
+    backend.expectNone('/api/trades');
+    expect(auth.logout).not.toHaveBeenCalled();
+
+    // État libéré : le 401 suivant relance un refresh.
+    auth.refreshToken.mockImplementationOnce(() => { token = 'nouveau'; return of(true); });
+    http.get('/api/stats').subscribe();
+    backend.expectOne('/api/stats').flush({}, { status: 401, statusText: 'Unauthorized' });
+    expect(backend.expectOne('/api/stats').request.headers.get('Authorization')).toBe('Bearer nouveau');
   });
 
   it('requête rejouée en erreur (500) : erreur renvoyée, pas de déconnexion', () => {

@@ -79,3 +79,21 @@ Réponse de Greg aux trois recommandations du relecteur (texte exact) :
 Ajout au sous-lot 4a (2026-11-16), réponse de Greg au relecteur sur l'IP réelle derrière Traefik (limite par IP de S3) et sur S5 (reporté au 4b), texte exact :
 
 > oui ajoute la phrase, et le test dans le 4a
+
+## Complément #1069 (2026-11-19)
+
+Texte de Greg : « ok, ferme les issues livrées puis #1069 »
+
+#1069 est le ticket à part issu du lot 4 (#1062) : corps validé de DELETE /users/me et des routes de suppression des comptes (relève du lot 1).
+
+## Complément #1103 (2026-11-19)
+
+Texte de Greg : « ok, on passe à #1103 »
+
+#1103 est une suite du 4c (#1065, lot 4 #1062) : refresh de l'admin sans contrôle du rôle ADMIN, et refresh de l'intercepteur `jwt-refresh` coupé avec la requête qui l'a lancé.
+
+## Complément #1133 (2026-11-19)
+
+Texte de Greg : « ok, on passe à #1133 »
+
+#1133 est issu de la vérification tests de #1103 (lot 4 #1062) : les specs de l'admin et de front-auth gardent le délai Vitest par défaut (5 s) et échouent sous charge, alors que l'app et l'API sont à 20 s (#689).

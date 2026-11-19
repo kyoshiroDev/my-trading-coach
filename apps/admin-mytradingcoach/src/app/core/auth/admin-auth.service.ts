@@ -1,7 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { catchError, of, switchMap, tap, throwError } from 'rxjs';
+import { EMPTY, catchError, of, switchMap, throwError } from 'rxjs';
 import { environment } from '@admin/environments/environment';
 import type { Plan, Role } from '@mtc/shared';
 
@@ -21,6 +21,12 @@ export class AdminAuthService {
   readonly currentUser = signal<AdminAuthUser | null>(null);
   readonly isAuthenticated = signal(false);
   readonly isAdmin = signal(false);
+
+  /**
+   * Incrémenté à chaque déconnexion (#1103) : le refresh partagé de `@mtc/front-auth` va au bout même
+   * sans requête en attente ; une réponse arrivée après la déconnexion est ignorée.
+   */
+  private session = 0;
 
   constructor() { this.loadFromStorage(); }
 
@@ -52,6 +58,7 @@ export class AdminAuthService {
   }
 
   logout() {
+    this.session++;
     this.http.post(`${environment.apiUrl}/auth/logout`, {}, { withCredentials: true }).subscribe();
     localStorage.removeItem('admin_access_token');
     localStorage.removeItem('admin_user');
@@ -65,18 +72,28 @@ export class AdminAuthService {
     return localStorage.getItem('admin_access_token');
   }
 
+  /**
+   * Renouvelle le jeton. Même règle que le login (#1103) : un compte qui n'est plus ADMIN (ou une
+   * réponse sans utilisateur) ne laisse rien dans le navigateur et le refresh échoue avec
+   * `NOT_ADMIN_MESSAGE` ; l'intercepteur `jwt-refresh` déconnecte alors (session serveur fermée).
+   */
   refreshToken() {
-    return this.http.post<{ data: { access_token: string; user: AdminAuthUser } }>(
+    const session = this.session;
+    return this.http.post<{ data: { access_token: string; user?: AdminAuthUser } }>(
       `${environment.apiUrl}/auth/refresh`,
       {},
       { withCredentials: true },
-    ).pipe(tap(res => {
-      localStorage.setItem('admin_access_token', res.data.access_token);
-      if (res.data.user) {
-        localStorage.setItem('admin_user', JSON.stringify(res.data.user));
-        this.currentUser.set(res.data.user);
-      }
-    }));
+    ).pipe(
+      switchMap((res) => {
+        if (session !== this.session) return EMPTY; // déconnecté pendant le refresh
+        const user = res.data.user;
+        if (user?.role !== 'ADMIN') {
+          return throwError(() => ({ status: 403, error: { message: NOT_ADMIN_MESSAGE } }));
+        }
+        this.handleAuth({ access_token: res.data.access_token, user });
+        return of(res);
+      }),
+    );
   }
 
   private handleAuth(data: { access_token: string; user: AdminAuthUser }) {

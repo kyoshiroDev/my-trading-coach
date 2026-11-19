@@ -16,6 +16,7 @@ import { AccountsService } from './accounts.service';
 import { CreateAccountDto } from './dto/create-account.dto';
 import { UpdateAccountRequestDto } from './dto/update-account.dto';
 import { CreatePayoutDto } from './dto/create-payout.dto';
+import { ConfirmDeletionDto } from './dto/confirm-deletion.dto';
 import { isPremiumAccess } from '../discord/discord-access.util';
 import { AccountIncidentsService } from './incidents/account-incidents.service';
 
@@ -173,7 +174,7 @@ export class AccountsController {
   deleteArchived(
     @CurrentUser() user: { id: string },
     @Param('id') id: string,
-    @Body() body?: { confirm?: unknown },
+    @Body() body: ConfirmDeletionDto,
   ) {
     return this.accounts.deleteArchived(user.id, id, body?.confirm);
   }
@@ -191,7 +192,7 @@ export class AccountsController {
   purge(
     @CurrentUser() user: { id: string },
     @Param('id') id: string,
-    @Body() body?: { confirm?: unknown },
+    @Body() body: ConfirmDeletionDto,
   ) {
     return this.accounts.purge(user.id, id, body?.confirm);
   }

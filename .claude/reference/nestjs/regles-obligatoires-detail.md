@@ -158,7 +158,11 @@
   `/trades/{market-context,news,live-price,instruments,user-assets,favorite-asset}`.
 - `@UseGuards(JwtAuthGuard, BetaGuard)` sur routes V2 session mode (BETA_TESTER + ADMIN)
 - `/api/analytics/summary` : PAS de PremiumGuard (FREE y accède)
-- `ValidationPipe` global : `whitelist: true, forbidNonWhitelisted: true`
+- `ValidationPipe` global : `whitelist: true, forbidNonWhitelisted: true`, défini par
+  `createValidationPipe()` (`config/validation-pipe.ts`, partagé avec les tests). Un `@Body()` typé en
+  ligne (`{ reason?: string }`) n'est jamais validé (type `Object` à l'exécution) : toujours une classe DTO.
+  Test d'un corps : appliquer `createValidationPipe()` au type réel du paramètre
+  (`Reflect.getMetadata('design:paramtypes', …)`, cf. `users/delete-bodies-validation.spec.ts`, #1069).
 - Ne jamais appeler Prisma dans les controllers
 - Imports profonds : alias `@api/…` (= `src/`, ex. `@api/common/guards/jwt-auth.guard`), déclaré dans
   `tsconfig.base.json`, `webpack.config.js` et les deux `vitest*.config.mts`

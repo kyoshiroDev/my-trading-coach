@@ -1,7 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { EMPTY, fromEvent } from 'rxjs';
+import { EMPTY, fromEvent, of } from 'rxjs';
 import { catchError, filter, switchMap, tap } from 'rxjs/operators';
 import { environment } from '@app/environments/environment';
 import { POLLING_MS } from '../constants/polling.const';
@@ -93,6 +93,12 @@ export class AuthService {
   readonly currentUser = signal<AuthUser | null>(null);
   readonly isAuthenticated = signal(false);
 
+  /**
+   * Incrémenté à chaque déconnexion (#1103) : le refresh partagé de `@mtc/front-auth` va au bout même
+   * sans requête en attente ; une réponse arrivée après la déconnexion est ignorée.
+   */
+  private session = 0;
+
   constructor() {
     this.loadFromStorage();
     this.startUserSync();
@@ -179,6 +185,7 @@ export class AuthService {
   }
 
   logout() {
+    this.session++;
     // Notifications push de CET appareil retirées avec le jeton d'avant la déconnexion (#666) :
     // sur un appareil partagé, la personne suivante ne reçoit pas les alertes de ce compte.
     void this.pushLogout.run(this.getAccessToken());
@@ -207,6 +214,7 @@ export class AuthService {
 
   refreshToken() {
     // Le refresh_token est envoyé automatiquement via le cookie httpOnly
+    const session = this.session;
     return this.http
       .post<AuthResponse>(
         `${environment.apiUrl}/auth/refresh`,
@@ -214,12 +222,14 @@ export class AuthService {
         { withCredentials: true },
       )
       .pipe(
-        tap((res) => {
+        switchMap((res) => {
+          if (session !== this.session) return EMPTY; // déconnecté pendant le refresh
           localStorage.setItem('access_token', res.data.access_token);
           if (res.data.user) {
             localStorage.setItem('user', JSON.stringify(res.data.user));
             this.currentUser.set(res.data.user);
           }
+          return of(res);
         }),
       );
   }
