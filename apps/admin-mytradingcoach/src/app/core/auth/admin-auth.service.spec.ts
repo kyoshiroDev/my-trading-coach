@@ -20,7 +20,7 @@ describe('AdminAuthService.refreshToken : rôle ADMIN exigé (#1103)', () => {
     localStorage.clear();
     localStorage.setItem('admin_access_token', 'ancien');
     localStorage.setItem('admin_user', JSON.stringify(admin));
-    TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])] });
+    TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([{ path: 'login', children: [] }])] });
     http = TestBed.inject(HttpTestingController);
     auth = TestBed.inject(AdminAuthService);
   });
@@ -54,5 +54,18 @@ describe('AdminAuthService.refreshToken : rôle ADMIN exigé (#1103)', () => {
     http.expectOne(`${environment.apiUrl}/auth/refresh`).flush({ data: { access_token: 'jeton-inconnu' } });
     expect(status).toBe(403);
     expect(auth.getAccessToken()).toBe('ancien');
+  });
+
+  it('déconnexion pendant le refresh : la réponse arrivée après ne remet pas de jeton', () => {
+    let emitted = false;
+    auth.refreshToken().subscribe(() => (emitted = true));
+    const refresh = http.expectOne(`${environment.apiUrl}/auth/refresh`);
+    auth.logout();
+    http.expectOne(`${environment.apiUrl}/auth/logout`).flush({});
+    refresh.flush({ data: { access_token: 'tardif', user: admin } });
+    expect(emitted).toBe(false);
+    expect(auth.getAccessToken()).toBeNull();
+    expect(localStorage.getItem('admin_user')).toBeNull();
+    expect(auth.isAuthenticated()).toBe(false);
   });
 });
