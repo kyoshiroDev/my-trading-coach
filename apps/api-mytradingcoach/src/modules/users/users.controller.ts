@@ -20,6 +20,7 @@ import { PartnerCodeService } from '../partner-codes/partner-code.service';
 import { CompleteOnboardingDto } from './dto/onboarding.dto';
 import { UpdateMeDto } from './dto/update-me.dto';
 import { UpdatePreferencesDto } from './dto/update-preferences.dto';
+import { DeleteMeDto } from './dto/delete-me.dto';
 import { AdminListQueryDto, AdminUpdateUserDto, SetRoleDto } from './dto/admin-user.dto';
 import { DeprecatedRoute } from '../../common/decorators/deprecated-route.decorator';
 
@@ -82,7 +83,7 @@ export class UsersController {
   @HttpCode(HttpStatus.NO_CONTENT)
   async deleteMe(
     @CurrentUser() user: { id: string },
-    @Body() body?: { reason?: string },
+    @Body() body: DeleteMeDto,
   ) {
     await this.usersService.deleteMe(user.id, body?.reason);
   }
