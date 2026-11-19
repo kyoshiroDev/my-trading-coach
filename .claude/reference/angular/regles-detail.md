@@ -169,9 +169,16 @@ Test de charge B9 : le polling faisait **la moitié** des requêtes de l'API. R�
   `role="alert"`. Un rechargement vide d'abord le bloc, et une réponse arrivée après un changement de
   paramètre (page, mode, sélection) est ignorée (#1065).
 - **Renouvellement du jeton** (`libs/front/auth` `jwt-refresh.interceptor.ts`, app et admin) : un seul
-  refresh partagé ; `AuthRefreshState.outcome$` émet l'issue (jeton OU erreur), donc les requêtes en
-  attente échouent avec le refresh au lieu de rester en suspens. Seul l'échec du refresh déconnecte
-  (pas une erreur de la requête rejouée) ; requête d'origine annulée → état libéré (#1065).
+  refresh partagé, `AuthRefreshState.refresh(auth)` (`shareReplay`, `refCount: false`) : les 401
+  arrivés pendant qu'il est en vol le rejoignent, et il ne dépend d'aucune requête. Une requête
+  annulée (écran quitté) se désabonne seule : le refresh va au bout, le jeton est gardé, le cookie de
+  refresh n'est jamais présenté deux fois (#1103 ; avant, il était coupé avec la requête d'origine).
+  Son échec déconnecte une fois et fait échouer les requêtes en attente (#1065) ; une erreur de la
+  requête rejouée ne déconnecte pas. Comme le refresh va au bout sans personne pour l'attendre, chaque
+  service d'auth (app et admin) a un compteur `session` incrémenté par `logout()` : une réponse de
+  refresh arrivée après la déconnexion est ignorée (rien réécrit, rien émis). Admin : `AdminAuthService.refreshToken()` refuse un compte non
+  ADMIN (ou une réponse sans utilisateur), comme le login A18 : rien n'est gardé, l'intercepteur
+  déconnecte (#1103).
 - **Tout nouveau socket** (`io(...)`) étale ses reconnexions avec `...SOCKET_RECONNECT_OPTIONS`
   (`core/services/socket-reconnect.ts`, SCA-B4-07) : 1er essai entre 1 et 9 s, plafond 60 s. Sans ça,
   tous les onglets reviennent ensemble après un redémarrage de l'API.
