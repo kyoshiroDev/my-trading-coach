@@ -1,7 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { catchError, of, switchMap, tap, throwError } from 'rxjs';
+import { catchError, of, switchMap, throwError } from 'rxjs';
 import { environment } from '@admin/environments/environment';
 import type { Plan, Role } from '@mtc/shared';
 
@@ -65,18 +65,26 @@ export class AdminAuthService {
     return localStorage.getItem('admin_access_token');
   }
 
+  /**
+   * Renouvelle le jeton. Même règle que le login (#1103) : un compte qui n'est plus ADMIN (ou une
+   * réponse sans utilisateur) ne laisse rien dans le navigateur et le refresh échoue avec
+   * `NOT_ADMIN_MESSAGE` ; l'intercepteur `jwt-refresh` déconnecte alors (session serveur fermée).
+   */
   refreshToken() {
-    return this.http.post<{ data: { access_token: string; user: AdminAuthUser } }>(
+    return this.http.post<{ data: { access_token: string; user?: AdminAuthUser } }>(
       `${environment.apiUrl}/auth/refresh`,
       {},
       { withCredentials: true },
-    ).pipe(tap(res => {
-      localStorage.setItem('admin_access_token', res.data.access_token);
-      if (res.data.user) {
-        localStorage.setItem('admin_user', JSON.stringify(res.data.user));
-        this.currentUser.set(res.data.user);
-      }
-    }));
+    ).pipe(
+      switchMap((res) => {
+        const user = res.data.user;
+        if (user?.role !== 'ADMIN') {
+          return throwError(() => ({ status: 403, error: { message: NOT_ADMIN_MESSAGE } }));
+        }
+        this.handleAuth({ access_token: res.data.access_token, user });
+        return of(res);
+      }),
+    );
   }
 
   private handleAuth(data: { access_token: string; user: AdminAuthUser }) {
