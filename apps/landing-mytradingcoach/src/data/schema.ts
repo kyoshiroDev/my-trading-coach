@@ -60,7 +60,7 @@ export const SOFTWARE_APPLICATION = {
   url: `${SITE}/prop-firm`,
   publisher: ORGANIZATION_REF,
   description:
-    'Journal de trading pour traders futures en prop firm : synchro Tradovate en lecture seule, marge avant la limite de la firme en direct, coach IA et débrief hebdomadaire. Outil d’analyse, pas un conseil en investissement.',
+    'Journal de trading pour traders futures en prop firm\u00a0: synchro Tradovate en lecture seule, marge avant la limite de la firme en direct, coach IA et débrief hebdomadaire. Outil d’analyse, pas un conseil en investissement.',
   inLanguage: 'fr',
   offers: [
     { '@type': 'Offer', name: 'Gratuit', price: '0', priceCurrency: 'EUR', description: 'Trades illimités, journal complet, 1 compte avec ses règles prop firm, synchro Tradovate, suivi prop firm en direct, compagnon de session, calendrier éco IA, news et contexte marché' },
@@ -70,7 +70,7 @@ export const SOFTWARE_APPLICATION = {
       price: String(monthly),
       priceCurrency: 'EUR',
       priceSpecification: { '@type': 'UnitPriceSpecification', price: String(monthly), priceCurrency: 'EUR', unitCode: 'MON' },
-      description: 'Tout le plan Gratuit, plus IA Insights, Chat Coach IA, Weekly Debrief, alertes prop firm en direct (objectif et payout compris, avec le son), anti-tilt, analytics avancés et comptes illimités avec leurs règles prop firm',
+      description: 'Tout le plan Gratuit, plus IA Insights, Chat Coach IA, Débrief hebdo, alertes prop firm en direct (objectif et payout compris, avec le son), anti-tilt, analytics avancés et comptes illimités avec leurs règles prop firm',
     },
     {
       '@type': 'Offer',
@@ -86,8 +86,8 @@ export const SOFTWARE_APPLICATION = {
     'Marge avant la limite de la prop firm, en direct',
     'Journal de trading avec suivi des émotions',
     'IA Insights propulsée par Claude',
-    'Weekly Debrief automatique chaque dimanche',
-    'Analytics : win rate, drawdown, heatmap',
+    'Débrief hebdo automatique chaque dimanche',
+    'Analytics\u00a0: win rate, drawdown, heatmap',
     'Hébergé en France',
   ],
 };
