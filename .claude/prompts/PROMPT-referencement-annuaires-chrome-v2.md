@@ -31,7 +31,7 @@ Ouvrir et lire les sites listés, préparer les textes, et soumettre UNIQUEMENT 
 ## Faits autorisés (les seuls que tu peux utiliser)
 - Nom : MyTradingCoach (MTC), site https://www.mytradingcoach.app, page prop firm https://www.mytradingcoach.app/prop-firm
 - Journal de trading avec coach IA pour traders de futures en prop firm, en français. Application web.
-- Lecture seule : aucun ordre passé, aucun conseil d'achat ou de vente.
+- Lecture seule : aucun ordre passé (D5 du 19/11 : la mention « aucun conseil d'achat ou de vente » est suspendue dans les textes publics).
 - Import automatique des trades Tradovate (connexion en lecture seule) et saisie manuelle.
 - Suivi de la marge avant la limite de drawdown, avec les règles de 16 prop firms.
 - Journal complet (setups, émotions, notes, statistiques). Débrief hebdomadaire rédigé par l'IA et alerte après une perte : options Premium.
@@ -42,8 +42,8 @@ Ouvrir et lire les sites listés, préparer les textes, et soumettre UNIQUEMENT 
 ## Textes approuvés (à copier tels quels)
 FR court (155 caractères) : MyTradingCoach (mytradingcoach.app) : journal de trading avec coach IA pour futures en prop firm. Marge avant la limite, import Tradovate en lecture seule.
 EN court (160 caractères) : MyTradingCoach (mytradingcoach.app): trading journal with an AI coach for futures prop firm traders. Margin before the drawdown limit, read-only Tradovate sync.
-FR moyen : MyTradingCoach (mytradingcoach.app) est un journal de trading en français pour les traders de futures en prop firm. Il importe tes trades Tradovate en lecture seule (ou tu les saisis à la main), affiche ta marge avant la limite de drawdown avec les règles de 16 prop firms, et réunit setups, émotions, notes et statistiques. Un coach IA t'aide à débriefer ta semaine. MTC ne passe aucun ordre et ne donne aucun conseil d'achat ou de vente. Hébergé en France, sans publicité. Plan gratuit et 14 jours de Premium offerts, sans carte.
-EN medium : MyTradingCoach (mytradingcoach.app) is a French-language trading journal for futures prop firm traders. It imports your Tradovate trades read-only (or you log them manually), shows your margin before the drawdown limit with the rules of 16 prop firms, and brings together setups, emotions, notes and statistics. An AI coach helps you debrief your week. MTC places no orders and gives no buy or sell advice. Hosted in France, no ads. Free plan and 14 days of Premium included, no card needed.
+FR moyen : MyTradingCoach (mytradingcoach.app) est un journal de trading en français pour les traders de futures en prop firm. Il importe tes trades Tradovate en lecture seule (ou tu les saisis à la main), affiche ta marge avant la limite de drawdown avec les règles de 16 prop firms, et réunit setups, émotions, notes et statistiques. Un coach IA t'aide à débriefer ta semaine. MTC ne passe aucun ordre (lecture seule). Hébergé en France, sans publicité. Plan gratuit et 14 jours de Premium offerts, sans carte.
+EN medium : MyTradingCoach (mytradingcoach.app) is a French-language trading journal for futures prop firm traders. It imports your Tradovate trades read-only (or you log them manually), shows your margin before the drawdown limit with the rules of 16 prop firms, and brings together setups, emotions, notes and statistics. An AI coach helps you debrief your week. MTC places no orders (read-only). Hosted in France, no ads. Free plan and 14 days of Premium included, no card needed.
 Pour toute autre longueur, découpe ces textes sans rien ajouter.
 
 ## Phase 1 : recherche, lecture seule (dans cet ordre, les plus cités par les IA d'abord)
@@ -85,3 +85,74 @@ Si une condition est fausse : ne soumets pas, mets le site dans « à faire par 
 8. Soumissions faites : liste exacte, heure, capture.
 9. Ce que tu n'as pas pu faire et pourquoi.
 Ne propose aucune action sur le site de MTC : Greg décide ensuite avec Claude.
+
+---
+
+## Complément de Greg (19/11/2026) : décisions sur le rapport des phases 1 et 2 (texte exact)
+
+# PROMPT : décisions de Greg sur le référencement (issue #1136) et vérifications complémentaires en lecture seule
+
+C'est la réponse de Greg au rapport des phases 1 et 2 du 19/11. Les décisions ci-dessous sont définitives pour cette session. Tu travailles lentement, tu prouves chaque point (fichier et ligne, capture sans donnée personnelle), tu t'arrêtes au moindre doute.
+
+## Règles absolues (inchangées)
+- Aucun secret affiché ou écrit. Contact public : contact@mytradingcoach.app uniquement (jamais hello@, jamais l'adresse personnelle).
+- Tu ne crées aucun compte, tu n'envoies aucun e-mail, message, commentaire ou formulaire, tu ne paies rien, tu ne soumets rien. Greg envoie lui-même.
+- Aucun changement dans le code applicatif, le site, Stripe, la prod. Tout ce qui suit est de la lecture seule, sauf le document décrit en T6.
+- Pas de tiret cadratin dans les textes visibles. Conformité AMF : aucune promesse de gain, aucun « n°1 » ou « recommandé par », aucune prévision.
+
+## Décisions de Greg
+D1. FundedTrading : on prépare le message final, Greg l'envoie lui-même maintenant à partner@fundedtrading.com. Pays du siège : France. Signature : « Grégory, founder, MyTradingCoach (mytradingcoach.app) · contact@mytradingcoach.app ».
+D2. propfirmapp et PropFirmMap : mêmes messages, adaptés, que Greg enverra dans 7 jours (pas tous en même temps). Greg décidera alors selon la réponse de FundedTrading.
+D3. NinjaTrader : la fiche de MTC est bien en ligne dans la catégorie « French trading apps » (page 2) : https://ninjatraderecosystem.com/french-trading-apps/?fwp_paged=2 . La carte renvoie vers https://www.mytradingcoach.app/?utm_source=ninjatrader&utm_medium=ecosystem&utm_campaign=fr-autres . Seule la page de détail /intl_app/mytradingcoach/ affiche « Page Not Found ». Le libellé du site « Référencé dans l'écosystème · Lien affilié » reste donc exact : on ne le modifie pas. Le message à NinjaTrader devient facultatif et de faible priorité (demander de restaurer la page de détail), à envoyer par le contact vendeur de Greg quand il le souhaite. Corrige dans ton rapport ton constat « fiche cassée » : c'est la page de détail seule.
+D4. Comptes : AlternativeTo oui (Greg crée le compte lui-même avec contact@ et un mot de passe de son gestionnaire, jamais communiqué). Product Hunt : plus tard, après les pages de règles, les premiers avis réels et le calendrier de lancement. SaaSHub, El Trader Financiado et Traders Second Brain : écartés (anglais seulement, ou concurrents).
+D5. Tant que la question des flèches haussier/baissier de l'analyse du calendrier économique n'est pas tranchée (T3), AUCUN texte public ne doit contenir la phrase « donne aucun conseil d'achat ou de vente ». Remplace-la par « ne passe aucun ordre (lecture seule) » dans tous les brouillons, textes approuvés et fiches. Les autres faits autorisés restent identiques.
+D6. Pas de mise en avant payante, pas d'affiliation, pas d'échange de liens, avec personne.
+D7. Des accès de test gratuits (compte Premium) pour un relecteur de média sont possibles : Greg les offrira lui-même s'ils sont demandés. Tu ne proposes rien de ton côté.
+
+## T1 : brouillons finaux (aucun envoi)
+- Réécris les 3 brouillons (FundedTrading, propfirmapp, PropFirmMap) selon D1, D2, D5 : en anglais, courts, factuels, avec « MyTradingCoach (mytradingcoach.app) », fondateur, lecture seule, Tradovate, règles de 16 prop firms, hébergé en France, plan gratuit et 14 jours de Premium sans carte, « no paid placement, no affiliate arrangement, no link exchange ». Pour FundedTrading, ajoute « HQ country: France ». Ne dis rien du calendrier économique ni d'analyse de marché.
+- Réécris le message NinjaTrader (facultatif, faible priorité) : la page de détail /intl_app/mytradingcoach/ affiche « Page Not Found » (vérifié le 19/11/2026) alors que la carte de la catégorie « French trading apps » fonctionne ; demande poliment de la restaurer. Pour l'envoi par le contact vendeur de Greg.
+- Mets à jour les valeurs pour AlternativeTo (nom, URL, accroche, description moyenne EN sans la phrase de D5, catégories, modèle Freemium, plateforme Web, langue française). Précise comment indiquer les alternatives (TradeZella, TradesViz, Edgewonk, TraderSync) si AlternativeTo le demande, sans aucun texte de comparaison.
+- Livre tout dans le rapport, prêt à copier-coller.
+
+## T2 : vérifier les affirmations que les IA répètent sur MTC (repo et site, lecture seule)
+Pour chaque point : ce que dit le site ou l'application (citation et URL ou fichier:ligne), verdict « exact / inexact / ambigu », et une proposition de formulation plus claire (non appliquée).
+1. Offre Fondateur : est-elle ouverte aujourd'hui ? Combien de places restantes selon la source de vérité du code, et que dit la landing à ce sujet ? (ChatGPT et Perplexity la disent « clôturée ».)
+2. Essai : durée exacte annoncée (14 jours ?) à chaque endroit où elle apparaît. (ChatGPT dit « un mois ».)
+3. Prix : plans et montants lus dans libs/shared (pricing.ts) et affichés sur la landing. (Les IA donnent 49 €/mois, 490 €/an, Fondateur 29 €/mois ou 290 €/an : recopie ce que le code affiche, sans jugement.)
+4. Fréquence réelle de synchronisation Tradovate (périodique ? manuelle via « Actualiser » ?) et tous les textes du site qui parlent de « direct », « temps réel » ou « automatique ». (Gemini dit « temps réel ».)
+5. Comptes pris en charge : comptes prop firm via Tradovate inclus ou non (ce qui est testé et ce qui est annoncé). (ChatGPT dit que les comptes d'évaluation et de prop firm ne sont pas éligibles à l'API standard.)
+6. Imports : liste exacte des courtiers et formats d'import réellement pris en charge aujourd'hui, et à quel plan ils sont ouverts. (Perplexity cite Tradovate, Binance, Bybit, MetaTrader 4/5, IBKR, MEXC « gratuitement ».)
+7. Plan gratuit : ce qu'il inclut exactement (synchro, nombre de comptes, suivi de la marge). Les classements regardent ce critère en premier. Vérifie aussi chaque affirmation de la carte NinjaTrader contre le code : « synchronisation Tradovate automatique gratuite », « trades et historique illimités », « sans carte bancaire », « hébergé en France », « planification avant séance, suivi en séance, revue après séance ».
+8. Chaque fois que la landing ou la page d'inscription dit « sans conseil d'achat ou de vente », « aucune prévision » ou équivalent : liste les endroits (fichier:ligne).
+
+## T3 : analyse du calendrier économique, état actuel (lecture seule, aucun changement)
+ChatGPT décrit MTC avec « Analyse du marché : OUI … NQ : BULL … indication de sentiment du marché ». Sur le dernier commit de dev et de main, relève :
+- où des flèches ou mots haussier/baissier (bull, bear, sentiment, « conseil actionnable ») apparaissent : interface, API, prompts de l'IA (fichier:ligne) ;
+- ce que le ticket #881 (formulation neutre AMF) a déjà changé ou non à ce sujet ;
+- 2 formulations neutres possibles pour remplacer chaque libellé (par exemple « au-dessus ou en dessous des attentes », sans direction de marché), non appliquées ;
+- si ces écrans sont visibles sans connexion ou seulement après inscription.
+Conclusion en 3 lignes : risque oui ou non au regard de « aucun conseil d'achat ou de vente », et ce que Greg doit décider. Ne propose pas de code.
+
+## T4 : écart de catalogue prop firms (lecture seule)
+Liste les prop firms du catalogue de MTC (16) avec leurs tailles de compte. Puis, d'après les pages publiques de Consistry (/prop-firm-rules, 58 firmes), Adakti (36) et NERIKSIA (25), liste les firmes que MTC n'a pas, classées par nombre de ces trois concurrents qui les couvrent. Noms seulement, aucune donnée de règles recopiée.
+
+## T5 : vérifications Chrome (lecture seule)
+- Ouvre http://www.mytradingcoach.app, http://mytradingcoach.app et https://mytradingcoach.app : vers quelle URL finale chacune redirige, avec quel code. Note l'URL canonique de l'accueil.
+- Ouvre https://ninjatraderecosystem.com/french-trading-apps/?fwp_paged=2 : confirme que la carte MyTradingCoach y est, recopie son texte et son lien. Ouvre ensuite https://ninjatraderecosystem.com/intl_app/mytradingcoach/ : toujours « Page Not Found » ? Dis si la carte pointe vers cette page de détail ou directement vers le site de MTC. Relève aussi si les liens UTM (utm_source=ninjatrader) sont bien repris par l'outil de suivi de l'acquisition de MTC (lecture du code seulement).
+
+## T6 : document et PR (autorisation donnée ICI, pour cette branche seulement)
+- Ajoute les décisions D1 à D7 en tête de .claude/decisions.md.
+- Sur la branche docs/prompt-referencement-v2 : le prompt v2 mis à jour (phrase de D5 remplacée) et le fichier de décisions, rien d'autre.
+- Lance l'agent de relecture (PROMPT-agent-relecteur.md) : il doit valider à 100 %. Un point non validé : tu corriges et tu relances la relecture complète.
+- Dès le 100 %, tu peux pousser CETTE branche et créer la PR vers dev (jamais main), document seulement. Ferme l'issue #1136 seulement si je l'écris.
+
+## Rapport final (un seul message)
+1. T1 : les brouillons prêts à copier-coller (FundedTrading, propfirmapp, PropFirmMap, NinjaTrader, AlternativeTo).
+2. T2 : tableau « point | ce que dit le site | source | verdict | formulation proposée ».
+3. T3 : l'état des flèches et libellés, avec fichier:ligne, et la conclusion en 3 lignes.
+4. T4 : le tableau de l'écart de catalogue.
+5. T5 : les redirections et l'état de la fiche NinjaTrader.
+6. Lien de la PR, état de la CI, verdict du relecteur.
+7. Ce que tu n'as pas pu faire et pourquoi.
+Ne propose aucune correction de code : Greg décide ensuite avec Claude.
