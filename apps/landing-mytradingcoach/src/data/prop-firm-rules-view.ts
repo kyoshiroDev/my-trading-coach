@@ -50,7 +50,7 @@ export const PHASE_LABEL: Record<PhaseKind, string> = {
 const DD_TYPE: Record<string, string> = {
   trailing_eod: 'Trailing sur le plus haut solde de fin de journée (EOD)',
   trailing_intraday: 'Trailing en temps réel, latent compris (intraday)',
-  static: 'Statique : plancher fixe',
+  static: 'Statique\u00a0: plancher fixe',
 };
 
 const SYMBOL: Record<string, string> = { USD: '$', EUR: '€', GBP: '£' };
@@ -115,7 +115,7 @@ export function ruleRows(p: CompactPhase, currency: string): RuleRow[] {
   rows.push(
     p.target !== null
       ? { label: 'Objectif', value: m(p.target) }
-      : { label: 'Objectif', value: p.phase === 'evaluation' ? 'Aucun' : 'Aucun : place aux payouts' },
+      : { label: 'Objectif', value: p.phase === 'evaluation' ? 'Aucun' : 'Aucun\u00a0: place aux payouts' },
   );
   if (p.dd) {
     const type = DD_TYPE[p.dd.type] ?? p.dd.type;

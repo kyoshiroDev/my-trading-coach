@@ -102,7 +102,7 @@ Dans la section pricing PREMIUM, mentionner les limites de façon positive :
 ```
 ✨ IA Insights (1 analyse toutes les 4h)
 💬 Chat Coach IA (jusqu'à 50 messages/jour)
-📅 Weekly Debrief automatique chaque dimanche
+📅 Débrief hebdo automatique chaque dimanche
 ```
 
 Formulation : jamais "limité à", toujours "jusqu'à" ou entre parenthèses en petit.

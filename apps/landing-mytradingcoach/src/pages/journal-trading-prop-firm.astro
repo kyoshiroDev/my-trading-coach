@@ -10,30 +10,30 @@ if (!FEATURES.multiAccounts) return Astro.redirect('/');
 
 const faq = [
   {
-    q: 'Comment suivre plusieurs comptes prop firm au même endroit ?',
+    q: 'Comment suivre plusieurs comptes prop firm au même endroit\u00a0?',
     a: "Tu crées un compte par éval ou funded (Apex, Lucid, Topstep, FTMO...) plus tes comptes perso. Chaque compte garde son capital de départ, ses trades et ses stats. Le sélecteur en haut de l'app filtre le journal, les analytics et les sessions sur le compte choisi, ou affiche l'ensemble.",
   },
   {
-    q: "Le suivi du drawdown et de l'objectif est-il fiable ?",
-    a: "Sur un compte Tradovate connecté, le calcul part du solde et de l'equity lus chez le broker (positions ouvertes comprises) et des clôtures officielles de chaque séance, avec les règles du plan de ta firme. Sur les autres comptes, c'est une estimation calculée depuis les trades que tu enregistres. Dans les deux cas, ce n'est pas le calcul officiel de ta firme : garde toujours un œil sur sa plateforme pour les chiffres officiels.",
+    q: "Le suivi du drawdown et de l'objectif est-il fiable\u00a0?",
+    a: "Sur un compte Tradovate connecté, le calcul part du solde et de l'equity lus chez le broker (positions ouvertes comprises) et des clôtures officielles de chaque séance, avec les règles du plan de ta firme. Sur les autres comptes, c'est une estimation calculée depuis les trades que tu enregistres. Dans les deux cas, ce n'est pas le calcul officiel de ta firme\u00a0: garde toujours un œil sur sa plateforme pour les chiffres officiels.",
   },
   {
-    q: "L'analyse IA est-elle séparée par compte ?",
-    a: "Oui. Le Weekly Debrief sort un onglet par compte avec ses forces, ses points faibles et ses objectifs propres, plus une vue d'ensemble. Tu ne reçois pas une moyenne de tout mélangé : chaque compte a son analyse.",
+    q: "L'analyse IA est-elle séparée par compte\u00a0?",
+    a: "Oui. Le Débrief hebdo sort un onglet par compte avec ses forces, ses points faibles et ses objectifs propres, plus une vue d'ensemble. Tu ne reçois pas une moyenne de tout mélangé\u00a0: chaque compte a son analyse.",
   },
   {
-    q: 'Peut-on importer les trades exportés des plateformes prop firm ?',
-    a: "Oui. Tu exportes ton historique depuis ta plateforme et tu l'importes dans le compte correspondant. Les exports Tradovate sont reconnus automatiquement, en gratuit, et la synchro Tradovate remonte même tout l'historique sans fichier. Pour une autre plateforme, l'import IA lit ton fichier tel quel : il est réservé au Premium. Les trades sont illimités, y compris en plan Gratuit.",
+    q: 'Peut-on importer les trades exportés des plateformes prop firm\u00a0?',
+    a: "Oui. Tu exportes ton historique depuis ta plateforme et tu l'importes dans le compte correspondant. Les exports Tradovate sont reconnus automatiquement, en gratuit, et la synchro Tradovate remonte même tout l'historique sans fichier. Pour une autre plateforme, l'import IA lit ton fichier tel quel\u00a0: il est réservé au Premium. Les trades sont illimités, y compris en plan Gratuit.",
   },
   {
-    q: 'Combien de comptes puis-je suivre ?',
+    q: 'Combien de comptes puis-je suivre\u00a0?',
     a: 'Le plan Gratuit gère 1 compte avec ses règles prop firm (drawdown, objectif), et Premium des comptes illimités, chacun avec ses règles.',
   },
 ];
 
 const canonical = 'https://www.mytradingcoach.app/journal-trading-prop-firm';
 const title = 'Journal de trading prop firm multi-comptes | MyTradingCoach';
-const description = "Journal de trading pour prop firm : suis tes comptes Apex, Lucid, Topstep et perso sans les mélanger, avec analyse IA et suivi du drawdown par compte.";
+const description = "Journal de trading pour prop firm\u00a0: suis tes comptes Apex, Lucid, Topstep et perso sans les mélanger, avec analyse IA et suivi du drawdown par compte.";
 // FAQPage = la FAQ affichée plus bas, mot pour mot.
 const schema = [webPage(canonical, title, description), ORGANIZATION, WEBSITE, faqPage(faq.map((f) => ({ question: f.q, answer: f.a })))];
 ---
@@ -55,7 +55,7 @@ const schema = [webPage(canonical, title, description), ORGANIZATION, WEBSITE, f
       <span class="sec-label">Trading prop firm</span>
       <h1>Le journal de trading <em>prop firm et multi-comptes</em></h1>
       <p class="pf-lead">
-        Évals, comptes funded, comptes perso : suis-les tous au même endroit, sans les
+        Évals, comptes funded, comptes perso&nbsp;: suis-les tous au même endroit, sans les
         mélanger. Chaque compte garde ses stats, son suivi de drawdown estimé et sa
         propre analyse IA. Pensé pour les traders Apex, Lucid, Topstep, FTMO et les
         autres firmes.
@@ -70,7 +70,7 @@ const schema = [webPage(canonical, title, description), ORGANIZATION, WEBSITE, f
       <h2>Un compte par éval, sans rien mélanger</h2>
       <p>
         Tu passes une éval Apex, tu gères un funded Lucid et tu trades aussi un compte
-        perso ? Crée un compte par environnement. Chacun a son capital de départ, ses
+        perso&nbsp;? Crée un compte par environnement. Chacun a son capital de départ, ses
         trades, son win rate et son P&amp;L. Fini l'éval et le funded confondus dans la
         même moyenne. Le sélecteur de compte filtre tout le journal, les analytics et
         tes sessions sur le compte que tu regardes, ou te montre la vue d'ensemble.
@@ -85,8 +85,8 @@ const schema = [webPage(canonical, title, description), ORGANIZATION, WEBSITE, f
         ta séance. De quoi savoir où tu en es sans ouvrir trois onglets.
       </p>
       <p class="pf-note">
-        Important : sur un compte Tradovate connecté, le suivi part du solde et de
-        l'equity lus chez le broker ; sur les autres comptes, c'est une estimation
+        Important&nbsp;: sur un compte Tradovate connecté, le suivi part du solde et de
+        l'equity lus chez le broker&nbsp;; sur les autres comptes, c'est une estimation
         calculée depuis les trades que tu enregistres. Ce n'est jamais le calcul officiel
         de ta firme. Réfère-toi toujours à ta plateforme pour les chiffres qui valident ou
         invalident ton compte.
@@ -96,7 +96,7 @@ const schema = [webPage(canonical, title, description), ORGANIZATION, WEBSITE, f
     <section class="pf-sec">
       <h2>Une analyse IA dédiée à chaque compte</h2>
       <p>
-        Le Weekly Debrief te génère un onglet par compte : tes forces, tes points
+        Le Débrief hebdo te génère un onglet par compte&nbsp;: tes forces, tes points
         faibles et tes objectifs pour la semaine, propres à ce compte. Plus une vue
         d'ensemble qui compare tes comptes entre eux. Tu sais quoi corriger sur ton éval
         sans que ton compte perso fausse la lecture.
@@ -107,7 +107,7 @@ const schema = [webPage(canonical, title, description), ORGANIZATION, WEBSITE, f
       <h2>Import CSV des plateformes prop firm</h2>
       <p>
         Tu exportes l'historique de ta plateforme et tu l'importes dans le bon compte.
-        Les exports Tradovate sont reconnus automatiquement, en gratuit ; pour une autre
+        Les exports Tradovate sont reconnus automatiquement, en gratuit&nbsp;; pour une autre
         plateforme, l'import IA lit ton fichier tel quel (Premium). Les trades sont illimités,
         tu pars donc avec tout ton passif déjà en place.
       </p>
@@ -126,7 +126,7 @@ const schema = [webPage(canonical, title, description), ORGANIZATION, WEBSITE, f
     </section>
 
     <section class="pf-final">
-      <h2>Prêt à suivre tes comptes proprement ?</h2>
+      <h2>Prêt à suivre tes comptes proprement&nbsp;?</h2>
       <p>Démarre gratuitement, sans carte bancaire. Passe à Premium quand tu suis plusieurs comptes.</p>
       <div class="pf-cta-row">
         <a class="pf-btn" href={`${APP_URL}/register`} data-ga-event="cta_signup" data-ga-place="jtp-final">Créer mon compte</a>
