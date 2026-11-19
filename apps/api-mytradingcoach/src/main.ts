@@ -3,7 +3,7 @@ import './instrument';
 import cluster from 'node:cluster';
 import { availableParallelism } from 'node:os';
 import { getHeapStatistics } from 'node:v8';
-import { ConsoleLogger, Logger, RequestMethod, ValidationPipe } from '@nestjs/common';
+import { ConsoleLogger, Logger, RequestMethod } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import helmet from 'helmet';
@@ -12,6 +12,7 @@ import * as compression from 'compression';
 import { AppModule } from './app/app.module';
 import { configureProxy } from './config/proxy';
 import { checkEnv } from './config/env';
+import { createValidationPipe } from './config/validation-pipe';
 import { webConcurrency } from './config/web-concurrency';
 import { appRole, runsCrons, runsQueueProcessors } from './config/app-role';
 import { RedisIoAdapter } from './common/adapters/redis-io.adapter';
@@ -83,13 +84,7 @@ async function bootstrap() {
   // Sans effet sur la liste des origines : la réponse réelle reste refusée hors CORS_ORIGINS.
   app.enableCors({ origin: corsOrigins, credentials: true, maxAge: 600 });
 
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      forbidNonWhitelisted: true,
-      transform: true,
-    }),
-  );
+  app.useGlobalPipes(createValidationPipe());
 
   // Adapter Redis pour socket.io → broadcast propagé à TOUS les workers du cluster.
   // Doit être branché avant app.listen() (init des gateways). Résilient si Redis down.
