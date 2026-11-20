@@ -60,10 +60,10 @@ export const SOFTWARE_APPLICATION = {
   url: `${SITE}/prop-firm`,
   publisher: ORGANIZATION_REF,
   description:
-    'Journal de trading pour traders futures en prop firm\u00a0: synchro Tradovate en lecture seule, marge avant la limite de la firme en direct, coach IA et débrief hebdomadaire. Outil d’analyse, pas un conseil en investissement.',
+    'Journal de trading pour traders futures en prop firm\u00a0: synchro Tradovate en lecture seule, marge avant la limite de la firme en direct quand l’app est ouverte, coach IA et débrief hebdomadaire. Outil d’analyse, pas un conseil en investissement.',
   inLanguage: 'fr',
   offers: [
-    { '@type': 'Offer', name: 'Gratuit', price: '0', priceCurrency: 'EUR', description: 'Trades illimités, journal complet, 1 compte avec ses règles prop firm, synchro Tradovate, suivi prop firm en direct, compagnon de session, calendrier éco IA, news et contexte marché' },
+    { '@type': 'Offer', name: 'Gratuit', price: '0', priceCurrency: 'EUR', description: 'Trades illimités, journal complet, 1 compte avec ses règles prop firm, synchro Tradovate, suivi prop firm en direct app ouverte, compagnon de session, calendrier éco IA, news et contexte marché' },
     {
       '@type': 'Offer',
       name: 'Premium mensuel',
@@ -83,7 +83,7 @@ export const SOFTWARE_APPLICATION = {
   ],
   featureList: [
     'Synchro Tradovate en lecture seule',
-    'Marge avant la limite de la prop firm, en direct',
+    'Marge avant la limite de la prop firm, en direct quand l’app est ouverte',
     'Journal de trading avec suivi des émotions',
     'IA Insights propulsée par Claude',
     'Débrief hebdo automatique chaque dimanche',

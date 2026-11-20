@@ -114,10 +114,6 @@
   border: 1px solid rgba(59,130,246,.18); padding: 1px 5px;
   border-radius: 3px; flex-shrink: 0;
 }
-.news-sentiment { font-size: var(--fs-2xs); font-family: var(--font-mono); padding: 1px 5px; border-radius: 3px; flex-shrink: 0; }
-.news-sentiment.bull    { background: var(--green-dim); color: var(--green); }
-.news-sentiment.bear    { background: var(--red-dim);   color: var(--red);   }
-.news-sentiment.neutral { background: var(--bg-3);      color: var(--text-3); }
 .nm-source {
   font-family: var(--font-mono); font-size: var(--fs-2xs); color: var(--text-3);
   background: var(--bg-3); padding: 1px 6px; border-radius: 3px;

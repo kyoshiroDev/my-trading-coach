@@ -19,7 +19,7 @@ export const PLAN_BENEFITS: { free: readonly PlanBenefit[]; premium: readonly Pl
     { id: 'tradovate_sync', text: 'Synchro Tradovate automatique, en lecture seule' },
     {
       id: 'prop_firm_live',
-      text: `${ACCOUNT_LIMITS.free} compte avec les règles de sa prop firm, suivi en direct pendant la séance`,
+      text: `${ACCOUNT_LIMITS.free} compte avec les règles de sa prop firm, suivi en direct pendant la séance quand l’app est ouverte`,
     },
     { id: 'journal', text: 'Journal et trades illimités, historique complet' },
     { id: 'session', text: 'Préparation et débrief de chaque séance' },

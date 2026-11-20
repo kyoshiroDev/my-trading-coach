@@ -17,22 +17,32 @@ export const FAQ: readonly FaqItem[] = [
   {
     question: 'Quelle est la différence avec un journal de trading classique\u00a0?',
     answer:
-      "Un journal de trading classique, tu l'ouvres après avoir perdu pour analyser ce qui s'est passé. MTC est un compagnon\u00a0: il est là avant (il te prépare), pendant (il surveille en temps réel) et après (il débriefe). Les 3 moments sont reliés par l'IA qui connaît ton profil, tes actifs et tes patterns.",
+      "Un journal de trading classique, tu l'ouvres après avoir perdu pour analyser ce qui s'est passé. MTC est un compagnon\u00a0: il est là avant (il te prépare), pendant (il suit ta séance en direct quand il est ouvert) et après (il débriefe). Les 3 moments sont reliés par l'IA qui connaît ton profil, tes actifs et tes patterns.",
   },
   {
     question: 'Quels marchés sont supportés\u00a0?',
     answer:
-      'Tous les marchés\u00a0: Futures CME (NQ, ES, MES, MNQ, 6E, 6B, Gold, Crude Oil\u00a0: P&L en ticks avec multiplicateurs officiels), Crypto spot et levier (Binance, Bybit, Coinbase…), Forex (toutes paires), Indices CFD, Actions. Un seul journal pour tout, multi-marché natif.',
+      'Tous les marchés\u00a0: Futures CME (NQ, ES, MES, MNQ, 6E, 6B, Gold, Crude Oil\u00a0: P&L en ticks avec multiplicateurs officiels), Crypto spot et levier, Forex (toutes paires), Indices CFD, Actions. Un seul journal pour tout, multi-marché natif.',
   },
   {
     question: 'Comment fonctionne le calendrier économique IA\u00a0?',
     answer:
-      "Chaque matin, MTC récupère les événements économiques du jour (NFP, PMI, décisions Fed, etc.) et les filtre pour tes actifs spécifiques. Tu vois uniquement ce qui te concerne\u00a0: NQ, BTC/USDT, EUR/USD. Quand un résultat tombe en cours de session, l'IA lit immédiatement la surprise et t'indique comment elle se lit pour chacun de tes actifs (haussière, baissière ou neutre). C'est une lecture de l'annonce, à titre informatif\u00a0: ni une prévision, ni un conseil.",
+      "Chaque matin, MTC récupère les événements économiques du jour (NFP, PMI, décisions Fed, etc.) et les filtre pour tes actifs spécifiques. Tu vois uniquement ce qui te concerne\u00a0: NQ, BTC/USDT, EUR/USD. Quand un résultat tombe en cours de session, l'IA lit tout de suite le chiffre publié et le situe pour tes actifs (au-dessus, en ligne ou en dessous de la prévision). C'est une lecture de l'annonce, à titre informatif\u00a0: ni une prévision, ni un conseil.",
   },
   {
     question: 'Puis-je importer mon historique de trades\u00a0?',
     answer:
-      "Oui. Si tu trades sur Tradovate, tu peux connecter ton compte directement\u00a0: tes trades et leurs frais se synchronisent automatiquement, en lecture seule (MyTradingCoach ne voit jamais ton mot de passe et ne peut passer aucun ordre). L'import CSV reconnaît automatiquement les exports Tradovate, Binance, Bybit, MetaTrader 4/5, IBKR et MEXC, en gratuit. Pour un autre broker, l'import IA lit ton fichier tel quel et structure ton historique\u00a0: il est réservé au Premium.",
+      "Oui. Si tu trades sur Tradovate, tu peux connecter ton compte directement\u00a0: tes trades et leurs frais se synchronisent automatiquement, en lecture seule (MyTradingCoach ne voit jamais ton mot de passe et ne peut passer aucun ordre). L'import CSV reconnaît automatiquement les exports Tradovate et ceux de plusieurs autres courtiers et plateformes, en gratuit. Pour un autre broker, l'import IA lit ton fichier tel quel et structure ton historique\u00a0: il est réservé au Premium.",
+  },
+  {
+    question: 'À quelle fréquence mes trades sont-ils synchronisés\u00a0?',
+    answer:
+      "En direct quand MyTradingCoach est ouvert. Application fermée, relevé automatique toutes les 15 minutes environ.",
+  },
+  {
+    question: 'Quels comptes sont compatibles\u00a0?',
+    answer:
+      "MyTradingCoach se connecte à ton compte Tradovate en lecture seule. Ça fonctionne avec tes comptes d'évaluation et financés des prop firms qui tournent sur Tradovate, et avec tes comptes simulés ou réels.",
   },
   {
     question: "Comment fonctionne l'essai Premium\u00a0?",
@@ -41,7 +51,7 @@ export const FAQ: readonly FaqItem[] = [
   },
   {
     question: 'Quelle est la différence entre Gratuit et Premium\u00a0?',
-    answer: `Le plan Gratuit couvre tout le quotidien\u00a0: journal illimité, trades illimités, pré-session matin, session live avec trade rapide et suivi prop firm en direct, débrief de session, 1 compte avec ses règles prop firm et sa synchro Tradovate, et l'IA mutualisée (calendrier éco avec analyse IA, news live et contexte marché en temps réel\u00a0: DXY, taux US, indices). Le plan Premium (${monthly}€/mois ou ${annual}€/an) ajoute l'IA personnelle et la profondeur\u00a0: IA Insights, Chat coach personnalisé, Débrief hebdo automatique, alertes prop firm en direct (objectif et payout compris, avec le son) et anti-tilt, score trader, analytics avancés et comptes illimités avec leurs règles prop firm.`,
+    answer: `Le plan Gratuit couvre tout le quotidien\u00a0: journal illimité, trades illimités, pré-session matin, session live avec trade rapide et suivi prop firm en direct quand MTC est ouvert, débrief de session, 1 compte avec ses règles prop firm et sa synchro Tradovate, et l'IA mutualisée (calendrier éco avec analyse IA, news live et contexte marché en temps réel\u00a0: DXY, taux US, indices). Le plan Premium (${monthly}€/mois ou ${annual}€/an) ajoute l'IA personnelle et la profondeur\u00a0: IA Insights, Chat coach personnalisé, Débrief hebdo automatique, alertes prop firm en direct (objectif et payout compris, avec le son) et anti-tilt, score trader, analytics avancés et comptes illimités avec leurs règles prop firm.`,
   },
   {
     question: 'Où sont hébergées mes données\u00a0?',
