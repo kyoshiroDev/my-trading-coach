@@ -7,8 +7,9 @@
   margin-bottom: var(--space-4, 16px);
   padding: var(--space-4, 16px) var(--space-5, 20px);
   border-radius: var(--radius-lg, 12px);
-  border: 1px solid rgba(239, 68, 68, 0.35);
-  background: rgba(239, 68, 68, 0.08);
+  /* Rouge du thème de chaque app (#1101) : --red / --red-dim, définis par l'app et l'admin. */
+  border: 1px solid color-mix(in srgb, var(--red) 35%, transparent);
+  background: var(--red-dim);
   color: var(--text, #e2eaf5);
 }
 
@@ -21,15 +22,16 @@
 .es-retry {
   min-height: 36px;
   padding: 0 var(--space-4, 16px);
-  border: 1px solid rgba(239, 68, 68, 0.5);
+  border: 1px solid color-mix(in srgb, var(--red) 50%, transparent);
   border-radius: var(--radius-md, 8px);
   background: transparent;
   color: var(--text, #e2eaf5);
   font-size: var(--fs-sm, 13px);
   font-weight: 600;
   cursor: pointer;
+  /* Focus clavier : contour global :focus-visible de foundations.css (couleur par app). */
 }
 
 .es-retry:hover {
-  background: rgba(239, 68, 68, 0.15);
+  background: color-mix(in srgb, var(--red) 15%, transparent);
 }
