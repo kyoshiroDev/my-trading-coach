@@ -14,6 +14,14 @@ activé, non démo, **et au moins un trade clôturé dans la semaine de `refDate
 #1056, une semaine de positions ouvertes ne coûte pas d'appel IA). Le cron ne
 journalise que le nombre de jobs, jamais les adresses. 3 essais, échecs gardés 7 j.
 
+**jobId stable (#1060, 2026-11-21)** : le cron et le rattrapage enfilent avec
+`debriefJobId(userId, année, semaine)` = `debrief-<userId>-<année>-<semaine>` (sans « : », refusés par
+BullMQ). Le job du dimanche encore en file et celui du lundi ne font qu'un : pas de deuxième e-mail.
+`removeOnComplete` : l'id ne dédoublonne que tant que le job est en file (l'idempotence `generatedAt`
+reste le garde-fou ensuite). Le rattrapage retire d'abord un job du dimanche **échoué** (gardé 7 j)
+avant de réenfiler. La régénération admin (`force`) n'a jamais de jobId. Verrouillé par
+`debrief/debrief-jobid.spec.ts`.
+
 **Débrief manuel de milieu de semaine (C1 #1048, 2026-11-16)** : un débrief généré avant le dimanche
 23:00 de sa semaine (`weeklyCutoff`, explicitement en heure de Paris, bouton « Générer le débrief de cette semaine ») est REFAIT par le
 cron du dimanche et, à défaut, par le rattrapage du lundi, sur la semaine complète : `created=true`,
