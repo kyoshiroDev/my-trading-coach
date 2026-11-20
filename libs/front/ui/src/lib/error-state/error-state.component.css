@@ -29,9 +29,9 @@
   font-size: var(--fs-sm, 13px);
   font-weight: 600;
   cursor: pointer;
+  /* Focus clavier : contour global :focus-visible de foundations.css (couleur par app). */
 }
 
-/* Focus clavier : contour global :focus-visible de foundations.css (couleur par app). */
 .es-retry:hover {
   background: color-mix(in srgb, var(--red) 15%, transparent);
 }

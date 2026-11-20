@@ -36,4 +36,13 @@ describe('ErrorStateComponent', () => {
     expect(css).not.toMatch(/#ef4444|#ff5563/i);
     expect(css).toContain('var(--red');
   });
+
+  it('les deux apps qui l’utilisent définissent --red et --red-dim (sinon fond et bordure disparaissent)', () => {
+    const root = join(import.meta.dirname, '../../../../../../apps');
+    for (const theme of ['app-mytradingcoach/src/styles/theme.css', 'admin-mytradingcoach/src/styles.css']) {
+      const css = readFileSync(join(root, theme), 'utf8');
+      expect(css, theme).toMatch(/--red\s*:/);
+      expect(css, theme).toMatch(/--red-dim\s*:/);
+    }
+  });
 });
