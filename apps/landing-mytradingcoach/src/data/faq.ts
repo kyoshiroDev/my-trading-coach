@@ -22,7 +22,7 @@ export const FAQ: readonly FaqItem[] = [
   {
     question: 'Quels marchés sont supportés\u00a0?',
     answer:
-      'Tous les marchés\u00a0: Futures CME (NQ, ES, MES, MNQ, 6E, 6B, Gold, Crude Oil\u00a0: P&L en ticks avec multiplicateurs officiels), Crypto spot et levier (Binance, Bybit, Coinbase…), Forex (toutes paires), Indices CFD, Actions. Un seul journal pour tout, multi-marché natif.',
+      'Tous les marchés\u00a0: Futures CME (NQ, ES, MES, MNQ, 6E, 6B, Gold, Crude Oil\u00a0: P&L en ticks avec multiplicateurs officiels), Crypto spot et levier, Forex (toutes paires), Indices CFD, Actions. Un seul journal pour tout, multi-marché natif.',
   },
   {
     question: 'Comment fonctionne le calendrier économique IA\u00a0?',
