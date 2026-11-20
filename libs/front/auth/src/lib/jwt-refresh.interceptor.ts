@@ -65,8 +65,9 @@ const isGoogleSignIn = (method: string, url: string) =>
 
 /**
  * Ajoute le JWT à chaque requête et, sur un 401, renouvelle le token UNE fois (les requêtes
- * arrivées pendant le renouvellement l'attendent), puis rejoue la requête. Si le refresh échoue,
- * l'utilisateur est déconnecté.
+ * arrivées pendant le renouvellement l'attendent), puis rejoue la requête. Si le refresh est refusé
+ * (401, ou 403 du refus de rôle admin), l'utilisateur est déconnecté ; une erreur passagère (5xx,
+ * 429, réseau) fait seulement échouer la requête (#1145).
  *
  * Un 401 sur une route d'authentification (mauvais mot de passe) est renvoyé tel quel : il ne
  * déclenche ni refresh ni déconnexion.

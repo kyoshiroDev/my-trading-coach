@@ -74,6 +74,21 @@ describe('jwtRefreshInterceptor', () => {
     });
   }
 
+  it('erreur passagère : toutes les requêtes en attente reçoivent l’erreur, sans déconnexion', () => {
+    const refresh = new Subject<unknown>();
+    auth.refreshToken.mockReturnValue(refresh);
+    const outcome: string[] = [];
+    http.get('/api/trades').subscribe({ error: (e) => outcome.push(`trades ${e.status}`) });
+    http.get('/api/stats').subscribe({ error: (e) => outcome.push(`stats ${e.status}`) });
+    backend.expectOne('/api/trades').flush({}, { status: 401, statusText: 'Unauthorized' });
+    backend.expectOne('/api/stats').flush({}, { status: 401, statusText: 'Unauthorized' });
+    expect(auth.refreshToken).toHaveBeenCalledOnce();
+
+    refresh.error({ status: 503 });
+    expect(outcome.sort()).toEqual(['stats 503', 'trades 503']);
+    expect(auth.logout).not.toHaveBeenCalled();
+  });
+
   it('refus de rôle admin (403) : déconnexion, comme un 401', () => {
     auth.refreshToken.mockReturnValue(throwError(() => ({ status: 403 })));
     http.get('/api/trades').subscribe({ error: () => undefined });
