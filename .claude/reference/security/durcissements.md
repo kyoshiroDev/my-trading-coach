@@ -37,8 +37,9 @@ Redis) : il ne s'active que via `@Throttle({ ip: { ttl, limit } })`. Verrouillé
 `@Public`, compteur propre à la route). Pas de limite dédiée : ni e-mail ni IA, pas de force brute
 possible (JWT signé par `JWT_REFRESH_SECRET`, jeton invalide rejeté avant toute lecture), rejeu déjà
 coupé par la rotation suivie (#1002). **Ne pas la resserrer** : un 429 sur le refresh déconnecte
-l'utilisateur côté front (`jwt-refresh.interceptor.ts`), donc une limite serrée par IP déconnecterait
-les traders derrière une même IP. Verrouillé par `modules/auth/refresh-throttle.spec.ts` : métadonnées
+l'utilisateur côté front (`jwt-refresh.interceptor.ts`, tant que #1145 n'est pas traité), donc une
+limite serrée par IP déconnecterait les traders derrière une même IP. Après #1145, cette raison tombe
+mais les autres restent : rien de plus à protéger. Verrouillé par `modules/auth/refresh-throttle.spec.ts` : métadonnées
 lues sur la méthode puis la classe (comme le guard), débit `default` et `ip` absent ou ≥
 `ANON_THROTTLE_LIMIT` par minute (limite rapportée à la fenêtre), route jamais exclue.
 
