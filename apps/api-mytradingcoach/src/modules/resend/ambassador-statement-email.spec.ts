@@ -33,7 +33,7 @@ describe('Relevé de commissions ambassadeur : objet en texte brut (#1073)', () 
     });
     const mail = mockSend.mock.calls[0][0] as { subject: string; html: string };
     expect(mail.subject).toBe(`Relevé de commissions · O'Neil & Co <x> (2026-10)`);
-    expect(mail.html).toContain('&amp; Co &lt;x&gt;');
+    expect(mail.html).toContain('O&#39;Neil &amp; Co &lt;x&gt;'); // échappement unique, 5 caractères
     expect(mail.html).not.toContain('<x>');
   });
 });

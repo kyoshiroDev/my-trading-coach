@@ -309,14 +309,9 @@ export function onboardingLink(appUrl: string, path: string, campaign: string, q
   return `${appUrl.replace(/\/+$/, '')}${path}?${params.toString()}`;
 }
 
-/**
- * Texte saisi par un utilisateur (nom à l'inscription) inséré dans un e-mail HTML : jamais
- * interprété comme du balisage (S1 #1063 : l'aperçu admin d'une campagne exécutait un nom
- * `<img onerror=…>`). Les cinq caractères sensibles.
- */
-export function escapeHtml(s: string): string {
-  return s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
-}
+/** Échappement HTML (S1 #1063) : implémentation unique dans common/utils (#1073), réexportée ici pour les templates. */
+export { escapeHtml } from '../../../common/utils/escape-html';
+import { escapeHtml } from '../../../common/utils/escape-html';
 
 /** Nom affiché dans « Bonjour {nom} », échappé ; « Trader » si vide. */
 export function greetingName(userName: string | null | undefined): string {
