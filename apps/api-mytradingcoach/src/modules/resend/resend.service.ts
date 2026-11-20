@@ -382,7 +382,8 @@ export class ResendService {
       from: this.from,
       to: CONTACT_INBOX,
       replyTo: params.ambassadorEmail,
-      subject: `Relevé de commissions · ${escapeHtml(params.ambassadorName)} (${params.period})`,
+      // Objet = texte brut : jamais échappé (#1073).
+      subject: `Relevé de commissions · ${params.ambassadorName} (${params.period})`,
       html:
         `<p>Relevé de commissions de <strong>${escapeHtml(params.ambassadorName)}</strong> ` +
         `pour la période ${params.period} en pièce jointe.</p>` +
