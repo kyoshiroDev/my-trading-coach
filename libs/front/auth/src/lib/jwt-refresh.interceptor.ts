@@ -17,7 +17,9 @@ export const AUTH_TOKEN_SOURCE = new InjectionToken<AuthTokenSource>('AUTH_TOKEN
  * Renouvellement partagé (#1065, #1103) : toutes les requêtes qui reçoivent un 401 pendant qu'il est
  * en vol attendent le même, et il ne dépend d'aucune d'elles. Une requête annulée (écran quitté) se
  * désabonne seule : le refresh va au bout, le nouveau jeton est gardé, et le cookie de refresh n'est
- * jamais présenté deux fois. Son échec déconnecte une seule fois, qu'il reste des requêtes ou non.
+ * jamais présenté deux fois. Un refus d'authentification déconnecte une seule fois, qu'il reste des
+ * requêtes ou non ; une erreur passagère (5xx, 429, réseau) fait seulement échouer les requêtes en
+ * attente, sans déconnecter (#1145) : le 401 suivant relancera un refresh.
  */
 @Injectable({ providedIn: 'root' })
 export class AuthRefreshState {
@@ -29,7 +31,7 @@ export class AuthRefreshState {
     const run: Observable<string> = auth.refreshToken().pipe(
       take(1),
       map(() => auth.getAccessToken() ?? ''),
-      tap({ error: () => auth.logout() }),
+      tap({ error: (err: unknown) => { if (isAuthRefusal(err)) auth.logout(); } }),
       // Terminé (succès ou échec) : le 401 suivant en relance un nouveau.
       finalize(() => {
         if (this.current === run) this.current = null;
@@ -41,6 +43,15 @@ export class AuthRefreshState {
     return run;
   }
 }
+
+/**
+ * Refus d'authentification du refresh : 401 (cookie absent, expiré, révoqué ou rejoué) ou 403 (refus
+ * de rôle de l'admin). Le reste (5xx, 429, réseau = statut 0) est passager et ne déconnecte pas (#1145).
+ */
+const isAuthRefusal = (err: unknown): boolean => {
+  const status = (err as { status?: unknown } | null)?.status;
+  return status === 401 || status === 403;
+};
 
 /** Routes d'authentification : jamais de token ajouté, jamais de refresh sur leur 401. */
 const AUTH_ROUTES = ['/auth/login', '/auth/register', '/auth/logout', '/auth/demo-login'];
