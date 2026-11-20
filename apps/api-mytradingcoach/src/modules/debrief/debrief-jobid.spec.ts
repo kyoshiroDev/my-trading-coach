@@ -26,7 +26,7 @@ const jobIdOf = (call: unknown[]) => (call[2] as { jobId?: string }).jobId;
 
 describe('Débrief : jobId stable par utilisateur et par semaine (#1060)', () => {
   beforeEach(() => {
-    vi.useFakeTimers();
+    vi.useFakeTimers({ toFake: ['Date'] }); // Date seule : les délais restent réels (règle 1)
     queue.add.mockReset().mockResolvedValue({});
     queue.getJob.mockReset().mockResolvedValue(undefined);
     service.getEligibleUsers.mockReset().mockResolvedValue([{ id: 'u1' }]);

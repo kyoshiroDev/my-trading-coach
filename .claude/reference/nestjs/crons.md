@@ -21,6 +21,10 @@ BullMQ). Le job du dimanche encore en file et celui du lundi ne font qu'un : pas
 reste le garde-fou ensuite). Le rattrapage retire d'abord un job du dimanche **échoué** (gardé 7 j)
 avant de réenfiler. La régénération admin (`force`) n'a jamais de jobId. Verrouillé par
 `debrief/debrief-jobid.spec.ts`.
+Limites acceptées : un job du dimanche encore **actif** le lundi 8 h qui échoue ensuite
+définitivement n'est plus rattrapé cette semaine-là (prix de l'anti-doublon) ; la semaine est
+calculée en heure locale du serveur (`getWeekInfo`) : le même id le dimanche et le lundi suppose un
+serveur en UTC ou à Paris (cas des VPS et de la CI).
 
 **Débrief manuel de milieu de semaine (C1 #1048, 2026-11-16)** : un débrief généré avant le dimanche
 23:00 de sa semaine (`weeklyCutoff`, explicitement en heure de Paris, bouton « Générer le débrief de cette semaine ») est REFAIT par le
