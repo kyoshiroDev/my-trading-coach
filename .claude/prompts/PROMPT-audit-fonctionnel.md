@@ -109,3 +109,9 @@ Texte de Greg : « continue » (après la proposition de passer à #1137).
 Texte de Greg : « oki continue ton travail alors » (après la proposition de la suite : #1132).
 
 #1132 est issu de la vérification security de #1103 (lot 4 #1062) : `POST /auth/refresh` sans limite de débit dédiée. Analyse du vérificateur security : aucune protection réelle à gagner, limite par défaut gardée exprès et verrouillée par un test.
+
+## Complément #1073 (2026-11-21)
+
+Texte de Greg : « continue les ticket ouvert dans l'audite »
+
+Ordre retenu (tickets faisables sans Greg d'abord) : #1073, #1101, #1060, #1102, puis #1068 (VPS par Greg). En attente de Greg : #1004 (logs prod), #1059 (décision : qui reçoit l'e-mail), #1110 (SHOW CONFIG). #1073 est issu du sous-lot 4a (#1063) : trois copies d'escapeHtml, sujet du relevé de commissions échappé, stats ambassadeur sans contrat partagé.
