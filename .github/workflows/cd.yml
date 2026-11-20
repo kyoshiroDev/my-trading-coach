@@ -45,8 +45,9 @@ jobs:
           if has app-mytradingcoach; then echo "angular=true" >> "$GITHUB_OUTPUT"; else echo "angular=false" >> "$GITHUB_OUTPUT"; fi
           if has admin-mytradingcoach; then echo "admin=true" >> "$GITHUB_OUTPUT"; else echo "admin=false" >> "$GITHUB_OUTPUT"; fi
           # API (SCA-B0-08) : un commit landing seul ne doit plus redémarrer l'API. Nx ne rattache
-          # ni prisma/ ni le bot Discord à un projet : on les teste en plus par chemin.
-          API_PATHS='^(prisma/|libs/|scripts/discord-bot/|docker-compose\.(prod|discord-bot)\.yml$|package\.json$|pnpm-lock\.yaml$|pnpm-workspace\.yaml$)'
+          # ni prisma/ ni le bot Discord à un projet : on les teste en plus par chemin. Seule
+          # libs/shared est importée par l'API : les libs front (libs/front/**) ne la redéploient pas (#1137).
+          API_PATHS='^(prisma/|libs/shared/|scripts/discord-bot/|docker-compose\.(prod|discord-bot)\.yml$|package\.json$|pnpm-lock\.yaml$|pnpm-workspace\.yaml$)'
           if has api-mytradingcoach || git diff --name-only "$BASE" HEAD | grep -qE "$API_PATHS"; then
             echo "api=true" >> "$GITHUB_OUTPUT"
           else
