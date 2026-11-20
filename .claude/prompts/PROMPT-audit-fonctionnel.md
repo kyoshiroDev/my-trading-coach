@@ -109,3 +109,7 @@ Texte de Greg : « continue » (après la proposition de passer à #1137).
 Texte de Greg : « oki continue ton travail alors » (après la proposition de la suite : #1132).
 
 #1132 est issu de la vérification security de #1103 (lot 4 #1062) : `POST /auth/refresh` sans limite de débit dédiée. Analyse du vérificateur security : aucune protection réelle à gagner, limite par défaut gardée exprès et verrouillée par un test.
+
+## Complément #1060 (2026-11-21)
+
+Suite de « continue les ticket ouvert dans l'audite » (ordre retenu au complément #1073). #1060 est issu de la vérification du sous-lot 3d (#1048) : deux jobs « generate » simultanés pour la même semaine (dimanche resté en file et rattrapage du lundi) pouvaient envoyer deux e-mails.
