@@ -174,7 +174,8 @@ Test de charge B9 : le polling faisait **la moitié** des requêtes de l'API. R�
   annulée (écran quitté) se désabonne seule : le refresh va au bout, le jeton est gardé, le cookie de
   refresh n'est jamais présenté deux fois (#1103 ; avant, il était coupé avec la requête d'origine).
   Un refus d'authentification (401, ou 403 du refus de rôle admin) déconnecte une fois ; une erreur
-  passagère (5xx, 429, réseau) ne déconnecte pas (#1145). Dans les deux cas, les requêtes en attente
+  passagère (5xx, 429, réseau) ne déconnecte pas (#1145) ; une erreur sans statut (ex. réponse 200 mal
+  formée) compte comme passagère. Dans les deux cas, les requêtes en attente
   échouent avec l'erreur du refresh (#1065), et le 401 suivant relance un refresh ; une erreur de la
   requête rejouée ne déconnecte pas. Comme le refresh va au bout sans personne pour l'attendre, chaque
   service d'auth (app et admin) a un compteur `session` incrémenté par `logout()` : une réponse de
