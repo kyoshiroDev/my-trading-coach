@@ -12,16 +12,22 @@ import { ANON_THROTTLE_LIMIT, IP_THROTTLER } from '../../common/throttler/email-
  */
 describe('POST /auth/refresh — limite de débit (#1132)', () => {
   const handler = AuthController.prototype.refresh;
+  // Comme le guard (`getAllAndOverride([handler, classe])`) : la méthode prime, sinon la classe.
+  const meta = (key: string): unknown =>
+    Reflect.getMetadata(key, handler) ?? Reflect.getMetadata(key, AuthController);
 
-  it('limite par défaut ou plus large, jamais plus serrée (par défaut comme par IP)', () => {
+  it('débit par défaut ou plus large, jamais plus serré (par défaut comme par IP)', () => {
     for (const name of ['default', IP_THROTTLER]) {
-      const limit = Reflect.getMetadata(`THROTTLER:LIMIT${name}`, handler) as number | undefined;
-      if (limit !== undefined) expect(limit).toBeGreaterThanOrEqual(ANON_THROTTLE_LIMIT);
+      const limit = meta(`THROTTLER:LIMIT${name}`) as number | undefined;
+      if (limit === undefined) continue;
+      const ttl = (meta(`THROTTLER:TTL${name}`) as number | undefined) ?? 60_000;
+      // Débit comparé (requêtes par minute) : 60 / h passerait sinon pour « 60 ».
+      expect((limit * 60_000) / ttl).toBeGreaterThanOrEqual(ANON_THROTTLE_LIMIT);
     }
   });
 
   it('jamais exclue du rate limiting', () => {
-    expect(Reflect.getMetadata('THROTTLER:SKIPdefault', handler)).toBeFalsy();
-    expect(Reflect.getMetadata(`THROTTLER:SKIP${IP_THROTTLER}`, handler)).toBeFalsy();
+    expect(meta('THROTTLER:SKIPdefault')).toBeFalsy();
+    expect(meta(`THROTTLER:SKIP${IP_THROTTLER}`)).toBeFalsy();
   });
 });
