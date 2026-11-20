@@ -3,7 +3,7 @@ title: "Journal de Trading Crypto : Suivre et Analyser ses Trades BTC/ETH"
 seoTitle: "Journal de trading crypto (BTC, ETH) | MyTradingCoach"
 description: "Comment tenir un journal de trading crypto utile : suivre tes trades Bitcoin, Ethereum et altcoins pour comprendre ce qui marche pour toi."
 publishDate: 2026-04-20
-updatedDate: 2026-11-16
+updatedDate: 2026-11-20
 tags: ["journal trading crypto", "crypto", "BTC", "ETH"]
 faq:
   - question: "Que noter dans un journal de trading crypto ?"
@@ -103,10 +103,10 @@ Le marché ne ferme jamais, et c'est un piège. Voici des habitudes de disciplin
 
 <h2>Le contexte de marché dans ton journal</h2>
 <p>
-Tes résultats dans un marché porteur ne disent pas comment tu traderas dans un marché baissier ou sans direction. Une partie d'une bonne période peut venir du mouvement général, pas de tes décisions.
+Tes résultats dans une période favorable ne disent pas comment tu traderas quand le marché change de rythme. Une partie d'une bonne période peut venir du mouvement général, pas de tes décisions.
 </p>
 <p>
-C'est pour ça qu'il est utile de noter le contexte de chaque trade : tendance haussière, baissière ou range. Avec le temps, tu verras dans quel contexte tes décisions tiennent le mieux.
+C'est pour ça qu'il est utile de noter le contexte de chaque trade : marché en tendance ou en range, volatilité forte ou faible. Avec le temps, tu verras dans quel contexte tes décisions tiennent le mieux.
 </p>
 
 <h2>Noter les événements dans ton journal</h2>

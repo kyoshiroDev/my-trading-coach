@@ -62,3 +62,11 @@ Dès que le relecteur valide à 100 %, tu peux pousser fix/landing-libelles-neut
 5. Lien de la PR, état de la CI (distingue un rouge dû au diff d'un rouge connu).
 6. Ce que tu n'as pas pu faire et pourquoi.
 Ne propose aucune mise en production : Greg décide.
+
+---
+
+## Complément de Greg (20/11/2026), après le rapport final et la section « Pour Greg »
+
+> vas y fait tes changement et continue
+
+(Lu comme : appliquer les recommandations de la section « Pour Greg » qui ne demandent pas de vérification en prod ni de décision légale : DayTimeline 08:15, consistency retirée des alertes en notification de Pricing.astro, « quand l'app est ouverte » dans PLAN_BENEFITS, vidéos de démo coupées faute de nouveau tournage, deux lignes du blog crypto. CGU et alertes dépendant de TRADOVATE_WATCH_MAX : inchangées.)
