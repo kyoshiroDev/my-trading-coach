@@ -33,6 +33,16 @@ Le throttler `ip` est **neutre par défaut** (`IP_THROTTLER_OFF`, jamais compté
 Redis) : il ne s'active que via `@Throttle({ ip: { ttl, limit } })`. Verrouillé par
 `register-ip-throttle.int-spec.ts` (11 e-mails distincts depuis une IP → la 11ᵉ reçoit 429).
 
+**`POST /auth/refresh` garde exprès la limite par défaut** (#1132) : 60 / min / IP (requête anonyme,
+`@Public`, compteur propre à la route). Pas de limite dédiée : ni e-mail ni IA, pas de force brute
+possible (JWT signé par `JWT_REFRESH_SECRET`, jeton invalide rejeté avant toute lecture), rejeu déjà
+coupé par la rotation suivie (#1002). **Ne pas la resserrer** : un 429 sur le refresh déconnecte
+l'utilisateur côté front (`jwt-refresh.interceptor.ts`, tant que #1145 n'est pas traité), donc une
+limite serrée par IP déconnecterait les traders derrière une même IP. Après #1145, cette raison tombe
+mais les autres restent : rien de plus à protéger. Verrouillé par `modules/auth/refresh-throttle.spec.ts` : métadonnées
+lues sur la méthode puis la classe (comme le guard), débit `default` et `ip` absent ou ≥
+`ANON_THROTTLE_LIMIT` par minute (limite rapportée à la fenêtre), route jamais exclue.
+
 <!-- Origine : security.md · Clé de test de charge `LOAD_TEST_KEY` (SCA-B9, 2026-10-01) · 2026-10-01 -->
 > **Origine** : `security.md` · « Clé de test de charge `LOAD_TEST_KEY` (SCA-B9, 2026-10-01) » · 2026-10-01
 
