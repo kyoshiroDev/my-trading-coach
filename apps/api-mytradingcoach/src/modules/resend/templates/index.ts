@@ -1,6 +1,7 @@
 // ── Templates emails MyTradingCoach ─────────────────────────────────────────
 // Templates HTML inline : pas de dépendance externe pour le rendu
 import { FOUNDER_OFFER, FOUNDER_REFUND_DAYS, PLAN_BENEFITS, PREMIUM_SIGNUP_TRIAL_DAYS, TRIAL_PERIOD_DAYS, formatMoney } from '@mtc/shared';
+import { escapeHtml } from '../../../common/utils/escape-html';
 
 // ── Base système ──────────────────────────────────────────────────────────────
 
@@ -310,8 +311,7 @@ export function onboardingLink(appUrl: string, path: string, campaign: string, q
 }
 
 /** Échappement HTML (S1 #1063) : implémentation unique dans common/utils (#1073), réexportée ici pour les templates. */
-export { escapeHtml } from '../../../common/utils/escape-html';
-import { escapeHtml } from '../../../common/utils/escape-html';
+export { escapeHtml };
 
 /** Nom affiché dans « Bonjour {nom} », échappé ; « Trader » si vide. */
 export function greetingName(userName: string | null | undefined): string {

@@ -35,7 +35,6 @@ export interface PromoteResult {
   referralLink: string;
 }
 
-
 @Injectable()
 export class AmbassadorService {
   constructor(
