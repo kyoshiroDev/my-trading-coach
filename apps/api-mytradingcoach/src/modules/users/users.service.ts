@@ -63,7 +63,7 @@ const USER_SELECT = {
   createdAt: true,
 } as const;
 
-/** Page Abonnements : essais et offerts listés (les plus récents d'abord). */
+/** Page Abonnements : essais, offerts, accès manuels et pauses listés (les plus récents d'abord). */
 const TRIAL_LIST_MAX = 200;
 
 /** Filtre par UTM d'inscription (#625) : absent = ignoré, `UTM_NONE` = non renseigné. */
@@ -773,6 +773,7 @@ export class UsersService {
       this.prisma.user.findMany({
         where: manualWhere,
         orderBy: { createdAt: 'desc' },
+        take: TRIAL_LIST_MAX, // borné comme les essais et les pauses (#1102)
         select: userSelect,
       }),
       this.prisma.user.findMany({

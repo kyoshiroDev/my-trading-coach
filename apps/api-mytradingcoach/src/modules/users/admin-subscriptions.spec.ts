@@ -49,6 +49,16 @@ describe('UsersService.adminSubscriptions (#1065)', () => {
     }));
   });
 
+  // #1102 : la liste des accès manuels n'avait pas de limite, contrairement aux essais et aux pauses.
+  it('accès manuels bornés comme les essais et les pauses (200 au plus, les plus récents)', async () => {
+    await service.adminSubscriptions();
+    const manual = callWhere((w) => isDeepStrictEqual(w, {
+      AND: [{ isDemo: false }, { role: { not: 'ADMIN' } }, subscriptionStatesWhere(['role', 'manual'], NOW)],
+    }));
+    expect(manual.take).toBe(200);
+    expect(manual.orderBy).toEqual({ createdAt: 'desc' });
+  });
+
   it('A10 : abonnements en pause listés à part', async () => {
     prisma.user.findMany.mockImplementation(async (a: { where: unknown }) =>
       isDeepStrictEqual(a.where, { isDemo: false, role: { not: 'ADMIN' }, ...subscriptionStateWhere('paused', NOW) }) ? [{ id: 'p1' }] : []);
