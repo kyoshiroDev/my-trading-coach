@@ -18,6 +18,7 @@ import { DialogDirective } from '@mtc/front-ui';
 /**
  * News live de la session : ticker horizontal (défilement continu) dans la carte marché,
  * et modale de lecture. Le corps d'une news n'est traduit qu'à sa première ouverture.
+ * Aucune tonalité de marché affichée (conformité AMF, suite de #881) : la source suffit.
  */
 @Component({
   selector: 'mtc-live-news',
@@ -70,9 +71,6 @@ import { DialogDirective } from '@mtc/front-ui';
               @if (news.site) {
                 <span class="nm-source">{{ news.site }}</span>
               }
-              <span class="news-sentiment" [class]="news.sentiment ?? 'neutral'">
-                {{ news.sentiment === 'bull' ? '▲ Bull' : news.sentiment === 'bear' ? '▼ Bear' : '- Neutre' }}
-              </span>
               <span class="nm-date">{{ formatNewsTime(news.publishedDate) }}</span>
             </div>
             <button class="nm-close" (click)="closeNews()" aria-label="Fermer">✕</button>

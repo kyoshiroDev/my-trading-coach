@@ -19,7 +19,8 @@ import { ECO_RANGE_MAX_DAYS, rangeDates } from './eco-calendar.range';
 import { AnalyzeResultDto, SavePinsDto } from './dto/eco-calendar.dto';
 
 // Calendrier économique = IA mutualisée (coût O(actifs), pas O(users)) → FREE.
-// Affichage ET analyse IA (bull/bear) accessibles à tous les utilisateurs connectés.
+// Affichage ET analyse IA (écart au-dessus / en ligne / en dessous de la prévision, sans direction
+// de marché, #881 / #920) accessibles à tous les utilisateurs connectés.
 @Controller('eco-calendar')
 @UseGuards(JwtAuthGuard)
 export class EcoCalendarController {

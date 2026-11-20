@@ -31,6 +31,8 @@ export const GET: APIRoute = () => {
 
 ## Ce que fait l'outil
 - Synchronise les trades d'un compte Tradovate en lecture seule : aucun ordre passé, aucun mouvement d'argent.
+- Fréquence de synchronisation : en direct quand MyTradingCoach est ouvert ; application fermée, relevé automatique toutes les 15 minutes environ.
+- Comptes compatibles : connexion au compte Tradovate en lecture seule. Fonctionne avec les comptes d'évaluation et financés des prop firms qui tournent sur Tradovate, et avec les comptes simulés ou réels.
 - Calcule la marge avant le plancher de drawdown et l'objectif, avec les règles de ${PROP_FIRM_CATALOG_FILES.length} prop firms futures, relevées sur leurs sources officielles et datées.
 - Journal de trading (émotions, setups, notes), statistiques et import CSV ; en Premium, coach IA personnel et débrief hebdomadaire.
 - Interface et support en français. Hébergé en France.
