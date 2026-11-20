@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { DebriefCron } from './debrief.cron';
 
-const mockQueue = { add: vi.fn() };
+// getJob : aucun job précédent avec le même id (#1060).
+const mockQueue = { add: vi.fn(), getJob: vi.fn().mockResolvedValue(undefined) };
 const mockPrisma = { weeklyDebrief: { findMany: vi.fn() } };
 const mockService = {
   getEligibleUsers: vi.fn(),
