@@ -323,7 +323,7 @@ export function buildCoachInsights(
   };
   const out: CoachInsight[] = [];
 
-  if (s.winRate >= 50) out.push({ tone: 'good', text: `Ton win rate est de ${s.winRate.toFixed(0)}\u00a0% ${periodShort}, au-dessus de la barre des 50%.` });
+  if (s.winRate >= 50) out.push({ tone: 'good', text: `Ton win rate est de ${s.winRate.toFixed(0)}\u00a0% ${periodShort}, au-dessus de la barre des 50\u00a0%.` });
   else out.push({ tone: 'warn', text: `Ton win rate est de ${s.winRate.toFixed(0)}\u00a0% ${periodShort}. Vise 50\u00a0%+ en filtrant mieux tes setups.` });
 
   if (s.profitFactor != null) {

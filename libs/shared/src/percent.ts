@@ -4,7 +4,7 @@
  * inconnue (null, NaN, ±∞) → « — », jamais « - » ni « NaN % » ; 0 → « 0 % » (une séance à 0 gagnant
  * n'est pas une valeur inconnue) ; jamais « -0 % ». Avant, le même 62,5 % s'affichait « 62.5% »,
  * « 63% » ou « 63 % » selon l'écran.
- * `decimals` : pour une variation (ex. « +0,4 % » d'un capital), sinon 0.
+ * `decimals` : pour une variation (ex. « +0.4 % » d'un capital), sinon 0.
  * `sign` : préfixe « + » devant une valeur positive (variations).
  */
 export function formatPercent(

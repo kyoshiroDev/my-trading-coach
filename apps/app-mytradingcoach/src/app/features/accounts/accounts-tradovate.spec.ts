@@ -231,7 +231,7 @@ describe('Mes comptes — connexion Tradovate par compte', () => {
     it('à reconnecter : affichage inchangé (« À reconnecter » et son message)', () => {
       const { q } = setup({
         accounts: [acct('a', 'A')],
-        connections: [conn('a', { status: 'NEEDS_RECONNECT', lastSyncError: 'Connexion expirée ou révoquée\u00a0: reconnecte ton compte Tradovate.' })],
+        connections: [conn('a', { status: 'NEEDS_RECONNECT', lastSyncError: 'Connexion expirée ou révoquée : reconnecte ton compte Tradovate.' })],
       });
       expect(q('tradovate-status-a')!.textContent!.trim()).toBe('À reconnecter');
       expect(q('tradovate-sync-error-a')).toBeNull();
@@ -299,7 +299,7 @@ describe('Mes comptes — connexion Tradovate par compte', () => {
   it('connexion expirée : « À reconnecter » + message du back + bouton qui rouvre la réassurance', () => {
     const { q, click, el } = setup({
       accounts: [acct('a', 'A')],
-      connections: [conn('a', { status: 'NEEDS_RECONNECT', lastSyncError: 'Connexion expirée ou révoquée\u00a0: reconnecte ton compte Tradovate.' })],
+      connections: [conn('a', { status: 'NEEDS_RECONNECT', lastSyncError: 'Connexion expirée ou révoquée : reconnecte ton compte Tradovate.' })],
     });
     expect(q('tradovate-status-a')!.textContent).toContain('À reconnecter');
     expect(q('tradovate-row-a')!.textContent).toContain('Connexion expirée ou révoquée');

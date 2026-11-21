@@ -26,7 +26,7 @@ function heatColor(winRate: number, count: number): string {
           >
             <span class="cell-hour">{{ h }}h</span>
             @if (statByHour(h); as s) {
-              <span class="cell-val">{{ s.winRate.toFixed(0) }}%</span>
+              <span class="cell-val">{{ s.winRate.toFixed(0) }}&nbsp;%</span>
             }
           </div>
         }

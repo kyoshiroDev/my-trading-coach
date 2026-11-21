@@ -51,7 +51,7 @@ export class SessionRecapComponent {
   protected readonly winRateDisplay = computed(() => {
     const stats = this.liveStats();
     if (!stats || stats.tradesCount === 0) return '-';
-    return stats.winRate.toFixed(0) + '%';
+    return stats.winRate.toFixed(0) + '\u00a0%';
   });
 
   protected readonly sessionDuration = computed(() => {

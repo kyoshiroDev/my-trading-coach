@@ -59,7 +59,7 @@ const DEMO_RECAP: DailyRecap = {
 const DEMO_OBJECTIVES: DebriefObjective[] = [
   { title: 'Max 5 trades par session', reason: '' },
   { title: 'Aucun revenge trade', reason: '' },
-  { title: 'Stop loss sur 100% des trades', reason: '' },
+  { title: 'Stop loss sur 100\u00a0% des trades', reason: '' },
   { title: 'Journal rempli en fin de session', reason: '' },
 ];
 
