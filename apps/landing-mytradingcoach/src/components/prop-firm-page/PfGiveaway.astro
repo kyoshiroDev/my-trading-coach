@@ -5,17 +5,18 @@
  * (lecture seule, cache 60 s, seulement des données affichables). API injoignable, réponse invalide
  * ou tirages éteints → la section reste cachée. Aucune promesse de gain de trading.
  */
-import { GIVEAWAY_FREE_PRIZE_MONTHS, GIVEAWAY_MIN_TRADES, GIVEAWAY_PREMIUM_PRIZE_MONTHS } from '@mtc/shared';
+import { GIVEAWAY_FREE_PRIZE_MONTHS, GIVEAWAY_MIN_TRADES, GIVEAWAY_PREMIUM_PRIZE_MONTHS, giveawayDrawDayLabel } from '@mtc/shared';
 import { APP_URL } from '../../config';
 
 const register = `${APP_URL}/register`;
+const drawDay = giveawayDrawDayLabel();
 ---
 
 <section class="pf-giveaway" id="concours" data-giveaway hidden aria-labelledby="pf-giveaway-title">
   <div class="gw-in">
     <span class="pf-eyebrow">Concours du mois</span>
     <h2 class="pf-h2" id="pf-giveaway-title">Chaque mois, des traders gagnent du Premium.</h2>
-    <p class="gw-lead">Un tirage au sort le 1er de chaque mois, parmi les traders qui enregistrent au moins {GIVEAWAY_MIN_TRADES} trades dans le mois. Inscris-toi et enregistre tes trades&nbsp;: tu participes.</p>
+    <p class="gw-lead">Un tirage au sort le {drawDay} de chaque mois, parmi les traders qui enregistrent au moins {GIVEAWAY_MIN_TRADES} trades dans le mois. Inscris-toi et enregistre tes trades&nbsp;: tu participes.</p>
 
     <div class="gw-prizes">
       <div class="gw-prize" data-giveaway-free hidden>

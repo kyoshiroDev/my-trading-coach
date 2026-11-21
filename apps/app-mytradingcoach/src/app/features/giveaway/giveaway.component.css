@@ -4,7 +4,7 @@
 
 .page-head { margin-bottom: 20px; }
 .page-title { font-family: var(--font-display); font-size: 25px; font-weight: 700; letter-spacing: -.3px; display: flex; align-items: center; gap: 10px; margin: 0; }
-.page-title svg.lucide { color: var(--text-2); flex-shrink: 0; }
+.page-title svg.lucide { color: var(--text-2); flex-shrink: 0; align-self: flex-start; margin-top: calc((1lh - 20px) / 2); }
 .page-sub { font-size: 14px; color: var(--text-2); margin-top: 6px; max-width: 560px; }
 
 .state-box { background: var(--bg-card); border: 1px solid var(--border); border-radius: 13px; padding: 30px; text-align: center; color: var(--text-2); font-size: 13px; }
@@ -18,7 +18,7 @@
 /* ── En-tête : lots + compte à rebours ── */
 .hero {
   display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 20px; align-items: center;
-  background: linear-gradient(135deg, color-mix(in srgb, var(--blue) 12%, transparent), color-mix(in srgb, var(--blue-bright) 5%, transparent));
+  background: var(--bg-card);
   border: 1px solid var(--border-hover); border-radius: 14px; padding: 24px; margin-bottom: 16px;
 }
 .prizes { display: flex; flex-wrap: wrap; gap: 14px; min-width: 0; }
@@ -33,7 +33,7 @@
 /* ── Mon statut ── */
 .status-head { display: flex; align-items: flex-start; gap: 10px; }
 .status-text { font-family: var(--font-display); font-size: 16px; font-weight: 600; }
-.status svg.lucide.ok-ic { color: var(--blue-bright); flex-shrink: 0; margin-top: 2px; }
+.status svg.lucide.ok-ic { color: var(--text-2); flex-shrink: 0; margin-top: 2px; }
 .bar { height: 10px; border-radius: 5px; background: var(--bg-3); overflow: hidden; margin-top: 16px; }
 .bar-fill { height: 100%; background: var(--blue); transition: width .6s; }
 .bar-foot { font-size: 12px; color: var(--text-3); margin-top: 10px; }
@@ -48,7 +48,8 @@
 .stat { background: var(--bg-card); border: 1px solid var(--border); border-radius: 13px; padding: 16px 18px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .stat.wide { grid-column: 1 / -1; }
 .stat-lbl { font-family: var(--font-mono); font-size: var(--fs-2xs); color: var(--text-3); text-transform: uppercase; letter-spacing: .6px; }
-.stat-v { font-family: var(--font-display); font-size: 24px; font-weight: 700; }
+.stat-v { font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.stat.wide .stat-v { font-family: var(--font-display); }
 
 /* ── Gagnants ── */
 .winners { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
@@ -77,7 +78,7 @@
 .field-group { border: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
 .field-group legend { padding: 0; }
 .radio { display: flex; align-items: flex-start; gap: 10px; font-size: 13.5px; color: var(--text); cursor: pointer; }
-.radio input { accent-color: var(--blue); width: 16px; height: 16px; margin-top: 2px; flex-shrink: 0; }
+.radio input { color-scheme: dark; accent-color: var(--blue); width: 16px; height: 16px; margin-top: 2px; flex-shrink: 0; }
 .field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .field-lbl { font-size: 12.5px; color: var(--text-2); }
 .field-input { background: var(--bg); border: 1px solid var(--border-hover); border-radius: 9px; padding: 11px 13px; font-family: var(--font-body); font-size: 14px; color: var(--text); min-width: 0; resize: vertical; }

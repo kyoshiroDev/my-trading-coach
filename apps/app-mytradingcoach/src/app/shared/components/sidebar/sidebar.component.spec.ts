@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { TestBed } from '@angular/core/testing';
-import { NO_ERRORS_SCHEMA } from '@angular/core';
+import { NO_ERRORS_SCHEMA, signal } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -12,6 +12,8 @@ import { UsersApi } from '@app/core/api/users.api';
 import { AmbassadorNotifService } from '@app/core/services/ambassador-notif.service';
 import { LiveModeService } from '@app/core/services/live-mode.service';
 import { DemoService } from '@app/core/services/demo.service';
+import { GiveawayStateService } from '@app/core/services/giveaway-state.service';
+import { TradovateLiveSocketService } from '@app/core/services/tradovate-live-socket.service';
 
 type Plan = 'FREE' | 'PREMIUM';
 
@@ -110,3 +112,63 @@ describe('SidebarComponent — repli persistant', () => {
     expect(c.collapsed()).toBe(true);
   });
 });
+
+/** Tirage mensuel (PROMPT-tirage-mensuel, lot B) : « Score trader » devient « Concours du mois ». */
+describe('SidebarComponent — entrée Concours du mois', () => {
+  const NAV_TEMPLATE = `
+    @if (giveaway.enabled()) {
+      <a data-testid="nav-concours">Concours du mois</a>
+    } @else {
+      <a data-testid="nav-scoring">Score trader</a>
+    }
+  `;
+
+  function mountNav(enabled: boolean, authenticated = true) {
+    const giveaway = { enabled: signal(enabled), state: signal(enabled ? { enabled } : null), load: vi.fn() };
+    TestBed.configureTestingModule({
+      providers: [
+        provideRouter([]),
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: UserStore, useValue: { isPremium: () => false, isDemo: () => false, isAmbassador: () => false, displayName: () => 'Greg', initials: () => 'GR', user: () => ({ onboardingCompleted: true }) } },
+        { provide: AuthService, useValue: { isAuthenticated: () => authenticated, fetchMe: () => of(null), logout: vi.fn() } },
+        { provide: UsersApi, useValue: { finishOnboarding: () => of({ data: {} }) } },
+        { provide: AmbassadorNotifService, useValue: { newReferrals: () => 0 } },
+        { provide: LiveModeService, useValue: { isLive: () => false } },
+        { provide: DemoService, useValue: { showSignupPrompt: () => false, dismiss: vi.fn() } },
+        { provide: TradovateLiveSocketService, useValue: { connect: vi.fn(), disconnect: vi.fn() } },
+        { provide: GiveawayStateService, useValue: giveaway },
+      ],
+    });
+    TestBed.overrideComponent(SidebarComponent, {
+      set: { template: NAV_TEMPLATE, imports: [], styleUrls: [], styleUrl: undefined as unknown as string, schemas: [NO_ERRORS_SCHEMA] },
+    });
+    const fixture = TestBed.createComponent(SidebarComponent);
+    fixture.detectChanges();
+    return { el: fixture.nativeElement as HTMLElement, giveaway };
+  }
+
+  beforeEach(() => {
+    TestBed.resetTestingModule();
+    localStorage.clear();
+  });
+
+  it('tout éteint : « Score trader », pas de « Concours du mois »', () => {
+    const { el } = mountNav(false);
+    expect(el.querySelector('[data-testid="nav-scoring"]')).toBeTruthy();
+    expect(el.querySelector('[data-testid="nav-concours"]')).toBeFalsy();
+  });
+
+  it('un tirage allumé : « Concours du mois » à la place', () => {
+    const { el } = mountNav(true);
+    expect(el.querySelector('[data-testid="nav-concours"]')).toBeTruthy();
+    expect(el.querySelector('[data-testid="nav-scoring"]')).toBeFalsy();
+  });
+
+  it('connecté sans état chargé : un seul chargement ; déjà chargé : aucun', () => {
+    expect(mountNav(false).giveaway.load).toHaveBeenCalledTimes(1);
+    TestBed.resetTestingModule();
+    expect(mountNav(true).giveaway.load).not.toHaveBeenCalled();
+  });
+});
+

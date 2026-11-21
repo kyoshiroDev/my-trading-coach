@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { GiveawayActivation, GiveawayDisplayConsent, GiveawayModeration, GiveawayPool, Role } from '@prisma/client';
+import { GiveawayActivation, GiveawayDisplayConsent, GiveawayModeration, GiveawayPool, Plan, Role } from '@prisma/client';
 import {
   GIVEAWAY_FREE_PRIZE_MONTHS,
   GIVEAWAY_MESSAGE_MAX,
@@ -24,6 +24,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../infra/redis.service';
 import { StripeGiveawayService } from '../stripe/stripe-giveaway.service';
 import { GiveawayEligibilityService, premiumSeniorityOk } from './giveaway-eligibility.service';
+import { premiumOfferRefusal } from '../users/premium-offer.util';
 import { GiveawaySettingsService } from './giveaway-settings.service';
 import { safePrizeError } from './giveaway-errors';
 
@@ -125,7 +126,7 @@ export class GiveawayPublicService {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       select: {
-        id: true, isDemo: true, isInternal: true, role: true, createdAt: true,
+        id: true, isDemo: true, isInternal: true, role: true, plan: true, createdAt: true,
         stripeCustomerId: true, stripeSubscriptionId: true, stripeSubscriptionStatus: true,
         stripeCancelAt: true, stripeInterval: true,
       },
@@ -164,7 +165,8 @@ export class GiveawayPublicService {
 
   private async reasonFor(
     user: {
-      id: string; isInternal: boolean; role: Role; createdAt: Date;
+      id: string; isDemo: boolean; isInternal: boolean; role: Role; plan: Plan; createdAt: Date;
+      stripeSubscriptionId: string | null; stripeSubscriptionStatus: string | null;
       stripeCustomerId: string | null; stripeCancelAt: Date | null; stripeInterval: string | null;
     },
     pool: GiveawayPool,
@@ -176,7 +178,9 @@ export class GiveawayPublicService {
     if (pool === GiveawayPool.FREE ? !base.free : !base.premium) return 'pool_off';
     if (await this.recentWinner(user.id, now)) return 'recent_winner';
     if (pool === GiveawayPool.FREE) {
-      if (user.role === Role.BETA_TESTER) return 'not_eligible';
+      // Même règle que le tirage (`PREMIUM_OFFERABLE_WHERE`) : Premium manuel, essai Stripe, paiement en
+      // attente, BETA_TESTER → pas dans le tirage des gratuits.
+      if (premiumOfferRefusal(user)) return 'not_eligible';
       if (user.createdAt.getTime() > now.getTime() - GIVEAWAY_MIN_ACCOUNT_AGE_DAYS * DAY_MS) return 'account_too_recent';
     } else {
       if (user.stripeCancelAt) return 'cancel_scheduled';

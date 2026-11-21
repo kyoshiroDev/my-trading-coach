@@ -46,7 +46,7 @@ const redis = {
 const service = new GiveawayPublicService(prisma as never, settings as never, eligibility as never, stripe as never, redis as never);
 
 const freeUser = (over: Record<string, unknown> = {}) => ({
-  id: 'u1', isDemo: false, isInternal: false, role: Role.USER, createdAt: new Date(NOW.getTime() - 30 * DAY),
+  id: 'u1', isDemo: false, isInternal: false, role: Role.USER, plan: 'FREE', createdAt: new Date(NOW.getTime() - 30 * DAY),
   stripeCustomerId: null, stripeSubscriptionId: null, stripeSubscriptionStatus: null, stripeCancelAt: null, stripeInterval: null, ...over,
 });
 
@@ -106,6 +106,17 @@ describe('état de la page (mon statut)', () => {
     user = freeUser();
     prisma.giveawayWin.count.mockResolvedValueOnce(1);
     expect((await service.appState('u1', NOW)).me.reason).toBe('recent_winner');
+  });
+
+  it('même règle que le tirage des gratuits : plan PREMIUM sans abonnement, essai Stripe, paiement en attente → « not_eligible »', async () => {
+    eligibility.countTrades.mockResolvedValue(9);
+    user = freeUser({ plan: 'PREMIUM' });
+    expect((await service.appState('u1', NOW)).me).toMatchObject({ pool: 'FREE', reason: 'not_eligible' });
+    user = freeUser({ stripeSubscriptionId: 'sub', stripeSubscriptionStatus: 'trialing' });
+    expect((await service.appState('u1', NOW)).me).toMatchObject({ pool: 'FREE', reason: 'not_eligible' });
+    user = freeUser({ stripeSubscriptionId: 'sub', stripeSubscriptionStatus: 'past_due' });
+    expect((await service.appState('u1', NOW)).me.reason).toBe('not_eligible');
+    eligibility.countTrades.mockResolvedValue(3);
   });
 
   it('abonné : tirage Premium éteint → « pool_off » ; allumé, moins de 2 mois → « premium_too_recent »', async () => {

@@ -136,8 +136,9 @@ export interface GiveawayPublicState {
 
 /**
  * Pourquoi l'utilisateur participe ou non au tirage qui le concerne :
- * `in` participe ; `need_trades` manque des trades ce mois-ci ; `premium_too_recent` abonné depuis
- * moins de 2 mois ; `account_too_recent` compte de moins de 7 jours ; `recent_winner` gagnant pendant la carence ; `cancel_scheduled` résiliation programmée ;
+ * `in` participe ; `need_trades` manque des trades ce mois-ci ; `premium_too_recent` ancienneté Premium
+ * insuffisante (`GIVEAWAY_PREMIUM_MIN_*`) ; `account_too_recent` compte plus jeune que
+ * `GIVEAWAY_MIN_ACCOUNT_AGE_DAYS` ; `recent_winner` gagnant pendant la carence ; `cancel_scheduled` résiliation programmée ;
  * `pool_off` le tirage qui le concerne est éteint ; `not_eligible` (rôle, compte interne…).
  */
 export type GiveawayMyReason =

@@ -36,6 +36,8 @@ export class GiveawayWinnerComponent {
   protected readonly TrophyIcon = Trophy;
   protected readonly MESSAGE_MAX = GIVEAWAY_MESSAGE_MAX;
   protected readonly PSEUDO_MAX = GIVEAWAY_PSEUDO_MAX;
+  /** Pseudo Instagram : la longueur maximale, plus un « @ » éventuel retiré par l'API. */
+  protected readonly INSTAGRAM_INPUT_MAX = GIVEAWAY_PSEUDO_MAX + 1;
   protected readonly longDate = longDateLabel;
 
   protected readonly state = this.store.state;

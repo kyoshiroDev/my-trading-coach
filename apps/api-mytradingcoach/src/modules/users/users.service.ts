@@ -303,6 +303,8 @@ export class UsersService {
       this.prisma.user.delete({ where: { id: userId } }),
     ]);
     await this.userCache?.invalidate(userId); // jeton encore valide d'un compte supprimé : refusé immédiatement
+    // Tirage mensuel : le nom d'un gagnant supprimé ne reste pas dans l'état public en cache (60 s).
+    await this.redisService?.client.del('giveaway:public-state').catch(() => undefined);
     // Dernière analyse IA (contenu tiré des trades) et délai des insights effacés avec le compte (#1056).
     // Redis absent : on ne bloque pas la suppression, les clés expirent seules sous 4 h.
     try {

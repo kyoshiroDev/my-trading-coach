@@ -22,13 +22,18 @@ export class GiveawayStateService {
     inject(UserScopedReset).register(() => this.reset());
   }
 
+  /** Incrémenté à chaque remise à zéro : une réponse arrivée après une déconnexion est ignorée. */
+  private generation = 0;
+
   load(): void {
     if (this.loading()) return;
     this.loading.set(true);
+    const gen = this.generation;
     this.api
       .state()
       .pipe(catchError(() => of(null)))
       .subscribe((r) => {
+        if (gen !== this.generation) return; // compte changé entre-temps
         this.loading.set(false);
         this.loadError.set(!r);
         if (r) this.state.set(r.data);
@@ -37,7 +42,9 @@ export class GiveawayStateService {
 
   /** Remise à zéro à la déconnexion (aucun état d'un autre compte gardé). */
   reset(): void {
+    this.generation++;
     this.state.set(null);
     this.loadError.set(false);
+    this.loading.set(false);
   }
 }

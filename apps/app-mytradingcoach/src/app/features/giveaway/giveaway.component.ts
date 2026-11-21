@@ -22,7 +22,7 @@ export function drawDayLabel(iso: string): string {
 /** Date longue Paris avec « 1er » : « 1er mars 2027 », « 15 mars 2027 ». */
 export function longDateLabel(iso: string): string {
   const d = new Date(iso).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Paris' });
-  return d.startsWith('1 ') ? `1er ${d.slice(2)}` : d;
+  return /^1\s/.test(d) ? `1er ${d.slice(2)}` : d;
 }
 
 /** « février 2027 » pour la période « 2027-02 ». */
@@ -94,7 +94,8 @@ export class GiveawayComponent {
   });
 
   constructor() {
-    if (!this.state()) this.store.load();
+    // Rechargé à chaque ouverture : la progression suit les trades saisis depuis la connexion.
+    this.store.load();
     // Horloge locale du compte à rebours (aucun appel à l'API).
     const timer = setInterval(() => this.now.set(Date.now()), MINUTE);
     inject(DestroyRef).onDestroy(() => clearInterval(timer));

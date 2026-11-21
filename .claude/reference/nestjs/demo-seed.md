@@ -168,3 +168,14 @@ Deux pièges d'ordonnancement :
 - **Aucune session sans compte** : `SessionService.startSession` garantit
   « anti-NULL, jamais de session sans compte ». Les sessions démo portent donc un
   `accountId` (le compte futures), sinon la démo ne reflète pas l'app réelle.
+
+## Tirage mensuel et compte démo (#1158, 2026-11-21)
+
+Le seed démo ne crée **aucune** ligne `GiveawayDraw` / `GiveawayWin` : le prompt interdit tout faux
+gagnant et tout faux message, et une ligne démo fausserait les compteurs publics (landing, page de
+l'app). La page « Concours du mois » de la démo est fabriquée par `GiveawayPublicService.appState`
+(`demo: true`, onglet visible, compteurs à 0, aucun gagnant, mention « exemple » dans l'app) ; le
+statut « Encore N trades » / « Tu es dans le tirage » se calcule sur les trades démo du mois civil en
+cours, que le re-seed nocturne date en relatif (`daysAgo`) : les premiers jours d'un mois, la démo
+peut afficher « Encore N trades », ce qui est exact. Rien à enrichir dans le seed tant que la page ne
+montre que ces données.

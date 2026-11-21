@@ -52,7 +52,7 @@
         @if (instagramConsent()) {
           <label class="field">
             <span class="field-lbl">Ton pseudo Instagram <span class="muted">(facultatif, pour te mentionner)</span></span>
-            <input class="field-input" type="text" name="instagramHandle" maxlength="31" [ngModel]="instagramHandle()" (ngModelChange)="instagramHandle.set($event)" data-testid="winner-instagram-handle" />
+            <input class="field-input" type="text" name="instagramHandle" [maxlength]="INSTAGRAM_INPUT_MAX" [ngModel]="instagramHandle()" (ngModelChange)="instagramHandle.set($event)" data-testid="winner-instagram-handle" />
           </label>
         }
       </fieldset>

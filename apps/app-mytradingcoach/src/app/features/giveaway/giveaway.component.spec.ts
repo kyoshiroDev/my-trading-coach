@@ -132,6 +132,11 @@ describe('Concours du mois : page', () => {
     expect(store.load).toHaveBeenCalled();
   });
 
+  it('état rechargé à chaque ouverture (progression à jour)', () => {
+    const { store } = mountPage(state());
+    expect(store.load).toHaveBeenCalledTimes(1);
+  });
+
   it('espace insécable devant « : ; ! ? » partout', () => {
     // Textes de la page seulement : les messages des gagnants sont saisis par eux.
     const { el } = mountPage(state({ winners: [] }));
