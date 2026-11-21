@@ -67,7 +67,7 @@ export function timeLabel(value: string, on: Date = new Date()): string {
 }
 
 export function pctLabel(value: number): string {
-  return `${Math.round(value * 1000) / 10} %`;
+  return `${Math.round(value * 1000) / 10}\u00a0%`;
 }
 
 export const PHASE_LABELS: Record<PropFirmPhaseRules['phase'], string> = {
@@ -90,11 +90,11 @@ export function defaultPhase(plan: PropFirmPlanDetail, type: AccountType): PropF
 export function drawdownKindLabel(dd: PropFirmPhaseRules['max_drawdown']): string {
   switch (dd.type) {
     case 'static':
-      return 'Statique : le seuil ne bouge pas';
+      return 'Statique\u00a0: le seuil ne bouge pas';
     case 'trailing_eod':
-      return 'Trailing EOD : suit le plus haut solde de clôture';
+      return 'Trailing EOD\u00a0: suit le plus haut solde de clôture';
     case 'trailing_intraday':
-      return 'Trailing intraday : suit le plus haut pic en séance, latent inclus';
+      return 'Trailing intraday\u00a0: suit le plus haut pic en séance, latent inclus';
   }
 }
 
@@ -107,7 +107,7 @@ export function enforcementLabel(dd: PropFirmPhaseRules['max_drawdown']): string
     case 'eod_balance':
       return 'Contrôlé une fois par jour, sur le solde de clôture';
     default:
-      return 'Contrôle en séance non documenté par la firm : par prudence, surveille ton equity';
+      return 'Contrôle en séance non documenté par la firm\u00a0: par prudence, surveille ton equity';
   }
 }
 

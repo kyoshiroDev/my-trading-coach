@@ -26,7 +26,7 @@ function heatColor(winRate: number, count: number): string {
           >
             <span class="cell-hour">{{ h }}h</span>
             @if (statByHour(h); as s) {
-              <span class="cell-val">{{ s.winRate.toFixed(0) }}%</span>
+              <span class="cell-val">{{ s.winRate.toFixed(0) }}&nbsp;%</span>
             }
           </div>
         }
@@ -70,6 +70,6 @@ export class HeatmapComponent {
   protected cellTitle(h: number): string {
     const s = this.statByHour(h);
     if (!s) return `${h}h · aucun trade`;
-    return `${h}h · WR: ${s.winRate.toFixed(1)}% (${s.count} trades)`;
+    return `${h}h · WR\u00a0: ${s.winRate.toFixed(1)}\u00a0% (${s.count} trades)`;
   }
 }

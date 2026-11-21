@@ -69,10 +69,10 @@ export class AiInsightsComponent implements AfterViewChecked {
   protected readonly SendIcon = Send;
 
   protected readonly SUGGESTIONS = [
-    'Quand est-ce que je trade le mieux ?',
-    'Mon émotion affecte-t-elle mes résultats ?',
-    'Quel est mon meilleur setup ?',
-    'Comment réduire mon drawdown ?',
+    'Quand est-ce que je trade le mieux\u00a0?',
+    'Mon émotion affecte-t-elle mes résultats\u00a0?',
+    'Quel est mon meilleur setup\u00a0?',
+    'Comment réduire mon drawdown\u00a0?',
   ];
   private readonly aiApi = inject(AiApi);
   private readonly destroyRef = inject(DestroyRef);

@@ -458,9 +458,9 @@ export class AccountsComponent implements OnInit {
     if (ret.status === 'error') {
       this.toast.error(tradovateErrorMessage(ret.reason, false));
     } else if (ret.status === 'select_account') {
-      this.toast.info('Compte Tradovate connecté : confirme ci-dessous le compte à synchroniser.');
+      this.toast.info('Compte Tradovate connecté\u00a0: confirme ci-dessous le compte à synchroniser.');
     } else if (ret.syncFailed) {
-      this.toast.warning("Compte Tradovate connecté, mais la première synchronisation n'a pas abouti : relance-la avec « Synchroniser ».");
+      this.toast.warning("Compte Tradovate connecté, mais la première synchronisation n'a pas abouti\u00a0: relance-la avec « Synchroniser ».");
     } else {
       this.toast.success(`Compte connecté · ${tradesLine(ret.trades ?? 0)}`);
       const fees = feesLine(ret.fees);
@@ -905,9 +905,9 @@ export class AccountsComponent implements OnInit {
   /** « Ce n'était pas un payout » : le cycle repart alors du payout précédent, ou du début. */
   protected async dismissPayout(a: TradingAccount, payoutId: string, amount: number): Promise<void> {
     const confirmed = await this.confirm.ask({
-      title: 'Ce retrait n\'était pas un payout ?',
+      title: 'Ce retrait n\'était pas un payout\u00a0?',
       message:
-        `Le retrait de ${this.money(amount, a.currency)} ne sera plus compté comme payout : ` +
+        `Le retrait de ${this.money(amount, a.currency)} ne sera plus compté comme payout\u00a0: ` +
         'le cycle de payout repartira du payout précédent, ou du début du compte.',
       confirmLabel: 'Ce n\'était pas un payout',
     });
@@ -932,7 +932,7 @@ export class AccountsComponent implements OnInit {
       return;
     }
     const confirmed = await this.confirm.ask({
-      title: `Supprimer « ${a.label} » ?`,
+      title: `Supprimer « ${a.label} »\u00a0?`,
       message:
         'Les trades et sessions rattachés ne sont pas supprimés mais perdent leur compte. ' +
         'Un compte avec historique est archivé plutôt que supprimé.',
@@ -949,7 +949,7 @@ export class AccountsComponent implements OnInit {
         // journal gardait des trades rattachés à un compte disparu.
         next: (res) => {
           this.toast.success(
-            res?.data?.archived ? `« ${a.label} » archivé : il sort de tes statistiques.` : `« ${a.label} » supprimé.`,
+            res?.data?.archived ? `« ${a.label} » archivé\u00a0: il sort de tes statistiques.` : `« ${a.label} » supprimé.`,
           );
           this.refreshAfterImport();
         },

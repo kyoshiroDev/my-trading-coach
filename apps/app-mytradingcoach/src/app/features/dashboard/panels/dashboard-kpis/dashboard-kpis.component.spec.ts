@@ -96,7 +96,7 @@ describe('DashboardKpisComponent — drawdown max par trade', () => {
   it('non-régression des autres chiffres sur le même jeu : P&L, win rate, profit factor, trades', () => {
     const el = renderCase().nativeElement as HTMLElement;
     expect(card(el, 'P&L net').querySelector('.mtc-kpi-val')!.textContent!.trim()).toBe(usd(1064.4));
-    expect(card(el, 'Win rate').querySelector('.mtc-kpi-val')!.textContent!.trim()).toBe('40%');
+    expect(card(el, 'Win rate').querySelector('.mtc-kpi-val')!.textContent!.trim()).toBe('40\u00a0%');
     expect(card(el, 'Profit factor').querySelector('.mtc-kpi-val')!.textContent!.trim()).toBe('2.35');
     expect(card(el, 'Trades pris').querySelector('.mtc-kpi-val')!.textContent!.trim()).toBe('5');
   });
@@ -106,7 +106,7 @@ describe('DashboardKpisComponent — drawdown max par trade', () => {
     expect(card(el, 'Profit factor').querySelector('svg')).toBeNull();
     const bars = [...card(el, 'Trades pris').querySelectorAll<HTMLElement>('.mtc-minibars span')];
     expect(bars.map((b) => b.style.height)).toEqual(['100%', '67%']);
-    expect(bars.map((b) => b.getAttribute('title'))).toEqual(['6 nov. : 3 trades', '9 nov. : 2 trades']);
+    expect(bars.map((b) => b.getAttribute('title'))).toEqual(['6 nov.\u00a0: 3 trades', '9 nov.\u00a0: 2 trades']);
     const area = card(el, 'Drawdown max').querySelector('svg path')!.getAttribute('d')!;
     expect(area.endsWith('L72,0 L0,0 Z')).toBe(true);
   });
@@ -135,6 +135,25 @@ describe('DashboardKpisComponent — drawdown max par trade', () => {
     const tooltip = card(renderCase().nativeElement, 'Drawdown max').querySelector('mtc-info-tooltip')!;
     expect(tooltip.getAttribute('text')).toContain('Plus forte baisse depuis un sommet, trade par trade, sur la période.');
     expect(tooltip.getAttribute('text')).toContain('Tous comptes\u00a0: le compte le plus touché.');
+  });
+
+  it('variation du capital : formateur unique des %, point décimal et espace insécable (#1180)', () => {
+    const el: HTMLElement = renderCase().nativeElement;
+    const sub = el.querySelector('[data-testid="dashboard-capital"]')!.parentElement!.querySelector('.mtc-kpi-sub')!;
+    // 1 064,40 / 50 000 = 2,13 % → « +2.1 % sur 30 jours »
+    expect(sub.textContent!.trim()).toBe('+2.1\u00a0% sur 30 jours');
+  });
+
+  it('variation arrondie à zéro : « 0.0 % » en couleur neutre, ni rouge ni vert (#1180)', () => {
+    const dd = maxDrawdownOfTrades(TRADES);
+    // -20 / 50 000 = -0,04 % → affiché « 0.0 % »
+    const el: HTMLElement = render({
+      summary: { ...SUMMARY, totalPnl: -20 }, maxDrawdown: dd.maxDrawdown, drawdownSeries: dd.series, periodShort: 'sur 30 jours',
+      periodStartCapital: 50_000, currentCapital: 49_980, tradeBars: [],
+    }).nativeElement;
+    const pct = el.querySelector<HTMLElement>('[data-testid="dashboard-capital-pct"]')!;
+    expect(pct.textContent!.trim()).toBe('0.0\u00a0% sur 30 jours');
+    expect(pct.style.color).toBe('var(--text-3)');
   });
 
   it('aucun trade : 0 et « Aucune donnée »', () => {

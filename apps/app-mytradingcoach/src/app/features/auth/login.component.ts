@@ -83,7 +83,7 @@ export class LoginComponent {
             // Même 401 pour un compte Google sans mot de passe (anti-énumération) : on le rappelle.
             this.apiError.set(
               this.googleEnabled()
-                ? 'Email ou mot de passe incorrect. Compte créé avec Google ? Utilise « Continuer avec Google ».'
+                ? 'Email ou mot de passe incorrect. Compte créé avec Google\u00a0? Utilise « Continuer avec Google ».'
                 : 'Email ou mot de passe incorrect',
             );
           else if (status === 404)

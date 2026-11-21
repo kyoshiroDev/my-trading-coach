@@ -50,12 +50,12 @@ export function tiltMessage(e: TiltAlertEvent): string {
   switch (e.signal) {
     case 'revenge': {
       const m = Math.max(1, Math.round(e.minutes ?? 0));
-      return `${e.accountLabel} : trade repris ${m} min après une perte.${mood} Une pause de 10 minutes ?`;
+      return `${e.accountLabel}\u00a0: trade repris ${m} min après une perte.${mood} Une pause de 10 minutes\u00a0?`;
     }
     case 'size':
-      return `${e.accountLabel} : ${e.quantity} contrats juste après une perte, plus du double de ta taille habituelle (${e.medianQuantity}).${mood} Une pause avant le prochain ?`;
+      return `${e.accountLabel}\u00a0: ${e.quantity} contrats juste après une perte, plus du double de ta taille habituelle (${e.medianQuantity}).${mood} Une pause avant le prochain\u00a0?`;
     case 'overtrading':
-      return `${e.accountLabel} : ${e.count} trades aujourd'hui, plus du double d'une journée habituelle (${e.medianCount}).${mood} Tu suis toujours ton plan ?`;
+      return `${e.accountLabel}\u00a0: ${e.count} trades aujourd'hui, plus du double d'une journée habituelle (${e.medianCount}).${mood} Tu suis toujours ton plan\u00a0?`;
   }
 }
 
@@ -64,33 +64,33 @@ type Permission = 'default' | 'granted' | 'denied' | 'unsupported';
 /** Texte de l'alerte : le compte, ce qui reste, et ce qui se passe si on dépasse. */
 export function propAlertMessage(e: PropAlertEvent): string {
   const money = (v: number) => formatMoney(v, e.currency, { decimals: 0, sign: false });
-  const pct = (v: number) => `${Math.round(v * 100)} %`;
+  const pct = (v: number) => `${Math.round(v * 100)}\u00a0%`;
   switch (e.kind) {
     case 'objective':
-      return `${e.accountLabel} : objectif atteint selon l'estimation MyTradingCoach, toutes les règles du plan sont remplies. Vérifie chez ta firm.`;
+      return `${e.accountLabel}\u00a0: objectif atteint selon l'estimation MyTradingCoach, toutes les règles du plan sont remplies. Vérifie chez ta firm.`;
     case 'payout':
-      return `${e.accountLabel} : payout possible selon l'estimation MyTradingCoach. Vérifie les conditions chez ta firm avant de le demander.`;
+      return `${e.accountLabel}\u00a0: payout possible selon l'estimation MyTradingCoach. Vérifie les conditions chez ta firm avant de le demander.`;
     case 'consistency': {
       const rule = e.maxShare != null ? ` (une journée ≤ ${pct(e.maxShare)} du profit)` : '';
       if (e.level === 'breached') {
-        const extra = e.extraProfit != null ? ` : il faudra environ ${money(e.extraProfit)} de profit en plus pour la respecter` : '';
-        return `${e.accountLabel} : ta journée dépasse la règle de consistency${rule}${extra}.`;
+        const extra = e.extraProfit != null ? `\u00a0: il faudra environ ${money(e.extraProfit)} de profit en plus pour la respecter` : '';
+        return `${e.accountLabel}\u00a0: ta journée dépasse la règle de consistency${rule}${extra}.`;
       }
-      return `${e.accountLabel} : encore ${money(e.remaining)} de gain maximum aujourd'hui pour respecter la consistency${rule}.`;
+      return `${e.accountLabel}\u00a0: encore ${money(e.remaining)} de gain maximum aujourd'hui pour respecter la consistency${rule}.`;
     }
   }
   if (e.kind === 'drawdown') {
     return e.level === 'breached'
-      ? `${e.accountLabel} : plancher de drawdown atteint selon l'estimation MyTradingCoach. Vérifie ton compte chez ta firm.`
-      : `${e.accountLabel} : plus que ${money(e.remaining)} avant le plancher de drawdown.`;
+      ? `${e.accountLabel}\u00a0: plancher de drawdown atteint selon l'estimation MyTradingCoach. Vérifie ton compte chez ta firm.`
+      : `${e.accountLabel}\u00a0: plus que ${money(e.remaining)} avant le plancher de drawdown.`;
   }
   if (e.level === 'breached') {
     const effect = e.breach === 'account_failed'
       ? "chez ta firm, c'est un échec du compte"
       : 'ta firm coupe le trading jusqu’à la prochaine séance';
-    return `${e.accountLabel} : limite de perte journalière atteinte (${money(e.limit)}) : ${effect}.`;
+    return `${e.accountLabel}\u00a0: limite de perte journalière atteinte (${money(e.limit)})\u00a0: ${effect}.`;
   }
-  return `${e.accountLabel} : plus que ${money(e.remaining)} de perte permise aujourd'hui (limite ${money(e.limit)}).`;
+  return `${e.accountLabel}\u00a0: plus que ${money(e.remaining)} de perte permise aujourd'hui (limite ${money(e.limit)}).`;
 }
 
 /**
@@ -131,7 +131,7 @@ export class PropAlertsService {
     const message = tiltMessage(e);
     this.toast.warning(message, { duration: TILT_TOAST_MS });
     this.sound.play('tilt');
-    this.show('MyTradingCoach · pause ?', message, `${e.accountId}:tilt:${e.signal}`);
+    this.show('MyTradingCoach · pause\u00a0?', message, `${e.accountId}:tilt:${e.signal}`);
   }
 
   /** Demande l'autorisation des notifications système (sur un clic de l'utilisateur). */

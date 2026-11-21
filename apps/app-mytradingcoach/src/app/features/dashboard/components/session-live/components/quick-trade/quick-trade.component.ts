@@ -292,7 +292,7 @@ export class QuickTradeComponent {
   /** Sans prix connu, rien n'est loggé : un trade à `entry: 0` donnait un P&L absurde à la clôture (#994). */
   private emitWithPrice(selected: UserAssetItem, price: number | null | undefined): void {
     if (price == null || !(price > 0)) {
-      this.toast.error(`Prix de ${selected.symbol} indisponible : ajoute ce trade depuis le journal, avec ton prix d'entrée.`);
+      this.toast.error(`Prix de ${selected.symbol} indisponible\u00a0: ajoute ce trade depuis le journal, avec ton prix d'entrée.`);
       return;
     }
     this.emitTrade(selected, price);

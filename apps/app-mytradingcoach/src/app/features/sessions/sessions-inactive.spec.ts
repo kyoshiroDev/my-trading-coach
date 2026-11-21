@@ -76,7 +76,7 @@ describe('Historique des sessions — comptes échoués et archivés', () => {
     const { el } = setup([{ status: 'ACTIVE' }, { status: 'ARCHIVED' }]);
     const toggle = el.querySelector('mtc-inactive-accounts-toggle')!;
     expect(toggle.classList).not.toContain('is-empty');
-    expect(toggle.textContent).toContain('1 compte exclu des chiffres : 1 archivé.');
+    expect(toggle.textContent).toContain('1 compte exclu des chiffres\u00a0: 1 archivé.');
     expect(toggle.querySelector('input[role="switch"]')).not.toBeNull();
   });
 

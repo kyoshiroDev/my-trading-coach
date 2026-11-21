@@ -10,7 +10,7 @@ import {
   untracked,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { DecimalPipe, TitleCasePipe } from '@angular/common';
+import { TitleCasePipe } from '@angular/common';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map, catchError } from 'rxjs/operators';
 import { of } from 'rxjs';
@@ -64,7 +64,7 @@ type NumericField =
 
 @Component({
   selector: 'mtc-trade-form',
-  imports: [DialogDirective, FormsModule, TitleCasePipe, DecimalPipe, LucideDynamicIcon, PnlFormatPipe],
+  imports: [DialogDirective, FormsModule, TitleCasePipe, LucideDynamicIcon, PnlFormatPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './trade-form.component.html',
   styleUrl: './trade-form.component.css',
@@ -200,6 +200,11 @@ export class TradeFormComponent {
       return null;
     return f.side === 'LONG' ? entry * (1 - 1 / lev) : entry * (1 + 1 / lev);
   });
+
+  /** Prix à 2 décimales : milliers en espace, décimale au point (#1180) : « 18 540.25 ». */
+  protected priceLabel(v: number): string {
+    return v.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).replace(',', '.');
+  }
 
   protected readonly todayMax = computed(() =>
     new Date().toLocaleDateString('sv-SE'),
@@ -469,7 +474,7 @@ export class TradeFormComponent {
       return;
     }
     if (this.forexCapitalMissing()) {
-      this.zodErrors.set({ capitalEngaged: 'Indique le capital engagé : cette paire n’est pas cotée en dollars.' });
+      this.zodErrors.set({ capitalEngaged: 'Indique le capital engagé\u00a0: cette paire n’est pas cotée en dollars.' });
       return;
     }
     this.zodErrors.set({});

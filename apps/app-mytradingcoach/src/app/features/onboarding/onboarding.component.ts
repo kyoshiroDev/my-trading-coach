@@ -128,7 +128,7 @@ export class OnboardingComponent {
     const t = this.tvSummary();
     if (!t) return null;
     if (t.created === null) {
-      return "La première synchronisation n'a pas abouti : relance-la depuis Mes comptes.";
+      return "La première synchronisation n'a pas abouti\u00a0: relance-la depuis Mes comptes.";
     }
     return t.created > 0 ? (feesLine(t.fees)?.text ?? null) : null;
   });
@@ -641,7 +641,7 @@ export class OnboardingComponent {
         // Non bloquant (le wizard avance), mais plus muet : les actifs se complètent depuis Profil.
         error: () => {
           this.isSaving.set(false);
-          this.toast.warning('Tes actifs n’ont pas pu être enregistrés : tu pourras les ajouter depuis ton Profil.');
+          this.toast.warning('Tes actifs n’ont pas pu être enregistrés\u00a0: tu pourras les ajouter depuis ton Profil.');
           this.step.set(7);
         },
       });
@@ -658,7 +658,7 @@ export class OnboardingComponent {
         // Non bloquant (on termine l'onboarding), mais plus muet.
         error: () => {
           this.isSaving.set(false);
-          this.toast.error('Ton trade n’a pas pu être enregistré : tu pourras le saisir depuis le journal.');
+          this.toast.error('Ton trade n’a pas pu être enregistré\u00a0: tu pourras le saisir depuis le journal.');
           this.step.set(9);
         },
       });

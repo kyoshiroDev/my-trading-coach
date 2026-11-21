@@ -21,6 +21,7 @@ import { apiErrorMessage } from '../../core/utils/api-error';
 import { toParisDateStr, todayParis } from '@mtc/shared';
 import type { EcoEvent } from '@mtc/shared';
 import { ErrorStateComponent } from '@mtc/front-ui';
+import { EcoValuePipe } from '@app/shared/pipes';
 import {
   LucideDynamicIcon,
   LucideStar as Star,
@@ -53,7 +54,7 @@ interface TableRow {
 @Component({
   selector: 'mtc-eco-calendar-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [LucideDynamicIcon, ErrorStateComponent],
+  imports: [LucideDynamicIcon, ErrorStateComponent, EcoValuePipe],
   templateUrl: './eco-calendar.component.html',
   styleUrl: './eco-calendar.component.css',
 })

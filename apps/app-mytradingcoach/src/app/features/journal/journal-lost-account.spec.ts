@@ -127,7 +127,7 @@ describe('Journal — compte perdu', () => {
     expect(el.querySelectorAll('[data-testid="trade-row"]').length).toBe(4);
     const badges = [...el.querySelectorAll('[data-testid="trade-account-badge"]')];
     expect(badges.map((b) => b.textContent!.trim())).toEqual(['Échoué', 'Archivé']);
-    expect(badges[0].getAttribute('title')).toBe('Apex 50K #1 : hors statistiques');
+    expect(badges[0].getAttribute('title')).toBe('Apex 50K #1\u00a0: hors statistiques');
   });
 
   it('liste et chiffres : MÊMES filtres, sans includeInactive par défaut, avec après l\'interrupteur (les deux rechargés)', async () => {

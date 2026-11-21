@@ -69,8 +69,8 @@ describe('Session live v3 — trade en cours (#598)', () => {
     expect(text('live-position-row')).toContain('MNQ');
     expect(text('live-position-row')).toContain('2 contrats');
     expect(text('live-latent')).toBe('-42.5 $');
-    // 21500,25 − 42,5 / (2 × 2 $/pt) = 21489,625 → arrondi au centième
-    expect(text('live-price')).toMatch(/^prix 21\s?489,63 · relevé à \d{2}:\d{2}:\d{2}$/);
+    // 21500,25 − 42,5 / (2 × 2 $/pt) = 21489.625 → arrondi au centième
+    expect(text('live-price')).toMatch(/^prix 21\s?489\.63 · relevé à \d{2}:\d{2}:\d{2}$/);
   });
 
   it('position broker sans stop : repli, aucune valeur inventée, mention Tradovate', () => {

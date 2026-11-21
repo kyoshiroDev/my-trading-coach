@@ -72,7 +72,7 @@ import { roundCents } from '@mtc/shared';
           <div class="ctx-cell trate2">
             <div class="ctx-cell-name">US 2Y <span class="ctx-desc">(Taux court)</span></div>
             <div class="ctx-cell-line">
-              <span class="ctx-cell-val blue">{{ ctx()!.treasury.t2y !== null ? fmt(ctx()!.treasury.t2y, 2, 2) + '%' : '-' }}</span>
+              <span class="ctx-cell-val blue">{{ ctx()!.treasury.t2y !== null ? fmt(ctx()!.treasury.t2y, 2, 2) + '\u00a0%' : '-' }}</span>
               <span class="ctx-cell-chg"
                     [class.green]="dir(ctx()!.treasury.t2yChg) === 'up'"
                     [class.red]="dir(ctx()!.treasury.t2yChg) === 'down'">{{ pctLabel(ctx()!.treasury.t2yChg) }}</span>
@@ -82,7 +82,7 @@ import { roundCents } from '@mtc/shared';
           <div class="ctx-cell trate5">
             <div class="ctx-cell-name">US 5Y <span class="ctx-desc">(Taux moyen)</span></div>
             <div class="ctx-cell-line">
-              <span class="ctx-cell-val blue">{{ ctx()!.treasury.t5y !== null ? fmt(ctx()!.treasury.t5y, 2, 2) + '%' : '-' }}</span>
+              <span class="ctx-cell-val blue">{{ ctx()!.treasury.t5y !== null ? fmt(ctx()!.treasury.t5y, 2, 2) + '\u00a0%' : '-' }}</span>
               <span class="ctx-cell-chg"
                     [class.green]="dir(ctx()!.treasury.t5yChg) === 'up'"
                     [class.red]="dir(ctx()!.treasury.t5yChg) === 'down'">{{ pctLabel(ctx()!.treasury.t5yChg) }}</span>
@@ -92,7 +92,7 @@ import { roundCents } from '@mtc/shared';
           <div class="ctx-cell trate10">
             <div class="ctx-cell-name">US 10Y <span class="ctx-desc">(Référence)</span></div>
             <div class="ctx-cell-line">
-              <span class="ctx-cell-val yellow">{{ ctx()!.treasury.t10y !== null ? fmt(ctx()!.treasury.t10y, 2, 2) + '%' : '-' }}</span>
+              <span class="ctx-cell-val yellow">{{ ctx()!.treasury.t10y !== null ? fmt(ctx()!.treasury.t10y, 2, 2) + '\u00a0%' : '-' }}</span>
               <span class="ctx-cell-chg"
                     [class.green]="dir(ctx()!.treasury.t10yChg) === 'up'"
                     [class.red]="dir(ctx()!.treasury.t10yChg) === 'down'">{{ pctLabel(ctx()!.treasury.t10yChg) }}</span>
@@ -102,7 +102,7 @@ import { roundCents } from '@mtc/shared';
           <div class="ctx-cell trate30">
             <div class="ctx-cell-name">US 30Y <span class="ctx-desc">(Taux long)</span></div>
             <div class="ctx-cell-line">
-              <span class="ctx-cell-val yellow">{{ ctx()!.treasury.t30y !== null ? fmt(ctx()!.treasury.t30y, 2, 2) + '%' : '-' }}</span>
+              <span class="ctx-cell-val yellow">{{ ctx()!.treasury.t30y !== null ? fmt(ctx()!.treasury.t30y, 2, 2) + '\u00a0%' : '-' }}</span>
               <span class="ctx-cell-chg"
                     [class.green]="dir(ctx()!.treasury.t30yChg) === 'up'"
                     [class.red]="dir(ctx()!.treasury.t30yChg) === 'down'">{{ pctLabel(ctx()!.treasury.t30yChg) }}</span>
@@ -113,7 +113,7 @@ import { roundCents } from '@mtc/shared';
             <div class="ctx-cell inverted">
               <div class="ctx-cell-name red">Courbe <span class="ctx-desc">(2Y &gt; 10Y)</span></div>
               <div class="ctx-cell-line">
-                <span class="ctx-cell-val red small">⚠ {{ fmt(spread(), 2, 2) }}%</span>
+                <span class="ctx-cell-val red small">⚠ {{ fmt(spread(), 2, 2) }}&nbsp;%</span>
                 <span class="ctx-cell-chg red">{{ pctLabel(spreadChg()) }}</span>
               </div>
             </div>
@@ -121,7 +121,7 @@ import { roundCents } from '@mtc/shared';
             <div class="ctx-cell">
               <div class="ctx-cell-name">Spread <span class="ctx-desc">(10Y - 2Y)</span></div>
               <div class="ctx-cell-line">
-                <span class="ctx-cell-val green">{{ spread() !== null ? (spread()! > 0 ? '+' : '') + fmt(spread(), 2, 2) + '%' : '-' }}</span>
+                <span class="ctx-cell-val green">{{ spread() !== null ? (spread()! > 0 ? '+' : '') + fmt(spread(), 2, 2) + '\u00a0%' : '-' }}</span>
                 <span class="ctx-cell-chg"
                       [class.green]="dir(spreadChg()) === 'up'"
                       [class.red]="dir(spreadChg()) === 'down'">{{ pctLabel(spreadChg()) }}</span>
@@ -148,9 +148,9 @@ export class MarketContextBarComponent {
   protected pctLabel(pct: number | null | undefined): string {
     if (pct == null) return '-';
     const v = pct.toFixed(2);
-    if (pct > 0) return `▲ +${v}%`;
-    if (pct < 0) return `▼ ${v}%`;
-    return `${v}%`;
+    if (pct > 0) return `▲ +${v}\u00a0%`;
+    if (pct < 0) return `▼ ${v}\u00a0%`;
+    return `${v}\u00a0%`;
   }
 
   /** Formatage nombre : séparateur de milliers espace + décimale POINT (fidélité maquette). */
