@@ -10,8 +10,8 @@ import { DRAWDOWN_LABELS } from './drawdown-labels.const';
  */
 const app = resolve(import.meta.dirname, '../..');
 const read = (path: string) => readFileSync(resolve(app, path), 'utf8');
-/** Texte visible d'un gabarit : sans les commentaires HTML. */
-const visible = (path: string) => read(path).replace(/<!--[\s\S]*?-->/g, '');
+/** Texte visible d'un gabarit : sans les commentaires HTML, `&nbsp;` décodé en U+00A0 (comme les textes partagés). */
+const visible = (path: string) => read(path).replace(/<!--[\s\S]*?-->/g, '').replace(/&nbsp;/g, '\u00a0');
 
 /** Écrans qui montrent la TAILLE de la règle de drawdown d'un compte ou d'un plan. */
 const RULE_SCREENS = [
