@@ -35,7 +35,7 @@
   <button type="button" class="lb-wide lb-end" data-testid="live-bar-close" (click)="closeSession.emit()">Clôturer la session</button>
   @if (tickerTape().length) {
     <!-- Contexte marché qui défile sous le chrono (< 1100 px) ; toucher = détail (8 tickers + news) -->
-    <button type="button" class="lb-tape" data-testid="live-bar-tape" aria-label="Contexte marché : ouvrir le détail" (click)="openContext.emit()">
+    <button type="button" class="lb-tape" data-testid="live-bar-tape" aria-label="Contexte marché&nbsp;: ouvrir le détail" (click)="openContext.emit()">
       <span class="lb-tape-track" [style.animation-duration.s]="tickerTape().length * 5">
         @for (copy of [0, 1]; track copy) {
           <span class="lb-tape-set" [attr.aria-hidden]="copy === 1">

@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '@admin/environments/environment';
-import type { AcquisitionUtm, AdminAcquisitionData, AdminAmbassadorStats, AdminFoundersData, AdminSubscriptionsData, AdminUser, AdminBetaRoleResponse, AdminOfferPremiumResponse, AdminRemoveOfferedPremiumResponse, AdminLandingEngagementData, AdminFunnelData, AdminPlanLinkStats, AdminSignupFunnelData, AdminSignupMethodsData, AdminUserDetail as UserDetailData, FounderSeatStatus, Plan, Role } from '@mtc/shared';
+import type { AdminGiveawayData, AdminGiveawayDrawResponse, AdminGiveawaySettingsResponse, AdminGiveawayWin, DrawGiveawayRequest, GiveawayPool, ModerateGiveawayWinRequest, UpdateGiveawaySettingsRequest, AcquisitionUtm, AdminAcquisitionData, AdminAmbassadorStats, AdminFoundersData, AdminSubscriptionsData, AdminUser, AdminBetaRoleResponse, AdminOfferPremiumResponse, AdminRemoveOfferedPremiumResponse, AdminLandingEngagementData, AdminFunnelData, AdminPlanLinkStats, AdminSignupFunnelData, AdminSignupMethodsData, AdminUserDetail as UserDetailData, FounderSeatStatus, Plan, Role } from '@mtc/shared';
 export type { AdminPlanLinkStats };
 export type { UserDetailData };
 
@@ -260,6 +260,23 @@ export class AdminApi {
   }
   setFounderOffer(dto: { open?: boolean; endsAt?: string | null }) {
     return this.http.patch<{ data: unknown }>(`${this.adminBase}/founder-offer`, dto);
+  }
+  // Tirage mensuel (PROMPT-tirage-mensuel)
+  giveaway() { return this.http.get<{ data: AdminGiveawayData }>(`${this.adminBase}/giveaway`); }
+  setGiveaway(pool: GiveawayPool, enabled: boolean) {
+    const body: UpdateGiveawaySettingsRequest = { pool, enabled };
+    return this.http.patch<{ data: AdminGiveawaySettingsResponse }>(`${this.adminBase}/giveaway/settings`, body);
+  }
+  moderateGiveawayWin(id: string, moderation: ModerateGiveawayWinRequest['moderation']) {
+    const body: ModerateGiveawayWinRequest = { moderation };
+    return this.http.patch<{ data: AdminGiveawayWin | null }>(`${this.adminBase}/giveaway/wins/${id}/moderation`, body);
+  }
+  retryGiveawayWin(id: string) {
+    return this.http.post<{ data: AdminGiveawayWin | null }>(`${this.adminBase}/giveaway/wins/${id}/retry`, {});
+  }
+  drawGiveawayNow(pool: GiveawayPool) {
+    const body: DrawGiveawayRequest = { pool };
+    return this.http.post<{ data: AdminGiveawayDrawResponse }>(`${this.adminBase}/giveaway/draw`, body);
   }
   partnerCodes() { return this.http.get<{ data: AdminPartnerCode[] }>(`${this.adminBase}/partner-codes`); }
   createPartnerCode(dto: PartnerCodeInput) {

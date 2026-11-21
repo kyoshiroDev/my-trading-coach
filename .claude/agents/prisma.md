@@ -157,3 +157,4 @@ Contenu déplacé à l'identique le 2026-11-16. Lire un fichier seulement quand 
 | `commun/push-admin.md` | notifications push / PWA de l'admin |
 | `commun/push-traders.md` | notifications push des traders |
 | `commun/registre-brokers.md` | nouveau broker CSV, registre `BrokerCsvMapping` |
+| `commun/tirage-mensuel.md` | tirage au sort mensuel : éligibilité, lots, interrupteurs, e-mails, onglet admin « Tirages » |

@@ -18,6 +18,7 @@ import {
   LucideUserX as UserX,
   LucideGift as Gift,
   LucideBell as Bell,
+  LucideTicket as Ticket,
 } from '@lucide/angular';
 import { AdminAuthService } from '../../core/auth/admin-auth.service';
 import { ScrollMemoryDirective } from '@mtc/front-ui';
@@ -49,4 +50,5 @@ export class ShellComponent {
   protected readonly HandshakeIcon = Handshake;
   protected readonly GiftIcon      = Gift;
   protected readonly BellIcon      = Bell;
+  protected readonly TicketIcon    = Ticket;
 }

@@ -43,6 +43,7 @@ vi.mock('./stripe/stripe-customer.service', () => stub('StripeCustomerService'))
 vi.mock('./stripe/stripe-referral.service', () => stub('StripeReferralService'));
 vi.mock('./stripe/stripe-subscription.service', () => stub('StripeSubscriptionService'));
 vi.mock('./stripe/stripe-webhook.service', () => stub('StripeWebhookService'));
+vi.mock('./stripe/stripe-giveaway.service', () => stub('StripeGiveawayService'));
 vi.mock('./founder-offer/founder-offer.module', () => stub('FounderOfferModule'));
 vi.mock('./partner-codes/partner-code.module', () => stub('PartnerCodeModule'));
 
