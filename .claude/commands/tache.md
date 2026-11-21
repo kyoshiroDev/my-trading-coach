@@ -30,7 +30,7 @@ $ARGUMENTS
    **« OK à 100 % »** ou un point qui revient à Greg (décision business, prod, VPS, Stripe live : voir `relecteur.md`).
 7. **À 100 %** : vérifier les conflits avec `origin/dev`, pousser, ouvrir la PR vers `dev` (description du relecteur,
    section « Vérificateurs » comprise), l'ajouter au projet n° 4 (`Partie de #n`), suivre la CI jusqu'au vert.
-   Jamais vers `main`, jamais de merge : seul Greg merge.
+   Jamais vers `main`. Merge vers `dev` par la session une fois la CI verte (merge commit, une PR à la fois, attendre la CI/CD de `dev`, décision du 2026-11-21) ; `dev` → `main`, seul Greg merge.
 8. **Message à Greg** : uniquement la section « Pour Greg » du relecteur, plus 5 lignes de résumé au maximum.
    Nouvelle décision de Greg → en haut de `.claude/decisions.md`, dans le même commit que le travail concerné.
 

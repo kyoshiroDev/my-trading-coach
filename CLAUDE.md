@@ -85,7 +85,7 @@ Avant de coder : lire les agents de la 2ᵉ colonne pour **chaque** ligne qui co
 
 ### Branche de départ
 - **Tout** (feature, bug, optimisation, perf, refactor, dette, docs, CI…) → branche depuis `origin/dev` à jour (worktree dédié), livrée sur `dev`, puis `dev` → `main`. `beta` n'est plus utilisée pour les fonctionnalités (décision du 2026-11-08) : inutile de demander « nouvelle feature ou pas ? ».
-- **Tout prompt passe par l'agent `relecteur`** : il valide, fait corriger et dirige la session (et les autres agents). **Aucun push tant qu'il n'a pas rendu « OK à 100 % »** (aucune correction restante, aucune question ouverte pour Greg). À 100 % → on pousse et on ouvre la PR vers `dev`, sans attendre de « OK push » de Greg. La PR `dev` → `main` n'est ouverte que sur demande explicite de Greg. **Seul Greg merge** (merge commit, jamais squash).
+- **Tout prompt passe par l'agent `relecteur`** : il valide, fait corriger et dirige la session (et les autres agents). **Aucun push tant qu'il n'a pas rendu « OK à 100 % »** (aucune correction restante, aucune question ouverte pour Greg). À 100 % → on pousse et on ouvre la PR vers `dev`, sans attendre de « OK push » de Greg. La PR `dev` → `main` n'est ouverte que sur demande explicite de Greg. **Merge** (merge commit, jamais squash) : les PR vers `dev` sont mergées par la session (conflits résolus, relecteur « OK à 100 % », CI verte, une PR à la fois en attendant la fin de la CI/CD de `dev` ; décision du 2026-11-21) ; la PR `dev` → `main`, seul Greg la merge.
 
 ### Avant de coder
 0. Prompt collé par Greg → l'enregistrer tel quel dans `.claude/prompts/PROMPT-<nom-du-prompt>.md` (texte exact, compléments ajoutés à la suite) et le commiter avec le travail : le relecteur lit ce texte-là.

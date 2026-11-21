@@ -83,7 +83,7 @@ Ensuite :
    - **Conflits résolus** : fichier par fichier, ou « aucun ».
    - **Décisions** : les entrées ajoutées à `.claude/decisions.md` dans cette PR.
 7. Titre au format des commits (`fix(landing): …`, `feat(api): …`). Pas de reviewers ni de labels sauf demande. Aucune mention `@` de personne.
-8. Tu ne merges **jamais**, tu n'approuves pas la PR, tu ne fermes pas celle d'un autre. Greg lit et merge lui-même, en **merge commit** (jamais squash) : rappelle-le en dernière ligne de la description.
+8. Tu ne merges **jamais**, tu n'approuves pas la PR, tu ne fermes pas celle d'un autre. Une PR vers `dev` est mergée par la session (pas par toi) une fois ton « OK à 100 % » rendu et la CI verte, en **merge commit** (jamais squash), une PR à la fois, et la session attend la fin de la CI et de la CD de `dev` avant la PR suivante (décision du 2026-11-21) ; la PR `dev` → `main`, seul Greg la merge. Rappelle « merge commit, jamais squash » en dernière ligne de la description.
 9. Dans ta section « Pour Greg », donne le lien de la PR et les 2 ou 3 points à regarder en priorité.
 
 ## Suivi de la CI et de la CD (jusqu'au vert)
@@ -98,8 +98,8 @@ Ensuite :
 4. **Interdit pour faire passer au vert** : désactiver ou supprimer un test, ajouter `skip`/`only`, baisser un seuil (couverture, lint), ajouter un `eslint-disable` ou un `@ts-ignore` sans raison écrite, `--no-verify`, modifier un workflow pour sauter une étape, toucher aux secrets. Un test **instable** (passe en local, échoue au hasard) : une seule relance, puis tu le signales à Greg avec le journal, sans le désactiver.
 5. Après **3 tentatives** sans vert, ou si la cause est hors du code (runner GitHub, quota, secret manquant, service externe en panne) : arrête et explique à Greg ce qui bloque, avec le journal utile.
 
-**Après le merge par Greg : la CD.**
-1. Dès que Greg a mergé (sur `dev` ou `main`), suis le workflow de déploiement jusqu'à la fin (`gh run list --branch <dev|main> --limit 3`, puis `gh run watch`).
+**Après le merge (par la session sur `dev`, par Greg sur `main`) : la CD.**
+1. Dès le merge (sur `dev` ou `main`), suis le workflow de déploiement jusqu'à la fin (`gh run list --branch <dev|main> --limit 3`, puis `gh run watch`).
 2. **Vert** : fais les vérifications en lecture seule de ce qui a été déployé (`/api/health`, pages concernées en `200`, `curl -sI` sur les redirections…) sans créer de visite inutile en prod, puis un récapitulatif de 3 lignes à Greg.
 3. **Rouge** :
    - si la cause est dans le **code** : correctif sur une nouvelle branche depuis `dev` à jour (`fix/…`), même circuit (relecture jusqu'à « OK à 100 % », conflits, PR, CI) ;
