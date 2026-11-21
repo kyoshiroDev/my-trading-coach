@@ -32,13 +32,14 @@
               </div>
               <button type="button" role="switch" class="g-switch" [attr.aria-checked]="p.enabled"
                 [attr.aria-label]="POOL_LABEL[p.pool]" [disabled]="busy() !== null || (!p.enabled && !d.activationAvailable)" (click)="toggle(p)"
+                [attr.aria-describedby]="!p.enabled && !d.activationAvailable ? 'activation-locked-' + p.pool : null"
                 [attr.data-testid]="'toggle-' + p.pool">
                 <span class="g-switch-knob"></span>
               </button>
             </div>
 
             @if (!p.enabled && !d.activationAvailable) {
-              <p class="locked" data-testid="giveaway-activation-locked">Activable en prod avec le lot B (page Concours et règlement).</p>
+              <p class="locked" [id]="'activation-locked-' + p.pool" [attr.data-testid]="'activation-locked-' + p.pool">Activable en prod avec le lot B (page Concours et règlement).</p>
             }
 
             @if (confirming() === p.pool) {

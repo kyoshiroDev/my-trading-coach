@@ -124,6 +124,7 @@ test.describe('Admin · Tirages', () => {
     await setup(page, { activationAvailable: false });
     await page.goto('/tirages', { waitUntil: 'domcontentloaded' });
     await expect(page.getByTestId('toggle-FREE')).toBeDisabled();
-    await expect(page.getByTestId('pool-FREE').getByTestId('giveaway-activation-locked')).toContainText('lot B');
+    await expect(page.getByTestId('activation-locked-FREE')).toContainText('lot B');
+    await expect(page.getByTestId('toggle-FREE')).toHaveAttribute('aria-describedby', 'activation-locked-FREE');
   });
 });

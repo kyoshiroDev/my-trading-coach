@@ -126,10 +126,16 @@ describe('GiveawayComponent', () => {
 
   it('prod avant le lot B : interrupteur éteint verrouillé avec l’explication, éteindre reste possible', async () => {
     const { el } = await render(data({ activationAvailable: false }));
-    expect((q(el, 'toggle-FREE') as HTMLButtonElement).disabled).toBe(true);
-    expect(q(el, 'pool-FREE')!.querySelector('[data-testid="giveaway-activation-locked"]')).not.toBeNull();
-    expect((q(el, 'toggle-PREMIUM') as HTMLButtonElement).disabled).toBe(false); // allumé : on peut l'éteindre
-    expect(q(el, 'pool-PREMIUM')!.querySelector('[data-testid="giveaway-activation-locked"]')).toBeNull();
+    const toggle = q(el, 'toggle-FREE') as HTMLButtonElement;
+    expect(toggle.disabled).toBe(true);
+    expect(q(el, 'activation-locked-FREE')!.textContent).toContain('lot B');
+    // La raison du bouton désactivé est lue par un lecteur d'écran.
+    expect(toggle.getAttribute('aria-describedby')).toBe('activation-locked-FREE');
+    expect(el.querySelector('#activation-locked-FREE')).not.toBeNull();
+    const premium = q(el, 'toggle-PREMIUM') as HTMLButtonElement;
+    expect(premium.disabled).toBe(false); // allumé : on peut l'éteindre
+    expect(premium.hasAttribute('aria-describedby')).toBe(false);
+    expect(q(el, 'activation-locked-PREMIUM')).toBeNull();
   });
 
   it('en-tête : jour et heure du tirage tirés des constantes', async () => {
