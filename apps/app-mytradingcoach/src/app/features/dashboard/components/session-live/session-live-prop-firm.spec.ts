@@ -147,6 +147,7 @@ describe('Session live — sans séance, bouton « Démarrer » (#1031)', () => 
     const { el } = setup({ noSession: true, canStart: false, startDisabled: true });
     expect(el.querySelector('[data-testid="start-session-live"]')).toBeNull();
     expect(el.querySelector('.no-session-hint')).toBeNull();
+    expect(el.querySelector('[data-testid="no-session-demo"]')).not.toBeNull();
   });
 
   it('compte normal : bouton présent, grisé avec le message tant qu’aucun compte n’est choisi', () => {
@@ -155,5 +156,6 @@ describe('Session live — sans séance, bouton « Démarrer » (#1031)', () => 
     expect(btn).not.toBeNull();
     expect(btn!.disabled).toBe(true);
     expect(el.querySelector('.no-session-hint')).not.toBeNull();
+    expect(el.querySelector('[data-testid="no-session-demo"]')).toBeNull();
   });
 });
