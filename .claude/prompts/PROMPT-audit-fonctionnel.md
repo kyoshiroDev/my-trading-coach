@@ -110,6 +110,12 @@ Texte de Greg : « oki continue ton travail alors » (après la proposition de l
 
 #1132 est issu de la vérification security de #1103 (lot 4 #1062) : `POST /auth/refresh` sans limite de débit dédiée. Analyse du vérificateur security : aucune protection réelle à gagner, limite par défaut gardée exprès et verrouillée par un test.
 
+## Complément #1145 (2026-11-20)
+
+Texte de Greg : « tous est merge continue la suite »
+
+#1145 est issu de la vérification security de #1132 (lot 4 #1062) : le refresh partagé de `@mtc/front-auth` déconnecte sur toute erreur (429, 5xx, réseau), pas seulement sur un refus d'authentification.
+
 ## Complément #1073 (2026-11-21)
 
 Texte de Greg : « continue les ticket ouvert dans l'audite »
