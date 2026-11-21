@@ -295,16 +295,16 @@
                     <span class="eco-actual"
                           [class.beat]="event.estimate !== null && event.actual > event.estimate"
                           [class.miss]="event.estimate !== null && event.actual < event.estimate">
-                      Actuel&nbsp;: {{ event.actual }}{{ event.unit }}
+                      Actuel&nbsp;: {{ event.actual | ecoValue: event.unit }}
                     </span>
                     <span class="eco-sep">·</span>
                   }
                   @if (event.estimate !== null) {
-                    <span>Prévu&nbsp;: {{ event.estimate }}{{ event.unit }}</span>
+                    <span>Prévu&nbsp;: {{ event.estimate | ecoValue: event.unit }}</span>
                     <span class="eco-sep">·</span>
                   }
                   @if (event.previous !== null) {
-                    <span>Préc.&nbsp;: {{ event.previous }}{{ event.unit }}</span>
+                    <span>Préc.&nbsp;: {{ event.previous | ecoValue: event.unit }}</span>
                   }
                 </div>
               }

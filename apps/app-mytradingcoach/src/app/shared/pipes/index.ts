@@ -7,3 +7,4 @@ export { MoneyPipe } from './money.pipe';
 export { PnlFormatPipe } from './pnl-format.pipe';
 export { SessionLabelPipe } from './session-label.pipe';
 export { TimeframeLabelPipe } from './timeframe-label.pipe';
+export { EcoValuePipe, formatEcoValue } from './eco-value.pipe';
