@@ -2,30 +2,10 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '@app/environments/environment';
-import type { Plan } from '@mtc/shared';
+import type { AmbassadorStats } from '@mtc/shared';
 
-/** Filleul vu par l'ambassadeur : pseudo masqué, ni nom ni e-mail (S2 #1063). */
-export interface ReferralUser {
-  pseudo: string;
-  plan: Plan;
-  createdAt: string;
-  isActive: boolean;
-  /** 20 % du montant mensuel réellement payé, calculé par l'API (fondateur, annuel, code partenaire). */
-  monthlyCommission: number;
-  /** Abonnement Premium actif (calculé par l'API) : un essai ou une pause n'est pas « Payant ». */
-  paying: boolean;
-}
-
-export interface AmbassadorStats {
-  referralCode: string;
-  referrals: ReferralUser[];
-  total: number;
-  free: number;
-  premium: number;
-  earningsByMonth: Record<string, number>;
-  totalEarned: number;
-  pendingPayout: number;
-}
+/** Contrat partagé (#1073), ré-exporté pour les importeurs existants. */
+export type { AmbassadorReferral as ReferralUser, AmbassadorStats } from '@mtc/shared';
 
 @Injectable({ providedIn: 'root' })
 export class AmbassadorApi {

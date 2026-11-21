@@ -53,6 +53,49 @@ describe('jwtRefreshInterceptor', () => {
     expect(auth.logout).toHaveBeenCalledOnce();
   });
 
+  /**
+   * #1145 : toute erreur du refresh déconnectait, même passagère (API qui redémarre, 429, réseau).
+   * Seul un refus d'authentification (401, ou 403 du refus de rôle admin) déconnecte.
+   */
+  for (const [label, status] of [['5xx (API qui redémarre)', 503], ['429 (limite de débit)', 429], ['réseau coupé', 0]] as const) {
+    it(`refresh en erreur passagère, ${label} : pas de déconnexion, la requête échoue, le 401 suivant relance un refresh`, () => {
+      auth.refreshToken.mockReturnValueOnce(throwError(() => ({ status })));
+      let got: number | undefined;
+      http.get('/api/trades').subscribe({ error: (e) => (got = e.status) });
+      backend.expectOne('/api/trades').flush({}, { status: 401, statusText: 'Unauthorized' });
+      expect(got).toBe(status);
+      expect(auth.logout).not.toHaveBeenCalled();
+
+      auth.refreshToken.mockImplementationOnce(() => { token = 'nouveau'; return of(true); });
+      http.get('/api/stats').subscribe();
+      backend.expectOne('/api/stats').flush({}, { status: 401, statusText: 'Unauthorized' });
+      expect(backend.expectOne('/api/stats').request.headers.get('Authorization')).toBe('Bearer nouveau');
+      expect(auth.refreshToken).toHaveBeenCalledTimes(2);
+    });
+  }
+
+  it('erreur passagère : toutes les requêtes en attente reçoivent l’erreur, sans déconnexion', () => {
+    const refresh = new Subject<unknown>();
+    auth.refreshToken.mockReturnValue(refresh);
+    const outcome: string[] = [];
+    http.get('/api/trades').subscribe({ error: (e) => outcome.push(`trades ${e.status}`) });
+    http.get('/api/stats').subscribe({ error: (e) => outcome.push(`stats ${e.status}`) });
+    backend.expectOne('/api/trades').flush({}, { status: 401, statusText: 'Unauthorized' });
+    backend.expectOne('/api/stats').flush({}, { status: 401, statusText: 'Unauthorized' });
+    expect(auth.refreshToken).toHaveBeenCalledOnce();
+
+    refresh.error({ status: 503 });
+    expect(outcome.sort()).toEqual(['stats 503', 'trades 503']);
+    expect(auth.logout).not.toHaveBeenCalled();
+  });
+
+  it('refus de rôle admin (403) : déconnexion, comme un 401', () => {
+    auth.refreshToken.mockReturnValue(throwError(() => ({ status: 403 })));
+    http.get('/api/trades').subscribe({ error: () => undefined });
+    backend.expectOne('/api/trades').flush({}, { status: 401, statusText: 'Unauthorized' });
+    expect(auth.logout).toHaveBeenCalledOnce();
+  });
+
   it('refresh en échec : les requêtes qui l’attendaient échouent aussi, aucune ne reste en suspens (#1065)', () => {
     const refresh = new Subject<unknown>();
     auth.refreshToken.mockReturnValue(refresh);
