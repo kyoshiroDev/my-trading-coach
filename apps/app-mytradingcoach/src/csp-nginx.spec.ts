@@ -25,8 +25,11 @@ const indexes = ['apps/app-mytradingcoach/src/index.html', 'apps/admin-mytrading
 );
 
 describe('CSP de spa-releases.conf (#1068)', () => {
-  it('la conf sert une politique', () => {
+  it('la conf sert une seule politique', () => {
     expect(header).not.toBe('');
+    // Une seule ligne CSP : une seconde (autre location, ou bloquante à côté de la Report-Only)
+    // échapperait aux contrôles ci-dessous.
+    expect(conf.match(/add_header Content-Security-Policy/g)).toHaveLength(1);
   });
 
   it("chaque script inline des index de l'app et de l'admin est autorisé par son empreinte", () => {
@@ -38,7 +41,7 @@ describe('CSP de spa-releases.conf (#1068)', () => {
   });
 
   it('chaque gestionnaire inline (onload…) des index et du CSS critique est autorisé', () => {
-    const handlers = indexes.flatMap((html) => [...html.matchAll(/\son[a-z]+="([^"]*)"/g)].map((m) => m[1]));
+    const handlers = indexes.flatMap((html) => [...html.matchAll(/\son[a-z]+=(?:"([^"]*)"|'([^']*)')/g)].map((m) => m[1] ?? m[2]));
     // Ajouté au build par l'inlining du CSS critique (feuille de style chargée en media="print").
     handlers.push("this.media='all'");
     expect(directive('script-src')).toContain("'unsafe-hashes'");
