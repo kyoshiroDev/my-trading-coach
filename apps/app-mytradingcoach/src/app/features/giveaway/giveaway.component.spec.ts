@@ -82,9 +82,9 @@ describe('Concours du mois : page', () => {
     expect(q('giveaway-status-text')!.textContent).toBe('Tu es dans le tirage du 1er mars.');
   });
 
-  it('Premium de moins de 2 mois : phrase honnête, sans barre', () => {
+  it('ancienneté Premium insuffisante : phrase honnête, sans barre', () => {
     const { q } = mountPage(state({ me: { pool: 'PREMIUM', reason: 'premium_too_recent', tradesThisMonth: 9 } }));
-    expect(q('giveaway-status-text')!.textContent).toBe('Tu participeras au tirage Premium dès ton 2e\u00a0mois d’abonnement.');
+    expect(q('giveaway-status-text')!.textContent).toBe('Tu participeras au tirage Premium dès ta 2e\u00a0échéance payée (abonnement annuel\u00a0: 2\u00a0mois après le paiement).');
     expect(q('giveaway-status')!.querySelector('.bar')).toBeNull();
   });
 

@@ -58,14 +58,16 @@ const day = giveawayDrawDayLabel();
       <p>
         Le tirage est ouvert aux personnes physiques majeures titulaires d'un compte MyTradingCoach. Sont
         exclus&nbsp;: les comptes de démonstration, les comptes internes de l'organisateur et les comptes
-        administrateurs. Un compte supprimé ne participe plus.
+        administrateurs. Un compte supprimé ne participe plus. Une seule participation par personne&nbsp;:
+        l'organisateur peut exclure un participant qui utilise plusieurs comptes ou contourne les conditions.
       </p>
 
       <h2>4. Conditions de participation</h2>
       <p><strong>Tirage des comptes gratuits</strong>&nbsp;:</p>
       <ul>
-        <li>ne pas avoir d'abonnement Premium en cours (payant ou en essai), ni de paiement en attente, ni
-          de Premium accordé par un rôle (bêta-testeur)&nbsp;;</li>
+        <li>ne pas avoir d'abonnement Premium en cours (payant ou en essai Stripe), ni de paiement en
+          attente, ni de Premium permanent accordé par l'organisateur (rôle bêta-testeur, par exemple).
+          L'essai Premium offert à l'inscription n'empêche pas de participer&nbsp;;</li>
         <li>compte créé depuis plus de {GIVEAWAY_MIN_ACCOUNT_AGE_DAYS}&nbsp;jours&nbsp;;</li>
         <li>au moins {GIVEAWAY_MIN_TRADES} trades enregistrés dans MyTradingCoach au cours du mois civil
           précédant le tirage (date du trade, heure de Paris, synchronisation ou saisie)&nbsp;;</li>
@@ -93,7 +95,8 @@ const day = giveawayDrawDayLabel();
       <h2>6. Lots</h2>
       <ul>
         <li><strong>Tirage des comptes gratuits</strong>&nbsp;: {GIVEAWAY_FREE_PRIZE_MONTHS}&nbsp;mois de
-          Premium offert, sans carte bancaire, activé automatiquement. À la fin, le compte repasse en
+          Premium offert, sans carte bancaire, activé automatiquement. S'il reste un Premium offert en
+          cours, le mois gagné s'ajoute à sa suite. À la fin, le compte repasse en
           gratuit sans aucun prélèvement.</li>
         <li><strong>Tirage des abonnés Premium</strong>&nbsp;: {GIVEAWAY_PREMIUM_PRIZE_MONTHS}&nbsp;mois
           d'abonnement offerts, sous la forme d'un avoir crédité sur le compte de facturation&nbsp;: pour un

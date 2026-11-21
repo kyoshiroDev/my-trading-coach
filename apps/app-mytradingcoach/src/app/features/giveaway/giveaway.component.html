@@ -95,9 +95,9 @@
       <div class="card-title">Comment participer</div>
       <ul>
         <li>Enregistre au moins {{ s.minTrades }} trades dans le mois (synchro Tradovate ou saisie).</li>
-        <li>Comptes gratuits&nbsp;: compte de plus de {{ minAccountDays }}&nbsp;jours. Abonnés Premium&nbsp;: abonnés depuis au moins {{ premiumMonths }}&nbsp;mois.</li>
+        <li>Comptes gratuits&nbsp;: compte de plus de {{ minAccountDays }}&nbsp;jours. Abonnés Premium&nbsp;: dès la {{ premiumInvoices }}e&nbsp;échéance payée (abonnement annuel&nbsp;: {{ premiumMonths }}&nbsp;mois après le paiement).</li>
         <li>Tirage automatique le {{ nextDrawLabel() }} à {{ drawHour }}&nbsp;h (Paris), puis chaque mois.</li>
-        <li>Un gagnant peut rejouer {{ cooldownMonths }}&nbsp;mois plus tard. Gratuit et sans obligation d’achat.</li>
+        <li>Un gagnant peut rejouer {{ cooldownMonths }}&nbsp;mois plus tard. Tirage des comptes gratuits sans obligation d’achat.</li>
       </ul>
       <a class="rules-link" [href]="rulesUrl" target="_blank" rel="noopener" data-testid="giveaway-rules-link">Lire le règlement</a>
     </section>

@@ -72,7 +72,7 @@
 - `deleteMe` efface message, pseudos et accords des lots du compte ; `GiveawayWin.userId` et
   `GiveawayDraw.winnerId` passent à null (SetNull), le tirage et sa trace restent.
 
-## Verrou d'activation en prod (jusqu'au lot B)
+## Verrou d'activation en prod (ouvert au lot B, gardé comme coupe-circuit)
 `GIVEAWAY_PROD_ACTIVATION_OPEN = false` (`giveaway-settings.service.ts`) : en prod (`FRONTEND_URL`
 absent ou égal à l'app de prod, normalisé), **allumer** un tirage répond 409 (« Activation en prod
 disponible avec le lot B… ») ; éteindre reste toujours possible ; hors prod, l'activation est libre.
@@ -99,10 +99,10 @@ mécanisme reste : le remettre à `false` referme l'allumage en prod sans touche
   selon l'accord, message seulement VALIDE). `GET /giveaway/state` : même état + `me` (tirage concerné :
   abonné actif = PREMIUM, sinon FREE ; raison `in` / `need_trades` / `premium_too_recent` (lecture
   Stripe, cache 1 h) / `account_too_recent` / `recent_winner` / `cancel_scheduled` / `pool_off` /
-  `not_eligible` ; trades du mois civil en cours) + `myWin`. Démo : page visible, données d'exemple,
-  aucun gagnant ni message. `PATCH /giveaway/me/win` : message modifié → EN_ATTENTE.
-- **App** : `GiveawayStateService` (chargé par la barre latérale à la connexion, vidé à la
-  déconnexion). Dès qu'un tirage est allumé (ou en démo), l'entrée « Score trader » devient
+  `not_eligible` ; trades du mois civil en cours) + `myWin`. Démo : état réel des interrupteurs
+  (onglet seulement si un tirage est allumé ; sinon raison `pool_off`), aucun gagnant ni message. `PATCH /giveaway/me/win` : message modifié → EN_ATTENTE.
+- **App** : `GiveawayStateService` (chargé par la barre latérale à la connexion, rechargé à chaque
+  ouverture de la page, vidé à la déconnexion). Dès qu'un tirage est allumé (démo comprise), l'entrée « Score trader » devient
   « Concours du mois » (`nav-concours`, icône cadeau, même place) ; `/scoring` reste joignable.
   Pages `/concours` (lots, compte à rebours, statut + progression, compteurs ou « Premier tirage le… »,
   gagnants, conditions, lien vers le règlement) et `/concours/gagnant` (lot, affichage, message,

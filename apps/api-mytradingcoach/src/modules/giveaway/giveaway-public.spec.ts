@@ -134,11 +134,16 @@ describe('état de la page (mon statut)', () => {
     expect((await service.appState('u1', NOW)).me.reason).toBe('cancel_scheduled');
   });
 
-  it('démo : page visible, données d’exemple, aucun gagnant ni message', async () => {
-    settingsRow.freeEnabled = false;
+  it('démo : état réel des interrupteurs, aucun gagnant ni message', async () => {
     user = freeUser({ isDemo: true });
-    const s = await service.appState('u1', NOW);
-    expect(s).toMatchObject({ demo: true, enabled: true, winners: [], winnersFree: 0, winnersPremium: 0, myWin: null });
+    const on = await service.appState('u1', NOW);
+    expect(on).toMatchObject({ demo: true, enabled: true, free: true, winners: [], winnersFree: 0, winnersPremium: 0, myWin: null });
+    expect(on.me.reason).toBe('need_trades');
+    settingsRow.freeEnabled = false;
+    store.clear();
+    const off = await service.appState('u1', NOW);
+    expect(off).toMatchObject({ demo: true, enabled: false, free: false });
+    expect(off.me.reason).toBe('pool_off');
   });
 });
 

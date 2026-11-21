@@ -141,18 +141,18 @@ export class GiveawayPublicService {
       user.stripeSubscriptionId && user.stripeSubscriptionStatus === 'active' ? GiveawayPool.PREMIUM : GiveawayPool.FREE;
 
     if (user.isDemo) {
-      // Démo : page visible avec des données d'exemple, jamais de faux gagnant ni de faux message.
+      // Démo (relecteur du 21/11) : état réel des interrupteurs (onglet seulement si un tirage est
+      // allumé), données d'exemple, jamais de faux gagnant ni de faux message.
+      const poolOn = pool === GiveawayPool.FREE ? base.free : base.premium;
+      const reason: GiveawayMyReason = !poolOn ? 'pool_off' : tradesThisMonth >= GIVEAWAY_MIN_TRADES ? 'in' : 'need_trades';
       return {
         ...base,
-        enabled: true,
-        free: true,
-        premium: true,
         winnersFree: 0,
         winnersPremium: 0,
         monthsOffered: 0,
         winners: [],
         demo: true,
-        me: { pool, reason: tradesThisMonth >= GIVEAWAY_MIN_TRADES ? 'in' : 'need_trades', tradesThisMonth },
+        me: { pool, reason, tradesThisMonth },
         myWin: null,
       };
     }

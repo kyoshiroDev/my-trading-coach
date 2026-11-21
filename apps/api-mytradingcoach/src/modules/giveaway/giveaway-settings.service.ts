@@ -24,8 +24,7 @@ const PROD_FRONTEND_URL = 'https://app.mytradingcoach.app';
  * confidentialité (condition de l'agent security). Hors prod, l'activation reste libre.
  */
 export const GIVEAWAY_PROD_ACTIVATION_OPEN = true;
-export const GIVEAWAY_ACTIVATION_LOCKED_MESSAGE =
-  'Activation en prod disponible avec le lot B (page « Concours du mois » et règlement).';
+export const GIVEAWAY_ACTIVATION_LOCKED_MESSAGE = 'Activation en prod fermée pour le moment.';
 
 /** URL comparée sans casse ni barre finale : une URL de prod écrite autrement reste la prod. */
 const normUrl = (u: string) => u.trim().toLowerCase().replace(/\/+$/, '');

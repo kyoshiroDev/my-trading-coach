@@ -124,11 +124,11 @@ describe('GiveawayComponent', () => {
     http.expectOne(BASE).flush({ data: data() });
   });
 
-  it('prod avant le lot B : interrupteur éteint verrouillé avec l’explication, éteindre reste possible', async () => {
+  it('verrou prod fermé : interrupteur éteint verrouillé avec l’explication, éteindre reste possible', async () => {
     const { el } = await render(data({ activationAvailable: false }));
     const toggle = q(el, 'toggle-FREE') as HTMLButtonElement;
     expect(toggle.disabled).toBe(true);
-    expect(q(el, 'activation-locked-FREE')!.textContent).toContain('lot B');
+    expect(q(el, 'activation-locked-FREE')!.textContent).toContain('Activation en prod fermée');
     // La raison du bouton désactivé est lue par un lecteur d'écran.
     expect(toggle.getAttribute('aria-describedby')).toBe('activation-locked-FREE');
     expect(el.querySelector('#activation-locked-FREE')).not.toBeNull();

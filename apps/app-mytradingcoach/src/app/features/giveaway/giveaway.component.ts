@@ -5,6 +5,7 @@ import { ErrorStateComponent } from '@mtc/front-ui';
 import {
   GIVEAWAY_DRAW_HOUR,
   GIVEAWAY_MIN_ACCOUNT_AGE_DAYS,
+  GIVEAWAY_PREMIUM_MIN_PAID_INVOICES,
   GIVEAWAY_PREMIUM_MIN_PAID_MONTHS,
   GIVEAWAY_WIN_COOLDOWN_MONTHS,
   giveawayDrawDayLabel, type GiveawayAppState, type GiveawayMyReason } from '@mtc/shared';
@@ -63,6 +64,7 @@ export class GiveawayComponent {
   protected readonly drawHour = GIVEAWAY_DRAW_HOUR;
   protected readonly minAccountDays = GIVEAWAY_MIN_ACCOUNT_AGE_DAYS;
   protected readonly premiumMonths = GIVEAWAY_PREMIUM_MIN_PAID_MONTHS;
+  protected readonly premiumInvoices = GIVEAWAY_PREMIUM_MIN_PAID_INVOICES;
   protected readonly cooldownMonths = GIVEAWAY_WIN_COOLDOWN_MONTHS;
   protected readonly periodLabel = periodLabel;
 
@@ -112,8 +114,8 @@ export class GiveawayComponent {
     const reasons: Record<GiveawayMyReason, string> = {
       in: `Tu es dans le tirage du ${next}.`,
       need_trades: `Encore ${left}\u00a0trade${left > 1 ? 's' : ''} pour participer au tirage du ${next}.`,
-      premium_too_recent: `Tu participeras au tirage Premium dès ton ${GIVEAWAY_PREMIUM_MIN_PAID_MONTHS}e\u00a0mois d’abonnement.`,
-      account_too_recent: `Ton compte participera au tirage dès ses ${GIVEAWAY_MIN_ACCOUNT_AGE_DAYS}\u00a0premiers jours.`,
+      premium_too_recent: `Tu participeras au tirage Premium dès ta ${GIVEAWAY_PREMIUM_MIN_PAID_INVOICES}e\u00a0échéance payée (abonnement annuel\u00a0: ${GIVEAWAY_PREMIUM_MIN_PAID_MONTHS}\u00a0mois après le paiement).`,
+      account_too_recent: `Ton compte pourra participer quand il aura plus de ${GIVEAWAY_MIN_ACCOUNT_AGE_DAYS}\u00a0jours.`,
       recent_winner: 'Tu as gagné récemment\u00a0: tu pourras rejouer dans quelques mois.',
       cancel_scheduled: 'Ton abonnement se termine bientôt\u00a0: le tirage Premium est réservé aux abonnements qui continuent.',
       pool_off: s.me.pool === 'PREMIUM'
