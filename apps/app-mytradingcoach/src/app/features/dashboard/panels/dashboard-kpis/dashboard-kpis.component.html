@@ -10,7 +10,7 @@
         <div class="mtc-kpi-val" data-testid="dashboard-capital" [style.color]="capitalColor()">{{ capitalDisplay() }}</div>
         <div class="mtc-kpi-sub">
           @if (capitalPct() !== 0) {
-            <span [style.color]="capitalPct() > 0 ? 'var(--green)' : 'var(--red)'">{{ capitalPct() | pct:1:true }} {{ periodShort() }}</span>
+            <span data-testid="dashboard-capital-pct" [style.color]="capitalTone()">{{ capitalPct() | pct:1:true }} {{ periodShort() }}</span>
           } @else { base }
         </div>
       </div>

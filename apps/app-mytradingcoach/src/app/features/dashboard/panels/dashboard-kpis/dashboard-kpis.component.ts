@@ -70,6 +70,11 @@ export class DashboardKpisComponent {
     const start = this.periodStartCapital();
     return start <= 0 ? 0 : ((this.summary()?.totalPnl ?? 0) / start) * 100;
   });
+  /** Couleur de la variation : suit la valeur ARRONDIE affichée (« 0.0 % » neutre, jamais rouge, #1180). */
+  protected readonly capitalTone = computed(() => {
+    const shown = Number(this.capitalPct().toFixed(1));
+    return shown === 0 ? 'var(--text-3)' : shown > 0 ? 'var(--green)' : 'var(--red)';
+  });
   protected readonly capitalColor = computed(() => {
     const start = this.periodStartCapital();
     if (start <= 0) return 'var(--text-2)';
