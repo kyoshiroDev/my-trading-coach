@@ -17,6 +17,12 @@ describe('formatEcoValue (#1179)', () => {
     expect(formatEcoValue(52.4)).toBe('52.4');
   });
 
+  it('milliers en espace fine insécable (U+202F, fr-FR), une seule virgule remplacée, arrondi à 3 décimales', () => {
+    expect(formatEcoValue(1234.5, 'K')).toBe('1\u202f234.5K');
+    expect(formatEcoValue(-1234.567, '%')).toBe('-1\u202f234.567\u00a0%');
+    expect(formatEcoValue(5.3326, '%')).toBe('5.333\u00a0%');
+  });
+
   it('valeur absente → « - »', () => {
     expect(formatEcoValue(null, '%')).toBe('-');
     expect(formatEcoValue(undefined, 'K')).toBe('-');
@@ -35,18 +41,13 @@ describe('gabarits de l’app : aucun « % » collé à une interpolation (#1179
     expect(templates.length).toBeGreaterThan(50);
   });
 
-  it('« }}% » ou « }} % » remplacés par « }}&nbsp;% » ou un pipe', () => {
-    const fautes = templates.flatMap((f) =>
-      readFileSync(join(appDir, f), 'utf8')
-        .split('\n')
-        .map((ligne, i) => ({ f, i: i + 1, ligne }))
-        .filter(({ ligne }) => /\}\}[ \t]*%/.test(ligne)),
-    );
-    expect(fautes.map(({ f, i }) => `${f}:${i}`)).toEqual([]);
+  it('« }}% » ou « }} % » remplacés par « }}&nbsp;% » ou un pipe (même sur deux lignes)', () => {
+    const fautes = templates.filter((f) => /\}\}\s*%/.test(readFileSync(join(appDir, f), 'utf8')));
+    expect(fautes).toEqual([]);
   });
 
   it('les valeurs éco passent par le pipe ecoValue', () => {
-    const fautes = templates.filter((f) => /\{\{ *[\w.]+ *\}\}\{\{ *[\w.]*unit *\}\}/.test(readFileSync(join(appDir, f), 'utf8')));
+    const fautes = templates.filter((f) => /\}\}\s*\{\{\s*[\w.?!]*\bunit\s*\}\}/.test(readFileSync(join(appDir, f), 'utf8')));
     expect(fautes).toEqual([]);
   });
 });
