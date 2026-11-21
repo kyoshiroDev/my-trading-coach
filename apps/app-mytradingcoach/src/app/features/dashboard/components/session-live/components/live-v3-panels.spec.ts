@@ -77,8 +77,8 @@ describe('Session live v3 — bandeau', () => {
 
   it('contexte marché défilant sous le chrono : toucher = détail', () => {
     const tape = [
-      { label: 'NQ', value: '18 584', change: '+0,62 %', dir: 'up' },
-      { label: '10Y', value: '4,31 %', change: null, dir: 'flat' },
+      { label: 'NQ', value: '18 584', change: '+0.62 %', dir: 'up' },
+      { label: '10Y', value: '4.31 %', change: null, dir: 'flat' },
     ];
     const { el, fixture } = render(LiveBarComponent, { clock: null, tickerTape: tape }, BAR_TEMPLATE);
     const btn = el.querySelector('[data-testid="live-bar-tape"]') as HTMLButtonElement;

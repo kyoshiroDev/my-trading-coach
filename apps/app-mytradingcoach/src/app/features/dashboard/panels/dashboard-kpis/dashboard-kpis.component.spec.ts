@@ -137,6 +137,13 @@ describe('DashboardKpisComponent — drawdown max par trade', () => {
     expect(tooltip.getAttribute('text')).toContain('Tous comptes\u00a0: le compte le plus touché.');
   });
 
+  it('variation du capital : formateur unique des %, point décimal et espace insécable (#1180)', () => {
+    const el: HTMLElement = renderCase().nativeElement;
+    const sub = el.querySelector('[data-testid="dashboard-capital"]')!.parentElement!.querySelector('.mtc-kpi-sub')!;
+    // 1 064,40 / 50 000 = 2,13 % → « +2.1 % sur 30 jours »
+    expect(sub.textContent!.trim()).toBe('+2.1\u00a0% sur 30 jours');
+  });
+
   it('aucun trade : 0 et « Aucune donnée »', () => {
     const fixture = render({ summary: { ...SUMMARY, totalTrades: 0, totalPnl: 0, winRate: 0, profitFactor: null }, maxDrawdown: 0 });
     const ddCard = card(fixture.nativeElement, 'Drawdown max');

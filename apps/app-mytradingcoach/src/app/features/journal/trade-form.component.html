@@ -257,7 +257,7 @@
               <div class="liquidation-warning">
                 ⚠ Liquidation
                 {{ form().side === 'LONG' ? 'sous' : 'au-dessus de' }}
-                <strong>{{ liq | number: '1.2-2' }}</strong>
+                <strong>{{ priceLabel(liq) }}</strong>
               </div>
             }
           }

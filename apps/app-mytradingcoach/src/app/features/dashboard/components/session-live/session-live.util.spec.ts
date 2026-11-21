@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import type { EcoEvent } from '@mtc/shared';
 import type { InstrumentDto } from '@app/core/api/trades.api';
 import {
-  bannerTickers, bySurprise, surprise, cmeClosed, cmeReopenLabel, moodLabel, planKindShort, RELEASE_DISPLAY_MS, releaseExpired, splitFirstSentence, closeKind, countdownLabel, nextAnnouncement, pointValue, positionBar, priceFromLatent,
+  bannerTickers, bySurprise, surprise, cmeClosed, cmeReopenLabel, moodLabel, planKindShort, RELEASE_DISPLAY_MS, releaseExpired, splitFirstSentence, closeKind, countdownLabel, formatPrice, nextAnnouncement, pointValue, positionBar, priceFromLatent,
 } from './session-live.util';
 
 // Extrait de instruments.const.ts (API) : valeur du point = tickValue / tickSize.
@@ -140,10 +140,10 @@ describe('bandeau PC (#597)', () => {
       updatedAt: '',
     });
     expect(t.map((x) => x.label)).toEqual(['NQ', 'SPX', 'DXY', '10Y']);
-    expect(t[0]).toMatchObject({ change: '+0,62\u00a0%', dir: 'up' });
-    expect(t[1]).toMatchObject({ change: '-0,41\u00a0%', dir: 'down' });
-    expect(t[2]).toMatchObject({ value: '104,20', change: null, dir: 'flat' });
-    expect(t[3].value).toBe('4,31\u00a0%');
+    expect(t[0]).toMatchObject({ change: '+0.62\u00a0%', dir: 'up' });
+    expect(t[1]).toMatchObject({ change: '-0.41\u00a0%', dir: 'down' });
+    expect(t[2]).toMatchObject({ value: '104.20', change: null, dir: 'flat' });
+    expect(t[3].value).toBe('4.31\u00a0%');
     expect(bannerTickers(null)).toEqual([]);
   });
 
@@ -153,7 +153,7 @@ describe('bandeau PC (#597)', () => {
       treasury: { t2y: 3.9, t2yChg: null, t5y: null, t5yChg: null, t10y: 4.31, t10yChg: null, t30y: null, t30yChg: null },
       updatedAt: '',
     }, true);
-    expect(t.map((x) => `${x.label} ${x.value}`)).toEqual(['NQ 1', 'SPX 1', 'DXY 1,00', '2Y 3,90\u00a0%', '10Y 4,31\u00a0%', '30Y -']);
+    expect(t.map((x) => `${x.label} ${x.value}`)).toEqual(['NQ 1', 'SPX 1', 'DXY 1.00', '2Y 3.90\u00a0%', '10Y 4.31\u00a0%', '30Y -']);
   });
 
   it('humeur en texte seul, type de plan court', () => {
@@ -191,5 +191,13 @@ describe('plusieurs annonces fortes publiées ensemble', () => {
     const unemp = { name: 'Chômage', actual: 4.1, estimate: 4.2 };
     const noEst = { name: 'X', actual: 1, estimate: null };
     expect(bySurprise([unemp, noEst, nfp]).map((e) => e.name)).toEqual(['NFP', 'Chômage', 'X']);
+  });
+});
+
+describe('formatPrice (#1180)', () => {
+  it('milliers en espace fine insécable, décimale au point', () => {
+    expect(formatPrice(5905.25)).toBe('5\u202f905.25');
+    expect(formatPrice(18540)).toBe('18\u202f540');
+    expect(formatPrice(null)).toBe('-');
   });
 });
