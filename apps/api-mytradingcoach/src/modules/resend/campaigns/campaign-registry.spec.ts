@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { matchWhere } from '@api/test/prisma-where';
 import { subscriptionState } from '@mtc/shared';
+import { freezeClock } from '@api/test/freeze-clock';
 import { CAMPAIGNS, CAMPAIGNS_BY_KEY, loadFirstWeek, type CampaignLoadDeps } from './campaign-registry';
 
 // Suite d'onboarding (oct. 2026) : ciblage RÉEL de chaque campagne automatique (segments évalués en
@@ -8,6 +9,7 @@ import { CAMPAIGNS, CAMPAIGNS_BY_KEY, loadFirstWeek, type CampaignLoadDeps } fro
 
 const DAY = 24 * 3600e3;
 const NOW = new Date('2026-11-20T09:00:00Z');
+freezeClock(NOW);
 const START = '2026-10-01T00:00:00Z'; // avant toutes les fenêtres testées
 const daysAgo = (d: number) => new Date(NOW.getTime() - d * DAY);
 
