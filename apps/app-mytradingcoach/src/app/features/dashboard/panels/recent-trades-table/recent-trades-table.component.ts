@@ -98,6 +98,7 @@ export class RecentTradesTableComponent {
   /** R:R signé à 1 décimale, au point (#1180) : « +1.5 », « -0.8 » ; inconnu → « — ». */
   protected rr(v: number | null | undefined): string {
     if (v === null || v === undefined || !Number.isFinite(v)) return '—';
-    return `${v >= 0 ? '+' : ''}${v.toFixed(1)}`;
+    const r = Number(v.toFixed(1)) || 0; // -0.04 → 0, jamais « -0.0 »
+    return `${r >= 0 ? '+' : ''}${r.toFixed(1)}`;
   }
 }

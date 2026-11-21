@@ -88,4 +88,9 @@ describe('RecentTradesTableComponent · compte échoué ou archivé', () => {
     expect(el.querySelector('.mtc-tc-pct')!.textContent!.trim()).toBe('+0.62\u00a0%');
     expect(el.querySelector('.mtc-tc-sub')!.textContent).toContain('R:R +1.5');
   });
+
+  it('R:R arrondi à zéro : « +0.0 », jamais « -0.0 » (#1180)', () => {
+    const el = render([{ ...row('z', 'loss', -5), riskReward: -0.04 } as unknown as DashboardTradeRow]);
+    expect([...el.querySelectorAll('.mtc-table tbody td')][6].textContent!.trim()).toBe('+0.0');
+  });
 });
