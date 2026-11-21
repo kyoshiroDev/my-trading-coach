@@ -74,7 +74,7 @@ par empreinte (`sha256-…`) : modifier le script `mtc-register-view` de l'index
 `apps/app-mytradingcoach/src/csp-nginx.spec.ts` échoue sinon), puis de reporter la conf sur les deux VPS. Un nouvel
 environnement d'API (`apiUrl` / `wsUrl`) ou un nouveau service tiers appelé par le navigateur s'ajoute à `connect-src`. État au 21/11/2026 : Report-Only appliqué sur
 l'ancien VPS (admin, app dev, app beta) le 21/11 à 21 h 36, VPS prod (app) à suivre. Relevé sur dev.app (compte démo,
-11 pages) : seules violations, Stripe.js et ses frames (page de paiement intégrée, origines Stripe ajoutées ensuite) et un
+12 pages, tableau de bord compris) : seules violations, Stripe.js et ses frames (page de paiement intégrée, origines Stripe ajoutées ensuite) et un
 `script-src eval` signalé par Zod 4 (test `allowsEval` dans un `try/catch`, sans effet : Zod se rabat sans `eval`, à ignorer).
 La PR de phase 2 (mode bloquant) met cet état à jour.
 
