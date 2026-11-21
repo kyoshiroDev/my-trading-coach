@@ -129,3 +129,9 @@ Suite de « continue les ticket ouvert dans l'audite » (ordre retenu au complé
 ## Complément #1060 (2026-11-21)
 
 Suite de « continue les ticket ouvert dans l'audite » (ordre retenu au complément #1073). #1060 est issu de la vérification du sous-lot 3d (#1048) : deux jobs « generate » simultanés pour la même semaine (dimanche resté en file et rattrapage du lundi) pouvaient envoyer deux e-mails.
+
+## Complément #1102 (2026-11-21)
+
+Texte de Greg : « ici reprend l'audite de l'app »
+
+#1102 est issu de la vérification nestjs du 4c (#1065, lot 4 #1062) : types d'échange de l'admin (`AdminUser`, données Abonnements, fondateurs) à déplacer de `admin.api.ts` vers `libs/shared/src/contracts`, liste des accès manuels sans `take`, champ `total` de `GET /admin/subscriptions` plus lu par l'admin (à retirer une fois l'admin du 4c en prod : fait le 19/11, promo #1118).

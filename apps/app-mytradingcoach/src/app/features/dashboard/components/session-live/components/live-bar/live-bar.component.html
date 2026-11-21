@@ -21,7 +21,7 @@
   @let total = totalPnl();
   @let shown = total ?? realizedPnl();
   <span class="lb-pnl" data-testid="live-bar-pnl" [class.green]="shown > 0" [class.red]="shown < 0"
-        [attr.title]="total === null ? 'Réalisé seul : latent de la position ouverte inconnu' : 'Réalisé + latent du jour'">
+        [attr.title]="total === null ? 'Réalisé seul : latent de la position ouverte inconnu' : 'Réalisé + latent du jour'">
     {{ fmt(shown) }}
   </span>
   <div class="lb-wide lb-market" data-testid="live-bar-market">
@@ -35,7 +35,7 @@
   <button type="button" class="lb-wide lb-end" data-testid="live-bar-close" (click)="closeSession.emit()">Clôturer la session</button>
   @if (tickerTape().length) {
     <!-- Contexte marché qui défile sous le chrono (< 1100 px) ; toucher = détail (8 tickers + news) -->
-    <button type="button" class="lb-tape" data-testid="live-bar-tape" aria-label="Contexte marché : ouvrir le détail" (click)="openContext.emit()">
+    <button type="button" class="lb-tape" data-testid="live-bar-tape" aria-label="Contexte marché&nbsp;: ouvrir le détail" (click)="openContext.emit()">
       <span class="lb-tape-track" [style.animation-duration.s]="tickerTape().length * 5">
         @for (copy of [0, 1]; track copy) {
           <span class="lb-tape-set" [attr.aria-hidden]="copy === 1">

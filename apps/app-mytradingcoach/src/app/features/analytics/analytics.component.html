@@ -70,7 +70,7 @@
         {{ summary() ? (summary()!.topSession | sessionLabel) : '-' }}
       </div>
       <div class="stat-sub">
-        {{ summary()?.topSessionWinRate ?? 0 }}% win rate
+        {{ summary()?.topSessionWinRate ?? 0 }}&nbsp;% win rate
       </div>
     </div>
 
@@ -128,17 +128,17 @@
       <!-- Heatmap (gauche, plus large) -->
       <div class="card heatmap-card">
         <div class="card-header">
-          <div class="card-title">Heatmap horaire : win rate par heure
+          <div class="card-title">Heatmap horaire&nbsp;: win rate par heure
             <mtc-info-tooltip label="Comment lire la heatmap"
-              text="Win rate par heure de la journée. Vert ≥ 65 %, orange 50-65 %, rouge < 50 %." />
+              text="Win rate par heure de la journée. Vert ≥ 65&nbsp;%, orange 50-65&nbsp;%, rouge < 50&nbsp;%." />
           </div>
           <div class="heatmap-legend">
             <span class="legend-dot dot-red"></span
-            ><span class="legend-txt">&lt;50%</span>
+            ><span class="legend-txt">&lt;50&nbsp;%</span>
             <span class="legend-dot dot-orange"></span
-            ><span class="legend-txt">50-65%</span>
+            ><span class="legend-txt">50-65&nbsp;%</span>
             <span class="legend-dot dot-green"></span
-            ><span class="legend-txt">≥65%</span>
+            ><span class="legend-txt">≥65&nbsp;%</span>
           </div>
         </div>
         <div class="heatmap-wrapper" data-testid="heatmap">
@@ -169,7 +169,7 @@
                             hour +
                             'h · ' +
                             cell.winRate.toFixed(0) +
-                            '% (' +
+                            ' % (' +
                             cell.count +
                             ' trades)'
                           : ''
@@ -383,7 +383,7 @@
           <span class="locked-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg></span>
           <h3 class="locked-title">Heatmap de performance horaire</h3>
           <p class="locked-desc">
-            Découvre tes meilleures heures : quand tu gagnes vraiment et quand
+            Découvre tes meilleures heures&nbsp;: quand tu gagnes vraiment et quand
             tu perds le plus.
           </p>
           <button

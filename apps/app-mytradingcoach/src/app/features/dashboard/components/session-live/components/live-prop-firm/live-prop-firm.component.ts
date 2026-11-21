@@ -173,7 +173,7 @@ export class LivePropFirmComponent {
     if (!m.objective) return null;
     return m.objective.pct >= 1
       ? 'Objectif atteint'
-      : `Objectif : ${this.money(m.objective.current)} / ${this.money(m.objective.target)}`;
+      : `Objectif\u00a0: ${this.money(m.objective.current)} / ${this.money(m.objective.target)}`;
   });
 
   /** Relevé broker le plus récent (equity ou solde), « il y a 2 min ». */
@@ -229,7 +229,7 @@ export class LivePropFirmComponent {
   }
 
   protected pct(v: number): string {
-    return `${Math.round(v * 100)} %`;
+    return `${Math.round(v * 100)}\u00a0%`; // espace insécable avant % (règle design 5)
   }
 
   protected ddKindLabel(kind: string): string {

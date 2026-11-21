@@ -33,6 +33,8 @@ describe('UsersService.adminSubscriptions (#1065)', () => {
     const res = await service.adminSubscriptions(2, 20);
     expect(res.stripeTotal).toBe(57);
     expect(res.page).toBe(2);
+    // Plus de `total` (#1102) : l'admin ne le lit plus, il mêlait payants et accès manuels.
+    expect(res).not.toHaveProperty('total');
   });
 
   it('A9 : la fin programmée et le statut Stripe sont lus pour les abonnés payants', async () => {
@@ -47,6 +49,16 @@ describe('UsersService.adminSubscriptions (#1065)', () => {
     expect(prisma.user.findMany).toHaveBeenCalledWith(expect.objectContaining({
       where: { AND: [{ isDemo: false }, { role: { not: 'ADMIN' } }, subscriptionStatesWhere(['role', 'manual'], NOW)] },
     }));
+  });
+
+  // #1102 : la liste des accès manuels n'avait pas de limite, contrairement aux essais et aux pauses.
+  it('accès manuels bornés comme les essais et les pauses (200 au plus, les plus récents)', async () => {
+    await service.adminSubscriptions();
+    const manual = callWhere((w) => isDeepStrictEqual(w, {
+      AND: [{ isDemo: false }, { role: { not: 'ADMIN' } }, subscriptionStatesWhere(['role', 'manual'], NOW)],
+    }));
+    expect(manual.take).toBe(200);
+    expect(manual.orderBy).toEqual({ createdAt: 'desc' });
   });
 
   it('A10 : abonnements en pause listés à part', async () => {

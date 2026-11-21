@@ -81,7 +81,7 @@
       <div class="pf-gauge" data-testid="live-prop-firm-drawdown">
         <div class="pf-row">
           <span>{{ ddLabels.margin.label }}
-            <mtc-info-tooltip [label]="'À propos : ' + ddLabels.margin.label" [text]="ddLabels.margin.help" /></span>
+            <mtc-info-tooltip [label]="'À propos : ' + ddLabels.margin.label" [text]="ddLabels.margin.help" /></span>
           @if (drawdown(); as dd) {
             @if (dd.breached) {
               <span class="pf-val red">plancher dépassé</span>
@@ -101,7 +101,7 @@
             }
           </div>
         } @else if (metrics()?.drawdownUnconfirmed) {
-          <div class="pf-sub">Montant non publié par la firm pour ce plan : aucune marge calculée.</div>
+          <div class="pf-sub">Montant non publié par la firm pour ce plan&nbsp;: aucune marge calculée.</div>
         } @else {
           <div class="pf-sub">
             Aucune règle de drawdown sur ce compte.
@@ -118,7 +118,7 @@
             @if (objAmounts(); as o) {
               <span class="pf-val"><span [class.green]="o.current > 0">{{ money(o.current, true) }}</span> / {{ money(o.target) }}</span>
             } @else if (objRatio() !== null) {
-              <span class="pf-val">{{ objWidth() }} %</span>
+              <span class="pf-val">{{ objWidth() }}&nbsp;%</span>
             }
           </div>
           <div class="bar-track"><div class="bar-fill obj" [style.width.%]="objWidth()"></div></div>
@@ -127,11 +127,11 @@
           @if (consistency(); as c) {
             @if (c.today > c.cap) {
               <div class="pf-sub red" data-testid="live-prop-firm-consistency">
-                Consistency : ta journée dépasse la règle (une journée ≤ {{ pct(c.maxShare) }} du profit).
+                Consistency&nbsp;: ta journée dépasse la règle (une journée ≤ {{ pct(c.maxShare) }} du profit).
               </div>
             } @else {
               <div class="pf-sub" data-testid="live-prop-firm-consistency">
-                Consistency : encore <b>{{ money(c.cap - c.today) }}</b> de gain max aujourd'hui (une journée ≤ {{ pct(c.maxShare) }} du profit).
+                Consistency&nbsp;: encore <b>{{ money(c.cap - c.today) }}</b> de gain max aujourd'hui (une journée ≤ {{ pct(c.maxShare) }} du profit).
               </div>
             }
           }
@@ -160,7 +160,7 @@
         }
         @case ('denied') {
           <p class="pf-note" data-testid="live-prop-firm-notifications-denied">
-            Notifications bloquées par le navigateur : les alertes restent affichées dans l'app.
+            Notifications bloquées par le navigateur&nbsp;: les alertes restent affichées dans l'app.
           </p>
         }
       }
@@ -183,7 +183,7 @@
 @if (planWizardOpen()) {
   <div class="pf-modal-overlay" role="button" tabindex="-1"
        (click)="planWizardOpen.set(false)" (keydown.escape)="planWizardOpen.set(false)">
-    <div class="pf-modal" role="dialog" aria-modal="true" aria-label="Quel est ce compte ?"
+    <div class="pf-modal" role="dialog" aria-modal="true" aria-label="Quel est ce compte&nbsp;?"
          (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()" data-testid="live-prop-firm-plan-modal">
       <mtc-account-plan-wizard [accountId]="accountId()" (done)="onPlanLinked()" />
     </div>
