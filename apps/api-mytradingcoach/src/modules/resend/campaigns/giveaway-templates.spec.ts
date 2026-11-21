@@ -1,9 +1,11 @@
 import { describe, it, expect } from 'vitest';
+import { freezeClock } from '../../../test/freeze-clock';
 import { giveawayAnnounceTemplate, giveawayEndingTemplate, giveawayWinnerTemplate, GIVEAWAY_FROM } from './giveaway-templates';
 
 // E-mails du tirage mensuel (PROMPT-tirage-mensuel) : textes tranchés par le relecteur le 21/11.
 const APP = 'https://app.test';
 const END = new Date('2027-03-01T08:00:00Z');
+freezeClock(END);
 const text = (html: string) =>
   html.replace(/<[^>]+>/g, ' ').replace(/&nbsp;|\u00a0/g, ' ').replace(/\s+/g, ' ').replace(/ ([.,])/g, '$1');
 

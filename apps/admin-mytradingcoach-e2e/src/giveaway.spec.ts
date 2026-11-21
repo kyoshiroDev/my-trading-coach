@@ -1,11 +1,17 @@
-import { test, expect, type Page, type Route } from '@playwright/test';
+import { test, expect as baseExpect, type Page, type Route } from '@playwright/test';
+
+// Page chargée à la demande (onglet en lazy) : marge pour une machine chargée.
+const expect = baseExpect.configure({ timeout: 20_000 });
 
 /**
  * E2E admin « Tirages » (PROMPT-tirage-mensuel, lot A) : allumer avec confirmation, voir
  * l'historique, modérer un message, interrupteur verrouillé en prod avant le lot B.
  * Réseau simulé (`page.route`) : aucune API ni base nécessaires, session admin posée dans le
- * stockage local comme après une connexion. Projet hors CI : lancé en local
- * (`pnpm exec playwright test -c apps/admin-mytradingcoach-e2e/playwright.config.ts giveaway --project=chromium`).
+ * stockage local comme après une connexion. Projet hors CI. En local, contre un build (le serveur de
+ * dev compile à la demande et peut ne jamais rendre la page à temps) : `nx run admin-mytradingcoach:build
+ * --configuration=development`, servir `dist/apps/admin-mytradingcoach/browser` sur le port 4300 avec
+ * repli sur index.html, puis
+ * `pnpm exec playwright test -c apps/admin-mytradingcoach-e2e/playwright.config.ts giveaway --project=chromium`.
  */
 
 const WIN = {
@@ -37,6 +43,8 @@ async function setup(page: Page, opts: { activationAvailable?: boolean } = {}) {
   const calls: { method: string; url: string; body: unknown }[] = [];
   let freeEnabled = false;
   let moderation = 'EN_ATTENTE';
+  // Données simulées datées de 2027 : horloge du navigateur figée (les délais restent réels).
+  await page.clock.setFixedTime(new Date('2027-02-10T10:00:00Z'));
   await page.addInitScript(() => {
     localStorage.setItem('admin_access_token', 'e2e-token');
     localStorage.setItem('admin_user', JSON.stringify({ id: 'admin', email: 'admin@test.local', plan: 'FREE', role: 'ADMIN' }));
@@ -46,7 +54,12 @@ async function setup(page: Page, opts: { activationAvailable?: boolean } = {}) {
   await page.route('**/api/**', async (route: Route) => {
     const req = route.request();
     const url = new URL(req.url());
-    const body = req.postData() ? JSON.parse(req.postData()!) : null;
+    let body: unknown = null;
+    try {
+      body = req.postDataJSON();
+    } catch {
+      body = req.postData(); // corps non JSON : gardé tel quel, la requête reçoit quand même une réponse
+    }
     calls.push({ method: req.method(), url: url.pathname, body });
     const json = (data: unknown) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data }) });
     if (url.pathname.endsWith('/admin/giveaway') && req.method() === 'GET') {
