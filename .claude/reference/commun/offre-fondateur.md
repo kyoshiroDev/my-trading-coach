@@ -54,8 +54,6 @@ Admin (#525, phase E) : `GET /admin/users/subscriptions` renvoie l'objet BRUT (l
 `{ data }` ; l'ancien `{ data: { … } }` donnait `{ data: { data } }` et faisait planter la page admin
 Abonnements) et inclut `founderSeat` / `partnerRedemption` pour le montant réel. Forme = contrat `AdminSubscriptionsData`
 de `@mtc/shared` (#1102, avec `AdminUser` et `AdminFoundersData`) : `stripeTotal`, `pausedUsers`, `trialUsers`
-toujours présents, plus de champ `total` ; accès manuels, essais et pauses bornés à `TRIAL_LIST_MAX` (200). Forme = contrat `AdminSubscriptionsData`
-de `@mtc/shared` (#1102, avec `AdminUser` et `AdminFoundersData`) : `stripeTotal`, `pausedUsers`, `trialUsers`
 toujours présents, plus de champ `total` ; accès manuels, essais et pauses bornés à `TRIAL_LIST_MAX` (200). `AdminUserDetail.offer`
 (fondateur : numéro, statut, intervalle, dates, cta ; code : conditions figées, statut). Digest
 quotidien (`signup-digest.cron.ts`) : ligne `offerDigestLines` (« Fondateurs : X / 200 (N actifs) ·

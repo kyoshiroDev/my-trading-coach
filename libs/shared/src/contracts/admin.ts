@@ -35,7 +35,7 @@ export interface AdminUser {
   } | null;
 }
 
-/** Page Abonnements (`GET /admin/subscriptions`, #1065, #1102). */
+/** Page Abonnements (`GET /admin/users/subscriptions`, alias déprécié : `/admin/subscriptions` ; #1065, #1102). */
 export interface AdminSubscriptionsData {
   /** Une page des abonnés payants ; `stripeTotal` = leur nombre total (A8 #1065). */
   stripeUsers: AdminUser[];
