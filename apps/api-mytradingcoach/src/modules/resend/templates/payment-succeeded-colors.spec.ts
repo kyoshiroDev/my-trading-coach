@@ -6,7 +6,7 @@ import { ACCENT, paymentSucceededTemplate } from './index';
  * « paiement reçu » prend la couleur de marque, plus aucun vert.
  */
 describe('E-mail paiement reçu — couleurs', () => {
-  const { html } = paymentSucceededTemplate({ userName: 'Lucas', amount: '49,00 €', appUrl: 'https://app' });
+  const { html, subject } = paymentSucceededTemplate({ userName: 'Lucas', amount: '49,00 €', appUrl: 'https://app' });
 
   it('barre d’accent et bordure de carte aux couleurs de la marque', () => {
     expect(html).toContain(ACCENT.brand);
@@ -17,5 +17,10 @@ describe('E-mail paiement reçu — couleurs', () => {
     expect(html).not.toContain('#10b981');
     expect(html).not.toContain('16,185,129');
     expect(html).not.toContain(ACCENT.success);
+  });
+
+  it('objet sans emoji coche (vert dans la boîte de réception)', () => {
+    expect(subject).toBe('Paiement reçu : 49,00 €');
+    expect(subject).not.toContain('✅');
   });
 });

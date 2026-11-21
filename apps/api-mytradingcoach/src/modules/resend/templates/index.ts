@@ -565,7 +565,7 @@ export function paymentSucceededTemplate(params: {
   `); // bordure bleue par défaut : un paiement n'est pas un gain (#1159)
 
   return {
-    subject: `✅ Paiement reçu : ${amount}`,
+    subject: `Paiement reçu : ${amount}`, // sans ✅ : coche verte dans la boîte de réception (#1159)
     html: emailWrapper(content, renewalStr ? `Prochaine échéance le ${renewalStr}.` : 'Merci pour ton paiement.', ACCENT.brand),
   };
 }
