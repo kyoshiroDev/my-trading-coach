@@ -2,8 +2,10 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { GiveawayActivation, GiveawayPool, Prisma } from '@prisma/client';
 import { GiveawayDrawService, eligibleHash } from './giveaway-draw.service';
 import { GiveawayCron, GIVEAWAY_CRON } from './giveaway.cron';
+import { freezeClock } from '../../test/freeze-clock';
 
 const NOW = new Date('2027-02-01T08:00:00Z');
+freezeClock(NOW);
 
 type Draw = { id: string; period: string; pool: GiveawayPool };
 let draws: Draw[] = [];
@@ -44,8 +46,9 @@ const prisma = {
 };
 const settings = { isEnabled: vi.fn(async () => true) };
 const eligibility = { eligibleIds: vi.fn(async () => ['a', 'b', 'c']) };
-const prizes = { apply: vi.fn(async () => ({ status: GiveawayActivation.APPLIED, error: null })) };
-const resend = { sendAdminAlert: vi.fn(async () => undefined) };
+type Prize = { status: GiveawayActivation; error: string | null };
+const prizes = { apply: vi.fn(async (_winId: string, _now?: Date): Promise<Prize> => ({ status: GiveawayActivation.APPLIED, error: null })) };
+const resend = { sendAdminAlert: vi.fn(async (_subject: string, _body: string) => undefined) };
 const service = new GiveawayDrawService(prisma as never, settings as never, eligibility as never, prizes as never, resend as never);
 
 beforeEach(() => {

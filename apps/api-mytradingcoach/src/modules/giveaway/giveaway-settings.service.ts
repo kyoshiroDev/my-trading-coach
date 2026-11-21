@@ -80,8 +80,10 @@ export class GiveawaySettingsService {
 
   /** « Tirer maintenant » : seulement hors prod, et si `GIVEAWAY_MANUAL_DRAW=true`. */
   manualDrawAvailable(): boolean {
-    const frontendUrl = this.config.get<string>('FRONTEND_URL') ?? PROD_FRONTEND_URL;
-    return this.config.get<string>('GIVEAWAY_MANUAL_DRAW') === 'true' && frontendUrl !== PROD_FRONTEND_URL;
+    // Comparaison normalisée (casse, barre finale) : une URL de prod écrite autrement reste la prod.
+    const norm = (u: string) => u.trim().toLowerCase().replace(/\/+$/, '');
+    const frontendUrl = norm(this.config.get<string>('FRONTEND_URL') ?? PROD_FRONTEND_URL);
+    return this.config.get<string>('GIVEAWAY_MANUAL_DRAW') === 'true' && frontendUrl !== norm(PROD_FRONTEND_URL);
   }
 
   /** Destinataires réels de l'annonce (consentement marketing filtré), affiché dans la confirmation. */

@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { HttpException, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { GiveawayActivation, GiveawayPool } from '@prisma/client';
 import { addCalendarMonths, giveawayPremiumCreditCents } from '@mtc/shared';
@@ -7,6 +7,20 @@ import { UsersService } from '../users/users.service';
 import { StripeGiveawayService } from '../stripe/stripe-giveaway.service';
 import { ResendService } from '../resend/resend.service';
 import { giveawayWinnerTemplate } from '../resend/campaigns/giveaway-templates';
+
+/**
+ * Raison d'échec affichable (admin, e-mail, journal) : nos propres messages (refus métier), sinon le
+ * seul code de l'erreur. Jamais le message brut d'une erreur Stripe ou Prisma (« No such customer:
+ * 'cus_…' », requête recopiée), règle « ne jamais exposer ».
+ */
+export function safePrizeError(err: unknown): string {
+  if (err instanceof HttpException) return err.message;
+  const e = err as { type?: unknown; code?: unknown; name?: unknown };
+  if (typeof e?.type === 'string' && e.type.startsWith('Stripe')) {
+    return `Stripe : ${typeof e.code === 'string' ? e.code : e.type}`;
+  }
+  return `Erreur interne (${typeof e?.name === 'string' ? e.name : 'inconnue'})`;
+}
 
 export interface PrizeResult {
   status: GiveawayActivation;
@@ -49,6 +63,7 @@ export class GiveawayPrizeService {
       let endsAt: Date;
       let creditCents: number | null = null;
       let stripeBalanceTxId: string | null = null;
+      let interval: 'month' | 'year' | null = null;
 
       if (win.pool === GiveawayPool.FREE) {
         ({ startsAt, endsAt } = await this.users.grantGiveawayPremium(win.userId, win.prizeMonths, now));
@@ -56,6 +71,7 @@ export class GiveawayPrizeService {
         if (!win.user.stripeCustomerId) return this.fail(winId, 'Aucun client Stripe.');
         const facts = await this.stripe.billingFacts(win.user.stripeCustomerId);
         if (!facts.chargeCents || !facts.interval) return this.fail(winId, 'Aucune échéance payée lisible chez Stripe.');
+        interval = facts.interval;
         creditCents = giveawayPremiumCreditCents(facts.chargeCents, facts.interval);
         if (creditCents <= 0) return this.fail(winId, 'Montant de l’avoir nul.');
         stripeBalanceTxId = await this.stripe.creditGiveaway({
@@ -73,11 +89,11 @@ export class GiveawayPrizeService {
           startsAt, endsAt, creditCents, stripeBalanceTxId,
         },
       });
-      await this.sendWinnerEmail(win.user, win.pool, win.prizeMonths, endsAt);
+      await this.sendWinnerEmail(win.user, win.pool, win.prizeMonths, endsAt, interval);
       this.logger.log(`Lot du tirage attribué | lot ${winId}, tirage ${win.pool}`);
       return { status: GiveawayActivation.APPLIED, error: null };
     } catch (err) {
-      return this.fail(winId, (err as Error).message || 'Erreur inconnue.');
+      return this.fail(winId, safePrizeError(err));
     }
   }
 
@@ -98,10 +114,11 @@ export class GiveawayPrizeService {
     pool: GiveawayPool,
     prizeMonths: number,
     endsAt: Date,
+    interval: 'month' | 'year' | null,
   ): Promise<void> {
     const appUrl = this.config.get<string>('FRONTEND_URL') ?? 'https://app.mytradingcoach.app';
     const { subject, html, from, replyTo } = giveawayWinnerTemplate({
-      userName: user.name ?? '', appUrl, pool, prizeMonths, endsAt,
+      userName: user.name ?? '', appUrl, pool, prizeMonths, endsAt, interval,
     });
     // Transactionnel (le lot est acquis) : jamais filtré par le consentement marketing.
     await this.resend.send({ to: user.email, subject, html, from, replyTo });

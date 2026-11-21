@@ -18,7 +18,7 @@ const prisma = {
       return { count: ok ? 1 : 0 };
     }),
   },
-  user: { count: vi.fn(async () => 42), findMany: vi.fn(async () => []) },
+  user: { count: vi.fn(async (_args: { where: unknown }) => 42), findMany: vi.fn(async () => []) },
 };
 const dispatch = { allowedUsers: vi.fn(async () => new Set()), dispatch: vi.fn() };
 const redis = { set: vi.fn(async () => 'OK'), get: vi.fn(async () => null), del: vi.fn() };

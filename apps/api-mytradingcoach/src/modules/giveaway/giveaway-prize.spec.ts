@@ -1,20 +1,22 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { ConflictException } from '@nestjs/common';
 import { GiveawayActivation, GiveawayPool } from '@prisma/client';
-import { GiveawayPrizeService } from './giveaway-prize.service';
+import { GiveawayPrizeService, safePrizeError } from './giveaway-prize.service';
+import { freezeClock } from '../../test/freeze-clock';
 
 const NOW = new Date('2027-02-01T08:00:00Z');
+freezeClock(NOW);
 
 let win: Record<string, unknown>;
 const prisma = {
   giveawayWin: {
     findUnique: vi.fn(async () => win),
-    updateMany: vi.fn(async () => ({ count: 1 })),
+    updateMany: vi.fn(async (_args: { where: unknown; data: Record<string, unknown> }) => ({ count: 1 })),
   },
 };
 const users = { grantGiveawayPremium: vi.fn() };
-const stripe = { billingFacts: vi.fn(), creditGiveaway: vi.fn(async () => 'cbtxn_1') };
-const resend = { send: vi.fn(async () => undefined) };
+const stripe = { billingFacts: vi.fn(), creditGiveaway: vi.fn(async (_args: { customerId: string; winId: string; cents: number; months: number }) => 'cbtxn_1') };
+const resend = { send: vi.fn(async (_mail: { to: string; subject: string; html: string; from?: string; replyTo?: string }) => undefined) };
 const config = { get: vi.fn(() => 'https://app.test') };
 const service = new GiveawayPrizeService(prisma as never, users as never, stripe as never, resend as never, config as never);
 
@@ -56,6 +58,7 @@ describe('GiveawayPrizeService', () => {
     stripe.billingFacts.mockResolvedValue({ paidInvoices: 1, firstPaidAt: new Date(), chargeCents: 49000, interval: 'year' });
     await service.apply('w1', NOW);
     expect(stripe.creditGiveaway.mock.calls[0][0]).toMatchObject({ cents: 12250 });
+    expect(resend.send.mock.calls[0][0].html).toContain('de ton prochain renouvellement annuel');
   });
 
   it('compte plus éligible au moment de l’attribution → FAILED avec la raison, aucun e-mail au gagnant', async () => {
@@ -75,5 +78,16 @@ describe('GiveawayPrizeService', () => {
   it('compte supprimé entre le tirage et l’attribution → FAILED', async () => {
     win = { ...win, userId: null, user: null };
     expect((await service.apply('w1', NOW)).status).toBe(GiveawayActivation.FAILED);
+  });
+
+  it('erreur Stripe ou Prisma : seul le code est gardé, jamais le message brut (identifiants)', async () => {
+    win = { ...win, pool: GiveawayPool.PREMIUM, prizeMonths: 3 };
+    const stripeErr = Object.assign(new Error("No such customer: 'cus_secret'"), { type: 'StripeInvalidRequestError', code: 'resource_missing' });
+    stripe.billingFacts.mockRejectedValueOnce(stripeErr);
+    const res = await service.apply('w1', NOW);
+    expect(res.error).toBe('Stripe : resource_missing');
+    expect(JSON.stringify(prisma.giveawayWin.updateMany.mock.calls)).not.toContain('cus_secret');
+    expect(safePrizeError(Object.assign(new Error('SELECT * FROM "User" WHERE email=…'), { name: 'PrismaClientUnknownRequestError' })))
+      .toBe('Erreur interne (PrismaClientUnknownRequestError)');
   });
 });

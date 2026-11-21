@@ -44,13 +44,17 @@ export function giveawayWinnerTemplate(params: {
   pool: GiveawayPool;
   prizeMonths: number;
   endsAt: Date;
+  /** Lot Premium : intervalle de l'abonnement (avoir déduit des prochains prélèvements ou du prochain renouvellement). */
+  interval?: 'month' | 'year' | null;
 }): CampaignContent {
   const prize = months(params.prizeMonths);
   const end = longDateFr(params.endsAt);
   const what =
     params.pool === GiveawayPool.FREE
       ? `Tu as gagné <strong>${prize} de Premium</strong>, déjà activé sur ton compte, sans carte. Il court jusqu'au ${end}, puis ton compte repasse en gratuit tout seul&nbsp;: rien n'est prélevé.`
-      : `Tu as gagné <strong>${prize} offerts</strong> sur ton abonnement Premium. Le montant est déjà crédité sur ton compte de facturation et sera déduit de tes prochains prélèvements. Ton abonnement continue ensuite normalement.`;
+      : `Tu as gagné <strong>${prize} offerts</strong> sur ton abonnement Premium. Le montant est déjà crédité sur ton compte de facturation et sera déduit ${
+          params.interval === 'year' ? 'de ton prochain renouvellement annuel' : 'de tes prochains prélèvements'
+        }. Ton abonnement continue ensuite normalement.`;
   const content =
     card(`
       ${heading('Tirage du mois', 'Tu as gagné le tirage du mois')}
@@ -58,10 +62,10 @@ export function giveawayWinnerTemplate(params: {
       <p ${P}>${what}</p>
       <p ${P}>Sur ta page gagnant, tu choisis si ton nom apparaît dans la liste des gagnants (pseudo ou prénom avec initiale) et tu peux laisser un petit message. Sans réponse de ta part, rien n'est affiché.</p>
       ${cta('Voir ma page gagnant', onboardingLink(params.appUrl, GIVEAWAY_WINNER_PATH, 'giveaway_winner'))}
-    `, 'rgba(16,185,129,.4)') + RISK_NOTICE;
+    `) + RISK_NOTICE;
   return {
     subject: `Tu as gagné le tirage du mois\u00a0: ${prize} offerts`,
-    html: emailWrapper(content, `${prize} offerts, jusqu'au ${end}.`, ACCENT.success),
+    html: emailWrapper(content, `${prize} offerts, jusqu'au ${end}.`, ACCENT.brand),
     from: GIVEAWAY_FROM,
     replyTo: GIVEAWAY_REPLY_TO,
   };

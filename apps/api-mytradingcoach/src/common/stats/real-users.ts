@@ -5,7 +5,8 @@ import { Prisma, Role } from '@prisma/client';
  * l'équipe) et hors ADMIN. Une seule définition pour tous les agrégats, Prisma (`REAL_USERS_WHERE`)
  * et SQL brut (`realUsersSql`). Jamais pour cibler des envois : les comptes de test doivent recevoir
  * les e-mails (`email-campaign.service.ts` et `auto-campaigns.cron.ts` gardent leur propre filtre,
- * verrouillé par `campaign-audience.spec.ts`).
+ * verrouillé par `campaign-audience.spec.ts`). Exception voulue : le tirage mensuel (éligibilité et
+ * e-mail d'annonce) l'utilise, le prompt exclut les comptes internes de tout envoi lié au tirage.
  */
 export const REAL_USERS_WHERE = {
   isDemo: false,

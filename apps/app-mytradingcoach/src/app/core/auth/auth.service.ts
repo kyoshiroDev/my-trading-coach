@@ -8,7 +8,7 @@ import { POLLING_MS } from '../constants/polling.const';
 import { visibleInterval } from '../utils/visible-interval';
 import { UserScopedReset } from './user-scoped-reset';
 import { PushLogout } from '../push/push-logout';
-import type { Plan, Role } from '@mtc/shared';
+import type { Plan, Role, TrialSource } from '@mtc/shared';
 
 /** Rôle d'un utilisateur : alias du contrat partagé, gardé pour les importeurs existants. */
 export type UserRole = Role;
@@ -23,7 +23,7 @@ export interface AuthUser {
   /** Essai Stripe déjà consommé (ou Premium offert reçu) : plus d'essai de 30 j au checkout. */
   trialUsed?: boolean;
   /** Origine du `trialEndsAt` en cours (#769) : essai offert à l'inscription ou Premium offert par l'admin. */
-  trialSource?: 'SIGNUP' | 'ADMIN' | null;
+  trialSource?: TrialSource | null;
   /** Fin de l'essai d'inscription, fixe (un Premium offert ensuite ne la déplace pas). */
   signupTrialEndsAt?: string | null;
   /** Fin d'un abonnement payant passé (B5 #1013) : ancien abonné, pas de fenêtre « Premium offert terminé ». */

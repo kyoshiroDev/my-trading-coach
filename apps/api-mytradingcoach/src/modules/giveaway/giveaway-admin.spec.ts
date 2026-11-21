@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { ConflictException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { GiveawayActivation, GiveawayPool } from '@prisma/client';
 import { GiveawayAdminService } from './giveaway-admin.service';
+import { freezeClock } from '../../test/freeze-clock';
 
 const prisma = {
   giveawayWin: { findUnique: vi.fn(), updateMany: vi.fn() },
@@ -18,7 +19,11 @@ const prizes = { apply: vi.fn() };
 const redis = { client: { get: vi.fn(async () => null), set: vi.fn(async () => 'OK') } };
 const service = new GiveawayAdminService(prisma as never, settings as never, eligibility as never, draws as never, prizes as never, redis as never);
 
-beforeEach(() => vi.clearAllMocks());
+freezeClock('2027-02-10T10:00:00Z');
+beforeEach(() => {
+  vi.clearAllMocks();
+  redis.client.get.mockResolvedValue(null);
+});
 
 describe('GiveawayAdminService', () => {
   it('relance : seulement un lot en échec', async () => {
@@ -46,8 +51,14 @@ describe('GiveawayAdminService', () => {
     await expect(service.moderate('x', 'VALIDE')).rejects.toBeInstanceOf(NotFoundException);
   });
 
+  it('modération : renvoie la ligne à jour', async () => {
+    prisma.giveawayWin.updateMany.mockResolvedValueOnce({ count: 1 });
+    expect(await service.moderate('w1', 'VALIDE')).toBeNull(); // aucune ligne dans l'historique simulé
+    expect(prisma.giveawayWin.updateMany.mock.calls[0][0]).toMatchObject({ where: { id: 'w1' }, data: { moderation: 'VALIDE' } });
+  });
+
   it('éligibles affichés : calculés une fois puis lus dans le cache', async () => {
-    const d = await service.data(new Date('2027-02-10T10:00:00Z'));
+    const d = await service.data();
     expect(d.free.eligibleNow).toBe(2);
     expect(d.free.announceAudience).toBe(7);
     expect(redis.client.set).toHaveBeenCalledWith('giveaway:eligible-now:FREE', '2', 'EX', 900);

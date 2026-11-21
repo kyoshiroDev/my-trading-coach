@@ -9,7 +9,7 @@
   @if (isLoading()) {
     <div class="card"><div class="empty">Chargement…</div></div>
   } @else if (loadError()) {
-    <div class="card"><div class="empty" data-testid="giveaway-load-error">Impossible de charger les tirages. Recharge la page.</div></div>
+    <mtc-error-state message="Les tirages n’ont pas pu être chargés." (retry)="load()" data-testid="giveaway-load-error" />
   } @else if (data(); as d) {
     @if (actionError(); as e) { <p class="err-text" role="alert" data-testid="giveaway-error">{{ e }}</p> }
     @if (notice(); as n) { <p class="notice" role="status" data-testid="giveaway-notice">{{ n }}</p> }
@@ -25,7 +25,7 @@
             <div class="pool-row">
               <div>
                 <div class="pool-stat"><span class="mono">{{ p.eligibleNow }}</span> éligible{{ p.eligibleNow > 1 ? 's' : '' }} si le tirage avait lieu maintenant</div>
-                <div class="pool-sub">Prochain tirage : <span class="mono">{{ d.nextDrawAt | date:'dd/MM/yyyy HH:mm' }}</span></div>
+                <div class="pool-sub">Prochain tirage&nbsp;: <span class="mono">{{ d.nextDrawAt | date:'dd/MM/yyyy HH:mm' }}</span></div>
                 @if (p.enabled && p.enabledAt) {
                   <div class="pool-sub">Allumé le <span class="mono">{{ p.enabledAt | date:'dd/MM/yyyy HH:mm' }}</span></div>
                 }
@@ -40,12 +40,12 @@
             @if (confirming() === p.pool) {
               <div class="confirm-box" role="alert" [attr.data-testid]="'confirm-' + p.pool">
                 <p class="confirm-text">
-                  Allumer le {{ POOL_LABEL[p.pool].toLowerCase() }} ? <strong class="mono">{{ p.announceAudience }}</strong>
+                  Allumer le {{ POOL_LABEL[p.pool].toLowerCase() }}&nbsp;? <strong class="mono">{{ p.announceAudience }}</strong>
                   utilisateur{{ p.announceAudience > 1 ? 's' : '' }} recevr{{ p.announceAudience > 1 ? 'ont' : 'a' }} un e-mail d'annonce
                   (consentement marketing respecté, jamais les comptes démo ou internes).
                 </p>
                 <div class="confirm-actions">
-                  <button type="button" class="btn" (click)="confirming.set(null)">Annuler</button>
+                  <button type="button" class="btn" (click)="confirming.set(null)" [attr.data-testid]="'confirm-no-' + p.pool">Annuler</button>
                   <button type="button" class="btn btn-primary" [disabled]="busy() !== null" (click)="apply(p.pool, true)"
                     [attr.data-testid]="'confirm-yes-' + p.pool">
                     {{ busy() === 'pool-' + p.pool ? 'En cours…' : 'Confirmer' }}
@@ -93,8 +93,8 @@
                   <td data-label="Fin" class="mono muted">{{ w.endsAt | date:'dd/MM/yyyy' }}</td>
                   <td data-label="Éligibles" class="num mono">{{ r.eligibleCount }}</td>
                   <td data-label="Attribution">
-                    <span class="pill" [class.pill-ok]="w.activationStatus === 'APPLIED'" [class.pill-warn]="w.activationStatus === 'PENDING'"
-                      [class.pill-err]="w.activationStatus === 'FAILED'">{{ ACTIVATION_LABEL[w.activationStatus] }}</span>
+                    <span class="st-pill" [class.st-ok]="w.activationStatus === 'APPLIED'" [class.st-warn]="w.activationStatus === 'PENDING'"
+                      [class.st-err]="w.activationStatus === 'FAILED'">{{ ACTIVATION_LABEL[w.activationStatus] }}</span>
                     @if (w.activationStatus === 'FAILED') {
                       <div class="sub err">{{ w.activationError }}</div>
                       <button type="button" class="btn btn-sm" [disabled]="busy() !== null" (click)="retry(w)" [attr.data-testid]="'retry-' + w.id">
@@ -107,8 +107,8 @@
                     @if (w.message) {
                       <q class="msg">{{ w.message }}</q>
                       <div class="mod-row">
-                        <span class="pill" [class.pill-ok]="w.moderation === 'VALIDE'" [class.pill-warn]="w.moderation === 'EN_ATTENTE'"
-                          [class.pill-err]="w.moderation === 'REFUSE'">{{ MODERATION_LABEL[w.moderation] }}</span>
+                        <span class="st-pill" [class.st-ok]="w.moderation === 'VALIDE'" [class.st-warn]="w.moderation === 'EN_ATTENTE'"
+                          [class.st-err]="w.moderation === 'REFUSE'">{{ MODERATION_LABEL[w.moderation] }}</span>
                         @if (w.moderation !== 'VALIDE') {
                           <button type="button" class="btn btn-sm" [disabled]="busy() !== null" (click)="moderate(w, 'VALIDE')" [attr.data-testid]="'validate-' + w.id">Valider</button>
                         }
@@ -125,7 +125,7 @@
                     <div class="sub">{{ PUBLICATION_LABEL[w.publicationStatus] }}</div>
                   </td>
                 } @else {
-                  <td data-label="Gagnant" colspan="5" class="muted">Aucun éligible, aucun gagnant</td>
+                  <td data-label="Gagnant" colspan="4" class="muted">Aucun éligible, aucun gagnant</td>
                   <td data-label="Éligibles" class="num mono">{{ r.eligibleCount }}</td>
                   <td colspan="4"></td>
                 }

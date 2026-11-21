@@ -2,7 +2,7 @@
  * Admin « Tirages » (PROMPT-tirage-mensuel) : allumer passe par une confirmation qui annonce le
  * nombre d'e-mails ; éteindre n'envoie rien ; historique, modération et relance d'une attribution.
  */
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
@@ -37,10 +37,16 @@ describe('GiveawayComponent', () => {
   let http: HttpTestingController;
 
   beforeEach(() => {
+    // Dates du jeu de données en dur : horloge figée (règle « horloge figée » de l'agent tests).
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2027-02-10T10:00:00Z'));
     TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])] });
     http = TestBed.inject(HttpTestingController);
   });
-  afterEach(() => http.verify());
+  afterEach(() => {
+    http.verify();
+    vi.useRealTimers();
+  });
 
   async function render(d = data()) {
     const fixture = TestBed.createComponent(GiveawayComponent);
@@ -87,8 +93,12 @@ describe('GiveawayComponent', () => {
     expect(q(el, 'giveaway-notice')!.textContent).toContain('Aucun e-mail envoyé');
   });
 
-  it('historique : gagnant, lot, tirage sans éligible', async () => {
+  it('historique : gagnant, lot, tirage sans éligible (11 colonnes partout)', async () => {
     const { el } = await render();
+    for (const tr of Array.from(el.querySelectorAll('tbody tr'))) {
+      const cols = Array.from(tr.querySelectorAll('td')).reduce((n, td) => n + Number(td.getAttribute('colspan') ?? 1), 0);
+      expect(cols).toBe(11);
+    }
     const rows = q(el, 'giveaway-history')!.textContent!;
     expect(rows).toContain('gagnant@test.local');
     expect(rows).toContain('Léa M.');
@@ -100,7 +110,7 @@ describe('GiveawayComponent', () => {
     q(el, 'validate-w1')!.click();
     const req = http.expectOne(`${BASE}/wins/w1/moderation`);
     expect(req.request.body).toEqual({ moderation: 'VALIDE' });
-    req.flush({ data: { ok: true } });
+    req.flush({ data: { ...WIN, moderation: 'VALIDE' } });
     http.expectOne(BASE).flush({ data: data() });
   });
 
@@ -120,5 +130,13 @@ describe('GiveawayComponent', () => {
     await fixture.whenStable();
     fixture.detectChanges();
     expect(q(fixture.nativeElement, 'giveaway-load-error')).not.toBeNull();
+  });
+
+  it('erreur d’action : le message de l’API est affiché', async () => {
+    const { fixture, el } = await render();
+    q(el, 'toggle-PREMIUM')!.click();
+    http.expectOne(`${BASE}/settings`).flush({ message: 'Trop de requêtes, réessaie dans une minute.' }, { status: 429, statusText: 'Too Many' });
+    fixture.detectChanges();
+    expect(q(el, 'giveaway-error')!.textContent).toContain('Trop de requêtes');
   });
 });

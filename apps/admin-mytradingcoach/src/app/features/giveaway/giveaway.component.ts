@@ -3,7 +3,8 @@ import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import type { Observable } from 'rxjs';
-import type { AdminGiveawayData, AdminGiveawayPoolState, AdminGiveawayWin, GiveawayPool } from '@mtc/shared';
+import { apiErrorMessage, type AdminGiveawayData, type AdminGiveawayPoolState, type AdminGiveawayWin, type GiveawayPool } from '@mtc/shared';
+import { ErrorStateComponent } from '@mtc/front-ui';
 import { AdminApi } from '../../core/api/admin.api';
 
 const POOL_LABEL: Record<GiveawayPool, string> = { FREE: 'Tirage gratuits', PREMIUM: 'Tirage Premium' };
@@ -27,7 +28,7 @@ const PUBLICATION_LABEL: Record<AdminGiveawayWin['publicationStatus'], string> =
  */
 @Component({
   selector: 'mtc-admin-giveaway',
-  imports: [DatePipe, RouterLink],
+  imports: [DatePipe, RouterLink, ErrorStateComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './giveaway.component.css',
   templateUrl: './giveaway.component.html',
@@ -101,9 +102,9 @@ export class GiveawayComponent {
           );
           this.load();
         },
-        error: () => {
+        error: (err: unknown) => {
           this.busy.set(null);
-          this.actionError.set("La modification n'a pas été enregistrée. Réessaie.");
+          this.actionError.set(apiErrorMessage(err, "La modification n'a pas été enregistrée. Réessaie."));
         },
       });
   }
@@ -129,9 +130,9 @@ export class GiveawayComponent {
         this.busy.set(null);
         this.load();
       },
-      error: () => {
+      error: (err: unknown) => {
         this.busy.set(null);
-        this.actionError.set(error);
+        this.actionError.set(apiErrorMessage(err, error));
       },
     });
   }

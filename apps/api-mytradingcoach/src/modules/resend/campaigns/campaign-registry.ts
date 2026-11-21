@@ -229,7 +229,7 @@ export const CAMPAIGNS: EmailCampaign[] = [
     // Tirage mensuel (PROMPT-tirage-mensuel) : même rôle que trial_ending pour le Premium gagné au
     // tirage des gratuits. Un gagnant peut regagner après le délai de carence : cooldown, pas oneShot.
     key: 'giveaway_ending',
-    label: 'Fin du Premium gagné au tirage dans 3 jours',
+    label: `Fin du Premium gagné au tirage dans ${GIVEAWAY_ENDING_NOTICE_DAYS} jours`,
     description: "Service\u00a0: date de fin du Premium gagné au tirage du mois, retour au gratuit sans rien prélever.",
     kind: 'service',
     requiresConsent: false,

@@ -1,18 +1,15 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { GiveawayActivation, GiveawayPool, Prisma } from '@prisma/client';
 import { createHash, randomInt } from 'crypto';
-import { addCalendarMonths, giveawayPeriod, giveawayPrizeMonths } from '@mtc/shared';
+import { addCalendarMonths, giveawayPeriod, giveawayPrizeMonths, type AdminGiveawayDrawResponse } from '@mtc/shared';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ResendService } from '../resend/resend.service';
 import { GiveawayEligibilityService } from './giveaway-eligibility.service';
-import { GiveawayPrizeService } from './giveaway-prize.service';
+import { GiveawayPrizeService, safePrizeError } from './giveaway-prize.service';
 import { GiveawaySettingsService } from './giveaway-settings.service';
 
-export type DrawOutcome =
-  | { kind: 'disabled' }
-  | { kind: 'already-drawn'; drawId: string }
-  | { kind: 'no-eligible'; drawId: string }
-  | { kind: 'drawn'; drawId: string; winId: string; activation: GiveawayActivation };
+/** Issue d'un tirage : contrat partagé avec l'admin (`POST /admin/giveaway/draw`). */
+export type DrawOutcome = AdminGiveawayDrawResponse;
 
 /** Trace d'audit : sha256 de la liste triée des identifiants éligibles (une ligne par id). */
 export function eligibleHash(ids: string[]): string {
@@ -105,8 +102,10 @@ export class GiveawayDrawService {
       try {
         out.push(await this.draw(pool, now));
       } catch (err) {
-        this.logger.error(`Tirage ${pool} en échec : ${(err as Error).message}`);
-        await this.notifyAdmin(`⚠️ Tirage ${POOL_LABEL[pool]} en échec`, `Erreur : ${(err as Error).message}\n\n${this.adminLink()}`);
+        // Code seulement : le message d'une erreur Prisma ou Stripe peut recopier requête et identifiants.
+        const reason = safePrizeError(err);
+        this.logger.error(`Tirage ${pool} en échec : ${reason}`);
+        await this.notifyAdmin(`⚠️ Tirage ${POOL_LABEL[pool]} en échec`, `Erreur : ${reason}\n\n${this.adminLink()}`);
       }
     }
     return out;

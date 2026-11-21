@@ -6,6 +6,7 @@ import {
   type AdminGiveawayData,
   type AdminGiveawayDrawRow,
   type AdminGiveawayPoolState,
+  type AdminGiveawayWin,
   type AdminGiveawaySettingsResponse,
 } from '@mtc/shared';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -68,16 +69,17 @@ export class GiveawayAdminService {
   }
 
   /** Valider ou refuser le message d'un gagnant : rien ne s'affiche dans l'app avant « Valider ». */
-  async moderate(winId: string, moderation: GiveawayModeration): Promise<void> {
+  async moderate(winId: string, moderation: GiveawayModeration): Promise<AdminGiveawayWin | null> {
     const { count } = await this.prisma.giveawayWin.updateMany({
       where: { id: winId },
       data: { moderation, moderatedAt: new Date() },
     });
     if (count === 0) throw new NotFoundException('Lot introuvable.');
+    return (await this.history(winId))[0]?.win ?? null;
   }
 
   /** « Relancer l'attribution » d'un lot FAILED (avoir Stripe : même clé, donc sans doublon). */
-  async retry(winId: string): Promise<AdminGiveawayDrawRow['win']> {
+  async retry(winId: string): Promise<AdminGiveawayWin | null> {
     const win = await this.prisma.giveawayWin.findUnique({ where: { id: winId }, select: { activationStatus: true } });
     if (!win) throw new NotFoundException('Lot introuvable.');
     if (win.activationStatus !== GiveawayActivation.FAILED) {

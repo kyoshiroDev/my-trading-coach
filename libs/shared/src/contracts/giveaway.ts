@@ -77,3 +77,26 @@ export interface AdminGiveawaySettingsResponse {
   /** Annonces mises en envoi (0 à l'extinction ou si déjà annoncé pour cette activation). */
   announcementsQueued: number;
 }
+
+/** `PATCH /admin/giveaway/settings` : corps. */
+export interface UpdateGiveawaySettingsRequest {
+  pool: GiveawayPool;
+  enabled: boolean;
+}
+
+/** `PATCH /admin/giveaway/wins/:id/moderation` : corps (réponse : la ligne `AdminGiveawayWin` à jour). */
+export interface ModerateGiveawayWinRequest {
+  moderation: Exclude<GiveawayModeration, 'EN_ATTENTE'>;
+}
+
+/** `POST /admin/giveaway/draw` (hors prod) : corps. */
+export interface DrawGiveawayRequest {
+  pool: GiveawayPool;
+}
+
+/** `POST /admin/giveaway/draw` : issue du tirage. */
+export type AdminGiveawayDrawResponse =
+  | { kind: 'disabled' }
+  | { kind: 'already-drawn'; drawId: string }
+  | { kind: 'no-eligible'; drawId: string }
+  | { kind: 'drawn'; drawId: string; winId: string; activation: GiveawayActivation };
