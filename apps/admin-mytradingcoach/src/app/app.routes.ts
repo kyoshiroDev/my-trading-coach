@@ -29,6 +29,7 @@ export const appRoutes: Routes = [
       { path: 'brokers',       loadComponent: () => import('./features/broker-mappings/broker-mappings.component').then(m => m.BrokerMappingsComponent) },
       { path: 'emails',          loadComponent: () => import('./features/emails/emails.component').then(m => m.EmailsComponent) },
       { path: 'ambassadeurs',   loadComponent: () => import('./features/ambassadors/ambassadors.component').then(m => m.AmbassadorsComponent) },
+      { path: 'tirages',        loadComponent: () => import('./features/giveaway/giveaway.component').then(m => m.GiveawayComponent) },
       { path: 'parrainage',     loadComponent: () => import('./features/referral/referral.component').then(m => m.ReferralComponent) },
     ],
   },

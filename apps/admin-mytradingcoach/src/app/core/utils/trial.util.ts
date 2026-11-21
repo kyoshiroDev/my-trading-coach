@@ -8,7 +8,8 @@ import { subscriptionState, type Plan, type TrialSource } from '@mtc/shared';
  * pendant l'essai d'inscription s'affiche « En pause », pas « Essai ».
  * N'influe ni sur `isOfferedPremium` (API) ni sur le bouton « Offrir ».
  */
-export type TrialOrigin = 'inscription' | 'admin';
+/** `tirage` : Premium gagné au tirage mensuel (`trialSource` GIVEAWAY), jamais retiré. */
+export type TrialOrigin = 'inscription' | 'admin' | 'tirage';
 
 export interface ActiveTrial {
   /** Date de fin (ISO). */
@@ -23,5 +24,6 @@ export function activeTrial(
   if (user.plan !== 'FREE' || !user.trialEndsAt) return null;
   const { kind } = subscriptionState(user, new Date(now));
   if (kind !== 'signup_trial' && kind !== 'offered') return null;
-  return { until: user.trialEndsAt, origin: user.trialSource === 'SIGNUP' ? 'inscription' : 'admin' };
+  const origin: TrialOrigin = user.trialSource === 'SIGNUP' ? 'inscription' : user.trialSource === 'GIVEAWAY' ? 'tirage' : 'admin';
+  return { until: user.trialEndsAt, origin };
 }

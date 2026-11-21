@@ -205,7 +205,7 @@ export function debriefReadyTemplate(params: {
   const pnlBg = totalPnl >= 0 ? 'rgba(16,185,129,.3)' : 'rgba(239,68,68,.3)';
 
   const content = card(`
-    <p style="${FONT}font-size:13px;color:#8fa3bf;margin:0 0 4px 0;text-transform:uppercase;letter-spacing:.8px;">Weekly Debrief · Semaine ${weekNumber}</p>
+    <p style="${FONT}font-size:13px;color:#8fa3bf;margin:0 0 4px 0;text-transform:uppercase;letter-spacing:.8px;">Débrief hebdo · Semaine ${weekNumber}</p>
     <h1 style="${FONT}font-size:24px;font-weight:700;color:#e2eaf5;margin:0 0 20px 0;letter-spacing:-.5px;">
       Ton débrief est prêt
     </h1>
@@ -601,7 +601,7 @@ export function subscriptionCanceledTemplate(params: {
       Bonjour ${greetingName(userName)}, ${status}
     </p>
     <p style="${FONT}font-size:13px;color:#6b8299;margin:0 0 20px 0;">
-      Tu peux te réabonner à tout moment pour retrouver les analytics avancés, l'IA Coach et les Weekly Debriefs.
+      Tu peux te réabonner à tout moment pour retrouver les analytics avancés, l'IA Coach et les Débriefs hebdo.
     </p>
     ${cta('Me réabonner →', resubscribeUrl, 'secondary')}
   `);

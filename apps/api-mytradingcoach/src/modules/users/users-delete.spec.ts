@@ -22,6 +22,8 @@ const baseUser = {
 const mockPrisma = {
   user: { findUnique: vi.fn(), delete: vi.fn().mockResolvedValue({}) },
   deletedAccount: { create: vi.fn().mockReturnValue({ __op: 'create' }) },
+  // Lot du tirage : données personnelles effacées dans la même transaction (PROMPT-tirage-mensuel).
+  giveawayWin: { updateMany: vi.fn().mockReturnValue({ __op: 'giveaway' }) },
   $transaction: vi.fn().mockResolvedValue([{}, {}]),
 };
 
@@ -69,9 +71,13 @@ describe('UsersService — suppression + trace DeletedAccount', () => {
     });
     expect(data.lifetimeDays).toBeGreaterThanOrEqual(3);
     expect(mockPrisma.user.delete).toHaveBeenCalledWith({ where: { id: 'user-1' } });
-    // create ET delete passés ensemble à $transaction
+    // create, effacement des données du lot du tirage ET delete passés ensemble à $transaction
     expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);
-    expect(mockPrisma.$transaction.mock.calls[0][0]).toHaveLength(2);
+    expect(mockPrisma.$transaction.mock.calls[0][0]).toHaveLength(3);
+    expect(mockPrisma.giveawayWin.updateMany.mock.calls[0][0]).toEqual({
+      where: { userId: 'user-1' },
+      data: { message: null, displayPseudo: null, instagramHandle: null, displayConsent: 'NONE', instagramConsent: false },
+    });
   });
 
   it('Discord relié (#741) : ses rôles sont retirés, APRÈS la suppression du User', async () => {
