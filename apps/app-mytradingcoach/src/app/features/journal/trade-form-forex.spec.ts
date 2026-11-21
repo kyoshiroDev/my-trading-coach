@@ -10,7 +10,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { TestBed } from '@angular/core/testing';
 import { signal, NO_ERRORS_SCHEMA } from '@angular/core';
-import { DecimalPipe, TitleCasePipe } from '@angular/common';
+import { TitleCasePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { of } from 'rxjs';
 import { PnlFormatPipe } from '../../shared/pipes';
@@ -27,6 +27,7 @@ const FORM_HTML = readFileSync(join(__dirname, 'trade-form.component.html'), 'ut
 const INSTRUMENTS = [
   { symbol: 'EUR/USD', label: 'Euro / Dollar (EUR/USD)', category: 'FOREX', tickValue: 10, tickSize: 0.0001, pipDecimals: 4 },
   { symbol: 'MNQ', label: 'Micro E-mini Nasdaq (MNQ)', category: 'FUTURES_US', tickValue: 0.5, tickSize: 0.25 },
+  { symbol: 'BTC/USDT', label: 'Bitcoin (BTC/USDT)', category: 'CRYPTO', tickValue: 1, tickSize: 0.01 },
 ] as unknown as InstrumentDto[];
 
 /** Accès aux membres protégés du composant, pour piloter la saisie comme le ferait le template. */
@@ -36,6 +37,7 @@ type FormInternals = {
   recalculate: () => void;
   autoPnl: () => number | undefined;
   exitMode: { set: (m: 'SL' | 'TP' | null) => void };
+  leverage: { set: (n: number) => void };
   onSubmit: () => void;
 };
 
@@ -58,7 +60,7 @@ async function render() {
   TestBed.overrideComponent(TradeFormComponent, {
     set: {
       template: FORM_HTML, styleUrls: [], styleUrl: undefined as unknown as string,
-      imports: [FormsModule, TitleCasePipe, DecimalPipe, PnlFormatPipe],
+      imports: [FormsModule, TitleCasePipe, PnlFormatPipe],
       schemas: [NO_ERRORS_SCHEMA],
     },
   });
@@ -124,5 +126,28 @@ describe('Formulaire de trade — forex (#951)', () => {
     cmp.onSubmit();
     expect(saved).toHaveLength(1);
     expect(saved[0]).toMatchObject({ asset: 'USD/JPY', pnl: 100, capitalEngaged: 10_000 });
+  });
+});
+
+describe('Formulaire de trade — prix de liquidation (#1180)', () => {
+  it('crypto levier 10, entrée 65 000 : « sous 58 500.00 » en LONG, « au-dessus de 71 500.00 » en SHORT', async () => {
+    const { cmp, fill, el, fixture } = await render();
+    cmp.selectInstrument(INSTRUMENTS[2]);
+    cmp.leverage.set(10);
+    fill({ side: 'LONG', entry: 65_000 });
+    const warn = () => el.querySelector('[data-testid="liquidation-warning"]');
+    expect(text(warn())).toContain('sous');
+    expect(warn()!.querySelector('strong')!.textContent).toBe('58\u202f500.00');
+    fill({ side: 'SHORT' });
+    fixture.detectChanges();
+    expect(text(warn())).toContain('au-dessus de');
+    expect(warn()!.querySelector('strong')!.textContent).toBe('71\u202f500.00');
+  });
+
+  it('future : aucun avertissement de liquidation', async () => {
+    const { cmp, fill, el } = await render();
+    cmp.selectInstrument(INSTRUMENTS[1]);
+    fill({ side: 'LONG', entry: 18_600 });
+    expect(el.querySelector('[data-testid="liquidation-warning"]')).toBeNull();
   });
 });

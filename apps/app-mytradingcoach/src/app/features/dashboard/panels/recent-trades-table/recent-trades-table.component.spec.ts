@@ -76,4 +76,16 @@ describe('RecentTradesTableComponent · compte échoué ou archivé', () => {
     expect(inCards).toEqual(['Archivé', 'Échoué']);
     expect(el.querySelector('[data-testid="trade-account-badge"]')!.getAttribute('title')).toBe('Compte x\u00a0: hors statistiques');
   });
+
+  it('chiffres au point, milliers en espace (#1180) : entrée, sortie, R:R, P&L %', () => {
+    const r = { ...row('p', 'win', 120), entry: 21489.25, exit: 21500.5, riskReward: 1.5, pct: 0.62 } as unknown as DashboardTradeRow;
+    const el = render([r]);
+    const cells = [...el.querySelectorAll('.mtc-table tbody td')].map((c) => c.textContent!.trim());
+    expect(cells[4]).toBe('21\u202f489.25');
+    expect(cells[5]).toBe('21\u202f500.5');
+    expect(cells[6]).toBe('+1.5');
+    expect(cells[8]).toBe('+0.62\u00a0%');
+    expect(el.querySelector('.mtc-tc-pct')!.textContent!.trim()).toBe('+0.62\u00a0%');
+    expect(el.querySelector('.mtc-tc-sub')!.textContent).toContain('R:R +1.5');
+  });
 });
