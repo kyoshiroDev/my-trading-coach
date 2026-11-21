@@ -70,7 +70,7 @@ un sous-composant. Fichiers encore au-dessus, à découper quand on y retouche :
 
 Circuit de chaque prompt (`.claude/commands/tache.md`, `/tache`) : routage des agents par le tableau de `CLAUDE.md` → travail → agents vérificateurs du domaine en parallèle sur le diff → `relecteur` en dernier, qui tranche et rend « OK à 100 % » seulement quand chaque domaine touché a un verdict conforme (revérifié après correction) → push, PR vers `dev` avec une section « Vérificateurs », CI suivie jusqu'au vert.
 
-Relecture et PR : à chaque arrêt, Claude Code passe par l'agent `relecteur` (`.claude/agents/relecteur.md`), qui s'appuie sur le journal des décisions `.claude/decisions.md` ; les prompts collés par Greg sont enregistrés dans `.claude/prompts/PROMPT-<nom>.md` et commités avec le travail ; aucun push tant qu'il n'a pas rendu « OK à 100 % », puis push et PR vers `dev` sans attendre de « OK push » de Greg, la PR `dev` → `main` seulement sur demande, et seul Greg merge (merge commit).
+Relecture et PR : à chaque arrêt, Claude Code passe par l'agent `relecteur` (`.claude/agents/relecteur.md`), qui s'appuie sur le journal des décisions `.claude/decisions.md` ; les prompts collés par Greg sont enregistrés dans `.claude/prompts/PROMPT-<nom>.md` et commités avec le travail ; aucun push tant qu'il n'a pas rendu « OK à 100 % », puis push et PR vers `dev` sans attendre de « OK push » de Greg, la PR `dev` → `main` seulement sur demande ; les PR vers `dev` sont mergées par Claude Code (merge commit) après le « OK à 100 % » du relecteur et la CI verte, une PR à la fois en attendant la fin de la CI/CD de `dev`, celle de `dev` → `main` par Greg seul.
 
 ## Commits
 
