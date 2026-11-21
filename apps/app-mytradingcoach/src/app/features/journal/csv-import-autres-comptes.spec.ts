@@ -12,13 +12,13 @@ import { alsoInOtherAccountLine } from './csv-import.component';
 describe('Import CSV : trades déjà présents dans un autre compte (#1001)', () => {
   it('pluriel', () => {
     expect(alsoInOtherAccountLine({ name: 'Apex 50k #1', count: 12 })).toBe(
-      '12 trades existent aussi dans le compte « Apex 50k #1 » : importés ici aussi.',
+      '12 trades existent aussi dans le compte « Apex 50k #1 »\u00a0: importés ici aussi.',
     );
   });
 
   it('singulier', () => {
     expect(alsoInOtherAccountLine({ name: 'Apex 50k #1', count: 1 })).toBe(
-      '1 trade existe aussi dans le compte « Apex 50k #1 » : importé ici aussi.',
+      '1 trade existe aussi dans le compte « Apex 50k #1 »\u00a0: importé ici aussi.',
     );
   });
 

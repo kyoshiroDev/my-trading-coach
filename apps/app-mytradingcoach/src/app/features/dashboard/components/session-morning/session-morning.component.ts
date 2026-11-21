@@ -47,14 +47,14 @@ const DEMO_ECO_EVENTS: EcoEvent[] = [
   { time: '16:00', name: 'ISM Manufacturing PMI', currency: 'USD', country: 'US', impact: 'medium', actual: null, estimate: 48.5, previous: 48.7, isReleased: false, unit: null },
   { time: '11:00', name: 'IPC Zone Euro (final)', currency: 'EUR', country: 'EU', impact: 'medium', actual: 2.4, estimate: 2.4, previous: 2.4, isReleased: true, unit: '%' },
 ];
-const DEMO_ECO_SUMMARY = "Journée chargée côté USD : les chiffres de l'emploi peuvent créer de la volatilité sur NQ et ES en début d'après-midi.";
+const DEMO_ECO_SUMMARY = "Journée chargée côté USD\u00a0: les chiffres de l'emploi peuvent créer de la volatilité sur NQ et ES en début d'après-midi.";
 // Même format que `morningFocus` (API) sur DEMO_ECO_EVENTS : point d'attention factuel, aucune consigne.
-const DEMO_ECO_RECO = 'Prochaine annonce à fort impact : 14:30, Non-Farm Payrolls (USD), Taux de chômage (USD). Volatilité possible autour de cet horaire.';
+const DEMO_ECO_RECO = 'Prochaine annonce à fort impact\u00a0: 14:30, Non-Farm Payrolls (USD), Taux de chômage (USD). Volatilité possible autour de cet horaire.';
 // Recap « Hier » d'exemple (mode démo).
 const DEMO_RECAP: DailyRecap = {
   id: 'demo', date: new Date(Date.now() - 864e5).toISOString(),
   tradesCount: 5, pnl: 320, winRate: 68, dominantEmotion: 'FOCUSED',
-  aiOneLiner: 'Belle discipline hier : tu as coupé tes pertes vite et laissé courir ton meilleur trade.',
+  aiOneLiner: 'Belle discipline hier\u00a0: tu as coupé tes pertes vite et laissé courir ton meilleur trade.',
 };
 const DEMO_OBJECTIVES: DebriefObjective[] = [
   { title: 'Max 5 trades par session', reason: '' },

@@ -288,10 +288,10 @@ export class TodaySessionComponent implements OnInit, OnDestroy {
     if (this.noTrades()) return "Tu n'as pas forcé de trade aujourd'hui. C'est de la discipline.";
     const s = this.disciplineScore();
     const revenge = this.sessionTrades().filter(t => t.emotion === 'REVENGE').length;
-    if (revenge > 0) return `${revenge} revenge trade${revenge > 1 ? 's' : ''} détecté${revenge > 1 ? 's' : ''} : travailler la gestion émotionnelle.`;
-    if (s >= 85) return 'Excellente gestion : plan respecté, émotions sous contrôle.';
+    if (revenge > 0) return `${revenge} revenge trade${revenge > 1 ? 's' : ''} détecté${revenge > 1 ? 's' : ''}\u00a0: travailler la gestion émotionnelle.`;
+    if (s >= 85) return 'Excellente gestion\u00a0: plan respecté, émotions sous contrôle.';
     if (s >= 70) return "Bonne session dans l'ensemble. Quelques petits ajustements possibles.";
-    return 'Score indicatif basé sur ta session : revenge trades, stops, objectifs.';
+    return 'Score indicatif basé sur ta session\u00a0: revenge trades, stops, objectifs.';
   });
   protected readonly scoreColor = computed(() => {
     const s = this.disciplineScore();

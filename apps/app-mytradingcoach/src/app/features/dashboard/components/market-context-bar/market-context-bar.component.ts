@@ -148,9 +148,9 @@ export class MarketContextBarComponent {
   protected pctLabel(pct: number | null | undefined): string {
     if (pct == null) return '-';
     const v = pct.toFixed(2);
-    if (pct > 0) return `▲ +${v}%`;
-    if (pct < 0) return `▼ ${v}%`;
-    return `${v}%`;
+    if (pct > 0) return `▲ +${v}\u00a0%`;
+    if (pct < 0) return `▼ ${v}\u00a0%`;
+    return `${v}\u00a0%`;
   }
 
   /** Formatage nombre : séparateur de milliers espace + décimale POINT (fidélité maquette). */

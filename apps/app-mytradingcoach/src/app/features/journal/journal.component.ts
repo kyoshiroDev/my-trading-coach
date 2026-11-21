@@ -441,7 +441,7 @@ export class JournalComponent {
   protected async askDeleteTrade(trade: Trade): Promise<void> {
     const day = new Date(trade.tradedAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
     const ok = await this.confirm.ask({
-      title: 'Supprimer ce trade ?',
+      title: 'Supprimer ce trade\u00a0?',
       message: `${trade.asset} ${trade.side === 'LONG' ? 'long' : 'short'} du ${day}. La suppression est définitive.`,
       confirmLabel: 'Supprimer',
       danger: true,

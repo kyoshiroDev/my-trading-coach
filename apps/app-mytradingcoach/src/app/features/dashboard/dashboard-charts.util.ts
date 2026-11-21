@@ -46,7 +46,7 @@ export function tradeCountBars(days: readonly { date: string; tradesCount: numbe
       date: d.date,
       count: d.tradesCount,
       pct: Math.max(8, Math.round((d.tradesCount / top) * 100)),
-      label: `${day} : ${d.tradesCount} trade${d.tradesCount > 1 ? 's' : ''}`,
+      label: `${day}\u00a0: ${d.tradesCount} trade${d.tradesCount > 1 ? 's' : ''}`,
     };
   });
 }
@@ -85,7 +85,7 @@ export function setupsDonutFromStats(bySetup: SetupStat[]): DonutView | null {
   if (!setups.length) return null;
   const { gradient, legend } = conicShares(setups.map((s) => ({ label: s.title, color: s.color, count: s.count })));
   const best = setups.reduce((a, b) => ((b.winRate ?? 0) > (a.winRate ?? 0) ? b : a), setups[0]);
-  return { gradient, legend, centerKicker: 'Win rate', centerValue: `${Math.round(best.winRate ?? 0)}%`, centerLabel: best.title };
+  return { gradient, legend, centerKicker: 'Win rate', centerValue: `${Math.round(best.winRate ?? 0)}\u00a0%`, centerLabel: best.title };
 }
 
 /**
@@ -100,7 +100,7 @@ export function setupsDonutFromShares(
   if (!setups.length) return null;
   const { gradient, legend, total } = conicShares(setups.map((s) => ({ label: s.title, color: s.color, count: s.count })));
   const top = setups[0];
-  return { gradient, legend, centerValue: `${Math.round((top.count / total) * 100)}%`, centerLabel: top.title };
+  return { gradient, legend, centerValue: `${Math.round((top.count / total) * 100)}\u00a0%`, centerLabel: top.title };
 }
 
 export interface EmotionShare { emotion: string; pct: number }
@@ -136,7 +136,7 @@ export function buildEmotionsDonut(stats: EmotionShare[]): DonutView | null {
   });
   return {
     gradient: `conic-gradient(${stops.join(', ')})`,
-    centerValue: `${stats[0].pct}%`,
+    centerValue: `${stats[0].pct}\u00a0%`,
     centerLabel: emotionLabel(stats[0].emotion),
     legend: stats.map((e) => ({ label: emotionLabel(e.emotion), color: colorOf(e.emotion), pct: e.pct })),
   };
@@ -183,9 +183,9 @@ export function plTooltipFor(g: PlGranularity): string {
     case 'day':
       return 'Chaque barre = le P&L net réalisé sur une journée (frais inclus). Les jours sans trade sont à plat.';
     case 'week':
-      return 'La période est trop longue pour un affichage jour par jour : les barres sont agrégées par semaine ISO (lundi → dimanche, comme le journal). Chaque barre = le P&L net de la semaine.';
+      return 'La période est trop longue pour un affichage jour par jour\u00a0: les barres sont agrégées par semaine ISO (lundi → dimanche, comme le journal). Chaque barre = le P&L net de la semaine.';
     default:
-      return 'La période est trop longue pour un affichage plus fin : les barres sont agrégées par mois. Chaque barre = le P&L net du mois.';
+      return 'La période est trop longue pour un affichage plus fin\u00a0: les barres sont agrégées par mois. Chaque barre = le P&L net du mois.';
   }
 }
 
@@ -323,15 +323,15 @@ export function buildCoachInsights(
   };
   const out: CoachInsight[] = [];
 
-  if (s.winRate >= 50) out.push({ tone: 'good', text: `Ton win rate est de ${s.winRate.toFixed(0)}% ${periodShort}, au-dessus de la barre des 50%.` });
-  else out.push({ tone: 'warn', text: `Ton win rate est de ${s.winRate.toFixed(0)}% ${periodShort}. Vise 50%+ en filtrant mieux tes setups.` });
+  if (s.winRate >= 50) out.push({ tone: 'good', text: `Ton win rate est de ${s.winRate.toFixed(0)}\u00a0% ${periodShort}, au-dessus de la barre des 50%.` });
+  else out.push({ tone: 'warn', text: `Ton win rate est de ${s.winRate.toFixed(0)}\u00a0% ${periodShort}. Vise 50\u00a0%+ en filtrant mieux tes setups.` });
 
   if (s.profitFactor != null) {
-    if (s.profitFactor >= 1.5) out.push({ tone: 'good', text: `Profit factor de ${s.profitFactor.toFixed(2)} : tes gains couvrent largement tes pertes.` });
-    else if (s.profitFactor < 1) out.push({ tone: 'bad', text: `Profit factor de ${s.profitFactor.toFixed(2)} : tu perds plus que tu ne gagnes. Resserre ton risque.` });
+    if (s.profitFactor >= 1.5) out.push({ tone: 'good', text: `Profit factor de ${s.profitFactor.toFixed(2)}\u00a0: tes gains couvrent largement tes pertes.` });
+    else if (s.profitFactor < 1) out.push({ tone: 'bad', text: `Profit factor de ${s.profitFactor.toFixed(2)}\u00a0: tu perds plus que tu ne gagnes. Resserre ton risque.` });
   }
 
-  if (s.streak >= 3) out.push({ tone: 'good', text: `Série de ${s.streak} trades gagnants : garde ta taille, ne force pas le suivant.` });
+  if (s.streak >= 3) out.push({ tone: 'good', text: `Série de ${s.streak} trades gagnants\u00a0: garde ta taille, ne force pas le suivant.` });
   else if (s.streak <= -3) out.push({ tone: 'bad', text: `Série de ${Math.abs(s.streak)} pertes d'affilée. Coupe et fais une pause.` });
 
   // Émotions sans R:R connu (avgRR null) écartées : un « 0R » n'est pas une mesure.
@@ -346,7 +346,7 @@ export function buildCoachInsights(
   const setups = bySetup.filter((x) => (x.count ?? 0) > 0 && x.winRate != null);
   if (setups.length) {
     const b = setups.reduce((a, c) => (c.winRate! > a.winRate! ? c : a));
-    if (b.winRate! >= 55) out.push({ tone: 'good', text: `Ton setup « ${b.title} » a affiché ${b.winRate!.toFixed(0)}% de réussite sur la période : ton taux le plus élevé.` });
+    if (b.winRate! >= 55) out.push({ tone: 'good', text: `Ton setup « ${b.title} » a affiché ${b.winRate!.toFixed(0)}\u00a0% de réussite sur la période\u00a0: ton taux le plus élevé.` });
   }
 
   return out.slice(0, 5);

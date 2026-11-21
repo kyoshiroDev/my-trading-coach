@@ -90,7 +90,7 @@ export class DashboardKpisComponent {
   protected readonly ddSeries = computed(() => this.drawdownSeries().slice(1));
 
   protected readonly tradeBarsLabel = computed(() =>
-    `Trades par jour : ${this.tradeBars().map((b) => b.count).join(', ')}`,
+    `Trades par jour\u00a0: ${this.tradeBars().map((b) => b.count).join(', ')}`,
   );
 
   /** Barre win rate (KPI), pleine largeur de la carte comme les autres visuels (#642). */

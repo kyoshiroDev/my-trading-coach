@@ -21,7 +21,7 @@ import { isInactiveStatus, statusBadgeClass, statusLabel } from '@app/core/utils
       <table class="mtc-table">
         <thead><tr>
           <th>Date</th><th>Actif</th><th>Direction</th><th>Stratégie</th>
-          <th class="r">Entrée</th><th class="r col-exit">Sortie</th><th class="r">R:R</th><th class="r">P&amp;L</th><th class="r">P&amp;L %</th><th class="c col-res">Résultat</th>
+          <th class="r">Entrée</th><th class="r col-exit">Sortie</th><th class="r">R:R</th><th class="r">P&amp;L</th><th class="r">P&amp;L&nbsp;%</th><th class="c col-res">Résultat</th>
         </tr></thead>
         <tbody>
           @for (t of rows(); track t.id) {
@@ -34,7 +34,7 @@ import { isInactiveStatus, statusBadgeClass, statusLabel } from '@app/core/utils
                 <!-- Compte échoué ou archivé (interrupteur allumé) : même badge que le journal. -->
                 @if (t.account && isInactiveStatus(t.account.status)) {
                   <span class="status-badge {{ statusBadgeClass(t.account.status) }}"
-                        [attr.title]="t.account.label + ' : hors statistiques'"
+                        [attr.title]="t.account.label + '\u00a0: hors statistiques'"
                         data-testid="trade-account-badge">{{ statusLabel(t.account.status) }}</span>
                 }
               </td>
@@ -60,7 +60,7 @@ import { isInactiveStatus, statusBadgeClass, statusLabel } from '@app/core/utils
             @if (t.outcome === 'open') { <span class="mtc-res open">{{ LABEL.open }}</span> }
             @if (t.account && isInactiveStatus(t.account.status)) {
               <span class="status-badge {{ statusBadgeClass(t.account.status) }}"
-                    [attr.title]="t.account.label + ' : hors statistiques'"
+                    [attr.title]="t.account.label + '\u00a0: hors statistiques'"
                     data-testid="trade-account-badge">{{ statusLabel(t.account.status) }}</span>
             }
           </span>

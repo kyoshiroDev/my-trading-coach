@@ -40,7 +40,7 @@ import { LiveStats, TradingSession } from '@app/core/api/session.api';
           <div class="recap-stat-lbl">Humeur finale</div>
         </div>
       </div>
-      <div class="recap-duration">Durée : {{ sessionDuration() }}</div>
+      <div class="recap-duration">Durée&nbsp;: {{ sessionDuration() }}</div>
     </div>
   `,
 })

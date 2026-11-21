@@ -469,7 +469,7 @@ export class TradeFormComponent {
       return;
     }
     if (this.forexCapitalMissing()) {
-      this.zodErrors.set({ capitalEngaged: 'Indique le capital engagé : cette paire n’est pas cotée en dollars.' });
+      this.zodErrors.set({ capitalEngaged: 'Indique le capital engagé\u00a0: cette paire n’est pas cotée en dollars.' });
       return;
     }
     this.zodErrors.set({});
