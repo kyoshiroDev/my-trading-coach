@@ -197,7 +197,7 @@ describe('Mes comptes — connexion Tradovate par compte', () => {
       expect(pill.textContent!.trim()).toBe('● Synchro en erreur');
       expect(pill.classList).toContain('warn');
       expect(q('tradovate-sync-error-a')!.textContent!.trim()).toBe(erreur);
-      expect(q('tradovate-last-sync-a')!.textContent).toContain('Dernière synchro : il y a 2 h');
+      expect(q('tradovate-last-sync-a')!.textContent).toContain('Dernière synchro\u00a0: il y a 2 h');
       expect(q('tradovate-sync-a')).not.toBeNull();
       expect(q('tradovate-disconnect-a')).not.toBeNull();
     });
