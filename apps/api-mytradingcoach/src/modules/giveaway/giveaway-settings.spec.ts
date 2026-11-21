@@ -1,8 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { ConflictException } from '@nestjs/common';
 import { GiveawayPool, Role } from '@prisma/client';
 import { matchWhere } from '../../test/prisma-where';
-import { GiveawaySettingsService, announceAudienceWhere } from './giveaway-settings.service';
+import { GIVEAWAY_PROD_ACTIVATION_OPEN, GiveawaySettingsService, announceAudienceWhere } from './giveaway-settings.service';
 
 type Settings = Record<string, unknown>;
 let row: Settings;
@@ -61,19 +60,17 @@ describe('GiveawaySettingsService : interrupteurs et annonce', () => {
     expect(announce).toHaveBeenCalledTimes(2);
   });
 
-  it('prod : allumer refusé tant que le lot B n’est pas livré, éteindre toujours permis', async () => {
+  it('prod : verrou ouvert au lot B, allumer est permis (annonce une fois)', async () => {
     const announce = vi.spyOn(service, 'announce').mockResolvedValue({ sent: 0, skipped: 0, errors: 0 });
+    expect(GIVEAWAY_PROD_ACTIVATION_OPEN).toBe(true);
     for (const url of [undefined, 'https://app.mytradingcoach.app', 'HTTPS://APP.MYTRADINGCOACH.APP/']) {
       if (url === undefined) delete env['FRONTEND_URL'];
       else env['FRONTEND_URL'] = url;
-      expect(service.activationAvailable()).toBe(false);
-      await expect(service.setEnabled(GiveawayPool.FREE, true)).rejects.toBeInstanceOf(ConflictException);
+      expect(service.activationAvailable()).toBe(true);
     }
-    expect(row.freeEnabled).toBe(false);
-    expect(announce).not.toHaveBeenCalled();
-    row.premiumEnabled = true;
-    expect(await service.setEnabled(GiveawayPool.PREMIUM, false)).toBe(0);
-    expect(row.premiumEnabled).toBe(false);
+    expect(await service.setEnabled(GiveawayPool.FREE, true)).toBe(42);
+    expect(row.freeEnabled).toBe(true);
+    expect(announce).toHaveBeenCalledTimes(1);
   });
 
   it('hors prod : activation disponible', () => {

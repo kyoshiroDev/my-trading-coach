@@ -514,6 +514,6 @@ export class CsvImportComponent {
  */
 export function alsoInOtherAccountLine(o: { name: string; count: number }): string {
   return o.count > 1
-    ? `${o.count} trades existent aussi dans le compte « ${o.name} » : importés ici aussi.`
-    : `1 trade existe aussi dans le compte « ${o.name} » : importé ici aussi.`;
+    ? `${o.count} trades existent aussi dans le compte « ${o.name} »\u00a0: importés ici aussi.`
+    : `1 trade existe aussi dans le compte « ${o.name} »\u00a0: importé ici aussi.`;
 }

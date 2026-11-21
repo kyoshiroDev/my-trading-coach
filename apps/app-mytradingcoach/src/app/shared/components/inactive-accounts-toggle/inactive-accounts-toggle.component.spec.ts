@@ -33,7 +33,7 @@ describe('InactiveAccountsToggleComponent', () => {
 
   it('« Tous les comptes » avec des comptes perdus : ligne de la maquette + interrupteur désactivé', () => {
     const { q, el } = setup([acc('a', 'ACTIVE'), acc('p', 'PASSED'), acc('f', 'FAILED'), acc('x', 'ARCHIVED')]);
-    expect(q('excluded-accounts-line')!.textContent).toContain('2 comptes exclus des chiffres : 1 échoué, 1 archivé.');
+    expect(q('excluded-accounts-line')!.textContent).toContain('2 comptes exclus des chiffres\u00a0: 1 échoué, 1 archivé.');
     const sw = q('include-inactive-toggle') as HTMLInputElement;
     expect(sw.getAttribute('role')).toBe('switch');
     expect(sw.checked).toBe(false);
@@ -66,6 +66,6 @@ describe('InactiveAccountsToggleComponent', () => {
 
   it('tous les comptes échoués : la ligne les annonce tous', () => {
     const { q } = setup([acc('f1', 'FAILED'), acc('f2', 'FAILED')]);
-    expect(q('excluded-accounts-line')!.textContent).toContain('2 comptes exclus des chiffres : 2 échoués.');
+    expect(q('excluded-accounts-line')!.textContent).toContain('2 comptes exclus des chiffres\u00a0: 2 échoués.');
   });
 });

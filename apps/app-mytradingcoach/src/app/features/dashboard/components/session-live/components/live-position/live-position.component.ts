@@ -76,8 +76,8 @@ export class LivePositionComponent {
   protected readonly exitPriceInput = signal('');
 
   protected readonly tooltip =
-    'Latent : résultat de la position ouverte calculé par Tradovate avec ses cotations, relu à ' +
-    'chaque entrée, sortie ou renfort, et sur « Actualiser » : il ne suit pas chaque tick. Le prix ' +
+    'Latent\u00a0: résultat de la position ouverte calculé par Tradovate avec ses cotations, relu à ' +
+    'chaque entrée, sortie ou renfort, et sur « Actualiser »\u00a0: il ne suit pas chaque tick. Le prix ' +
     'affiché en est déduit, à l’heure du relevé.';
 
   protected readonly positions = computed(() => this.broker()?.openPositions ?? []);

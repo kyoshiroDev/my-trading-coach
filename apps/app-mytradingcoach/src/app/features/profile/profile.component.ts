@@ -439,7 +439,7 @@ export class ProfileComponent implements OnInit {
     const f = this.offersStore.offers()?.founder;
     if (!f?.refundUntil) return null;
     const subject = `Remboursement fondateur n° ${f.number}`;
-    const body = `Bonjour,\n\nJe demande le remboursement de mon premier paiement fondateur (satisfait ou remboursé ${PRICING.founder.refundDays} jours).\nCompte : ${this.userStore.user()?.email ?? ''}\n\nMerci.`;
+    const body = `Bonjour,\n\nJe demande le remboursement de mon premier paiement fondateur (satisfait ou remboursé ${PRICING.founder.refundDays} jours).\nCompte\u00a0: ${this.userStore.user()?.email ?? ''}\n\nMerci.`;
     return `mailto:support@mytradingcoach.app?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   });
 
@@ -467,7 +467,7 @@ export class ProfileComponent implements OnInit {
     if (!s || this.changingInterval()) return;
     const ok = await this.confirm.ask({
       title: s.label,
-      message: `Ton abonnement passe à ${s.price}. Le changement est proratisé et facturé tout de suite ; ${
+      message: `Ton abonnement passe à ${s.price}. Le changement est proratisé et facturé tout de suite\u00a0; ${
         this.offersStore.isFounder() ? 'tu gardes ta place et ton numéro de fondateur.' : 'tu gardes ton tarif.'}`,
       confirmLabel: 'Confirmer',
     });
@@ -574,7 +574,7 @@ export class ProfileComponent implements OnInit {
       await navigator.clipboard.writeText(code);
       this.toast.success('Code copié\u00a0: colle-le après /verify dans Discord');
     } catch {
-      this.toast.error('Copie impossible : sélectionne le code à la main');
+      this.toast.error('Copie impossible\u00a0: sélectionne le code à la main');
     }
   }
 

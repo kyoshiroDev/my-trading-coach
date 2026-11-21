@@ -22,7 +22,7 @@
         <!-- Devises mêlées : aucune somme USD + EUR (#947), comme le reste de l'app. -->
         <div class="stat-value">{{ totalsCurrency() === null ? '—' : money(trackedCapital(), totalsCurrency()) }}</div>
         <div class="stat-sub">
-          {{ totalsCurrency() === null ? 'devises différentes : choisis un compte' : visibleAccounts().length + ' compte(s) suivi(s)' }}
+          {{ totalsCurrency() === null ? 'devises différentes : choisis un compte' : visibleAccounts().length + ' compte(s) suivi(s)' }}
         </div>
       </div>
       <div class="stat-card" style="--c:var(--green)">
@@ -33,7 +33,7 @@
           {{ totalsCurrency() === null ? '—' : money(totalPnl(), totalsCurrency(), true) }}
         </div>
         <div class="stat-sub">
-          {{ totalsCurrency() === null ? 'devises différentes : choisis un compte' : (selectedAccountName() ?? 'tous comptes') + ' · estimé' }}
+          {{ totalsCurrency() === null ? 'devises différentes : choisis un compte' : (selectedAccountName() ?? 'tous comptes') + ' · estimé' }}
         </div>
       </div>
       <div class="stat-card" style="--c:var(--purple)">
@@ -59,7 +59,7 @@
     @if (hasPropAccount()) {
       <div class="global-note">
         <svg [lucideIcon]="InfoIcon" [size]="15"></svg>
-        <span><b>Règles prop firm estimées.</b> Compte connecté au broker (pastille verte) : solde et positions ouvertes lus chez lui. Sinon, d'après tes trades loggés, positions ouvertes non incluses. Pour un compte relié à un plan du catalogue, la marge suit les règles officielles de la firm. Le statut de chaque compte reste piloté par toi.</span>
+        <span><b>Règles prop firm estimées.</b> Compte connecté au broker (pastille verte)&nbsp;: solde et positions ouvertes lus chez lui. Sinon, d'après tes trades loggés, positions ouvertes non incluses. Pour un compte relié à un plan du catalogue, la marge suit les règles officielles de la firm. Le statut de chaque compte reste piloté par toi.</span>
       </div>
     }
 
@@ -198,7 +198,7 @@
                     <span class="gauge-val text-green">atteint</span>
                   } @else {
                     <span class="gauge-val">{{ money(obj.current, a.currency) }} / {{ money(obj.target, a.currency) }}</span>
-                    <span class="gauge-pct">{{ objPct(a) }} %</span>
+                    <span class="gauge-pct">{{ objPct(a) }}&nbsp;%</span>
                   }
                 </div>
                 <div class="bar-track xs">
@@ -301,7 +301,7 @@
               @if (conn && conn.status === 'CONNECTED' && !conn.needsAccountSelection && !conn.syncPaused) {
                 <span class="sync-detail" [attr.data-testid]="'tradovate-last-sync-' + a.id">
                   @if (conn.externalAccountName) { <span class="tv-ext">{{ conn.externalAccountName }}</span><br /> }
-                  Dernière synchro : {{ relativeTime(conn.lastSyncAt) }} · {{ conn.tradesImported }} trade{{ conn.tradesImported > 1 ? 's' : '' }} importé{{ conn.tradesImported > 1 ? 's' : '' }}
+                  Dernière synchro&nbsp;: {{ relativeTime(conn.lastSyncAt) }} · {{ conn.tradesImported }} trade{{ conn.tradesImported > 1 ? 's' : '' }} importé{{ conn.tradesImported > 1 ? 's' : '' }}
                 </span>
               }
             </div>
@@ -434,7 +434,7 @@
             <div class="acct-sub acct-broker" [attr.data-testid]="'account-broker-' + a.id">
               <p class="broker-line">
                 <span class="live-dot" [class.is-stale]="b.referenceMismatch" aria-hidden="true"></span>
-                <b>Chez le broker</b> : solde <b>{{ money(b.cashBalance, a.currency) }}</b>
+                <b>Chez le broker</b>&nbsp;: solde <b>{{ money(b.cashBalance, a.currency) }}</b>
                 · equity <b>{{ money(b.equity, a.currency) }}</b>
                 @if (b.openPositions > 0) {
                   <!-- Latent jamais lu : « - », pas un 0 inventé (même règle que la session live). -->
@@ -454,7 +454,7 @@
               </p>
               @if (b.referenceMismatch) {
                 <p class="broker-warn" data-testid="broker-reference-mismatch">
-                  Ton solde de départ ({{ money(a.metrics.startingBalance, a.currency) }}) ne correspond pas au solde du broker :
+                  Ton solde de départ ({{ money(a.metrics.startingBalance, a.currency) }}) ne correspond pas au solde du broker&nbsp;:
                   la marge reste calculée depuis tes trades. Corrige le solde de départ du compte pour utiliser celui du broker.
                 </p>
               }
@@ -467,7 +467,7 @@
             <div class="acct-sub acct-rules" [attr.data-testid]="'account-rules-' + a.id">
               @if (a.metrics.drawdown?.rule; as r) {
                 <p class="dd-basis" data-testid="dd-basis">
-                  <b>Marge calculée avec ces règles</b> ({{ phaseLabel(r.phase) }}) :
+                  <b>Marge calculée avec ces règles</b> ({{ phaseLabel(r.phase) }})&nbsp;:
                   seuil actuel <b>{{ money(a.metrics.drawdown!.floor, a.currency) }}</b>
                   @if (r.locksAt !== null) {
                     · {{ r.locked ? 'figé' : 'se fige à ' + money(r.lockedFloor, a.currency) + ' quand le solde atteint ' + money(r.locksAt, a.currency) }}
@@ -489,14 +489,14 @@
                   }
                   @if (r.platformChoices.length) {
                     <span class="dd-platform-warn" data-testid="dd-platform-unknown">
-                      Le verrouillage dépend de ta plateforme ({{ platformList(r.platformChoices) }}) : indique-la via « Modifier ».
+                      Le verrouillage dépend de ta plateforme ({{ platformList(r.platformChoices) }})&nbsp;: indique-la via « Modifier ».
                       En attendant, le seuil ne se fige jamais (le cas le plus prudent).
                     </span>
                   }
                   <span class="dd-disclaimer">{{ a.metrics.disclaimer }}</span>
                 </p>
               } @else if (a.metrics.drawdownUnconfirmed) {
-                <p class="dd-basis" data-testid="dd-basis">Montant de drawdown <b>non confirmé</b> par la firm pour ce plan : aucune marge calculée.</p>
+                <p class="dd-basis" data-testid="dd-basis">Montant de drawdown <b>non confirmé</b> par la firm pour ce plan&nbsp;: aucune marge calculée.</p>
               }
               @if (a.metrics.progress; as pg) {
                 <div class="acct-progress" [class.is-done]="pg.done" [attr.data-testid]="'account-progress-' + a.id">
@@ -526,12 +526,12 @@
                       } @else if (pg.cycleAfter) {
                         Cycle compté depuis ton payout du {{ sessionDate(pg.cycleAfter) }}.
                       } @else {
-                        Cycle compté depuis le début du compte : si tu as déjà reçu un payout, indique sa date via « Modifier ».
+                        Cycle compté depuis le début du compte&nbsp;: si tu as déjà reçu un payout, indique sa date via « Modifier ».
                       }
                     </p>
                   }
                   @if (pg.unconfirmed) {
-                    <p class="pg-note pg-warn">Certaines règles de ce plan sont à revoir au catalogue : progression estimée.</p>
+                    <p class="pg-note pg-warn">Certaines règles de ce plan sont à revoir au catalogue&nbsp;: progression estimée.</p>
                   }
                 </div>
               }
@@ -596,7 +596,7 @@
 @if (planWizardFor(); as pw) {
   <div class="modal-overlay" role="button" tabindex="-1"
        (click)="closePlanWizard()" (keydown.escape)="closePlanWizard()">
-    <div class="modal apw-modal" role="dialog" aria-modal="true" mtcDialog (mtcDialogClose)="closePlanWizard()" aria-label="Quel est ce compte ?"
+    <div class="modal apw-modal" role="dialog" aria-modal="true" mtcDialog (mtcDialogClose)="closePlanWizard()" aria-label="Quel est ce compte&nbsp;?"
          (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()" data-testid="plan-wizard-modal">
       <div class="modal-body">
         <mtc-account-plan-wizard [accountId]="pw.id" [accountLabel]="pw.label" (done)="onPlanLinked()" />
@@ -711,7 +711,7 @@
             </label>
             <label class="fld">
               <span class="fld-lbl">{{ ddLabels.rule.label }}
-                <mtc-info-tooltip [label]="'À propos : ' + ddLabels.rule.label" [text]="ddLabels.rule.help" /></span>
+                <mtc-info-tooltip [label]="'À propos : ' + ddLabels.rule.label" [text]="ddLabels.rule.help" /></span>
               <input class="inp" type="number" [ngModel]="form().maxDrawdown"
                      (ngModelChange)="patch({ maxDrawdown: $event })" placeholder="2500" />
             </label>

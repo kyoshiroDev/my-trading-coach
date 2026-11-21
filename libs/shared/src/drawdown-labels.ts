@@ -11,7 +11,7 @@
 export const DRAWDOWN_LABELS = {
   max: {
     label: 'Drawdown max',
-    help: 'Plus forte baisse depuis un sommet, trade par trade, sur la période. Tous comptes : le compte le plus touché.',
+    help: 'Plus forte baisse depuis un sommet, trade par trade, sur la période. Tous comptes\u00a0: le compte le plus touché.',
   },
   margin: {
     label: 'Marge avant le plancher',

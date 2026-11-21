@@ -15,6 +15,7 @@ import DemoVideo from '../components/DemoVideo.astro';
 import PfHeader from '../components/prop-firm-page/PfHeader.astro';
 import PfRules from '../components/prop-firm-page/PfRules.astro';
 import PfPricing from '../components/prop-firm-page/PfPricing.astro';
+import PfGiveaway from '../components/prop-firm-page/PfGiveaway.astro';
 import { ORGANIZATION, SOFTWARE_APPLICATION, WEBSITE, faqPage, webPage } from '../data/schema';
 import { TEMOIGNAGES } from '../data/temoignages';
 import { founderOpenAtBuild } from '../lib/founder-build';
@@ -67,7 +68,7 @@ const schema = [
   description={description}
   canonical={canonical}
   ogImage="/og/prop-firm.jpg"
-  ogImageAlt="MyTradingCoach : suis ta marge avant la limite de ta prop firm"
+  ogImageAlt={"MyTradingCoach\u00a0: suis ta marge avant la limite de ta prop firm"}
   schema={schema}
 >
   <PfHeader />
@@ -214,6 +215,9 @@ const schema = [
 
     {/* 10. Tarifs */}
     <PfPricing founderOpen={founderOpen} />
+
+    {/* Tirage mensuel : affiché seulement si un tirage est allumé (lu côté navigateur). */}
+    <PfGiveaway />
 
     {/* 11. Confiance : formulation factuelle (clause 17 NinjaTrader), jamais « partenaire officiel ». */}
     <section class="pf-sec pf-trust">

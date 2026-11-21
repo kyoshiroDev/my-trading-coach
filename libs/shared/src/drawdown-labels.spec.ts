@@ -41,3 +41,12 @@ describe('landing · vocabulaire de la règle et de la marge (#937)', () => {
     }
   });
 });
+
+// Typographie (#1139) : libellés et aides affichés tels quels dans l'app et sur la landing.
+describe('DRAWDOWN_LABELS · typographie', () => {
+  it('espace insécable avant « : ; ! ? % », jamais une espace ordinaire', () => {
+    for (const [key, entry] of Object.entries(DRAWDOWN_LABELS)) {
+      for (const text of Object.values(entry)) if (typeof text === 'string') expect(text, key).not.toMatch(/\S[ \t]+[:;!?%]/);
+    }
+  });
+});

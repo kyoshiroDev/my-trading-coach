@@ -18,7 +18,7 @@ import { TopAssetBar } from '../../dashboard-charts.util';
         <div class="mtc-hbar">
           <div class="mtc-hbar-l">
             <div class="mtc-hbar-name">{{ a.asset | uppercase }}</div>
-            <div class="mtc-hbar-meta">{{ a.count }} trade{{ a.count > 1 ? 's' : '' }}@if (showWinRate()) { · {{ a.winRate.toFixed(0) }}%}</div>
+            <div class="mtc-hbar-meta">{{ a.count }} trade{{ a.count > 1 ? 's' : '' }}@if (showWinRate()) { · {{ a.winRate.toFixed(0) }}&nbsp;%}</div>
           </div>
           <div class="mtc-hbar-track"><div class="mtc-hbar-fill" [class.neg]="a.pnl < 0" [style.width.%]="a.barPct"></div></div>
           <div class="mtc-hbar-v" [style.color]="a.pnl >= 0 ? 'var(--green)' : 'var(--red)'">{{ a.pnl | pnlFormat }}</div>

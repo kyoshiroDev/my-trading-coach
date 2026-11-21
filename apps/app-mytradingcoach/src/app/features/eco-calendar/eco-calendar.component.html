@@ -190,7 +190,7 @@
                           </td>
                           <td class="r" data-label="Actuel">
                             @if (event.actual !== null) {
-                              <span class="num" [class.up]="actualClass(event) === 'up'" [class.down]="actualClass(event) === 'down'">{{ event.actual }}{{ event.unit }}</span>
+                              <span class="num" [class.up]="actualClass(event) === 'up'" [class.down]="actualClass(event) === 'down'">{{ event.actual | ecoValue: event.unit }}</span>
                             } @else if (row.state === 'next') {
                               <span class="state nx">{{ relTime(event) }}</span>
                             } @else {
@@ -198,10 +198,10 @@
                             }
                           </td>
                           <td class="r num hide-sm" data-label="Prév.">
-                            @if (event.estimate !== null) { {{ event.estimate }}{{ event.unit }} } @else { - }
+                            @if (event.estimate !== null) { {{ event.estimate | ecoValue: event.unit }} } @else { - }
                           </td>
                           <td class="r num hide-sm" data-label="Précédent">
-                            @if (event.previous !== null) { {{ event.previous }}{{ event.unit }} } @else { - }
+                            @if (event.previous !== null) { {{ event.previous | ecoValue: event.unit }} } @else { - }
                           </td>
                           <td class="c-ia" data-label="IA">
                             @switch (iaState(event)) {

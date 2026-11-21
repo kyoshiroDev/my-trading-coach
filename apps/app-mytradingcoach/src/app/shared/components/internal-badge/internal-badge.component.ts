@@ -10,7 +10,7 @@ import { SignupFunnelService } from '../../../core/services/signup-funnel.servic
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './internal-badge.component.css',
   template: `@if (internal()) {
-    <div class="internal-badge" title="Mode interne : parcours d'inscription non compté (?internal=0 pour annuler)">interne</div>
+    <div class="internal-badge" title="Mode interne&nbsp;: parcours d'inscription non compté (?internal=0 pour annuler)">interne</div>
   }`,
 })
 export class InternalBadgeComponent {

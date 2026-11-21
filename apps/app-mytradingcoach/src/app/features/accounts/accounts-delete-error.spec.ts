@@ -81,7 +81,7 @@ describe('Comptes — un refus de suppression est désormais expliqué', () => {
 
     expect(
       cmp.deleteError(),
-      'Le refus repart dans le vide : le compte reste sans explication',
+      'Le refus repart dans le vide\u00a0: le compte reste sans explication',
     ).toBe(MESSAGE_BACK);
     expect(store.load, 'Rien à recharger, la suppression a échoué').not.toHaveBeenCalled();
   });
@@ -122,7 +122,7 @@ describe('Comptes — un refus de suppression est désormais expliqué', () => {
     const { cmp } = setup([acct('a', 3), acct('b', 5)], () => of({ data: { archived: true } }));
     const success = vi.spyOn(TestBed.inject(ToastService), 'success');
     await cmp.confirmDelete(acct('a', 3));
-    expect(success).toHaveBeenCalledWith('« Compte a » archivé : il sort de tes statistiques.');
+    expect(success).toHaveBeenCalledWith('« Compte a » archivé\u00a0: il sort de tes statistiques.');
   });
 
   it('404 (déjà supprimé ailleurs) → traité comme un succès', async () => {

@@ -20,7 +20,7 @@ export class PnlFormatPipe implements PipeTransform {
     const pct = move ? priceMovePct(move) : null;
     if (pct !== null) {
       const pctSign = pct >= 0 ? '+' : '';
-      result += ` (${pctSign}${pct.toFixed(2)}%)`;
+      result += ` (${pctSign}${pct.toFixed(2)}\u00a0%)`;
     }
 
     return result;

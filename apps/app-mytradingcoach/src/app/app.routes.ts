@@ -165,6 +165,19 @@ export const appRoutes: Routes = [
           ),
       },
       {
+        // Tirage mensuel (PROMPT-tirage-mensuel, lot B) : ouvert à tous les plans.
+        path: 'concours',
+        data: { seo: { title: 'Concours du mois', noindex: true } },
+        loadComponent: () =>
+          import('./features/giveaway/giveaway.component').then((m) => m.GiveawayComponent),
+      },
+      {
+        path: 'concours/gagnant',
+        data: { seo: { title: 'Ton lot du tirage', noindex: true } },
+        loadComponent: () =>
+          import('./features/giveaway/giveaway-winner.component').then((m) => m.GiveawayWinnerComponent),
+      },
+      {
         path: 'eco-calendar',
         // Calendrier économique (affichage + analyse IA) = IA mutualisée → FREE.
         data: {

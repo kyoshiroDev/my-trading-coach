@@ -288,7 +288,7 @@ export class PdfService implements OnModuleDestroy {
   <div class="header">
     <div>
       <div class="brand">MyTradingCoach</div>
-      <div class="week-title">Weekly Debrief · Semaine ${data.weekNumber}</div>
+      <div class="week-title">Débrief hebdo · Semaine ${data.weekNumber}</div>
       <div class="week-dates">${escapeHtml(data.startDate)} → ${escapeHtml(data.endDate)} · ${escapeHtml(data.userName)}</div>
     </div>
     <div class="pnl-header">

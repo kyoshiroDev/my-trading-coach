@@ -1,7 +1,6 @@
 import { PctPipe } from '@mtc/front-ui';
 import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import { MoneyService } from '@app/core/services/money.service';
-import { DecimalPipe } from '@angular/common';
 import { AnalyticsSummary } from '@app/core/api/analytics.api';
 import { InfoTooltipComponent } from '@app/shared/components/info-tooltip/info-tooltip.component';
 import { PnlFormatPipe } from '@app/shared/pipes';
@@ -11,7 +10,7 @@ import { DRAWDOWN_PICK_ACCOUNT } from '@app/core/services/drawdown-scope.util';
 /** Rangée des 6 KPIs du dashboard (capital, P&L, win rate, profit factor, trades, drawdown). */
 @Component({
   selector: 'mtc-dashboard-kpis',
-  imports: [PctPipe, DecimalPipe, PnlFormatPipe, InfoTooltipComponent],
+  imports: [PctPipe, PnlFormatPipe, InfoTooltipComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './dashboard-kpis.component.css',
   templateUrl: './dashboard-kpis.component.html',
@@ -71,6 +70,11 @@ export class DashboardKpisComponent {
     const start = this.periodStartCapital();
     return start <= 0 ? 0 : ((this.summary()?.totalPnl ?? 0) / start) * 100;
   });
+  /** Couleur de la variation : suit la valeur ARRONDIE affichée (« 0.0 % » neutre, jamais rouge, #1180). */
+  protected readonly capitalTone = computed(() => {
+    const shown = Number(this.capitalPct().toFixed(1));
+    return shown === 0 ? 'var(--text-3)' : shown > 0 ? 'var(--green)' : 'var(--red)';
+  });
   protected readonly capitalColor = computed(() => {
     const start = this.periodStartCapital();
     if (start <= 0) return 'var(--text-2)';
@@ -90,7 +94,7 @@ export class DashboardKpisComponent {
   protected readonly ddSeries = computed(() => this.drawdownSeries().slice(1));
 
   protected readonly tradeBarsLabel = computed(() =>
-    `Trades par jour : ${this.tradeBars().map((b) => b.count).join(', ')}`,
+    `Trades par jour\u00a0: ${this.tradeBars().map((b) => b.count).join(', ')}`,
   );
 
   /** Barre win rate (KPI), pleine largeur de la carte comme les autres visuels (#642). */

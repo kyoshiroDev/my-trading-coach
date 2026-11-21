@@ -170,7 +170,7 @@ export class ActivityCalendarComponent {
   protected cellTitle(cell: CalendarCell): string {
     if (!cell.activity) return cell.date;
     const { pnl, tradesCount, winRate } = cell.activity;
-    return `${cell.date} · ${this.money(pnl)} · ${tradesCount} trades · ${winRate.toFixed(0)}% WR`;
+    return `${cell.date} · ${this.money(pnl)} · ${tradesCount} trades · ${winRate.toFixed(0)}\u00a0% WR`;
   }
 
   /** P&L net (frais déduits, calculé côté API) dans la devise native du compte, sans conversion. */

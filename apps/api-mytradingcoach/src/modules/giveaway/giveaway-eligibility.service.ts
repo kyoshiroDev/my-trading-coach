@@ -63,7 +63,6 @@ export class GiveawayEligibilityService {
         // règle que « Offrir Premium » (le lot est un Premium offert).
         PREMIUM_OFFERABLE_WHERE,
         { createdAt: { lte: new Date(now.getTime() - GIVEAWAY_MIN_ACCOUNT_AGE_DAYS * DAY_MS) } },
-        { emailVerifiedAt: { not: null } },
         this.cooldownWhere(now),
       ],
     };

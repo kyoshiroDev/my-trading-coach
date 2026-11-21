@@ -39,7 +39,7 @@
             </div>
 
             @if (!p.enabled && !d.activationAvailable) {
-              <p class="locked" [id]="'activation-locked-' + p.pool" [attr.data-testid]="'activation-locked-' + p.pool">Activable en prod avec le lot B (page Concours et règlement).</p>
+              <p class="locked" [id]="'activation-locked-' + p.pool" [attr.data-testid]="'activation-locked-' + p.pool">Activation en prod fermée pour le moment.</p>
             }
 
             @if (confirming() === p.pool) {

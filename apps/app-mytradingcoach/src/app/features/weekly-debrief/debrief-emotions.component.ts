@@ -54,7 +54,7 @@ function emotionColor(winRate: number): string {
               ></div>
             </div>
             <span class="emotion-wr" [style.color]="color(e.winRate)"
-              >{{ e.winRate.toFixed(0) }}%</span
+              >{{ e.winRate.toFixed(0) }}&nbsp;%</span
             >
           </div>
           <span

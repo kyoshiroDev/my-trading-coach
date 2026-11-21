@@ -167,7 +167,7 @@ describe('gradeTooltip', () => {
 
   it('barème standard', () => {
     expect(gradeTooltip(t({ executionMethod: 'STOP_BASED', stopLoss: 1 }))).toBe(
-      'Note calculée : 80/100. Barème standard : stop respecté, R:R, émotion effective et risque engagé.',
+      'Note calculée\u00a0: 80/100. Barème standard\u00a0: stop respecté, R:R, émotion effective et risque engagé.',
     );
   });
 });

@@ -13,7 +13,7 @@ import { ToastService } from './toast.service';
  */
 export const CHECKOUT_REFRESH_DELAYS_MS = [0, 2_500, 5_000, 10_000] as const;
 
-export const CHECKOUT_SUCCESS_MESSAGE = 'Abonnement activé, bienvenue !';
+export const CHECKOUT_SUCCESS_MESSAGE = 'Abonnement activé, bienvenue\u00a0!';
 export const CHECKOUT_CANCELED_MESSAGE = 'Paiement annulé. Tu peux réessayer quand tu veux.';
 
 /**

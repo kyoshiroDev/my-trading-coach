@@ -188,7 +188,7 @@ describe('compte Funded : prochain payout (même progression que le suivi du com
 
   it('seuil uniquement en jours gagnants (Tradeify) : légende sans ligne', () => {
     const line = planObjectiveLine(funded([{ key: 'winning_days', met: false, current: 0, required: 5, unit: 'days', threshold: 150 }]), [pt('2026-10-01', 41.3)], 'USD');
-    expect(line).toEqual({ value: null, label: 'Prochain payout', pending: ['Jours ≥ $150 : 0 / 5'] });
+    expect(line).toEqual({ value: null, label: 'Prochain payout', pending: ['Jours ≥ $150\u00a0: 0 / 5'] });
   });
 });
 
@@ -367,7 +367,7 @@ describe('« ? » de la carte drawdown selon la règle du plan relié', () => {
     expect(t).toContain('se fige à $25,100 quand ton solde atteint $26,100');
   });
   it('suiveur intraday : note sur les gains latents', () => {
-    expect(drawdownHelp(plan({ kind: 'trailing_intraday' }), 'USD')).toContain('Calcul sur les trades clôturés ; ta prop firm peut tenir compte des gains latents.');
+    expect(drawdownHelp(plan({ kind: 'trailing_intraday' }), 'USD')).toContain('Calcul sur les trades clôturés\u00a0; ta prop firm peut tenir compte des gains latents.');
   });
 });
 

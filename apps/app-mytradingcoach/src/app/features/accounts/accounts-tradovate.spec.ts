@@ -197,7 +197,7 @@ describe('Mes comptes — connexion Tradovate par compte', () => {
       expect(pill.textContent!.trim()).toBe('● Synchro en erreur');
       expect(pill.classList).toContain('warn');
       expect(q('tradovate-sync-error-a')!.textContent!.trim()).toBe(erreur);
-      expect(q('tradovate-last-sync-a')!.textContent).toContain('Dernière synchro : il y a 2 h');
+      expect(q('tradovate-last-sync-a')!.textContent).toContain('Dernière synchro\u00a0: il y a 2 h');
       expect(q('tradovate-sync-a')).not.toBeNull();
       expect(q('tradovate-disconnect-a')).not.toBeNull();
     });
@@ -449,14 +449,14 @@ describe('Mes comptes — retour du consentement Tradovate (toasts)', () => {
   it('choix du compte à confirmer + compte écarté : info puis avertissement explicite', () => {
     setup({ accounts: [acct('a', 'A')], query: { tradovate: 'select_account', accountId: 'a', excluded: '1' } });
     const t = toasts();
-    expect(t[0]).toEqual({ type: 'info', message: 'Compte Tradovate connecté : confirme ci-dessous le compte à synchroniser.' });
+    expect(t[0]).toEqual({ type: 'info', message: 'Compte Tradovate connecté\u00a0: confirme ci-dessous le compte à synchroniser.' });
     expect(t[1].type).toBe('warning');
     expect(t[1].message).toContain('déjà relié à un autre compte MyTradingCoach');
   });
 
   it('échec : toast d’erreur clair', () => {
     setup({ accounts: [acct('a', 'A')], query: { tradovate: 'error', reason: 'denied', accountId: 'a' } });
-    expect(toasts()).toEqual([{ type: 'error', message: "Tu as refusé l'accès sur Tradovate : aucune donnée n'a été lue." }]);
+    expect(toasts()).toEqual([{ type: 'error', message: "Tu as refusé l'accès sur Tradovate\u00a0: aucune donnée n'a été lue." }]);
   });
 
   it('retour destiné au wizard : ignoré ici (l’onboarding le traite)', () => {
