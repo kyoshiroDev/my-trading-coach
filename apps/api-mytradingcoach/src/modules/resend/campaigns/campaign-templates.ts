@@ -179,15 +179,15 @@ export function firstTradeTemplate({ userName, appUrl, unsubUrl }: CampaignBuild
       </p>
       <div style="margin:16px 0;">
         <div style="margin-bottom:10px;">
-          <span style="color:#10b981;">✓</span>
+          <span style="color:#60a5fa;">✓</span>
           <span style="${FONT}font-size:13px;color:#9db4ce;margin-left:8px;">Saisie rapide en quelques secondes</span>
         </div>
         <div style="margin-bottom:10px;">
-          <span style="color:#10b981;">✓</span>
+          <span style="color:#60a5fa;">✓</span>
           <span style="${FONT}font-size:13px;color:#9db4ce;margin-left:8px;">Suis ton émotion et ton setup à chaque trade</span>
         </div>
         <div>
-          <span style="color:#10b981;">✓</span>
+          <span style="color:#60a5fa;">✓</span>
           <span style="${FONT}font-size:13px;color:#9db4ce;margin-left:8px;">Tes stats se construisent automatiquement</span>
         </div>
       </div>

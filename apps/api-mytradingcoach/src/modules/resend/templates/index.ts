@@ -47,6 +47,16 @@ function gradientFallback(gradient: string): string {
   return gradient.match(/#[0-9a-f]{3,8}/i)?.[0] ?? '#3b82f6';
 }
 
+/**
+ * Couleurs d'un P&L dans les e-mails (récap du jour, débrief) : vert pour un gain, rouge pour une
+ * perte, neutre pour 0 exactement (le vert est réservé aux gains, e-mails compris, #1163).
+ */
+export function pnlTone(pnl: number): { color: string; bg: string; accent: string } {
+  if (pnl > 0) return { color: '#10b981', bg: 'rgba(16,185,129,.3)', accent: ACCENT.success };
+  if (pnl < 0) return { color: '#ef4444', bg: 'rgba(239,68,68,.3)', accent: ACCENT.brand };
+  return { color: '#9db4ce', bg: 'rgba(59,130,246,.3)', accent: ACCENT.brand };
+}
+
 // Logo : PNG hébergé par l'app (apps/app-mytradingcoach/public/logo-email.png, 80 px affiché en
 // 40 px pour rester net sur écran Retina). Le SVG inline était retiré par Gmail et Outlook.
 // Servi par l'environnement de l'API (FRONTEND_URL) : dev → dev.app, prod → app.
@@ -199,9 +209,8 @@ export function debriefReadyTemplate(params: {
   appUrl: string;
 }): { subject: string; html: string } {
   const { userName, weekNumber, winRate, totalPnl, totalTrades, currency, appUrl } = params;
-  const pnlColor = totalPnl >= 0 ? '#10b981' : '#ef4444';
+  const { color: pnlColor, bg: pnlBg, accent } = pnlTone(totalPnl);
   const pnlStr = formatMoney(totalPnl, currency, { decimals: 0 });
-  const pnlBg = totalPnl >= 0 ? 'rgba(16,185,129,.3)' : 'rgba(239,68,68,.3)';
 
   const content = card(`
     <p style="${FONT}font-size:13px;color:#8fa3bf;margin:0 0 4px 0;text-transform:uppercase;letter-spacing:.8px;">Weekly Debrief · Semaine ${weekNumber}</p>
@@ -234,7 +243,7 @@ export function debriefReadyTemplate(params: {
     html: emailWrapper(
       content,
       `Semaine ${weekNumber} : ${winRate.toFixed(0)}% WR · ${pnlStr} · ${totalTrades} trades`,
-      totalPnl >= 0 ? ACCENT.success : ACCENT.brand,
+      accent,
     ),
   };
 }
@@ -253,9 +262,8 @@ export function dailyRecapTemplate(params: {
   appUrl: string;
 }): { subject: string; html: string } {
   const { userName, date, pnl, winRate, tradesCount, aiOneLiner, currency, appUrl } = params;
-  const pnlColor = pnl >= 0 ? '#10b981' : '#ef4444';
+  const { color: pnlColor, bg: pnlBg, accent } = pnlTone(pnl);
   const pnlStr = formatMoney(pnl, currency, { decimals: 0 });
-  const pnlBg = pnl >= 0 ? 'rgba(16,185,129,.3)' : 'rgba(239,68,68,.3)';
   const dateStr = date.toLocaleDateString('fr-FR', {
     weekday: 'long', day: 'numeric', month: 'long',
   });
@@ -292,7 +300,7 @@ export function dailyRecapTemplate(params: {
     html: emailWrapper(
       content,
       `${pnlStr} · ${winRate.toFixed(0)}% WR · ${tradesCount} trades`,
-      pnl >= 0 ? ACCENT.success : ACCENT.brand,
+      accent,
     ),
   };
 }
