@@ -103,6 +103,13 @@ describe('PremiumLockComponent · composant conforme (#1189)', () => {
     expect(el.querySelector('.pl-sub')?.textContent?.trim()).toBe('Visualise ton capital');
   });
 
+  it('heading et subtitle restent des entrées du composant (un attribut statique sans entrée passerait le build)', () => {
+    const src = readFileSync(join(import.meta.dirname, 'premium-lock.component.ts'), 'utf8');
+    expect(src).toMatch(/\bheading\s*=\s*input\b/);
+    expect(src).toMatch(/\bsubtitle\s*=\s*input\b/);
+    expect(src).not.toMatch(/\btitle\s*=\s*input\b/);
+  });
+
   it('aucun usage de <mtc-premium-lock> avec title= (info-bulle native) : heading= partout', () => {
     const appDir = join(import.meta.dirname, '..', '..', '..');
     const templates = (readdirSync(appDir, { recursive: true }) as string[]).filter((f) => f.endsWith('.html'));
