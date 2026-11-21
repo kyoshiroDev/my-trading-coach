@@ -5,14 +5,16 @@
     <div class="no-session-cta">
       <div class="no-session-title">Pas de session en cours</div>
       <div class="no-session-sub">Démarre une session pour tracker tes trades en live et accéder au calendrier économique.</div>
-      <button class="session-start-btn" data-testid="start-session-live"
-              [disabled]="startDisabled()"
-              [title]="startDisabled() ? 'Choisis un compte dans la Pré-session' : ''"
-              (click)="startSession.emit()">
-        Démarrer la session →
-      </button>
-      @if (startDisabled()) {
-        <div class="no-session-hint">Choisis un compte dans l'onglet Pré-session pour lancer la session.</div>
+      @if (canStart()) {
+        <button class="session-start-btn" data-testid="start-session-live"
+                [disabled]="startDisabled()"
+                [title]="startDisabled() ? 'Choisis un compte dans la Pré-session' : ''"
+                (click)="startSession.emit()">
+          Démarrer la session →
+        </button>
+        @if (startDisabled()) {
+          <div class="no-session-hint">Choisis un compte dans l'onglet Pré-session pour lancer la session.</div>
+        }
       }
     </div>
   } @else {

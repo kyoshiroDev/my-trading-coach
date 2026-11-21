@@ -75,7 +75,7 @@
             </button>
           </div>
         }
-      } @else {
+      } @else if (canStartSession()) {
         <button class="mtc-start-btn" data-testid="start-session"
                 [disabled]="accountChoiceRequired()"
                 [title]="accountChoiceRequired() ? 'Choisis un compte dans la Pré-session' : ''"
@@ -95,7 +95,7 @@
       <div class="closed-badge">
         <span class="cb-ic">✓</span>
         <div>
-          <div class="cb-t">Session clôturée</div>
+          <div class="cb-t">Session clôturée@if (otherDayLabel(); as day) {<span class="cb-day" data-testid="closed-session-day"> · {{ day }}</span>}</div>
           <div class="cb-d">Durée : {{ sessionDuration() }}</div>
         </div>
         @if (savedFlash()) { <span class="saved-pill">✓ Enregistré</span> }
@@ -150,6 +150,7 @@
         [breakingNews]="store.breakingNews()"
         [triggerCloseModal]="store.triggerCloseModal()"
         [startDisabled]="accountChoiceRequired()"
+        [canStart]="canStartSession()"
         (startSession)="startSession()"
         (ecoCalendarRefreshed)="store.applyEcoRefresh($event)"
         (tradeClosed)="store.confirmCloseTrade($event)"
@@ -243,7 +244,7 @@
                   <div class="dtc-asset">{{ t.asset }} <span class="dtc-side" [class]="t.side.toLowerCase()">{{ t.side }}</span></div>
                   <div class="dtc-row">
                     <span class="dtc-time">{{ t.tradedAt | date:'HH:mm' }}</span>
-                    <span>{{ t.emotion | emotionEmoji }}</span>
+                    @if (t.emotion) { <span>{{ t.emotion | emotionEmoji }}</span> }
                     <span class="dtc-pnl" [style.color]="t.pnl | pnlColor">{{ t.pnl | pnlFormat : null : session.accountId }}</span>
                   </div>
                 } @else { <div class="dtc-empty">Aucun trade clôturé aujourd'hui</div> }
@@ -254,7 +255,7 @@
                   <div class="dtc-asset">{{ t.asset }} <span class="dtc-side" [class]="t.side.toLowerCase()">{{ t.side }}</span></div>
                   <div class="dtc-row">
                     <span class="dtc-time">{{ t.tradedAt | date:'HH:mm' }}</span>
-                    <span>{{ t.emotion | emotionEmoji }}</span>
+                    @if (t.emotion) { <span>{{ t.emotion | emotionEmoji }}</span> }
                     <span class="dtc-pnl" [style.color]="t.pnl | pnlColor">{{ t.pnl | pnlFormat : null : session.accountId }}</span>
                   </div>
                 } @else { <div class="dtc-empty">Rien à analyser, journée sans trade</div> }
@@ -268,7 +269,11 @@
                 <div class="emo-list">
                   @for (e of emotionBreakdown(); track e.emotion) {
                     <div class="emo-row">
-                      <span class="emo-emoji">{{ e.emotion | emotionEmoji }}</span>
+                      @if (e.emotion) {
+                        <span class="emo-emoji">{{ e.emotion | emotionEmoji }}</span>
+                      } @else {
+                        <span class="emo-none" data-testid="emotion-none">Non renseignée</span>
+                      }
                       <div class="emo-bar-wrap">
                         <div class="emo-bar" [style.width.%]="e.pct" [style.background]="emoColor(e.emotion)"></div>
                       </div>
