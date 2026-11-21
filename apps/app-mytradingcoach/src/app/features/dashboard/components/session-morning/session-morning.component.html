@@ -68,13 +68,13 @@
             <span>{{ recap.aiOneLiner }}</span>
           </div>
         } @else if (!userStore.isPremium() && !isDemo()) {
-          <div class="ai-oneliner" style="position:relative;min-height:40px;">
-            <span class="ai-star" style="filter:blur(2px)">✦</span>
-            <span style="filter:blur(4px);user-select:none;pointer-events:none;">
+          <div class="ai-oneliner pl-slot">
+            <span class="ai-star pl-blur-sm" aria-hidden="true">✦</span>
+            <span class="pl-blur" aria-hidden="true">
               Ton compagnon a analysé ta session et identifié un pattern clé dans tes trades.
             </span>
             <mtc-premium-lock
-              title="Analyse IA de ta session"
+              heading="Analyse IA de ta session"
               subtitle="Disponible en Premium"
             />
           </div>
@@ -113,8 +113,8 @@
           @if (!userStore.isPremium() && i >= 1) {
             @if (i === 1) {
               <!-- 2e objectif flou : aperçu Premium -->
-              <div style="position:relative;margin-top:4px;">
-                <div class="obj-item" style="filter:blur(3px);pointer-events:none;user-select:none;">
+              <div class="pl-slot pl-slot-obj">
+                <div class="obj-item pl-blur-md" aria-hidden="true">
                   <div class="obj-check">·</div>
                   <div class="obj-body">
                     <div class="obj-text">{{ obj.title }}</div>
@@ -122,7 +122,7 @@
                   <div class="obj-bdg s">Semaine</div>
                 </div>
                 <mtc-premium-lock
-                  title="{{ objectives().length - 1 }} autre(s) objectif(s) IA"
+                  heading="{{ objectives().length - 1 }} autre(s) objectif(s) IA"
                   subtitle="Générés par ton compagnon chaque dimanche"
                 />
               </div>

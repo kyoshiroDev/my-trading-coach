@@ -160,6 +160,14 @@
 }
 .ai-star { flex-shrink: 0; font-size: 14px; color: var(--blue-bright); margin-top: 1px; }
 
+/* Aperçus Premium floutés (compte gratuit) : l'emplacement est assez haut pour la carte du
+   cadenas partagé, qui passe à la ligne (#1189) ; avant, 40 px pour une carte de ~120 px. */
+.pl-slot { position: relative; min-height: 150px; }
+.pl-slot-obj { margin-top: 4px; }
+.pl-blur-sm { filter: blur(2px); }
+.pl-blur { filter: blur(4px); user-select: none; pointer-events: none; }
+.pl-blur-md { filter: blur(3px); pointer-events: none; user-select: none; }
+
 /* ─── Objectifs semaine — lignes en cartes bg-2 ─── */
 .obj-item {
   display: flex;

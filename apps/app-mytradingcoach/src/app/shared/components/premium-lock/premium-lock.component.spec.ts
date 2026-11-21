@@ -77,3 +77,34 @@ describe('PremiumLockComponent · mise en page (#1178)', () => {
     expect(bloc('.pl-text')).toContain('flex: 1 1 200px');
   });
 });
+
+describe('PremiumLockComponent · composant conforme (#1189)', () => {
+  beforeEach(() => TestBed.resetTestingModule());
+  const css = readFileSync(join(import.meta.dirname, 'premium-lock.component.css'), 'utf8');
+
+  it('icône cadenas Lucide (jamais « ✦ »), titre en h3 via l’entrée heading', () => {
+    const { button } = render(false);
+    const root = button.closest('[data-testid=premium-lock]')!;
+    expect(root.textContent).not.toContain('✦');
+    expect(root.querySelector('svg.pl-icon')).not.toBeNull();
+    expect(root.querySelector('h3.pl-title')?.textContent?.trim()).toBe('Fonctionnalité Premium');
+  });
+
+  it('aucune entrée « title » : pas d’info-bulle native sur toute la superposition', () => {
+    const src = readFileSync(join(import.meta.dirname, 'premium-lock.component.ts'), 'utf8');
+    expect(src).not.toMatch(/readonly title\s*=/);
+    expect(src).toMatch(/readonly heading\s*=/);
+  });
+
+  it('couleurs en tokens : ni rgba ni violet ; seul #fff (texte sur --primary)', () => {
+    expect(css).not.toMatch(/rgba?\(/);
+    expect(css).not.toContain('--purple');
+    const sansCommentaires = css.replace(/\/\*[\s\S]*?\*\//g, '');
+    expect(sansCommentaires.match(/#[0-9a-fA-F]{3,6}\b/g) ?? []).toEqual(['#fff']);
+  });
+
+  it('carte étroite : le bouton peut passer à la ligne (container query)', () => {
+    expect(css).toContain('container-type: inline-size');
+    expect(css).toMatch(/@container \(max-width: 340px\)\s*\{\s*\.pl-btn \{ white-space: normal;/);
+  });
+});
