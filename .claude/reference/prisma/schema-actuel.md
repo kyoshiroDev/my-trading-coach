@@ -199,3 +199,12 @@ enum SessionStatus       { ACTIVE CLOSED }                              // ← V
 > < 2 critères applicables → `null` (« Non évalué »). Recalculé à la **création / édition / import**
 > (donnée stable persistée, jamais recalculée à la lecture) ; **backfill SQL** dans la migration.
 > Seuils par défaut exposés : `RR_MIN=1.5`, `RISK_MAX_PCT=1`, `RISK_SOFT_PCT=2`, poids `{35,25,20,20}`.
+
+> **Tirage mensuel (#1150, 2026-11-21)** : `GiveawaySettings` (une ligne id = 1, interrupteurs
+> `freeEnabled` / `premiumEnabled` éteints par défaut, `*EnabledAt`, `*AnnouncedAt`),
+> `GiveawayDraw` (unique `period` + `pool`, `eligibleCount`, `eligibleHash`, `drawnIndex`,
+> `winnerId` SetNull), `GiveawayWin` (lot : `prizeMonths`, `startsAt` / `endsAt`,
+> `activationStatus` / `activationError`, `creditCents` / `stripeBalanceTxId`, accords
+> d'affichage et Instagram, message et modération, publication ; `userId` SetNull, données
+> personnelles effacées par `deleteMe`). `TrialSource.GIVEAWAY`. Migration additive
+> `20261121090000_giveaway`. Détail : `commun/tirage-mensuel.md`.

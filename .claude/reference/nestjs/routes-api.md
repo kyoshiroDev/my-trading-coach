@@ -47,6 +47,11 @@ GET    /api/admin/landing-engagement   ADMIN (?days=7|30, défaut 30) → vues +
 GET    /api/pricing/founder           PUBLIC (60/min, Cache-Control max-age=60) → { open, seatsTotal, seatsLeft, priceMonthlyEur, priceAnnualEur }
 GET    /api/admin/founders            ADMIN → fondateurs paginés (?status, ?page) + totaux (pris, actifs, perdus, remboursés, restants, par cta)
 PATCH  /api/admin/founder-offer       ADMIN → { open?, endsAt? } (interrupteur « Ouvrir l'offre »)
+GET    /api/admin/giveaway            ADMIN → tirage mensuel : 2 interrupteurs (éligibles maintenant, destinataires de l'annonce), prochain tirage, historique (commun/tirage-mensuel.md)
+PATCH  /api/admin/giveaway/settings   ADMIN → { pool, enabled } (allumer = annonce une fois par activation ; éteindre n'envoie rien)
+PATCH  /api/admin/giveaway/wins/:id/moderation  ADMIN → { moderation: VALIDE | REFUSE }
+POST   /api/admin/giveaway/wins/:id/retry       ADMIN → relance l'attribution d'un lot FAILED (avoir Stripe idempotent)
+POST   /api/admin/giveaway/draw       ADMIN → { pool } tirage manuel, 403 en prod ou sans GIVEAWAY_MANUAL_DRAW=true
 POST   /api/billing/checkout          plan premium_monthly|premium_yearly|founder_monthly|founder_yearly, cta?
 POST   /api/billing/interval          { interval: month|year } → changement par NOTRE flux, tarif gardé
 GET    /api/billing/offers            → { founderOffer, founder (place, éligibilité, refundUntil), partner, subscription } (app)

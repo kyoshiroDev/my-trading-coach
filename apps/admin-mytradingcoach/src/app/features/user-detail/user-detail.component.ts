@@ -275,10 +275,14 @@ export class UserDetailComponent {
 
   // ── Retirer le Premium offert (B10 #1064) ──
   protected readonly removingOffer = signal(false);
-  /** Même condition que l'API : Premium offert en cours, jamais pendant une pause Stripe. */
+  /**
+   * Même condition que l'API : Premium offert en cours, jamais pendant une pause Stripe, jamais un
+   * lot gagné au tirage mensuel (acquis, l'API répond 409).
+   */
   protected readonly canRemoveOffer = computed(() => {
-    const st = this.data()?.identity.subscriptionStatus;
-    return !!this.offeredUntil() && st !== 'past_due' && st !== 'unpaid';
+    const i = this.data()?.identity;
+    const st = i?.subscriptionStatus;
+    return !!this.offeredUntil() && st !== 'past_due' && st !== 'unpaid' && i?.trialSource !== 'GIVEAWAY';
   });
 
   protected async removeOfferedPremium(): Promise<void> {
