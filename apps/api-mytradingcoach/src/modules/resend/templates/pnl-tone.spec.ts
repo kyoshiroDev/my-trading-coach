@@ -18,6 +18,13 @@ describe('pnlTone : couleur d’un P&L dans les e-mails', () => {
     expect(zero.accent).toBe(ACCENT.brand);
     expect(pnlTone(-0)).toEqual(zero);
   });
+
+  it('jugé au centime, comme le montant affiché : un reste de somme est neutre', () => {
+    expect(pnlTone(0.1 + 0.2 - 0.3).color).toBe(pnlTone(0).color);
+    expect(pnlTone(0.004).color).toBe(pnlTone(0).color);
+    expect(pnlTone(-0.004).color).toBe(pnlTone(0).color);
+    expect(pnlTone(0.005).color).toBe(GREEN);
+  });
 });
 
 describe('récap du jour et débrief : P&L de 0 en couleur neutre', () => {
@@ -43,9 +50,23 @@ describe('récap du jour et débrief : P&L de 0 en couleur neutre', () => {
   });
 });
 
+describe('récap du jour : emoji de l’objet', () => {
+  const subject = (pnl: number) => dailyRecapTemplate({
+    userName: 'Trader', date: new Date('2026-11-09T18:00:00Z'), pnl, winRate: 50, tradesCount: 2,
+    aiOneLiner: null, currency: 'USD', appUrl: 'https://app.example',
+  }).subject;
+
+  it('📈 pour un gain, 📉 pour une perte, 📊 pour 0', () => {
+    expect(subject(120).startsWith('📈')).toBe(true);
+    expect(subject(-120).startsWith('📉')).toBe(true);
+    expect(subject(0).startsWith('📊')).toBe(true);
+    expect(subject(0.1 + 0.2 - 0.3).startsWith('📊')).toBe(true);
+  });
+});
+
 describe('campagne « premier trade » : coches sans vert', () => {
   it('les coches ✓ sont en bleu de marque', () => {
-    const ctx: CampaignBuildCtx = { userName: 'Trader', appUrl: 'https://app.example', unsubUrl: 'https://api.example/u' } as CampaignBuildCtx;
+    const ctx: CampaignBuildCtx = { userName: 'Trader', appUrl: 'https://app.example', unsubUrl: 'https://api.example/u' };
     const { html } = firstTradeTemplate(ctx);
     expect(html).toContain('✓');
     expect(html).not.toContain(GREEN);

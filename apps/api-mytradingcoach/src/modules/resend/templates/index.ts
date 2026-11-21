@@ -1,6 +1,6 @@
 // ── Templates emails MyTradingCoach ─────────────────────────────────────────
 // Templates HTML inline : pas de dépendance externe pour le rendu
-import { FOUNDER_OFFER, FOUNDER_REFUND_DAYS, PLAN_BENEFITS, PREMIUM_SIGNUP_TRIAL_DAYS, TRIAL_PERIOD_DAYS, formatMoney } from '@mtc/shared';
+import { FOUNDER_OFFER, FOUNDER_REFUND_DAYS, PLAN_BENEFITS, PREMIUM_SIGNUP_TRIAL_DAYS, TRIAL_PERIOD_DAYS, formatMoney, roundCents } from '@mtc/shared';
 import { escapeHtml } from '../../../common/utils/escape-html';
 
 // ── Base système ──────────────────────────────────────────────────────────────
@@ -49,12 +49,14 @@ function gradientFallback(gradient: string): string {
 
 /**
  * Couleurs d'un P&L dans les e-mails (récap du jour, débrief) : vert pour un gain, rouge pour une
- * perte, neutre pour 0 exactement (le vert est réservé aux gains, e-mails compris, #1163).
+ * perte, neutre pour 0 (le vert est réservé aux gains, e-mails compris, #1163). Jugé sur le montant
+ * arrondi au centime, comme le chiffre affiché : un reste de somme (5,5e-17) n'est pas un gain.
  */
-export function pnlTone(pnl: number): { color: string; bg: string; accent: string } {
-  if (pnl > 0) return { color: '#10b981', bg: 'rgba(16,185,129,.3)', accent: ACCENT.success };
-  if (pnl < 0) return { color: '#ef4444', bg: 'rgba(239,68,68,.3)', accent: ACCENT.brand };
-  return { color: '#9db4ce', bg: 'rgba(59,130,246,.3)', accent: ACCENT.brand };
+export function pnlTone(pnl: number): { color: string; bg: string; accent: string; emoji: string } {
+  const v = roundCents(pnl);
+  if (v > 0) return { color: '#10b981', bg: 'rgba(16,185,129,.3)', accent: ACCENT.success, emoji: '📈' };
+  if (v < 0) return { color: '#ef4444', bg: 'rgba(239,68,68,.3)', accent: ACCENT.brand, emoji: '📉' };
+  return { color: '#9db4ce', bg: 'rgba(59,130,246,.3)', accent: ACCENT.brand, emoji: '📊' };
 }
 
 // Logo : PNG hébergé par l'app (apps/app-mytradingcoach/public/logo-email.png, 80 px affiché en
@@ -262,7 +264,7 @@ export function dailyRecapTemplate(params: {
   appUrl: string;
 }): { subject: string; html: string } {
   const { userName, date, pnl, winRate, tradesCount, aiOneLiner, currency, appUrl } = params;
-  const { color: pnlColor, bg: pnlBg, accent } = pnlTone(pnl);
+  const { color: pnlColor, bg: pnlBg, accent, emoji } = pnlTone(pnl);
   const pnlStr = formatMoney(pnl, currency, { decimals: 0 });
   const dateStr = date.toLocaleDateString('fr-FR', {
     weekday: 'long', day: 'numeric', month: 'long',
@@ -296,7 +298,7 @@ export function dailyRecapTemplate(params: {
   `, pnlBg);
 
   return {
-    subject: `${pnl >= 0 ? '📈' : '📉'} Session ${dateStr} : ${pnlStr}`,
+    subject: `${emoji} Session ${dateStr} : ${pnlStr}`,
     html: emailWrapper(
       content,
       `${pnlStr} · ${winRate.toFixed(0)}% WR · ${tradesCount} trades`,
