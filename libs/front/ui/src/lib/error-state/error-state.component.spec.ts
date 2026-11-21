@@ -37,6 +37,26 @@ describe('ErrorStateComponent', () => {
     expect(css).toContain('var(--red');
   });
 
+  /**
+   * #1152 : dans l'app trader, --red est réservé aux pertes (agent design) ; le bandeau d'erreur
+   * passe en --yellow (avertissement). L'admin ne pose pas la variable et garde son rouge.
+   */
+  it('accent lu dans --error-state-accent / --error-state-dim, rouge en repli', () => {
+    const css = readFileSync(join(import.meta.dirname, 'error-state.component.css'), 'utf8');
+    expect(css).toContain('var(--error-state-accent, var(--red))');
+    expect(css).toContain('var(--error-state-dim, var(--red-dim))');
+    expect(css).not.toMatch(/var\(--red\)\s*\d+%/); // plus de rouge direct sans la variable
+  });
+
+  it('app trader : bandeau en jaune ; admin : variable non posée (rouge)', () => {
+    const root = join(import.meta.dirname, '../../../../../../apps');
+    const app = readFileSync(join(root, 'app-mytradingcoach/src/styles/theme.css'), 'utf8');
+    expect(app).toMatch(/--error-state-accent\s*:\s*var\(--yellow\)/);
+    expect(app).toMatch(/--error-state-dim\s*:\s*var\(--yellow-dim\)/);
+    const admin = readFileSync(join(root, 'admin-mytradingcoach/src/styles.css'), 'utf8');
+    expect(admin).not.toContain('--error-state-accent');
+  });
+
   it('les deux apps qui l’utilisent définissent --red et --red-dim (sinon fond et bordure disparaissent)', () => {
     const root = join(import.meta.dirname, '../../../../../../apps');
     for (const theme of ['app-mytradingcoach/src/styles/theme.css', 'admin-mytradingcoach/src/styles.css']) {
