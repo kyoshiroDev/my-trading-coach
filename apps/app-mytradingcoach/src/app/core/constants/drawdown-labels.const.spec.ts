@@ -10,8 +10,8 @@ import { DRAWDOWN_LABELS } from './drawdown-labels.const';
  */
 const app = resolve(import.meta.dirname, '../..');
 const read = (path: string) => readFileSync(resolve(app, path), 'utf8');
-/** Texte visible d'un gabarit : sans les commentaires HTML. */
-const visible = (path: string) => read(path).replace(/<!--[\s\S]*?-->/g, '');
+/** Texte visible d'un gabarit : sans les commentaires HTML, `&nbsp;` décodé en U+00A0 (comme les textes partagés). */
+const visible = (path: string) => read(path).replace(/<!--[\s\S]*?-->/g, '').replace(/&nbsp;/g, '\u00a0');
 
 /** Écrans qui montrent la TAILLE de la règle de drawdown d'un compte ou d'un plan. */
 const RULE_SCREENS = [
@@ -38,7 +38,7 @@ describe('vocabulaire du drawdown', () => {
       expect(help).not.toContain('—');
       expect(help).not.toMatch(/rentable/i);
     }
-    expect(DRAWDOWN_LABELS.max.help).toBe('Plus forte baisse depuis un sommet, trade par trade, sur la période. Tous comptes : le compte le plus touché.');
+    expect(DRAWDOWN_LABELS.max.help).toBe('Plus forte baisse depuis un sommet, trade par trade, sur la période. Tous comptes\u00a0: le compte le plus touché.');
   });
 
   it.each(RULE_SCREENS)('%s : la règle s’appelle « Règle de drawdown », jamais « Drawdown max »', (path) => {

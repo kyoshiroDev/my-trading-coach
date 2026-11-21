@@ -26,6 +26,10 @@
   --red-dim: rgba(239, 68, 68, 0.12);
   --yellow: #f59e0b;
   --yellow-dim: rgba(245, 158, 11, 0.12);
+  /* Bandeau mtc-error-state (@mtc/front-ui) : erreur non-trading = avertissement, jamais --red
+     (réservé aux pertes, agent design). L'admin ne pose rien : rouge par défaut (#1152). */
+  --error-state-accent: var(--yellow);
+  --error-state-dim: var(--yellow-dim);
   --purple: #8b5cf6;
   --purple-bright: #a78bfa;
   --purple-dim: rgba(139, 92, 246, 0.12);

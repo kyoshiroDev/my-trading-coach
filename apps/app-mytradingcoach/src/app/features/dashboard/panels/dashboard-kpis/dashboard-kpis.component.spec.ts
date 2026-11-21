@@ -134,7 +134,7 @@ describe('DashboardKpisComponent — drawdown max par trade', () => {
   it('info-bulle : définition trade par trade et cas « tous les comptes »', () => {
     const tooltip = card(renderCase().nativeElement, 'Drawdown max').querySelector('mtc-info-tooltip')!;
     expect(tooltip.getAttribute('text')).toContain('Plus forte baisse depuis un sommet, trade par trade, sur la période.');
-    expect(tooltip.getAttribute('text')).toContain('Tous comptes : le compte le plus touché.');
+    expect(tooltip.getAttribute('text')).toContain('Tous comptes\u00a0: le compte le plus touché.');
   });
 
   it('aucun trade : 0 et « Aucune donnée »', () => {
