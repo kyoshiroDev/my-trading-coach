@@ -48,7 +48,7 @@ const html = `
         <li>✅ Trades illimités</li>
         <li>✅ Analytics avancés (par setup, émotion, heure)</li>
         <li>✅ IA Insights &amp; Chat Coach</li>
-        <li>✅ Weekly Debrief automatique</li>
+        <li>✅ Débrief hebdo automatique</li>
         <li>✅ Score Trader &amp; Export PDF</li>
       </ul>
       <a href="${appUrl}" style="${BTN_STYLE}">
