@@ -41,6 +41,8 @@ async function setup(page: Page, opts: { activationAvailable?: boolean } = {}) {
     localStorage.setItem('admin_access_token', 'e2e-token');
     localStorage.setItem('admin_user', JSON.stringify({ id: 'admin', email: 'admin@test.local', plan: 'FREE', role: 'ADMIN' }));
   });
+  // Polices Google : hors sujet et dépendantes du réseau, elles retardent l'événement « load ».
+  await page.route(/fonts\.(googleapis|gstatic)\.com/, (route) => route.abort());
   await page.route('**/api/**', async (route: Route) => {
     const req = route.request();
     const url = new URL(req.url());
@@ -64,9 +66,12 @@ async function setup(page: Page, opts: { activationAvailable?: boolean } = {}) {
 }
 
 test.describe('Admin · Tirages', () => {
+  // Serveur de dev : la première page compile à la demande.
+  test.describe.configure({ timeout: 90_000 });
+
   test('allumer le tirage gratuit : confirmation avec le nombre d’e-mails, puis appel de l’API', async ({ page }) => {
     const calls = await setup(page);
-    await page.goto('/tirages');
+    await page.goto('/tirages', { waitUntil: 'domcontentloaded' });
     const toggle = page.getByTestId('toggle-FREE');
     await expect(toggle).toHaveAttribute('aria-checked', 'false');
     await toggle.click();
@@ -80,7 +85,7 @@ test.describe('Admin · Tirages', () => {
 
   test('annuler la confirmation : rien n’est envoyé', async ({ page }) => {
     const calls = await setup(page);
-    await page.goto('/tirages');
+    await page.goto('/tirages', { waitUntil: 'domcontentloaded' });
     await page.getByTestId('toggle-FREE').click();
     await page.getByTestId('confirm-no-FREE').click();
     await expect(page.getByTestId('confirm-FREE')).toHaveCount(0);
@@ -89,7 +94,7 @@ test.describe('Admin · Tirages', () => {
 
   test('historique et modération : « Valider » puis « Refuser »', async ({ page }) => {
     const calls = await setup(page);
-    await page.goto('/tirages');
+    await page.goto('/tirages', { waitUntil: 'domcontentloaded' });
     const history = page.getByTestId('giveaway-history');
     await expect(history).toContainText('gagnant@test.local');
     await expect(history).toContainText('Léa M.');
@@ -104,7 +109,7 @@ test.describe('Admin · Tirages', () => {
 
   test('prod avant le lot B : interrupteur verrouillé et expliqué', async ({ page }) => {
     await setup(page, { activationAvailable: false });
-    await page.goto('/tirages');
+    await page.goto('/tirages', { waitUntil: 'domcontentloaded' });
     await expect(page.getByTestId('toggle-FREE')).toBeDisabled();
     await expect(page.getByTestId('pool-FREE').getByTestId('giveaway-activation-locked')).toContainText('lot B');
   });
