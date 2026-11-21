@@ -303,7 +303,7 @@
     <div class="locked-blocks">
       <!-- Bloc 1 : Equity Curve & Drawdown -->
       <div class="locked-feature">
-        <div class="locked-preview">
+        <div class="locked-preview" aria-hidden="true">
           <div class="preview-curves">
             <svg
               viewBox="0 0 400 100"
@@ -352,7 +352,7 @@
 
       <!-- Bloc 2 : Heatmap horaire -->
       <div class="locked-feature">
-        <div class="locked-preview">
+        <div class="locked-preview" aria-hidden="true">
           <div class="heatmap-preview-mock">
             @for (cell of mockCells; track $index) {
               <div
@@ -370,7 +370,7 @@
 
       <!-- Bloc 3 : Top Actifs & Setup -->
       <div class="locked-feature">
-        <div class="locked-preview">
+        <div class="locked-preview" aria-hidden="true">
           <div class="bars-preview-mock">
             @for (bar of mockBars; track $index) {
               <div class="mock-bar-row">
@@ -387,4 +387,3 @@
     </div>
   }
 </div>
-

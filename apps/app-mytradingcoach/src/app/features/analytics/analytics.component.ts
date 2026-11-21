@@ -96,7 +96,6 @@ export class AnalyticsComponent {
     return q ? `?${q}` : '';
   }
 
-
   protected readonly calYear = signal(new Date().getFullYear());
   protected readonly calMonth = signal(new Date().getMonth() + 1);
   protected readonly calData = signal<MonthlyActivitySummary | null>(null);
