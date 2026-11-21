@@ -312,12 +312,12 @@
             >
               <defs>
                 <linearGradient id="gGreen" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stop-color="#10b981" stop-opacity="0.3" />
-                  <stop offset="100%" stop-color="#10b981" stop-opacity="0" />
+                  <stop offset="0%" class="pv-stop-gain" stop-opacity="0.3" />
+                  <stop offset="100%" class="pv-stop-gain" stop-opacity="0" />
                 </linearGradient>
                 <linearGradient id="gRed" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stop-color="#ef4444" stop-opacity="0.3" />
-                  <stop offset="100%" stop-color="#ef4444" stop-opacity="0" />
+                  <stop offset="0%" class="pv-stop-loss" stop-opacity="0.3" />
+                  <stop offset="100%" class="pv-stop-loss" stop-opacity="0" />
                 </linearGradient>
               </defs>
               <!-- Equity curve (green) -->
@@ -328,7 +328,7 @@
               <path
                 d="M0,80 C40,70 80,50 120,40 C160,30 200,20 240,15 C280,10 320,18 360,12 L400,8"
                 fill="none"
-                stroke="#10b981"
+                class="pv-stroke-gain"
                 stroke-width="2"
               />
               <!-- Drawdown (red, smaller) -->
@@ -340,7 +340,7 @@
               <path
                 d="M0,20 C40,22 80,28 120,35 C160,28 200,25 240,30 C280,36 320,28 360,32 L400,30"
                 fill="none"
-                stroke="#ef4444"
+                class="pv-stroke-loss"
                 stroke-width="1.5"
                 opacity="0.7"
               />
@@ -372,7 +372,7 @@
               <div
                 class="mock-cell"
                 [style.background]="
-                  cell > 0.66 ? '#10b981' : cell > 0.5 ? '#f59e0b' : '#ef4444'
+                  cell > 0.66 ? 'var(--green)' : cell > 0.5 ? 'var(--yellow)' : 'var(--red)'
                 "
                 [style.opacity]="0.15 + cell * 0.5"
               ></div>

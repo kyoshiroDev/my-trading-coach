@@ -568,3 +568,10 @@
 mtc-inactive-accounts-toggle {
   margin-bottom: 16px;
 }
+
+/* Aperçu flouté du paywall (courbe de capital = gains, drawdown = pertes) : couleurs du thème,
+   jamais en dur (#1174). Classes plutôt que var() dans les attributs SVG de présentation. */
+.pv-stop-gain { stop-color: var(--green); }
+.pv-stop-loss { stop-color: var(--red); }
+.pv-stroke-gain { stroke: var(--green); }
+.pv-stroke-loss { stroke: var(--red); }
