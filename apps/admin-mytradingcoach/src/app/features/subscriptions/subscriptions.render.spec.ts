@@ -47,13 +47,13 @@ describe('SubscriptionsComponent', () => {
   }
 
   it('montant mensuel et annuel issus de PREMIUM_PRICE_EUR', async () => {
-    const el = await render({ stripeUsers: [user('m', 'month'), user('y', 'year')], betaTesters: [], total: 2, page: 1, limit: 20 });
+    const el = await render({ stripeUsers: [user('m', 'month'), user('y', 'year')], betaTesters: [], page: 1, limit: 20 });
     const amounts = [...el.querySelectorAll('td[data-label="Montant"]')].map((td) => td.textContent?.trim());
     expect(amounts).toEqual([`${PREMIUM_PRICE_EUR.monthly} €/mois`, `${PREMIUM_PRICE_EUR.annual} €/an`]);
   });
 
   it('KPIs : MRR, essais et offerts (#828)', async () => {
-    const el = await render({ stripeUsers: [], betaTesters: [], total: 0, page: 1, limit: 20 });
+    const el = await render({ stripeUsers: [], betaTesters: [], page: 1, limit: 20 });
     expect(el.textContent).toContain('98€');
     expect(el.textContent).toContain('+ 0 offert');
     expect(el.textContent).not.toContain('essai 30 j');
@@ -68,7 +68,7 @@ describe('SubscriptionsComponent', () => {
       { ...user('annule', 'month'), stripeSubscriptionStatus: 'trialing', stripeCurrentPeriodEnd: soon, stripeCancelAt: soon },
       { ...user('offert', null), plan: 'FREE', trialEndsAt: soon, trialSource: 'ADMIN', stripeCurrentPeriodEnd: null },
     ];
-    const el = await render({ stripeUsers: [], betaTesters: [], trialUsers, total: 0, page: 1, limit: 20 });
+    const el = await render({ stripeUsers: [], betaTesters: [], trialUsers, page: 1, limit: 20 });
     const rows = [...el.querySelectorAll('[data-testid="trial-row"]')].map((tr) =>
       [...tr.querySelectorAll('td')].slice(1).map((td) => td.textContent?.trim()));
     expect(rows).toEqual([
@@ -90,7 +90,7 @@ describe('SubscriptionsComponent', () => {
   // nouveau numéro, sans erreur.
   it('A8 : page suivante en échec, numéro inchangé et erreur affichée', async () => {
     const page1 = Array.from({ length: 20 }, (_, i) => user(`m${i}`, 'month'));
-    const el = await render({ stripeUsers: page1, stripeTotal: 57, betaTesters: [], total: 57, page: 1, limit: 20 });
+    const el = await render({ stripeUsers: page1, stripeTotal: 57, betaTesters: [], page: 1, limit: 20 });
     (el.querySelector('[data-testid="subs-next"]') as HTMLButtonElement).click();
     http.expectOne((r) => r.url === `${environment.apiUrl}/admin/users/subscriptions`)
       .flush({}, { status: 500, statusText: 'Server Error' });
@@ -108,7 +108,7 @@ describe('SubscriptionsComponent', () => {
           createdAt: '2026-10-01T00:00:00.000Z', partnerCode: { code: 'TRADER10' },
         } },
       ],
-      betaTesters: [], total: 2, page: 1, limit: 20,
+      betaTesters: [], page: 1, limit: 20,
     });
     const amounts = [...el.querySelectorAll('td[data-label="Montant"]')].map((td) => td.textContent?.trim());
     expect(amounts).toEqual(['29 €/mois', '290 €/an']);
@@ -117,7 +117,7 @@ describe('SubscriptionsComponent', () => {
   });
 
   it('KPI Fondateurs : places prises / 200, actifs, offre ouverte', async () => {
-    const el = await render({ stripeUsers: [], betaTesters: [], total: 0, page: 1, limit: 20 });
+    const el = await render({ stripeUsers: [], betaTesters: [], page: 1, limit: 20 });
     expect(el.textContent).toContain('37 / 200');
     expect(el.textContent).toContain('35 actifs · offre ouverte');
   });
@@ -125,12 +125,12 @@ describe('SubscriptionsComponent', () => {
   // A8 (#1065) : 20 lignes renvoyées, KPI « Stripe actifs » = 20, aucune pagination.
   it('A8 : KPI sur le total des abonnés, pagination vers la page 2', async () => {
     const page1 = Array.from({ length: 20 }, (_, i) => user(`m${i}`, 'month'));
-    const el = await render({ stripeUsers: page1, stripeTotal: 57, betaTesters: [], total: 57, page: 1, limit: 20 });
+    const el = await render({ stripeUsers: page1, stripeTotal: 57, betaTesters: [], page: 1, limit: 20 });
     expect(el.querySelector('[data-testid="kpi-stripe"]')?.textContent?.trim()).toBe('57');
     (el.querySelector('[data-testid="subs-next"]') as HTMLButtonElement).click();
     const req = http.expectOne((r) => r.url === `${environment.apiUrl}/admin/users/subscriptions`);
     expect(req.request.params.get('page')).toBe('2');
-    req.flush({ data: { stripeUsers: [user('p2', 'year')], stripeTotal: 57, betaTesters: [], total: 57, page: 2, limit: 20 } });
+    req.flush({ data: { stripeUsers: [user('p2', 'year')], stripeTotal: 57, betaTesters: [], page: 2, limit: 20 } });
   });
 
   // A9 (#1065) : abonné résilié affiché « actif » avec une date de « Renouvellement ».
@@ -138,7 +138,7 @@ describe('SubscriptionsComponent', () => {
     const end = '2099-12-01T00:00:00.000Z';
     const el = await render({
       stripeUsers: [{ ...user('r', 'month'), stripeSubscriptionStatus: 'active', stripeCancelAt: end }],
-      stripeTotal: 1, betaTesters: [], total: 1, page: 1, limit: 20,
+      stripeTotal: 1, betaTesters: [], page: 1, limit: 20,
     });
     const status = el.querySelector('td[data-label="Statut"]')?.textContent?.trim();
     expect(status).toBe('résilié');
@@ -148,7 +148,7 @@ describe('SubscriptionsComponent', () => {
   // A10 (#1065) : abonnements en pause nulle part.
   it('A10 : bloc « En pause » avec les abonnements past_due / unpaid', async () => {
     const el = await render({
-      stripeUsers: [], stripeTotal: 0, betaTesters: [], total: 0, page: 1, limit: 20,
+      stripeUsers: [], stripeTotal: 0, betaTesters: [], page: 1, limit: 20,
       pausedUsers: [{ ...user('pause', 'month'), stripeSubscriptionStatus: 'past_due' }],
     });
     const rows = el.querySelectorAll('[data-testid="paused-row"]');
@@ -163,7 +163,7 @@ describe('SubscriptionsComponent', () => {
   // dans un badge Premium.
   it('A10 : accès manuels, accès réel affiché (rôle bêta ou Premium accordé)', async () => {
     const el = await render({
-      stripeUsers: [], stripeTotal: 0, total: 2, page: 1, limit: 20,
+      stripeUsers: [], stripeTotal: 0, page: 1, limit: 20,
       betaTesters: [
         { ...user('beta', null), plan: 'FREE', role: 'BETA_TESTER' },
         { ...user('offert', null), plan: 'PREMIUM', role: 'USER' },
@@ -180,7 +180,7 @@ describe('SubscriptionsComponent', () => {
   it('A11 : KPI Fondateurs « offre terminée » quand l’offre ne vend plus', async () => {
     FOUNDERS.offer = { ...FOUNDERS.offer, ended: true } as typeof FOUNDERS.offer;
     try {
-      const el = await render({ stripeUsers: [], betaTesters: [], total: 0, page: 1, limit: 20 });
+      const el = await render({ stripeUsers: [], betaTesters: [], page: 1, limit: 20 });
       expect(el.textContent).toContain('offre terminée');
       expect(el.textContent).not.toContain('offre ouverte');
     } finally {
