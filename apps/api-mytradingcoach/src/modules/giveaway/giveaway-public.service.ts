@@ -27,12 +27,13 @@ import { GiveawayEligibilityService, premiumSeniorityOk } from './giveaway-eligi
 import { premiumOfferRefusal } from '../users/premium-offer.util';
 import { GiveawaySettingsService } from './giveaway-settings.service';
 import { safePrizeError } from './giveaway-errors';
+import { GIVEAWAY_PUBLIC_CACHE_KEY } from './giveaway-cache';
 
 const DAY_MS = 24 * 3600_000;
 /** Derniers gagnants montrés (page de l'app et landing). */
 const WINNERS_SHOWN = 12;
 /** État public en cache (landing, une requête par visiteur) : invalidé par la modération. */
-export const GIVEAWAY_PUBLIC_CACHE_KEY = 'giveaway:public-state';
+export { GIVEAWAY_PUBLIC_CACHE_KEY };
 const PUBLIC_CACHE_TTL_S = 60;
 /** Ancienneté Premium d'un abonné (lecture Stripe) : en cache, une page vue = pas un appel Stripe. */
 const SENIORITY_CACHE_TTL_S = 3600;

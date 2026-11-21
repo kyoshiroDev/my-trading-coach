@@ -14,6 +14,7 @@ import { LiveModeService } from '@app/core/services/live-mode.service';
 import { DemoService } from '@app/core/services/demo.service';
 import { GiveawayStateService } from '@app/core/services/giveaway-state.service';
 import { TradovateLiveSocketService } from '@app/core/services/tradovate-live-socket.service';
+import SIDEBAR_TEMPLATE from './sidebar.component.html?raw';
 
 type Plan = 'FREE' | 'PREMIUM';
 
@@ -113,15 +114,12 @@ describe('SidebarComponent — repli persistant', () => {
   });
 });
 
-/** Tirage mensuel (PROMPT-tirage-mensuel, lot B) : « Score trader » devient « Concours du mois ». */
+/** Tirage mensuel (PROMPT-tirage-mensuel, lot B) : « Score trader » devient « Concours du mois » (VRAI gabarit). */
 describe('SidebarComponent — entrée Concours du mois', () => {
-  const NAV_TEMPLATE = `
-    @if (giveaway.enabled()) {
-      <a data-testid="nav-concours">Concours du mois</a>
-    } @else {
-      <a data-testid="nav-scoring">Score trader</a>
-    }
-  `;
+
+  /** Double neutre : toute méthode non définie renvoie null (le vrai gabarit en lit beaucoup). */
+  const neutral = <T extends object>(base: T): T =>
+    new Proxy(base, { get: (t, k) => (k in t ? (t as Record<PropertyKey, unknown>)[k] : () => null) });
 
   function mountNav(enabled: boolean, authenticated = true) {
     const giveaway = { enabled: signal(enabled), state: signal(enabled ? { enabled } : null), load: vi.fn() };
@@ -130,18 +128,18 @@ describe('SidebarComponent — entrée Concours du mois', () => {
         provideRouter([]),
         provideHttpClient(),
         provideHttpClientTesting(),
-        { provide: UserStore, useValue: { isPremium: () => false, isDemo: () => false, isAmbassador: () => false, displayName: () => 'Greg', initials: () => 'GR', user: () => ({ onboardingCompleted: true }) } },
+        { provide: UserStore, useValue: neutral({ isPremium: () => false, isDemo: () => false, isAmbassador: () => false, displayName: () => 'Greg', initials: () => 'GR', user: () => ({ onboardingCompleted: true }) }) },
         { provide: AuthService, useValue: { isAuthenticated: () => authenticated, fetchMe: () => of(null), logout: vi.fn() } },
         { provide: UsersApi, useValue: { finishOnboarding: () => of({ data: {} }) } },
-        { provide: AmbassadorNotifService, useValue: { newReferrals: () => 0 } },
-        { provide: LiveModeService, useValue: { isLive: () => false } },
-        { provide: DemoService, useValue: { showSignupPrompt: () => false, dismiss: vi.fn() } },
+        { provide: AmbassadorNotifService, useValue: neutral({ newReferrals: () => 0 }) },
+        { provide: LiveModeService, useValue: neutral({ isLive: () => false }) },
+        { provide: DemoService, useValue: neutral({ showSignupPrompt: () => false, dismiss: vi.fn() }) },
         { provide: TradovateLiveSocketService, useValue: { connect: vi.fn(), disconnect: vi.fn() } },
         { provide: GiveawayStateService, useValue: giveaway },
       ],
     });
     TestBed.overrideComponent(SidebarComponent, {
-      set: { template: NAV_TEMPLATE, imports: [], styleUrls: [], styleUrl: undefined as unknown as string, schemas: [NO_ERRORS_SCHEMA] },
+      set: { template: SIDEBAR_TEMPLATE, imports: [], styleUrls: [], styleUrl: undefined as unknown as string, schemas: [NO_ERRORS_SCHEMA] },
     });
     const fixture = TestBed.createComponent(SidebarComponent);
     fixture.detectChanges();

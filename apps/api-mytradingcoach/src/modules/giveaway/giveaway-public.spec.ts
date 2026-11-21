@@ -53,6 +53,7 @@ const freeUser = (over: Record<string, unknown> = {}) => ({
 freezeClock(NOW);
 beforeEach(() => {
   vi.clearAllMocks();
+  eligibility.countTrades.mockResolvedValue(3);
   store.clear();
   settingsRow.freeEnabled = true;
   settingsRow.premiumEnabled = false;
@@ -116,7 +117,6 @@ describe('état de la page (mon statut)', () => {
     expect((await service.appState('u1', NOW)).me).toMatchObject({ pool: 'FREE', reason: 'not_eligible' });
     user = freeUser({ stripeSubscriptionId: 'sub', stripeSubscriptionStatus: 'past_due' });
     expect((await service.appState('u1', NOW)).me.reason).toBe('not_eligible');
-    eligibility.countTrades.mockResolvedValue(3);
   });
 
   it('abonné : tirage Premium éteint → « pool_off » ; allumé, moins de 2 mois → « premium_too_recent »', async () => {

@@ -21,6 +21,7 @@ import { OFFER_PREMIUM_DEFAULT_DAYS, PREMIUM_OFFERABLE_WHERE, hasActiveStripeSub
 import { StripeAccountClosureService } from '../stripe/stripe-account-closure.service';
 import { DiscordGuildClient } from '../discord/discord-guild.client';
 import { RedisService } from '../infra/redis.service';
+import { GIVEAWAY_PUBLIC_CACHE_KEY } from '../giveaway/giveaway-cache';
 import { insightsCooldownKey, insightsKeptKey } from '../ai/insights-cache-keys';
 import { billingCacheKey } from '../stripe/stripe.helpers';
 import { isPremiumAccess } from '../discord/discord-access.util';
@@ -303,8 +304,6 @@ export class UsersService {
       this.prisma.user.delete({ where: { id: userId } }),
     ]);
     await this.userCache?.invalidate(userId); // jeton encore valide d'un compte supprimé : refusé immédiatement
-    // Tirage mensuel : le nom d'un gagnant supprimé ne reste pas dans l'état public en cache (60 s).
-    await this.redisService?.client.del('giveaway:public-state').catch(() => undefined);
     // Dernière analyse IA (contenu tiré des trades) et délai des insights effacés avec le compte (#1056).
     // Redis absent : on ne bloque pas la suppression, les clés expirent seules sous 4 h.
     try {
@@ -313,6 +312,12 @@ export class UsersService {
       this.logger.warn(
         `Compte supprimé : cache IA des insights non effacé, expire sous 4 h (user ${userId}) : ${err instanceof Error ? err.message : String(err)}`,
       );
+    }
+    // Tirage mensuel : le nom d'un gagnant supprimé ne reste pas dans l'état public en cache (60 s).
+    try {
+      await this.redisService?.client.del(GIVEAWAY_PUBLIC_CACHE_KEY);
+    } catch {
+      /* Redis indisponible : le cache expire seul en 60 s */
     }
     // Le Discord relié perd ses rôles : sans compte, plus d'accès aux salons réservés (#741).
     if (user.discordId && (await this.discordGuild?.removePlanRoles(user.discordId)) === false) {
