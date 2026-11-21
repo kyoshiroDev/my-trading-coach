@@ -45,10 +45,10 @@
 @media (max-width: 768px) {
   .cell { text-align: right; }
   .cell .mod-row { justify-content: flex-end; }
-  .msg-cell { max-width: none; }
+  .msg-cell { max-width: none; min-width: 0; }
 }
 .btn-sm { padding: var(--space-1) var(--space-2); margin-top: var(--space-1); }
-.msg-cell { max-width: 260px; }
+.msg-cell { max-width: 260px; min-width: 200px; }
 .msg { display: block; font-size: var(--fs-xs); color: var(--text2); line-height: 1.5; overflow-wrap: anywhere; }
 .mod-row { display: flex; align-items: center; gap: var(--space-1); flex-wrap: wrap; }
 
