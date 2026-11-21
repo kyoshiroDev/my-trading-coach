@@ -121,3 +121,11 @@ Texte de Greg : « tous est merge continue la suite »
 Texte de Greg : « continue les ticket ouvert dans l'audite »
 
 Ordre retenu (tickets faisables sans Greg d'abord) : #1073, #1101, #1060, #1102, puis #1068 (VPS par Greg). En attente de Greg : #1004 (logs prod), #1059 (décision : qui reçoit l'e-mail), #1110 (SHOW CONFIG). #1073 est issu du sous-lot 4a (#1063) : trois copies d'escapeHtml, sujet du relevé de commissions échappé, stats ambassadeur sans contrat partagé.
+
+## Complément #1101 (2026-11-21)
+
+Suite de « continue les ticket ouvert dans l'audite » (ordre retenu au complément #1073). #1101 est issu de la vérification design du 4c (#1065) : composant error-state de `@mtc/front-ui`, rouge de l'app trader écrit en dur et focus du bouton Réessayer.
+
+## Complément #1060 (2026-11-21)
+
+Suite de « continue les ticket ouvert dans l'audite » (ordre retenu au complément #1073). #1060 est issu de la vérification du sous-lot 3d (#1048) : deux jobs « generate » simultanés pour la même semaine (dimanche resté en file et rattrapage du lundi) pouvaient envoyer deux e-mails.

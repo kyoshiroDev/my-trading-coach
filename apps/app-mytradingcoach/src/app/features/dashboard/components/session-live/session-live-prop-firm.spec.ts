@@ -33,7 +33,10 @@ const conn: TradovateConnection = {
   lastSyncError: null, tradesImported: 0, brokerTradesCount: 0, connectedAt: '', syncPaused: false, syncPausedReason: null,
 };
 
-function setup(opts: { type?: TradingAccount['type']; connected?: boolean; loaded?: boolean }) {
+function setup(opts: {
+  type?: TradingAccount['type']; connected?: boolean; loaded?: boolean;
+  noSession?: boolean; canStart?: boolean; startDisabled?: boolean;
+}) {
   const connections = signal(opts.connected === false ? [] : [conn]);
   // Par défaut, connexions déjà chargées (cas « passé par Mes comptes »).
   const loaded = signal(opts.loaded ?? true);
@@ -58,7 +61,12 @@ function setup(opts: { type?: TradingAccount['type']; connected?: boolean; loade
   const fixture = TestBed.createComponent(SessionLiveComponent);
   const session = { id: 's', status: 'ACTIVE', accountId: 'a' } as unknown as TradingSession;
   // Entrées signal non alimentées en JIT (cf. angular.md) : remplacées avant le premier rendu.
-  (fixture.componentInstance as unknown as { session: () => TradingSession }).session = signal(session);
+  const inputs = fixture.componentInstance as unknown as {
+    session: () => TradingSession | null; canStart: () => boolean; startDisabled: () => boolean;
+  };
+  inputs.session = signal(opts.noSession ? null : session);
+  inputs.canStart = signal(opts.canStart ?? true);
+  inputs.startDisabled = signal(opts.startDisabled ?? false);
   fixture.detectChanges();
   const el = fixture.nativeElement as HTMLElement;
   return { fixture, el, connections, load };
@@ -129,5 +137,25 @@ describe('Session live — suivi prop firm à la place de Trade rapide', () => {
 
   it('connexions déjà chargées : pas de nouvel appel', () => {
     expect(setup({}).load).not.toHaveBeenCalled();
+  });
+});
+
+describe('Session live — sans séance, bouton « Démarrer » (#1031)', () => {
+  beforeEach(() => TestBed.resetTestingModule());
+
+  it('compte démo (canStart faux) : ni bouton ni message d’aide, même grisé', () => {
+    const { el } = setup({ noSession: true, canStart: false, startDisabled: true });
+    expect(el.querySelector('[data-testid="start-session-live"]')).toBeNull();
+    expect(el.querySelector('.no-session-hint')).toBeNull();
+    expect(el.querySelector('[data-testid="no-session-demo"]')).not.toBeNull();
+  });
+
+  it('compte normal : bouton présent, grisé avec le message tant qu’aucun compte n’est choisi', () => {
+    const { el } = setup({ noSession: true, startDisabled: true });
+    const btn = el.querySelector<HTMLButtonElement>('[data-testid="start-session-live"]');
+    expect(btn).not.toBeNull();
+    expect(btn!.disabled).toBe(true);
+    expect(el.querySelector('.no-session-hint')).not.toBeNull();
+    expect(el.querySelector('[data-testid="no-session-demo"]')).toBeNull();
   });
 });
