@@ -93,7 +93,7 @@ export class GiveawayInstagramService {
    */
   async publish(winId: string, args: { caption: string; imageUrl: string; publishAt?: string | null }): Promise<AdminGiveawayInstagramPublishResponse> {
     await this.publishableFacts(winId);
-    if (!this.metricool.configured) throw new ConflictException('Metricool n’est pas configuré\u00a0: ouvre l’image et copie la légende.');
+    if (!this.metricool.configured) throw new ServiceUnavailableException('Metricool n’est pas configuré\u00a0: ouvre l’image et copie la légende.');
     const { caption, problems } = checkCaption(args.caption);
     if (problems.length) throw new BadRequestException(`Légende refusée (${problems.join(', ')}).`);
     if (!this.isOurImage(args.imageUrl)) throw new BadRequestException('Image inconnue : recharge l’aperçu.');

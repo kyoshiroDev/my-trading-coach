@@ -228,7 +228,8 @@ describe('GiveawayComponent', () => {
     http.expectOne(`${BASE}/wins/w1/instagram/publish`).flush({ message: 'Ce gagnant a déjà été publié sur Instagram.' }, { status: 409, statusText: 'Conflict' });
     http.expectOne(BASE).flush({ data: data() });
     fixture.detectChanges();
-    expect(q(el, 'ig-download')).toBeNull();
+    expect(q(el, 'ig-panel')).toBeNull(); // panneau fermé : plus de bouton de confirmation
+    expect(el.textContent).toContain('déjà été publié');
   });
 
   it('erreur de chargement : message affiché', async () => {

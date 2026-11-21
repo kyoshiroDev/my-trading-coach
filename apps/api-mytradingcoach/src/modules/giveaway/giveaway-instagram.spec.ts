@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { BadGatewayException, BadRequestException, ConflictException } from '@nestjs/common';
+import { BadGatewayException, BadRequestException, ConflictException, ServiceUnavailableException } from '@nestjs/common';
 import { freezeClock } from '../../test/freeze-clock';
 import { GiveawayInstagramService, INSTAGRAM_TOKEN_RE } from './giveaway-instagram.service';
 import { MetricoolClient, MetricoolError } from './metricool.client';
@@ -124,7 +124,7 @@ describe('GiveawayInstagramService', () => {
     anthropic.enabled = false;
     const { imageUrl, caption } = await service.preview('w1');
     metricool.configured = false;
-    await expect(service.publish('w1', { caption, imageUrl })).rejects.toBeInstanceOf(ConflictException);
+    await expect(service.publish('w1', { caption, imageUrl })).rejects.toBeInstanceOf(ServiceUnavailableException);
     metricool.configured = true;
     await expect(service.publish('w1', { caption: 'Gagne 49 €', imageUrl })).rejects.toBeInstanceOf(BadRequestException);
     await expect(service.publish('w1', { caption, imageUrl: 'https://ailleurs.test/x.png' })).rejects.toBeInstanceOf(BadRequestException);

@@ -206,13 +206,14 @@ export class GiveawayComponent {
         error: (err: unknown) => {
           this.busy.set(null);
           const status = err instanceof HttpErrorResponse ? err.status : 0;
-          if (status === 502) {
-            // Refus ou panne de Metricool : publication manuelle.
+          if (status === 502 || status === 503) {
+            // Refus, panne ou configuration absente de Metricool : publication manuelle.
             this.igFallback.set(true);
             this.igError.set(apiErrorMessage(err, 'Metricool a refusé la publication. Ouvre l’image et copie la légende.'));
           } else if (status === 409) {
             // Déjà publié ou en cours (autre onglet) : jamais de publication manuelle en double.
-            this.igError.set(apiErrorMessage(err, 'Ce gagnant a déjà été publié sur Instagram.'));
+            this.closeInstagram();
+            this.actionError.set(apiErrorMessage(err, 'Ce gagnant a déjà été publié sur Instagram.'));
             this.load();
           } else {
             // Heure invalide, légende refusée, réseau : l'admin corrige et réessaie.
