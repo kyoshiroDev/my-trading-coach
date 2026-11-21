@@ -15,6 +15,7 @@ import { GiveawayDrawService, type DrawOutcome } from './giveaway-draw.service';
 import { GiveawayEligibilityService } from './giveaway-eligibility.service';
 import { GiveawayPrizeService } from './giveaway-prize.service';
 import { GiveawaySettingsService } from './giveaway-settings.service';
+import { GIVEAWAY_PUBLIC_CACHE_KEY } from './giveaway-public.service';
 
 const HISTORY_LIMIT = 48;
 /**
@@ -65,6 +66,7 @@ export class GiveawayAdminService {
 
   async setEnabled(pool: GiveawayPool, enabled: boolean): Promise<AdminGiveawaySettingsResponse> {
     const announcementsQueued = await this.settings.setEnabled(pool, enabled);
+    await this.invalidatePublic();
     const s = await this.settings.get();
     return { state: await this.poolState(pool, s, new Date()), announcementsQueued };
   }
@@ -76,6 +78,7 @@ export class GiveawayAdminService {
       data: { moderation, moderatedAt: new Date() },
     });
     if (count === 0) throw new NotFoundException('Lot introuvable.');
+    await this.invalidatePublic(); // message validé ou refusé : visible ou retiré dans la minute
     return (await this.history(winId))[0]?.win ?? null;
   }
 
@@ -89,6 +92,11 @@ export class GiveawayAdminService {
     await this.prizes.apply(winId);
     const rows = await this.history(winId);
     return rows[0]?.win ?? null;
+  }
+
+  /** État public (landing, page de l'app) en cache 60 s : vidé après un changement de l'admin. */
+  private async invalidatePublic(): Promise<void> {
+    await this.redisService.client.del(GIVEAWAY_PUBLIC_CACHE_KEY).catch(() => undefined);
   }
 
   /** « Tirer maintenant » : hors prod seulement (`GIVEAWAY_MANUAL_DRAW=true`). */

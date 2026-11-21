@@ -191,3 +191,4 @@ Contenu déplacé à l'identique le 2026-11-16. Lire un fichier seulement quand 
 | `astro/seo-blog.md` | nouvel article de blog |
 | `astro/seo-technique.md` | titres, meta, Open Graph, JSON-LD, sitemap, robots.txt, llms.txt, maillage, images de partage |
 | `commun/essai-premium.md` | essai d'inscription 14 j, essai Stripe 30 j, fin d'essai, libellés d'essai |
+| `commun/tirage-mensuel.md` | tirage au sort mensuel : section de `/prop-firm`, page `/reglement-tirage`, route publique |

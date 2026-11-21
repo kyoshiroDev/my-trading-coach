@@ -120,11 +120,11 @@ test.describe('Admin · Tirages', () => {
     expect(bodies).toEqual([{ moderation: 'VALIDE' }, { moderation: 'REFUSE' }]);
   });
 
-  test('prod avant le lot B : interrupteur verrouillé et expliqué', async ({ page }) => {
+  test('verrou prod fermé : interrupteur verrouillé et expliqué', async ({ page }) => {
     await setup(page, { activationAvailable: false });
     await page.goto('/tirages', { waitUntil: 'domcontentloaded' });
     await expect(page.getByTestId('toggle-FREE')).toBeDisabled();
-    await expect(page.getByTestId('activation-locked-FREE')).toContainText('lot B');
+    await expect(page.getByTestId('activation-locked-FREE')).toContainText('Activation en prod fermée');
     await expect(page.getByTestId('toggle-FREE')).toHaveAttribute('aria-describedby', 'activation-locked-FREE');
   });
 });

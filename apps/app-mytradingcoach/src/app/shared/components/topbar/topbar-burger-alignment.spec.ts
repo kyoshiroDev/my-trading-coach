@@ -109,6 +109,9 @@ const SANS_TOPBAR: Record<string, string | null> = {
   'features/ambassador/ambassador.component': '.content',
   'features/referral/referral.component': '.content',
   'features/become-ambassador/become-ambassador.component': '.content',
+  // Tirage mensuel (PROMPT-tirage-mensuel, lot B).
+  'features/giveaway/giveaway.component': '.content',
+  'features/giveaway/giveaway-winner.component': '.content',
 };
 
 describe('pages du shell sans topbar commune', () => {

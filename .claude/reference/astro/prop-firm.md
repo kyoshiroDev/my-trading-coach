@@ -108,3 +108,8 @@ newsletter.
   quelle. La refonte de l'accueil (contenu servi sur `/` sans 302) reste possible plus tard.
 - **Retrait** : supprimer les deux blocs nginx (deploy.md), remettre `accueil.astro` en `index.astro`
   (canonical `/`, sans `noindex`, `<Nav />` sans `home`), restaurer les liens `/` et le filtre sitemap.
+
+> **Tirage mensuel (#1158, 2026-11-21)** : section `PfGiveaway.astro` après la grille de prix, cachée
+> par défaut et affichée côté navigateur seulement si `GET /public/giveaway` dit `enabled` (aucune
+> donnée personnelle sans accord). Règlement : `/reglement-tirage` (noindex, exclu du sitemap dans
+> `astro.config.mjs`). Détail : `commun/tirage-mensuel.md`.
