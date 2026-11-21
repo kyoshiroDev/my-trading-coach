@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { ConflictException, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { GiveawayPool, GiveawaySettings, Prisma } from '@prisma/client';
 import { randomUUID } from 'crypto';
@@ -16,6 +16,18 @@ const SETTINGS_ID = 1;
 const PAGE_SIZE = 500;
 const ANNOUNCE_LOCK_TTL_S = 2 * 60 * 60;
 const PROD_FRONTEND_URL = 'https://app.mytradingcoach.app';
+
+/**
+ * Verrou d'activation en prod (relecteur du 21/11) : fermé tant que le lot B (page « Concours du
+ * mois », page gagnant, règlement, politique de confidentialité) n'est pas livré. L'annonce et les
+ * e-mails renvoient vers ces pages. Passé à `true` dans le lot B. Hors prod, l'activation reste libre.
+ */
+export const GIVEAWAY_PROD_ACTIVATION_OPEN = false;
+export const GIVEAWAY_ACTIVATION_LOCKED_MESSAGE =
+  'Activation en prod disponible avec le lot B (page « Concours du mois » et règlement).';
+
+/** URL comparée sans casse ni barre finale : une URL de prod écrite autrement reste la prod. */
+const normUrl = (u: string) => u.trim().toLowerCase().replace(/\/+$/, '');
 
 /**
  * E-mails d'annonce (marketing, décision du relecteur du 21/11) : consentement et désinscription
@@ -81,10 +93,17 @@ export class GiveawaySettingsService {
 
   /** « Tirer maintenant » : seulement hors prod, et si `GIVEAWAY_MANUAL_DRAW=true`. */
   manualDrawAvailable(): boolean {
-    // Comparaison normalisée (casse, barre finale) : une URL de prod écrite autrement reste la prod.
-    const norm = (u: string) => u.trim().toLowerCase().replace(/\/+$/, '');
-    const frontendUrl = norm(this.config.get<string>('FRONTEND_URL') ?? PROD_FRONTEND_URL);
-    return this.config.get<string>('GIVEAWAY_MANUAL_DRAW') === 'true' && frontendUrl !== norm(PROD_FRONTEND_URL);
+    return this.config.get<string>('GIVEAWAY_MANUAL_DRAW') === 'true' && !this.isProd();
+  }
+
+  /** Allumer un tirage est possible : toujours hors prod, en prod seulement verrou ouvert (lot B). */
+  activationAvailable(): boolean {
+    return GIVEAWAY_PROD_ACTIVATION_OPEN || !this.isProd();
+  }
+
+  /** Prod = `FRONTEND_URL` absent ou égal à l'app de prod (normalisé). */
+  private isProd(): boolean {
+    return normUrl(this.config.get<string>('FRONTEND_URL') ?? PROD_FRONTEND_URL) === normUrl(PROD_FRONTEND_URL);
   }
 
   /** Destinataires réels de l'annonce (consentement marketing filtré), affiché dans la confirmation. */
@@ -109,6 +128,7 @@ export class GiveawaySettingsService {
       this.logger.log(`Tirage ${pool} éteint.`);
       return 0;
     }
+    if (!this.activationAvailable()) throw new ConflictException(GIVEAWAY_ACTIVATION_LOCKED_MESSAGE);
     // Déjà allumé : rien ne change (pas de nouvelle date d'activation, pas de seconde annonce).
     await this.prisma.giveawaySettings.updateMany({
       where: { id: SETTINGS_ID, ...(free ? { freeEnabled: false } : { premiumEnabled: false }) },

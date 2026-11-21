@@ -58,6 +58,7 @@ export class GiveawayAdminService {
       premium,
       nextDrawAt: nextGiveawayDrawAt(now).toISOString(),
       manualDrawAvailable: this.settings.manualDrawAvailable(),
+      activationAvailable: this.settings.activationAvailable(),
       history,
     };
   }

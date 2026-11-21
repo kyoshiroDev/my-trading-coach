@@ -5,6 +5,7 @@
 import {
   GIVEAWAY_FREE_PRIZE_MONTHS,
   GIVEAWAY_MIN_TRADES,
+  GIVEAWAY_PREMIUM_MIN_PAID_MONTHS,
   GIVEAWAY_PREMIUM_PRIZE_MONTHS,
   GiveawayPool,
   giveawayDrawDayLabel,
@@ -49,12 +50,12 @@ export function giveawayWinnerTemplate(params: {
 }): CampaignContent {
   const prize = months(params.prizeMonths);
   const end = longDateFr(params.endsAt);
+  const free = params.pool === GiveawayPool.FREE;
+  const deduction = params.interval === 'year' ? 'de ton prochain renouvellement annuel' : 'de tes prochains prélèvements';
   const what =
-    params.pool === GiveawayPool.FREE
+    free
       ? `Tu as gagné <strong>${prize} de Premium</strong>, déjà activé sur ton compte, sans carte. Il court jusqu'au ${end}, puis ton compte repasse en gratuit tout seul&nbsp;: rien n'est prélevé.`
-      : `Tu as gagné <strong>${prize} offerts</strong> sur ton abonnement Premium. Le montant est déjà crédité sur ton compte de facturation et sera déduit ${
-          params.interval === 'year' ? 'de ton prochain renouvellement annuel' : 'de tes prochains prélèvements'
-        }. Ton abonnement continue ensuite normalement.`;
+      : `Tu as gagné <strong>${prize} offerts</strong> sur ton abonnement Premium. Le montant est déjà crédité sur ton compte de facturation et sera déduit ${deduction}. Ton abonnement continue ensuite normalement.`;
   const content =
     card(`
       ${heading('Tirage du mois', 'Tu as gagné le tirage du mois')}
@@ -64,8 +65,15 @@ export function giveawayWinnerTemplate(params: {
       ${cta('Voir ma page gagnant', onboardingLink(params.appUrl, GIVEAWAY_WINNER_PATH, 'giveaway_winner'))}
     `) + RISK_NOTICE;
   return {
-    subject: `Tu as gagné le tirage du mois\u00a0: ${prize} offerts`,
-    html: emailWrapper(content, `${prize} offerts, jusqu'au ${end}.`, ACCENT.brand),
+    subject: free
+      ? `Tu as gagné le tirage du mois\u00a0: ${prize} de Premium offert`
+      : `Tu as gagné le tirage du mois\u00a0: ${prize} offerts`,
+    // Lot Premium = avoir : pas de date de fin, il est déduit des prochaines échéances.
+    html: emailWrapper(
+      content,
+      free ? `${prize} de Premium offert, jusqu'au ${end}.` : `${prize} offerts, déduits ${deduction}.`,
+      ACCENT.brand,
+    ),
     from: GIVEAWAY_FROM,
     replyTo: GIVEAWAY_REPLY_TO,
   };
@@ -100,19 +108,19 @@ export function giveawayAnnounceTemplate(params: {
   nextDrawAt: Date;
 }): CampaignContent {
   const next = longDateFr(params.nextDrawAt);
-  const prize =
-    params.pool === GiveawayPool.FREE
-      ? `${months(GIVEAWAY_FREE_PRIZE_MONTHS)} de Premium offert, sans carte`
-      : `${months(GIVEAWAY_PREMIUM_PRIZE_MONTHS)} d'abonnement offerts`;
-  const who =
-    params.pool === GiveawayPool.FREE
-      ? 'Chaque mois, un compte gratuit est tiré au sort'
-      : 'Chaque mois, un abonné Premium est tiré au sort';
+  const day = giveawayDrawDayLabel();
+  const free = params.pool === GiveawayPool.FREE;
+  const intro = free
+    ? `chaque mois, un compte gratuit est tiré au sort. À gagner&nbsp;: <strong>${months(GIVEAWAY_FREE_PRIZE_MONTHS)} de Premium offert, sans carte</strong>.`
+    : `chaque mois, un abonné Premium est tiré au sort. À gagner&nbsp;: <strong>${months(GIVEAWAY_PREMIUM_PRIZE_MONTHS)} d'abonnement offerts</strong>.`;
+  const how = free
+    ? `Pour participer, enregistre au moins ${GIVEAWAY_MIN_TRADES} trades dans le mois&nbsp;: le tirage a lieu le ${day} du mois suivant. Le prochain, c'est le ${next}. Toutes les conditions sont dans l'app.`
+    : `Pour participer&nbsp;: être abonné depuis au moins ${months(GIVEAWAY_PREMIUM_MIN_PAID_MONTHS)} et enregistrer au moins ${GIVEAWAY_MIN_TRADES} trades dans le mois. Le tirage a lieu le ${day} du mois suivant&nbsp;; le prochain, c'est le ${next}. Toutes les conditions sont dans l'app.`;
   const content =
     card(`
       ${heading('Nouveau', 'Un tirage au sort chaque mois')}
-      <p ${P}>${hello(params.userName)} ${who} parmi les traders qui ont enregistré au moins ${GIVEAWAY_MIN_TRADES} trades dans le mois. À gagner&nbsp;: <strong>${prize}</strong>.</p>
-      <p ${P}>Rien à faire de plus&nbsp;: enregistre tes trades comme d'habitude, et tu participes. Le tirage a lieu le ${giveawayDrawDayLabel()} de chaque mois&nbsp;; le prochain, c'est le ${next}.</p>
+      <p ${P}>${hello(params.userName)} ${intro}</p>
+      <p ${P}>${how}</p>
       ${cta('Voir le concours du mois', onboardingLink(params.appUrl, GIVEAWAY_APP_PATH, 'giveaway_announce'))}
     `) + RISK_NOTICE + marketingFooter(params.unsubUrl);
   return {

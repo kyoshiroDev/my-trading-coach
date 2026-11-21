@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { ConflictException } from '@nestjs/common';
 import { GiveawayPool, Role } from '@prisma/client';
 import { matchWhere } from '../../test/prisma-where';
 import { GiveawaySettingsService, announceAudienceWhere } from './giveaway-settings.service';
@@ -30,6 +31,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   row = { id: 1, freeEnabled: false, premiumEnabled: false, freeEnabledAt: null, premiumEnabledAt: null, freeAnnouncedAt: null, premiumAnnouncedAt: null };
   for (const k of Object.keys(env)) delete env[k];
+  env['FRONTEND_URL'] = 'https://dev.app.mytradingcoach.app'; // hors prod : activation libre
 });
 
 describe('GiveawaySettingsService : interrupteurs et annonce', () => {
@@ -59,7 +61,27 @@ describe('GiveawaySettingsService : interrupteurs et annonce', () => {
     expect(announce).toHaveBeenCalledTimes(2);
   });
 
+  it('prod : allumer refusé tant que le lot B n’est pas livré, éteindre toujours permis', async () => {
+    const announce = vi.spyOn(service, 'announce').mockResolvedValue({ sent: 0, skipped: 0, errors: 0 });
+    for (const url of [undefined, 'https://app.mytradingcoach.app', 'HTTPS://APP.MYTRADINGCOACH.APP/']) {
+      if (url === undefined) delete env['FRONTEND_URL'];
+      else env['FRONTEND_URL'] = url;
+      expect(service.activationAvailable()).toBe(false);
+      await expect(service.setEnabled(GiveawayPool.FREE, true)).rejects.toBeInstanceOf(ConflictException);
+    }
+    expect(row.freeEnabled).toBe(false);
+    expect(announce).not.toHaveBeenCalled();
+    row.premiumEnabled = true;
+    expect(await service.setEnabled(GiveawayPool.PREMIUM, false)).toBe(0);
+    expect(row.premiumEnabled).toBe(false);
+  });
+
+  it('hors prod : activation disponible', () => {
+    expect(service.activationAvailable()).toBe(true);
+  });
+
   it('« Tirer maintenant » : seulement hors prod ET GIVEAWAY_MANUAL_DRAW=true', () => {
+    delete env['FRONTEND_URL'];
     expect(service.manualDrawAvailable()).toBe(false);
     env['GIVEAWAY_MANUAL_DRAW'] = 'true';
     expect(service.manualDrawAvailable()).toBe(false); // FRONTEND_URL absent = prod

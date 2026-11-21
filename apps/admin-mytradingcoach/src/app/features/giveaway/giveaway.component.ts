@@ -3,7 +3,7 @@ import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import type { Observable } from 'rxjs';
-import { apiErrorMessage, type AdminGiveawayData, type AdminGiveawayPoolState, type AdminGiveawayWin, type GiveawayPool } from '@mtc/shared';
+import { GIVEAWAY_DRAW_HOUR, apiErrorMessage, giveawayDrawDayLabel, type AdminGiveawayData, type AdminGiveawayPoolState, type AdminGiveawayWin, type GiveawayPool } from '@mtc/shared';
 import { ErrorStateComponent } from '@mtc/front-ui';
 import { AdminApi } from '../../core/api/admin.api';
 
@@ -38,6 +38,8 @@ export class GiveawayComponent {
   private readonly destroyRef = inject(DestroyRef);
 
   protected readonly POOL_LABEL = POOL_LABEL;
+  protected readonly DRAW_DAY = giveawayDrawDayLabel();
+  protected readonly DRAW_HOUR = GIVEAWAY_DRAW_HOUR;
   protected readonly ACTIVATION_LABEL = ACTIVATION_LABEL;
   protected readonly MODERATION_LABEL = MODERATION_LABEL;
   protected readonly CONSENT_LABEL = CONSENT_LABEL;

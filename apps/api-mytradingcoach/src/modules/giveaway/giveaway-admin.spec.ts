@@ -11,6 +11,7 @@ const prisma = {
 const settings = {
   get: vi.fn(async () => ({ freeEnabled: false, premiumEnabled: false, freeEnabledAt: null, premiumEnabledAt: null, freeAnnouncedAt: null, premiumAnnouncedAt: null })),
   manualDrawAvailable: vi.fn(() => false),
+  activationAvailable: vi.fn(() => false),
   announceAudienceCount: vi.fn(async () => 7),
 };
 const eligibility = { eligibleIds: vi.fn(async () => ['a', 'b']) };
@@ -61,6 +62,7 @@ describe('GiveawayAdminService', () => {
     const d = await service.data();
     expect(d.free.eligibleNow).toBe(2);
     expect(d.free.announceAudience).toBe(7);
+    expect(d.activationAvailable).toBe(false);
     expect(redis.client.set).toHaveBeenCalledWith('giveaway:eligible-now:FREE', '2', 'EX', 900);
     redis.client.get.mockResolvedValue('5' as never);
     eligibility.eligibleIds.mockClear();

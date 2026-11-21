@@ -2,7 +2,7 @@
   <div class="page-header">
     <div>
       <h1 class="page-title">Tirages</h1>
-      <div class="page-meta">Tirage au sort mensuel · le 1er de chaque mois à 9 h (Paris)</div>
+      <div class="page-meta">Tirage au sort mensuel · le {{ DRAW_DAY }} de chaque mois à {{ DRAW_HOUR }}&nbsp;h (Paris)</div>
     </div>
   </div>
 
@@ -31,11 +31,15 @@
                 }
               </div>
               <button type="button" role="switch" class="g-switch" [attr.aria-checked]="p.enabled"
-                [attr.aria-label]="POOL_LABEL[p.pool]" [disabled]="busy() !== null" (click)="toggle(p)"
+                [attr.aria-label]="POOL_LABEL[p.pool]" [disabled]="busy() !== null || (!p.enabled && !d.activationAvailable)" (click)="toggle(p)"
                 [attr.data-testid]="'toggle-' + p.pool">
                 <span class="g-switch-knob"></span>
               </button>
             </div>
+
+            @if (!p.enabled && !d.activationAvailable) {
+              <p class="locked" data-testid="giveaway-activation-locked">Activable en prod avec le lot B (page Concours et règlement).</p>
+            }
 
             @if (confirming() === p.pool) {
               <div class="confirm-box" role="alert" [attr.data-testid]="'confirm-' + p.pool">

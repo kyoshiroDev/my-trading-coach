@@ -16,6 +16,7 @@
 .pool-row { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); }
 .pool-stat { font-size: var(--fs-sm); color: var(--text); margin-bottom: var(--space-1); }
 .pool-sub { font-size: var(--fs-xs); color: var(--text3); }
+.locked { font-size: var(--fs-xs); color: var(--amber); margin: 0; }
 
 /* Interrupteur (role="switch"), même motif que Notifications. */
 .g-switch {

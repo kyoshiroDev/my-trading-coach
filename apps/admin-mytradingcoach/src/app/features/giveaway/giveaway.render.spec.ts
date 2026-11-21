@@ -26,6 +26,7 @@ const data = (over: Partial<AdminGiveawayData> = {}): AdminGiveawayData => ({
   premium: { pool: 'PREMIUM', enabled: true, enabledAt: '2027-01-10T10:00:00.000Z', announcedAt: '2027-01-10T10:00:00.000Z', eligibleNow: 3, announceAudience: 5 },
   nextDrawAt: '2027-03-01T08:00:00.000Z',
   manualDrawAvailable: false,
+  activationAvailable: true,
   history: [
     { drawId: 'd1', period: '2027-02', pool: 'FREE', drawnAt: '2027-02-01T08:00:00.000Z', eligibleCount: 12, eligibleHash: 'h', drawnIndex: 4, win: WIN },
     { drawId: 'd2', period: '2027-02', pool: 'PREMIUM', drawnAt: '2027-02-01T08:00:00.000Z', eligibleCount: 0, eligibleHash: 'h', drawnIndex: null, win: null },
@@ -121,6 +122,19 @@ describe('GiveawayComponent', () => {
     q(el, 'retry-w1')!.click();
     http.expectOne(`${BASE}/wins/w1/retry`).flush({ data: null });
     http.expectOne(BASE).flush({ data: data() });
+  });
+
+  it('prod avant le lot B : interrupteur éteint verrouillé avec l’explication, éteindre reste possible', async () => {
+    const { el } = await render(data({ activationAvailable: false }));
+    expect((q(el, 'toggle-FREE') as HTMLButtonElement).disabled).toBe(true);
+    expect(q(el, 'pool-FREE')!.querySelector('[data-testid="giveaway-activation-locked"]')).not.toBeNull();
+    expect((q(el, 'toggle-PREMIUM') as HTMLButtonElement).disabled).toBe(false); // allumé : on peut l'éteindre
+    expect(q(el, 'pool-PREMIUM')!.querySelector('[data-testid="giveaway-activation-locked"]')).toBeNull();
+  });
+
+  it('en-tête : jour et heure du tirage tirés des constantes', async () => {
+    const { el } = await render();
+    expect(el.querySelector('.page-meta')!.textContent).toMatch(/le 1er de chaque mois à 9\s+h/);
   });
 
   it('erreur de chargement : message affiché', async () => {

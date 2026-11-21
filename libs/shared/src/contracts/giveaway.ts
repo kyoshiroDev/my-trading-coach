@@ -68,6 +68,8 @@ export interface AdminGiveawayData {
   nextDrawAt: string;
   /** « Tirer maintenant » disponible (hors prod et `GIVEAWAY_MANUAL_DRAW=true`). */
   manualDrawAvailable: boolean;
+  /** Allumer un tirage est possible (toujours hors prod ; en prod, seulement à partir du lot B). */
+  activationAvailable: boolean;
   history: AdminGiveawayDrawRow[];
 }
 

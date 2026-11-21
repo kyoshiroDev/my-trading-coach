@@ -70,5 +70,21 @@
 - `deleteMe` efface message, pseudos et accords des lots du compte ; `GiveawayWin.userId` et
   `GiveawayDraw.winnerId` passent à null (SetNull), le tirage et sa trace restent.
 
-## Ne pas allumer en prod avant le lot B
-Les e-mails (gagnant, annonce) renvoient vers les pages du lot B (`/concours`, `/concours/gagnant`).
+## Verrou d'activation en prod (jusqu'au lot B)
+`GIVEAWAY_PROD_ACTIVATION_OPEN = false` (`giveaway-settings.service.ts`) : en prod (`FRONTEND_URL`
+absent ou égal à l'app de prod, normalisé), **allumer** un tirage répond 409 (« Activation en prod
+disponible avec le lot B… ») ; éteindre reste toujours possible ; hors prod, l'activation est libre.
+`GET /admin/giveaway` renvoie `activationAvailable` : l'interrupteur éteint est désactivé et
+expliqué dans l'admin. Raison : l'annonce et les e-mails renvoient vers `/concours` et
+`/concours/gagnant` (lot B), le règlement et la politique de confidentialité arrivent au lot B.
+**Le lot B passe la constante à `true`.**
+
+## Cas assumés (relecteur du 21/11)
+- Lot gratuit attribué par-dessus une offre de l'admin en cours : l'origine passe à GIVEAWAY sur
+  toute la période, les jours offerts par l'admin ne sont plus retirables (ils font partie du lot).
+- Gagnant pendant son essai d'inscription : il perd le report du premier prélèvement fondateur
+  (`founder-deferred.ts` ne reporte que SIGNUP), comme pour un Premium offert par l'admin.
+- BETA_TESTER abonné payant : reste éligible au tirage Premium (exclu seulement du tirage gratuit,
+  décision du 21/11) ; il paie, l'avoir a une valeur.
+- Cron sans verrou Redis : la contrainte unique (période, tirage) et le worker cron unique
+  suffisent ; deux lancements simultanés = un tirage, au pire deux lectures Stripe.
