@@ -84,18 +84,19 @@
                 <span class="ig-lbl">Légende{{ p.aiGenerated ? ' (rédigée par l’IA, modifiable)' : ' (modèle, modifiable)' }}</span>
                 <textarea class="ig-input" rows="8" [value]="igCaption()" (input)="igCaption.set($any($event.target).value)" data-testid="ig-caption"></textarea>
               </label>
-              @if (p.metricoolAvailable) {
+              @if (igError(); as e) { <p class="err-text" role="alert" data-testid="ig-error">{{ e }}</p> }
+              @if (p.metricoolAvailable && !igFallback()) {
                 <label class="ig-field">
-                  <span class="ig-lbl">Heure de publication (facultatif, sinon tout de suite)</span>
+                  <span class="ig-lbl">Heure de publication (facultatif, sinon dans 2 minutes)</span>
                   <input class="ig-input" type="datetime-local" [value]="igPublishAt()" (input)="igPublishAt.set($any($event.target).value)" data-testid="ig-publish-at" />
                 </label>
                 <button type="button" class="btn btn-primary" [disabled]="busy() !== null" (click)="confirmInstagram()" data-testid="ig-confirm">
                   {{ busy() === 'ig-pub-' + w.id ? 'Envoi…' : 'Confirmer la publication' }}
                 </button>
               } @else {
-                <p class="ig-note" data-testid="ig-fallback">Metricool n’est pas configuré&nbsp;: publie à la main.</p>
+                <p class="ig-note" data-testid="ig-fallback">{{ p.metricoolAvailable ? 'Metricool a refusé la publication' : 'Metricool n’est pas configuré' }}&nbsp;: publie à la main.</p>
                 <div class="ig-actions">
-                  <a class="btn" [href]="p.imageUrl" download="tirage-gagnant.png" target="_blank" rel="noopener" data-testid="ig-download">Télécharger l’image</a>
+                  <a class="btn" [href]="p.imageUrl" target="_blank" rel="noopener" data-testid="ig-download">Ouvrir l’image</a>
                   <button type="button" class="btn" (click)="copyCaption()" data-testid="ig-copy">{{ igCopied() ? 'Légende copiée' : 'Copier la légende' }}</button>
                 </div>
               }
@@ -165,7 +166,7 @@
                   <td data-label="Instagram">
                     {{ w.instagramConsent ? 'Accord' + (w.instagramHandle ? ' · @' + w.instagramHandle : '') : 'Non' }}
                     <div class="sub">{{ PUBLICATION_LABEL[w.publicationStatus] }}</div>
-                    @if (w.publishedUrl) { <a class="u-link sub" [href]="w.publishedUrl" target="_blank" rel="noopener">Voir le post</a> }
+                    @if (w.publishedUrl) { <a class="u-link sub" [href]="w.publishedUrl" target="_blank" rel="noopener" [attr.data-testid]="'ig-post-' + w.id">Voir le post</a> }
                     @if (canPublish(w)) {
                       <button type="button" class="btn btn-sm" [disabled]="busy() !== null" (click)="openInstagram(w)" [attr.data-testid]="'ig-publish-' + w.id">
                         {{ busy() === 'ig-' + w.id ? 'Préparation…' : 'Publier' }}

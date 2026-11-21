@@ -51,17 +51,17 @@ export function instagramImageHtml(f: InstagramWinnerFacts): string {
   body::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 80% 0%,rgba(59,130,246,.28),transparent 55%),radial-gradient(circle at 0% 100%,rgba(139,92,246,.18),transparent 50%)}
   .top,.mid,.bottom{position:relative}
   .eyebrow{font-family:'JetBrains Mono','Courier New',monospace;font-size:30px;letter-spacing:6px;text-transform:uppercase;color:#60a5fa}
-  .period{font-size:40px;color:#9db4ce;margin-top:18px}
-  .label{font-size:44px;color:#9db4ce;margin-bottom:28px}
+  .period{font-size:40px;color:#8fa3bf;margin-top:18px}
+  .label{font-size:44px;color:#8fa3bf;margin-bottom:28px}
   .name{font-size:104px;font-weight:800;letter-spacing:-2px;line-height:1.05;word-break:break-word}
-  .prize{margin-top:56px;display:inline-block;font-size:56px;font-weight:700;padding:28px 44px;border-radius:28px;background:#3b82f6;color:#ffffff}
+  .prize{margin-top:56px;display:inline-block;font-size:56px;font-weight:700;padding:28px 44px;border-radius:28px;background:#101d2e;border:2px solid rgba(99,155,255,.25);color:#60a5fa}
   .brand{font-size:44px;font-weight:700;letter-spacing:-.5px}
   .brand span{color:#60a5fa}
   .note{font-size:28px;color:#8fa3bf;margin-top:14px}
 </style></head><body>
   <div class="top"><div class="eyebrow">Tirage du mois</div><div class="period">${esc(f.periodLabel)}</div></div>
   <div class="mid"><div class="label">Gagnant du tirage</div><div class="name">${esc(f.displayName)}</div><div class="prize">${esc(prizeLabel(f.pool, f.prizeMonths))}</div></div>
-  <div class="bottom"><div class="brand">MyTrading<span>Coach</span></div><div class="note">Journal de trading · tirage parmi les traders qui enregistrent leurs trades</div></div>
+  <div class="bottom"><div class="brand">MyTrading<span>Coach</span></div><div class="note">Journal de trading · tirage au sort mensuel</div></div>
 </body></html>`;
 }
 
@@ -69,7 +69,7 @@ export function instagramImageHtml(f: InstagramWinnerFacts): string {
 export function fallbackCaption(f: InstagramWinnerFacts): string {
   const who = f.instagramHandle ? `@${f.instagramHandle}` : f.displayName;
   return [
-    `Tirage du mois de ${f.periodLabel} : bravo à ${who}, qui gagne ${prizeLabel(f.pool, f.prizeMonths)} sur MyTradingCoach.`,
+    `Tirage du mois de ${f.periodLabel}\u00a0: bravo à ${who}, qui gagne ${prizeLabel(f.pool, f.prizeMonths)} sur MyTradingCoach.`,
     'Chaque mois, un tirage au sort parmi les traders qui enregistrent leurs trades. Conditions dans le règlement.',
     '#journaldetrading #trading #propfirm',
   ].join('\n\n');

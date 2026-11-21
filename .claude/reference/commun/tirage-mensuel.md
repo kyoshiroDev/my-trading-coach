@@ -123,10 +123,12 @@ prod, Greg valide `/reglement-tirage` et la section 1 h) de la politique de conf
   servi par `GET /public/giveaway/image/:jeton.png` (`Cross-Origin-Resource-Policy: cross-origin` sur
   cette seule route).
 - **Publication** `POST /admin/giveaway/wins/:id/instagram/publish` : légende relue (recontrôlée),
-  image de l'aperçu seulement, heure facultative (sinon dans 2 minutes). `MetricoolClient` : image
+  image de l'aperçu seulement, heure facultative (sinon dans 2 minutes). Réservation atomique avant
+  l'envoi (`updateMany` sur `publicationStatus` ≠ PUBLISHED) : jamais deux posts pour un lot ; échec →
+  FAILED (réservation annulée). `MetricoolClient` : image
   copiée chez Metricool (`normalize/image/url`) puis post programmé avec `autoPublish`. Statut
   `PUBLISHED` (lien si Metricool le renvoie) ou `FAILED`. Variables `METRICOOL_API_TOKEN`,
-  `METRICOOL_USER_ID`, `METRICOOL_BLOG_ID` : absentes → l'admin propose « Télécharger l'image » et
-  « Copier la légende ». Erreurs Metricool : code HTTP seulement, jamais le corps.
+  `METRICOOL_USER_ID`, `METRICOOL_BLOG_ID` : absentes ou refus de Metricool → l'admin propose « Ouvrir l'image »
+  et « Copier la légende ». Sans `API_URL` hors prod : erreur (pas d'URL d'image vers la prod). Erreurs Metricool : code HTTP seulement, jamais le corps.
 - Politique de confidentialité : Metricool et Instagram ajoutés aux destinataires (section 4).
 

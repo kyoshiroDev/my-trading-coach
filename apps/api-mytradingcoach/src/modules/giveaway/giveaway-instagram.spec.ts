@@ -50,13 +50,13 @@ describe('GiveawayInstagramService', () => {
     draw: { period: '2027-02' }, user: { name: 'Léa Martin' }, ...over,
   });
   let current: Record<string, unknown> | null;
-  const prisma = { giveawayWin: { findUnique: vi.fn(async () => current), update: vi.fn(async (_args: { where: unknown; data: Record<string, unknown> }) => ({})) } };
+  const prisma = { giveawayWin: { findUnique: vi.fn(async () => current), update: vi.fn(async (_args: { where: unknown; data: Record<string, unknown> }) => ({})), updateMany: vi.fn(async (_args: { where: unknown; data: Record<string, unknown> }) => ({ count: 1 })) } };
   const store = new Map<string, string>();
   const redis = { client: { get: vi.fn(async (k: string) => store.get(k) ?? null), set: vi.fn(async (k: string, v: string) => { store.set(k, v); return 'OK'; }) } };
   const anthropic = { enabled: true, create: vi.fn() };
   const pdf = { renderPng: vi.fn(async () => Buffer.from('PNG')) };
   const metricool = { configured: true, publishInstagram: vi.fn(async () => ({ postId: '42', publicUrl: 'https://instagram.com/p/x' })) };
-  const config = { get: vi.fn((k: string) => (k === 'API_URL' ? 'https://dev.api.test' : undefined)) };
+  const config = { get: vi.fn((k: string): string | undefined => (k === 'API_URL' ? 'https://dev.api.test' : undefined)) };
   const service = new GiveawayInstagramService(prisma as never, redis as never, anthropic as never, pdf as never, metricool as never, config as never);
   const aiText = (text: string) => ({ content: [{ type: 'text', text }], usage: {} });
 
@@ -114,7 +114,9 @@ describe('GiveawayInstagramService', () => {
     const r = await service.publish('w1', { caption, imageUrl });
     expect(metricool.publishInstagram).toHaveBeenCalledWith({ caption, imageUrl, publishAt: null });
     expect(r).toMatchObject({ publicationStatus: 'PUBLISHED', publishedUrl: 'https://instagram.com/p/x' });
-    expect(prisma.giveawayWin.update.mock.calls[0][0].data).toMatchObject({ publicationStatus: 'PUBLISHED' });
+    // Réservation atomique avant l'envoi, puis lien enregistré.
+    expect(prisma.giveawayWin.updateMany.mock.calls[0][0]).toMatchObject({ where: { id: 'w1', publicationStatus: { not: 'PUBLISHED' } }, data: { publicationStatus: 'PUBLISHED' } });
+    expect(prisma.giveawayWin.update.mock.calls[0][0].data).toEqual({ publishedUrl: 'https://instagram.com/p/x' });
   });
 
   it('publication refusée : sans Metricool, légende interdite, image étrangère, date passée', async () => {
@@ -133,8 +135,28 @@ describe('GiveawayInstagramService', () => {
     anthropic.enabled = false;
     const { imageUrl, caption } = await service.preview('w1');
     metricool.publishInstagram.mockRejectedValueOnce(new MetricoolError(403, 'Metricool : accès refusé (abonnement ou jeton).'));
-    await expect(service.publish('w1', { caption, imageUrl })).rejects.toThrow(/Télécharge l’image/);
-    expect(prisma.giveawayWin.update.mock.calls[0][0].data).toEqual({ publicationStatus: 'FAILED' });
+    await expect(service.publish('w1', { caption, imageUrl })).rejects.toThrow(/Ouvre l’image/);
+    expect(prisma.giveawayWin.update.mock.calls[0][0].data).toEqual({ publicationStatus: 'FAILED', publishedAt: null });
+  });
+
+  it('déjà publié : 409 sans appel Metricool (aperçu et publication) ; course perdue : 409 aussi', async () => {
+    anthropic.enabled = false;
+    const { imageUrl, caption } = await service.preview('w1');
+    current = win({ publicationStatus: 'PUBLISHED' });
+    await expect(service.preview('w1')).rejects.toBeInstanceOf(ConflictException);
+    await expect(service.publish('w1', { caption, imageUrl })).rejects.toBeInstanceOf(ConflictException);
+    current = win();
+    prisma.giveawayWin.updateMany.mockResolvedValueOnce({ count: 0 }); // l'autre onglet a réservé d'abord
+    await expect(service.publish('w1', { caption, imageUrl })).rejects.toBeInstanceOf(ConflictException);
+    expect(metricool.publishInstagram).not.toHaveBeenCalled();
+    expect(prisma.giveawayWin.update).not.toHaveBeenCalled(); // jamais redescendu à FAILED
+  });
+
+  it('sans API_URL hors prod : erreur claire plutôt qu’une image introuvable', async () => {
+    config.get.mockImplementation((k: string) => (k === 'FRONTEND_URL' ? 'https://dev.app.test' : undefined));
+    anthropic.enabled = false;
+    await expect(service.preview('w1')).rejects.toThrow(/API_URL manquante/);
+    config.get.mockImplementation((k: string) => (k === 'API_URL' ? 'https://dev.api.test' : undefined));
   });
 
   it('image : jeton invalide ou expiré → null', async () => {

@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, Logger, NotFoundException, ServiceUnavailableException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { GiveawayActivation, GiveawayModeration, GiveawayPublication } from '@prisma/client';
 import { randomBytes } from 'crypto';
@@ -28,6 +28,7 @@ export const INSTAGRAM_IMAGE_TTL_S = 24 * 3600;
 const IMAGE_KEY = (token: string) => `giveaway:ig-image:${token}`;
 export const INSTAGRAM_TOKEN_RE = /^[a-f0-9]{48}$/;
 const PROD_API_URL = 'https://api.mytradingcoach.app';
+const PROD_FRONTEND_URL = 'https://app.mytradingcoach.app';
 
 /** Consigne fixe (mise en cache côté Anthropic) : seules les données du gagnant changent. */
 const CAPTION_SYSTEM = `Tu rédiges la légende Instagram de MyTradingCoach, un journal de trading en français, qui annonce le gagnant de son tirage au sort mensuel.
@@ -66,6 +67,7 @@ export class GiveawayInstagramService {
       include: { draw: { select: { period: true } }, user: { select: { name: true } } },
     });
     if (!win) throw new NotFoundException('Lot introuvable.');
+    if (win.publicationStatus === GiveawayPublication.PUBLISHED) throw new ConflictException('Ce gagnant a déjà été publié sur Instagram.');
     if (!win.userId || !win.instagramConsent) throw new ConflictException('Le gagnant n’a pas donné son accord pour Instagram.');
     if (win.message && win.moderation !== GiveawayModeration.VALIDE) throw new ConflictException('Valide d’abord le message du gagnant.');
     if (win.activationStatus !== GiveawayActivation.APPLIED) throw new ConflictException('Le lot n’est pas encore attribué.');
@@ -99,19 +101,23 @@ export class GiveawayInstagramService {
     if (publishAt && (Number.isNaN(publishAt.getTime()) || publishAt.getTime() < Date.now() - 60_000)) {
       throw new BadRequestException('Date de publication invalide.');
     }
+    // Réservation atomique : un double clic, deux onglets ou un appel direct n'envoient jamais deux posts.
+    const at = publishAt ?? new Date();
+    const { count } = await this.prisma.giveawayWin.updateMany({
+      where: { id: winId, publicationStatus: { not: GiveawayPublication.PUBLISHED } },
+      data: { publicationStatus: GiveawayPublication.PUBLISHED, publishedAt: at },
+    });
+    if (count === 0) throw new ConflictException('Ce gagnant a déjà été publié sur Instagram.');
     try {
       const res = await this.metricool.publishInstagram({ caption, imageUrl: args.imageUrl, publishAt });
-      const at = publishAt ?? new Date();
-      await this.prisma.giveawayWin.update({
-        where: { id: winId },
-        data: { publicationStatus: GiveawayPublication.PUBLISHED, publishedUrl: res.publicUrl, publishedAt: at },
-      });
+      await this.prisma.giveawayWin.update({ where: { id: winId }, data: { publishedUrl: res.publicUrl } });
       return { publicationStatus: GiveawayPublication.PUBLISHED, publishedUrl: res.publicUrl, publishedAt: at.toISOString() };
     } catch (err) {
       const message = err instanceof MetricoolError ? err.message : 'Metricool : erreur inattendue.';
-      await this.prisma.giveawayWin.update({ where: { id: winId }, data: { publicationStatus: GiveawayPublication.FAILED } });
+      // Seule la réservation de cet appel est annulée (aucun post n'est parti).
+      await this.prisma.giveawayWin.update({ where: { id: winId }, data: { publicationStatus: GiveawayPublication.FAILED, publishedAt: null } });
       this.logger.warn(`Publication Instagram en échec (lot ${winId}) : ${message}`);
-      throw new ConflictException(`${message} Télécharge l’image et copie la légende pour publier à la main.`);
+      throw new ConflictException(`${message} Ouvre l’image et copie la légende pour publier à la main.`);
     }
   }
 
@@ -122,8 +128,16 @@ export class GiveawayInstagramService {
     return b64 ? Buffer.from(b64, 'base64') : null;
   }
 
+  /**
+   * Adresse publique de l'API pour l'image. Sans `API_URL` : l'API de prod seulement si l'app est celle
+   * de prod (même règle que les liens de désinscription) ; ailleurs, erreur plutôt qu'une image introuvable.
+   */
   private apiBase(): string {
-    return (this.config.get<string>('API_URL') ?? PROD_API_URL).replace(/\/+$/, '');
+    const api = this.config.get<string>('API_URL');
+    if (api) return api.replace(/\/+$/, '');
+    const front = (this.config.get<string>('FRONTEND_URL') ?? PROD_FRONTEND_URL).replace(/\/+$/, '');
+    if (front === PROD_FRONTEND_URL) return PROD_API_URL;
+    throw new ServiceUnavailableException('API_URL manquante sur cet environnement : visuel Instagram impossible.');
   }
 
   private isOurImage(url: string): boolean {

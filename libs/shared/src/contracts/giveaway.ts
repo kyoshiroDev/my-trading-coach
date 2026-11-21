@@ -209,7 +209,7 @@ export interface AdminGiveawayInstagramPreview {
 export interface PublishGiveawayInstagramRequest {
   caption: string;
   imageUrl: string;
-  /** Heure de publication (ISO) ; absente = tout de suite. */
+  /** Heure de publication (ISO) ; absente = dans 2 minutes (pas de « maintenant » chez Metricool). */
   publishAt?: string | null;
 }
 

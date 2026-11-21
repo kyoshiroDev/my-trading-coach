@@ -160,7 +160,7 @@ describe('GiveawayComponent', () => {
     expect(q(r3.el, 'ig-publish-w1')).toBeNull();
   });
 
-  it('aperçu sans Metricool : « Télécharger l’image » et « Copier la légende », pas de publication', async () => {
+  it('aperçu sans Metricool : « Ouvrir l’image » et « Copier la légende », pas de publication', async () => {
     const ok = { ...WIN, moderation: 'VALIDE' as const };
     const { fixture, el } = await render(data({ history: [{ ...data().history[0], win: ok }] }));
     q(el, 'ig-publish-w1')!.click();
@@ -187,6 +187,21 @@ describe('GiveawayComponent', () => {
     expect(req.request.body).toEqual({ caption: 'Bravo Léa, bien joué', imageUrl: 'https://api.test/i.png', publishAt: null });
     req.flush({ data: { publicationStatus: 'PUBLISHED', publishedUrl: null, publishedAt: '2027-02-10T10:00:00.000Z' } });
     http.expectOne(BASE).flush({ data: data() });
+  });
+
+  it('Metricool refuse à la publication : erreur dans le panneau, puis « Ouvrir l’image » et « Copier la légende »', async () => {
+    const ok = { ...WIN, moderation: 'VALIDE' as const };
+    const { fixture, el } = await render(data({ history: [{ ...data().history[0], win: ok }] }));
+    q(el, 'ig-publish-w1')!.click();
+    http.expectOne(`${BASE}/wins/w1/instagram/preview`).flush({ data: { caption: 'Bravo', aiGenerated: true, imageUrl: 'https://api.test/i.png', metricoolAvailable: true } });
+    fixture.detectChanges();
+    q(el, 'ig-confirm')!.click();
+    http.expectOne(`${BASE}/wins/w1/instagram/publish`).flush({ message: 'Metricool : accès refusé (abonnement ou jeton).' }, { status: 409, statusText: 'Conflict' });
+    fixture.detectChanges();
+    expect(q(el, 'ig-error')!.textContent).toContain('accès refusé');
+    expect(q(el, 'ig-download')!.getAttribute('href')).toBe('https://api.test/i.png');
+    expect(q(el, 'ig-copy')).not.toBeNull();
+    expect(q(el, 'ig-confirm')).toBeNull();
   });
 
   it('erreur de chargement : message affiché', async () => {

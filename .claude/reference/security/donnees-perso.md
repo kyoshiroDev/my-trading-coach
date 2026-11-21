@@ -61,6 +61,8 @@ du gagnant et Instagram : consentement) et une ligne de conservation (trace et l
 l'instant ; à la suppression du compte, lien, nom, message et pseudo Instagram effacés par `deleteMe`).
 Ouverture du verrou d'activation en prod (`GIVEAWAY_PROD_ACTIVATION_OPEN = true`) dans le même commit,
 condition posée par l'agent security au lot A. Journaux du module : `safePrizeError` (code de
-l'erreur, jamais le message brut Stripe ou Prisma). Lot C : Metricool et Instagram ajoutés aux destinataires (section 4) ; seules
+l'erreur, jamais le message brut Stripe ou Prisma). Lot C : Metricool (sous-traitant, UE) dans la liste et Instagram (publication publique) en
+paragraphe à part, section 4 ; exception écrite dans la ligne Anthropic (nom affiché, lot, mois, pseudo
+Instagram pour la légende) ; conservation : annonce publiée retirée sur demande, visuel effacé sous 24 h ; seules
 les données affichables du gagnant (nom selon l'accord, lot, mois, pseudo Instagram) partent, et
 seulement avec son accord Instagram.

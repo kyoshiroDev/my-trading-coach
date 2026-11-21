@@ -145,6 +145,9 @@ export class GiveawayComponent {
   protected readonly igCaption = signal('');
   protected readonly igPublishAt = signal('');
   protected readonly igCopied = signal(false);
+  /** Metricool absent ou refus à la publication : « Ouvrir l'image » et « Copier la légende ». */
+  protected readonly igFallback = signal(false);
+  protected readonly igError = signal<string | null>(null);
 
   /** « Publier » seulement avec l'accord Instagram du gagnant et un message validé (ou aucun). */
   protected canPublish(w: AdminGiveawayWin): boolean {
@@ -155,6 +158,8 @@ export class GiveawayComponent {
     this.igWin.set(w);
     this.igPreview.set(null);
     this.igCopied.set(false);
+    this.igFallback.set(false);
+    this.igError.set(null);
     this.igPublishAt.set('');
     this.busy.set(`ig-${w.id}`);
     this.actionError.set(null);
@@ -186,7 +191,7 @@ export class GiveawayComponent {
     if (!w || !p) return;
     const at = this.igPublishAt();
     this.busy.set(`ig-pub-${w.id}`);
-    this.actionError.set(null);
+    this.igError.set(null);
     this.api
       .instagramPublish(w.id, { caption: this.igCaption(), imageUrl: p.imageUrl, publishAt: at ? new Date(at).toISOString() : null })
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -199,7 +204,8 @@ export class GiveawayComponent {
         },
         error: (err: unknown) => {
           this.busy.set(null);
-          this.actionError.set(apiErrorMessage(err, 'La publication a échoué. Télécharge l’image et copie la légende.'));
+          this.igFallback.set(true);
+          this.igError.set(apiErrorMessage(err, 'La publication a échoué. Ouvre l’image et copie la légende.'));
         },
       });
   }
@@ -209,7 +215,7 @@ export class GiveawayComponent {
       await navigator.clipboard.writeText(this.igCaption());
       this.igCopied.set(true);
     } catch {
-      this.actionError.set('Copie impossible : sélectionne la légende à la main.');
+      this.igError.set('Copie impossible\u00a0: sélectionne la légende à la main.');
     }
   }
 
