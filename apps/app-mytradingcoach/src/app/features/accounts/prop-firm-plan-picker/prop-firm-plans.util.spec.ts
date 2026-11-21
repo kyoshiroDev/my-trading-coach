@@ -67,8 +67,8 @@ describe('libellés', () => {
       configuration: { dailyLossLimit: true, evalDrawdown: null, payoutPath: 'consistency', addon: null } })))
       .toBe('Trading Combine · avec DLL · payout Consistency');
     expect(programLabel(plan({ id: 'tradeify-select-daily-c50-50k', planName: 'Select',
-      configuration: { dailyLossLimit: true, evalDrawdown: null, payoutPath: 'daily', addon: 'consistency 50 %' } })))
-      .toBe('Select · avec DLL · payout Daily · option consistency 50 %');
+      configuration: { dailyLossLimit: true, evalDrawdown: null, payoutPath: 'daily', addon: 'consistency 50\u00a0%' } })))
+      .toBe('Select · avec DLL · payout Daily · option consistency 50\u00a0%');
   });
 
   it('funded qui démarre à 0 $ : le solde de départ pré-rempli suit la phase', () => {

@@ -1121,7 +1121,7 @@
         "daily_loss_limit": false,
         "eval_drawdown": null,
         "payout_path": "flex",
-        "addon": "consistency 50 %"
+        "addon": "consistency 50\u00a0%"
       },
       "price": {
         "amount": 135,
@@ -1381,7 +1381,7 @@
         "daily_loss_limit": true,
         "eval_drawdown": null,
         "payout_path": "daily",
-        "addon": "consistency 50 %"
+        "addon": "consistency 50\u00a0%"
       },
       "price": {
         "amount": 135,
@@ -1647,7 +1647,7 @@
         "daily_loss_limit": false,
         "eval_drawdown": null,
         "payout_path": "flex",
-        "addon": "consistency 50 %"
+        "addon": "consistency 50\u00a0%"
       },
       "price": {
         "amount": 205,
@@ -1919,7 +1919,7 @@
         "daily_loss_limit": true,
         "eval_drawdown": null,
         "payout_path": "daily",
-        "addon": "consistency 50 %"
+        "addon": "consistency 50\u00a0%"
       },
       "price": {
         "amount": 205,
@@ -2197,7 +2197,7 @@
         "daily_loss_limit": false,
         "eval_drawdown": null,
         "payout_path": "flex",
-        "addon": "consistency 50 %"
+        "addon": "consistency 50\u00a0%"
       },
       "price": {
         "amount": 329,
@@ -2481,7 +2481,7 @@
         "daily_loss_limit": true,
         "eval_drawdown": null,
         "payout_path": "daily",
-        "addon": "consistency 50 %"
+        "addon": "consistency 50\u00a0%"
       },
       "price": {
         "amount": 329,
@@ -2771,7 +2771,7 @@
         "daily_loss_limit": false,
         "eval_drawdown": null,
         "payout_path": "flex",
-        "addon": "consistency 50 %"
+        "addon": "consistency 50\u00a0%"
       },
       "price": {
         "amount": 459,
@@ -3067,7 +3067,7 @@
         "daily_loss_limit": true,
         "eval_drawdown": null,
         "payout_path": "daily",
-        "addon": "consistency 50 %"
+        "addon": "consistency 50\u00a0%"
       },
       "price": {
         "amount": 459,
