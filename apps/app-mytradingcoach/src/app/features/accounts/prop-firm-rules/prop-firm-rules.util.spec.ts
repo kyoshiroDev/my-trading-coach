@@ -31,12 +31,12 @@ describe('prop-firm-rules.util', () => {
   });
 
   it('pctScheduleLabel : seuil par numéro de payout', () => {
-    expect(pctScheduleLabel([0.2, 0.25, 0.3])).toBe('P1 20 % · P2 25 % · P3 et suivants 30 %');
+    expect(pctScheduleLabel([0.2, 0.25, 0.3])).toBe('P1 20\u00a0% · P2 25\u00a0% · P3 et suivants 30\u00a0%');
   });
 
   it('pctLabel', () => {
-    expect(pctLabel(0.5)).toBe('50 %');
-    expect(pctLabel(0.4)).toBe('40 %');
+    expect(pctLabel(0.5)).toBe('50\u00a0%');
+    expect(pctLabel(0.4)).toBe('40\u00a0%');
   });
 
   it('lockLabel : seuil figé, déclencheur, ou rien', () => {

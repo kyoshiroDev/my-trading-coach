@@ -74,6 +74,6 @@ describe('RecentTradesTableComponent · compte échoué ou archivé', () => {
     const inCards = [...el.querySelectorAll('.mtc-trade-cards [data-testid="trade-account-badge"]')].map((b) => b.textContent!.trim());
     expect(inTable).toEqual(['Archivé', 'Échoué']);
     expect(inCards).toEqual(['Archivé', 'Échoué']);
-    expect(el.querySelector('[data-testid="trade-account-badge"]')!.getAttribute('title')).toBe('Compte x : hors statistiques');
+    expect(el.querySelector('[data-testid="trade-account-badge"]')!.getAttribute('title')).toBe('Compte x\u00a0: hors statistiques');
   });
 });

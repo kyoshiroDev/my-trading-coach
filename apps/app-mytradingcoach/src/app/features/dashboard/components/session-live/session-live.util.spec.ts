@@ -140,10 +140,10 @@ describe('bandeau PC (#597)', () => {
       updatedAt: '',
     });
     expect(t.map((x) => x.label)).toEqual(['NQ', 'SPX', 'DXY', '10Y']);
-    expect(t[0]).toMatchObject({ change: '+0,62 %', dir: 'up' });
-    expect(t[1]).toMatchObject({ change: '-0,41 %', dir: 'down' });
+    expect(t[0]).toMatchObject({ change: '+0,62\u00a0%', dir: 'up' });
+    expect(t[1]).toMatchObject({ change: '-0,41\u00a0%', dir: 'down' });
     expect(t[2]).toMatchObject({ value: '104,20', change: null, dir: 'flat' });
-    expect(t[3].value).toBe('4,31 %');
+    expect(t[3].value).toBe('4,31\u00a0%');
     expect(bannerTickers(null)).toEqual([]);
   });
 
@@ -153,7 +153,7 @@ describe('bandeau PC (#597)', () => {
       treasury: { t2y: 3.9, t2yChg: null, t5y: null, t5yChg: null, t10y: 4.31, t10yChg: null, t30y: null, t30yChg: null },
       updatedAt: '',
     }, true);
-    expect(t.map((x) => `${x.label} ${x.value}`)).toEqual(['NQ 1', 'SPX 1', 'DXY 1,00', '2Y 3,90 %', '10Y 4,31 %', '30Y -']);
+    expect(t.map((x) => `${x.label} ${x.value}`)).toEqual(['NQ 1', 'SPX 1', 'DXY 1,00', '2Y 3,90\u00a0%', '10Y 4,31\u00a0%', '30Y -']);
   });
 
   it('humeur en texte seul, type de plan court', () => {

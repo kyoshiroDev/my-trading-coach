@@ -190,6 +190,7 @@ export class LiveNextEventComponent {
   }
 
   protected value(v: number | null, unit?: string | null): string {
-    return v === null || v === undefined ? '-' : `${v.toLocaleString('fr-FR')}${unit ?? ''}`;
+    // « 4,1 % » : espace insécable avant « % » (règle design 5, #1173) ; « 250K » reste collé.
+    return v === null || v === undefined ? '-' : `${v.toLocaleString('fr-FR')}${unit === '%' ? '\u00a0%' : (unit ?? '')}`;
   }
 }

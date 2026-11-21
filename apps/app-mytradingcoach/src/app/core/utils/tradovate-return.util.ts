@@ -54,12 +54,12 @@ export function parseTradovateReturn(params: Record<string, string | undefined>)
 export function excludedAccountsMessage(excluded: number): string | null {
   if (excluded <= 0) return null;
   return excluded > 1
-    ? `${excluded} comptes Tradovate de ce login ne sont pas proposés : ils sont déjà reliés à un autre compte MyTradingCoach. Délie-les là-bas pour pouvoir les choisir ici.`
-    : "1 compte Tradovate de ce login n'est pas proposé : il est déjà relié à un autre compte MyTradingCoach. Délie-le là-bas pour pouvoir le choisir ici.";
+    ? `${excluded} comptes Tradovate de ce login ne sont pas proposés\u00a0: ils sont déjà reliés à un autre compte MyTradingCoach. Délie-les là-bas pour pouvoir les choisir ici.`
+    : "1 compte Tradovate de ce login n'est pas proposé\u00a0: il est déjà relié à un autre compte MyTradingCoach. Délie-le là-bas pour pouvoir le choisir ici.";
 }
 
 const REASONS: Record<string, string> = {
-  denied: "Tu as refusé l'accès sur Tradovate : aucune donnée n'a été lue.",
+  denied: "Tu as refusé l'accès sur Tradovate\u00a0: aucune donnée n'a été lue.",
   session_expired: 'La demande de connexion a expiré. Relance-la, elle reste valable 10 minutes.',
   state_mismatch: "La demande de connexion n'a pas pu être vérifiée. Relance-la depuis cet écran.",
   missing_code: "Tradovate n'a pas renvoyé d'autorisation. Relance la connexion.",
@@ -69,7 +69,7 @@ const REASONS: Record<string, string> = {
   no_account: 'Aucun compte Tradovate actif trouvé avec ces identifiants.',
   account_not_found: "Ce compte n'existe plus dans MyTradingCoach.",
   account_already_linked:
-    'Ce compte est déjà relié à un autre compte MyTradingCoach. Délie-le là-bas avant de le relier ici : deux liaisons se déconnecteraient mutuellement.',
+    'Ce compte est déjà relié à un autre compte MyTradingCoach. Délie-le là-bas avant de le relier ici\u00a0: deux liaisons se déconnecteraient mutuellement.',
 };
 
 /** Message d'échec du retour, toujours non bloquant et avec une porte de sortie. */
@@ -121,7 +121,7 @@ export function syncResultLines(r: TradovateSyncResult): { text: string; warn: b
   }
   if (r.openPositions > 0) {
     lines.push({
-      text: `${plural(r.openPositions, 'position encore ouverte', 'positions encore ouvertes')} : importée(s) à la clôture.`,
+      text: `${plural(r.openPositions, 'position encore ouverte', 'positions encore ouvertes')}\u00a0: importée(s) à la clôture.`,
       warn: false,
     });
   }

@@ -103,7 +103,7 @@ export class AccountPayoutsComponent implements OnInit {
 
   protected async remove(p: AccountPayout): Promise<void> {
     const ok = await this.confirm.ask({
-      title: 'Supprimer ce payout ?',
+      title: 'Supprimer ce payout\u00a0?',
       message: `Le payout de ${this.money(p.amount)} du ${this.day(p.tradeDate)} ne sera plus retiré du solde du compte.`,
       confirmLabel: 'Supprimer',
       danger: true,

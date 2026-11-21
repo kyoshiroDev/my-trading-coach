@@ -180,15 +180,15 @@ export function chartAriaLabel(
 ): string {
   const fmt = (v: number) => formatMoney(v, currency, { decimals: 0, sign: false });
   const known = series.dates.filter((d): d is string => !!d);
-  if (!known.length) return kind === 'equity' ? "Courbe d'équité : aucune donnée" : 'Drawdown : aucune donnée';
+  if (!known.length) return kind === 'equity' ? "Courbe d'équité\u00a0: aucune donnée" : 'Drawdown\u00a0: aucune donnée';
   const period = `du ${tooltipDate(known[0])} au ${tooltipDate(known[known.length - 1])}`;
   const last = series.values[series.values.length - 1];
   if (kind === 'equity') {
-    return `Courbe d'équité ${period} : départ ${fmt(series.values[0])}, actuel ${fmt(last)}.`;
+    return `Courbe d'équité ${period}\u00a0: départ ${fmt(series.values[0])}, actuel ${fmt(last)}.`;
   }
   const maxIdx = maxDrawdownIndex(series.values);
   const max = maxIdx === null ? 0 : series.values[maxIdx];
-  return `Drawdown ${period} : départ ${fmt(0)}, actuel ${fmt(last)}, max ${fmt(max)}.`;
+  return `Drawdown ${period}\u00a0: départ ${fmt(0)}, actuel ${fmt(last)}, max ${fmt(max)}.`;
 }
 
 /** Objectif tracé sur la courbe d'équité (niveau de SOLDE, comme l'axe). */
@@ -311,7 +311,7 @@ export function drawdownHelp(plan: PlanFloor | null, currency: string | null): s
     parts.push(`Le plancher se fige à ${fmt(rule.lockedFloor ?? rule.locksAt - rule.amount)} quand ton solde atteint ${fmt(rule.locksAt)}.`);
   }
   if (rule.kind === 'trailing_intraday') {
-    parts.push('Calcul sur les trades clôturés ; ta prop firm peut tenir compte des gains latents.');
+    parts.push('Calcul sur les trades clôturés\u00a0; ta prop firm peut tenir compte des gains latents.');
   }
   return parts.join(' ');
 }

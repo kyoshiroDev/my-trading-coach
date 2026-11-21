@@ -11,9 +11,9 @@ import { ToastService } from '../services/toast.service';
 export function googleAuthErrorMessage(err: unknown): string {
   const status = err instanceof HttpErrorResponse ? err.status : undefined;
   const code = err instanceof HttpErrorResponse ? (err.error as { code?: string } | null)?.code : undefined;
-  if (status === 0) return 'Connexion impossible : vérifie ton réseau et réessaie';
+  if (status === 0) return 'Connexion impossible\u00a0: vérifie ton réseau et réessaie';
   if (code === 'GOOGLE_EMAIL_NOT_VERIFIED')
-    return "Ton adresse Google n'est pas vérifiée : vérifie-la chez Google, ou inscris-toi avec ton email";
+    return "Ton adresse Google n'est pas vérifiée\u00a0: vérifie-la chez Google, ou inscris-toi avec ton email";
   if (status === 401) return 'La connexion Google a expiré, réessaie';
   if (status === 403) return "La connexion Google n'est pas disponible pour ce compte";
   if (status === 409) return 'Ce compte est déjà relié à un autre compte Google';
@@ -46,7 +46,7 @@ export class GoogleSignInService {
           if (data.googleStatus === 'linked') {
             this.toast.success(
               data.passwordCleared
-                ? 'Ton compte Google est maintenant relié. Pour sécuriser ton compte, ton ancien mot de passe a été retiré : tu peux en définir un depuis ton profil.'
+                ? 'Ton compte Google est maintenant relié. Pour sécuriser ton compte, ton ancien mot de passe a été retiré\u00a0: tu peux en définir un depuis ton profil.'
                 : 'Ton compte Google est maintenant relié',
               { duration: 8000 },
             );

@@ -96,7 +96,7 @@ describe('DashboardKpisComponent — drawdown max par trade', () => {
   it('non-régression des autres chiffres sur le même jeu : P&L, win rate, profit factor, trades', () => {
     const el = renderCase().nativeElement as HTMLElement;
     expect(card(el, 'P&L net').querySelector('.mtc-kpi-val')!.textContent!.trim()).toBe(usd(1064.4));
-    expect(card(el, 'Win rate').querySelector('.mtc-kpi-val')!.textContent!.trim()).toBe('40%');
+    expect(card(el, 'Win rate').querySelector('.mtc-kpi-val')!.textContent!.trim()).toBe('40\u00a0%');
     expect(card(el, 'Profit factor').querySelector('.mtc-kpi-val')!.textContent!.trim()).toBe('2.35');
     expect(card(el, 'Trades pris').querySelector('.mtc-kpi-val')!.textContent!.trim()).toBe('5');
   });
@@ -106,7 +106,7 @@ describe('DashboardKpisComponent — drawdown max par trade', () => {
     expect(card(el, 'Profit factor').querySelector('svg')).toBeNull();
     const bars = [...card(el, 'Trades pris').querySelectorAll<HTMLElement>('.mtc-minibars span')];
     expect(bars.map((b) => b.style.height)).toEqual(['100%', '67%']);
-    expect(bars.map((b) => b.getAttribute('title'))).toEqual(['6 nov. : 3 trades', '9 nov. : 2 trades']);
+    expect(bars.map((b) => b.getAttribute('title'))).toEqual(['6 nov.\u00a0: 3 trades', '9 nov.\u00a0: 2 trades']);
     const area = card(el, 'Drawdown max').querySelector('svg path')!.getAttribute('d')!;
     expect(area.endsWith('L72,0 L0,0 Z')).toBe(true);
   });

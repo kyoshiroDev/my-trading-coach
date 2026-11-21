@@ -234,12 +234,12 @@ export interface BannerTicker { label: string; value: string; change: string | n
 export function bannerTickers(ctx: MarketContext | null | undefined, full = false): BannerTicker[] {
   if (!ctx) return [];
   const pct = (v: number | null | undefined) => (v === null || v === undefined || !Number.isFinite(v)
-    ? null : `${v > 0 ? '+' : ''}${v.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} %`);
+    ? null : `${v > 0 ? '+' : ''}${v.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}\u00a0%`);
   const dir = (v: number | null | undefined): BannerTicker['dir'] => (!v ? 'flat' : v > 0 ? 'up' : 'down');
   const num = (v: number | null | undefined, d: number) => (v === null || v === undefined || !Number.isFinite(v)
     ? '-' : v.toLocaleString('fr-FR', { minimumFractionDigits: d, maximumFractionDigits: d }));
   const rate = (label: string, v: number | null | undefined): BannerTicker =>
-    ({ label, value: v == null ? '-' : `${num(v, 2)} %`, change: null, dir: 'flat' });
+    ({ label, value: v == null ? '-' : `${num(v, 2)}\u00a0%`, change: null, dir: 'flat' });
   return [
     { label: 'NQ', value: num(ctx.nq?.value, 0), change: pct(ctx.nq?.changePct), dir: dir(ctx.nq?.changePct) },
     { label: 'SPX', value: num(ctx.spx?.value, 0), change: pct(ctx.spx?.changePct), dir: dir(ctx.spx?.changePct) },
