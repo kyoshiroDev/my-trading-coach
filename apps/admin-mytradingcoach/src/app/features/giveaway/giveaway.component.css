@@ -43,7 +43,7 @@
 /* Cellules à plusieurs éléments : un seul bloc, pour que la carte mobile (td en flex) ne les répartisse pas. */
 .cell { min-width: 0; }
 @media (max-width: 768px) {
-  .cell { text-align: right; }
+  .cell { text-align: right; overflow-wrap: anywhere; }
   .cell .mod-row { justify-content: flex-end; }
   .msg-cell { max-width: none; min-width: 0; }
 }
