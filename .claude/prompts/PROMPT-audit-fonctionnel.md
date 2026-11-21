@@ -135,3 +135,9 @@ Suite de « continue les ticket ouvert dans l'audite » (ordre retenu au complé
 Texte de Greg : « ici reprend l'audite de l'app »
 
 #1102 est issu de la vérification nestjs du 4c (#1065, lot 4 #1062) : types d'échange de l'admin (`AdminUser`, données Abonnements, fondateurs) à déplacer de `admin.api.ts` vers `libs/shared/src/contracts`, liste des accès manuels sans `take`, champ `total` de `GET /admin/subscriptions` plus lu par l'admin (à retirer une fois l'admin du 4c en prod : fait le 19/11, promo #1118).
+
+## Complément #1068 (2026-11-21)
+
+Texte de Greg : « c'est mergé, continue l'audite »
+
+Seul ticket de #993 qui avance sans Greg : #1068 (CSP de l'admin et de l'app). Conf du dépôt et test d'empreinte maintenant, phase 1 en Report-Only ; application sur les VPS par Greg (commandes données), puis passage en mode bloquant dans une seconde PR après vérification sans violation. #1110 et #1004 attendent le VPS ou une connexion Tradovate réelle ; #1059 est déjà fermée (PR #1070).

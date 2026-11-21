@@ -64,6 +64,15 @@ directement ne marcherait pas : Docker fige la cible d'un lien au démarrage du 
 le dépôt (`infra/static/nginx/`) : modifier le dépôt **et** le VPS. Les assets hashés (`*.js|css|…`
 côté SPA, `/_assets/` côté landing : c'est le `build.assets` d'Astro, pas `/_astro/`) font
 `try_files /current$uri /previous$uri =404`.
+**CSP de l'app et de l'admin (#1068, 2026-11-21)** : `spa-releases.conf` pose une seule politique sur
+`index.html` (`location /`) pour l'app (prod, dev, beta) et l'admin. Phase 1 en
+`Content-Security-Policy-Report-Only` (violations dans la console, rien de bloqué), puis passage en
+`Content-Security-Policy` une fois l'app et l'admin vérifiés sans violation. Les scripts inline sont autorisés
+par empreinte (`sha256-…`) : modifier le script `mtc-register-view` de l'index de l'app, ou ajouter un script ou un
+`on…=` inline dans un index, demande de recalculer l'empreinte dans la conf (le test
+`apps/app-mytradingcoach/src/csp-nginx.spec.ts` échoue sinon), puis de reporter la conf sur les deux VPS. Un nouvel
+environnement d'API (`apiUrl` / `wsUrl`) ou un nouveau service tiers appelé par le navigateur s'ajoute à `connect-src`.
+
 Fichiers à nom fixe, avant la règle des assets (`location =`, prioritaire sur la regex) : les service
 workers (`ngsw-worker.js`, `push-sw.js`, …) en `no-cache`, sinon la règle des `.js` leur donnait un
 cache immuable d'un an ; `manifest.webmanifest` en `application/manifest+json`, cache 1 h, 404 s'il
