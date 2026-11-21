@@ -6,9 +6,9 @@ import { ANON_THROTTLE_LIMIT, IP_THROTTLER } from '../../common/throttler/email-
 /**
  * #1132 : POST /auth/refresh garde exprès la limite par défaut (60 / min / IP, compteur propre à la
  * route). Ni e-mail ni IA, pas de force brute possible (JWT signé), rejeu déjà coupé par la rotation
- * (#1002). Surtout : un 429 sur le refresh DÉCONNECTE l'utilisateur côté front (intercepteur
- * jwt-refresh, tant que #1145 n'est pas traité) ; une limite plus serrée « par cohérence avec login » déconnecterait les traders
- * derrière une même IP (bureau, opérateur mobile). La route reste aussi comptée (jamais ignorée).
+ * (#1002) : une limite dédiée n'ajouterait aucune protection. Une limite plus serrée « par cohérence
+ * avec login » ferait échouer pour rien les traders derrière une même IP (bureau, opérateur mobile) ;
+ * depuis #1145 un 429 ne les déconnecte plus, mais leurs requêtes échouent. La route reste comptée.
  */
 describe('POST /auth/refresh — limite de débit (#1132)', () => {
   const handler = AuthController.prototype.refresh;

@@ -1,16 +1,7 @@
 import { Injectable, Logger, OnModuleDestroy, ServiceUnavailableException } from '@nestjs/common';
 import puppeteer, { type Browser } from 'puppeteer';
 import { formatMoney } from '@mtc/shared';
-
-/** Texte IA ou utilisateur injecté dans le HTML du PDF : jamais interprété comme du balisage. */
-export function escapeHtml(value: unknown): string {
-  return String(value ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
+import { escapeHtml } from '../../common/utils/escape-html';
 
 /** Chromium fermé après ce délai sans PDF, ou après ce nombre de PDF (fuites mémoire). */
 export const BROWSER_IDLE_MS = 5 * 60_000;
