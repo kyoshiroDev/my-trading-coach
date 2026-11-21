@@ -38,7 +38,7 @@ describe('vocabulaire du drawdown', () => {
       expect(help).not.toContain('—');
       expect(help).not.toMatch(/rentable/i);
     }
-    expect(DRAWDOWN_LABELS.max.help).toBe('Plus forte baisse depuis un sommet, trade par trade, sur la période. Tous comptes : le compte le plus touché.');
+    expect(DRAWDOWN_LABELS.max.help).toBe('Plus forte baisse depuis un sommet, trade par trade, sur la période. Tous comptes\u00a0: le compte le plus touché.');
   });
 
   it.each(RULE_SCREENS)('%s : la règle s’appelle « Règle de drawdown », jamais « Drawdown max »', (path) => {

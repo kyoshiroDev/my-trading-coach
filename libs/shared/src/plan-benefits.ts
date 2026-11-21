@@ -35,11 +35,11 @@ export const PLAN_BENEFITS: { free: readonly PlanBenefit[]; premium: readonly Pl
     },
     {
       id: 'anti_tilt',
-      text: 'Anti-tilt en direct, app ouverte ou en notification pendant ta séance (compte Tradovate connecté) : reprise de position après une perte, taille qui grossit, surtrading',
+      text: 'Anti-tilt en direct, app ouverte ou en notification pendant ta séance (compte Tradovate connecté)\u00a0: reprise de position après une perte, taille qui grossit, surtrading',
     },
     { id: 'accounts', text: 'Comptes illimités, chacun avec les règles de sa prop firm' },
     { id: 'weekly_debrief', text: 'Débrief de ta semaine rédigé par le coach IA' },
-    { id: 'analytics', text: 'Analyses avancées : par setup, par heure, drawdown détaillé' },
-    { id: 'ai_coach', text: 'Coach IA : insights, chat et récap du jour à 17\u00a0h\u00a030' },
+    { id: 'analytics', text: 'Analyses avancées\u00a0: par setup, par heure, drawdown détaillé' },
+    { id: 'ai_coach', text: 'Coach IA\u00a0: insights, chat et récap du jour à 17\u00a0h\u00a030' },
   ],
 };
