@@ -183,7 +183,7 @@
 @if (planWizardOpen()) {
   <div class="pf-modal-overlay" role="button" tabindex="-1"
        (click)="planWizardOpen.set(false)" (keydown.escape)="planWizardOpen.set(false)">
-    <div class="pf-modal" role="dialog" aria-modal="true" aria-label="Quel est ce compte ?"
+    <div class="pf-modal" role="dialog" aria-modal="true" aria-label="Quel est ce compte&nbsp;?"
          (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()" data-testid="live-prop-firm-plan-modal">
       <mtc-account-plan-wizard [accountId]="accountId()" (done)="onPlanLinked()" />
     </div>

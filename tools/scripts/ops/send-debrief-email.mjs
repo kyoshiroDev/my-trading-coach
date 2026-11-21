@@ -42,7 +42,7 @@ const html = `
     <h1 style="color:#e2eaf5;font-size:22px;margin-bottom:8px;">
       📅 Ton débrief semaine ${weekNumber} est prêt
     </h1>
-    <p style="color:#8fa3bf;margin-top:0;">MyTradingCoach — Weekly Debrief</p>
+    <p style="color:#8fa3bf;margin-top:0;">MyTradingCoach · Débrief hebdo</p>
 
     <div style="${CARD_STYLE}">
       <p>Bonjour Gregory,</p>
