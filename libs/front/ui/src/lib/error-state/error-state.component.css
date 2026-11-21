@@ -7,9 +7,10 @@
   margin-bottom: var(--space-4, 16px);
   padding: var(--space-4, 16px) var(--space-5, 20px);
   border-radius: var(--radius-lg, 12px);
-  /* Rouge du thème de chaque app (#1101) : --red / --red-dim, définis par l'app et l'admin. */
-  border: 1px solid color-mix(in srgb, var(--red) 35%, transparent);
-  background: var(--red-dim);
+  /* Accent posé par chaque app (#1152) : l'app trader réserve --red aux pertes et met ses erreurs
+     en --yellow ; l'admin ne pose rien et garde son --red / --red-dim (#1101). */
+  border: 1px solid color-mix(in srgb, var(--error-state-accent, var(--red)) 35%, transparent);
+  background: var(--error-state-dim, var(--red-dim));
   color: var(--text, #e2eaf5);
 }
 
@@ -22,7 +23,7 @@
 .es-retry {
   min-height: 36px;
   padding: 0 var(--space-4, 16px);
-  border: 1px solid color-mix(in srgb, var(--red) 50%, transparent);
+  border: 1px solid color-mix(in srgb, var(--error-state-accent, var(--red)) 50%, transparent);
   border-radius: var(--radius-md, 8px);
   background: transparent;
   color: var(--text, #e2eaf5);
@@ -33,5 +34,5 @@
 }
 
 .es-retry:hover {
-  background: color-mix(in srgb, var(--red) 15%, transparent);
+  background: color-mix(in srgb, var(--error-state-accent, var(--red)) 15%, transparent);
 }
