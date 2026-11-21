@@ -5,6 +5,7 @@
  */
 import { GiveawayPool } from '@prisma/client';
 import { findForbiddenTerms } from '../../common/ai-text-guard/ai-text-guard';
+import { instagramFontFaces } from './giveaway-instagram.fonts';
 
 export const INSTAGRAM_IMAGE_WIDTH = 1080;
 export const INSTAGRAM_IMAGE_HEIGHT = 1350;
@@ -40,15 +41,16 @@ export function periodLabel(period: string): string {
 }
 
 /**
- * Gabarit fixe aux couleurs de l'app (« The Terminal ») : fond nuit, accent bleu, police système
- * (aucune requête externe pendant le rendu). Couleurs en dur : image rendue côté serveur, hors CSS de l'app.
+ * Gabarit fixe aux couleurs de l'app (« The Terminal ») : fond nuit, accent bleu, polices de la marque
+ * intégrées en data URI (aucune requête externe pendant le rendu, police système si absentes). Couleurs en dur : image rendue côté serveur, hors CSS de l'app.
  */
-export function instagramImageHtml(f: InstagramWinnerFacts): string {
+export function instagramImageHtml(f: InstagramWinnerFacts, fontFaces = instagramFontFaces()): string {
   return `<!doctype html><html lang="fr"><head><meta charset="utf-8"><style>
+  ${fontFaces}
   *{box-sizing:border-box;margin:0;padding:0}
   html,body{width:${INSTAGRAM_IMAGE_WIDTH}px;height:${INSTAGRAM_IMAGE_HEIGHT}px}
   body{background:#080c14;color:#e2eaf5;font-family:'Inter','Segoe UI',Arial,sans-serif;display:flex;flex-direction:column;justify-content:space-between;padding:110px 96px;position:relative;overflow:hidden}
-  body::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 80% 0%,rgba(59,130,246,.28),transparent 55%),radial-gradient(circle at 0% 100%,rgba(139,92,246,.18),transparent 50%)}
+  body::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 80% 0%,rgba(59,130,246,.28),transparent 55%)}
   .top,.mid,.bottom{position:relative}
   .eyebrow{font-family:'JetBrains Mono','Courier New',monospace;font-size:30px;letter-spacing:6px;text-transform:uppercase;color:#60a5fa}
   .period{font-size:40px;color:#8fa3bf;margin-top:18px}
@@ -81,7 +83,7 @@ export function fallbackCaption(f: InstagramWinnerFacts): string {
  * (€, $, euros), termes interdits (promesse de gain, conseil), pour refuser la publication.
  */
 export function checkCaption(raw: string): { caption: string; problems: string[] } {
-  let caption = raw.replace(/[—–]/g, ',').replace(/\r/g, '').trim();
+  let caption = raw.replace(/\s*[—–]\s*/g, ', ').replace(/\r/g, '').trim();
   let tags = 0;
   caption = caption.replace(/#[\p{L}\p{N}_]+/gu, (tag) => (++tags <= INSTAGRAM_MAX_HASHTAGS ? tag : '')).replace(/[ \t]+\n/g, '\n').trim();
   if (caption.length > INSTAGRAM_CAPTION_MAX) caption = caption.slice(0, INSTAGRAM_CAPTION_MAX).trim();

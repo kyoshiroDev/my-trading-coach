@@ -146,16 +146,50 @@ export class GiveawayComponent {
   protected readonly igCaption = signal('');
   protected readonly igPublishAt = signal('');
   protected readonly igCopied = signal(false);
-  /** Metricool absent ou refus à la publication : « Ouvrir l'image » et « Copier la légende ». */
+  /** Metricool absent ou refus à la publication : « Télécharger l'image » et « Copier la légende ». */
   protected readonly igFallback = signal(false);
   protected readonly igError = signal<string | null>(null);
+  protected readonly igPeriod = signal<string | null>(null);
 
   /** « Publier » seulement avec l'accord Instagram du gagnant et un message validé (ou aucun). */
   protected canPublish(w: AdminGiveawayWin): boolean {
     return w.instagramConsent && w.activationStatus === 'APPLIED' && (!w.message || w.moderation === 'VALIDE') && w.publicationStatus !== 'PUBLISHED';
   }
 
-  protected openInstagram(w: AdminGiveawayWin): void {
+  /** « Programmé le … » tant que l'heure n'est pas passée (post programmé chez Metricool), sinon « Publié le … ». */
+  protected publicationLabel(w: AdminGiveawayWin): string {
+    if (w.publicationStatus !== 'PUBLISHED' || !w.publishedAt) return PUBLICATION_LABEL[w.publicationStatus];
+    const at = new Date(w.publishedAt);
+    const day = at.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', timeZone: 'Europe/Paris' });
+    if (at.getTime() > Date.now()) {
+      const hour = at.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Paris' });
+      return `Programmé le ${day} à ${hour}`;
+    }
+    return `Publié le ${day}`;
+  }
+
+  /** Vrai téléchargement (l'attribut download est ignoré entre admin. et api.) ; échec → onglet. */
+  protected async downloadImage(): Promise<void> {
+    const p = this.igPreview();
+    if (!p) return;
+    const name = `tirage-${this.igPeriod() ?? 'mois'}-gagnant.png`;
+    try {
+      const res = await fetch(p.imageUrl);
+      if (!res.ok) throw new Error(String(res.status));
+      const url = URL.createObjectURL(await res.blob());
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = name;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch {
+      window.open(p.imageUrl, '_blank', 'noopener');
+      this.igError.set('Téléchargement impossible\u00a0: clic droit sur l’image puis « Enregistrer l’image ».');
+    }
+  }
+
+  protected openInstagram(w: AdminGiveawayWin, period?: string): void {
+    this.igPeriod.set(period ?? null);
     this.igWin.set(w);
     this.igPreview.set(null);
     this.igCopied.set(false);
@@ -209,7 +243,7 @@ export class GiveawayComponent {
           if (status === 502 || status === 503) {
             // Refus, panne ou configuration absente de Metricool : publication manuelle.
             this.igFallback.set(true);
-            this.igError.set(apiErrorMessage(err, 'Metricool a refusé la publication. Ouvre l’image et copie la légende.'));
+            this.igError.set(apiErrorMessage(err, 'Metricool a refusé la publication. Télécharge l’image et copie la légende.'));
           } else if (status === 409) {
             // Déjà publié ou en cours (autre onglet) : jamais de publication manuelle en double.
             this.closeInstagram();

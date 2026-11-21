@@ -157,6 +157,7 @@ export class GiveawayAdminService {
             instagramHandle: d.win.instagramHandle,
             publicationStatus: d.win.publicationStatus,
             publishedUrl: d.win.publishedUrl,
+            publishedAt: d.win.publishedAt?.toISOString() ?? null,
           }
         : null,
     }));

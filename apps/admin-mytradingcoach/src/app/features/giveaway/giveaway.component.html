@@ -96,7 +96,7 @@
               } @else {
                 <p class="ig-note" data-testid="ig-fallback">{{ p.metricoolAvailable ? 'Metricool a refusé la publication' : 'Metricool n’est pas configuré' }}&nbsp;: publie à la main.</p>
                 <div class="ig-actions">
-                  <a class="btn" [href]="p.imageUrl" target="_blank" rel="noopener" data-testid="ig-download">Ouvrir l’image</a>
+                  <button type="button" class="btn" (click)="downloadImage()" data-testid="ig-download">Télécharger l’image</button>
                   <button type="button" class="btn" (click)="copyCaption()" data-testid="ig-copy">{{ igCopied() ? 'Légende copiée' : 'Copier la légende' }}</button>
                 </div>
               }
@@ -165,10 +165,10 @@
                   </td>
                   <td data-label="Instagram">
                     {{ w.instagramConsent ? 'Accord' + (w.instagramHandle ? ' · @' + w.instagramHandle : '') : 'Non' }}
-                    <div class="sub">{{ PUBLICATION_LABEL[w.publicationStatus] }}</div>
+                    <div class="sub" [attr.data-testid]="'ig-status-' + w.id">{{ publicationLabel(w) }}</div>
                     @if (w.publishedUrl) { <a class="u-link sub" [href]="w.publishedUrl" target="_blank" rel="noopener" [attr.data-testid]="'ig-post-' + w.id">Voir le post</a> }
                     @if (canPublish(w)) {
-                      <button type="button" class="btn btn-sm" [disabled]="busy() !== null" (click)="openInstagram(w)" [attr.data-testid]="'ig-publish-' + w.id">
+                      <button type="button" class="btn btn-sm" [disabled]="busy() !== null" (click)="openInstagram(w, r.period)" [attr.data-testid]="'ig-publish-' + w.id">
                         {{ busy() === 'ig-' + w.id ? 'Préparation…' : 'Publier' }}
                       </button>
                     }

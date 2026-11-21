@@ -59,6 +59,8 @@ export interface AdminGiveawayWin {
   instagramHandle: string | null;
   publicationStatus: GiveawayPublication;
   publishedUrl: string | null;
+  /** Heure de publication (ISO) ; future = post programmé chez Metricool. */
+  publishedAt: string | null;
 }
 
 /** `GET /admin/giveaway`. */

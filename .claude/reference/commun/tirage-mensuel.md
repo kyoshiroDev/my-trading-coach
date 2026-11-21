@@ -130,7 +130,12 @@ prod, Greg valide `/reglement-tirage` et la section 1 h) de la politique de conf
   écrit → reste PUBLISHED. `MetricoolClient` : image
   copiée chez Metricool (`normalize/image/url`) puis post programmé avec `autoPublish`. Statut
   `PUBLISHED` (lien si Metricool le renvoie) ou `FAILED`. Variables `METRICOOL_API_TOKEN`,
-  `METRICOOL_USER_ID`, `METRICOOL_BLOG_ID` : absentes ou refus de Metricool → l'admin propose « Ouvrir l'image »
+  `METRICOOL_USER_ID`, `METRICOOL_BLOG_ID` : absentes ou refus de Metricool → l'admin propose « Télécharger l'image » (vrai téléchargement, onglet si échec)
   et « Copier la légende ». Sans `API_URL` hors prod : erreur (pas d'URL d'image vers la prod). Erreurs Metricool : code HTTP seulement, jamais le corps.
 - Politique de confidentialité : Metricool et Instagram ajoutés aux destinataires (section 4).
+- Visuel expiré (clé Redis absente) à la publication → 400 « recharge l'aperçu », avant toute réservation.
+- Polices de la marque (Inter 400/700/800, JetBrains Mono) intégrées en data URI depuis
+  `node_modules/@fontsource` (`giveaway-instagram.fonts.ts`, lues une fois) ; absentes → police système.
+- Admin : « Programmé le JJ/MM à HH:mm » tant que `publishedAt` est futur, puis « Publié le JJ/MM ».
+  Metricool ne renvoie souvent pas de lien à la programmation : « Voir le post » peut manquer.
 

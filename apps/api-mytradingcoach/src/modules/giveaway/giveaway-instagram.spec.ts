@@ -25,6 +25,16 @@ describe('gabarit et légende', () => {
     expect(html).not.toContain('<script>x');
     expect(html).toContain('&lt;script&gt;');
     expect(html).toContain('width:1080px;height:1350px');
+    expect(html).not.toContain('139,92,246'); // pas de halo violet (réservé à la marque)
+  });
+
+  it('image : polices de la marque intégrées en data URI (aucune requête externe)', () => {
+    const html = instagramImageHtml(FACTS);
+    expect(html.match(/@font-face/g)).toHaveLength(4);
+    expect(html).toContain("font-family:'Inter';font-weight:800");
+    expect(html).toContain('data:font/woff2;base64,');
+    expect(html).not.toMatch(/https?:\/\/[^"')]*\.woff2/);
+    expect(instagramImageHtml(FACTS, '')).not.toContain('@font-face'); // repli police système
   });
 
   it('légende de repli : vraies données, mention du pseudo Instagram, conforme', () => {
@@ -39,6 +49,7 @@ describe('gabarit et légende', () => {
     expect(checkCaption('Avec MTC tu vas devenir rentable').problems.length).toBeGreaterThan(0);
     const { caption } = checkCaption('Bravo \u2014 Léa #a #b #c #d #e #f #g');
     expect(caption).not.toMatch(/[\u2014–]/);
+    expect(caption.startsWith('Bravo, Léa')).toBe(true); // jamais « mot , mot »
     expect(caption.match(/#/g)).toHaveLength(5);
   });
 });
@@ -52,7 +63,7 @@ describe('GiveawayInstagramService', () => {
   let current: Record<string, unknown> | null;
   const prisma = { giveawayWin: { findUnique: vi.fn(async () => current), update: vi.fn(async (_args: { where: unknown; data: Record<string, unknown> }) => ({})), updateMany: vi.fn(async (_args: { where: unknown; data: Record<string, unknown> }) => ({ count: 1 })) } };
   const store = new Map<string, string>();
-  const redis = { client: { get: vi.fn(async (k: string) => store.get(k) ?? null), set: vi.fn(async (k: string, v: string) => { store.set(k, v); return 'OK'; }) } };
+  const redis = { client: { get: vi.fn(async (k: string) => store.get(k) ?? null), set: vi.fn(async (k: string, v: string) => { store.set(k, v); return 'OK'; }), exists: vi.fn(async (k: string) => (store.has(k) ? 1 : 0)) } };
   const anthropic = { enabled: true, create: vi.fn() };
   const pdf = { renderPng: vi.fn(async () => Buffer.from('PNG')) };
   const metricool = { configured: true, publishInstagram: vi.fn(async () => ({ postId: '42', publicUrl: 'https://instagram.com/p/x' })) };
@@ -166,6 +177,15 @@ describe('GiveawayInstagramService', () => {
     config.get.mockImplementation((k: string) => (k === 'FRONTEND_URL' ? 'https://dev.app.test' : undefined));
     anthropic.enabled = false;
     await expect(service.preview('w1')).rejects.toThrow(/API_URL manquante/);
+  });
+
+  it('visuel expiré à la publication : 400 « recharge l’aperçu », rien n’est réservé', async () => {
+    anthropic.enabled = false;
+    const { imageUrl, caption } = await service.preview('w1');
+    store.clear();
+    await expect(service.publish('w1', { caption, imageUrl })).rejects.toThrow(/Visuel expiré/);
+    expect(prisma.giveawayWin.updateMany).not.toHaveBeenCalled();
+    expect(metricool.publishInstagram).not.toHaveBeenCalled();
   });
 
   it('image : jeton invalide ou expiré → null', async () => {

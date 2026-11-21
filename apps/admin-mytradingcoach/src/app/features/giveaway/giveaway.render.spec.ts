@@ -18,7 +18,7 @@ const WIN: AdminGiveawayWin = {
   startsAt: '2027-02-01T08:00:00.000Z', endsAt: '2027-03-01T08:00:00.000Z',
   activationStatus: 'APPLIED', activationError: null, creditCents: null,
   displayConsent: 'PRENOM_INITIALE', message: 'Merci, ça motive !', moderation: 'EN_ATTENTE',
-  instagramConsent: true, instagramHandle: 'lea', publicationStatus: 'NONE', publishedUrl: null,
+  instagramConsent: true, instagramHandle: 'lea', publicationStatus: 'NONE', publishedUrl: null, publishedAt: null,
 };
 
 const data = (over: Partial<AdminGiveawayData> = {}): AdminGiveawayData => ({
@@ -160,7 +160,7 @@ describe('GiveawayComponent', () => {
     expect(q(r3.el, 'ig-publish-w1')).toBeNull();
   });
 
-  it('aperçu sans Metricool : « Ouvrir l’image » et « Copier la légende », pas de publication', async () => {
+  it('aperçu sans Metricool : « Télécharger l’image » et « Copier la légende », pas de publication', async () => {
     const ok = { ...WIN, moderation: 'VALIDE' as const };
     const { fixture, el } = await render(data({ history: [{ ...data().history[0], win: ok }] }));
     q(el, 'ig-publish-w1')!.click();
@@ -168,7 +168,7 @@ describe('GiveawayComponent', () => {
     fixture.detectChanges();
     expect(q(el, 'ig-panel')).not.toBeNull();
     expect((q(el, 'ig-caption') as HTMLTextAreaElement).value).toBe('Bravo Léa');
-    expect(q(el, 'ig-download')!.getAttribute('href')).toContain('/image/x.png');
+    expect(q(el, 'ig-download')!.textContent).toContain('Télécharger l’image');
     expect(q(el, 'ig-copy')).not.toBeNull();
     expect(q(el, 'ig-confirm')).toBeNull();
   });
@@ -189,7 +189,7 @@ describe('GiveawayComponent', () => {
     http.expectOne(BASE).flush({ data: data() });
   });
 
-  it('Metricool refuse à la publication : erreur dans le panneau, puis « Ouvrir l’image » et « Copier la légende »', async () => {
+  it('Metricool refuse à la publication : erreur dans le panneau, puis « Télécharger l’image » et « Copier la légende »', async () => {
     const ok = { ...WIN, moderation: 'VALIDE' as const };
     const { fixture, el } = await render(data({ history: [{ ...data().history[0], win: ok }] }));
     q(el, 'ig-publish-w1')!.click();
@@ -199,7 +199,7 @@ describe('GiveawayComponent', () => {
     http.expectOne(`${BASE}/wins/w1/instagram/publish`).flush({ message: 'Metricool : accès refusé (abonnement ou jeton).' }, { status: 502, statusText: 'Bad Gateway' });
     fixture.detectChanges();
     expect(q(el, 'ig-error')!.textContent).toContain('accès refusé');
-    expect(q(el, 'ig-download')!.getAttribute('href')).toBe('https://api.test/i.png');
+    expect(q(el, 'ig-download')).not.toBeNull();
     expect(q(el, 'ig-copy')).not.toBeNull();
     expect(q(el, 'ig-confirm')).toBeNull();
   });
@@ -230,6 +230,42 @@ describe('GiveawayComponent', () => {
     fixture.detectChanges();
     expect(q(el, 'ig-panel')).toBeNull(); // panneau fermé : plus de bouton de confirmation
     expect(el.textContent).toContain('déjà été publié');
+  });
+
+  it('statut Instagram : « Programmé le … à … » si l’heure est future, « Publié le … » sinon', async () => {
+    const future = { ...WIN, publicationStatus: 'PUBLISHED' as const, publishedAt: '2099-03-01T17:30:00.000Z' };
+    const { el } = await render(data({ history: [{ ...data().history[0], win: future }] }));
+    expect(q(el, 'ig-status-w1')!.textContent).toContain('Programmé le 01/03 à 18:30');
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])] });
+    http = TestBed.inject(HttpTestingController);
+    const past = { ...future, publishedAt: '2020-01-05T10:00:00.000Z' };
+    const r2 = await render(data({ history: [{ ...data().history[0], win: past }] }));
+    expect(q(r2.el, 'ig-status-w1')!.textContent?.trim()).toBe('Publié le 05/01');
+  });
+
+  it('« Télécharger l’image » : fichier nommé d’après le mois ; échec → onglet et consigne', async () => {
+    const ok = { ...WIN, moderation: 'VALIDE' as const };
+    const { fixture, el } = await render(data({ history: [{ ...data().history[0], win: ok }] }));
+    q(el, 'ig-publish-w1')!.click();
+    http.expectOne(`${BASE}/wins/w1/instagram/preview`).flush({ data: { caption: 'Bravo', aiGenerated: false, imageUrl: 'https://api.test/i.png', metricoolAvailable: false } });
+    fixture.detectChanges();
+    const fetchMock = vi.fn(async () => new Response(new Blob(['png']), { status: 200 }));
+    vi.stubGlobal('fetch', fetchMock);
+    const created = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:x');
+    const clicks: string[] = [];
+    const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (this: HTMLAnchorElement) { clicks.push(this.download); });
+    const fixtureComp = fixture.componentInstance as unknown as { downloadImage(): Promise<void> };
+    await fixtureComp.downloadImage();
+    expect(fetchMock).toHaveBeenCalledWith('https://api.test/i.png');
+    expect(clicks).toEqual([`tirage-${data().history[0].period}-gagnant.png`]);
+    fetchMock.mockRejectedValueOnce(new Error('cors'));
+    const open = vi.spyOn(window, 'open').mockReturnValue(null);
+    await fixtureComp.downloadImage();
+    fixture.detectChanges();
+    expect(open).toHaveBeenCalledWith('https://api.test/i.png', '_blank', 'noopener');
+    expect(q(el, 'ig-error')!.textContent).toContain('Enregistrer l’image');
+    click.mockRestore(); created.mockRestore(); open.mockRestore(); vi.unstubAllGlobals();
   });
 
   it('erreur de chargement : message affiché', async () => {

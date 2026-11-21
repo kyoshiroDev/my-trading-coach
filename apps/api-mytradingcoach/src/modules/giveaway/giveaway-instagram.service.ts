@@ -93,10 +93,14 @@ export class GiveawayInstagramService {
    */
   async publish(winId: string, args: { caption: string; imageUrl: string; publishAt?: string | null }): Promise<AdminGiveawayInstagramPublishResponse> {
     await this.publishableFacts(winId);
-    if (!this.metricool.configured) throw new ServiceUnavailableException('Metricool n’est pas configuré\u00a0: ouvre l’image et copie la légende.');
+    if (!this.metricool.configured) throw new ServiceUnavailableException('Metricool n’est pas configuré\u00a0: télécharge l’image et copie la légende.');
     const { caption, problems } = checkCaption(args.caption);
     if (problems.length) throw new BadRequestException(`Légende refusée (${problems.join(', ')}).`);
     if (!this.isOurImage(args.imageUrl)) throw new BadRequestException('Image inconnue : recharge l’aperçu.');
+    // Visuel expiré (24 h) : Metricool ne pourrait pas le copier et le repli ouvrirait une image morte.
+    const token = args.imageUrl.slice(args.imageUrl.lastIndexOf('/') + 1).replace(/\.png$/, '');
+    const alive = await this.redisService.client.exists(IMAGE_KEY(token)).catch(() => 0);
+    if (!alive) throw new BadRequestException('Visuel expiré\u00a0: recharge l’aperçu.');
     const publishAt = args.publishAt ? new Date(args.publishAt) : null;
     if (publishAt && (Number.isNaN(publishAt.getTime()) || publishAt.getTime() < Date.now() - 60_000)) {
       throw new BadRequestException('Date de publication invalide.');
@@ -117,7 +121,7 @@ export class GiveawayInstagramService {
       await this.prisma.giveawayWin.update({ where: { id: winId }, data: { publicationStatus: GiveawayPublication.FAILED, publishedAt: null } });
       this.logger.warn(`Publication Instagram en échec (lot ${winId}) : ${message}`);
       // 502 = refus ou panne de Metricool, seul cas où l'admin passe en publication manuelle.
-      throw new BadGatewayException(`${message} Ouvre l’image et copie la légende pour publier à la main.`);
+      throw new BadGatewayException(`${message} Télécharge l’image et copie la légende pour publier à la main.`);
     }
     // Post parti : un échec d'écriture du lien ne rend jamais le lot republiable.
     if (publicUrl) {
