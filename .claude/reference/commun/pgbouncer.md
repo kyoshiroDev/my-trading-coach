@@ -55,9 +55,10 @@ docker exec -it mtc_postgres psql -h mtc_pgbouncer -p 6432 -U mtc_user -d pgboun
 Réglages actuels :
 | | Valeur | Pourquoi |
 |---|---|---|
-| `pool_mode` | **session** (assumé) | l'API plafonne déjà ses connexions (3 workers × `DB_POOL_MAX`) ; passer en `transaction` = changement de comportement non testé |
-| pool par base (`DATABASES`) | prod **20**, dev **6**, beta **6** | budget ≤ 42 connexions serveur sur `max_connections=50` |
+| `pool_mode` | **session** (constaté le 2026-11-21, #1110 : `/etc/pgbouncer/pgbouncer.ini` du conteneur prod, généré à son démarrage du 07/11) | l'API plafonne déjà ses connexions (3 workers × `DB_POOL_MAX`) ; passer en `transaction` = changement de comportement non testé |
+| pool par base (`DATABASES`) | prod **25** (VPS prod, constaté le 21/11) ; dev **6**, beta **6** (ancien VPS, relevé du 01/10) | budget ≤ 42 connexions serveur sur `max_connections=50` |
 | `max_client_conn` | 200 | |
+| `default_pool_size` / `max_db_connections` (VPS prod) | 5 / 40 (constaté le 21/11) | `max_db_connections` plafonne le total des connexions serveur |
 | `query_wait_timeout` | 30 s (au lieu de 120) | échouer vite plutôt que de faire attendre 2 min |
 | `DB_POOL_MAX` API | prod 5 (défaut) · **dev et beta 2** (`.env.dev`, `.env.beta`) | 3 × 2 = 6 = pool de la base |
 

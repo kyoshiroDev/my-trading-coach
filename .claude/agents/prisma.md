@@ -13,7 +13,7 @@ Appelé comme vérificateur : tu lis seulement le diff de ton domaine (`git diff
 1. Migration additive : colonne nullable ou avec `DEFAULT`, nouvelle table, index `CONCURRENTLY`.
 2. Suppression / renommage en deux déploiements ; NOT NULL ajouté seulement quand l'ancien code ne peut plus laisser la colonne vide.
 3. Jamais modifier une migration déjà présente sur `dev`.
-4. Migrations sur connexion directe, jamais via PgBouncer (transaction mode).
+4. Migrations sur connexion directe (`DATABASE_DIRECT_URL`), jamais via PgBouncer.
 5. Règles de nommage respectées (section dédiée).
 6. Index pour les requêtes chaudes nouvelles.
 7. Aucun champ sensible exposé par les réponses (`reference/commun/donnees-sensibles.md`).
@@ -43,8 +43,9 @@ pnpm dlx prisma validate                            # valider le schéma
 
 ## PgBouncer — règle critique
 
-En production, `DATABASE_URL` pointe vers PgBouncer (port 6432, transaction mode).
-**PgBouncer en transaction mode est incompatible avec les migrations DDL.**
+En production, `DATABASE_URL` pointe vers PgBouncer (port 6432). Mode réel : **session** (config
+chargée par le conteneur prod, constatée le 2026-11-21, #1110 ; détail dans `reference/commun/pgbouncer.md`).
+**Les migrations ne passent jamais par PgBouncer.**
 
 → Les migrations utilisent `DATABASE_DIRECT_URL` (Postgres direct, port 5432) :
 ```sh
