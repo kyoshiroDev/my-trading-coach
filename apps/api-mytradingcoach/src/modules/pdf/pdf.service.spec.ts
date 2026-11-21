@@ -4,7 +4,8 @@ const launch = vi.fn();
 vi.mock('puppeteer', () => ({ default: { launch: (...a: unknown[]) => launch(...a) } }));
 
 import { ServiceUnavailableException } from '@nestjs/common';
-import { PdfService, PDF_QUEUE_MAX, escapeHtml, type DebriefPdfData } from './pdf.service';
+import { PdfService, PDF_QUEUE_MAX, type DebriefPdfData } from './pdf.service';
+import { escapeHtml } from '../../common/utils/escape-html';
 
 const data = (over: Partial<DebriefPdfData> = {}): DebriefPdfData => ({
   currency: 'USD', weekNumber: 40, year: 2026, startDate: '28/09', endDate: '04/10', userName: 'Lucas',
