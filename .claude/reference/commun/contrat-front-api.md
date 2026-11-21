@@ -9,7 +9,8 @@
 ## Contrat front ↔ API (`libs/shared/src/contracts`, audit du 27/09/2026)
 
 - **Source unique des formes JSON échangées** : enums (copie des enums Prisma), trades, sessions,
-  débrief, calendrier éco, fiche utilisateur admin, stats VPS. Import : `from '@mtc/shared'`.
+  débrief, calendrier éco, fiche utilisateur admin, stats VPS, statistiques ambassadeur
+  (`AmbassadorStats` / `AdminAmbassadorStats`, #1073). Import : `from '@mtc/shared'`.
 - Les dates y sont des `string` ISO (ce que le front reçoit). Côté API, les DTO de requête
   `implements` le contrat (`CreateTradeDto implements CreateTradeRequest`) : un champ ajouté d'un
   seul côté casse la compilation.
