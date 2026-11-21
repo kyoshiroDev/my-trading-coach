@@ -25,10 +25,11 @@
 ## CD de l'API : déploiement ciblé, garde-fou et gel (SCA-B0-08, 2026-09-30)
 
 - `deploy-api` ne tourne que si `changes.outputs.api == 'true'` : projet Nx `api-mytradingcoach`
-  affecté, **ou** fichier touché sous `prisma/`, `libs/`, `scripts/discord-bot/`,
+  affecté, **ou** fichier touché sous `prisma/`, `libs/shared/`, `scripts/discord-bot/`,
   `docker-compose.{prod,discord-bot}.yml`, `package.json`, `pnpm-lock.yaml`,
   `pnpm-workspace.yaml` (Nx ne rattache pas ces chemins à un projet). Un commit landing seul ne
-  redémarre plus l'API.
+  redémarre plus l'API. Les libs front (`libs/front/**`, que l'API n'importe pas) non plus : le
+  motif valait `libs/` jusqu'au #1137.
 - Après `up`, le job attend `/api/health/ready` (Postgres + Redis) jusqu'à **90 s**, sinon il
   échoue en affichant les 80 dernières lignes de logs, et `deployed/prod` ne bouge pas.
 - **Gel** : variable de dépôt `FREEZE_API_DEPLOY=true` (Settings → Secrets and variables →

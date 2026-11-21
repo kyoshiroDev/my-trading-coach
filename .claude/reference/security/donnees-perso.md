@@ -51,3 +51,15 @@ litiges tardifs). Jamais touchées, seulement comptées et signalées (`warn`) :
 (webhook de fin jamais traité) et ligne terminée sans `endedAt`. Une place RELEASED d'un compte vivant
 (`releaseUnpaid` détache la place) suit la même règle. Couvert par `retention.cron.spec.ts` et
 `retention.int-spec.ts` (179/181 j, ACTIVE, sans fin, compte lié, rejeu).
+
+## Tirage au sort mensuel déclaré dans la politique de confidentialité (#1150, 2026-11-21)
+
+Politique de confidentialité (`politique-confidentialite.astro`, mise à jour du 21/11) : section 1 h)
+(données lues pour la participation, trace du tirage, lot, et seulement avec accord : nom à afficher,
+message ≤ 140, accord et pseudo Instagram), deux finalités (tirage : exécution du contrat ; affichage
+du gagnant et Instagram : consentement) et une ligne de conservation (trace et lot sans limite pour
+l'instant ; à la suppression du compte, lien, nom, message et pseudo Instagram effacés par `deleteMe`).
+Ouverture du verrou d'activation en prod (`GIVEAWAY_PROD_ACTIVATION_OPEN = true`) dans le même commit,
+condition posée par l'agent security au lot A. Journaux du module : `safePrizeError` (code de
+l'erreur, jamais le message brut Stripe ou Prisma). La publication Instagram (Metricool, lot C)
+ajoutera un destinataire à la section 4.

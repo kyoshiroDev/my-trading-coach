@@ -38,6 +38,7 @@ import { AuthService } from '@app/core/auth/auth.service';
 import { UsersApi } from '@app/core/api/users.api';
 import { AmbassadorNotifService } from '@app/core/services/ambassador-notif.service';
 import { LiveModeService } from '@app/core/services/live-mode.service';
+import { GiveawayStateService } from '@app/core/services/giveaway-state.service';
 import { OnboardingComponent } from '@app/features/onboarding/onboarding.component';
 import { environment } from '@app/environments/environment';
 import { ScrollMemoryDirective } from '@mtc/front-ui';
@@ -73,6 +74,8 @@ export class SidebarComponent {
   private readonly destroyRef = inject(DestroyRef);
   protected readonly ambassadorNotif = inject(AmbassadorNotifService);
   protected readonly liveModeService = inject(LiveModeService);
+  /** Tirage mensuel : « Score trader » devient « Concours du mois » dès qu'un tirage est allumé. */
+  protected readonly giveaway = inject(GiveawayStateService);
   private readonly tradovateLive = inject(TradovateLiveSocketService);
   protected readonly landingUrl = environment.landingUrl;
 
@@ -92,6 +95,7 @@ export class SidebarComponent {
   protected readonly AmbassadorIcon = Users;
   protected readonly ParrainageIcon = Gift;
   protected readonly ScoringIcon   = Award;
+  protected readonly ContestIcon   = Gift;
   protected readonly ProfilIcon    = User;
   protected readonly LogoutIcon    = LogOut;
   protected readonly LockIcon      = Lock;
@@ -187,6 +191,11 @@ export class SidebarComponent {
       untracked(() => (on ? this.tradovateLive.connect() : this.tradovateLive.disconnect()));
     });
     this.destroyRef.onDestroy(() => this.tradovateLive.disconnect());
+
+    // Tirage mensuel : état chargé une fois par connexion (entrée « Concours du mois »).
+    effect(() => {
+      if (this.auth.isAuthenticated()) untracked(() => { if (!this.giveaway.state()) this.giveaway.load(); });
+    });
 
     const onFocus = () => {
       if (!this.auth.isAuthenticated()) return;

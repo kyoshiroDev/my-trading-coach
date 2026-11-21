@@ -13,3 +13,5 @@ export * from './debrief';
 export * from './prop-firm';
 export * from './incident';
 export * from './ai';
+export * from './giveaway';
+export * from './ambassador';

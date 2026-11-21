@@ -135,3 +135,14 @@ describe('landing · pages règles des prop firms (#1071, phase 3)', () => {
     }
   });
 });
+
+// Typographie (#1139) : l'option payante d'un plan est affichée en clair dans l'app et sur la landing.
+describe('catalogue · libellé des options (configuration.addon)', () => {
+  it('espace insécable avant « : ; ! ? % », jamais une espace ordinaire', () => {
+    type Plan = { id: string; configuration?: { addon?: string | null } | null };
+    const plans = (PROP_FIRM_CATALOG_FILES as { plans: Plan[] }[]).flatMap((f) => f.plans);
+    const addons = plans.filter((p) => p.configuration?.addon);
+    expect(addons.length).toBeGreaterThan(0);
+    for (const p of addons) expect(p.configuration?.addon, p.id).not.toMatch(/\S[ \t]+[:;!?%]/);
+  });
+});

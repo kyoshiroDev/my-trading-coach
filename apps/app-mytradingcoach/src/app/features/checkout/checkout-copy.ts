@@ -104,7 +104,7 @@ export function checkoutCopy(s: CheckoutSummary, now: Date = new Date()): Checko
     };
   }
 
-  const referral = s.referralDiscount ? ' −10 % la première année grâce à ton parrainage.' : '';
+  const referral = s.referralDiscount ? ' −10\u00a0% la première année grâce à ton parrainage.' : '';
   // Montant RÉELLEMENT prélevé la 1re année par un filleul (B8 #1013) : 44,10 € × 12 puis 49 €, ou
   // 441 € puis 490 €, jusque dans la mention de prélèvement (avant : 49 € partout).
   const first = s.referralDiscount ? roundCents(s.recurringEur * (1 - REFERRAL_DISCOUNT.rate)) : s.recurringEur;

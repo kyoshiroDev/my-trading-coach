@@ -283,6 +283,13 @@ describe('Fiche admin — retirer le Premium offert (B10 #1064)', () => {
     expect(removeBtn((await render(signup)).el)).toBeNull();
   });
 
+  it('Premium gagné au tirage mensuel : aucun bouton (lot acquis, l’API répond 409), source « tirage »', async () => {
+    const won = makeData({ trialEndsAt: new Date(Date.now() + 20 * DAY_MS).toISOString(), trialSource: 'GIVEAWAY', offeredPremium: true });
+    const { el } = await render(won);
+    expect(removeBtn(el)).toBeNull();
+    expect(el.querySelector('[data-testid="trial-row"]')!.textContent).toContain('source\u00a0: tirage');
+  });
+
   it('Premium offert pendant une pause Stripe (past_due) : aucun bouton, comme l’API', async () => {
     const paused = { ...offeredData(), identity: { ...offeredData().identity, subscriptionStatus: 'past_due' } };
     expect(removeBtn((await render(paused)).el)).toBeNull();

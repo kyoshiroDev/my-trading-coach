@@ -1,0 +1,71 @@
+<div class="content mtc-page">
+  <div class="page-head mtc-page-head">
+    <h1 class="page-title mtc-page-title"><svg [lucideIcon]="TrophyIcon" [size]="20"></svg>Ton lot du tirage</h1>
+    <p class="page-sub">Choisis comment ton nom apparaît dans la liste des gagnants. Tout reste modifiable.</p>
+  </div>
+
+  @if (!state() && !loadError()) {
+    <div class="state-box">Chargement…</div>
+  } @else if (!state() && loadError()) {
+    <mtc-error-state message="Ta page gagnant n’a pas pu être chargée. Vérifie ta connexion puis réessaie." (retry)="reload()" />
+  } @else if (win(); as w) {
+    <section class="card" data-testid="winner-prize">
+      <div class="card-title">Ce que tu as gagné</div>
+      @if (w.pool === 'FREE') {
+        <p class="status-text">{{ w.prizeMonths }}&nbsp;mois de Premium offert, jusqu’au {{ longDate(w.endsAt) }}.</p>
+        <p class="bar-foot">Ensuite, ton compte repasse en gratuit tout seul&nbsp;: rien n’est prélevé.</p>
+      } @else {
+        <p class="status-text">{{ w.prizeMonths }}&nbsp;mois offerts sur ton abonnement Premium.</p>
+        <p class="bar-foot">Le montant est crédité sur ton compte de facturation et déduit de tes prochaines échéances.</p>
+      }
+      @if (w.activationStatus !== 'APPLIED') {
+        <p class="bar-foot" data-testid="winner-pending">Ton lot est en cours d’activation. Écris-nous à support@mytradingcoach.app si ça dure.</p>
+      }
+    </section>
+
+    <form class="card winner-form" (ngSubmit)="save()" data-testid="winner-form">
+      <fieldset class="field-group">
+        <legend class="card-title">Affichage dans la liste des gagnants</legend>
+        <label class="radio"><input type="radio" name="consent" value="NONE" [ngModel]="consent()" (ngModelChange)="consent.set($event)" data-testid="winner-consent-none" /> Ne pas afficher mon nom («&nbsp;Un trader&nbsp;»)</label>
+        <label class="radio"><input type="radio" name="consent" value="PRENOM_INITIALE" [ngModel]="consent()" (ngModelChange)="consent.set($event)" data-testid="winner-consent-initial" /> Mon prénom et l’initiale de mon nom</label>
+        <label class="radio"><input type="radio" name="consent" value="PSEUDO" [ngModel]="consent()" (ngModelChange)="consent.set($event)" data-testid="winner-consent-pseudo" /> Un pseudo</label>
+        @if (consent() === 'PSEUDO') {
+          <label class="field">
+            <span class="field-lbl">Pseudo</span>
+            <input class="field-input" type="text" name="pseudo" [maxlength]="PSEUDO_MAX" [ngModel]="pseudo()" (ngModelChange)="pseudo.set($event)" data-testid="winner-pseudo" />
+          </label>
+        }
+      </fieldset>
+
+      <label class="field">
+        <span class="field-lbl">Ton message <span class="muted">(facultatif, {{ MESSAGE_MAX }} caractères au plus, publié après validation)</span></span>
+        <textarea class="field-input" name="message" rows="3" [maxlength]="MESSAGE_MAX" [ngModel]="message()" (ngModelChange)="message.set($event)" data-testid="winner-message"></textarea>
+        <span class="muted mono counter">{{ message().length }} / {{ MESSAGE_MAX }}</span>
+      </label>
+      @if (w.message && w.moderation !== 'VALIDE') {
+        <p class="bar-foot" data-testid="winner-moderation">{{ w.moderation === 'REFUSE' ? 'Ton message n’a pas été retenu. Tu peux en écrire un autre.' : 'Ton message sera affiché après validation.' }}</p>
+      }
+
+      <fieldset class="field-group">
+        <legend class="card-title">Instagram</legend>
+        <label class="radio"><input type="checkbox" name="instagram" [ngModel]="instagramConsent()" (ngModelChange)="instagramConsent.set($event)" data-testid="winner-instagram-consent" /> J’accepte que MyTradingCoach annonce mon gain sur Instagram (avec le nom choisi ci-dessus)</label>
+        @if (instagramConsent()) {
+          <label class="field">
+            <span class="field-lbl">Ton pseudo Instagram <span class="muted">(facultatif, pour te mentionner)</span></span>
+            <input class="field-input" type="text" name="instagramHandle" [maxlength]="INSTAGRAM_INPUT_MAX" [ngModel]="instagramHandle()" (ngModelChange)="instagramHandle.set($event)" data-testid="winner-instagram-handle" />
+          </label>
+        }
+      </fieldset>
+
+      @if (error(); as e) { <p class="form-error" role="alert" data-testid="winner-error">{{ e }}</p> }
+      @if (saved()) { <p class="form-ok" role="status" data-testid="winner-saved">C’est enregistré.</p> }
+      <button type="submit" class="btn btn-blue" [disabled]="saving() || userStore.isDemo()" data-testid="winner-save">
+        {{ saving() ? 'Enregistrement…' : 'Enregistrer mes choix' }}
+      </button>
+    </form>
+  } @else {
+    <div class="state-box" data-testid="winner-none">
+      Aucun lot gagné pour le moment. <a routerLink="/concours">Voir le concours du mois</a>
+    </div>
+  }
+</div>

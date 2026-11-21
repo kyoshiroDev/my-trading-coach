@@ -16,7 +16,10 @@ MoneyPipe         // idem avec décimales / sans « + » : {{ pnl | money:0 }}, 
 EmotionEmojiPipe  // emoji selon état émotionnel
 SessionLabelPipe  // label lisible de la session
 SetupColorPipe    // couleur selon setup
+EcoValuePipe      // valeur d'annonce éco + unité : {{ e.actual | ecoValue: e.unit }} → « 4.1 % », « 250K » (formatEcoValue en .ts, #1179)
 ```
+
+**Séparateur décimal (#1180)** : point pour les chiffres de trading (%, P&L, prix, indices, annonces éco), milliers en espace (fr-FR + `.replace(',', '.')`) ; décimale au point comme `formatMoney`. Les montants d'abonnement en € restent au format fr-FR.
 
 **Devise = propriété DU COMPTE, ZÉRO conversion, AUCUNE préférence globale** (PROMPT-213/214) :
 un montant s'affiche dans la devise de son compte de trading (`TradingAccount.currency`), tel que

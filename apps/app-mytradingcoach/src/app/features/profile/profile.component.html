@@ -144,7 +144,7 @@
                       <span class="stp-stat">
                         {{ s.tradeCount }} trade{{ s.tradeCount > 1 ? 's' : '' }} ·
                         @if (winRateValue(s.id) !== null) {
-                          <b [class]="'wr-' + winRateClass(s.id)">{{ winRateValue(s.id) }}% WR</b>
+                          <b [class]="'wr-' + winRateClass(s.id)">{{ winRateValue(s.id) }}&nbsp;% WR</b>
                         } @else { <b>-</b> }
                       </span>
                     } @else {

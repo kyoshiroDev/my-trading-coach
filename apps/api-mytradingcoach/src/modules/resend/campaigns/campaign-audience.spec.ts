@@ -94,13 +94,15 @@ describe('public des campagnes : interne sélectionné, démo et ADMIN exclus', 
   it('admin, liste des campagnes : chaque campagne exposée, comptages compris', async () => {
     const { svc, prisma } = makeService();
     const list = await svc.listCampaigns();
-    // Les campagnes absentes de l'admin (essai J+11 et fin d'essai) ne partent que par le cron,
-    // couvert au test précédent.
+    // Les campagnes absentes de l'admin (essai J+11, fin d'essai et fin du Premium gagné au tirage)
+    // ne partent que par le cron, couvert au test précédent.
     // (Les types de l'admin ne sont pas toujours les clés du registre : strategy_profile = profile_reminder.)
     const trial = CAMPAIGNS.filter((c) => c.key === 'trial_ending' || c.key === 'trial_ended');
     expect(trial.map((c) => c.automated)).toEqual([true, true]);
     expect(list.some((c) => c.type.startsWith('trial'))).toBe(false);
-    expect(list).toHaveLength(CAMPAIGNS.length - trial.length);
+    const cronOnly = CAMPAIGNS.filter((c) => c.key === 'giveaway_ending');
+    expect(cronOnly.map((c) => c.automated)).toEqual([true]);
+    expect(list).toHaveLength(CAMPAIGNS.length - trial.length - cronOnly.length);
     // Comptage du segment : `{ AND: [segment, public] }` ; les autres comptages l'emboîtent.
     const segmentCounts = prisma.user.count.mock.calls
       .map(([args]) => args.where as Prisma.UserWhereInput)

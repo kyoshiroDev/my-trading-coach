@@ -14,7 +14,7 @@ import type { AmbassadorService } from '../ambassador/ambassador.service';
  */
 const DAY = 86_400_000;
 const NOW = new Date('2026-11-17T12:00:00.000Z');
-const prisma = { user: { findUnique: vi.fn(), update: vi.fn(), updateMany: vi.fn() } };
+const prisma = { user: { findUnique: vi.fn(), update: vi.fn(), updateMany: vi.fn() }, giveawayWin: { findFirst: vi.fn() } };
 const cache = { invalidate: vi.fn() };
 const discord = { setPlanRole: vi.fn() };
 const redis = { client: { del: vi.fn() } };
@@ -39,6 +39,40 @@ beforeEach(() => {
   prisma.user.updateMany.mockResolvedValue({ count: 1 });
   discord.setPlanRole.mockResolvedValue(undefined);
   redis.client.del.mockResolvedValue(1);
+});
+
+describe('UsersService.removeOfferedPremium : lot du tirage (PROMPT-tirage-mensuel)', () => {
+  it('Premium gagné au tirage : jamais retiré (lot acquis)', async () => {
+    prisma.user.findUnique.mockResolvedValueOnce(offered({ trialSource: 'GIVEAWAY' }));
+    await expect(service.removeOfferedPremium('u1')).rejects.toBeInstanceOf(ConflictException);
+    expect(prisma.user.updateMany).not.toHaveBeenCalled();
+  });
+
+  it('offre admin posée par-dessus un lot gagné en cours : le lot est rendu jusqu’à sa fin', async () => {
+    const winEnd = new Date(NOW.getTime() + 10 * DAY);
+    prisma.giveawayWin.findFirst.mockResolvedValueOnce({ endsAt: winEnd });
+    prisma.user.findUnique
+      .mockResolvedValueOnce(offered({ trialEndsAt: new Date(NOW.getTime() + 40 * DAY) }))
+      .mockResolvedValueOnce({ discordId: null, plan: 'FREE', role: 'USER', trialEndsAt: winEnd });
+    const res = await service.removeOfferedPremium('u1');
+    expect(prisma.user.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({ data: { trialEndsAt: winEnd, trialSource: 'GIVEAWAY' } }),
+    );
+    expect(res).toEqual({ trialEndsAt: winEnd.toISOString() });
+  });
+
+  it('lot et essai d’inscription en cours : la fin la plus tardive l’emporte', async () => {
+    const winEnd = new Date(NOW.getTime() + 10 * DAY);
+    const signupEnd = new Date(NOW.getTime() + 12 * DAY);
+    prisma.giveawayWin.findFirst.mockResolvedValueOnce({ endsAt: winEnd });
+    prisma.user.findUnique
+      .mockResolvedValueOnce(offered({ trialEndsAt: new Date(NOW.getTime() + 40 * DAY), signupTrialEndsAt: signupEnd }))
+      .mockResolvedValueOnce({ discordId: null, plan: 'FREE', role: 'USER', trialEndsAt: signupEnd });
+    await service.removeOfferedPremium('u1');
+    expect(prisma.user.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({ data: { trialEndsAt: signupEnd, trialSource: 'SIGNUP' } }),
+    );
+  });
 });
 
 describe('UsersService.removeOfferedPremium (B10 #1064)', () => {
@@ -89,7 +123,11 @@ describe('UsersService.removeOfferedPremium (B10 #1064)', () => {
     prisma.user.updateMany.mockResolvedValueOnce({ count: 0 });
     await expect(service.removeOfferedPremium('u1')).rejects.toThrow('Aucun Premium offert en cours.');
     expect(prisma.user.updateMany).toHaveBeenCalledWith({
-      where: { id: 'u1', ...subscriptionStateWhere('offered', NOW) },
+      where: {
+        id: 'u1',
+        // Jamais un lot du tirage (PROMPT-tirage-mensuel), même si l'état a changé depuis la lecture.
+        AND: [subscriptionStateWhere('offered', NOW), { OR: [{ trialSource: null }, { trialSource: { not: 'GIVEAWAY' } }] }],
+      },
       data: { trialEndsAt: NOW },
     });
     expect(prisma.user.update).not.toHaveBeenCalled();

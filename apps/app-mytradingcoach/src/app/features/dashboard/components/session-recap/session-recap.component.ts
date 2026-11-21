@@ -40,7 +40,7 @@ import { LiveStats, TradingSession } from '@app/core/api/session.api';
           <div class="recap-stat-lbl">Humeur finale</div>
         </div>
       </div>
-      <div class="recap-duration">Durée : {{ sessionDuration() }}</div>
+      <div class="recap-duration">Durée&nbsp;: {{ sessionDuration() }}</div>
     </div>
   `,
 })
@@ -51,7 +51,7 @@ export class SessionRecapComponent {
   protected readonly winRateDisplay = computed(() => {
     const stats = this.liveStats();
     if (!stats || stats.tradesCount === 0) return '-';
-    return stats.winRate.toFixed(0) + '%';
+    return stats.winRate.toFixed(0) + '\u00a0%';
   });
 
   protected readonly sessionDuration = computed(() => {

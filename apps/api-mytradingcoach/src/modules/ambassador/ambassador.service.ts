@@ -9,7 +9,7 @@ import { Prisma, Role } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuthUserCacheService } from '../infra/auth-user-cache.service';
 import { isPayingReferral, referralMonthlyCommission } from './ambassador-commission.util';
-import { roundCents } from '@mtc/shared';
+import { roundCents, type AdminAmbassadorStats, type AmbassadorStats } from '@mtc/shared';
 import { emailEquals } from '../../common/utils/email.util';
 import { maskPseudo } from '../referral/mask-pseudo';
 import { DEMO_ACCOUNT_LOCKED } from '../users/demo-account-locked';
@@ -33,35 +33,6 @@ export interface PromoteResult {
   role: Role;
   referralCode: string;
   referralLink: string;
-}
-
-/**
- * Filleul tel que le voit l'ambassadeur (S2 #1063) : pseudo masqué, ni id, ni nom, ni e-mail.
- * La vue admin (fiche ambassadeur) ajoute id, nom et e-mail.
- */
-export interface ReferralUser {
-  pseudo: string;
-  id?: string;
-  name?: string | null;
-  email?: string;
-  plan: string;
-  createdAt: Date;
-  isActive: boolean;
-  /** 20 % du montant mensuel réellement payé (fondateur, annuel ÷ 12, code partenaire) ; 0 sans abonnement actif. */
-  monthlyCommission: number;
-  /** Abonnement Premium `active` : « Payant » (un essai ou une pause n'en est pas un). */
-  paying: boolean;
-}
-
-export interface AmbassadorStats {
-  referralCode: string;
-  referrals: ReferralUser[];
-  total: number;
-  free: number;
-  premium: number;
-  earningsByMonth: Record<string, number>;
-  totalEarned: number;
-  pendingPayout: number;
 }
 
 @Injectable()
@@ -316,7 +287,11 @@ export class AmbassadorService {
     return { count };
   }
 
-  async getStats(userId: string, view: 'ambassador' | 'admin' = 'ambassador'): Promise<AmbassadorStats> {
+  /** Statistiques (contrat `AmbassadorStats`, #1073) : filleuls masqués, ou identifiés pour l'admin. */
+  async getStats(userId: string, view?: 'ambassador'): Promise<AmbassadorStats>;
+  async getStats(userId: string, view: 'admin'): Promise<AdminAmbassadorStats>;
+  async getStats(userId: string, view: 'ambassador' | 'admin'): Promise<AmbassadorStats | AdminAmbassadorStats>;
+  async getStats(userId: string, view: 'ambassador' | 'admin' = 'ambassador'): Promise<AmbassadorStats | AdminAmbassadorStats> {
     const ambassador = await this.prisma.user.findUnique({
       where: { id: userId },
       select: { referralCode: true },
@@ -379,7 +354,7 @@ export class AmbassadorService {
         pseudo: maskPseudo(u.name, u.email),
         ...(view === 'admin' ? { id: u.id, name: u.name, email: u.email } : {}),
         plan: u.plan,
-        createdAt: u.createdAt,
+        createdAt: u.createdAt.toISOString(),
         isActive: u._count.trades > 0,
         monthlyCommission: referralMonthlyCommission(u, now),
         paying: isPayingReferral(u),

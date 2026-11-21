@@ -1,34 +1,13 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '@admin/environments/environment';
-import type { AcquisitionUtm, AdminAcquisitionData, AdminBetaRoleResponse, AdminOfferPremiumResponse, AdminRemoveOfferedPremiumResponse, AdminLandingEngagementData, AdminFunnelData, AdminPlanLinkStats, AdminSignupFunnelData, AdminSignupMethodsData, AdminUserDetail as UserDetailData, Plan, Role, TrialSource } from '@mtc/shared';
+import type { AdminGiveawayData, AdminGiveawayDrawResponse, AdminGiveawaySettingsResponse, AdminGiveawayWin, DrawGiveawayRequest, GiveawayPool, ModerateGiveawayWinRequest, UpdateGiveawaySettingsRequest, AcquisitionUtm, AdminAcquisitionData, AdminAmbassadorStats, AdminFoundersData, AdminSubscriptionsData, AdminUser, AdminBetaRoleResponse, AdminOfferPremiumResponse, AdminRemoveOfferedPremiumResponse, AdminLandingEngagementData, AdminFunnelData, AdminPlanLinkStats, AdminSignupFunnelData, AdminSignupMethodsData, AdminUserDetail as UserDetailData, FounderSeatStatus, Plan, Role } from '@mtc/shared';
 export type { AdminPlanLinkStats };
 export type { UserDetailData };
 
-export interface AdminUser {
-  id: string; email: string; name: string | null;
-  plan: Plan; role: Role;
-  trialEndsAt: string | null; stripeInterval: 'month' | 'year' | null;
-  /** Origine de `trialEndsAt` (#769) : essai d'inscription ou Premium offert par l'admin. */
-  trialSource?: TrialSource | null;
-  /** Statut de l'abonnement Stripe (#813) : badge « En pause », essai d'abonnement. */
-  stripeSubscriptionStatus?: string | null;
-  /** Fin programmée de l'abonnement (#813) : liste des utilisateurs (essai annulé, résilié) et page Abonnements. */
-  stripeCancelAt?: string | null;
-  stripeCurrentPeriodEnd: string | null;
-  lastSeenAt: string | null; lastLoginAt: string | null; createdAt: string;
-  /** UTM d'inscription (#625), null = non renseigné. */
-  acquisitionSource?: string | null; acquisitionMedium?: string | null; acquisitionCampaign?: string | null;
-  /** Compte interne (#823), exclu des statistiques : renvoyé par la liste (`ADMIN_USER_SELECT`). */
-  isInternal?: boolean;
-  /** Abonnés Stripe seulement (#525) : place fondateur et code partenaire, pour le montant réel. */
-  founderSeat?: { number: number; status: FounderSeatStatus } | null;
-  partnerRedemption?: {
-    status: 'ACTIVE' | 'LOST' | 'RELEASED';
-    priceMonthlyEur: number; priceAnnualEur: number; durationMonths: number | null; createdAt: string;
-    partnerCode: { code: string };
-  } | null;
-}
+/** Contrats partagés (#1102), ré-exportés pour les importeurs existants. */
+export type { AdminUser, AdminFoundersData, FounderSeatStatus } from '@mtc/shared';
+export type SubscriptionsData = AdminSubscriptionsData;
 
 export interface AdminStats {
   mrr: number; arr: number;
@@ -53,24 +32,6 @@ export interface AdminStats {
 }
 
 // ── Offre fondateur et codes partenaires (#525) ─────────────────────────────
-
-export type FounderSeatStatus = 'ACTIVE' | 'LOST' | 'REFUNDED' | 'RELEASED';
-
-export interface AdminFoundersData {
-  /** `open` = interrupteur ; `ended` = ouverte mais ne vend plus, date passée ou complet (A11 #1065). */
-  offer: { open: boolean; ended?: boolean; endsAt: string | null; seatsTotal: number };
-  totals: {
-    taken: number; active: number; lost: number; refunded: number; released: number; seatsLeft: number;
-    byCta: { cta: string | null; count: number }[];
-  };
-  page: number; pageSize: number; total: number;
-  rows: {
-    number: number; status: FounderSeatStatus; interval: 'month' | 'year'; cta: string | null;
-    takenAt: string; endedAt: string | null;
-    userId: string | null; email: string | null;
-    source: string | null; medium: string | null; campaign: string | null;
-  }[];
-}
 
 export interface AdminPartnerCode {
   id: string; code: string; label: string;
@@ -118,19 +79,6 @@ export interface AiCostData {
   unattributed: number;
 }
 
-export interface SubscriptionsData {
-  /** Une page des abonnés payants ; `stripeTotal` = leur nombre total (A8 #1065). */
-  stripeUsers: AdminUser[];
-  stripeTotal?: number;
-  /** Accès manuels (A10 #1065) : rôle bêta-testeur ou plan PREMIUM accordé, sans abonnement ni essai. */
-  betaTesters: AdminUser[];
-  /** Abonnements en pause, past_due / unpaid (A10 #1065). */
-  pausedUsers?: AdminUser[];
-  /** Essais d'inscription, essais d'abonnement et Premium offerts en cours (#828). */
-  trialUsers?: AdminUser[];
-  total: number; page: number; limit: number;
-}
-
 export interface CampaignMeta {
   type: string;
   label: string;
@@ -174,23 +122,8 @@ export interface AdminAmbassadorPromoteResult {
   referralLink: string;
 }
 
-export interface AdminAmbassadorDetail {
-  referralCode: string;
-  referrals: Array<{
-    id: string;
-    name: string | null;
-    email: string;
-    plan: Plan;
-    createdAt: string;
-    isActive: boolean;
-  }>;
-  total: number;
-  free: number;
-  premium: number;
-  earningsByMonth: Record<string, number>;
-  totalEarned: number;
-  pendingPayout: number;
-}
+/** Fiche ambassadeur (GET /admin/ambassadors/:id/stats) : contrat partagé (#1073). */
+export type AdminAmbassadorDetail = AdminAmbassadorStats;
 
 export interface RetentionData {
   activation: { rate: number; activated: number; total: number };
@@ -327,6 +260,23 @@ export class AdminApi {
   }
   setFounderOffer(dto: { open?: boolean; endsAt?: string | null }) {
     return this.http.patch<{ data: unknown }>(`${this.adminBase}/founder-offer`, dto);
+  }
+  // Tirage mensuel (PROMPT-tirage-mensuel)
+  giveaway() { return this.http.get<{ data: AdminGiveawayData }>(`${this.adminBase}/giveaway`); }
+  setGiveaway(pool: GiveawayPool, enabled: boolean) {
+    const body: UpdateGiveawaySettingsRequest = { pool, enabled };
+    return this.http.patch<{ data: AdminGiveawaySettingsResponse }>(`${this.adminBase}/giveaway/settings`, body);
+  }
+  moderateGiveawayWin(id: string, moderation: ModerateGiveawayWinRequest['moderation']) {
+    const body: ModerateGiveawayWinRequest = { moderation };
+    return this.http.patch<{ data: AdminGiveawayWin | null }>(`${this.adminBase}/giveaway/wins/${id}/moderation`, body);
+  }
+  retryGiveawayWin(id: string) {
+    return this.http.post<{ data: AdminGiveawayWin | null }>(`${this.adminBase}/giveaway/wins/${id}/retry`, {});
+  }
+  drawGiveawayNow(pool: GiveawayPool) {
+    const body: DrawGiveawayRequest = { pool };
+    return this.http.post<{ data: AdminGiveawayDrawResponse }>(`${this.adminBase}/giveaway/draw`, body);
   }
   partnerCodes() { return this.http.get<{ data: AdminPartnerCode[] }>(`${this.adminBase}/partner-codes`); }
   createPartnerCode(dto: PartnerCodeInput) {

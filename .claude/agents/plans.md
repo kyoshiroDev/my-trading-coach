@@ -15,7 +15,7 @@ Appelé comme vérificateur : tu lis seulement les parties du diff qui touchent 
 3. 2 paliers seulement : FREE et PREMIUM (aucun STARTER).
 4. Gating : FREE = le quoi (+ IA mutualisée), PREMIUM = le comment et le pourquoi ; on verrouille la couche de profondeur, pas la carte.
 5. Trades FREE illimités ; quota de comptes FREE 1.
-6. Essai : 14 jours offerts à l'inscription sans carte ; essai Stripe 30 j seulement mensuel, comptes antérieurs jamais essayés ; jamais « 1 mois offert » hors parrain.
+6. Essai : 14 jours offerts à l'inscription sans carte ; essai Stripe 30 j seulement mensuel, comptes antérieurs jamais essayés ; jamais « 1 mois offert » hors parrain et lot du tirage mensuel des gratuits (`reference/commun/tirage-mensuel.md`).
 7. Offre fondateur : 29 € / 290 € à vie, 200 places, pas d'essai Stripe.
 8. Libellés de paywall uniques (`PaywallCtaService`, décision E3).
 9. Comptes démo, ADMIN et BETA_TESTER traités comme prévu dans les e-mails et agrégats de plan.
@@ -146,3 +146,4 @@ Contenu déplacé à l'identique le 2026-11-16. Lire un fichier seulement quand 
 | `plans/matrice-features.md` | qui a accès à quoi (grille complète) |
 | `commun/essai-premium.md` | essai d'inscription 14 j, essai Stripe 30 j, fin d'essai, libellés d'essai |
 | `commun/offre-fondateur.md` | offre fondateur, places, codes partenaires, route publique `/pricing/founder` |
+| `commun/tirage-mensuel.md` | tirage au sort mensuel : éligibilité, lots (Premium offert, avoir Stripe), interrupteurs, e-mails |

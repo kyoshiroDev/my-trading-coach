@@ -1,6 +1,7 @@
 // ── Templates emails MyTradingCoach ─────────────────────────────────────────
 // Templates HTML inline : pas de dépendance externe pour le rendu
-import { FOUNDER_OFFER, FOUNDER_REFUND_DAYS, PLAN_BENEFITS, PREMIUM_SIGNUP_TRIAL_DAYS, TRIAL_PERIOD_DAYS, formatMoney } from '@mtc/shared';
+import { FOUNDER_OFFER, FOUNDER_REFUND_DAYS, PLAN_BENEFITS, PREMIUM_SIGNUP_TRIAL_DAYS, TRIAL_PERIOD_DAYS, formatMoney, roundCents } from '@mtc/shared';
+import { escapeHtml } from '../../../common/utils/escape-html';
 
 // ── Base système ──────────────────────────────────────────────────────────────
 
@@ -37,13 +38,26 @@ export const RISK_NOTICE = `<p style="${FONT}font-size:12px;color:#8fa3bf;font-s
 export const ACCENT = {
   brand: 'linear-gradient(90deg,#3b82f6,#8b5cf6)',
   alert: 'linear-gradient(90deg,#ef4444,#f59e0b)', // sécurité, paiement échoué
-  success: 'linear-gradient(90deg,#10b981,#3b82f6)', // paiement reçu, recap positif
+  // Vert = gains seulement (règle design 3) : récap à P&L positif, jamais un paiement (#1159).
+  success: 'linear-gradient(90deg,#10b981,#3b82f6)',
   discord: 'linear-gradient(90deg,#5865f2,#8b5cf6)',
 } as const;
 
 // Première couleur du dégradé : repli pour les clients mail qui ignorent linear-gradient (Outlook).
 function gradientFallback(gradient: string): string {
   return gradient.match(/#[0-9a-f]{3,8}/i)?.[0] ?? '#3b82f6';
+}
+
+/**
+ * Couleurs d'un P&L dans les e-mails (récap du jour, débrief) : vert pour un gain, rouge pour une
+ * perte, neutre pour 0 (le vert est réservé aux gains, e-mails compris, #1163). Jugé sur le montant
+ * arrondi au centime, comme le chiffre affiché : un reste de somme (5,5e-17) n'est pas un gain.
+ */
+export function pnlTone(pnl: number): { color: string; bg: string; accent: string; emoji: string } {
+  const v = roundCents(pnl);
+  if (v > 0) return { color: '#10b981', bg: 'rgba(16,185,129,.3)', accent: ACCENT.success, emoji: '📈' };
+  if (v < 0) return { color: '#ef4444', bg: 'rgba(239,68,68,.3)', accent: ACCENT.brand, emoji: '📉' };
+  return { color: '#9db4ce', bg: 'rgba(59,130,246,.3)', accent: ACCENT.brand, emoji: '📊' };
 }
 
 // Logo : PNG hébergé par l'app (apps/app-mytradingcoach/public/logo-email.png, 80 px affiché en
@@ -198,12 +212,11 @@ export function debriefReadyTemplate(params: {
   appUrl: string;
 }): { subject: string; html: string } {
   const { userName, weekNumber, winRate, totalPnl, totalTrades, currency, appUrl } = params;
-  const pnlColor = totalPnl >= 0 ? '#10b981' : '#ef4444';
+  const { color: pnlColor, bg: pnlBg, accent } = pnlTone(totalPnl);
   const pnlStr = formatMoney(totalPnl, currency, { decimals: 0 });
-  const pnlBg = totalPnl >= 0 ? 'rgba(16,185,129,.3)' : 'rgba(239,68,68,.3)';
 
   const content = card(`
-    <p style="${FONT}font-size:13px;color:#8fa3bf;margin:0 0 4px 0;text-transform:uppercase;letter-spacing:.8px;">Weekly Debrief · Semaine ${weekNumber}</p>
+    <p style="${FONT}font-size:13px;color:#8fa3bf;margin:0 0 4px 0;text-transform:uppercase;letter-spacing:.8px;">Débrief hebdo · Semaine ${weekNumber}</p>
     <h1 style="${FONT}font-size:24px;font-weight:700;color:#e2eaf5;margin:0 0 20px 0;letter-spacing:-.5px;">
       Ton débrief est prêt
     </h1>
@@ -233,7 +246,7 @@ export function debriefReadyTemplate(params: {
     html: emailWrapper(
       content,
       `Semaine ${weekNumber} : ${winRate.toFixed(0)}% WR · ${pnlStr} · ${totalTrades} trades`,
-      totalPnl >= 0 ? ACCENT.success : ACCENT.brand,
+      accent,
     ),
   };
 }
@@ -252,9 +265,8 @@ export function dailyRecapTemplate(params: {
   appUrl: string;
 }): { subject: string; html: string } {
   const { userName, date, pnl, winRate, tradesCount, aiOneLiner, currency, appUrl } = params;
-  const pnlColor = pnl >= 0 ? '#10b981' : '#ef4444';
+  const { color: pnlColor, bg: pnlBg, accent, emoji } = pnlTone(pnl);
   const pnlStr = formatMoney(pnl, currency, { decimals: 0 });
-  const pnlBg = pnl >= 0 ? 'rgba(16,185,129,.3)' : 'rgba(239,68,68,.3)';
   const dateStr = date.toLocaleDateString('fr-FR', {
     weekday: 'long', day: 'numeric', month: 'long',
   });
@@ -287,11 +299,11 @@ export function dailyRecapTemplate(params: {
   `, pnlBg);
 
   return {
-    subject: `${pnl >= 0 ? '📈' : '📉'} Session ${dateStr} : ${pnlStr}`,
+    subject: `${emoji} Session ${dateStr} : ${pnlStr}`,
     html: emailWrapper(
       content,
       `${pnlStr} · ${winRate.toFixed(0)}% WR · ${tradesCount} trades`,
-      pnl >= 0 ? ACCENT.success : ACCENT.brand,
+      accent,
     ),
   };
 }
@@ -309,14 +321,8 @@ export function onboardingLink(appUrl: string, path: string, campaign: string, q
   return `${appUrl.replace(/\/+$/, '')}${path}?${params.toString()}`;
 }
 
-/**
- * Texte saisi par un utilisateur (nom à l'inscription) inséré dans un e-mail HTML : jamais
- * interprété comme du balisage (S1 #1063 : l'aperçu admin d'une campagne exécutait un nom
- * `<img onerror=…>`). Les cinq caractères sensibles.
- */
-export function escapeHtml(s: string): string {
-  return s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
-}
+/** Échappement HTML (S1 #1063) : implémentation unique dans common/utils (#1073), réexportée ici pour les templates. */
+export { escapeHtml };
 
 /** Nom affiché dans « Bonjour {nom} », échappé ; « Trader » si vide. */
 export function greetingName(userName: string | null | undefined): string {
@@ -566,11 +572,11 @@ export function paymentSucceededTemplate(params: {
     </table>
     ${cta('Voir mon dashboard →', `${appUrl}/dashboard`)}
     ${invoiceUrl ? cta('Télécharger la facture', invoiceUrl, 'secondary') : ''}
-  `, 'rgba(16,185,129,.3)');
+  `); // bordure bleue par défaut : un paiement n'est pas un gain (#1159)
 
   return {
-    subject: `✅ Paiement reçu : ${amount}`,
-    html: emailWrapper(content, renewalStr ? `Prochaine échéance le ${renewalStr}.` : 'Merci pour ton paiement.', ACCENT.success),
+    subject: `Paiement reçu : ${amount}`, // sans ✅ : coche verte dans la boîte de réception (#1159)
+    html: emailWrapper(content, renewalStr ? `Prochaine échéance le ${renewalStr}.` : 'Merci pour ton paiement.', ACCENT.brand),
   };
 }
 
@@ -605,7 +611,7 @@ export function subscriptionCanceledTemplate(params: {
       Bonjour ${greetingName(userName)}, ${status}
     </p>
     <p style="${FONT}font-size:13px;color:#6b8299;margin:0 0 20px 0;">
-      Tu peux te réabonner à tout moment pour retrouver les analytics avancés, l'IA Coach et les Weekly Debriefs.
+      Tu peux te réabonner à tout moment pour retrouver les analytics avancés, l'IA Coach et les Débriefs hebdo.
     </p>
     ${cta('Me réabonner →', resubscribeUrl, 'secondary')}
   `);

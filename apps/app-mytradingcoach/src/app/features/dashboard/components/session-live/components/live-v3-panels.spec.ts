@@ -77,8 +77,8 @@ describe('Session live v3 — bandeau', () => {
 
   it('contexte marché défilant sous le chrono : toucher = détail', () => {
     const tape = [
-      { label: 'NQ', value: '18 584', change: '+0,62 %', dir: 'up' },
-      { label: '10Y', value: '4,31 %', change: null, dir: 'flat' },
+      { label: 'NQ', value: '18 584', change: '+0.62 %', dir: 'up' },
+      { label: '10Y', value: '4.31 %', change: null, dir: 'flat' },
     ];
     const { el, fixture } = render(LiveBarComponent, { clock: null, tickerTape: tape }, BAR_TEMPLATE);
     const btn = el.querySelector('[data-testid="live-bar-tape"]') as HTMLButtonElement;
@@ -182,7 +182,7 @@ describe('Session live v3 — annonce publiée (WebSocket éco)', () => {
     const { el, text, fixture } = render(LiveNextEventComponent, { events: [] }, NEXT_TEMPLATE);
     releases$.next([released]);
     fixture.detectChanges();
-    expect(text('live-release-values')).toBe('Publié 3,4% · prévu 3,1% · précédent 3,2%');
+    expect(text('live-release-values')).toBe('Publié 3.4 % · prévu 3.1 % · précédent 3.2 %');
     expect(text('live-release-analysis')).toBe('Inflation au-dessus du consensus.');
     expect(el.querySelector('[data-testid="live-release-more"]')).toBeNull();
     (el.querySelector('.ne-toggle') as HTMLButtonElement).click();
@@ -210,7 +210,7 @@ describe('Session live v3 — annonce publiée (WebSocket éco)', () => {
     fixture.detectChanges();
     expect(text('live-release')).toContain('2 PUBLIÉES');
     expect(el.querySelector('[data-testid="live-release"]')!.classList.contains('ne-high')).toBe(true);
-    expect(text('live-release-values')).toContain('3,4%'); // le CPI (impact fort) en tête
+    expect(text('live-release-values')).toContain('3.4 %'); // le CPI (impact fort) en tête
     (el.querySelector('.ne-toggle') as HTMLButtonElement).click();
     fixture.detectChanges();
     expect(text('live-release-others')).toContain('Jobless Claims publié 220K · prévu 215K');
@@ -238,7 +238,7 @@ describe('Session live v3 — annonce publiée (WebSocket éco)', () => {
     expect(tabs[1].querySelector('.ne-tab-dot'), 'chômage pas encore lu').not.toBeNull();
     tabs[1].click();
     fixture.detectChanges();
-    expect(text('live-release-values')).toContain('4,1%');
+    expect(text('live-release-values')).toContain('4.1 %');
     expect(text('live-release-analysis')).toBe('Chômage stable.');
     expect(el.querySelector('.ne-tab-dot')).toBeNull();
     // L'annonce à impact moyen reste dans le dépliage, sans onglet

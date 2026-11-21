@@ -7,8 +7,8 @@ import {
   Optional,
   ServiceUnavailableException,
 } from '@nestjs/common';
-import { Plan, Role, Prisma, TrialSource } from '@prisma/client';
-import { UTM_NONE, type AcquisitionUtm, type AdminOfferPremiumResponse, type AdminRemoveOfferedPremiumResponse } from '@mtc/shared';
+import { GiveawayDisplayConsent, Role, Prisma, TrialSource } from '@prisma/client';
+import { UTM_NONE, addCalendarMonths, type AcquisitionUtm, type AdminOfferPremiumResponse, type AdminRemoveOfferedPremiumResponse } from '@mtc/shared';
 import { PrismaService } from '../../prisma/prisma.service';
 import { closedTradeStats } from '../analytics/analytics.sql';
 import { AmbassadorService } from '../ambassador/ambassador.service';
@@ -17,10 +17,11 @@ import { CompleteOnboardingDto } from './dto/onboarding.dto';
 import { UpdateMeDto } from './dto/update-me.dto';
 import { UpdatePreferencesDto } from './dto/update-preferences.dto';
 import { AuthUserCacheService } from '../infra/auth-user-cache.service';
-import { OFFER_PREMIUM_DEFAULT_DAYS, hasActiveStripeSubscription } from './premium-offer.util';
+import { OFFER_PREMIUM_DEFAULT_DAYS, PREMIUM_OFFERABLE_WHERE, hasActiveStripeSubscription, premiumOfferRefusal } from './premium-offer.util';
 import { StripeAccountClosureService } from '../stripe/stripe-account-closure.service';
 import { DiscordGuildClient } from '../discord/discord-guild.client';
 import { RedisService } from '../infra/redis.service';
+import { GIVEAWAY_PUBLIC_CACHE_KEY } from '../giveaway/giveaway-cache';
 import { insightsCooldownKey, insightsKeptKey } from '../ai/insights-cache-keys';
 import { billingCacheKey } from '../stripe/stripe.helpers';
 import { isPremiumAccess } from '../discord/discord-access.util';
@@ -63,7 +64,7 @@ const USER_SELECT = {
   createdAt: true,
 } as const;
 
-/** Page Abonnements : essais et offerts listés (les plus récents d'abord). */
+/** Page Abonnements : essais, offerts, accès manuels et pauses listés (les plus récents d'abord). */
 const TRIAL_LIST_MAX = 200;
 
 /** Filtre par UTM d'inscription (#625) : absent = ignoré, `UTM_NONE` = non renseigné. */
@@ -291,6 +292,15 @@ export class UsersService {
           isInternal: user.isInternal,
         },
       }),
+      // Lot du tirage mensuel : le tirage reste compté (lien mis à null par la suppression), mais le
+      // message, les pseudos et les accords d'affichage sont des données personnelles, effacées ici.
+      this.prisma.giveawayWin.updateMany({
+        where: { userId },
+        data: {
+          message: null, displayPseudo: null, instagramHandle: null,
+          displayConsent: GiveawayDisplayConsent.NONE, instagramConsent: false,
+        },
+      }),
       this.prisma.user.delete({ where: { id: userId } }),
     ]);
     await this.userCache?.invalidate(userId); // jeton encore valide d'un compte supprimé : refusé immédiatement
@@ -302,6 +312,12 @@ export class UsersService {
       this.logger.warn(
         `Compte supprimé : cache IA des insights non effacé, expire sous 4 h (user ${userId}) : ${err instanceof Error ? err.message : String(err)}`,
       );
+    }
+    // Tirage mensuel : le nom d'un gagnant supprimé ne reste pas dans l'état public en cache (60 s).
+    try {
+      await this.redisService?.client.del(GIVEAWAY_PUBLIC_CACHE_KEY);
+    } catch {
+      /* Redis indisponible : le cache expire seul en 60 s */
     }
     // Le Discord relié perd ses rôles : sans compte, plus d'accès aux salons réservés (#741).
     if (user.discordId && (await this.discordGuild?.removePlanRoles(user.discordId)) === false) {
@@ -541,23 +557,9 @@ export class UsersService {
       },
     });
     if (!user) throw new NotFoundException('Utilisateur introuvable');
-    if (user.stripeSubscriptionId && hasActiveStripeSubscription(user.stripeSubscriptionStatus)) {
-      throw new ConflictException('Cet utilisateur a déjà un abonnement Stripe.');
-    }
-    // Prélèvement en attente (3D Secure non confirmé, carte refusée, #769) : le Premium offert passerait
-    // devant un abonnement que Stripe peut encore encaisser.
-    if (user.stripeSubscriptionStatus === 'past_due' || user.stripeSubscriptionStatus === 'unpaid') {
-      throw new ConflictException('Paiement Stripe en attente\u00a0: régler d’abord l’abonnement.');
-    }
-    if (user.plan === Plan.PREMIUM) {
-      throw new ConflictException('Cet utilisateur est déjà Premium.');
-    }
-    if (user.role === Role.ADMIN || user.role === Role.BETA_TESTER) {
-      throw new ConflictException('Cet utilisateur a déjà le Premium par son rôle.');
-    }
-    if (user.isDemo) {
-      throw new ConflictException('Impossible d\'offrir le Premium au compte démo.');
-    }
+    // Mêmes refus que l'éligibilité du tirage gratuit (`premiumOfferRefusal`, une seule règle).
+    const refusal = premiumOfferRefusal(user);
+    if (refusal) throw new ConflictException(refusal);
 
     const now = Date.now();
     const from = Math.max(now, user.trialEndsAt?.getTime() ?? 0);
@@ -580,6 +582,43 @@ export class UsersService {
       `Premium offert | admin: ${adminId ?? 'inconnu'}, user: ${userId}, fin: ${trialEndsAt.toISOString()}`,
     );
     return { trialEndsAt: trialEndsAt.toISOString() };
+  }
+
+  /**
+   * Lot du tirage mensuel des gratuits (PROMPT-tirage-mensuel) : même mécanisme que « Offrir Premium »
+   * (`trialEndsAt` futur, plan FREE, fin gérée par le cron de fin d'essai), origine GIVEAWAY, durée en
+   * mois civils à partir de `max(maintenant, trialEndsAt)`. Écriture conditionnelle : refusée si le
+   * compte n'est plus éligible au moment de l'attribution (abonnement pris entre-temps, rôle changé).
+   * Renvoie le début et la fin de l'accès gagné.
+   */
+  async grantGiveawayPremium(userId: string, months: number, now = new Date()): Promise<{ startsAt: Date; endsAt: Date }> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        plan: true, role: true, isDemo: true, trialEndsAt: true, discordId: true,
+        stripeSubscriptionId: true, stripeSubscriptionStatus: true,
+      },
+    });
+    if (!user) throw new NotFoundException('Utilisateur introuvable');
+    const refusal = premiumOfferRefusal(user);
+    if (refusal) throw new ConflictException(refusal);
+
+    const startsAt = new Date(Math.max(now.getTime(), user.trialEndsAt?.getTime() ?? 0));
+    const endsAt = addCalendarMonths(startsAt, months);
+    const { count } = await this.prisma.user.updateMany({
+      where: { id: userId, ...PREMIUM_OFFERABLE_WHERE },
+      data: { trialEndsAt: endsAt, trialUsed: true, trialSource: TrialSource.GIVEAWAY },
+    });
+    if (count === 0) throw new ConflictException('Compte plus éligible au Premium offert.');
+    await this.userCache?.invalidate(userId);
+    await this.redisService?.client.del(billingCacheKey(userId)).catch(() => undefined);
+    if (user.discordId) {
+      await this.discordGuild?.setPlanRole(user.discordId, true).catch((err: Error) =>
+        this.logger.warn(`Rôle Discord Premium non posé après le tirage (user ${userId}) : ${err.message}`),
+      );
+    }
+    this.logger.log(`Premium gagné au tirage | user: ${userId}, fin: ${endsAt.toISOString()}`);
+    return { startsAt, endsAt };
   }
 
   /**
@@ -609,22 +648,47 @@ export class UsersService {
     if (user.trialSource === TrialSource.SIGNUP || !user.trialEndsAt || user.trialEndsAt <= now) {
       throw new ConflictException('Aucun Premium offert en cours.');
     }
+    // Lot gagné au tirage mensuel : acquis, jamais retiré (décision du 16/11 limitée à l'offre de l'admin).
+    if (user.trialSource === TrialSource.GIVEAWAY) {
+      throw new ConflictException('Premium gagné au tirage\u00a0: le lot reste acquis.');
+    }
 
     const signupEnd = user.signupTrialEndsAt && user.signupTrialEndsAt > now ? user.signupTrialEndsAt : null;
+    // Lot du tirage gratuit encore en cours sous l'offre de l'admin (relecteur du 21/11) : le mois gagné
+    // est rendu, jamais perdu. La fin la plus tardive l'emporte (essai d'inscription ou lot).
+    const giveawayWin = await this.prisma.giveawayWin.findFirst({
+      where: { userId, pool: 'FREE', activationStatus: 'APPLIED', endsAt: { gt: now } },
+      orderBy: { endsAt: 'desc' },
+      select: { endsAt: true },
+    });
+    const giveawayEnd = giveawayWin?.endsAt ?? null;
+    const restored =
+      giveawayEnd && (!signupEnd || giveawayEnd >= signupEnd)
+        ? { trialEndsAt: giveawayEnd, trialSource: TrialSource.GIVEAWAY }
+        : signupEnd
+          ? { trialEndsAt: signupEnd, trialSource: TrialSource.SIGNUP }
+          : null;
     // Écriture conditionnelle : le where refait les contrôles (état « offert » de subscriptionState,
     // filtre partagé testé sur une vraie base), pour qu'un webhook Stripe arrivé entre la lecture et
     // l'écriture ne soit jamais écrasé.
     const { count } = await this.prisma.user.updateMany({
-      where: { id: userId, ...subscriptionStateWhere('offered', now) },
-      data: signupEnd ? { trialEndsAt: signupEnd, trialSource: TrialSource.SIGNUP } : { trialEndsAt: now },
+      where: {
+        id: userId,
+        AND: [
+          subscriptionStateWhere('offered', now),
+          // Jamais un lot du tirage (`not` seul exclurait aussi une origine nulle).
+          { OR: [{ trialSource: null }, { trialSource: { not: TrialSource.GIVEAWAY } }] },
+        ],
+      },
+      data: restored ?? { trialEndsAt: now },
     });
     if (count === 0) throw new ConflictException('Aucun Premium offert en cours.');
     await this.userCache?.invalidate(userId); // accès relu tout de suite par le JWT
     await this.realignPremiumAccess(userId);
     this.logger.log(
-      `Premium offert retiré | admin: ${adminId ?? 'inconnu'}, user: ${userId}, essai d'inscription rendu: ${signupEnd ? signupEnd.toISOString() : 'non'}`,
+      `Premium offert retiré | admin: ${adminId ?? 'inconnu'}, user: ${userId}, accès rendu: ${restored ? `${restored.trialSource} jusqu'au ${restored.trialEndsAt.toISOString()}` : 'non'}`,
     );
-    return { trialEndsAt: signupEnd ? signupEnd.toISOString() : null };
+    return { trialEndsAt: restored ? restored.trialEndsAt.toISOString() : null };
   }
 
   async upgradeToPremium(userId: string) {
@@ -773,6 +837,7 @@ export class UsersService {
       this.prisma.user.findMany({
         where: manualWhere,
         orderBy: { createdAt: 'desc' },
+        take: TRIAL_LIST_MAX, // borné comme les essais et les pauses (#1102)
         select: userSelect,
       }),
       this.prisma.user.findMany({
@@ -798,7 +863,6 @@ export class UsersService {
       betaTesters,
       trialUsers,
       pausedUsers,
-      total: stripeTotal + betaTesters.length,
       page,
       limit,
     };

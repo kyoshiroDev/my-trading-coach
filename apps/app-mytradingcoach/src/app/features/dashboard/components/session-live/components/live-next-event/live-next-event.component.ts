@@ -6,6 +6,7 @@ import { ECO_GAP_LABEL, EcoCalendarApi, EcoCalendarData, EcoResultAnalysis } fro
 import { translateEcoEvent } from '@app/core/data/eco-event-translations';
 import { EcoSocketService } from '@app/core/services/eco-socket.service';
 import { byImpact, cmeReopenLabel, countdownLabel, nextAnnouncement, releaseExpired, splitFirstSentence, surprise } from '../../session-live.util';
+import { formatEcoValue } from '@app/shared/pipes';
 
 /** Annonce qui vient de tomber, avec l'analyse IA existante (null tant qu'elle n'est pas arrivée). */
 interface Release {
@@ -190,6 +191,6 @@ export class LiveNextEventComponent {
   }
 
   protected value(v: number | null, unit?: string | null): string {
-    return v === null || v === undefined ? '-' : `${v.toLocaleString('fr-FR')}${unit ?? ''}`;
+    return formatEcoValue(v, unit);
   }
 }

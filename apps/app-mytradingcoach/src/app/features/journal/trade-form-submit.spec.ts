@@ -10,7 +10,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { TestBed } from '@angular/core/testing';
 import { signal, NO_ERRORS_SCHEMA } from '@angular/core';
-import { DecimalPipe, TitleCasePipe } from '@angular/common';
+import { TitleCasePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { of } from 'rxjs';
 import { PnlFormatPipe } from '../../shared/pipes';
@@ -58,7 +58,7 @@ async function render() {
   TestBed.overrideComponent(TradeFormComponent, {
     set: {
       template: FORM_HTML, styleUrls: [], styleUrl: undefined as unknown as string,
-      imports: [FormsModule, TitleCasePipe, DecimalPipe, PnlFormatPipe],
+      imports: [FormsModule, TitleCasePipe, PnlFormatPipe],
       schemas: [NO_ERRORS_SCHEMA],
     },
   });

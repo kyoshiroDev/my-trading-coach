@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
-import { DatePipe, DecimalPipe, UpperCasePipe } from '@angular/common';
+import { DatePipe, UpperCasePipe } from '@angular/common';
+import { PctPipe } from '@mtc/front-ui';
 import { PnlFormatPipe } from '@app/shared/pipes';
 import { DashboardTradeRow, TradeRowOutcome } from '../../dashboard-charts.util';
 import { isInactiveStatus, statusBadgeClass, statusLabel } from '@app/core/utils/account-status.util';
@@ -13,7 +14,7 @@ import { isInactiveStatus, statusBadgeClass, statusLabel } from '@app/core/utils
  */
 @Component({
   selector: 'mtc-recent-trades-table',
-  imports: [DatePipe, DecimalPipe, UpperCasePipe, PnlFormatPipe],
+  imports: [DatePipe, UpperCasePipe, PnlFormatPipe, PctPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './recent-trades-table.component.css',
   template: `
@@ -21,7 +22,7 @@ import { isInactiveStatus, statusBadgeClass, statusLabel } from '@app/core/utils
       <table class="mtc-table">
         <thead><tr>
           <th>Date</th><th>Actif</th><th>Direction</th><th>Stratégie</th>
-          <th class="r">Entrée</th><th class="r col-exit">Sortie</th><th class="r">R:R</th><th class="r">P&amp;L</th><th class="r">P&amp;L %</th><th class="c col-res">Résultat</th>
+          <th class="r">Entrée</th><th class="r col-exit">Sortie</th><th class="r">R:R</th><th class="r">P&amp;L</th><th class="r">P&amp;L&nbsp;%</th><th class="c col-res">Résultat</th>
         </tr></thead>
         <tbody>
           @for (t of rows(); track t.id) {
@@ -34,17 +35,17 @@ import { isInactiveStatus, statusBadgeClass, statusLabel } from '@app/core/utils
                 <!-- Compte échoué ou archivé (interrupteur allumé) : même badge que le journal. -->
                 @if (t.account && isInactiveStatus(t.account.status)) {
                   <span class="status-badge {{ statusBadgeClass(t.account.status) }}"
-                        [attr.title]="t.account.label + ' : hors statistiques'"
+                        [attr.title]="t.account.label + '\u00a0: hors statistiques'"
                         data-testid="trade-account-badge">{{ statusLabel(t.account.status) }}</span>
                 }
               </td>
               <td><span class="mtc-side" [class.long]="t.side === 'LONG'">{{ t.side }}</span></td>
               <td><span class="mtc-setup-cell"><span class="setup-dot-sm" [style.background]="t.setup.color"></span>{{ t.setup.title }}</span></td>
-              <td class="mono dim r">{{ t.entry | number:'1.0-2' }}</td>
-              <td class="mono dim r col-exit">{{ t.exit !== null ? (t.exit | number:'1.0-2') : '-' }}</td>
-              <td class="mono dim r">{{ t.riskReward !== null && t.riskReward !== undefined ? ((t.riskReward >= 0 ? '+' : '') + (t.riskReward | number:'1.1-1')) : '—' }}</td>
+              <td class="mono dim r">{{ price(t.entry) }}</td>
+              <td class="mono dim r col-exit">{{ price(t.exit) }}</td>
+              <td class="mono dim r">{{ rr(t.riskReward) }}</td>
               <td class="mono strong r" [style.color]="TONE[t.outcome]">{{ t.pnl | pnlFormat : null : t.accountId }}</td>
-              <td class="mono r" [style.color]="t.pct === null ? 'var(--text-3)' : TONE[t.outcome]">{{ t.pct === null ? '-' : ((t.pct >= 0 ? '+' : '') + (t.pct | number:'1.2-2') + '%') }}</td>
+              <td class="mono r" [style.color]="t.pct === null ? 'var(--text-3)' : TONE[t.outcome]">{{ t.pct === null ? '-' : (t.pct | pct:2:true) }}</td>
               <td class="c col-res"><span class="mtc-res" [class]="t.outcome">{{ LABEL[t.outcome] }}</span></td>
             </tr>
           }
@@ -60,16 +61,16 @@ import { isInactiveStatus, statusBadgeClass, statusLabel } from '@app/core/utils
             @if (t.outcome === 'open') { <span class="mtc-res open">{{ LABEL.open }}</span> }
             @if (t.account && isInactiveStatus(t.account.status)) {
               <span class="status-badge {{ statusBadgeClass(t.account.status) }}"
-                    [attr.title]="t.account.label + ' : hors statistiques'"
+                    [attr.title]="t.account.label + '\u00a0: hors statistiques'"
                     data-testid="trade-account-badge">{{ statusLabel(t.account.status) }}</span>
             }
           </span>
           <span class="mtc-tc-pnl" [style.color]="TONE[t.outcome]">{{ t.pnl | pnlFormat : null : t.accountId }}</span>
           <span class="mtc-tc-sub">
             {{ t.tradedAt | date:'d MMM' }} · <span class="setup-dot-sm" [style.background]="t.setup.color"></span>{{ t.setup.title }}
-            · R:R {{ t.riskReward !== null && t.riskReward !== undefined ? ((t.riskReward >= 0 ? '+' : '') + (t.riskReward | number:'1.1-1')) : '—' }}
+            · R:R {{ rr(t.riskReward) }}
           </span>
-          <span class="mtc-tc-pct" [style.color]="t.pct === null ? 'var(--text-3)' : TONE[t.outcome]">{{ t.pct === null ? '-' : ((t.pct >= 0 ? '+' : '') + (t.pct | number:'1.2-2') + '%') }}</span>
+          <span class="mtc-tc-pct" [style.color]="t.pct === null ? 'var(--text-3)' : TONE[t.outcome]">{{ t.pct === null ? '-' : (t.pct | pct:2:true) }}</span>
         </li>
       }
     </ul>
@@ -87,4 +88,17 @@ export class RecentTradesTableComponent {
   protected readonly TONE: Record<TradeRowOutcome, string> = {
     win: 'var(--green)', loss: 'var(--red)', breakeven: 'var(--text-3)', open: 'var(--text-3)',
   };
+
+  /** Prix : milliers en espace, décimale au point, 2 décimales au plus (#1180) : « 21 489.25 ». */
+  protected price(v: number | null | undefined): string {
+    if (v === null || v === undefined || !Number.isFinite(v)) return '-';
+    return v.toLocaleString('fr-FR', { maximumFractionDigits: 2 }).replace(',', '.');
+  }
+
+  /** R:R signé à 1 décimale, au point (#1180) : « +1.5 », « -0.8 » ; inconnu → « — ». */
+  protected rr(v: number | null | undefined): string {
+    if (v === null || v === undefined || !Number.isFinite(v)) return '—';
+    const r = Number(v.toFixed(1)) || 0; // -0.04 → 0, jamais « -0.0 »
+    return `${r >= 0 ? '+' : ''}${r.toFixed(1)}`;
+  }
 }

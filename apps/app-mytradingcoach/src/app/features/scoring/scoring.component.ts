@@ -43,7 +43,7 @@ interface ScoreBar {
 
 /** Aucun trade clôturé avec R/R connu : « Gestion risque » non mesurée (#930). */
 export const RISK_UNMEASURED_HINT =
-  'Non mesurée : aucun trade avec un R/R connu. Ajoute ton stop et ton objectif dans le Journal pour la calculer.';
+  'Non mesurée\u00a0: aucun trade avec un R/R connu. Ajoute ton stop et ton objectif dans le Journal pour la calculer.';
 
 /**
  * Score global = moyenne des seules barres mesurées (une barre « — » ne compte pas pour 0). Aucune
@@ -132,7 +132,7 @@ export function computeScore(trades: Trade[]): ScoreBar[] {
 
 /** Aucun trade : les cinq barres « — » (non mesurées), pas 0 (F13 #1047, règle #930). */
 function unmeasuredBars(): ScoreBar[] {
-  const hint = 'Pas encore de trade : le score se calcule dès tes premiers trades.';
+  const hint = 'Pas encore de trade\u00a0: le score se calcule dès tes premiers trades.';
   return ['Discipline', 'Performance', 'Psychologie', 'Gestion risque', 'Consistance'].map((name) => ({
     name, score: null, color: 'transparent', hint,
   }));

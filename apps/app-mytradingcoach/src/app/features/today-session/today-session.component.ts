@@ -172,6 +172,18 @@ export class TodaySessionComponent implements OnInit, OnDestroy {
     const s = this.store.activeSession();
     return new Date(s?.endedAt ?? s?.startedAt ?? this.today);
   });
+  /**
+   * Séance servie d'un autre jour (démo le week-end : séance du vendredi, #1031) : sa date, sinon
+   * l'en-tête « Samedi … » laisse croire qu'elle a eu lieu aujourd'hui. `null` pour une séance du jour.
+   */
+  protected readonly otherDayLabel = computed(() => {
+    const s = this.store.activeSession();
+    if (!s?.startedAt) return null;
+    const started = new Date(s.startedAt);
+    return started.toDateString() === this.today.toDateString() ? null : this.frDate.format(started);
+  });
+  /** Démo en lecture seule : aucun bouton « Démarrer la session », même grisé (#1031). */
+  protected readonly canStartSession = computed(() => !this.userStore.isDemo());
   /** Mêmes chiffres que les 4 cartes du débrief ; humeur = celle choisie en fin de session. */
   protected readonly resultsCard = computed<Omit<ResultsCardData, 'referralCode'>>(() => {
     const stats = this.debriefStats();
@@ -214,8 +226,9 @@ export class TodaySessionComponent implements OnInit, OnDestroy {
     const trades = this.sessionTrades();
     const total = trades.length;
     if (!total) return [];
-    const counts = new Map<string, number>();
-    for (const t of trades) counts.set(t.emotion, (counts.get(t.emotion) ?? 0) + 1);
+    // Trade sans émotion (emotion null) : sa propre ligne « Non renseignée », pas un « - » (#1031).
+    const counts = new Map<string | null, number>();
+    for (const t of trades) counts.set(t.emotion ?? null, (counts.get(t.emotion ?? null) ?? 0) + 1);
     return [...counts.entries()]
       .map(([emotion, count]) => ({ emotion, count, pct: Math.round((count / total) * 100) }))
       .sort((a, b) => b.count - a.count);
@@ -275,10 +288,10 @@ export class TodaySessionComponent implements OnInit, OnDestroy {
     if (this.noTrades()) return "Tu n'as pas forcé de trade aujourd'hui. C'est de la discipline.";
     const s = this.disciplineScore();
     const revenge = this.sessionTrades().filter(t => t.emotion === 'REVENGE').length;
-    if (revenge > 0) return `${revenge} revenge trade${revenge > 1 ? 's' : ''} détecté${revenge > 1 ? 's' : ''} : travailler la gestion émotionnelle.`;
-    if (s >= 85) return 'Excellente gestion : plan respecté, émotions sous contrôle.';
+    if (revenge > 0) return `${revenge} revenge trade${revenge > 1 ? 's' : ''} détecté${revenge > 1 ? 's' : ''}\u00a0: travailler la gestion émotionnelle.`;
+    if (s >= 85) return 'Excellente gestion\u00a0: plan respecté, émotions sous contrôle.';
     if (s >= 70) return "Bonne session dans l'ensemble. Quelques petits ajustements possibles.";
-    return 'Score indicatif basé sur ta session : revenge trades, stops, objectifs.';
+    return 'Score indicatif basé sur ta session\u00a0: revenge trades, stops, objectifs.';
   });
   protected readonly scoreColor = computed(() => {
     const s = this.disciplineScore();
@@ -288,7 +301,7 @@ export class TodaySessionComponent implements OnInit, OnDestroy {
     return 'var(--red)';
   });
 
-  protected emoColor(emotion: string): string { return EMOTION_COLORS[emotion] ?? 'var(--text-3)'; }
+  protected emoColor(emotion: string | null): string { return (emotion && EMOTION_COLORS[emotion]) || 'var(--text-3)'; }
   protected toggleObjCheck(index: number): void {
     const current = this.objectiveChecks();
     this.objectiveChecks.set({ ...current, [index]: !current[index] });

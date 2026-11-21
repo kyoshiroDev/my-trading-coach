@@ -15,6 +15,7 @@ import DemoVideo from '../components/DemoVideo.astro';
 import PfHeader from '../components/prop-firm-page/PfHeader.astro';
 import PfRules from '../components/prop-firm-page/PfRules.astro';
 import PfPricing from '../components/prop-firm-page/PfPricing.astro';
+import PfGiveaway from '../components/prop-firm-page/PfGiveaway.astro';
 import { ORGANIZATION, SOFTWARE_APPLICATION, WEBSITE, faqPage, webPage } from '../data/schema';
 import { TEMOIGNAGES } from '../data/temoignages';
 import { founderOpenAtBuild } from '../lib/founder-build';
@@ -43,13 +44,15 @@ const extras = [
 const faq = [
   { q: "C'est vraiment gratuit ?", a: `Oui. Le plan Gratuit n'a pas de limite de durée et ne demande aucune carte bancaire. À l'inscription, tu as en plus ${PREMIUM_SIGNUP_TRIAL_DAYS} jours de Premium offerts, puis tu repasses en Gratuit automatiquement.` },
   { q: 'MyTradingCoach peut-il toucher à mon compte ?', a: "Non. La connexion est en lecture seule : aucun ordre, aucun mouvement d'argent." },
+  { q: 'À quelle fréquence mes trades sont-ils synchronisés ?', a: "En direct quand MyTradingCoach est ouvert. Application fermée, relevé automatique toutes les 15 minutes environ." },
+  { q: 'Quels comptes sont compatibles ?', a: "MyTradingCoach se connecte à ton compte Tradovate en lecture seule. Ça fonctionne avec tes comptes d'évaluation et financés des prop firms qui tournent sur Tradovate, et avec tes comptes simulés ou réels." },
   { q: 'Je ne suis pas sur Tradovate.', a: 'Tu peux importer tes trades en CSV. Plusieurs formats d’export courants (crypto, forex, actions) sont reconnus automatiquement, en gratuit. Pour un autre format, l’import IA lit ton fichier tel quel : il est réservé au Premium.' },
   { q: 'Le calcul remplace la plateforme de ma firme ?', a: 'Non, il est indicatif : la plateforme de ta firme fait toujours foi.' },
 ];
 
 const canonical = 'https://www.mytradingcoach.app/prop-firm';
-const title = 'Journal de trading prop firm en direct · MyTradingCoach';
-const description = `Trader futures en prop firm : connecte Tradovate et suis en direct ta marge avant le plancher de ta firme. Règles de ${firmCount} prop firms. Gratuit, sans carte.`;
+const title = 'Journal de trading prop firm · MyTradingCoach';
+const description = `Trader futures en prop firm\u00a0: connecte Tradovate et suis ta marge avant le plancher, en direct app ouverte. Règles de ${firmCount} prop firms. Gratuit, sans carte.`;
 // FAQPage = la FAQ affichée plus bas, mot pour mot.
 const schema = [
   webPage(canonical, title, description),
@@ -65,7 +68,7 @@ const schema = [
   description={description}
   canonical={canonical}
   ogImage="/og/prop-firm.jpg"
-  ogImageAlt="MyTradingCoach : suis ta marge avant la limite de ta prop firm"
+  ogImageAlt={"MyTradingCoach\u00a0: suis ta marge avant la limite de ta prop firm"}
   schema={schema}
 >
   <PfHeader />
@@ -76,10 +79,10 @@ const schema = [
       <div class="pf-hero-copy">
         <span class="pf-eyebrow">Pour les traders futures en prop firm</span>
         <h1>Suis ta marge avant la limite de ta <span class="pf-accent">prop firm.</span></h1>
-        <p class="pf-lead">Connecte ton compte Tradovate : MyTradingCoach te montre en direct combien il te reste avant de perdre ton compte.</p>
+        <p class="pf-lead">Connecte ton compte Tradovate : MyTradingCoach te montre en direct, quand il est ouvert, combien il te reste avant de perdre ton compte.</p>
         <ul class="pf-checks">
           <li><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><polyline points="4 12 10 18 20 6" /></svg>Tes trades arrivent tout seuls</li>
-          <li><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><polyline points="4 12 10 18 20 6" /></svg>Ta marge restante, en direct</li>
+          <li><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><polyline points="4 12 10 18 20 6" /></svg>Ta marge restante, en direct quand l'app est ouverte</li>
           <li><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><polyline points="4 12 10 18 20 6" /></svg>Les règles de {firmCount} prop firms, au plan près</li>
         </ul>
         <div class="pf-hero-ctas">
@@ -212,6 +215,9 @@ const schema = [
 
     {/* 10. Tarifs */}
     <PfPricing founderOpen={founderOpen} />
+
+    {/* Tirage mensuel : affiché seulement si un tirage est allumé (lu côté navigateur). */}
+    <PfGiveaway />
 
     {/* 11. Confiance : formulation factuelle (clause 17 NinjaTrader), jamais « partenaire officiel ». */}
     <section class="pf-sec pf-trust">

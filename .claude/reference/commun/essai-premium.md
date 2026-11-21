@@ -92,7 +92,7 @@ par la constante, jamais écrite. Garde : `libs/shared/src/signup-trial-copy.spe
     mention de prélèvement (`REFERRAL_DISCOUNT`, B8) ; avantages = `PLAN_BENEFITS.premium` (B9).
   - Camembert des setups du FREE sur la période (`GET /analytics/setup-shares`, nombres seulement, E1).
   - Paywalls : un seul libellé (`PaywallCtaService`, E3) ; essai Stripe = « 30 jours d'essai · carte
-    requise » (`TRIAL_LABEL`, Q1), jamais « 1 mois offert » (réservé au mois offert du parrain). Essai
+    requise » (`TRIAL_LABEL`, Q1), jamais « 1 mois offert » (réservé au mois offert du parrain et au lot du tirage mensuel des gratuits, `commun/tirage-mensuel.md`). Essai
     gardé pour les comptes antérieurs jamais essayés (`trialUsed` faux), ligne dans les CGU.
 - **État d'abonnement unique (#813, 2026-11-01)** : `subscriptionState` (`libs/shared/src/subscription-state.ts`,
   fonction pure partagée API / app / admin). Ordre : statut Stripe (`active` = payant, `trialing` = essai

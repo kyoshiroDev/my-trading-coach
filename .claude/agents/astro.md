@@ -102,7 +102,7 @@ Dans la section pricing PREMIUM, mentionner les limites de façon positive :
 ```
 ✨ IA Insights (1 analyse toutes les 4h)
 💬 Chat Coach IA (jusqu'à 50 messages/jour)
-📅 Weekly Debrief automatique chaque dimanche
+📅 Débrief hebdo automatique chaque dimanche
 ```
 
 Formulation : jamais "limité à", toujours "jusqu'à" ou entre parenthèses en petit.
@@ -191,3 +191,4 @@ Contenu déplacé à l'identique le 2026-11-16. Lire un fichier seulement quand 
 | `astro/seo-blog.md` | nouvel article de blog |
 | `astro/seo-technique.md` | titres, meta, Open Graph, JSON-LD, sitemap, robots.txt, llms.txt, maillage, images de partage |
 | `commun/essai-premium.md` | essai d'inscription 14 j, essai Stripe 30 j, fin d'essai, libellés d'essai |
+| `commun/tirage-mensuel.md` | tirage au sort mensuel : section de `/prop-firm`, page `/reglement-tirage`, route publique |

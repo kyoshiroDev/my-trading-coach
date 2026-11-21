@@ -36,13 +36,13 @@ describe('badges d\'état', () => {
 
 describe('excludedAccountsLine', () => {
   it('texte de la maquette', () => {
-    expect(excludedAccountsLine({ failed: 1, archived: 1 })).toBe('2 comptes exclus des chiffres : 1 échoué, 1 archivé.');
+    expect(excludedAccountsLine({ failed: 1, archived: 1 })).toBe('2 comptes exclus des chiffres\u00a0: 1 échoué, 1 archivé.');
   });
 
   it('accords au singulier et au pluriel, parties absentes omises', () => {
-    expect(excludedAccountsLine({ failed: 1, archived: 0 })).toBe('1 compte exclu des chiffres : 1 échoué.');
-    expect(excludedAccountsLine({ failed: 0, archived: 3 })).toBe('3 comptes exclus des chiffres : 3 archivés.');
-    expect(excludedAccountsLine({ failed: 2, archived: 1 })).toBe('3 comptes exclus des chiffres : 2 échoués, 1 archivé.');
+    expect(excludedAccountsLine({ failed: 1, archived: 0 })).toBe('1 compte exclu des chiffres\u00a0: 1 échoué.');
+    expect(excludedAccountsLine({ failed: 0, archived: 3 })).toBe('3 comptes exclus des chiffres\u00a0: 3 archivés.');
+    expect(excludedAccountsLine({ failed: 2, archived: 1 })).toBe('3 comptes exclus des chiffres\u00a0: 2 échoués, 1 archivé.');
   });
 
   it('aucun compte exclu → pas de ligne', () => {

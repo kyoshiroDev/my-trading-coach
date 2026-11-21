@@ -15,6 +15,7 @@ import { StripeCustomerService } from './stripe-customer.service';
 import { StripeReferralService } from './stripe-referral.service';
 import { StripeSubscriptionService } from './stripe-subscription.service';
 import { StripeWebhookService } from './stripe-webhook.service';
+import { StripeGiveawayService } from './stripe-giveaway.service';
 import { runsQueueProcessors } from '../../config/app-role';
 import { AdminPushModule } from '../admin-push/admin-push.module';
 
@@ -37,10 +38,11 @@ import { AdminPushModule } from '../admin-push/admin-push.module';
     StripeReferralService,
     StripeBillingService,
     StripeWebhookService,
+    StripeGiveawayService,
     // Processeur de file : worker seulement (SCA-B6-01) ; le web ne fait qu'alimenter la file.
     ...(runsQueueProcessors() ? [StripeProcessor] : []),
   ],
-  // Admin (réconciliation des abonnements) et referral (avoir du parrain).
-  exports: [StripeSubscriptionService, StripeCustomerService],
+  // Admin (réconciliation des abonnements), referral (avoir du parrain), tirage mensuel (avoir du lot).
+  exports: [StripeSubscriptionService, StripeCustomerService, StripeGiveawayService],
 })
 export class StripeModule {}

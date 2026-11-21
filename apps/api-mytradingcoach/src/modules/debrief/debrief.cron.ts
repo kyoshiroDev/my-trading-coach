@@ -5,6 +5,17 @@ import { Queue } from 'bullmq';
 import { PrismaService } from '../../prisma/prisma.service';
 import { DebriefService } from './debrief.service';
 
+/**
+ * Id du job « generate » du cron et du rattrapage (#1060) : `debrief-<userId>-<année>-<semaine>`
+ * (BullMQ refuse les « : »). Le job du dimanche resté en file et celui du rattrapage du lundi ne
+ * font qu'un : pas de deuxième e-mail. Avec `removeOnComplete`, il ne dédoublonne que tant que le
+ * job est en file : l'idempotence de generate (generatedAt) reste le garde-fou après. Les jobs admin
+ * (force) n'en ont jamais, pour ne pas être avalés par un job du cron.
+ */
+export function debriefJobId(userId: string, year: number, weekNumber: number): string {
+  return `debrief-${userId}-${year}-${weekNumber}`;
+}
+
 @Injectable()
 export class DebriefCron {
   private readonly logger = new Logger(DebriefCron.name);
@@ -28,6 +39,7 @@ export class DebriefCron {
   async scheduledDebriefs() {
     this.logger.log('Starting weekly debrief generation...');
     const now = new Date();
+    const { weekNumber, year } = this.debriefService.getWeekInfo(now);
     const eligibleUsers = await this.debriefService.getEligibleUsers(now);
 
     await Promise.all(
@@ -35,7 +47,7 @@ export class DebriefCron {
         this.debriefQueue.add(
           'generate',
           { userId: user.id, refDate: now.toISOString(), force: false },
-          this.jobOpts,
+          { ...this.jobOpts, jobId: debriefJobId(user.id, year, weekNumber) },
         ),
       ),
     );
@@ -67,13 +79,18 @@ export class DebriefCron {
     const missing = eligibleUsers.filter((u) => !hasDebrief.has(u.id));
 
     await Promise.all(
-      missing.map((user) =>
-        this.debriefQueue.add(
+      missing.map(async (user) => {
+        const jobId = debriefJobId(user.id, year, weekNumber);
+        // Job du dimanche échoué, gardé 7 j pour diagnostic : son id resterait pris et le
+        // rattrapage serait ignoré. On le retire ; un job encore en file est gardé (#1060).
+        const previous = await this.debriefQueue.getJob(jobId);
+        if (previous && (await previous.getState()) === 'failed') await previous.remove();
+        await this.debriefQueue.add(
           'generate',
           { userId: user.id, refDate: refDate.toISOString(), force: false },
-          this.jobOpts,
-        ),
-      ),
+          { ...this.jobOpts, jobId },
+        );
+      }),
     );
 
     this.logger.log(`Catch-up (S${weekNumber}/${year}): ${missing.length}/${eligibleUsers.length} missed debriefs queued`);

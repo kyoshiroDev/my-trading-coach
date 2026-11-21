@@ -51,9 +51,9 @@ describe('tradeCountBars', () => {
       { date: '2026-11-04', tradesCount: 0 },
     ]);
     expect(bars).toEqual([
-      { date: '2026-11-03', count: 1, pct: 33, label: '3 nov. : 1 trade' },
-      { date: '2026-11-06', count: 3, pct: 100, label: '6 nov. : 3 trades' },
-      { date: '2026-11-09', count: 2, pct: 67, label: '9 nov. : 2 trades' },
+      { date: '2026-11-03', count: 1, pct: 33, label: '3 nov.\u00a0: 1 trade' },
+      { date: '2026-11-06', count: 3, pct: 100, label: '6 nov.\u00a0: 3 trades' },
+      { date: '2026-11-09', count: 2, pct: 67, label: '9 nov.\u00a0: 2 trades' },
     ]);
   });
 
@@ -92,7 +92,7 @@ describe('donuts', () => {
       { setupId: 'a', title: 'Breakout', color: '#fff', count: 3 },
       { setupId: 'b', title: 'Range', color: '#fff', count: 1 },
     ]);
-    expect(d).toMatchObject({ centerValue: '75%', centerLabel: 'Breakout' });
+    expect(d).toMatchObject({ centerValue: '75\u00a0%', centerLabel: 'Breakout' });
     // Centre = part du setup dominant, comme la légende : pas de libellé « Win rate ».
     expect(d?.centerKicker).toBeUndefined();
     expect(d?.legend.map((l) => l.pct)).toEqual([75, 25]);
@@ -102,14 +102,14 @@ describe('donuts', () => {
     const d = setupsDonutFromStats([
       { setupId: 's', title: 'Sans setup', color: '#888', winRate: 40, avgRR: null, count: 5, pnl: 1064.4 },
     ]);
-    expect(d).toMatchObject({ centerKicker: 'Win rate', centerValue: '40%', centerLabel: 'Sans setup' });
+    expect(d).toMatchObject({ centerKicker: 'Win rate', centerValue: '40\u00a0%', centerLabel: 'Sans setup' });
     expect(d?.legend).toEqual([{ label: 'Sans setup', color: '#888', pct: 100 }]);
   });
 
   it('donut des émotions : état dominant au centre', () => {
     const shares = emotionSharesFromStats([{ emotion: 'FOCUSED', count: 2 }, { emotion: 'FEAR', count: 1 }]);
     expect(shares).toEqual([{ emotion: 'FOCUSED', pct: 67 }, { emotion: 'FEAR', pct: 33 }]);
-    expect(buildEmotionsDonut(shares)?.centerValue).toBe('67%');
+    expect(buildEmotionsDonut(shares)?.centerValue).toBe('67\u00a0%');
     expect(buildEmotionsDonut([])).toBeNull();
   });
 });

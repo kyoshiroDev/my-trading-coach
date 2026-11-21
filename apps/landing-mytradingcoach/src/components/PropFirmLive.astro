@@ -27,7 +27,7 @@ const data = JSON.stringify(catalog).replace(/</g, '\\u003c');
       <span class="sec-label">Prop firms</span>
       <h2>Ta firm, ton plan. <em>Tes vraies règles.</em></h2>
       <p class="sec-sub">
-        {catalog.length} prop firms futures, {planCount} plans. Choisis le tien : MyTradingCoach
+        {catalog.length} prop firms futures, {planCount} plans. Choisis le tien&nbsp;: MyTradingCoach
         applique ses règles officielles à ton compte et te montre ta marge avant le plancher, ta
         progression vers l'objectif ou le prochain payout.
       </p>
@@ -82,9 +82,9 @@ const data = JSON.stringify(catalog).replace(/</g, '\\u003c');
 
     <div class="pfl-cta reveal">
       <a href={`${APP_URL}/register`} class="btn-p" data-ga-event="cta_signup" data-ga-place="prop-firm">Suivre mon compte prop firm gratuitement</a>
-      <p>Règles et suivi en direct : gratuit · Alertes avant la casse : Premium</p>
+      <p>Règles et suivi en direct, app ouverte&nbsp;: gratuit · Alertes avant la casse&nbsp;: Premium</p>
       {/* Garde-fou : la marge affichée est une estimation, la plateforme de la firm fait foi (même mention dans l'app). */}
-      <p class="pfl-note">Calcul indicatif : la plateforme de ta firm fait foi.</p>
+      <p class="pfl-note">Calcul indicatif&nbsp;: la plateforme de ta firm fait foi.</p>
     </div>
 
     {/* La preuve que l'app existe : capture réelle, en vignette agrandissable. */}
@@ -101,7 +101,7 @@ const data = JSON.stringify(catalog).replace(/</g, '\\u003c');
           height="536"
           loading="lazy"
           decoding="async"
-          alt="Compte de démonstration Apex 50K EOD Trail en évaluation dans MyTradingCoach : solde, marge calculée avec les règles officielles, plus haut de clôture, objectif restant, puis les règles du plan."
+          alt="Compte de démonstration Apex 50K EOD Trail en évaluation dans MyTradingCoach&nbsp;: solde, marge calculée avec les règles officielles, plus haut de clôture, objectif restant, puis les règles du plan."
         />
         <figcaption>Capture réelle · compte de démonstration · cliquer pour agrandir</figcaption>
       </a>
@@ -112,15 +112,15 @@ const data = JSON.stringify(catalog).replace(/</g, '\\u003c');
           height="507"
           loading="lazy"
           decoding="async"
-          alt="Compte de démonstration Tradeify 50K funded dans MyTradingCoach : solde, seuil qui se fige à 50 100 $, conditions restantes avant le prochain payout, puis les règles funded du plan (taille par palier, payout)."
+          alt="Compte de démonstration Tradeify 50K funded dans MyTradingCoach&nbsp;: solde, seuil qui se fige à 50 100 $, conditions restantes avant le prochain payout, puis les règles funded du plan (taille par palier, payout)."
         />
         <figcaption>Capture réelle · compte de démonstration · cliquer pour agrandir</figcaption>
       </a>
       <ul class="pfl-points">
         <li><strong>Solde et equity lus chez Tradovate</strong>, positions ouvertes comprises, au lieu d'une estimation</li>
         <li><strong>Plus haut de clôture officiel</strong> de chaque séance, pour les règles EOD</li>
-        <li><strong>Marge, objectif et prochain payout</strong> en direct pendant ta séance, payouts détectés chez le broker</li>
-        <li><strong>Alertes avant la casse</strong> : drawdown, perte du jour, consistency <span class="pfl-prem">Premium</span></li>
+        <li><strong>Marge, objectif et prochain payout</strong> en direct pendant ta séance quand MyTradingCoach est ouvert, payouts détectés chez le broker</li>
+        <li><strong>Alertes avant la casse</strong>&nbsp;: drawdown, perte du jour, consistency <span class="pfl-prem">Premium</span></li>
       </ul>
     </figure>
   </div>

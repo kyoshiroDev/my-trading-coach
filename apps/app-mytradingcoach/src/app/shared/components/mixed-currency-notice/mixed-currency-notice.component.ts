@@ -15,7 +15,7 @@ import { LucideDynamicIcon, LucideCoins as Coins } from '@lucide/angular';
     <div class="mcn" role="status" data-testid="mixed-currency-notice">
       <svg [lucideIcon]="CoinsIcon" [size]="16" class="mcn-ic"></svg>
       <div>
-        <div class="mcn-title">Comptes en devises différentes : choisis un compte</div>
+        <div class="mcn-title">Comptes en devises différentes&nbsp;: choisis un compte</div>
         <div class="mcn-sub">
           Chaque compte s'affiche dans sa propre devise, sans conversion. Choisis un compte dans le
           sélecteur en haut pour voir ses totaux.

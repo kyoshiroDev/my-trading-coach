@@ -12,13 +12,13 @@ const ev = (p: Partial<PropAlertEvent> = {}): PropAlertEvent => ({
 
 describe('propAlertMessage', () => {
   it('drawdown : ce qui reste, ou plancher atteint', () => {
-    expect(propAlertMessage(ev())).toBe('Apex 50k : plus que $450 avant le plancher de drawdown.');
+    expect(propAlertMessage(ev())).toBe('Apex 50k\u00a0: plus que $450 avant le plancher de drawdown.');
     expect(propAlertMessage(ev({ level: 'breached', remaining: -20 }))).toContain('plancher de drawdown atteint');
   });
 
   it('perte journalière : ce qui reste, et la sanction de la firm une fois atteinte', () => {
     expect(propAlertMessage(ev({ kind: 'daily_loss', remaining: 250, limit: 1000 })))
-      .toBe("Apex 50k : plus que $250 de perte permise aujourd'hui (limite $1,000).");
+      .toBe("Apex 50k\u00a0: plus que $250 de perte permise aujourd'hui (limite $1,000).");
     expect(propAlertMessage(ev({ kind: 'daily_loss', level: 'breached', limit: 1000, breach: 'trading_paused_for_day' })))
       .toContain('coupe le trading jusqu’à la prochaine séance');
     expect(propAlertMessage(ev({ kind: 'daily_loss', level: 'breached', limit: 1000, breach: 'account_failed' })))
@@ -29,9 +29,9 @@ describe('propAlertMessage', () => {
 describe('propAlertMessage : consistency et bonnes nouvelles', () => {
   it('consistency : ce qui reste aujourd’hui, ou le profit à rattraper', () => {
     expect(propAlertMessage(ev({ kind: 'consistency', remaining: 150, limit: 800, maxShare: 0.4 })))
-      .toBe("Apex 50k : encore $150 de gain maximum aujourd'hui pour respecter la consistency (une journée ≤ 40 % du profit).");
+      .toBe("Apex 50k\u00a0: encore $150 de gain maximum aujourd'hui pour respecter la consistency (une journée ≤ 40\u00a0% du profit).");
     expect(propAlertMessage(ev({ kind: 'consistency', level: 'breached', remaining: -100, limit: 800, maxShare: 0.4, extraProfit: 250 })))
-      .toBe('Apex 50k : ta journée dépasse la règle de consistency (une journée ≤ 40 % du profit) : il faudra environ $250 de profit en plus pour la respecter.');
+      .toBe('Apex 50k\u00a0: ta journée dépasse la règle de consistency (une journée ≤ 40\u00a0% du profit)\u00a0: il faudra environ $250 de profit en plus pour la respecter.');
   });
 
   it('objectif atteint, payout possible : présentés comme une estimation', () => {
@@ -47,7 +47,7 @@ const tilt = (p: Partial<TiltAlertEvent> = {}): TiltAlertEvent => ({
 describe('tiltMessage : le fait, l’humeur si elle pèse, une question', () => {
   it('revenge, avec une humeur fatiguée notée en pré-session', () => {
     expect(tiltMessage(tilt({ moodStart: 'TIRED' })))
-      .toBe('Apex 50k : trade repris 1 min après une perte. Tu avais noté « fatigué » en pré-session. Une pause de 10 minutes ?');
+      .toBe('Apex 50k\u00a0: trade repris 1 min après une perte. Tu avais noté « fatigué » en pré-session. Une pause de 10 minutes\u00a0?');
   });
 
   it('humeur neutre ou positive : non mentionnée', () => {
@@ -56,9 +56,9 @@ describe('tiltMessage : le fait, l’humeur si elle pèse, une question', () => 
 
   it('taille et surtrading : comparés à l’habitude du trader', () => {
     expect(tiltMessage(tilt({ signal: 'size', quantity: 5, medianQuantity: 2 })))
-      .toBe('Apex 50k : 5 contrats juste après une perte, plus du double de ta taille habituelle (2). Une pause avant le prochain ?');
+      .toBe('Apex 50k\u00a0: 5 contrats juste après une perte, plus du double de ta taille habituelle (2). Une pause avant le prochain\u00a0?');
     expect(tiltMessage(tilt({ signal: 'overtrading', count: 7, medianCount: 3 })))
-      .toBe("Apex 50k : 7 trades aujourd'hui, plus du double d'une journée habituelle (3). Tu suis toujours ton plan ?");
+      .toBe("Apex 50k\u00a0: 7 trades aujourd'hui, plus du double d'une journée habituelle (3). Tu suis toujours ton plan\u00a0?");
   });
 });
 
@@ -95,7 +95,7 @@ describe('PropAlertsService.handle', () => {
   it('avertissement : toast d’alerte temporaire + notification système', () => {
     const { svc, toast } = setup();
     svc.handle(ev());
-    expect(toast.warning).toHaveBeenCalledWith('Apex 50k : plus que $450 avant le plancher de drawdown.');
+    expect(toast.warning).toHaveBeenCalledWith('Apex 50k\u00a0: plus que $450 avant le plancher de drawdown.');
     expect(notifications).toEqual([{ title: 'MyTradingCoach · alerte prop firm', opts: expect.objectContaining({ tag: 'a:drawdown' }) }]);
   });
 
@@ -116,7 +116,7 @@ describe('PropAlertsService.handle', () => {
     const { svc, toast } = setup();
     svc.handleTilt(tilt());
     expect(toast.warning).toHaveBeenCalledWith(expect.stringContaining('trade repris'), { duration: TILT_TOAST_MS });
-    expect(notifications[0]).toEqual({ title: 'MyTradingCoach · pause ?', opts: expect.objectContaining({ tag: 'a:tilt:revenge' }) });
+    expect(notifications[0]).toEqual({ title: 'MyTradingCoach · pause\u00a0?', opts: expect.objectContaining({ tag: 'a:tilt:revenge' }) });
   });
 
   it('un son par gravité : avertissement, critique ou dépassé, bonne nouvelle, anti-tilt', () => {

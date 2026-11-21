@@ -256,3 +256,4 @@ Contenu déplacé à l'identique le 2026-11-16. Lire un fichier seulement quand 
 | `commun/registre-brokers.md` | nouveau broker CSV, registre `BrokerCsvMapping` |
 | `commun/seances-et-chiffres-947.md` | séance du jour, clôture, totaux de séance, périodes et chiffres affichés |
 | `commun/synchro-broker.md` | synchro Tradovate / NinjaTrader, OAuth broker, temps réel, connexion broker d'un compte |
+| `commun/tirage-mensuel.md` | tirage au sort mensuel : éligibilité, lots, interrupteurs, e-mails, onglet admin « Tirages » |

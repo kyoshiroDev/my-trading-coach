@@ -23,6 +23,7 @@ import {
   welcomeFreeTemplate,
   welcomePremiumTemplate,
 } from './templates';
+import { escapeHtml } from '../../common/utils/escape-html';
 
 // Boîte interne de réception (candidatures ambassadeur, relevés). Aligné sur
 // sendAdminAlert (inbox éprouvée du projet).
@@ -43,10 +44,6 @@ const QUOTA_ERRORS = new Set(['daily_quota_exceeded', 'monthly_quota_exceeded'])
 export function maskEmail(email: string): string {
   const at = email.indexOf('@');
   return at > 0 ? `${email[0]}***${email.slice(at)}` : '***';
-}
-
-function escapeHtml(s: string): string {
-  return s.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c] ?? c);
 }
 
 // ── Service Mail (Resend) ─────────────────────────────────────────────────────
@@ -382,7 +379,8 @@ export class ResendService {
       from: this.from,
       to: CONTACT_INBOX,
       replyTo: params.ambassadorEmail,
-      subject: `Relevé de commissions · ${escapeHtml(params.ambassadorName)} (${params.period})`,
+      // Objet = texte brut : jamais échappé (#1073).
+      subject: `Relevé de commissions · ${params.ambassadorName} (${params.period})`,
       html:
         `<p>Relevé de commissions de <strong>${escapeHtml(params.ambassadorName)}</strong> ` +
         `pour la période ${params.period} en pièce jointe.</p>` +

@@ -158,6 +158,8 @@ model User {
   /// Référence personnelle des détecteurs de comportement (#602), une ligne au plus.
   behaviorBaseline BehaviorBaseline?
   behaviorAlerts   BehaviorAlert[]
+  giveawayDraws    GiveawayDraw[]
+  giveawayWins     GiveawayWin[]
   lastSeenAt      DateTime?
   lastLoginAt     DateTime?
   createdAt       DateTime             @default(now())
@@ -958,6 +960,8 @@ enum Plan {
 enum TrialSource {
   SIGNUP
   ADMIN
+  /// Premium gagné au tirage mensuel des comptes gratuits (PROMPT-tirage-mensuel).
+  GIVEAWAY
 }
 
 enum TradeSide {
@@ -1397,3 +1401,106 @@ model CheckoutReservation {
   @@index([userId])
 }
 
+
+// ── Tirage au sort mensuel (PROMPT-tirage-mensuel, 2026-11-20) ─────────────────────────────────
+// Éteint par défaut : rien ne se passe tant que l'admin n'a pas allumé un tirage. Valeurs (lots,
+// seuils, jour et heure) dans `@mtc/shared` (`giveaway.ts`).
+
+enum GiveawayPool {
+  FREE
+  PREMIUM
+}
+
+enum GiveawayDisplayConsent {
+  NONE
+  PSEUDO
+  PRENOM_INITIALE
+}
+
+enum GiveawayModeration {
+  EN_ATTENTE
+  VALIDE
+  REFUSE
+}
+
+enum GiveawayActivation {
+  PENDING
+  APPLIED
+  FAILED
+}
+
+enum GiveawayPublication {
+  NONE
+  PUBLISHED
+  FAILED
+}
+
+/// Interrupteurs des deux tirages : une seule ligne (id = 1), créée à la première lecture.
+model GiveawaySettings {
+  id                 Int       @id @default(1)
+  freeEnabled        Boolean   @default(false)
+  premiumEnabled     Boolean   @default(false)
+  /// Date de la dernière activation (null = jamais allumé).
+  freeEnabledAt      DateTime?
+  premiumEnabledAt   DateTime?
+  /// Annonce envoyée pour l'activation en cours : posée par une écriture conditionnelle (une seule
+  /// annonce par activation, même sur un double clic), remise à null quand le tirage est éteint.
+  freeAnnouncedAt    DateTime?
+  premiumAnnouncedAt DateTime?
+  updatedAt          DateTime  @updatedAt
+}
+
+/// Un tirage fait (gagnant ou non). L'unicité (période, tirage) interdit tout second tirage.
+model GiveawayDraw {
+  id            String       @id @default(cuid())
+  /// Mois Paris du tirage (« 2027-02 » pour le tirage du 1er février 2027).
+  period        String
+  pool          GiveawayPool
+  eligibleCount Int
+  drawnAt       DateTime     @default(now())
+  /// Null = aucun éligible, ou gagnant dont le compte a été supprimé depuis.
+  winnerId      String?
+  winner        User?        @relation(fields: [winnerId], references: [id], onDelete: SetNull)
+  /// Trace d'audit : sha256 de la liste des ids éligibles triée, et rang tiré (`crypto.randomInt`).
+  eligibleHash  String
+  drawnIndex    Int?
+  win           GiveawayWin?
+
+  @@unique([period, pool])
+  @@index([winnerId])
+}
+
+/// Lot gagné : activation, accords d'affichage et d'Instagram, message et sa modération.
+model GiveawayWin {
+  id                  String                 @id @default(cuid())
+  drawId              String                 @unique
+  draw                GiveawayDraw           @relation(fields: [drawId], references: [id], onDelete: Cascade)
+  /// Null = compte supprimé depuis (les données personnelles ci-dessous sont alors effacées).
+  userId              String?
+  user                User?                  @relation(fields: [userId], references: [id], onDelete: SetNull)
+  pool                GiveawayPool
+  prizeMonths         Int
+  startsAt            DateTime
+  endsAt              DateTime
+  activationStatus    GiveawayActivation     @default(PENDING)
+  activationError     String?
+  /// Avoir Stripe du lot Premium (centimes) et transaction de solde créée.
+  creditCents         Int?
+  stripeBalanceTxId   String?
+  displayConsent      GiveawayDisplayConsent @default(NONE)
+  displayPseudo       String?
+  message             String?
+  moderation          GiveawayModeration     @default(EN_ATTENTE)
+  moderatedAt         DateTime?
+  instagramConsent    Boolean                @default(false)
+  instagramHandle     String?
+  publicationStatus   GiveawayPublication    @default(NONE)
+  publishedUrl        String?
+  publishedAt         DateTime?
+  /// E-mail « ton lot se termine bientôt » envoyé (lot gratuit).
+  endingNoticeSentAt  DateTime?
+  createdAt           DateTime               @default(now())
+  updatedAt           DateTime               @updatedAt
+
+  @@index([userId, createdAt])
+}

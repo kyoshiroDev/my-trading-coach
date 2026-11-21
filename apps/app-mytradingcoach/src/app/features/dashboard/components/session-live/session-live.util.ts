@@ -1,4 +1,4 @@
-import type { EcoEvent } from '@mtc/shared';
+import { formatPercent, type EcoEvent } from '@mtc/shared';
 import type { InstrumentDto, MarketContext } from '@app/core/api/trades.api';
 import type { MoodState } from '@app/core/api/session.api';
 
@@ -233,13 +233,14 @@ export interface BannerTicker { label: string; value: string; change: string | n
  */
 export function bannerTickers(ctx: MarketContext | null | undefined, full = false): BannerTicker[] {
   if (!ctx) return [];
+  // Variation : formateur unique des % (point décimal, #1180) ; inconnue → null (champ masqué).
   const pct = (v: number | null | undefined) => (v === null || v === undefined || !Number.isFinite(v)
-    ? null : `${v > 0 ? '+' : ''}${v.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} %`);
+    ? null : formatPercent(v, { decimals: 2, sign: true }));
   const dir = (v: number | null | undefined): BannerTicker['dir'] => (!v ? 'flat' : v > 0 ? 'up' : 'down');
   const num = (v: number | null | undefined, d: number) => (v === null || v === undefined || !Number.isFinite(v)
-    ? '-' : v.toLocaleString('fr-FR', { minimumFractionDigits: d, maximumFractionDigits: d }));
+    ? '-' : v.toLocaleString('fr-FR', { minimumFractionDigits: d, maximumFractionDigits: d }).replace(',', '.'));
   const rate = (label: string, v: number | null | undefined): BannerTicker =>
-    ({ label, value: v == null ? '-' : `${num(v, 2)} %`, change: null, dir: 'flat' });
+    ({ label, value: v == null ? '-' : `${num(v, 2)}\u00a0%`, change: null, dir: 'flat' });
   return [
     { label: 'NQ', value: num(ctx.nq?.value, 0), change: pct(ctx.nq?.changePct), dir: dir(ctx.nq?.changePct) },
     { label: 'SPX', value: num(ctx.spx?.value, 0), change: pct(ctx.spx?.changePct), dir: dir(ctx.spx?.changePct) },
@@ -268,10 +269,10 @@ export function planKindShort(kind: 'static' | 'trailing_eod' | 'trailing_intrad
   }
 }
 
-/** Prix en notation française compacte : 18 540, 5 905,25. */
+/** Prix compact : milliers en espace, décimale au point (#1180) : 18 540, 5 905.25. */
 export function formatPrice(v: number | null | undefined): string {
   if (v === null || v === undefined || !Number.isFinite(v)) return '-';
-  return v.toLocaleString('fr-FR', { maximumFractionDigits: 5 });
+  return v.toLocaleString('fr-FR', { maximumFractionDigits: 5 }).replace(',', '.');
 }
 
 function clamp(v: number, min: number, max: number): number {

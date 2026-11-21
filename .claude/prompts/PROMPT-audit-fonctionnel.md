@@ -97,3 +97,47 @@ Texte de Greg : « ok, on passe à #1103 »
 Texte de Greg : « ok, on passe à #1133 »
 
 #1133 est issu de la vérification tests de #1103 (lot 4 #1062) : les specs de l'admin et de front-auth gardent le délai Vitest par défaut (5 s) et échouent sous charge, alors que l'app et l'API sont à 20 s (#689).
+
+## Complément #1137 (2026-11-19)
+
+Texte de Greg : « continue » (après la proposition de passer à #1137).
+
+#1137 est issu de la vérification deploy de #1133 (lot 4 #1062) : le filtre `API_PATHS` de `cd.yml` redéploie l'API pour tout changement sous `libs/`, y compris les libs front que l'API n'importe pas.
+
+## Complément #1132 (2026-11-20)
+
+Texte de Greg : « oki continue ton travail alors » (après la proposition de la suite : #1132).
+
+#1132 est issu de la vérification security de #1103 (lot 4 #1062) : `POST /auth/refresh` sans limite de débit dédiée. Analyse du vérificateur security : aucune protection réelle à gagner, limite par défaut gardée exprès et verrouillée par un test.
+
+## Complément #1145 (2026-11-20)
+
+Texte de Greg : « tous est merge continue la suite »
+
+#1145 est issu de la vérification security de #1132 (lot 4 #1062) : le refresh partagé de `@mtc/front-auth` déconnecte sur toute erreur (429, 5xx, réseau), pas seulement sur un refus d'authentification.
+
+## Complément #1073 (2026-11-21)
+
+Texte de Greg : « continue les ticket ouvert dans l'audite »
+
+Ordre retenu (tickets faisables sans Greg d'abord) : #1073, #1101, #1060, #1102, puis #1068 (VPS par Greg). En attente de Greg : #1004 (logs prod), #1059 (décision : qui reçoit l'e-mail), #1110 (SHOW CONFIG). #1073 est issu du sous-lot 4a (#1063) : trois copies d'escapeHtml, sujet du relevé de commissions échappé, stats ambassadeur sans contrat partagé.
+
+## Complément #1101 (2026-11-21)
+
+Suite de « continue les ticket ouvert dans l'audite » (ordre retenu au complément #1073). #1101 est issu de la vérification design du 4c (#1065) : composant error-state de `@mtc/front-ui`, rouge de l'app trader écrit en dur et focus du bouton Réessayer.
+
+## Complément #1060 (2026-11-21)
+
+Suite de « continue les ticket ouvert dans l'audite » (ordre retenu au complément #1073). #1060 est issu de la vérification du sous-lot 3d (#1048) : deux jobs « generate » simultanés pour la même semaine (dimanche resté en file et rattrapage du lundi) pouvaient envoyer deux e-mails.
+
+## Complément #1102 (2026-11-21)
+
+Texte de Greg : « ici reprend l'audite de l'app »
+
+#1102 est issu de la vérification nestjs du 4c (#1065, lot 4 #1062) : types d'échange de l'admin (`AdminUser`, données Abonnements, fondateurs) à déplacer de `admin.api.ts` vers `libs/shared/src/contracts`, liste des accès manuels sans `take`, champ `total` de `GET /admin/subscriptions` plus lu par l'admin (à retirer une fois l'admin du 4c en prod : fait le 19/11, promo #1118).
+
+## Complément #1068 (2026-11-21)
+
+Texte de Greg : « c'est mergé, continue l'audite »
+
+Seul ticket de #993 qui avance sans Greg : #1068 (CSP de l'admin et de l'app). Conf du dépôt et test d'empreinte maintenant, phase 1 en Report-Only ; application sur les VPS par Greg (commandes données), puis passage en mode bloquant dans une seconde PR après vérification sans violation. #1110 et #1004 attendent le VPS ou une connexion Tradovate réelle ; #1059 est déjà fermée (PR #1070).

@@ -107,7 +107,7 @@ describe('messages', () => {
     expect(lines.map((l) => l.text)).toEqual([
       '34 trades synchronisés · 2 déjà présents',
       'Frais non rapprochés sur certains trades · vérifie le P&L net.',
-      '1 position encore ouverte : importée(s) à la clôture.',
+      '1 position encore ouverte\u00a0: importée(s) à la clôture.',
       '1 trade non importé (données incomplètes côté Tradovate).',
     ]);
   });

@@ -50,5 +50,5 @@ export function excludedAccountsLine({ failed, archived }: ExcludedAccounts): st
   if (failed > 0) parts.push(`${failed} échoué${failed > 1 ? 's' : ''}`);
   if (archived > 0) parts.push(`${archived} archivé${archived > 1 ? 's' : ''}`);
   const head = total > 1 ? `${total} comptes exclus des chiffres` : '1 compte exclu des chiffres';
-  return `${head} : ${parts.join(', ')}.`;
+  return `${head}\u00a0: ${parts.join(', ')}.`;
 }

@@ -69,9 +69,26 @@ export type AuthProvider = (typeof AuthProvider)[keyof typeof AuthProvider];
 export const Plan = { FREE: 'FREE', PREMIUM: 'PREMIUM' } as const;
 export type Plan = (typeof Plan)[keyof typeof Plan];
 
-// Origine d'un Premium sans abonnement Stripe (#769) : essai d'inscription ou offert par l'admin.
-export const TrialSource = { SIGNUP: 'SIGNUP', ADMIN: 'ADMIN' } as const;
+// Origine d'un Premium sans abonnement Stripe (#769) : essai d'inscription, offert par l'admin ou
+// gagné au tirage mensuel (GIVEAWAY, PROMPT-tirage-mensuel).
+export const TrialSource = { SIGNUP: 'SIGNUP', ADMIN: 'ADMIN', GIVEAWAY: 'GIVEAWAY' } as const;
 export type TrialSource = (typeof TrialSource)[keyof typeof TrialSource];
+
+// Tirage au sort mensuel (PROMPT-tirage-mensuel).
+export const GiveawayPool = { FREE: 'FREE', PREMIUM: 'PREMIUM' } as const;
+export type GiveawayPool = (typeof GiveawayPool)[keyof typeof GiveawayPool];
+
+export const GiveawayDisplayConsent = { NONE: 'NONE', PSEUDO: 'PSEUDO', PRENOM_INITIALE: 'PRENOM_INITIALE' } as const;
+export type GiveawayDisplayConsent = (typeof GiveawayDisplayConsent)[keyof typeof GiveawayDisplayConsent];
+
+export const GiveawayModeration = { EN_ATTENTE: 'EN_ATTENTE', VALIDE: 'VALIDE', REFUSE: 'REFUSE' } as const;
+export type GiveawayModeration = (typeof GiveawayModeration)[keyof typeof GiveawayModeration];
+
+export const GiveawayActivation = { PENDING: 'PENDING', APPLIED: 'APPLIED', FAILED: 'FAILED' } as const;
+export type GiveawayActivation = (typeof GiveawayActivation)[keyof typeof GiveawayActivation];
+
+export const GiveawayPublication = { NONE: 'NONE', PUBLISHED: 'PUBLISHED', FAILED: 'FAILED' } as const;
+export type GiveawayPublication = (typeof GiveawayPublication)[keyof typeof GiveawayPublication];
 
 export const BrokerProvider = { TRADOVATE: 'TRADOVATE' } as const;
 export type BrokerProvider = (typeof BrokerProvider)[keyof typeof BrokerProvider];
@@ -157,4 +174,9 @@ export const CONTRACT_ENUMS = {
   PushAlertType,
   PlanLinkChoice,
   TradovateObservationOutcome,
+  GiveawayPool,
+  GiveawayDisplayConsent,
+  GiveawayModeration,
+  GiveawayActivation,
+  GiveawayPublication,
 } as const;

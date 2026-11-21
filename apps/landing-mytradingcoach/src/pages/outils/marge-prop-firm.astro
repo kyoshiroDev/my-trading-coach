@@ -26,7 +26,7 @@ const faq = [
   },
   {
     question: `Le résultat remplace-t-il la plateforme de ma firme${NB}?`,
-    answer: `Non. Le calcul est indicatif et la plateforme de ta firme fait toujours foi. Pour suivre ta marge en direct pendant la séance, MyTradingCoach se connecte à ton compte Tradovate en lecture seule.`,
+    answer: `Non. Le calcul est indicatif et la plateforme de ta firme fait toujours foi. Pour suivre ta marge en direct pendant la séance (quand l'app est ouverte), MyTradingCoach se connecte à ton compte Tradovate en lecture seule.`,
   },
 ];
 ---
@@ -100,7 +100,7 @@ const faq = [
 
     <div class="tl-result" id="tl-result" role="status" aria-live="polite" aria-atomic="true"></div>
     <p class="tl-next" id="tl-next" hidden>
-      Pour suivre ta marge avant le plancher en direct pendant ta séance, avec ton compte Tradovate connecté en lecture seule&nbsp;:
+      Pour suivre ta marge avant le plancher en direct pendant ta séance, app ouverte, avec ton compte Tradovate connecté en lecture seule&nbsp;:
       <a href={`${APP_URL}/demo`} data-ga-event="cta_demo" data-ga-place="outil-marge">voir la démo</a> ou
       <a href={`${APP_URL}/register`} data-ga-event="cta_signup" data-ga-place="outil-marge">créer un compte gratuit</a>.
     </p>

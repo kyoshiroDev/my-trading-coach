@@ -188,15 +188,15 @@
 }
 
 .dot-red {
-  background: repeating-linear-gradient(135deg, #3a0f0f 0 2px, rgba(239,68,68,0.5) 2px 3px);
+  background: repeating-linear-gradient(135deg, color-mix(in srgb, var(--red) 20%, var(--bg)) 0 2px, color-mix(in srgb, var(--red) 50%, transparent) 2px 3px);
   outline: 1px dashed var(--red);
 }
 .dot-orange {
-  background: #3a2a0a;
+  background: color-mix(in srgb, var(--yellow) 20%, var(--bg));
   outline: 1px dotted var(--yellow);
 }
 .dot-green {
-  background: #1e3a2f;
+  background: color-mix(in srgb, var(--green) 20%, var(--bg));
   outline: 1px solid var(--green);
 }
 
@@ -261,27 +261,27 @@
 .heatmap-cell:hover { opacity: .8; }
 
 .cell-green {
-  background: rgba(16,185,129,0.18);
+  background: color-mix(in srgb, var(--green) 18%, transparent);
   color: var(--green);
-  border: 1px solid rgba(16,185,129,0.25);
+  border: 1px solid color-mix(in srgb, var(--green) 25%, transparent);
 }
 /* Daltonisme : la couleur n'est jamais seule. Vert = bordure pleine, orange = pointillés,
    rouge = tirets + hachures. */
 .cell-orange {
-  background: rgba(245,158,11,0.15);
+  background: color-mix(in srgb, var(--yellow) 15%, transparent);
   color: var(--yellow);
-  border: 1px dotted rgba(245,158,11,0.6);
+  border: 1px dotted color-mix(in srgb, var(--yellow) 60%, transparent);
 }
 .cell-red {
   background:
-    repeating-linear-gradient(135deg, transparent 0 5px, rgba(239,68,68,0.14) 5px 7px),
-    rgba(239,68,68,0.12);
+    repeating-linear-gradient(135deg, transparent 0 5px, color-mix(in srgb, var(--red) 14%, transparent) 5px 7px),
+    var(--red-dim);
   color: var(--red);
-  border: 1px dashed rgba(239,68,68,0.6);
+  border: 1px dashed color-mix(in srgb, var(--red) 60%, transparent);
 }
 .cell-empty {
-  background: rgba(99,155,255,0.04);
-  border: 1px solid rgba(99,155,255,0.06);
+  background: color-mix(in srgb, var(--border) 40%, transparent);
+  border: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
   border-radius: 6px;
   min-width: 36px;
   vertical-align: middle;
@@ -308,7 +308,7 @@
 .perf-table td {
   padding: 10px 0;
   font-size: 13px;
-  border-bottom: 1px solid rgba(99, 155, 255, 0.05);
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 50%, transparent);
   color: var(--text-2);
 }
 
@@ -385,7 +385,7 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  background: rgba(8, 12, 20, 0.82);
+  background: color-mix(in srgb, var(--bg) 82%, transparent);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
   padding: 24px;
@@ -421,7 +421,8 @@
 .locked-cta {
   display: inline-block;
   margin-top: 10px;
-  background: var(--blue, #3b82f6);
+  /* Texte blanc seulement sur --primary (5,2:1) / --primary-hover (6,7:1), règle design 1 (#1085). */
+  background: var(--primary);
   color: #fff;
   border-radius: 8px;
   padding: 9px 24px;
@@ -429,7 +430,7 @@
   font-weight: 500;
   font-family: var(--font-body);
   text-decoration: none;
-  box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 0 20px color-mix(in srgb, var(--blue) 30%, transparent);
   transition:
     background 0.2s,
     transform 0.15s,
@@ -437,9 +438,9 @@
 }
 
 .locked-cta:hover {
-  background: var(--blue-bright, #60a5fa);
+  background: var(--primary-hover);
   transform: translateY(-1px);
-  box-shadow: 0 0 28px rgba(59, 130, 246, 0.5);
+  box-shadow: 0 0 28px color-mix(in srgb, var(--blue) 50%, transparent);
 }
 
 /* ── SVG preview (Bloc 1) ── */
@@ -502,8 +503,8 @@
   border-radius: 3px;
   background: linear-gradient(
     90deg,
-    rgba(59, 130, 246, 0.5),
-    rgba(139, 92, 246, 0.35)
+    color-mix(in srgb, var(--blue) 50%, transparent),
+    color-mix(in srgb, var(--purple) 35%, transparent)
   );
 }
 
@@ -554,7 +555,7 @@
 
 .period-tab.active {
   background: var(--bg-card);
-  color: var(--blue-bright, #60a5fa);
+  color: var(--blue-bright);
   box-shadow: 0 1px 3px rgba(0,0,0,.2);
 }
 
@@ -568,3 +569,10 @@
 mtc-inactive-accounts-toggle {
   margin-bottom: 16px;
 }
+
+/* Aperçu flouté du paywall (courbe de capital = gains, drawdown = pertes) : couleurs du thème,
+   jamais en dur (#1174). Classes plutôt que var() dans les attributs SVG de présentation. */
+.pv-stop-gain { stop-color: var(--green); }
+.pv-stop-loss { stop-color: var(--red); }
+.pv-stroke-gain { stroke: var(--green); }
+.pv-stroke-loss { stroke: var(--red); }
