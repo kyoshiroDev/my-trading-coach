@@ -1,0 +1,126 @@
+---
+/**
+ * Section « Chaque mois, des traders gagnent du Premium » (PROMPT-tirage-mensuel, lot B).
+ * N'apparaît que si au moins un tirage est allumé : lue côté navigateur sur `GET /public/giveaway`
+ * (lecture seule, cache 60 s, seulement des données affichables). API injoignable, réponse invalide
+ * ou tirages éteints → la section reste cachée. Aucune promesse de gain de trading.
+ */
+import { GIVEAWAY_FREE_PRIZE_MONTHS, GIVEAWAY_MIN_TRADES, GIVEAWAY_PREMIUM_PRIZE_MONTHS } from '@mtc/shared';
+import { APP_URL } from '../../config';
+
+const register = `${APP_URL}/register`;
+---
+
+<section class="pf-giveaway" id="concours" data-giveaway hidden aria-labelledby="pf-giveaway-title">
+  <div class="gw-in">
+    <span class="pf-eyebrow">Concours du mois</span>
+    <h2 class="pf-h2" id="pf-giveaway-title">Chaque mois, des traders gagnent du Premium.</h2>
+    <p class="gw-lead">Un tirage au sort le 1er de chaque mois, parmi les traders qui enregistrent au moins {GIVEAWAY_MIN_TRADES} trades dans le mois. Inscris-toi et enregistre tes trades&nbsp;: tu participes.</p>
+
+    <div class="gw-prizes">
+      <div class="gw-prize" data-giveaway-free hidden>
+        <span class="gw-lbl">Comptes gratuits</span>
+        <span class="gw-v">{GIVEAWAY_FREE_PRIZE_MONTHS}&nbsp;mois de Premium offert</span>
+      </div>
+      <div class="gw-prize" data-giveaway-premium hidden>
+        <span class="gw-lbl">Abonnés Premium</span>
+        <span class="gw-v">{GIVEAWAY_PREMIUM_PRIZE_MONTHS}&nbsp;mois d’abonnement offerts</span>
+      </div>
+    </div>
+
+    <p class="gw-counters" data-giveaway-counters></p>
+
+    <div class="gw-actions">
+      <a href={register} class="gw-btn" data-ga-event="cta_signup" data-ga-place="pf-giveaway">Commencer gratuitement</a>
+      <a href="/reglement-tirage" class="gw-rules" data-ga-event="giveaway_rules" data-ga-place="pf-giveaway">Lire le règlement</a>
+    </div>
+  </div>
+</section>
+
+<script>
+  import { API_URL } from '../../config';
+
+  interface PublicGiveaway {
+    enabled: boolean;
+    free: boolean;
+    premium: boolean;
+    nextDrawAt: string;
+    winnersFree: number;
+    winnersPremium: number;
+    monthsOffered: number;
+  }
+
+  const int = (v: unknown) => typeof v === 'number' && Number.isInteger(v) && v >= 0;
+
+  function parse(raw: unknown): PublicGiveaway | null {
+    const s = raw as Partial<PublicGiveaway> | null;
+    if (
+      !s || typeof s.enabled !== 'boolean' || typeof s.free !== 'boolean' || typeof s.premium !== 'boolean' ||
+      typeof s.nextDrawAt !== 'string' || Number.isNaN(Date.parse(s.nextDrawAt)) ||
+      !int(s.winnersFree) || !int(s.winnersPremium) || !int(s.monthsOffered)
+    ) {
+      return null;
+    }
+    return s as PublicGiveaway;
+  }
+
+  function counters(s: PublicGiveaway): string {
+    const winners = s.winnersFree + s.winnersPremium;
+    const day = new Date(s.nextDrawAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', timeZone: 'Europe/Paris' });
+    const first = day.startsWith('1 ') ? `1er ${day.slice(2)}` : day;
+    if (winners === 0) return `Premier tirage le ${first}.`;
+    return `${winners} gagnant${winners > 1 ? 's' : ''} depuis le début, ${s.monthsOffered} mois de Premium offerts. Prochain tirage le ${first}.`;
+  }
+
+  async function show(): Promise<void> {
+    const section = document.querySelector<HTMLElement>('[data-giveaway]');
+    if (!section) return;
+    try {
+      const res = await fetch(`${API_URL}/public/giveaway`, { signal: AbortSignal.timeout(4_000) });
+      if (!res.ok) return;
+      const body = (await res.json()) as { data?: unknown } | null;
+      const s = parse(body?.data);
+      if (!s || !s.enabled) return;
+      section.querySelector<HTMLElement>('[data-giveaway-free]')!.hidden = !s.free;
+      section.querySelector<HTMLElement>('[data-giveaway-premium]')!.hidden = !s.premium;
+      section.querySelector<HTMLElement>('[data-giveaway-counters]')!.textContent = counters(s);
+      section.hidden = false;
+    } catch {
+      /* API injoignable : la section reste cachée */
+    }
+  }
+
+  void show();
+</script>
+
+<style>
+  /* Section propre (les utilitaires .pf-in / .pf-btn de la page sont scopés à prop-firm.astro). */
+  .pf-giveaway { padding: 88px 20px; border-top: 1px solid var(--b); }
+  .pf-giveaway[hidden] { display: none; }
+  .gw-in { max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
+  .gw-btn {
+    display: inline-block; text-align: center; text-decoration: none;
+    background: var(--blue); color: var(--on-blue);
+    font-family: var(--disp); font-size: 18px; font-weight: 700;
+    padding: 18px 30px; border-radius: 14px;
+    box-shadow: 0 0 32px color-mix(in srgb, var(--blue) 35%, transparent);
+    transition: background 0.2s, transform 0.2s;
+  }
+  .gw-btn:hover { background: var(--blue2); transform: translateY(-2px); }
+  .gw-btn:focus-visible { outline: 2px solid var(--blue2); outline-offset: 3px; }
+  .gw-lead { font-size: 18px; line-height: 1.55; color: var(--txt2); max-width: 620px; margin: 0 0 24px; }
+  .gw-prizes { display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 18px; }
+  .gw-prize { display: flex; flex-direction: column; gap: 6px; background: var(--bg2); border: 1px solid var(--b); border-radius: 12px; padding: 16px 20px; min-width: 0; }
+  .gw-prize[hidden] { display: none; }
+  .gw-lbl { font-family: var(--mono); font-size: 12px; letter-spacing: 1.2px; text-transform: uppercase; color: var(--pulse); }
+  .gw-v { font-family: var(--disp); font-size: 22px; font-weight: 700; }
+  .gw-counters { font-family: var(--mono); font-size: 14px; color: var(--txt2); margin: 0 0 24px; }
+  .gw-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 18px; }
+  .gw-rules { color: var(--blue2); font-size: 15px; }
+  .gw-rules:focus-visible { outline: 2px solid var(--blue2); outline-offset: 3px; }
+  @media (max-width: 640px) {
+    .pf-giveaway { padding: 56px 20px; }
+    .gw-lead { font-size: 16px; }
+    .gw-prize { flex: 1 1 100%; }
+  }
+</style>

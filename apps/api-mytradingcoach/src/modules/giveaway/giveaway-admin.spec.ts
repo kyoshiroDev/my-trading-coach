@@ -17,7 +17,7 @@ const settings = {
 const eligibility = { eligibleIds: vi.fn(async () => ['a', 'b']) };
 const draws = { draw: vi.fn() };
 const prizes = { apply: vi.fn() };
-const redis = { client: { get: vi.fn(async () => null), set: vi.fn(async () => 'OK') } };
+const redis = { client: { get: vi.fn(async () => null), set: vi.fn(async () => 'OK'), del: vi.fn(async () => 1) } };
 const service = new GiveawayAdminService(prisma as never, settings as never, eligibility as never, draws as never, prizes as never, redis as never);
 
 freezeClock('2027-02-10T10:00:00Z');

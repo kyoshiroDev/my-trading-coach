@@ -47,6 +47,9 @@ GET    /api/admin/landing-engagement   ADMIN (?days=7|30, défaut 30) → vues +
 GET    /api/pricing/founder           PUBLIC (60/min, Cache-Control max-age=60) → { open, seatsTotal, seatsLeft, priceMonthlyEur, priceAnnualEur }
 GET    /api/admin/founders            ADMIN → fondateurs paginés (?status, ?page) + totaux (pris, actifs, perdus, remboursés, restants, par cta)
 PATCH  /api/admin/founder-offer       ADMIN → { open?, endsAt? } (interrupteur « Ouvrir l'offre »)
+GET    /api/giveaway/state            JWT → page « Concours du mois » : état public + statut de l'utilisateur (raison, trades du mois) + son lot (démo : exemple, aucun gagnant)
+PATCH  /api/giveaway/me/win           JWT → { displayConsent, displayPseudo?, message? (≤ 140), instagramConsent, instagramHandle? } ; message modifié → EN_ATTENTE (bloqué en démo)
+GET    /api/public/giveaway           PUBLIC → section de la landing : tirages allumés, lots, prochain tirage, compteurs, gagnants affichables (cache 60 s)
 GET    /api/admin/giveaway            ADMIN → tirage mensuel : 2 interrupteurs (éligibles maintenant, destinataires de l'annonce), prochain tirage, historique (commun/tirage-mensuel.md)
 PATCH  /api/admin/giveaway/settings   ADMIN → { pool, enabled } (allumer = annonce une fois par activation ; éteindre n'envoie rien)
 PATCH  /api/admin/giveaway/wins/:id/moderation  ADMIN → { moderation: VALIDE | REFUSE }

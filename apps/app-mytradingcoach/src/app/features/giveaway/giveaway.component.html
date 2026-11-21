@@ -1,0 +1,105 @@
+<div class="content mtc-page">
+  <div class="page-head mtc-page-head">
+    <h1 class="page-title mtc-page-title"><svg [lucideIcon]="GiftIcon" [size]="20"></svg>Concours du mois</h1>
+    <p class="page-sub">Chaque mois, un tirage au sort parmi les traders qui enregistrent leurs trades.</p>
+  </div>
+
+  @if (!state() && !loadError()) {
+    <div class="state-box" data-testid="giveaway-loading">Chargement…</div>
+  } @else if (!state() && loadError()) {
+    <mtc-error-state message="Le concours n’a pas pu être chargé. Vérifie ta connexion puis réessaie." (retry)="reload()" />
+  } @else if (state(); as s) {
+    @if (s.demo) {
+      <p class="demo-note" data-testid="giveaway-demo-note">Exemple&nbsp;: en mode démo, la page montre le fonctionnement du concours. Aucun vrai tirage, aucun vrai gagnant.</p>
+    }
+
+    <!-- EN-TÊTE : lots du mois + compte à rebours -->
+    <section class="hero" data-testid="giveaway-hero">
+      <div class="prizes">
+        @if (s.free) {
+          <div class="prize" data-testid="giveaway-prize-free">
+            <span class="prize-lbl">Comptes gratuits</span>
+            <span class="prize-v">{{ s.freePrizeMonths }}&nbsp;mois de Premium</span>
+            <span class="prize-sub">offert, sans carte</span>
+          </div>
+        }
+        @if (s.premium) {
+          <div class="prize" data-testid="giveaway-prize-premium">
+            <span class="prize-lbl">Abonnés Premium</span>
+            <span class="prize-v">{{ s.premiumPrizeMonths }}&nbsp;mois offerts</span>
+            <span class="prize-sub">sur ton abonnement</span>
+          </div>
+        }
+      </div>
+      <div class="countdown" data-testid="giveaway-countdown">
+        <span class="cd-lbl">Prochain tirage le {{ nextDrawLabel() }} à {{ drawHour }}&nbsp;h</span>
+        <span class="cd-v">{{ countdown() }}</span>
+      </div>
+    </section>
+
+    <!-- MON STATUT -->
+    <section class="card status" data-testid="giveaway-status">
+      <div class="status-head">
+        @if (s.me.reason === 'in') {
+          <svg [lucideIcon]="CheckIcon" [size]="18" class="ok-ic"></svg>
+        }
+        <span class="status-text" data-testid="giveaway-status-text">{{ statusText(s) }}</span>
+      </div>
+      @if (s.me.reason === 'in' || s.me.reason === 'need_trades') {
+        <div class="bar" role="progressbar" aria-label="Trades enregistrés ce mois-ci" [attr.aria-valuenow]="s.me.tradesThisMonth" aria-valuemin="0" [attr.aria-valuemax]="s.minTrades">
+          <div class="bar-fill" [style.width.%]="progress()"></div>
+        </div>
+        <div class="bar-foot"><span class="mono">{{ s.me.tradesThisMonth }} / {{ s.minTrades }}</span> trades enregistrés ce mois-ci</div>
+      }
+    </section>
+
+    @if (s.myWin; as w) {
+      <a class="card win-link" routerLink="/concours/gagnant" data-testid="giveaway-my-win">
+        <svg [lucideIcon]="TrophyIcon" [size]="18"></svg>
+        <span>Tu as gagné le tirage du {{ w.period }}. Choisis comment ton nom apparaît →</span>
+      </a>
+    }
+
+    <!-- COMPTEURS RÉELS -->
+    <section class="stats" data-testid="giveaway-counters">
+      @if (hasWinners()) {
+        <div class="stat"><span class="stat-lbl">Gagnants gratuits</span><span class="stat-v mono">{{ s.winnersFree }}</span></div>
+        <div class="stat"><span class="stat-lbl">Gagnants Premium</span><span class="stat-v mono">{{ s.winnersPremium }}</span></div>
+        <div class="stat"><span class="stat-lbl">Mois offerts</span><span class="stat-v mono">{{ s.monthsOffered }}</span></div>
+      } @else {
+        <div class="stat wide" data-testid="giveaway-first-draw"><span class="stat-lbl">Premier tirage</span><span class="stat-v">le {{ nextDrawLabel() }}</span></div>
+      }
+    </section>
+
+    <!-- GAGNANTS -->
+    @if (s.winners.length) {
+      <section class="card" data-testid="giveaway-winners">
+        <div class="card-title">Les gagnants</div>
+        <ul class="winners">
+          @for (w of s.winners; track w.period + w.pool) {
+            <li class="winner">
+              <div class="winner-row">
+                <span class="mono muted">{{ w.period }}</span>
+                <span class="winner-name">{{ w.displayName }}</span>
+                <span class="winner-prize">{{ w.prizeMonths }}&nbsp;mois · {{ w.pool === 'FREE' ? 'gratuits' : 'Premium' }}</span>
+              </div>
+              @if (w.message) { <q class="winner-msg">{{ w.message }}</q> }
+            </li>
+          }
+        </ul>
+      </section>
+    }
+
+    <!-- CONDITIONS -->
+    <section class="card conditions" data-testid="giveaway-conditions">
+      <div class="card-title">Comment participer</div>
+      <ul>
+        <li>Enregistre au moins {{ s.minTrades }} trades dans le mois (synchro Tradovate ou saisie).</li>
+        <li>Comptes gratuits&nbsp;: compte de plus de {{ minAccountDays }}&nbsp;jours. Abonnés Premium&nbsp;: abonnés depuis au moins {{ premiumMonths }}&nbsp;mois.</li>
+        <li>Tirage automatique le {{ nextDrawLabel() }} à {{ drawHour }}&nbsp;h (Paris), puis chaque mois.</li>
+        <li>Un gagnant peut rejouer {{ cooldownMonths }}&nbsp;mois plus tard. Gratuit et sans obligation d’achat.</li>
+      </ul>
+      <a class="rules-link" [href]="rulesUrl" target="_blank" rel="noopener" data-testid="giveaway-rules-link">Lire le règlement</a>
+    </section>
+  }
+</div>

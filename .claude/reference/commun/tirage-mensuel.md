@@ -1,8 +1,8 @@
 # Tirage au sort mensuel (PROMPT-tirage-mensuel, #1150)
 
 > Décisions : `decisions.md` du 2026-11-20 et du 2026-11-21. Lot A (données, tirage, attribution,
-> admin) ; lot B (onglet « Concours du mois », page gagnant, landing, règlement) et lot C
-> (publication Instagram) à venir.
+> admin, PR #1164) ; lot B (onglet « Concours du mois », page gagnant, landing, règlement, #1158) ;
+> lot C (publication Instagram) à venir.
 
 ## Principe
 - **Éteint par défaut.** Deux interrupteurs indépendants dans l'admin (« Tirages », `/tirages`) :
@@ -20,7 +20,9 @@
   périodes (gagnant de P éligible de nouveau à P + 6).
 - Gratuits : `PREMIUM_OFFERABLE_WHERE` (même règle que « Offrir Premium », testée équivalente à
   `premiumOfferRefusal` : pas d'abonnement actif / en essai / en pause, ni plan PREMIUM, ni ADMIN /
-  BETA_TESTER), compte de plus de `GIVEAWAY_MIN_ACCOUNT_AGE_DAYS` jours, `emailVerifiedAt` non nul.
+  BETA_TESTER), compte de plus de `GIVEAWAY_MIN_ACCOUNT_AGE_DAYS` jours. Pas de critère « e-mail vérifié »
+  (décision du 21/11 : `emailVerifiedAt` n'est posé que par la connexion Google, aucune vérification pour
+  les inscriptions par e-mail).
   Un essai d'inscription en cours n'exclut pas (le lot s'ajoute après). AMBASSADOR éligible.
 - Premium : abonnement `active` (ni `trialing` ni `past_due`), `stripeCancelAt` vide, puis lecture
   Stripe des factures (seulement pour les candidats déjà actifs) : mensuel = au moins
@@ -77,7 +79,8 @@ disponible avec le lot B… ») ; éteindre reste toujours possible ; hors prod,
 `GET /admin/giveaway` renvoie `activationAvailable` : l'interrupteur éteint est désactivé et
 expliqué dans l'admin. Raison : l'annonce et les e-mails renvoient vers `/concours` et
 `/concours/gagnant` (lot B), le règlement et la politique de confidentialité arrivent au lot B.
-**Le lot B passe la constante à `true`.**
+**Ouvert au lot B (21/11, `true`)**, dans le même commit que la politique de confidentialité. Le
+mécanisme reste : le remettre à `false` referme l'allumage en prod sans toucher aux tirages allumés.
 
 ## Cas assumés (relecteur du 21/11)
 - Lot gratuit attribué par-dessus une offre de l'admin en cours : l'origine passe à GIVEAWAY sur
@@ -88,3 +91,22 @@ expliqué dans l'admin. Raison : l'annonce et les e-mails renvoient vers `/conco
   décision du 21/11) ; il paie, l'avoir a une valeur.
 - Cron sans verrou Redis : la contrainte unique (période, tirage) et le worker cron unique
   suffisent ; deux lancements simultanés = un tirage, au pire deux lectures Stripe.
+
+## Lot B : app, landing, règlement (#1158)
+- **API** : `GiveawayPublicService`. `GET /public/giveaway` (public, `Cache-Control: public, max-age=60`,
+  Redis 60 s `giveaway:public-state`, vidé par l'allumage, la modération et les réglages du gagnant) :
+  tirages allumés, lots, seuil, prochain tirage, compteurs (lots APPLIED), 12 derniers gagnants (nom
+  selon l'accord, message seulement VALIDE). `GET /giveaway/state` : même état + `me` (tirage concerné :
+  abonné actif = PREMIUM, sinon FREE ; raison `in` / `need_trades` / `premium_too_recent` (lecture
+  Stripe, cache 1 h) / `account_too_recent` / `recent_winner` / `cancel_scheduled` / `pool_off` /
+  `not_eligible` ; trades du mois civil en cours) + `myWin`. Démo : page visible, données d'exemple,
+  aucun gagnant ni message. `PATCH /giveaway/me/win` : message modifié → EN_ATTENTE.
+- **App** : `GiveawayStateService` (chargé par la barre latérale à la connexion, vidé à la
+  déconnexion). Dès qu'un tirage est allumé (ou en démo), l'entrée « Score trader » devient
+  « Concours du mois » (`nav-concours`, icône cadeau, même place) ; `/scoring` reste joignable.
+  Pages `/concours` (lots, compte à rebours, statut + progression, compteurs ou « Premier tirage le… »,
+  gagnants, conditions, lien vers le règlement) et `/concours/gagnant` (lot, affichage, message,
+  Instagram décoché par défaut).
+- **Landing** : `PfGiveaway.astro` sur `/prop-firm`, cachée par défaut, affichée côté navigateur si
+  `enabled` ; `/reglement-tirage` (noindex, hors sitemap), valeurs tirées de `@mtc/shared`.
+

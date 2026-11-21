@@ -1,0 +1,142 @@
+---
+/**
+ * Règlement du tirage au sort mensuel (PROMPT-tirage-mensuel, lot B). Noindex, hors sitemap.
+ * Valeurs (lots, seuils, jour, heure, carence) tirées de `@mtc/shared`, jamais recopiées.
+ * Texte légal : validé par Greg avant toute activation en prod.
+ */
+import Base from '../layouts/Base.astro';
+import '../styles/legal.css';
+import Nav from '../components/Nav.astro';
+import Footer from '../components/Footer.astro';
+import {
+  GIVEAWAY_DRAW_HOUR,
+  GIVEAWAY_FREE_PRIZE_MONTHS,
+  GIVEAWAY_MESSAGE_MAX,
+  GIVEAWAY_MIN_ACCOUNT_AGE_DAYS,
+  GIVEAWAY_MIN_TRADES,
+  GIVEAWAY_PREMIUM_MIN_PAID_INVOICES,
+  GIVEAWAY_PREMIUM_MIN_PAID_MONTHS,
+  GIVEAWAY_PREMIUM_PRIZE_MONTHS,
+  GIVEAWAY_WIN_COOLDOWN_MONTHS,
+  giveawayDrawDayLabel,
+} from '@mtc/shared';
+
+const day = giveawayDrawDayLabel();
+---
+
+<Base
+  title="Règlement du tirage au sort mensuel : MyTradingCoach"
+  description="Règlement du tirage au sort mensuel de MyTradingCoach : organisateur, conditions, mode de tirage, lots."
+  canonical="https://www.mytradingcoach.app/reglement-tirage"
+  ogUrl="https://www.mytradingcoach.app/reglement-tirage"
+  noindex
+>
+  <Nav stickyCta={false} />
+
+  <main class="legal">
+    <a class="legal-back" href="/prop-firm">← Retour à l'accueil</a>
+
+    <h1 class="no-lead">Règlement du tirage au sort mensuel</h1>
+
+    <div class="legal-body">
+      <h2>1. Organisateur</h2>
+      <p>
+        Le tirage au sort est organisé par Grégory Tahir, entrepreneur individuel exerçant sous le nom
+        commercial My Trading Coach (SIRET&nbsp;: 512 926 460 00027), éditeur de l'application
+        MyTradingCoach (ci-après « l'organisateur »). Les coordonnées complètes figurent dans les
+        <a href="/mentions-legales">mentions légales</a>.
+      </p>
+
+      <h2>2. Participation gratuite et sans obligation d'achat</h2>
+      <p>
+        Le tirage des comptes gratuits est gratuit et sans obligation d'achat&nbsp;: il suffit d'avoir un
+        compte MyTradingCoach gratuit et de remplir les conditions de l'article 4. Le tirage réservé aux
+        abonnés Premium ne demande aucun paiement en plus de l'abonnement en cours.
+      </p>
+
+      <h2>3. Personnes concernées</h2>
+      <p>
+        Le tirage est ouvert aux personnes physiques majeures titulaires d'un compte MyTradingCoach. Sont
+        exclus&nbsp;: les comptes de démonstration, les comptes internes de l'organisateur et les comptes
+        administrateurs. Un compte supprimé ne participe plus.
+      </p>
+
+      <h2>4. Conditions de participation</h2>
+      <p><strong>Tirage des comptes gratuits</strong>&nbsp;:</p>
+      <ul>
+        <li>ne pas avoir d'abonnement Premium payant en cours, ni de paiement en attente&nbsp;;</li>
+        <li>compte créé depuis plus de {GIVEAWAY_MIN_ACCOUNT_AGE_DAYS}&nbsp;jours&nbsp;;</li>
+        <li>au moins {GIVEAWAY_MIN_TRADES} trades enregistrés dans MyTradingCoach au cours du mois civil
+          précédant le tirage (date du trade, heure de Paris, synchronisation ou saisie)&nbsp;;</li>
+        <li>ne pas avoir gagné l'un des tirages au cours des {GIVEAWAY_WIN_COOLDOWN_MONTHS} derniers mois.</li>
+      </ul>
+      <p><strong>Tirage des abonnés Premium</strong>&nbsp;:</p>
+      <ul>
+        <li>abonnement Premium actif, sans résiliation programmée&nbsp;;</li>
+        <li>abonnement mensuel&nbsp;: au moins {GIVEAWAY_PREMIUM_MIN_PAID_INVOICES} échéances payées&nbsp;;
+          abonnement annuel&nbsp;: premier paiement effectué depuis au moins
+          {GIVEAWAY_PREMIUM_MIN_PAID_MONTHS}&nbsp;mois&nbsp;;</li>
+        <li>au moins {GIVEAWAY_MIN_TRADES} trades enregistrés au cours du mois civil précédant le tirage&nbsp;;</li>
+        <li>ne pas avoir gagné l'un des tirages au cours des {GIVEAWAY_WIN_COOLDOWN_MONTHS} derniers mois.</li>
+      </ul>
+
+      <h2>5. Mode de tirage</h2>
+      <p>
+        Chaque tirage ouvert a lieu automatiquement le {day} de chaque mois à {GIVEAWAY_DRAW_HOUR}&nbsp;h
+        (heure de Paris), parmi les comptes qui remplissent les conditions ce jour-là. Le gagnant est tiré
+        au hasard par un générateur aléatoire sécurisé, sur la liste des comptes participants classée dans
+        un ordre fixe. Une trace du tirage (empreinte de la liste des participants et rang tiré) est
+        conservée. S'il n'y a aucun participant, aucun lot n'est attribué ce mois-là.
+      </p>
+
+      <h2>6. Lots</h2>
+      <ul>
+        <li><strong>Tirage des comptes gratuits</strong>&nbsp;: {GIVEAWAY_FREE_PRIZE_MONTHS}&nbsp;mois de
+          Premium offert, sans carte bancaire, activé automatiquement. À la fin, le compte repasse en
+          gratuit sans aucun prélèvement.</li>
+        <li><strong>Tirage des abonnés Premium</strong>&nbsp;: {GIVEAWAY_PREMIUM_PRIZE_MONTHS}&nbsp;mois
+          d'abonnement offerts, sous la forme d'un avoir crédité sur le compte de facturation&nbsp;: pour un
+          abonnement mensuel, il est déduit des prochaines échéances&nbsp;; pour un abonnement annuel, il
+          est déduit du prochain renouvellement annuel.</li>
+      </ul>
+      <p>Les lots ne peuvent être ni échangés, ni remboursés, ni convertis en argent.</p>
+
+      <h2>7. Information du gagnant</h2>
+      <p>
+        Le gagnant est prévenu par e-mail, à l'adresse de son compte. Il retrouve son lot sur sa page
+        gagnant dans l'application.
+      </p>
+
+      <h2>8. Nom et message du gagnant</h2>
+      <p>
+        Le nom d'un gagnant n'est jamais publié sans son accord. Depuis sa page gagnant, il choisit
+        d'apparaître sous un pseudo, sous son prénom suivi de l'initiale de son nom, ou de ne pas
+        apparaître (« Un trader »). Il peut laisser un message de {GIVEAWAY_MESSAGE_MAX} caractères au
+        plus, publié seulement après validation par l'organisateur. Une annonce sur Instagram n'est faite
+        qu'avec son accord séparé. Ces choix restent modifiables à tout moment&nbsp;; ils sont effacés si
+        le compte est supprimé.
+      </p>
+
+      <h2>9. Modification ou arrêt</h2>
+      <p>
+        L'organisateur peut modifier, suspendre ou arrêter le tirage à tout moment, notamment en cas de
+        fraude ou de problème technique. Les lots déjà gagnés restent acquis.
+      </p>
+
+      <h2>10. Données personnelles</h2>
+      <p>
+        Les données utilisées pour le tirage (compte, trades enregistrés, statut d'abonnement) sont celles
+        déjà traitées par l'application. Le détail figure dans la
+        <a href="/politique-confidentialite">politique de confidentialité</a>.
+      </p>
+
+      <h2>11. Contact</h2>
+      <p>
+        Pour toute question sur le tirage&nbsp;:
+        <a href="mailto:support@mytradingcoach.app">support@mytradingcoach.app</a>.
+      </p>
+    </div>
+  </main>
+
+  <Footer />
+</Base>

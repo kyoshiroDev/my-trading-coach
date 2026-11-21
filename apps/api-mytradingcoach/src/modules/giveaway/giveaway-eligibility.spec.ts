@@ -95,10 +95,10 @@ describe('tirage des gratuits : chaque critère', () => {
     expect(await service.eligibleIds(GiveawayPool.FREE, NOW)).toEqual([]);
   });
 
-  it('e-mail non vérifié → exclu', async () => {
+  it('e-mail non vérifié (inscription par e-mail) → éligible (décision du 21/11 : critère retiré)', async () => {
     users = [base('a', { emailVerifiedAt: null })];
     giveTrades('a', 5);
-    expect(await service.eligibleIds(GiveawayPool.FREE, NOW)).toEqual([]);
+    expect(await service.eligibleIds(GiveawayPool.FREE, NOW)).toEqual(['a']);
   });
 
   it('abonnement Stripe actif, en essai ou paiement en attente → exclu', async () => {

@@ -53,6 +53,8 @@ export default defineConfig({
         // Retrait : supprimer ces deux lignes avec la redirection (astro.md, « Accueil → /prop-firm »).
         if (/^https:\/\/www\.mytradingcoach\.app\/?$/.test(page)) return false;
         if (/\/accueil\/?$/.test(page)) return false;
+        // Règlement du tirage mensuel : noindex, hors sitemap (PROMPT-tirage-mensuel).
+        if (page.includes('/reglement-tirage')) return false;
         if (!MULTI_ACCOUNTS && page.includes('/journal-trading-prop-firm')) return false;
         if (!REFERRAL && page.includes('/ambassadeur')) return false;
         return true;

@@ -20,9 +20,10 @@ const PROD_FRONTEND_URL = 'https://app.mytradingcoach.app';
 /**
  * Verrou d'activation en prod (relecteur du 21/11) : fermé tant que le lot B (page « Concours du
  * mois », page gagnant, règlement, politique de confidentialité) n'est pas livré. L'annonce et les
- * e-mails renvoient vers ces pages. Passé à `true` dans le lot B. Hors prod, l'activation reste libre.
+ * e-mails renvoient vers ces pages. Ouvert au lot B (21/11), dans le même commit que la politique de
+ * confidentialité (condition de l'agent security). Hors prod, l'activation reste libre.
  */
-export const GIVEAWAY_PROD_ACTIVATION_OPEN = false;
+export const GIVEAWAY_PROD_ACTIVATION_OPEN = true;
 export const GIVEAWAY_ACTIVATION_LOCKED_MESSAGE =
   'Activation en prod disponible avec le lot B (page « Concours du mois » et règlement).';
 
@@ -38,7 +39,7 @@ export function announceCampaign(pool: GiveawayPool): EmailCampaign {
   return {
     key: pool === GiveawayPool.FREE ? 'giveaway_announce_free' : 'giveaway_announce_premium',
     label: 'Annonce du tirage mensuel',
-    description: "Marketing : annonce du tirage à son activation dans l'admin.",
+    description: "Marketing\u00a0: annonce du tirage à son activation dans l'admin.",
     kind: 'marketing',
     requiresConsent: true,
     automated: false,

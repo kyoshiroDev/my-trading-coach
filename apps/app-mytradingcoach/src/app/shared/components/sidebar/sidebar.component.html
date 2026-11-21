@@ -148,22 +148,36 @@
         }
       </a>
 
-      <a
-        routerLink="/scoring"
-        routerLinkActive="active"
-        class="nav-item"
-        data-testid="nav-scoring"
-        [attr.title]="collapsed() ? 'Score trader' : null"
-        (click)="closeSidebar()"
-      >
-        <svg [lucideIcon]="ScoringIcon" [size]="16" class="nav-icon"></svg>
-        <span class="nav-label">Score trader</span>
-        @if (!userStore.isPremium()) {
-          <span class="nav-lock" title="Premium : débloque avec l'abonnement">
-            <svg [lucideIcon]="LockIcon" [size]="12"></svg>
-          </span>
-        }
-      </a>
+      @if (giveaway.enabled()) {
+        <a
+          routerLink="/concours"
+          routerLinkActive="active"
+          class="nav-item"
+          data-testid="nav-concours"
+          [attr.title]="collapsed() ? 'Concours du mois' : null"
+          (click)="closeSidebar()"
+        >
+          <svg [lucideIcon]="ContestIcon" [size]="16" class="nav-icon"></svg>
+          <span class="nav-label">Concours du mois</span>
+        </a>
+      } @else {
+        <a
+          routerLink="/scoring"
+          routerLinkActive="active"
+          class="nav-item"
+          data-testid="nav-scoring"
+          [attr.title]="collapsed() ? 'Score trader' : null"
+          (click)="closeSidebar()"
+        >
+          <svg [lucideIcon]="ScoringIcon" [size]="16" class="nav-icon"></svg>
+          <span class="nav-label">Score trader</span>
+          @if (!userStore.isPremium()) {
+            <span class="nav-lock" title="Premium : débloque avec l'abonnement">
+              <svg [lucideIcon]="LockIcon" [size]="12"></svg>
+            </span>
+          }
+        </a>
+      }
 
       <a
         routerLink="/eco-calendar"
