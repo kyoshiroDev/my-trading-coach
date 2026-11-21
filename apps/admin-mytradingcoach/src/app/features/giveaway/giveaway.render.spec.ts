@@ -45,6 +45,9 @@ describe('GiveawayComponent', () => {
     http = TestBed.inject(HttpTestingController);
   });
   afterEach(() => {
+    // Doubles remis en place même si une assertion échoue avant la fin du test.
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
     http.verify();
     vi.useRealTimers();
   });
@@ -252,9 +255,9 @@ describe('GiveawayComponent', () => {
     fixture.detectChanges();
     const fetchMock = vi.fn(async () => new Response(new Blob(['png']), { status: 200 }));
     vi.stubGlobal('fetch', fetchMock);
-    const created = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:x');
+    vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:x');
     const clicks: string[] = [];
-    const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (this: HTMLAnchorElement) { clicks.push(this.download); });
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (this: HTMLAnchorElement) { clicks.push(this.download); });
     const fixtureComp = fixture.componentInstance as unknown as { downloadImage(): Promise<void> };
     await fixtureComp.downloadImage();
     expect(fetchMock).toHaveBeenCalledWith('https://api.test/i.png');
@@ -265,7 +268,6 @@ describe('GiveawayComponent', () => {
     fixture.detectChanges();
     expect(open).toHaveBeenCalledWith('https://api.test/i.png', '_blank', 'noopener');
     expect(q(el, 'ig-error')!.textContent).toContain('Enregistrer l’image');
-    click.mockRestore(); created.mockRestore(); open.mockRestore(); vi.unstubAllGlobals();
   });
 
   it('erreur de chargement : message affiché', async () => {

@@ -4,6 +4,8 @@ import { freezeClock } from '../../test/freeze-clock';
 import { GiveawayInstagramService, INSTAGRAM_TOKEN_RE } from './giveaway-instagram.service';
 import { MetricoolClient, MetricoolError } from './metricool.client';
 import { checkCaption, fallbackCaption, instagramImageHtml, periodLabel, prizeLabel } from './giveaway-instagram.template';
+import { findFontFile, instagramFontFaces } from './giveaway-instagram.fonts';
+import { join } from 'path';
 
 /** Lot C du tirage mensuel : publication Instagram d'un gagnant. Aucun vrai appel IA ni Metricool. */
 const NOW = new Date('2027-02-10T10:00:00Z');
@@ -28,10 +30,18 @@ describe('gabarit et légende', () => {
     expect(html).not.toContain('139,92,246'); // pas de halo violet (réservé à la marque)
   });
 
+  it('polices : node_modules trouvé depuis un sous-dossier (CI lancée depuis apps/…), sinon null', () => {
+    const fromSub = findFontFile('@fontsource/inter/files/inter-latin-400-normal.woff2', join(process.cwd(), 'apps', 'api-mytradingcoach', 'src'));
+    expect(fromSub).toMatch(/inter-latin-400-normal\.woff2$/);
+    expect(findFontFile('@fontsource/nexiste-pas/x.woff2', '/')).toBeNull();
+  });
+
   it('image : polices de la marque intégrées en data URI (aucune requête externe)', () => {
     const html = instagramImageHtml(FACTS);
-    expect(html.match(/@font-face/g)).toHaveLength(4);
-    expect(html).toContain("font-family:'Inter';font-weight:800");
+    // Échoue si le repli silencieux s'enclenche alors que les fichiers existent (ex. webpack, chemin).
+    expect(instagramFontFaces()).not.toBe('');
+    expect(html.match(/@font-face/g)).toHaveLength(3);
+    expect(html).toContain("font-family:'Space Grotesk';font-weight:700");
     expect(html).toContain('data:font/woff2;base64,');
     expect(html).not.toMatch(/https?:\/\/[^"')]*\.woff2/);
     expect(instagramImageHtml(FACTS, '')).not.toContain('@font-face'); // repli police système

@@ -134,8 +134,10 @@ prod, Greg valide `/reglement-tirage` et la section 1 h) de la politique de conf
   et « Copier la légende ». Sans `API_URL` hors prod : erreur (pas d'URL d'image vers la prod). Erreurs Metricool : code HTTP seulement, jamais le corps.
 - Politique de confidentialité : Metricool et Instagram ajoutés aux destinataires (section 4).
 - Visuel expiré (clé Redis absente) à la publication → 400 « recharge l'aperçu », avant toute réservation.
-- Polices de la marque (Inter 400/700/800, JetBrains Mono) intégrées en data URI depuis
-  `node_modules/@fontsource` (`giveaway-instagram.fonts.ts`, lues une fois) ; absentes → police système.
+- Polices de la marque (Space Grotesk 700 pour nom, lot et marque ; Inter 400 ; JetBrains Mono) en
+  data URI depuis `node_modules/@fontsource`, cherché depuis le dossier courant puis ses parents
+  (`giveaway-instagram.fonts.ts`, lues une fois ; jamais `createRequire`/`require.resolve`, que webpack
+  remplace dans le bundle) ; absentes → police système.
 - Admin : « Programmé le JJ/MM à HH:mm » tant que `publishedAt` est futur, puis « Publié le JJ/MM ».
   Metricool ne renvoie souvent pas de lien à la programmation : « Voir le post » peut manquer.
 
