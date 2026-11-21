@@ -24,7 +24,8 @@
   logue un **nombre**, pas la liste des destinataires.
 - **Identité visuelle** (`templates/index.ts`, oct. 2026) : `emailWrapper(content, preheader, accent)`
   pose une barre pleine largeur en haut (`ACCENT.brand` par défaut ; `alert` = reset mot de passe et
-  paiement échoué ; `success` = paiement reçu et récap/débrief positif ; `discord` = invitation
+  paiement échoué ; `success` = récap/débrief à P&L positif seulement (vert = gains ; paiement reçu
+  en `brand` depuis #1159) ; `discord` = invitation
   Discord), puis le logo **PNG** `logo-email.png` (80 px affiché en 40 px, servi par l'app de
   l'environnement : `${FRONTEND_URL}/logo-email.png`). Pas de SVG inline : Gmail et Outlook le
   retirent. Fond sombre forcé (`color-scheme: dark` + `bgcolor` sur body/div/table, Gmail retirant
