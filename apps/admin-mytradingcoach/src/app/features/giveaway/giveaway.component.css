@@ -39,6 +39,14 @@
 
 .tbl-wrap { overflow-x: auto; }
 .tbl th.num, .tbl td.num { text-align: right; }
+.tbl td.nowrap { white-space: nowrap; }
+/* Cellules à plusieurs éléments : un seul bloc, pour que la carte mobile (td en flex) ne les répartisse pas. */
+.cell { min-width: 0; }
+@media (max-width: 768px) {
+  .cell { text-align: right; }
+  .cell .mod-row { justify-content: flex-end; }
+  .msg-cell { max-width: none; }
+}
 .btn-sm { padding: var(--space-1) var(--space-2); margin-top: var(--space-1); }
 .msg-cell { max-width: 260px; }
 .msg { display: block; font-size: var(--fs-xs); color: var(--text2); line-height: 1.5; overflow-wrap: anywhere; }

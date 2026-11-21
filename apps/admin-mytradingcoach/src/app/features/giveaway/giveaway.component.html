@@ -108,7 +108,7 @@
       </div>
     }
 
-    <div class="card fill">
+    <div class="card">
       <div class="card-head"><span class="card-label">Historique</span></div>
       <div class="tbl-wrap">
         <table class="tbl" data-testid="giveaway-history">
@@ -121,21 +121,21 @@
           <tbody>
             @for (r of d.history; track r.drawId) {
               <tr [attr.data-testid]="'draw-' + r.drawId">
-                <td data-label="Mois" class="mono">{{ r.period }}</td>
+                <td data-label="Mois" class="mono nowrap">{{ r.period }}</td>
                 <td data-label="Tirage">{{ r.pool === 'FREE' ? 'Gratuits' : 'Premium' }}</td>
                 @if (r.win; as w) {
-                  <td data-label="Gagnant">
+                  <td data-label="Gagnant"><div class="cell">
                     @if (w.userId) { <a class="u-link" [routerLink]="['/users', w.userId]">{{ w.email }}</a> } @else { <span class="muted">compte supprimé</span> }
-                    <div class="sub">{{ w.displayName }}</div>
+                    <div class="sub">{{ w.displayName }}</div></div>
                   </td>
-                  <td data-label="Lot" class="num mono">
+                  <td data-label="Lot" class="num mono nowrap"><div class="cell">
                     {{ w.prizeMonths }} mois
-                    @if (w.creditCents) { <div class="sub">{{ euros(w.creditCents) }}</div> }
+                    @if (w.creditCents) { <div class="sub">{{ euros(w.creditCents) }}</div> }</div>
                   </td>
                   <td data-label="Début" class="mono muted">{{ w.startsAt | date:'dd/MM/yyyy' }}</td>
                   <td data-label="Fin" class="mono muted">{{ w.endsAt | date:'dd/MM/yyyy' }}</td>
                   <td data-label="Éligibles" class="num mono">{{ r.eligibleCount }}</td>
-                  <td data-label="Attribution">
+                  <td data-label="Attribution"><div class="cell">
                     <span class="st-pill" [class.st-ok]="w.activationStatus === 'APPLIED'" [class.st-warn]="w.activationStatus === 'PENDING'"
                       [class.st-err]="w.activationStatus === 'FAILED'">{{ ACTIVATION_LABEL[w.activationStatus] }}</span>
                     @if (w.activationStatus === 'FAILED') {
@@ -143,10 +143,10 @@
                       <button type="button" class="btn btn-sm" [disabled]="busy() !== null" (click)="retry(w)" [attr.data-testid]="'retry-' + w.id">
                         Relancer l'attribution
                       </button>
-                    }
+                    }</div>
                   </td>
                   <td data-label="Affichage">{{ CONSENT_LABEL[w.displayConsent] }}</td>
-                  <td data-label="Message" class="msg-cell">
+                  <td data-label="Message" class="msg-cell"><div class="cell">
                     @if (w.message) {
                       <q class="msg">{{ w.message }}</q>
                       <div class="mod-row">
@@ -161,9 +161,9 @@
                       </div>
                     } @else {
                       <span class="muted">-</span>
-                    }
+                    }</div>
                   </td>
-                  <td data-label="Instagram">
+                  <td data-label="Instagram"><div class="cell">
                     {{ w.instagramConsent ? 'Accord' + (w.instagramHandle ? ' · @' + w.instagramHandle : '') : 'Non' }}
                     <div class="sub" [attr.data-testid]="'ig-status-' + w.id">{{ publicationLabel(w) }}</div>
                     @if (w.publishedUrl) { <a class="u-link sub" [href]="w.publishedUrl" target="_blank" rel="noopener" [attr.data-testid]="'ig-post-' + w.id">Voir le post</a> }
@@ -171,7 +171,7 @@
                       <button type="button" class="btn btn-sm" [disabled]="busy() !== null" (click)="openInstagram(w, r.period)" [attr.data-testid]="'ig-publish-' + w.id">
                         {{ busy() === 'ig-' + w.id ? 'Préparation…' : 'Publier' }}
                       </button>
-                    }
+                    }</div>
                   </td>
                 } @else {
                   <td data-label="Gagnant" colspan="4" class="muted">Aucun éligible, aucun gagnant</td>
