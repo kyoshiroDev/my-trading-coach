@@ -5,7 +5,8 @@ import { addCalendarMonths, giveawayPeriod, giveawayPrizeMonths, type AdminGivea
 import { PrismaService } from '../../prisma/prisma.service';
 import { ResendService } from '../resend/resend.service';
 import { GiveawayEligibilityService } from './giveaway-eligibility.service';
-import { GiveawayPrizeService, safePrizeError } from './giveaway-prize.service';
+import { GiveawayPrizeService } from './giveaway-prize.service';
+import { safePrizeError } from './giveaway-errors';
 import { GiveawaySettingsService } from './giveaway-settings.service';
 
 /** Issue d'un tirage : contrat partagé avec l'admin (`POST /admin/giveaway/draw`). */

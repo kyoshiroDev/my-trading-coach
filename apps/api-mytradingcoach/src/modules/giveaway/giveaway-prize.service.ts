@@ -1,4 +1,4 @@
-import { HttpException, Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { GiveawayActivation, GiveawayPool } from '@prisma/client';
 import { addCalendarMonths, giveawayPremiumCreditCents } from '@mtc/shared';
@@ -7,20 +7,9 @@ import { UsersService } from '../users/users.service';
 import { StripeGiveawayService } from '../stripe/stripe-giveaway.service';
 import { ResendService } from '../resend/resend.service';
 import { giveawayWinnerTemplate } from '../resend/campaigns/giveaway-templates';
+import { safePrizeError } from './giveaway-errors';
 
-/**
- * Raison d'échec affichable (admin, e-mail, journal) : nos propres messages (refus métier), sinon le
- * seul code de l'erreur. Jamais le message brut d'une erreur Stripe ou Prisma (« No such customer:
- * 'cus_…' », requête recopiée), règle « ne jamais exposer ».
- */
-export function safePrizeError(err: unknown): string {
-  if (err instanceof HttpException) return err.message;
-  const e = err as { type?: unknown; code?: unknown; name?: unknown };
-  if (typeof e?.type === 'string' && e.type.startsWith('Stripe')) {
-    return `Stripe : ${typeof e.code === 'string' ? e.code : e.type}`;
-  }
-  return `Erreur interne (${typeof e?.name === 'string' ? e.name : 'inconnue'})`;
-}
+export { safePrizeError };
 
 export interface PrizeResult {
   status: GiveawayActivation;

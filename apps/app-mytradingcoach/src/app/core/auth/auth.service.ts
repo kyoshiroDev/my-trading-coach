@@ -22,7 +22,7 @@ export interface AuthUser {
   trialEndsAt?: string | null;
   /** Essai Stripe déjà consommé (ou Premium offert reçu) : plus d'essai de 30 j au checkout. */
   trialUsed?: boolean;
-  /** Origine du `trialEndsAt` en cours (#769) : essai offert à l'inscription ou Premium offert par l'admin. */
+  /** Origine du `trialEndsAt` en cours (#769) : essai d'inscription, Premium offert par l'admin ou gagné au tirage mensuel. */
   trialSource?: TrialSource | null;
   /** Fin de l'essai d'inscription, fixe (un Premium offert ensuite ne la déplace pas). */
   signupTrialEndsAt?: string | null;

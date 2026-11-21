@@ -10,6 +10,7 @@ import { EmailDispatchService } from '../resend/email-dispatch.service';
 import type { EmailCampaign } from '../resend/campaigns/campaign-registry';
 import { giveawayAnnounceTemplate } from '../resend/campaigns/giveaway-templates';
 import { PREMIUM_OFFERABLE_WHERE } from '../users/premium-offer.util';
+import { safePrizeError } from './giveaway-errors';
 
 const SETTINGS_ID = 1;
 const PAGE_SIZE = 500;
@@ -121,7 +122,7 @@ export class GiveawaySettingsService {
     if (count === 0) return 0;
     const audience = await this.announceAudienceCount(pool);
     // En arrière-plan : la réponse de l'admin n'attend pas des centaines d'envois (file Resend plafonnée).
-    void this.announce(pool, now).catch((err: Error) => this.logger.error(`Annonce du tirage ${pool} : ${err.message}`));
+    void this.announce(pool, now).catch((err: unknown) => this.logger.error(`Annonce du tirage ${pool} : ${safePrizeError(err)}`));
     return audience;
   }
 

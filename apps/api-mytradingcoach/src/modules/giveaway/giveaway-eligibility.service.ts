@@ -16,6 +16,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { REAL_USERS_WHERE } from '../../common/stats/real-users';
 import { PREMIUM_OFFERABLE_WHERE } from '../users/premium-offer.util';
 import { StripeGiveawayService, type GiveawayBillingFacts } from '../stripe/stripe-giveaway.service';
+import { safePrizeError } from './giveaway-errors';
 
 const DAY_MS = 24 * 3600_000;
 
@@ -122,7 +123,7 @@ export class GiveawayEligibilityService {
         if (premiumSeniorityOk(facts, c.stripeInterval, now)) ids.push(c.id);
       } catch (err) {
         // Un client illisible chez Stripe est écarté de ce tirage plutôt que de bloquer tous les autres.
-        this.logger.warn(`Factures Stripe illisibles, candidat écarté (user ${c.id}) : ${(err as Error).message}`);
+        this.logger.warn(`Factures Stripe illisibles, candidat écarté (user ${c.id}) : ${safePrizeError(err)}`);
       }
     }
     return ids;
