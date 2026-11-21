@@ -799,7 +799,6 @@ export class UsersService {
       betaTesters,
       trialUsers,
       pausedUsers,
-      total: stripeTotal + betaTesters.length,
       page,
       limit,
     };

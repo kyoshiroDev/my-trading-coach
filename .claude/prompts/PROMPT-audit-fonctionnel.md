@@ -109,3 +109,9 @@ Texte de Greg : « continue » (après la proposition de passer à #1137).
 Texte de Greg : « oki continue ton travail alors » (après la proposition de la suite : #1132).
 
 #1132 est issu de la vérification security de #1103 (lot 4 #1062) : `POST /auth/refresh` sans limite de débit dédiée. Analyse du vérificateur security : aucune protection réelle à gagner, limite par défaut gardée exprès et verrouillée par un test.
+
+## Complément #1102 (2026-11-21)
+
+Texte de Greg : « ici reprend l'audite de l'app »
+
+#1102 est issu de la vérification nestjs du 4c (#1065, lot 4 #1062) : types d'échange de l'admin (`AdminUser`, données Abonnements, fondateurs) à déplacer de `admin.api.ts` vers `libs/shared/src/contracts`, liste des accès manuels sans `take`, champ `total` de `GET /admin/subscriptions` plus lu par l'admin (à retirer une fois l'admin du 4c en prod : fait le 19/11, promo #1118).

@@ -33,6 +33,8 @@ describe('UsersService.adminSubscriptions (#1065)', () => {
     const res = await service.adminSubscriptions(2, 20);
     expect(res.stripeTotal).toBe(57);
     expect(res.page).toBe(2);
+    // Plus de `total` (#1102) : l'admin ne le lit plus, il mêlait payants et accès manuels.
+    expect(res).not.toHaveProperty('total');
   });
 
   it('A9 : la fin programmée et le statut Stripe sont lus pour les abonnés payants', async () => {
