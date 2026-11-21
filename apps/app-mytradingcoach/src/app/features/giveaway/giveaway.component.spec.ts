@@ -2,10 +2,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { NO_ERRORS_SCHEMA, computed, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { DatePipe } from '@angular/common';
 import { of, throwError } from 'rxjs';
 import type { GiveawayAppState, GiveawayMyWin } from '@mtc/shared';
-import { GiveawayComponent, countdownLabel, drawDayLabel } from './giveaway.component';
+import { GiveawayComponent, countdownLabel, drawDayLabel, longDateLabel, periodLabel } from './giveaway.component';
 import { GiveawayWinnerComponent } from './giveaway-winner.component';
 import { GiveawayStateService } from '../../core/services/giveaway-state.service';
 import { GiveawayApi } from '../../core/api/giveaway.api';
@@ -122,7 +121,7 @@ describe('Concours du mois : page', () => {
 
   it('lot gagné : lien vers la page gagnant', () => {
     const { q } = mountPage(state({ myWin: WIN }));
-    expect(q('giveaway-my-win')).not.toBeNull();
+    expect(q('giveaway-my-win')!.textContent).toContain('tirage de février 2027');
   });
 
   it('chargement puis erreur', () => {
@@ -144,6 +143,9 @@ describe('Concours du mois : page', () => {
 describe('Concours du mois : utilitaires', () => {
   it('jour du tirage et compte à rebours', () => {
     expect(drawDayLabel('2027-03-01T08:00:00.000Z')).toBe('1er mars');
+    expect(periodLabel('2027-02')).toBe('février 2027');
+    expect(longDateLabel('2027-03-01T08:00:00.000Z')).toBe('1er mars 2027');
+    expect(longDateLabel('2027-03-15T08:00:00.000Z')).toBe('15 mars 2027');
     expect(countdownLabel('2027-03-01T08:00:00.000Z', Date.parse('2027-03-01T05:40:00Z'))).toBe('2\u00a0h 20\u00a0min');
     expect(countdownLabel('2027-03-01T08:00:00.000Z', Date.parse('2027-03-01T08:00:30Z'))).toBe('moins d’une minute');
   });
@@ -166,7 +168,7 @@ describe('Page gagnant', () => {
       ],
     });
     TestBed.overrideComponent(GiveawayWinnerComponent, {
-      set: { template: WINNER_TEMPLATE, imports: [FormsModule, DatePipe], styleUrls: [], styleUrl: undefined as unknown as string, schemas: [NO_ERRORS_SCHEMA] },
+      set: { template: WINNER_TEMPLATE, imports: [FormsModule], styleUrls: [], styleUrl: undefined as unknown as string, schemas: [NO_ERRORS_SCHEMA] },
     });
     const fixture = TestBed.createComponent(GiveawayWinnerComponent);
     fixture.detectChanges();
@@ -178,7 +180,7 @@ describe('Page gagnant', () => {
   it('lot activé et date de fin ; Instagram décoché par défaut', async () => {
     const { q, fixture } = mountWinner(state({ myWin: WIN }));
     await fixture.whenStable();
-    expect(q('winner-prize')!.textContent).toContain('1\u00a0mois de Premium offert');
+    expect(q('winner-prize')!.textContent).toContain('1\u00a0mois de Premium offert, jusqu’au 1er mars 2027.');
     expect((q('winner-instagram-consent') as HTMLInputElement).checked).toBe(false);
     expect((q('winner-consent-none') as HTMLInputElement).checked).toBe(true);
   });

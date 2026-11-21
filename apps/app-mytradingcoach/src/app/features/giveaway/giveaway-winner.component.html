@@ -12,7 +12,7 @@
     <section class="card" data-testid="winner-prize">
       <div class="card-title">Ce que tu as gagné</div>
       @if (w.pool === 'FREE') {
-        <p class="status-text">{{ w.prizeMonths }}&nbsp;mois de Premium offert, jusqu’au {{ w.endsAt | date: 'd MMMM y' : 'Europe/Paris' }}.</p>
+        <p class="status-text">{{ w.prizeMonths }}&nbsp;mois de Premium offert, jusqu’au {{ longDate(w.endsAt) }}.</p>
         <p class="bar-foot">Ensuite, ton compte repasse en gratuit tout seul&nbsp;: rien n’est prélevé.</p>
       } @else {
         <p class="status-text">{{ w.prizeMonths }}&nbsp;mois offerts sur ton abonnement Premium.</p>

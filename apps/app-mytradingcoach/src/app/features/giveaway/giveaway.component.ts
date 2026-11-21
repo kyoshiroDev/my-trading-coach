@@ -19,6 +19,18 @@ export function drawDayLabel(iso: string): string {
   return `${giveawayDrawDayLabel()} ${month}`;
 }
 
+/** Date longue Paris avec « 1er » : « 1er mars 2027 », « 15 mars 2027 ». */
+export function longDateLabel(iso: string): string {
+  const d = new Date(iso).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Paris' });
+  return d.startsWith('1 ') ? `1er ${d.slice(2)}` : d;
+}
+
+/** « février 2027 » pour la période « 2027-02 ». */
+export function periodLabel(period: string): string {
+  const [y, m] = period.split('-').map(Number);
+  return new Date(Date.UTC(y, m - 1, 15)).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+}
+
 /** Compte à rebours lisible : « 12 j 4 h », « 3 h 20 min », « moins d'une minute ». */
 export function countdownLabel(targetIso: string, now: number): string {
   const ms = Math.max(0, new Date(targetIso).getTime() - now);
@@ -52,6 +64,7 @@ export class GiveawayComponent {
   protected readonly minAccountDays = GIVEAWAY_MIN_ACCOUNT_AGE_DAYS;
   protected readonly premiumMonths = GIVEAWAY_PREMIUM_MIN_PAID_MONTHS;
   protected readonly cooldownMonths = GIVEAWAY_WIN_COOLDOWN_MONTHS;
+  protected readonly periodLabel = periodLabel;
 
   protected readonly state = this.store.state;
   protected readonly loadError = this.store.loadError;

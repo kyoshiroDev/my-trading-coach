@@ -1,5 +1,4 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, signal, untracked } from '@angular/core';
-import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -15,6 +14,7 @@ import {
 import { GiveawayApi } from '../../core/api/giveaway.api';
 import { GiveawayStateService } from '../../core/services/giveaway-state.service';
 import { UserStore } from '../../core/stores/user.store';
+import { longDateLabel } from './giveaway.component';
 
 /**
  * Page gagnant (lien de l'e-mail, PROMPT-tirage-mensuel lot B) : lot activé et date de fin, choix de
@@ -24,7 +24,7 @@ import { UserStore } from '../../core/stores/user.store';
 @Component({
   selector: 'mtc-giveaway-winner',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ErrorStateComponent, DatePipe, FormsModule, RouterLink, LucideDynamicIcon],
+  imports: [ErrorStateComponent, FormsModule, RouterLink, LucideDynamicIcon],
   styleUrl: './giveaway.component.css',
   templateUrl: './giveaway-winner.component.html',
 })
@@ -36,6 +36,7 @@ export class GiveawayWinnerComponent {
   protected readonly TrophyIcon = Trophy;
   protected readonly MESSAGE_MAX = GIVEAWAY_MESSAGE_MAX;
   protected readonly PSEUDO_MAX = GIVEAWAY_PSEUDO_MAX;
+  protected readonly longDate = longDateLabel;
 
   protected readonly state = this.store.state;
   protected readonly loadError = this.store.loadError;

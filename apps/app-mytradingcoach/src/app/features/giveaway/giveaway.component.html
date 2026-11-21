@@ -56,7 +56,7 @@
     @if (s.myWin; as w) {
       <a class="card win-link" routerLink="/concours/gagnant" data-testid="giveaway-my-win">
         <svg [lucideIcon]="TrophyIcon" [size]="18"></svg>
-        <span>Tu as gagné le tirage du {{ w.period }}. Choisis comment ton nom apparaît →</span>
+        <span>Tu as gagné le tirage de {{ periodLabel(w.period) }}. Choisis comment ton nom apparaît →</span>
       </a>
     }
 
@@ -79,7 +79,7 @@
           @for (w of s.winners; track w.period + w.pool) {
             <li class="winner">
               <div class="winner-row">
-                <span class="mono muted">{{ w.period }}</span>
+                <span class="muted">{{ periodLabel(w.period) }}</span>
                 <span class="winner-name">{{ w.displayName }}</span>
                 <span class="winner-prize">{{ w.prizeMonths }}&nbsp;mois · {{ w.pool === 'FREE' ? 'gratuits' : 'Premium' }}</span>
               </div>
