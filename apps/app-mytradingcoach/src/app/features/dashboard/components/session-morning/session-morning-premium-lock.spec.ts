@@ -19,15 +19,24 @@ describe('session-morning · emplacements du cadenas Premium (#1189)', () => {
       expect(l).toContain('heading=');
       expect(l).not.toMatch(/\btitle=/);
     }
-    expect(html.match(/class="[^"]*\bpl-slot\b/g)).toHaveLength(2);
+    expect(html.match(/class="[^"]*(?<![\w-])pl-slot(?![\w-])/g)).toHaveLength(2);
   });
 
   it('plus aucun style inline dans les aperçus floutés', () => {
-    expect(html).not.toContain('filter:blur');
-    expect(html).not.toContain('position:relative;min-height:40px');
+    // Blocs .pl-slot jusqu'au cadenas inclus (le reste du template garde des styles inline légitimes).
+    const slots = html.match(/<div class="[^"]*(?<![\w-])pl-slot(?![\w-])[^"]*">[\s\S]*?<mtc-premium-lock[\s\S]*?\/>/g) ?? [];
+    expect(slots).toHaveLength(2);
+    for (const b of slots) expect(b).not.toMatch(/\sstyle=|\[style/);
   });
 
   it('emplacement assez haut pour la carte (150 px)', () => {
-    expect(css).toMatch(/\.pl-slot \{ position: relative; min-height: 150px; \}/);
+    const bloc = css.match(/\.pl-slot\s*\{([^}]*)\}/)?.[1] ?? '';
+    expect(bloc).toMatch(/position:\s*relative/);
+    expect(bloc).toMatch(/min-height:\s*150px/);
+  });
+
+  it('téléphone (conteneur ≤ 520 px) : emplacement à 170 px (carte mesurée à ~160 px à 360 px)', () => {
+    const tel = css.match(/@container \(max-width: 520px\)\s*\{([\s\S]*?)\n\}/)?.[1] ?? '';
+    expect(tel).toMatch(/\.pl-slot\s*\{\s*min-height:\s*170px/);
   });
 });

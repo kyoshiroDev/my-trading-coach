@@ -54,7 +54,10 @@
   padding: 7px 14px;
   font-size: 12px;
   font-weight: 600;
-  white-space: nowrap;
+  /* Peut passer à la ligne : le libellé fondateur (~340 px) dépasse la carte (360 px max), même sur ordinateur (#1189). */
+  white-space: normal;
+  max-width: 100%;
+  text-align: center;
   text-decoration: none;
   font-family: var(--font-body);
   flex-shrink: 0;
@@ -67,8 +70,7 @@
 .pl-btn:hover { background: var(--primary-hover); }
 .pl-btn:focus-visible { outline: 2px solid var(--blue-bright); outline-offset: 2px; } /* 6,7:1 sur la carte (#1087) */
 
-/* Carte étroite (téléphone, petits emplacements) : le libellé du bouton peut passer à la ligne
-   au lieu de déborder de la carte (#1189). */
+/* Carte étroite (téléphone, petits emplacements) : bouton sur toute la largeur de la carte (#1189). */
 @container (max-width: 340px) {
-  .pl-btn { white-space: normal; text-align: center; flex-basis: 100%; }
+  .pl-btn { flex-basis: 100%; }
 }

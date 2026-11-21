@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach, beforeAll } from 'vitest';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { TestBed } from '@angular/core/testing';
-import { signal } from '@angular/core';
+import { ChangeDetectorRef, signal } from '@angular/core';
 import * as angularCore from '@angular/core';
 import { PremiumLockComponent } from './premium-lock.component';
 import { OffersStore } from '@app/core/stores/offers.store';
@@ -40,7 +40,7 @@ function render(founderAvailable: boolean, trialAvailable = true) {
   const fixture = TestBed.createComponent(PremiumLockComponent);
   fixture.detectChanges();
   const button = (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>('[data-testid=premium-lock-cta]')!;
-  return { button, intent };
+  return { button, intent, fixture };
 }
 
 describe('PremiumLockComponent', () => {
@@ -90,10 +90,28 @@ describe('PremiumLockComponent · composant conforme (#1189)', () => {
     expect(root.querySelector('h3.pl-title')?.textContent?.trim()).toBe('Fonctionnalité Premium');
   });
 
-  it('aucune entrée « title » : pas d’info-bulle native sur toute la superposition', () => {
-    const src = readFileSync(join(import.meta.dirname, 'premium-lock.component.ts'), 'utf8');
-    expect(src).not.toMatch(/readonly title\s*=/);
-    expect(src).toMatch(/readonly heading\s*=/);
+  it('entrée heading (et subtitle) reliée au h3 et au sous-titre', () => {
+    const { fixture } = render(false);
+    // En JIT (vitest), une entrée signal n'est pas affectable par setInput : on remplace le signal.
+    const cmp = fixture.componentInstance as unknown as Record<string, unknown>;
+    cmp['heading'] = signal('Equity Curve');
+    cmp['subtitle'] = signal('Visualise ton capital');
+    fixture.componentRef.injector.get(ChangeDetectorRef).markForCheck(); // OnPush
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('h3.pl-title')?.textContent?.trim()).toBe('Equity Curve');
+    expect(el.querySelector('.pl-sub')?.textContent?.trim()).toBe('Visualise ton capital');
+  });
+
+  it('aucun usage de <mtc-premium-lock> avec title= (info-bulle native) : heading= partout', () => {
+    const appDir = join(import.meta.dirname, '..', '..', '..');
+    const templates = (readdirSync(appDir, { recursive: true }) as string[]).filter((f) => f.endsWith('.html'));
+    const usages = templates.flatMap((f) => readFileSync(join(appDir, f), 'utf8').match(/<mtc-premium-lock\b[\s\S]*?\/?>/g) ?? []);
+    expect(usages.length).toBeGreaterThanOrEqual(5);
+    for (const u of usages) {
+      expect(u).toMatch(/\bheading=/);
+      expect(u).not.toMatch(/(^|\s)\[?title\]?=/);
+    }
   });
 
   it('couleurs en tokens : ni rgba ni violet ; seul #fff (texte sur --primary)', () => {
@@ -103,8 +121,16 @@ describe('PremiumLockComponent · composant conforme (#1189)', () => {
     expect(sansCommentaires.match(/#[0-9a-fA-F]{3,6}\b/g) ?? []).toEqual(['#fff']);
   });
 
-  it('carte étroite : le bouton peut passer à la ligne (container query)', () => {
+  it('bouton jamais plus large que la carte : passage à la ligne permanent (libellé fondateur ~340 px)', () => {
+    const btn = css.match(/\.pl-btn\s*\{([^}]*)\}/)?.[1] ?? '';
+    expect(btn).toMatch(/white-space:\s*normal/);
+    expect(btn).toMatch(/max-width:\s*100%/);
+    expect(btn).not.toContain('nowrap');
     expect(css).toContain('container-type: inline-size');
-    expect(css).toMatch(/@container \(max-width: 340px\)\s*\{\s*\.pl-btn \{ white-space: normal;/);
+    expect(css).toMatch(/@container\s*\(max-width:\s*340px\)\s*\{\s*\.pl-btn\s*\{[^}]*flex-basis:\s*100%/);
+  });
+
+  it('libellé fondateur rendu dans le bouton (le plus long des libellés)', () => {
+    expect(render(true).button.textContent).toContain('(offre fondateur)');
   });
 });

@@ -508,6 +508,8 @@
 @container (max-width: 520px) {
   .mood-row { flex-wrap: wrap; }
   .mood-btn { flex: 1 1 calc(50% - 4px); }
+  /* Carte du cadenas plus haute sur téléphone (texte et bouton sur 2 lignes, ~160 px mesurés, #1189). */
+  .pl-slot { min-height: 170px; }
 }
 
 .eco-briefing {
