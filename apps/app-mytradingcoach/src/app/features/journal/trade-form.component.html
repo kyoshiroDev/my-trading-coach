@@ -254,10 +254,10 @@
               <p class="field-hint field-error" role="alert">{{ err }}</p>
             }
             @if (liquidationPrice(); as liq) {
-              <div class="liquidation-warning">
+              <div class="liquidation-warning" data-testid="liquidation-warning">
                 ⚠ Liquidation
                 {{ form().side === 'LONG' ? 'sous' : 'au-dessus de' }}
-                <strong>{{ liq | number: '1.2-2' }}</strong>
+                <strong>{{ priceLabel(liq) }}</strong>
               </div>
             }
           }
