@@ -55,6 +55,8 @@ export interface CampaignBuildCtx {
   firstWeek?: { trades: number; days: number; pnl: string };
   /** Essai d'inscription (#769, B2) : date de fin. */
   trial?: { endsAt: Date };
+  /** Lot du tirage mensuel des gratuits (PROMPT-tirage-mensuel) : fin du Premium gagné. */
+  giveaway?: { endsAt: Date };
 }
 
 const P = `style="${FONT}font-size:14px;color:#9db4ce;margin:0 0 16px 0;line-height:1.7;"`;

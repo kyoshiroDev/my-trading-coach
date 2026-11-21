@@ -55,6 +55,7 @@ describe('registre : suite automatique', () => {
     const auto = CAMPAIGNS.filter((c) => c.automated).sort((a, b) => b.priority - a.priority);
     expect(auto.map((c) => [c.key, c.priority, c.kind, c.requiresConsent])).toEqual([
       ['trial_ending', 120, 'service', false],
+      ['giveaway_ending', 119, 'service', false],
       ['trial_ended', 110, 'service', false],
       ['connect_tradovate', 100, 'service', false],
       ['prop_firm_rules', 90, 'service', false],
@@ -62,7 +63,8 @@ describe('registre : suite automatique', () => {
       ['profile_reminder', 45, 'marketing', true],
       ['discord_invite', 40, 'marketing', true],
     ]);
-    expect(auto.every((c) => c.recurringCooldownDays === undefined)).toBe(true); // tous oneShot
+    // Tous oneShot, sauf la fin du lot du tirage : un gagnant peut regagner après la carence.
+    expect(auto.filter((c) => c.recurringCooldownDays !== undefined).map((c) => c.key)).toEqual(['giveaway_ending']);
   });
 
   it('N3 (#1048) : first_week_recap sort du cron (gardée pour l’admin), elle ne visait plus personne', () => {
@@ -77,7 +79,7 @@ describe('registre : suite automatique', () => {
     for (const c of CAMPAIGNS.filter((x) => x.automated)) {
       const json = JSON.stringify(c.segment(NOW));
       expect(json, c.key).toMatch(
-        /"createdAt":\{"gte":"[^"]+","lte":"[^"]+"\}|"signupTrialEndsAt":\{"(gt|gte)":"[^"]+","lte":"[^"]+"\}/,
+        /"createdAt":\{"gte":"[^"]+","lte":"[^"]+"\}|"signupTrialEndsAt":\{"(gt|gte)":"[^"]+","lte":"[^"]+"\}|"trialEndsAt":\{"gt":"[^"]+","lte":"[^"]+"\}/,
       );
     }
   });

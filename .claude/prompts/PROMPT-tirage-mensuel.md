@@ -143,3 +143,9 @@ Le relecteur valide le plan et tranche les détails. Il ne remonte à Greg que c
 1. Valider le texte du règlement.
 2. Remplir les variables Metricool sur le VPS prod si l'abonnement le permet.
 3. Allumer le tirage voulu dans l'admin quand le moment est venu. Le premier tirage aura lieu le 1er du mois suivant.
+
+---
+
+## Compléments (session)
+
+- 2026-11-21, après l'étape 0 : Greg suit les recommandations du relecteur (« suit les recommandation du relecteur et oui attaque le lot A »). Abonnés Premium **annuels** : lot = avoir de 3/12 du prix annuel réel, déduit du prochain renouvellement (règlement : « 3 mois offerts, déduits du prochain renouvellement annuel ») ; éligibles si le premier paiement réel date d'au moins 2 mois civils (`GIVEAWAY_PREMIUM_MIN_PAID_MONTHS = 2`). Mensuels : 2 factures payées (montant > 0), avoir de 3 × la mensualité réellement facturée.

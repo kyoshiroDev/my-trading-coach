@@ -41,3 +41,4 @@ export * from './terms';
 export * from './subscription-state';
 export * from './metrics-annotations';
 export * from './calculators';
+export * from './giveaway';

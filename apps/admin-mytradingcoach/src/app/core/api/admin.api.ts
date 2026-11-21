@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '@admin/environments/environment';
-import type { AcquisitionUtm, AdminAcquisitionData, AdminBetaRoleResponse, AdminOfferPremiumResponse, AdminRemoveOfferedPremiumResponse, AdminLandingEngagementData, AdminFunnelData, AdminPlanLinkStats, AdminSignupFunnelData, AdminSignupMethodsData, AdminUserDetail as UserDetailData, Plan, Role, TrialSource } from '@mtc/shared';
+import type { AdminGiveawayData, AdminGiveawaySettingsResponse, AdminGiveawayWin, GiveawayPool, AcquisitionUtm, AdminAcquisitionData, AdminBetaRoleResponse, AdminOfferPremiumResponse, AdminRemoveOfferedPremiumResponse, AdminLandingEngagementData, AdminFunnelData, AdminPlanLinkStats, AdminSignupFunnelData, AdminSignupMethodsData, AdminUserDetail as UserDetailData, Plan, Role, TrialSource } from '@mtc/shared';
 export type { AdminPlanLinkStats };
 export type { UserDetailData };
 
@@ -327,6 +327,20 @@ export class AdminApi {
   }
   setFounderOffer(dto: { open?: boolean; endsAt?: string | null }) {
     return this.http.patch<{ data: unknown }>(`${this.adminBase}/founder-offer`, dto);
+  }
+  // Tirage mensuel (PROMPT-tirage-mensuel)
+  giveaway() { return this.http.get<{ data: AdminGiveawayData }>(`${this.adminBase}/giveaway`); }
+  setGiveaway(pool: GiveawayPool, enabled: boolean) {
+    return this.http.patch<{ data: AdminGiveawaySettingsResponse }>(`${this.adminBase}/giveaway/settings`, { pool, enabled });
+  }
+  moderateGiveawayWin(id: string, moderation: 'VALIDE' | 'REFUSE') {
+    return this.http.patch<{ data: { ok: true } }>(`${this.adminBase}/giveaway/wins/${id}/moderation`, { moderation });
+  }
+  retryGiveawayWin(id: string) {
+    return this.http.post<{ data: AdminGiveawayWin | null }>(`${this.adminBase}/giveaway/wins/${id}/retry`, {});
+  }
+  drawGiveawayNow(pool: GiveawayPool) {
+    return this.http.post<{ data: unknown }>(`${this.adminBase}/giveaway/draw`, { pool });
   }
   partnerCodes() { return this.http.get<{ data: AdminPartnerCode[] }>(`${this.adminBase}/partner-codes`); }
   createPartnerCode(dto: PartnerCodeInput) {
