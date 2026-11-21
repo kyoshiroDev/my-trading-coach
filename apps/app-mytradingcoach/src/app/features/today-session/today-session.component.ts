@@ -172,6 +172,18 @@ export class TodaySessionComponent implements OnInit, OnDestroy {
     const s = this.store.activeSession();
     return new Date(s?.endedAt ?? s?.startedAt ?? this.today);
   });
+  /**
+   * Séance servie d'un autre jour (démo le week-end : séance du vendredi, #1031) : sa date, sinon
+   * l'en-tête « Samedi … » laisse croire qu'elle a eu lieu aujourd'hui. `null` pour une séance du jour.
+   */
+  protected readonly otherDayLabel = computed(() => {
+    const s = this.store.activeSession();
+    if (!s?.startedAt) return null;
+    const started = new Date(s.startedAt);
+    return started.toDateString() === this.today.toDateString() ? null : this.frDate.format(started);
+  });
+  /** Démo en lecture seule : aucun bouton « Démarrer la session », même grisé (#1031). */
+  protected readonly canStartSession = computed(() => !this.userStore.isDemo());
   /** Mêmes chiffres que les 4 cartes du débrief ; humeur = celle choisie en fin de session. */
   protected readonly resultsCard = computed<Omit<ResultsCardData, 'referralCode'>>(() => {
     const stats = this.debriefStats();
@@ -214,8 +226,9 @@ export class TodaySessionComponent implements OnInit, OnDestroy {
     const trades = this.sessionTrades();
     const total = trades.length;
     if (!total) return [];
-    const counts = new Map<string, number>();
-    for (const t of trades) counts.set(t.emotion, (counts.get(t.emotion) ?? 0) + 1);
+    // Trade sans émotion (emotion null) : sa propre ligne « Non renseignée », pas un « - » (#1031).
+    const counts = new Map<string | null, number>();
+    for (const t of trades) counts.set(t.emotion ?? null, (counts.get(t.emotion ?? null) ?? 0) + 1);
     return [...counts.entries()]
       .map(([emotion, count]) => ({ emotion, count, pct: Math.round((count / total) * 100) }))
       .sort((a, b) => b.count - a.count);
@@ -288,7 +301,7 @@ export class TodaySessionComponent implements OnInit, OnDestroy {
     return 'var(--red)';
   });
 
-  protected emoColor(emotion: string): string { return EMOTION_COLORS[emotion] ?? 'var(--text-3)'; }
+  protected emoColor(emotion: string | null): string { return (emotion && EMOTION_COLORS[emotion]) || 'var(--text-3)'; }
   protected toggleObjCheck(index: number): void {
     const current = this.objectiveChecks();
     this.objectiveChecks.set({ ...current, [index]: !current[index] });
