@@ -38,7 +38,8 @@ export const RISK_NOTICE = `<p style="${FONT}font-size:12px;color:#8fa3bf;font-s
 export const ACCENT = {
   brand: 'linear-gradient(90deg,#3b82f6,#8b5cf6)',
   alert: 'linear-gradient(90deg,#ef4444,#f59e0b)', // sécurité, paiement échoué
-  success: 'linear-gradient(90deg,#10b981,#3b82f6)', // paiement reçu, recap positif
+  // Vert = gains seulement (règle design 3) : récap à P&L positif, jamais un paiement (#1159).
+  success: 'linear-gradient(90deg,#10b981,#3b82f6)',
   discord: 'linear-gradient(90deg,#5865f2,#8b5cf6)',
 } as const;
 
@@ -571,11 +572,11 @@ export function paymentSucceededTemplate(params: {
     </table>
     ${cta('Voir mon dashboard →', `${appUrl}/dashboard`)}
     ${invoiceUrl ? cta('Télécharger la facture', invoiceUrl, 'secondary') : ''}
-  `, 'rgba(16,185,129,.3)');
+  `); // bordure bleue par défaut : un paiement n'est pas un gain (#1159)
 
   return {
-    subject: `✅ Paiement reçu : ${amount}`,
-    html: emailWrapper(content, renewalStr ? `Prochaine échéance le ${renewalStr}.` : 'Merci pour ton paiement.', ACCENT.success),
+    subject: `Paiement reçu : ${amount}`, // sans ✅ : coche verte dans la boîte de réception (#1159)
+    html: emailWrapper(content, renewalStr ? `Prochaine échéance le ${renewalStr}.` : 'Merci pour ton paiement.', ACCENT.brand),
   };
 }
 
