@@ -73,14 +73,14 @@
   `GiveawayDraw.winnerId` passent à null (SetNull), le tirage et sa trace restent.
 
 ## Verrou d'activation en prod (ouvert au lot B, gardé comme coupe-circuit)
-`GIVEAWAY_PROD_ACTIVATION_OPEN = false` (`giveaway-settings.service.ts`) : en prod (`FRONTEND_URL`
-absent ou égal à l'app de prod, normalisé), **allumer** un tirage répond 409 (« Activation en prod
-disponible avec le lot B… ») ; éteindre reste toujours possible ; hors prod, l'activation est libre.
-`GET /admin/giveaway` renvoie `activationAvailable` : l'interrupteur éteint est désactivé et
-expliqué dans l'admin. Raison : l'annonce et les e-mails renvoient vers `/concours` et
-`/concours/gagnant` (lot B), le règlement et la politique de confidentialité arrivent au lot B.
-**Ouvert au lot B (21/11, `true`)**, dans le même commit que la politique de confidentialité. Le
-mécanisme reste : le remettre à `false` referme l'allumage en prod sans toucher aux tirages allumés.
+`GIVEAWAY_PROD_ACTIVATION_OPEN` (`giveaway-settings.service.ts`) vaut **`true`** depuis le lot B
+(21/11, même commit que la politique de confidentialité, condition de security). Le remettre à
+`false` (changement de code relu) referme l'allumage en prod : en prod (`FRONTEND_URL` absent ou égal
+à l'app de prod, normalisé), **allumer** répond alors 409 « Activation en prod fermée pour le
+moment. » ; éteindre reste toujours possible et les tirages déjà allumés ne sont pas touchés ; hors
+prod, l'activation est toujours libre. `GET /admin/giveaway` renvoie `activationAvailable` :
+l'interrupteur éteint est alors désactivé et expliqué dans l'admin. Avant d'allumer un tirage en
+prod, Greg valide `/reglement-tirage` et la section 1 h) de la politique de confidentialité.
 
 ## Cas assumés (relecteur du 21/11)
 - Lot gratuit attribué par-dessus une offre de l'admin en cours : l'origine passe à GIVEAWAY sur

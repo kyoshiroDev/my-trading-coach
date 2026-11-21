@@ -66,20 +66,20 @@ describe('Concours du mois : page', () => {
     const { q } = mountPage(state());
     expect(q('giveaway-prize-free')!.textContent).toContain('1\u00a0mois de Premium');
     expect(q('giveaway-prize-premium')!.textContent).toContain('3\u00a0mois offerts');
-    expect(q('giveaway-countdown')!.textContent).toContain('Prochain tirage le 1er mars à 9\u00a0h');
+    expect(q('giveaway-countdown')!.textContent).toContain('Prochain tirage le 1er\u00a0mars à 9\u00a0h');
     expect(q('giveaway-countdown')!.textContent).toContain('18\u00a0j 22\u00a0h');
   });
 
   it('mon statut : « Encore 2 trades » et barre de progression à 60 %', () => {
     const { q } = mountPage(state());
-    expect(q('giveaway-status-text')!.textContent).toBe('Encore 2\u00a0trades pour participer au tirage du 1er mars.');
+    expect(q('giveaway-status-text')!.textContent).toBe('Encore 2\u00a0trades pour participer au tirage du 1er\u00a0mars.');
     const fill = q('giveaway-status')!.querySelector('.bar-fill') as HTMLElement;
     expect(fill.style.width).toBe('60%');
   });
 
   it('dans le tirage : « Tu es dans le tirage du 1er mars »', () => {
     const { q } = mountPage(state({ me: { pool: 'FREE', reason: 'in', tradesThisMonth: 7 } }));
-    expect(q('giveaway-status-text')!.textContent).toBe('Tu es dans le tirage du 1er mars.');
+    expect(q('giveaway-status-text')!.textContent).toBe('Tu es dans le tirage du 1er\u00a0mars.');
   });
 
   it('ancienneté Premium insuffisante : phrase honnête, sans barre', () => {
@@ -93,7 +93,7 @@ describe('Concours du mois : page', () => {
     expect(q('giveaway-counters')!.textContent).toContain('5');
     TestBed.resetTestingModule();
     const empty = mountPage(state({ winnersFree: 0, winnersPremium: 0, monthsOffered: 0, winners: [] }));
-    expect(empty.q('giveaway-first-draw')!.textContent).toContain('le 1er mars');
+    expect(empty.q('giveaway-first-draw')!.textContent).toContain('le 1er\u00a0mars');
     expect(empty.q('giveaway-counters')!.textContent).not.toContain('0');
     expect(empty.q('giveaway-winners')).toBeNull();
   });
@@ -147,9 +147,9 @@ describe('Concours du mois : page', () => {
 
 describe('Concours du mois : utilitaires', () => {
   it('jour du tirage et compte à rebours', () => {
-    expect(drawDayLabel('2027-03-01T08:00:00.000Z')).toBe('1er mars');
+    expect(drawDayLabel('2027-03-01T08:00:00.000Z')).toBe('1er\u00a0mars');
     expect(periodLabel('2027-02')).toBe('février 2027');
-    expect(longDateLabel('2027-03-01T08:00:00.000Z')).toBe('1er mars 2027');
+    expect(longDateLabel('2027-03-01T08:00:00.000Z')).toBe('1er\u00a0mars 2027');
     expect(longDateLabel('2027-03-15T08:00:00.000Z')).toBe('15 mars 2027');
     expect(countdownLabel('2027-03-01T08:00:00.000Z', Date.parse('2027-03-01T05:40:00Z'))).toBe('2\u00a0h 20\u00a0min');
     expect(countdownLabel('2027-03-01T08:00:00.000Z', Date.parse('2027-03-01T08:00:30Z'))).toBe('moins d’une minute');
@@ -185,7 +185,7 @@ describe('Page gagnant', () => {
   it('lot activé et date de fin ; Instagram décoché par défaut', async () => {
     const { q, fixture } = mountWinner(state({ myWin: WIN }));
     await fixture.whenStable();
-    expect(q('winner-prize')!.textContent).toContain('1\u00a0mois de Premium offert, jusqu’au 1er mars 2027.');
+    expect(q('winner-prize')!.textContent).toContain('1\u00a0mois de Premium offert, jusqu’au 1er\u00a0mars 2027.');
     expect((q('winner-instagram-consent') as HTMLInputElement).checked).toBe(false);
     expect((q('winner-consent-none') as HTMLInputElement).checked).toBe(true);
   });

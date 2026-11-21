@@ -17,13 +17,13 @@ const MINUTE = 60_000;
 /** « 1er décembre » : jour du tirage et mois Paris de la date donnée. */
 export function drawDayLabel(iso: string): string {
   const month = new Date(iso).toLocaleDateString('fr-FR', { month: 'long', timeZone: 'Europe/Paris' });
-  return `${giveawayDrawDayLabel()} ${month}`;
+  return `${giveawayDrawDayLabel()}\u00a0${month}`;
 }
 
 /** Date longue Paris avec « 1er » : « 1er mars 2027 », « 15 mars 2027 ». */
 export function longDateLabel(iso: string): string {
   const d = new Date(iso).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Paris' });
-  return /^1\s/.test(d) ? `1er ${d.slice(2)}` : d;
+  return /^1\s/.test(d) ? `1er\u00a0${d.slice(2)}` : d;
 }
 
 /** « février 2027 » pour la période « 2027-02 ». */
