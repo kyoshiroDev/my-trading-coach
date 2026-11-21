@@ -127,7 +127,9 @@ describe('Séance du jour — démo le week-end et émotion absente (#1031)', ()
 
   it('compte démo : aucun bouton « Démarrer la session »', () => {
     expect(mount(null, { isDemo: true }).cmp.canStartSession()).toBe(false);
-    TestBed.resetTestingModule();
+  });
+
+  it('compte normal : le bouton « Démarrer la session » reste proposé', () => {
     expect(mount(null).cmp.canStartSession()).toBe(true);
   });
 
