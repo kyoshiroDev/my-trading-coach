@@ -22,7 +22,7 @@
         <select #fsResult aria-label="Filtrer par résultat"
           [value]="filterResult()"
           (change)="filterResult.set($any($event.target).value)">
-          <option value="ALL">Résultat : tous</option>
+          <option value="ALL">Résultat&nbsp;: tous</option>
           <option value="WIN">Win</option>
           <option value="LOSS">Loss</option>
           <option value="BREAKEVEN">Break-even</option>
@@ -36,7 +36,7 @@
         <select #fsSetup aria-label="Filtrer par setup"
           [value]="filterSetup() ?? ''"
           (change)="filterSetup.set($any($event.target).value || null)">
-          <option value="">Setup : tous</option>
+          <option value="">Setup&nbsp;: tous</option>
           @for (s of setupsStore.active(); track s.id) {
             <option [value]="s.id">{{ s.title }}</option>
           }
@@ -50,7 +50,7 @@
         <select #fsExecution aria-label="Filtrer par note d'exécution"
           [value]="filterExecution()"
           (change)="filterExecution.set($any($event.target).value)">
-          <option value="ALL">Execution : toutes</option>
+          <option value="ALL">Execution&nbsp;: toutes</option>
           <option value="EXCELLENT">Excellent</option>
           <option value="BON">Bon</option>
           <option value="MOYEN">Moyen</option>
@@ -66,7 +66,7 @@
         <select #fsEmotion aria-label="Filtrer par émotion"
           [value]="filterEmotion()"
           (change)="filterEmotion.set($any($event.target).value)">
-          <option value="ALL">Émotion : toutes</option>
+          <option value="ALL">Émotion&nbsp;: toutes</option>
           <option value="CONFIDENT">Confiant</option>
           <option value="FOCUSED">Focus</option>
           <option value="NEUTRAL">Neutre</option>
@@ -237,7 +237,7 @@
               <!-- Gagnants / décisifs (BE et ouverts exclus), même règle que le win rate (#947). -->
               @if (week.winCount + week.lossCount > 0) {
                 <span class="day-dot">·</span>
-                <span class="day-winrate" title="Gagnants / (gagnants + perdants) : break-even et trades ouverts exclus">{{ week.winCount }}/{{ week.winCount + week.lossCount }}</span>
+                <span class="day-winrate" title="Gagnants / (gagnants + perdants)&nbsp;: break-even et trades ouverts exclus">{{ week.winCount }}/{{ week.winCount + week.lossCount }}</span>
               }
               @if (!money.mixed()) {
               <span class="day-dot">·</span>
@@ -283,7 +283,7 @@
               <!-- Gagnants / décisifs (BE et ouverts exclus), même règle que le win rate (#947). -->
               @if (day.winCount + day.lossCount > 0) {
                 <span class="day-dot">·</span>
-                <span class="day-winrate" title="Gagnants / (gagnants + perdants) : break-even et trades ouverts exclus">{{ day.winCount }}/{{ day.winCount + day.lossCount }}</span>
+                <span class="day-winrate" title="Gagnants / (gagnants + perdants)&nbsp;: break-even et trades ouverts exclus">{{ day.winCount }}/{{ day.winCount + day.lossCount }}</span>
               }
               @if (!money.mixed()) {
               <span class="day-dot">·</span>
@@ -330,7 +330,7 @@
                   <span class="td-asset">{{ trade.asset }}
                     @if (trade.account && isInactiveStatus(trade.account.status)) {
                       <span class="status-badge {{ statusBadgeClass(trade.account.status) }}"
-                            [attr.title]="trade.account.label + ' : hors statistiques'"
+                            [attr.title]="trade.account.label + ' : hors statistiques'"
                             data-testid="trade-account-badge">{{ statusLabel(trade.account.status) }}</span>
                     }
                   </span>
@@ -477,7 +477,7 @@
       </div>
       <p class="confirm-modal-desc">
         Déplacer <strong>tous les trades de cette journée</strong>
-        ({{ day.count }} trade{{ day.count > 1 ? 's' : '' }}) vers :
+        ({{ day.count }} trade{{ day.count > 1 ? 's' : '' }}) vers&nbsp;:
       </p>
       <div class="reassign-accounts">
         @for (acc of activeAccounts(); track acc.id) {
