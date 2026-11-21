@@ -71,8 +71,9 @@ describe('PremiumLockComponent · mise en page (#1178)', () => {
   it('carte : passage à la ligne, jamais plus large que son bloc (le texte tombait à 37 px dès 1440 px)', () => {
     const content = bloc('.pl-content');
     expect(content).toContain('flex-wrap: wrap');
-    expect(content).toContain('width: min(360px, calc(100% - 32px))');
-    expect(content).not.toContain('max-width: 360px');
+    // Largeur selon le contenu (petits emplacements de la séance du matin), bornée au bloc.
+    expect(content).toContain('max-width: min(360px, calc(100% - 32px))');
+    expect(content).not.toMatch(/(^|[^-])width: min/);
     expect(bloc('.pl-text')).toContain('flex: 1 1 200px');
   });
 });
