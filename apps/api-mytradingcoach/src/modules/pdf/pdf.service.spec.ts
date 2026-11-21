@@ -130,3 +130,23 @@ describe('PdfService — texte IA et utilisateur échappé', () => {
     expect(escapeHtml(null)).toBe('');
   });
 });
+
+describe('PdfService.renderPng — visuel Instagram du tirage mensuel (lot C)', () => {
+  it('image 1080×1350 rendue par le même Chromium (viewport, capture PNG découpée, page fermée)', async () => {
+    const page = {
+      setViewport: vi.fn().mockResolvedValue(undefined),
+      setContent: vi.fn().mockResolvedValue(undefined),
+      screenshot: vi.fn(async () => new Uint8Array([137, 80, 78, 71])),
+      close: vi.fn().mockResolvedValue(undefined),
+    };
+    launch.mockImplementation(async () => ({ on: vi.fn(), close: vi.fn().mockResolvedValue(undefined), newPage: vi.fn(async () => page) }));
+    const svc = new PdfService();
+    const png = await svc.renderPng('<html><body>gagnant</body></html>', 1080, 1350);
+    expect([...png.subarray(0, 4)]).toEqual([137, 80, 78, 71]); // signature PNG
+    expect(page.setViewport).toHaveBeenCalledWith({ width: 1080, height: 1350, deviceScaleFactor: 1 });
+    expect(page.setContent).toHaveBeenCalledWith('<html><body>gagnant</body></html>', expect.objectContaining({ waitUntil: 'load' }));
+    expect(page.screenshot).toHaveBeenCalledWith({ type: 'png', clip: { x: 0, y: 0, width: 1080, height: 1350 } });
+    expect(page.close).toHaveBeenCalled();
+    await svc.onModuleDestroy();
+  });
+});

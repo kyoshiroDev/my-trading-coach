@@ -56,6 +56,15 @@ describe('CSP de spa-releases.conf (#1068)', () => {
     }
   });
 
+  it('la page de paiement (Stripe Checkout Elements) peut charger Stripe.js et ses frames', () => {
+    for (const origin of ['https://js.stripe.com', 'https://*.js.stripe.com']) {
+      expect(directive('script-src')).toContain(origin);
+      expect(directive('frame-src')).toContain(origin);
+    }
+    expect(directive('frame-src')).toContain('https://hooks.stripe.com');
+    expect(directive('connect-src')).toContain('https://api.stripe.com');
+  });
+
   it('aucun repli permissif', () => {
     expect(directive('script-src')).not.toContain("'unsafe-inline'");
     expect(directive('script-src')).not.toContain("'unsafe-eval'");

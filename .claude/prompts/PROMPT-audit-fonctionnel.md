@@ -142,6 +142,16 @@ Texte de Greg : « c'est mergé, continue l'audite »
 
 Seul ticket de #993 qui avance sans Greg : #1068 (CSP de l'admin et de l'app). Conf du dépôt et test d'empreinte maintenant, phase 1 en Report-Only ; application sur les VPS par Greg (commandes données), puis passage en mode bloquant dans une seconde PR après vérification sans violation. #1110 et #1004 attendent le VPS ou une connexion Tradovate réelle ; #1059 est déjà fermée (PR #1070).
 
+## Complément #1068, report sur les VPS (2026-11-21)
+
+Textes exacts de Greg :
+
+> je te donne l'autorisation de faire le necessaire sur le vps tu soumet au relecteur et tu suis ce qu'il te retourne
+
+> je t'autorise à lancer les commandes sur l'ancien VPS et le VPS prod pour #1068 et #1110 SEULEMENT, sudo par moi
+
+Conf Report-Only appliquée sur l'ancien VPS (admin, app dev, app beta). Le relevé sur dev.app avec le compte démo montre que Stripe.js (page de paiement intégrée) n'était pas autorisé : origines Stripe ajoutées avant le report sur le VPS prod.
+
 ## Complément #1110 (2026-11-21)
 
 Même autorisation que le complément « #1068, report sur les VPS » (#1068 et #1110 SEULEMENT, sudo par Greg). `SHOW CONFIG` demande le mot de passe de `mtc_user` : aucun secret lu. Preuve prise à la place dans `/etc/pgbouncer/pgbouncer.ini` du conteneur prod (filtré, sans secret), généré à son démarrage : `pool_mode = session`, pool de la base prod 25. Correction des agents prisma et deploy et de la référence pgbouncer.

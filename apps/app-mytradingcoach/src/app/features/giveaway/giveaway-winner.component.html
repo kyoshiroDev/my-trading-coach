@@ -49,6 +49,7 @@
       <fieldset class="field-group">
         <legend class="card-title">Instagram</legend>
         <label class="radio"><input type="checkbox" name="instagram" [ngModel]="instagramConsent()" (ngModelChange)="instagramConsent.set($event)" data-testid="winner-instagram-consent" /> J’accepte que MyTradingCoach annonce mon gain sur Instagram (avec le nom choisi ci-dessus)</label>
+        <p class="bar-foot" data-testid="winner-instagram-note">Une annonce déjà publiée reste en ligne&nbsp;: pour la retirer, écris-nous à support@mytradingcoach.app.</p>
         @if (instagramConsent()) {
           <label class="field">
             <span class="field-lbl">Ton pseudo Instagram <span class="muted">(facultatif, pour te mentionner)</span></span>

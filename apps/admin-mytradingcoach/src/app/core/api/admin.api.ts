@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '@admin/environments/environment';
-import type { AdminGiveawayData, AdminGiveawayDrawResponse, AdminGiveawaySettingsResponse, AdminGiveawayWin, DrawGiveawayRequest, GiveawayPool, ModerateGiveawayWinRequest, UpdateGiveawaySettingsRequest, AcquisitionUtm, AdminAcquisitionData, AdminAmbassadorStats, AdminFoundersData, AdminSubscriptionsData, AdminUser, AdminBetaRoleResponse, AdminOfferPremiumResponse, AdminRemoveOfferedPremiumResponse, AdminLandingEngagementData, AdminFunnelData, AdminPlanLinkStats, AdminSignupFunnelData, AdminSignupMethodsData, AdminUserDetail as UserDetailData, FounderSeatStatus, Plan, Role } from '@mtc/shared';
+import type { AdminGiveawayData, AdminGiveawayDrawResponse, AdminGiveawaySettingsResponse, AdminGiveawayWin, DrawGiveawayRequest, GiveawayPool, ModerateGiveawayWinRequest, UpdateGiveawaySettingsRequest, AcquisitionUtm, AdminAcquisitionData, AdminAmbassadorStats, AdminFoundersData, AdminSubscriptionsData, AdminUser, AdminBetaRoleResponse, AdminOfferPremiumResponse, AdminRemoveOfferedPremiumResponse, AdminLandingEngagementData, AdminFunnelData, AdminPlanLinkStats, AdminSignupFunnelData, AdminSignupMethodsData, AdminUserDetail as UserDetailData, FounderSeatStatus, Plan, Role, AdminGiveawayInstagramPreview, AdminGiveawayInstagramPublishResponse, PublishGiveawayInstagramRequest } from '@mtc/shared';
 export type { AdminPlanLinkStats };
 export type { UserDetailData };
 
@@ -273,6 +273,12 @@ export class AdminApi {
   }
   retryGiveawayWin(id: string) {
     return this.http.post<{ data: AdminGiveawayWin | null }>(`${this.adminBase}/giveaway/wins/${id}/retry`, {});
+  }
+  instagramPreview(id: string) {
+    return this.http.post<{ data: AdminGiveawayInstagramPreview }>(`${this.adminBase}/giveaway/wins/${id}/instagram/preview`, {});
+  }
+  instagramPublish(id: string, body: PublishGiveawayInstagramRequest) {
+    return this.http.post<{ data: AdminGiveawayInstagramPublishResponse }>(`${this.adminBase}/giveaway/wins/${id}/instagram/publish`, body);
   }
   drawGiveawayNow(pool: GiveawayPool) {
     const body: DrawGiveawayRequest = { pool };

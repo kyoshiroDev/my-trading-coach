@@ -85,6 +85,42 @@ export class PdfService implements OnModuleDestroy {
     return run;
   }
 
+  /**
+   * Image PNG d'un gabarit HTML (visuel Instagram du tirage mensuel, 1080×1350) : même navigateur et
+   * même file que les PDF (un seul Chromium, rendus l'un après l'autre).
+   */
+  renderPng(html: string, width: number, height: number): Promise<Buffer> {
+    if (this.pending >= PDF_QUEUE_MAX) {
+      return Promise.reject(new ServiceUnavailableException('Trop de rendus en préparation. Réessaie dans une minute.'));
+    }
+    this.pending += 1;
+    const run = this.queue.then(() => this.renderImage(html, width, height)).finally(() => {
+      this.pending -= 1;
+    });
+    this.queue = run.catch(() => undefined);
+    return run;
+  }
+
+  private async renderImage(html: string, width: number, height: number): Promise<Buffer> {
+    if (this.idleTimer) clearTimeout(this.idleTimer);
+    const browser = await this.getBrowser();
+    const page = await browser.newPage();
+    try {
+      await page.setViewport({ width, height, deviceScaleFactor: 1 });
+      await page.setContent(html, { waitUntil: 'load', timeout: PDF_TIMEOUT_MS });
+      const png = await page.screenshot({ type: 'png', clip: { x: 0, y: 0, width, height } });
+      return Buffer.from(png);
+    } catch (err) {
+      await this.closeBrowser();
+      throw err;
+    } finally {
+      await page.close().catch(() => undefined);
+      this.renders += 1;
+      if (this.renders >= BROWSER_MAX_RENDERS) await this.closeBrowser();
+      else this.idleTimer = setTimeout(() => void this.closeBrowser(), BROWSER_IDLE_MS).unref();
+    }
+  }
+
   async onModuleDestroy(): Promise<void> {
     await this.closeBrowser();
   }
