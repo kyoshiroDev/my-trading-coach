@@ -1,4 +1,6 @@
 import { describe, it, expect, vi, beforeEach, beforeAll } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
 import * as angularCore from '@angular/core';
@@ -59,5 +61,18 @@ describe('PremiumLockComponent', () => {
     expect(button.tagName).toBe('BUTTON');
     button.click();
     expect(intent.open).toHaveBeenCalledWith('cadenas');
+  });
+});
+
+describe('PremiumLockComponent · mise en page (#1178)', () => {
+  const css = readFileSync(join(import.meta.dirname, 'premium-lock.component.css'), 'utf8');
+  const bloc = (sel: string) => css.match(new RegExp(`${sel.replace('.', '\\.')}\\s*\\{([^}]*)\\}`))?.[1] ?? '';
+
+  it('carte : passage à la ligne, jamais plus large que son bloc (le texte tombait à 37 px dès 1440 px)', () => {
+    const content = bloc('.pl-content');
+    expect(content).toContain('flex-wrap: wrap');
+    expect(content).toContain('width: min(360px, calc(100% - 32px))');
+    expect(content).not.toContain('max-width: 360px');
+    expect(bloc('.pl-text')).toContain('flex: 1 1 200px');
   });
 });
