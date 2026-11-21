@@ -1182,7 +1182,7 @@
       "configuration": {
         "daily_loss_limit": false,
         "eval_drawdown": null,
-        "addon": "consistency 50 %"
+        "addon": "consistency 50\u00a0%"
       },
       "price": {
         "amount": null,
@@ -1310,7 +1310,7 @@
       "configuration": {
         "daily_loss_limit": false,
         "eval_drawdown": null,
-        "addon": "consistency 50 %"
+        "addon": "consistency 50\u00a0%"
       },
       "price": {
         "amount": null,
@@ -1444,7 +1444,7 @@
       "configuration": {
         "daily_loss_limit": false,
         "eval_drawdown": null,
-        "addon": "consistency 50 %"
+        "addon": "consistency 50\u00a0%"
       },
       "price": {
         "amount": null,
@@ -1584,7 +1584,7 @@
       "configuration": {
         "daily_loss_limit": false,
         "eval_drawdown": null,
-        "addon": "consistency 50 %"
+        "addon": "consistency 50\u00a0%"
       },
       "price": {
         "amount": null,
@@ -1730,7 +1730,7 @@
       "configuration": {
         "daily_loss_limit": true,
         "eval_drawdown": null,
-        "addon": "consistency 50 %"
+        "addon": "consistency 50\u00a0%"
       },
       "price": {
         "amount": null,
@@ -1874,7 +1874,7 @@
       "configuration": {
         "daily_loss_limit": true,
         "eval_drawdown": null,
-        "addon": "consistency 50 %"
+        "addon": "consistency 50\u00a0%"
       },
       "price": {
         "amount": null,
@@ -2024,7 +2024,7 @@
       "configuration": {
         "daily_loss_limit": true,
         "eval_drawdown": null,
-        "addon": "consistency 50 %"
+        "addon": "consistency 50\u00a0%"
       },
       "price": {
         "amount": null,
@@ -2180,7 +2180,7 @@
       "configuration": {
         "daily_loss_limit": true,
         "eval_drawdown": null,
-        "addon": "consistency 50 %"
+        "addon": "consistency 50\u00a0%"
       },
       "price": {
         "amount": null,
@@ -5302,7 +5302,7 @@
       "configuration": {
         "daily_loss_limit": false,
         "eval_drawdown": "eod",
-        "addon": "consistency 50 %"
+        "addon": "consistency 50\u00a0%"
       },
       "price": {
         "amount": null,
@@ -5417,7 +5417,7 @@
       "configuration": {
         "daily_loss_limit": false,
         "eval_drawdown": "eod",
-        "addon": "consistency 50 %"
+        "addon": "consistency 50\u00a0%"
       },
       "price": {
         "amount": null,
@@ -5532,7 +5532,7 @@
       "configuration": {
         "daily_loss_limit": false,
         "eval_drawdown": "eod",
-        "addon": "consistency 50 %"
+        "addon": "consistency 50\u00a0%"
       },
       "price": {
         "amount": null,
@@ -5647,7 +5647,7 @@
       "configuration": {
         "daily_loss_limit": false,
         "eval_drawdown": "eod",
-        "addon": "consistency 50 %"
+        "addon": "consistency 50\u00a0%"
       },
       "price": {
         "amount": null,
@@ -5762,7 +5762,7 @@
       "configuration": {
         "daily_loss_limit": false,
         "eval_drawdown": "intraday",
-        "addon": "consistency 50 %"
+        "addon": "consistency 50\u00a0%"
       },
       "price": {
         "amount": null,
@@ -5877,7 +5877,7 @@
       "configuration": {
         "daily_loss_limit": false,
         "eval_drawdown": "intraday",
-        "addon": "consistency 50 %"
+        "addon": "consistency 50\u00a0%"
       },
       "price": {
         "amount": null,
@@ -5992,7 +5992,7 @@
       "configuration": {
         "daily_loss_limit": false,
         "eval_drawdown": "intraday",
-        "addon": "consistency 50 %"
+        "addon": "consistency 50\u00a0%"
       },
       "price": {
         "amount": null,
@@ -6107,7 +6107,7 @@
       "configuration": {
         "daily_loss_limit": false,
         "eval_drawdown": "intraday",
-        "addon": "consistency 50 %"
+        "addon": "consistency 50\u00a0%"
       },
       "price": {
         "amount": null,
@@ -6222,7 +6222,7 @@
       "configuration": {
         "daily_loss_limit": true,
         "eval_drawdown": "eod",
-        "addon": "consistency 50 %"
+        "addon": "consistency 50\u00a0%"
       },
       "price": {
         "amount": null,
@@ -6353,7 +6353,7 @@
       "configuration": {
         "daily_loss_limit": true,
         "eval_drawdown": "eod",
-        "addon": "consistency 50 %"
+        "addon": "consistency 50\u00a0%"
       },
       "price": {
         "amount": null,
@@ -6484,7 +6484,7 @@
       "configuration": {
         "daily_loss_limit": true,
         "eval_drawdown": "eod",
-        "addon": "consistency 50 %"
+        "addon": "consistency 50\u00a0%"
       },
       "price": {
         "amount": null,
@@ -6615,7 +6615,7 @@
       "configuration": {
         "daily_loss_limit": true,
         "eval_drawdown": "eod",
-        "addon": "consistency 50 %"
+        "addon": "consistency 50\u00a0%"
       },
       "price": {
         "amount": null,
@@ -6746,7 +6746,7 @@
       "configuration": {
         "daily_loss_limit": true,
         "eval_drawdown": "intraday",
-        "addon": "consistency 50 %"
+        "addon": "consistency 50\u00a0%"
       },
       "price": {
         "amount": null,
@@ -6877,7 +6877,7 @@
       "configuration": {
         "daily_loss_limit": true,
         "eval_drawdown": "intraday",
-        "addon": "consistency 50 %"
+        "addon": "consistency 50\u00a0%"
       },
       "price": {
         "amount": null,
@@ -7008,7 +7008,7 @@
       "configuration": {
         "daily_loss_limit": true,
         "eval_drawdown": "intraday",
-        "addon": "consistency 50 %"
+        "addon": "consistency 50\u00a0%"
       },
       "price": {
         "amount": null,
@@ -7139,7 +7139,7 @@
       "configuration": {
         "daily_loss_limit": true,
         "eval_drawdown": "intraday",
-        "addon": "consistency 50 %"
+        "addon": "consistency 50\u00a0%"
       },
       "price": {
         "amount": null,

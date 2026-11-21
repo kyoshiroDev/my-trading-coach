@@ -350,8 +350,8 @@ export interface AdminOfferPremiumResponse {
 }
 
 /**
- * `DELETE /admin/users/:id/offer-premium` (B10) : fin de l'essai d'inscription rendu s'il court
- * encore (ISO), sinon `null` (compte en gratuit tout de suite).
+ * `DELETE /admin/users/:id/offer-premium` (B10) : fin de l'accès rendu (essai d'inscription ou lot du
+ * tirage gratuit encore en cours, la plus tardive, ISO), sinon `null` (compte en gratuit tout de suite).
  */
 export interface AdminRemoveOfferedPremiumResponse {
   trialEndsAt: string | null;

@@ -56,3 +56,10 @@ describe('SIGNUP_PITCH_POINTS', () => {
     expect(SIGNUP_PITCH_POINTS.some((p) => p.text.includes(`${PROP_FIRM_COUNT} prop firms`))).toBe(true);
   });
 });
+
+// Typographie (#1139) : ces textes sont affichés tels quels dans l'app, la landing et les e-mails.
+describe('PLAN_BENEFITS · typographie', () => {
+  it('espace insécable avant « : ; ! ? % », jamais une espace ordinaire', () => {
+    for (const b of [...PLAN_BENEFITS.free, ...PLAN_BENEFITS.premium]) expect(b.text, b.id).not.toMatch(/\S[ \t]+[:;!?%]/);
+  });
+});

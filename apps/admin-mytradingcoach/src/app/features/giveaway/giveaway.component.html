@@ -1,0 +1,146 @@
+<div class="screen">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Tirages</h1>
+      <div class="page-meta">Tirage au sort mensuel · le {{ DRAW_DAY }} de chaque mois à {{ DRAW_HOUR }}&nbsp;h (Paris)</div>
+    </div>
+  </div>
+
+  @if (isLoading()) {
+    <div class="card"><div class="empty">Chargement…</div></div>
+  } @else if (loadError()) {
+    <mtc-error-state message="Les tirages n’ont pas pu être chargés." (retry)="load()" data-testid="giveaway-load-error" />
+  } @else if (data(); as d) {
+    @if (actionError(); as e) { <p class="err-text" role="alert" data-testid="giveaway-error">{{ e }}</p> }
+    @if (notice(); as n) { <p class="notice" role="status" data-testid="giveaway-notice">{{ n }}</p> }
+
+    <div class="pool-cols">
+      @for (p of pools(d); track p.pool) {
+        <div class="card" [attr.data-testid]="'pool-' + p.pool">
+          <div class="card-head">
+            <span class="card-label">{{ POOL_LABEL[p.pool] }}</span>
+            <span class="badge" [class.b-ok]="p.enabled" [class.b-free]="!p.enabled">{{ p.enabled ? 'Allumé' : 'Éteint' }}</span>
+          </div>
+          <div class="card-body pool-body">
+            <div class="pool-row">
+              <div>
+                <div class="pool-stat"><span class="mono">{{ p.eligibleNow }}</span> éligible{{ p.eligibleNow > 1 ? 's' : '' }} si le tirage avait lieu maintenant</div>
+                <div class="pool-sub">Prochain tirage&nbsp;: <span class="mono">{{ d.nextDrawAt | date:'dd/MM/yyyy HH:mm' }}</span></div>
+                @if (p.enabled && p.enabledAt) {
+                  <div class="pool-sub">Allumé le <span class="mono">{{ p.enabledAt | date:'dd/MM/yyyy HH:mm' }}</span></div>
+                }
+              </div>
+              <button type="button" role="switch" class="g-switch" [attr.aria-checked]="p.enabled"
+                [attr.aria-label]="POOL_LABEL[p.pool]" [disabled]="busy() !== null || (!p.enabled && !d.activationAvailable)" (click)="toggle(p)"
+                [attr.aria-describedby]="!p.enabled && !d.activationAvailable ? 'activation-locked-' + p.pool : null"
+                [attr.data-testid]="'toggle-' + p.pool">
+                <span class="g-switch-knob"></span>
+              </button>
+            </div>
+
+            @if (!p.enabled && !d.activationAvailable) {
+              <p class="locked" [id]="'activation-locked-' + p.pool" [attr.data-testid]="'activation-locked-' + p.pool">Activable en prod avec le lot B (page Concours et règlement).</p>
+            }
+
+            @if (confirming() === p.pool) {
+              <div class="confirm-box" role="alert" [attr.data-testid]="'confirm-' + p.pool">
+                <p class="confirm-text">
+                  Allumer le {{ POOL_LABEL[p.pool].toLowerCase() }}&nbsp;? <strong class="mono">{{ p.announceAudience }}</strong>
+                  utilisateur{{ p.announceAudience > 1 ? 's' : '' }} recevr{{ p.announceAudience > 1 ? 'ont' : 'a' }} un e-mail d'annonce
+                  (consentement marketing respecté, jamais les comptes démo ou internes).
+                </p>
+                <div class="confirm-actions">
+                  <button type="button" class="btn" (click)="confirming.set(null)" [attr.data-testid]="'confirm-no-' + p.pool">Annuler</button>
+                  <button type="button" class="btn btn-primary" [disabled]="busy() !== null" (click)="apply(p.pool, true)"
+                    [attr.data-testid]="'confirm-yes-' + p.pool">
+                    {{ busy() === 'pool-' + p.pool ? 'En cours…' : 'Confirmer' }}
+                  </button>
+                </div>
+              </div>
+            }
+
+            @if (d.manualDrawAvailable) {
+              <button type="button" class="btn" [disabled]="busy() !== null || !p.enabled" (click)="drawNow(p.pool)"
+                [attr.data-testid]="'draw-now-' + p.pool">
+                Tirer maintenant (hors prod)
+              </button>
+            }
+          </div>
+        </div>
+      }
+    </div>
+
+    <div class="card fill">
+      <div class="card-head"><span class="card-label">Historique</span></div>
+      <div class="tbl-wrap">
+        <table class="tbl" data-testid="giveaway-history">
+          <caption class="sr-only">Historique des tirages</caption>
+          <thead><tr>
+            <th scope="col">Mois</th><th scope="col">Tirage</th><th scope="col">Gagnant</th><th scope="col" class="num">Lot</th>
+            <th scope="col">Début</th><th scope="col">Fin</th><th scope="col" class="num">Éligibles</th><th scope="col">Attribution</th>
+            <th scope="col">Affichage</th><th scope="col">Message</th><th scope="col">Instagram</th>
+          </tr></thead>
+          <tbody>
+            @for (r of d.history; track r.drawId) {
+              <tr [attr.data-testid]="'draw-' + r.drawId">
+                <td data-label="Mois" class="mono">{{ r.period }}</td>
+                <td data-label="Tirage">{{ r.pool === 'FREE' ? 'Gratuits' : 'Premium' }}</td>
+                @if (r.win; as w) {
+                  <td data-label="Gagnant">
+                    @if (w.userId) { <a class="u-link" [routerLink]="['/users', w.userId]">{{ w.email }}</a> } @else { <span class="muted">compte supprimé</span> }
+                    <div class="sub">{{ w.displayName }}</div>
+                  </td>
+                  <td data-label="Lot" class="num mono">
+                    {{ w.prizeMonths }} mois
+                    @if (w.creditCents) { <div class="sub">{{ euros(w.creditCents) }}</div> }
+                  </td>
+                  <td data-label="Début" class="mono muted">{{ w.startsAt | date:'dd/MM/yyyy' }}</td>
+                  <td data-label="Fin" class="mono muted">{{ w.endsAt | date:'dd/MM/yyyy' }}</td>
+                  <td data-label="Éligibles" class="num mono">{{ r.eligibleCount }}</td>
+                  <td data-label="Attribution">
+                    <span class="st-pill" [class.st-ok]="w.activationStatus === 'APPLIED'" [class.st-warn]="w.activationStatus === 'PENDING'"
+                      [class.st-err]="w.activationStatus === 'FAILED'">{{ ACTIVATION_LABEL[w.activationStatus] }}</span>
+                    @if (w.activationStatus === 'FAILED') {
+                      <div class="sub err">{{ w.activationError }}</div>
+                      <button type="button" class="btn btn-sm" [disabled]="busy() !== null" (click)="retry(w)" [attr.data-testid]="'retry-' + w.id">
+                        Relancer l'attribution
+                      </button>
+                    }
+                  </td>
+                  <td data-label="Affichage">{{ CONSENT_LABEL[w.displayConsent] }}</td>
+                  <td data-label="Message" class="msg-cell">
+                    @if (w.message) {
+                      <q class="msg">{{ w.message }}</q>
+                      <div class="mod-row">
+                        <span class="st-pill" [class.st-ok]="w.moderation === 'VALIDE'" [class.st-warn]="w.moderation === 'EN_ATTENTE'"
+                          [class.st-err]="w.moderation === 'REFUSE'">{{ MODERATION_LABEL[w.moderation] }}</span>
+                        @if (w.moderation !== 'VALIDE') {
+                          <button type="button" class="btn btn-sm" [disabled]="busy() !== null" (click)="moderate(w, 'VALIDE')" [attr.data-testid]="'validate-' + w.id">Valider</button>
+                        }
+                        @if (w.moderation !== 'REFUSE') {
+                          <button type="button" class="btn btn-sm" [disabled]="busy() !== null" (click)="moderate(w, 'REFUSE')" [attr.data-testid]="'refuse-' + w.id">Refuser</button>
+                        }
+                      </div>
+                    } @else {
+                      <span class="muted">-</span>
+                    }
+                  </td>
+                  <td data-label="Instagram">
+                    {{ w.instagramConsent ? 'Accord' + (w.instagramHandle ? ' · @' + w.instagramHandle : '') : 'Non' }}
+                    <div class="sub">{{ PUBLICATION_LABEL[w.publicationStatus] }}</div>
+                  </td>
+                } @else {
+                  <td data-label="Gagnant" colspan="4" class="muted">Aucun éligible, aucun gagnant</td>
+                  <td data-label="Éligibles" class="num mono">{{ r.eligibleCount }}</td>
+                  <td colspan="4"></td>
+                }
+              </tr>
+            } @empty {
+              <tr><td colspan="11" class="empty">Aucun tirage pour le moment.</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+</div>

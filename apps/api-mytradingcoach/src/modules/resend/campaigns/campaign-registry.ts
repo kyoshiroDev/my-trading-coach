@@ -21,6 +21,8 @@ import {
   trialEndedTemplate,
   trialEndingTemplate,
 } from './campaign-templates';
+import { giveawayEndingTemplate } from './giveaway-templates';
+import { GIVEAWAY_ENDING_NOTICE_DAYS, GIVEAWAY_WIN_COOLDOWN_MONTHS } from '@mtc/shared';
 
 /**
  * transactional : jamais filtré ni plafonné · marketing : consentement + plafond · service : aide à
@@ -182,6 +184,13 @@ export async function loadTrialEnd(deps: CampaignLoadDeps, userIds: string[]): P
   );
 }
 
+/** Lot du tirage gratuit (PROMPT-tirage-mensuel) : fin du Premium gagné, lue au moment de l'envoi. */
+export async function loadGiveawayEnd(deps: CampaignLoadDeps, userIds: string[]): Promise<CampaignContextMap> {
+  if (userIds.length === 0) return new Map();
+  const users = await deps.prisma.user.findMany({ where: { id: { in: userIds } }, select: { id: true, trialEndsAt: true } });
+  return new Map(users.filter((u) => u.trialEndsAt).map((u) => [u.id, { giveaway: { endsAt: u.trialEndsAt! } }]));
+}
+
 /** Offre fondateur vérifiée AU MOMENT de l'envoi : fermée ou complète → personne. */
 async function loadFounderSeats(deps: CampaignLoadDeps, userIds: string[]): Promise<CampaignContextMap> {
   const state = await deps.founderState();
@@ -215,6 +224,29 @@ export const CAMPAIGNS: EmailCampaign[] = [
     }),
     loadContext: loadTrialEnd,
     build: trialEndingTemplate,
+  },
+  {
+    // Tirage mensuel (PROMPT-tirage-mensuel) : même rôle que trial_ending pour le Premium gagné au
+    // tirage des gratuits. Un gagnant peut regagner après le délai de carence : cooldown, pas oneShot.
+    key: 'giveaway_ending',
+    label: `Fin du Premium gagné au tirage dans ${GIVEAWAY_ENDING_NOTICE_DAYS} jours`,
+    description: "Service\u00a0: date de fin du Premium gagné au tirage du mois, retour au gratuit sans rien prélever.",
+    kind: 'service',
+    requiresConsent: false,
+    automated: true,
+    priority: 119,
+    bypassCap: true, // daté : jamais retardé après la fin du lot
+    recurringCooldownDays: GIVEAWAY_WIN_COOLDOWN_MONTHS * 28,
+    segment: (now) => ({
+      AND: [
+        notBetaTester,
+        { trialSource: TrialSource.GIVEAWAY },
+        { trialEndsAt: { gt: now, lte: new Date(now.getTime() + GIVEAWAY_ENDING_NOTICE_DAYS * DAY) } },
+        noStripeSubscription,
+      ],
+    }),
+    loadContext: loadGiveawayEnd,
+    build: giveawayEndingTemplate,
   },
   {
     key: 'trial_ended',

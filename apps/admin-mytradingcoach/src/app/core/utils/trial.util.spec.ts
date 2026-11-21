@@ -10,6 +10,7 @@ describe('activeTrial (#769)', () => {
     ['essai d’inscription', { plan: 'FREE', trialEndsAt: FUTURE, trialSource: 'SIGNUP' }, { until: FUTURE, origin: 'inscription' }],
     ['essai prolongé par l’admin', { plan: 'FREE', trialEndsAt: FUTURE, trialSource: 'ADMIN' }, { until: FUTURE, origin: 'admin' }],
     ['Premium offert (ancien, sans origine)', { plan: 'FREE', trialEndsAt: FUTURE, trialSource: null }, { until: FUTURE, origin: 'admin' }],
+    ['Premium gagné au tirage mensuel', { plan: 'FREE', trialEndsAt: FUTURE, trialSource: 'GIVEAWAY' }, { until: FUTURE, origin: 'tirage' }],
     ['gratuit', { plan: 'FREE', trialEndsAt: null, trialSource: null }, null],
     ['essai expiré', { plan: 'FREE', trialEndsAt: PAST, trialSource: 'SIGNUP' }, null],
     ['fin exactement maintenant', { plan: 'FREE', trialEndsAt: new Date(NOW).toISOString(), trialSource: 'SIGNUP' }, null],

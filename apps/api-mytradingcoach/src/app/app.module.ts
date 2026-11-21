@@ -19,6 +19,7 @@ import { DiscordModule } from '../modules/discord/discord.module';
 import { TrialModule } from '../modules/trial/trial.module';
 import { VpsModule } from '../modules/vps/vps.module';
 import { AdminModule } from '../modules/admin/admin.module';
+import { GiveawayModule } from '../modules/giveaway/giveaway.module';
 import { SessionModule } from '../modules/session/session.module';
 import { AccountsModule } from '../modules/accounts/accounts.module';
 import { SetupsModule } from '../modules/setups/setups.module';
@@ -97,6 +98,7 @@ import { RedisService } from '../modules/infra/redis.service';
     TrialModule,
     VpsModule,
     AdminModule,
+    GiveawayModule,
     SessionModule,
     AccountsModule,
     SetupsModule,

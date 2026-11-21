@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { matchWhere } from '@api/test/prisma-where';
+import { subscriptionState } from '@mtc/shared';
+import { freezeClock } from '@api/test/freeze-clock';
 import { CAMPAIGNS, CAMPAIGNS_BY_KEY, loadFirstWeek, type CampaignLoadDeps } from './campaign-registry';
 
 // Suite d'onboarding (oct. 2026) : ciblage RÉEL de chaque campagne automatique (segments évalués en
@@ -7,6 +9,7 @@ import { CAMPAIGNS, CAMPAIGNS_BY_KEY, loadFirstWeek, type CampaignLoadDeps } fro
 
 const DAY = 24 * 3600e3;
 const NOW = new Date('2026-11-20T09:00:00Z');
+freezeClock(NOW);
 const START = '2026-10-01T00:00:00Z'; // avant toutes les fenêtres testées
 const daysAgo = (d: number) => new Date(NOW.getTime() - d * DAY);
 
@@ -55,6 +58,7 @@ describe('registre : suite automatique', () => {
     const auto = CAMPAIGNS.filter((c) => c.automated).sort((a, b) => b.priority - a.priority);
     expect(auto.map((c) => [c.key, c.priority, c.kind, c.requiresConsent])).toEqual([
       ['trial_ending', 120, 'service', false],
+      ['giveaway_ending', 119, 'service', false],
       ['trial_ended', 110, 'service', false],
       ['connect_tradovate', 100, 'service', false],
       ['prop_firm_rules', 90, 'service', false],
@@ -62,7 +66,8 @@ describe('registre : suite automatique', () => {
       ['profile_reminder', 45, 'marketing', true],
       ['discord_invite', 40, 'marketing', true],
     ]);
-    expect(auto.every((c) => c.recurringCooldownDays === undefined)).toBe(true); // tous oneShot
+    // Tous oneShot, sauf la fin du lot du tirage : un gagnant peut regagner après la carence.
+    expect(auto.filter((c) => c.recurringCooldownDays !== undefined).map((c) => c.key)).toEqual(['giveaway_ending']);
   });
 
   it('N3 (#1048) : first_week_recap sort du cron (gardée pour l’admin), elle ne visait plus personne', () => {
@@ -77,7 +82,7 @@ describe('registre : suite automatique', () => {
     for (const c of CAMPAIGNS.filter((x) => x.automated)) {
       const json = JSON.stringify(c.segment(NOW));
       expect(json, c.key).toMatch(
-        /"createdAt":\{"gte":"[^"]+","lte":"[^"]+"\}|"signupTrialEndsAt":\{"(gt|gte)":"[^"]+","lte":"[^"]+"\}/,
+        /"createdAt":\{"gte":"[^"]+","lte":"[^"]+"\}|"signupTrialEndsAt":\{"(gt|gte)":"[^"]+","lte":"[^"]+"\}|"trialEndsAt":\{"gt":"[^"]+","lte":"[^"]+"\}/,
       );
     }
   });
@@ -317,4 +322,34 @@ describe('E6 : BETA_TESTER exclus des e-mails d’essai, d’upsell et fondateur
       expect(json(key)).toContain('"role":{"not":"BETA_TESTER"}');
     },
   );
+});
+
+describe('giveaway_ending : fin du Premium gagné au tirage (PROMPT-tirage-mensuel)', () => {
+  const HOUR = 3600e3;
+  const winner = (endsInHours: number, over: User = {}) =>
+    user({ createdAt: daysAgo(60), trialSource: 'GIVEAWAY', trialEndsAt: new Date(NOW.getTime() + endsInHours * HOUR), ...over });
+
+  it('3 jours avant la fin au plus : ciblé ; 5 jours avant ou déjà fini : non', () => {
+    expect(matches('giveaway_ending', winner(71))).toBe(true);
+    expect(matches('giveaway_ending', winner(2))).toBe(true);
+    expect(matches('giveaway_ending', winner(5 * 24))).toBe(false);
+    expect(matches('giveaway_ending', winner(-1))).toBe(false);
+  });
+
+  it('essai d’inscription, Premium offert par l’admin, abonné Stripe ou BETA_TESTER : jamais ciblé', () => {
+    expect(matches('giveaway_ending', winner(48, { trialSource: 'SIGNUP' }))).toBe(false);
+    expect(matches('giveaway_ending', winner(48, { trialSource: 'ADMIN' }))).toBe(false);
+    expect(matches('giveaway_ending', winner(48, { stripeSubscriptionStatus: 'active' }))).toBe(false);
+    expect(matches('giveaway_ending', winner(48, { role: 'BETA_TESTER' }))).toBe(false);
+  });
+
+  it('le gagnant ne reçoit pas trial_ending en plus (réservé à l’essai d’inscription)', () => {
+    expect(matches('trial_ending', winner(48, { signupTrialEndsAt: new Date(NOW.getTime() + 48 * HOUR) }))).toBe(false);
+  });
+
+  it('fin du lot : plus d’accès Premium une fois trialEndsAt passé (retour au gratuit)', () => {
+    const base = { plan: 'FREE' as const, role: 'USER' as const, trialSource: 'GIVEAWAY' as const, stripeSubscriptionStatus: null };
+    expect(subscriptionState({ ...base, trialEndsAt: new Date(NOW.getTime() + HOUR) }, NOW)).toMatchObject({ premiumAccess: true, kind: 'offered' });
+    expect(subscriptionState({ ...base, trialEndsAt: new Date(NOW.getTime() - HOUR) }, NOW)).toMatchObject({ premiumAccess: false, kind: 'free' });
+  });
 });

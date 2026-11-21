@@ -32,6 +32,7 @@ const mockPrisma = {
   trade: {
     count: vi.fn(),
   },
+  giveawayWin: { updateMany: vi.fn() },
   deletedAccount: {
     create: vi.fn().mockReturnValue({ __op: 'create' }),
   },

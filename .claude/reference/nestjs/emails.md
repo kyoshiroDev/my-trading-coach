@@ -119,3 +119,16 @@ décision), cron `AutoCampaignsCron` (10 h Paris, prod, worker cron), journal `E
   `onboarding-templates.spec.ts` (règles d'écriture), `onboarding-sequence.simulation.spec.ts` (VRAI
   cron + dispatch sur 21 jours, 6 profils : modifier une priorité ou une fenêtre = mettre à jour le
   calendrier attendu).
+
+## Tirage mensuel (#1150, 2026-11-21)
+
+E-mails du tirage vus par les traders envoyés depuis **contact@** (`GIVEAWAY_FROM`,
+`resend/campaigns/giveaway-templates.ts`) : gagnant (transactionnel), `giveaway_ending` (service,
+registre, 3 jours avant la fin du Premium gagné, hors plafond, cooldown), annonce à l'activation
+(marketing hors registre, consentement respecté, hors plafond, une par activation). Détail :
+`commun/tirage-mensuel.md`.
+L'annonce tourne en arrière-plan dans le process web (chaque envoi passe par la file Resend) : si le
+conteneur redémarre en pleine boucle, `*AnnouncedAt` est déjà posé et le reste ne part pas. Pour
+relancer : éteindre puis rallumer le tirage (une seconde annonce n'atteint pas ceux qui l'ont déjà
+reçue dans la journée, cooldown 1 j). Exception assumée à `REAL_USERS_WHERE` « jamais pour cibler
+des envois » : les comptes internes ne reçoivent aucun e-mail du tirage.
