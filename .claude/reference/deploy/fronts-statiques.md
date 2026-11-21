@@ -72,8 +72,11 @@ côté SPA, `/_assets/` côté landing : c'est le `build.assets` d'Astro, pas `/
 par empreinte (`sha256-…`) : modifier le script `mtc-register-view` de l'index de l'app, ou ajouter un script ou un
 `on…=` inline dans un index, demande de recalculer l'empreinte dans la conf (le test
 `apps/app-mytradingcoach/src/csp-nginx.spec.ts` échoue sinon), puis de reporter la conf sur les deux VPS. Un nouvel
-environnement d'API (`apiUrl` / `wsUrl`) ou un nouveau service tiers appelé par le navigateur s'ajoute à `connect-src`. État au 21/11/2026 : conf du dépôt seulement,
-pas encore reportée sur les VPS (Greg) ; la PR de phase 2 met cet état à jour.
+environnement d'API (`apiUrl` / `wsUrl`) ou un nouveau service tiers appelé par le navigateur s'ajoute à `connect-src`. État au 21/11/2026 : Report-Only appliqué sur
+l'ancien VPS (admin, app dev, app beta) le 21/11 à 21 h 36, VPS prod (app) à suivre. Relevé sur dev.app (compte démo,
+11 pages) : seules violations, Stripe.js et ses frames (page de paiement intégrée, origines Stripe ajoutées ensuite) et un
+`script-src eval` signalé par Zod 4 (test `allowsEval` dans un `try/catch`, sans effet : Zod se rabat sans `eval`, à ignorer).
+La PR de phase 2 (mode bloquant) met cet état à jour.
 
 Fichiers à nom fixe, avant la règle des assets (`location =`, prioritaire sur la regex) : les service
 workers (`ngsw-worker.js`, `push-sw.js`, …) en `no-cache`, sinon la règle des `.js` leur donnait un
