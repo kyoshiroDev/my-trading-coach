@@ -223,6 +223,13 @@ comme la CI : `pnpm nx run-many -t typecheck -p api-mytradingcoach` (ou `tsconfi
 `createResendMock()` : un helper interne ajouté au service doit être une propriété
 (`private readonly x = () => …`), sinon le test échoue.
 
+**Specs des libs front (`libs/front/ui`, `libs/front/auth`) : déjà typecheckées** (#1151, 2026-11-21).
+Elles n'ont pas de cible `typecheck` propre, mais `apps/app-mytradingcoach/tsconfig.spec.json` inclut
+`libs/front/{ui,auth}/src/**/*.ts` : la cible `typecheck` de l'app les vérifie (erreur de type ajoutée
+exprès dans un spec de chaque lib → `tsc -p tsconfig.spec.json` de l'app échoue). L'app dépend des deux
+libs dans le graphe Nx : un diff limité à une lib rend l'app « affected » et la CI relance son typecheck.
+Ne pas ajouter de cible en double ; un nouveau dossier `libs/front/*` doit être ajouté à cet `include`.
+
 ## Test d'équivalence avant / après une réécriture (SCA-B2, 2026-10-02)
 
 Pour réécrire un calcul sans changer ses résultats : figer l'ancienne implémentation dans

@@ -63,6 +63,8 @@ export class SessionLiveComponent {
   readonly triggerCloseModal = input<boolean>(false);
   /** Désactive le CTA « Démarrer » tant qu'aucun compte précis n'est choisi (règle 1 session = 1 compte). */
   readonly startDisabled = input<boolean>(false);
+  /** Faux pour la démo (lecture seule) : pas de bouton « Démarrer », même grisé (#1031). */
+  readonly canStart = input<boolean>(true);
 
   readonly startSession = output<void>();
   readonly tradeClosed = output<{ tradeId: string; exitPrice: number }>();

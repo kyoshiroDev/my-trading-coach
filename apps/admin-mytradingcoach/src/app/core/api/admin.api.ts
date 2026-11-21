@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '@admin/environments/environment';
-import type { AcquisitionUtm, AdminAcquisitionData, AdminFoundersData, AdminSubscriptionsData, AdminUser, AdminBetaRoleResponse, AdminOfferPremiumResponse, AdminRemoveOfferedPremiumResponse, AdminLandingEngagementData, AdminFunnelData, AdminPlanLinkStats, AdminSignupFunnelData, AdminSignupMethodsData, AdminUserDetail as UserDetailData, FounderSeatStatus, Plan, Role } from '@mtc/shared';
+import type { AcquisitionUtm, AdminAcquisitionData, AdminAmbassadorStats, AdminFoundersData, AdminSubscriptionsData, AdminUser, AdminBetaRoleResponse, AdminOfferPremiumResponse, AdminRemoveOfferedPremiumResponse, AdminLandingEngagementData, AdminFunnelData, AdminPlanLinkStats, AdminSignupFunnelData, AdminSignupMethodsData, AdminUserDetail as UserDetailData, FounderSeatStatus, Plan, Role } from '@mtc/shared';
 export type { AdminPlanLinkStats };
 export type { UserDetailData };
 
@@ -122,23 +122,8 @@ export interface AdminAmbassadorPromoteResult {
   referralLink: string;
 }
 
-export interface AdminAmbassadorDetail {
-  referralCode: string;
-  referrals: Array<{
-    id: string;
-    name: string | null;
-    email: string;
-    plan: Plan;
-    createdAt: string;
-    isActive: boolean;
-  }>;
-  total: number;
-  free: number;
-  premium: number;
-  earningsByMonth: Record<string, number>;
-  totalEarned: number;
-  pendingPayout: number;
-}
+/** Fiche ambassadeur (GET /admin/ambassadors/:id/stats) : contrat partagé (#1073). */
+export type AdminAmbassadorDetail = AdminAmbassadorStats;
 
 export interface RetentionData {
   activation: { rate: number; activated: number; total: number };

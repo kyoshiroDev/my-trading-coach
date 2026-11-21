@@ -50,7 +50,8 @@ export interface SessionTrade {
   /** P&L BRUT ; le net (affiché) = pnl − commission, cf. netPnl (@mtc/shared). */
   pnl: number | null;
   commission?: number | null;
-  emotion: string;
+  /** Null si non saisie (Prisma `EmotionState?`). */
+  emotion: string | null;
   setupId?: string;
   setup?: { id: string; title: string; color: string };
   riskReward?: number | null;

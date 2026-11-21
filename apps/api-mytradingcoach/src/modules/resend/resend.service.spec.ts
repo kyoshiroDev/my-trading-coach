@@ -67,7 +67,8 @@ describe('ResendService', () => {
 
       const html = mockSend.mock.calls[0][0].html as string;
       expect(html).not.toContain('<a href');
-      expect(html).toContain('&lt;/pre&gt;&lt;a href="https://x"&gt;Valider le paiement&lt;/a&gt;');
+      // Échappement unique à 5 caractères (#1073) : les guillemets aussi.
+      expect(html).toContain('&lt;/pre&gt;&lt;a href=&quot;https://x&quot;&gt;Valider le paiement&lt;/a&gt;');
       expect(html.match(/<\/pre>/g)).toHaveLength(1);
     });
   });
