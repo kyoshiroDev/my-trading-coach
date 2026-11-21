@@ -29,7 +29,7 @@ import { UserStore } from '@app/core/stores/user.store';
 import { ToastService } from '@app/core/services/toast.service';
 import { apiErrorMessage } from '@app/core/utils/api-error';
 import { PremiumLockComponent } from '@app/shared/components/premium-lock/premium-lock.component';
-import { MoneyPipe } from '@app/shared/pipes';
+import { EcoValuePipe, MoneyPipe } from '@app/shared/pipes';
 import { eventKey, normalizeEventKey } from '@mtc/shared';
 import type { EcoEvent } from '@mtc/shared';
 
@@ -65,7 +65,7 @@ const DEMO_OBJECTIVES: DebriefObjective[] = [
 
 @Component({
   selector: 'mtc-session-morning',
-  imports: [PctPipe, DatePipe, RouterLink, LucideDynamicIcon, PremiumLockComponent, MoneyPipe],
+  imports: [PctPipe, DatePipe, RouterLink, LucideDynamicIcon, PremiumLockComponent, MoneyPipe, EcoValuePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './session-morning.component.css',
   templateUrl: './session-morning.component.html',
