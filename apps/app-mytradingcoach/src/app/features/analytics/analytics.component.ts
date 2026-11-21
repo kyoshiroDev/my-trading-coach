@@ -25,7 +25,7 @@ import {
   SetupStat,
   TopAsset,
 } from '../../core/api/analytics.api';
-import { PlanModalComponent } from '../../shared/components/plan-modal/plan-modal.component';
+import { PremiumLockComponent } from '../../shared/components/premium-lock/premium-lock.component';
 import { ActivityCalendarComponent } from '../../shared/components/activity-calendar/activity-calendar.component';
 import { InfoTooltipComponent } from '../../shared/components/info-tooltip/info-tooltip.component';
 import { PerfChartComponent } from '../../shared/components/perf-chart/perf-chart.component';
@@ -41,7 +41,6 @@ import { TradesApi } from '../../core/api/trades.api';
 import { isInactiveStatus } from '../../core/utils/account-status.util';
 import { rollingRange } from '../../core/utils/rolling-period.util';
 import { NO_AUTO_PERIOD, periodChosenByUser, periodOnSelection, type AutoPeriodState } from '../../core/utils/inactive-period.util';
-import { PaywallCtaService } from '@app/core/services/paywall-cta.service';
 import { resourceValue } from '@app/core/utils/resource-value';
 
 const MOCK_HEATMAP_CELLS = [
@@ -58,7 +57,7 @@ const MOCK_SETUP_BARS = [88, 72, 65, 54, 38] as const;
     TopbarComponent,
     PnlFormatPipe,
     SessionLabelPipe,
-    PlanModalComponent,
+    PremiumLockComponent,
     ActivityCalendarComponent,
     InfoTooltipComponent,
     PerfChartComponent,
@@ -71,8 +70,6 @@ const MOCK_SETUP_BARS = [88, 72, 65, 54, 38] as const;
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AnalyticsComponent {
-  /** Libellé unique des boutons de paywall (E3 #1013). */
-  protected readonly paywall = inject(PaywallCtaService);
   protected readonly userStore = inject(UserStore);
   private readonly analyticsApi = inject(AnalyticsApi);
   private readonly destroyRef = inject(DestroyRef);
@@ -99,7 +96,6 @@ export class AnalyticsComponent {
     return q ? `?${q}` : '';
   }
 
-  protected readonly showPlanModal = signal(false);
 
   protected readonly calYear = signal(new Date().getFullYear());
   protected readonly calMonth = signal(new Date().getMonth() + 1);

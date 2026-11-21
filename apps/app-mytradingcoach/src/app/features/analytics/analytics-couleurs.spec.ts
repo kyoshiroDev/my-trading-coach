@@ -25,13 +25,20 @@ describe('Statistiques — couleurs du thème', () => {
 
   /**
    * #1175 : le reste du CSS doublait les tokens en dur (hex sombres, rgba des -dim, replis de var(),
-   * blanc sur --blue). Seuls restent le blanc sur --primary (règle design 1) et l'ombre noire.
+   * blanc sur --blue). #1178 : le bouton du paywall vit dans mtc-premium-lock ; il ne reste que
+   * l'ombre noire, et plus de violet décoratif dans l'aperçu.
    */
-  it('CSS : aucune couleur en dur hors blanc sur --primary et ombre', () => {
+  it('CSS : aucune couleur en dur hors ombre, aucun violet décoratif', () => {
     const css = STYLES.replace(/\/\*[\s\S]*?\*\//g, '');
-    expect(css.match(/#[0-9a-f]{3,8}\b/gi)).toEqual(['#fff']);
-    expect(css).toMatch(/background:\s*var\(--primary\);\s*color:\s*#fff;/);
+    expect(css.match(/#[0-9a-f]{3,8}\b/gi)).toBeNull();
     expect(css.match(/rgba\([^)]*\)/g)).toEqual(['rgba(0,0,0,.2)']);
     expect(css).not.toMatch(/var\(--[a-z-]+,\s*#/i); // plus de repli en dur
+    expect(css).not.toContain('--purple');
+  });
+
+  it('#1178 : blocs verrouillés par le composant partagé mtc-premium-lock', () => {
+    expect(TEMPLATE.match(/<mtc-premium-lock /g)).toHaveLength(3);
+    expect(TEMPLATE).not.toContain('locked-overlay');
+    expect(STYLES).not.toContain('.locked-cta');
   });
 });
