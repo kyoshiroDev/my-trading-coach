@@ -23,4 +23,4 @@ await this.prisma.aiUsageLog.create({
 ```
 
 Toujours passer `{ userId, feature }` dans les options. Features valides :
-`'insights'` | `'chat'` | `'debrief'` | `'csv_import'` | `'daily_recap'` | `'eco_calendar'`
+`'insights'` | `'chat'` | `'debrief'` | `'csv_import'` | `'daily_recap'` | `'eco_calendar'` | `'giveaway_instagram'` (légende Instagram d'un gagnant du tirage, `userId: null`)
