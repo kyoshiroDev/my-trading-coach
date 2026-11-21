@@ -125,7 +125,9 @@ prod, Greg valide `/reglement-tirage` et la section 1 h) de la politique de conf
 - **Publication** `POST /admin/giveaway/wins/:id/instagram/publish` : légende relue (recontrôlée),
   image de l'aperçu seulement, heure facultative (sinon dans 2 minutes). Réservation atomique avant
   l'envoi (`updateMany` sur `publicationStatus` ≠ PUBLISHED) : jamais deux posts pour un lot ; échec →
-  FAILED (réservation annulée). `MetricoolClient` : image
+  FAILED (réservation annulée) et 502 ; l'admin ne passe en publication manuelle que sur ce 502
+  (409 = déjà publié → rechargement ; 400 = heure ou légende à corriger). Post parti mais lien non
+  écrit → reste PUBLISHED. `MetricoolClient` : image
   copiée chez Metricool (`normalize/image/url`) puis post programmé avec `autoPublish`. Statut
   `PUBLISHED` (lien si Metricool le renvoie) ou `FAILED`. Variables `METRICOOL_API_TOKEN`,
   `METRICOOL_USER_ID`, `METRICOOL_BLOG_ID` : absentes ou refus de Metricool → l'admin propose « Ouvrir l'image »

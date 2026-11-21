@@ -196,12 +196,39 @@ describe('GiveawayComponent', () => {
     http.expectOne(`${BASE}/wins/w1/instagram/preview`).flush({ data: { caption: 'Bravo', aiGenerated: true, imageUrl: 'https://api.test/i.png', metricoolAvailable: true } });
     fixture.detectChanges();
     q(el, 'ig-confirm')!.click();
-    http.expectOne(`${BASE}/wins/w1/instagram/publish`).flush({ message: 'Metricool : accès refusé (abonnement ou jeton).' }, { status: 409, statusText: 'Conflict' });
+    http.expectOne(`${BASE}/wins/w1/instagram/publish`).flush({ message: 'Metricool : accès refusé (abonnement ou jeton).' }, { status: 502, statusText: 'Bad Gateway' });
     fixture.detectChanges();
     expect(q(el, 'ig-error')!.textContent).toContain('accès refusé');
     expect(q(el, 'ig-download')!.getAttribute('href')).toBe('https://api.test/i.png');
     expect(q(el, 'ig-copy')).not.toBeNull();
     expect(q(el, 'ig-confirm')).toBeNull();
+  });
+
+  it('heure refusée (400) : erreur affichée, formulaire gardé pour réessayer', async () => {
+    const ok = { ...WIN, moderation: 'VALIDE' as const };
+    const { fixture, el } = await render(data({ history: [{ ...data().history[0], win: ok }] }));
+    q(el, 'ig-publish-w1')!.click();
+    http.expectOne(`${BASE}/wins/w1/instagram/preview`).flush({ data: { caption: 'Bravo', aiGenerated: true, imageUrl: 'https://api.test/i.png', metricoolAvailable: true } });
+    fixture.detectChanges();
+    q(el, 'ig-confirm')!.click();
+    http.expectOne(`${BASE}/wins/w1/instagram/publish`).flush({ message: 'Date de publication invalide.' }, { status: 400, statusText: 'Bad Request' });
+    fixture.detectChanges();
+    expect(q(el, 'ig-error')!.textContent).toContain('Date de publication invalide');
+    expect(q(el, 'ig-confirm')).not.toBeNull();
+    expect(q(el, 'ig-download')).toBeNull();
+  });
+
+  it('déjà publié (409) : message, rechargement, pas de publication manuelle', async () => {
+    const ok = { ...WIN, moderation: 'VALIDE' as const };
+    const { fixture, el } = await render(data({ history: [{ ...data().history[0], win: ok }] }));
+    q(el, 'ig-publish-w1')!.click();
+    http.expectOne(`${BASE}/wins/w1/instagram/preview`).flush({ data: { caption: 'Bravo', aiGenerated: true, imageUrl: 'https://api.test/i.png', metricoolAvailable: true } });
+    fixture.detectChanges();
+    q(el, 'ig-confirm')!.click();
+    http.expectOne(`${BASE}/wins/w1/instagram/publish`).flush({ message: 'Ce gagnant a déjà été publié sur Instagram.' }, { status: 409, statusText: 'Conflict' });
+    http.expectOne(BASE).flush({ data: data() });
+    fixture.detectChanges();
+    expect(q(el, 'ig-download')).toBeNull();
   });
 
   it('erreur de chargement : message affiché', async () => {

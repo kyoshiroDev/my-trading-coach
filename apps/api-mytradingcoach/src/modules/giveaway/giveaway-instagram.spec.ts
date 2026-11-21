@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { BadRequestException, ConflictException } from '@nestjs/common';
+import { BadGatewayException, BadRequestException, ConflictException } from '@nestjs/common';
 import { freezeClock } from '../../test/freeze-clock';
 import { GiveawayInstagramService, INSTAGRAM_TOKEN_RE } from './giveaway-instagram.service';
 import { MetricoolClient, MetricoolError } from './metricool.client';
@@ -66,6 +66,7 @@ describe('GiveawayInstagramService', () => {
     current = win();
     anthropic.enabled = true;
     metricool.configured = true;
+    config.get.mockImplementation((k: string) => (k === 'API_URL' ? 'https://dev.api.test' : undefined));
   });
 
   it('aperçu : légende IA (prompt mis en cache, coût via AnthropicClientService) et image temporaire', async () => {
@@ -135,8 +136,17 @@ describe('GiveawayInstagramService', () => {
     anthropic.enabled = false;
     const { imageUrl, caption } = await service.preview('w1');
     metricool.publishInstagram.mockRejectedValueOnce(new MetricoolError(403, 'Metricool : accès refusé (abonnement ou jeton).'));
-    await expect(service.publish('w1', { caption, imageUrl })).rejects.toThrow(/Ouvre l’image/);
+    await expect(service.publish('w1', { caption, imageUrl })).rejects.toBeInstanceOf(BadGatewayException);
     expect(prisma.giveawayWin.update.mock.calls[0][0].data).toEqual({ publicationStatus: 'FAILED', publishedAt: null });
+  });
+
+  it('post parti mais lien non enregistré : reste PUBLISHED, jamais redescendu à FAILED', async () => {
+    anthropic.enabled = false;
+    const { imageUrl, caption } = await service.preview('w1');
+    metricool.publishInstagram.mockResolvedValueOnce({ postId: '9', publicUrl: 'https://instagram.com/p/y' });
+    prisma.giveawayWin.update.mockRejectedValueOnce(new Error('db'));
+    await expect(service.publish('w1', { caption, imageUrl })).resolves.toMatchObject({ publicationStatus: 'PUBLISHED' });
+    expect(prisma.giveawayWin.update).toHaveBeenCalledTimes(1);
   });
 
   it('déjà publié : 409 sans appel Metricool (aperçu et publication) ; course perdue : 409 aussi', async () => {
@@ -156,7 +166,6 @@ describe('GiveawayInstagramService', () => {
     config.get.mockImplementation((k: string) => (k === 'FRONTEND_URL' ? 'https://dev.app.test' : undefined));
     anthropic.enabled = false;
     await expect(service.preview('w1')).rejects.toThrow(/API_URL manquante/);
-    config.get.mockImplementation((k: string) => (k === 'API_URL' ? 'https://dev.api.test' : undefined));
   });
 
   it('image : jeton invalide ou expiré → null', async () => {

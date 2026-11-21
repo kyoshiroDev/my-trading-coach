@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, Injectable, Logger, NotFoundException, ServiceUnavailableException } from '@nestjs/common';
+import { BadGatewayException, BadRequestException, ConflictException, Injectable, Logger, NotFoundException, ServiceUnavailableException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { GiveawayActivation, GiveawayModeration, GiveawayPublication } from '@prisma/client';
 import { randomBytes } from 'crypto';
@@ -93,7 +93,7 @@ export class GiveawayInstagramService {
    */
   async publish(winId: string, args: { caption: string; imageUrl: string; publishAt?: string | null }): Promise<AdminGiveawayInstagramPublishResponse> {
     await this.publishableFacts(winId);
-    if (!this.metricool.configured) throw new ConflictException('Metricool n’est pas configuré : télécharge l’image et copie la légende.');
+    if (!this.metricool.configured) throw new ConflictException('Metricool n’est pas configuré\u00a0: ouvre l’image et copie la légende.');
     const { caption, problems } = checkCaption(args.caption);
     if (problems.length) throw new BadRequestException(`Légende refusée (${problems.join(', ')}).`);
     if (!this.isOurImage(args.imageUrl)) throw new BadRequestException('Image inconnue : recharge l’aperçu.');
@@ -108,17 +108,24 @@ export class GiveawayInstagramService {
       data: { publicationStatus: GiveawayPublication.PUBLISHED, publishedAt: at },
     });
     if (count === 0) throw new ConflictException('Ce gagnant a déjà été publié sur Instagram.');
+    let publicUrl: string | null;
     try {
-      const res = await this.metricool.publishInstagram({ caption, imageUrl: args.imageUrl, publishAt });
-      await this.prisma.giveawayWin.update({ where: { id: winId }, data: { publishedUrl: res.publicUrl } });
-      return { publicationStatus: GiveawayPublication.PUBLISHED, publishedUrl: res.publicUrl, publishedAt: at.toISOString() };
+      ({ publicUrl } = await this.metricool.publishInstagram({ caption, imageUrl: args.imageUrl, publishAt }));
     } catch (err) {
       const message = err instanceof MetricoolError ? err.message : 'Metricool : erreur inattendue.';
       // Seule la réservation de cet appel est annulée (aucun post n'est parti).
       await this.prisma.giveawayWin.update({ where: { id: winId }, data: { publicationStatus: GiveawayPublication.FAILED, publishedAt: null } });
       this.logger.warn(`Publication Instagram en échec (lot ${winId}) : ${message}`);
-      throw new ConflictException(`${message} Ouvre l’image et copie la légende pour publier à la main.`);
+      // 502 = refus ou panne de Metricool, seul cas où l'admin passe en publication manuelle.
+      throw new BadGatewayException(`${message} Ouvre l’image et copie la légende pour publier à la main.`);
     }
+    // Post parti : un échec d'écriture du lien ne rend jamais le lot republiable.
+    if (publicUrl) {
+      await this.prisma.giveawayWin
+        .update({ where: { id: winId }, data: { publishedUrl: publicUrl } })
+        .catch(() => this.logger.warn(`Lien Instagram non enregistré (lot ${winId}).`));
+    }
+    return { publicationStatus: GiveawayPublication.PUBLISHED, publishedUrl: publicUrl, publishedAt: at.toISOString() };
   }
 
   /** Image d'un jeton (route publique), null si expirée ou inconnue. */
