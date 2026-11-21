@@ -3,7 +3,7 @@ import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import type { Observable } from 'rxjs';
-import { GIVEAWAY_DRAW_HOUR, apiErrorMessage, giveawayDrawDayLabel, type AdminGiveawayData, type AdminGiveawayPoolState, type AdminGiveawayWin, type GiveawayPool } from '@mtc/shared';
+import { GIVEAWAY_DRAW_HOUR, apiErrorMessage, giveawayDrawDayLabel, type AdminGiveawayInstagramPreview, type AdminGiveawayData, type AdminGiveawayPoolState, type AdminGiveawayWin, type GiveawayPool } from '@mtc/shared';
 import { ErrorStateComponent } from '@mtc/front-ui';
 import { AdminApi } from '../../core/api/admin.api';
 
@@ -137,6 +137,80 @@ export class GiveawayComponent {
         this.actionError.set(apiErrorMessage(err, error));
       },
     });
+  }
+
+  // ── Publication Instagram (lot C) ──
+  protected readonly igWin = signal<AdminGiveawayWin | null>(null);
+  protected readonly igPreview = signal<AdminGiveawayInstagramPreview | null>(null);
+  protected readonly igCaption = signal('');
+  protected readonly igPublishAt = signal('');
+  protected readonly igCopied = signal(false);
+
+  /** « Publier » seulement avec l'accord Instagram du gagnant et un message validé (ou aucun). */
+  protected canPublish(w: AdminGiveawayWin): boolean {
+    return w.instagramConsent && w.activationStatus === 'APPLIED' && (!w.message || w.moderation === 'VALIDE') && w.publicationStatus !== 'PUBLISHED';
+  }
+
+  protected openInstagram(w: AdminGiveawayWin): void {
+    this.igWin.set(w);
+    this.igPreview.set(null);
+    this.igCopied.set(false);
+    this.igPublishAt.set('');
+    this.busy.set(`ig-${w.id}`);
+    this.actionError.set(null);
+    this.api
+      .instagramPreview(w.id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (r) => {
+          this.busy.set(null);
+          this.igPreview.set(r.data);
+          this.igCaption.set(r.data.caption);
+        },
+        error: (err: unknown) => {
+          this.busy.set(null);
+          this.igWin.set(null);
+          this.actionError.set(apiErrorMessage(err, 'L’aperçu Instagram n’a pas pu être préparé.'));
+        },
+      });
+  }
+
+  protected closeInstagram(): void {
+    this.igWin.set(null);
+    this.igPreview.set(null);
+  }
+
+  protected confirmInstagram(): void {
+    const w = this.igWin();
+    const p = this.igPreview();
+    if (!w || !p) return;
+    const at = this.igPublishAt();
+    this.busy.set(`ig-pub-${w.id}`);
+    this.actionError.set(null);
+    this.api
+      .instagramPublish(w.id, { caption: this.igCaption(), imageUrl: p.imageUrl, publishAt: at ? new Date(at).toISOString() : null })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.busy.set(null);
+          this.closeInstagram();
+          this.notice.set('Publication envoyée à Metricool.');
+          this.load();
+        },
+        error: (err: unknown) => {
+          this.busy.set(null);
+          this.actionError.set(apiErrorMessage(err, 'La publication a échoué. Télécharge l’image et copie la légende.'));
+        },
+      });
+  }
+
+  protected async copyCaption(): Promise<void> {
+    try {
+      await navigator.clipboard.writeText(this.igCaption());
+      this.igCopied.set(true);
+    } catch {
+      this.actionError.set('Copie impossible : sélectionne la légende à la main.');
+    }
   }
 
   protected euros(cents: number): string {

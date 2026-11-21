@@ -1,4 +1,5 @@
-import { Body, Controller, Get, Header, Patch, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Header, NotFoundException, Param, Patch, Res, UseGuards } from '@nestjs/common';
+import type { Response } from 'express';
 import { Throttle } from '@nestjs/throttler';
 import type { GiveawayAppState, GiveawayMyWin, GiveawayPublicState } from '@mtc/shared';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -6,6 +7,7 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
 import { GiveawayPublicService } from './giveaway-public.service';
 import { UpdateMyGiveawayWinDto } from './dto/giveaway-me.dto';
+import { GiveawayInstagramService } from './giveaway-instagram.service';
 
 /** État public : 60 s maximum en cache (navigateur, nginx, Traefik), comme l'offre fondateur. */
 export const GIVEAWAY_PUBLIC_CACHE_CONTROL = 'public, max-age=60';
@@ -33,7 +35,27 @@ export class GiveawayController {
 /** Section de la landing : lecture seule, aucune donnée personnelle sans accord. */
 @Controller('public')
 export class PublicGiveawayController {
-  constructor(private readonly giveaway: GiveawayPublicService) {}
+  constructor(
+    private readonly giveaway: GiveawayPublicService,
+    private readonly instagram: GiveawayInstagramService,
+  ) {}
+
+  /**
+   * Visuel Instagram d'un gagnant (lot C) à une URL publique temporaire : jeton aléatoire de 48
+   * caractères, 24 h, lu par Metricool. Rien d'autre n'est servi par ce chemin.
+   */
+  @Public()
+  @Throttle({ default: { ttl: 60_000, limit: 30 } })
+  @Get('giveaway/image/:file')
+  async image(@Param('file') file: string, @Res() res: Response): Promise<void> {
+    const png = await this.instagram.image(file.replace(/\.png$/, ''));
+    if (!png) throw new NotFoundException();
+    res.setHeader('Content-Type', 'image/png');
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+    // L'API sert en « same-site » : cette seule image doit pouvoir être lue par Metricool.
+    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+    res.end(png);
+  }
 
   @Public()
   @Throttle({ default: { ttl: 60_000, limit: 60 } })

@@ -2,7 +2,7 @@
 
 > Décisions : `decisions.md` du 2026-11-20 et du 2026-11-21. Lot A (données, tirage, attribution,
 > admin, PR #1164) ; lot B (onglet « Concours du mois », page gagnant, landing, règlement, #1158) ;
-> lot C (publication Instagram) à venir.
+> lot C (publication Instagram via Metricool).
 
 ## Principe
 - **Éteint par défaut.** Deux interrupteurs indépendants dans l'admin (« Tirages », `/tirages`) :
@@ -109,4 +109,24 @@ prod, Greg valide `/reglement-tirage` et la section 1 h) de la politique de conf
   Instagram décoché par défaut).
 - **Landing** : `PfGiveaway.astro` sur `/prop-firm`, cachée par défaut, affichée côté navigateur si
   `enabled` ; `/reglement-tirage` (noindex, hors sitemap), valeurs tirées de `@mtc/shared`.
+
+## Lot C : publication Instagram (#1150)
+- **Bouton « Publier »** (onglet admin, colonne Instagram) seulement si : accord Instagram, lot APPLIED,
+  message absent ou VALIDE, pas déjà publié. Même règle côté API (`GiveawayInstagramService`, 409 sinon).
+- **Aperçu** `POST /admin/giveaway/wins/:id/instagram/preview` (Throttle 6/min) : légende rédigée par
+  Claude (`AI_MODELS.fast`, consigne fixe en cache + `COMPLIANCE_RULE`, `AnthropicClientService` = coût
+  dans `AiUsageLog`, feature `giveaway_instagram`, `guardAiText`), puis `checkCaption` (aucun prix,
+  aucun terme interdit, tirets remplacés, 5 hashtags au plus). IA coupée, en erreur ou sortie écartée →
+  légende de repli (`fallbackCaption`, `aiGenerated: false`). Visuel : gabarit fixe
+  (`giveaway-instagram.template.ts`) rendu en PNG 1080×1350 par `PdfService.renderPng` (même
+  Chromium et même file que les PDF), stocké 24 h dans Redis sous un jeton aléatoire de 48 caractères,
+  servi par `GET /public/giveaway/image/:jeton.png` (`Cross-Origin-Resource-Policy: cross-origin` sur
+  cette seule route).
+- **Publication** `POST /admin/giveaway/wins/:id/instagram/publish` : légende relue (recontrôlée),
+  image de l'aperçu seulement, heure facultative (sinon dans 2 minutes). `MetricoolClient` : image
+  copiée chez Metricool (`normalize/image/url`) puis post programmé avec `autoPublish`. Statut
+  `PUBLISHED` (lien si Metricool le renvoie) ou `FAILED`. Variables `METRICOOL_API_TOKEN`,
+  `METRICOOL_USER_ID`, `METRICOOL_BLOG_ID` : absentes → l'admin propose « Télécharger l'image » et
+  « Copier la légende ». Erreurs Metricool : code HTTP seulement, jamais le corps.
+- Politique de confidentialité : Metricool et Instagram ajoutés aux destinataires (section 4).
 

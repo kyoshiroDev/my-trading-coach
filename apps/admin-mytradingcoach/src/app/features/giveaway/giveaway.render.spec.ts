@@ -143,6 +143,52 @@ describe('GiveawayComponent', () => {
     expect(el.querySelector('.page-meta')!.textContent).toMatch(/le 1er de chaque mois à 9\s+h/);
   });
 
+  it('« Publier » absent sans accord Instagram ; présent avec accord et message validé', async () => {
+    const { el } = await render();
+    expect(q(el, 'ig-publish-w1')).toBeNull(); // WIN : accord Instagram mais message en attente
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])] });
+    http = TestBed.inject(HttpTestingController);
+    const ok = { ...WIN, moderation: 'VALIDE' as const };
+    const r2 = await render(data({ history: [{ ...data().history[0], win: ok }] }));
+    expect(q(r2.el, 'ig-publish-w1')).not.toBeNull();
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])] });
+    http = TestBed.inject(HttpTestingController);
+    const noConsent = { ...ok, instagramConsent: false };
+    const r3 = await render(data({ history: [{ ...data().history[0], win: noConsent }] }));
+    expect(q(r3.el, 'ig-publish-w1')).toBeNull();
+  });
+
+  it('aperçu sans Metricool : « Télécharger l’image » et « Copier la légende », pas de publication', async () => {
+    const ok = { ...WIN, moderation: 'VALIDE' as const };
+    const { fixture, el } = await render(data({ history: [{ ...data().history[0], win: ok }] }));
+    q(el, 'ig-publish-w1')!.click();
+    http.expectOne(`${BASE}/wins/w1/instagram/preview`).flush({ data: { caption: 'Bravo Léa', aiGenerated: false, imageUrl: 'https://api.test/api/public/giveaway/image/x.png', metricoolAvailable: false } });
+    fixture.detectChanges();
+    expect(q(el, 'ig-panel')).not.toBeNull();
+    expect((q(el, 'ig-caption') as HTMLTextAreaElement).value).toBe('Bravo Léa');
+    expect(q(el, 'ig-download')!.getAttribute('href')).toContain('/image/x.png');
+    expect(q(el, 'ig-copy')).not.toBeNull();
+    expect(q(el, 'ig-confirm')).toBeNull();
+  });
+
+  it('aperçu avec Metricool : légende modifiée envoyée à la confirmation', async () => {
+    const ok = { ...WIN, moderation: 'VALIDE' as const };
+    const { fixture, el } = await render(data({ history: [{ ...data().history[0], win: ok }] }));
+    q(el, 'ig-publish-w1')!.click();
+    http.expectOne(`${BASE}/wins/w1/instagram/preview`).flush({ data: { caption: 'Bravo', aiGenerated: true, imageUrl: 'https://api.test/i.png', metricoolAvailable: true } });
+    fixture.detectChanges();
+    const ta = q(el, 'ig-caption') as HTMLTextAreaElement;
+    ta.value = 'Bravo Léa, bien joué';
+    ta.dispatchEvent(new Event('input'));
+    q(el, 'ig-confirm')!.click();
+    const req = http.expectOne(`${BASE}/wins/w1/instagram/publish`);
+    expect(req.request.body).toEqual({ caption: 'Bravo Léa, bien joué', imageUrl: 'https://api.test/i.png', publishAt: null });
+    req.flush({ data: { publicationStatus: 'PUBLISHED', publishedUrl: null, publishedAt: '2027-02-10T10:00:00.000Z' } });
+    http.expectOne(BASE).flush({ data: data() });
+  });
+
   it('erreur de chargement : message affiché', async () => {
     const fixture = TestBed.createComponent(GiveawayComponent);
     fixture.detectChanges();

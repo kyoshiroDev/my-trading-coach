@@ -191,3 +191,30 @@ export interface UpdateMyGiveawayWinRequest {
   instagramConsent: boolean;
   instagramHandle?: string | null;
 }
+
+// ── Lot C : publication Instagram ────────────────────────────────────────────
+
+/** `POST /admin/giveaway/wins/:id/instagram/preview` : aperçu modifiable avant publication. */
+export interface AdminGiveawayInstagramPreview {
+  caption: string;
+  /** Faux = légende de repli (IA coupée, en erreur ou sortie écartée). */
+  aiGenerated: boolean;
+  /** URL publique temporaire (24 h) du visuel 1080×1350. */
+  imageUrl: string;
+  /** Metricool configuré : sinon « Télécharger l'image » et « Copier la légende ». */
+  metricoolAvailable: boolean;
+}
+
+/** `POST /admin/giveaway/wins/:id/instagram/publish` : corps. */
+export interface PublishGiveawayInstagramRequest {
+  caption: string;
+  imageUrl: string;
+  /** Heure de publication (ISO) ; absente = tout de suite. */
+  publishAt?: string | null;
+}
+
+export interface AdminGiveawayInstagramPublishResponse {
+  publicationStatus: GiveawayPublication;
+  publishedUrl: string | null;
+  publishedAt: string;
+}

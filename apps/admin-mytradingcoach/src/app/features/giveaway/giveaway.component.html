@@ -70,6 +70,43 @@
       }
     </div>
 
+    @if (igWin(); as w) {
+      <div class="card ig-panel" data-testid="ig-panel">
+        <div class="card-head">
+          <span class="card-label">Publier sur Instagram · {{ w.displayName }}</span>
+          <button type="button" class="btn btn-sm" (click)="closeInstagram()" data-testid="ig-close">Fermer</button>
+        </div>
+        <div class="card-body ig-body">
+          @if (igPreview(); as p) {
+            <img class="ig-img" [src]="p.imageUrl" alt="Visuel Instagram du gagnant" width="1080" height="1350" data-testid="ig-image" />
+            <div class="ig-side">
+              <label class="ig-field">
+                <span class="ig-lbl">Légende{{ p.aiGenerated ? ' (rédigée par l’IA, modifiable)' : ' (modèle, modifiable)' }}</span>
+                <textarea class="ig-input" rows="8" [value]="igCaption()" (input)="igCaption.set($any($event.target).value)" data-testid="ig-caption"></textarea>
+              </label>
+              @if (p.metricoolAvailable) {
+                <label class="ig-field">
+                  <span class="ig-lbl">Heure de publication (facultatif, sinon tout de suite)</span>
+                  <input class="ig-input" type="datetime-local" [value]="igPublishAt()" (input)="igPublishAt.set($any($event.target).value)" data-testid="ig-publish-at" />
+                </label>
+                <button type="button" class="btn btn-primary" [disabled]="busy() !== null" (click)="confirmInstagram()" data-testid="ig-confirm">
+                  {{ busy() === 'ig-pub-' + w.id ? 'Envoi…' : 'Confirmer la publication' }}
+                </button>
+              } @else {
+                <p class="ig-note" data-testid="ig-fallback">Metricool n’est pas configuré&nbsp;: publie à la main.</p>
+                <div class="ig-actions">
+                  <a class="btn" [href]="p.imageUrl" download="tirage-gagnant.png" target="_blank" rel="noopener" data-testid="ig-download">Télécharger l’image</a>
+                  <button type="button" class="btn" (click)="copyCaption()" data-testid="ig-copy">{{ igCopied() ? 'Légende copiée' : 'Copier la légende' }}</button>
+                </div>
+              }
+            </div>
+          } @else {
+            <div class="empty">Préparation de l’aperçu…</div>
+          }
+        </div>
+      </div>
+    }
+
     <div class="card fill">
       <div class="card-head"><span class="card-label">Historique</span></div>
       <div class="tbl-wrap">
@@ -128,6 +165,12 @@
                   <td data-label="Instagram">
                     {{ w.instagramConsent ? 'Accord' + (w.instagramHandle ? ' · @' + w.instagramHandle : '') : 'Non' }}
                     <div class="sub">{{ PUBLICATION_LABEL[w.publicationStatus] }}</div>
+                    @if (w.publishedUrl) { <a class="u-link sub" [href]="w.publishedUrl" target="_blank" rel="noopener">Voir le post</a> }
+                    @if (canPublish(w)) {
+                      <button type="button" class="btn btn-sm" [disabled]="busy() !== null" (click)="openInstagram(w)" [attr.data-testid]="'ig-publish-' + w.id">
+                        {{ busy() === 'ig-' + w.id ? 'Préparation…' : 'Publier' }}
+                      </button>
+                    }
                   </td>
                 } @else {
                   <td data-label="Gagnant" colspan="4" class="muted">Aucun éligible, aucun gagnant</td>

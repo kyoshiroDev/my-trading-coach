@@ -49,6 +49,9 @@ GET    /api/admin/founders            ADMIN → fondateurs paginés (?status, ?p
 PATCH  /api/admin/founder-offer       ADMIN → { open?, endsAt? } (interrupteur « Ouvrir l'offre »)
 GET    /api/giveaway/state            JWT → page « Concours du mois » : état public + statut de l'utilisateur (raison, trades du mois) + son lot (démo : exemple, aucun gagnant)
 PATCH  /api/giveaway/me/win           JWT → { displayConsent, displayPseudo?, message? (≤ 140), instagramConsent, instagramHandle? } ; message modifié → EN_ATTENTE (bloqué en démo)
+POST   /api/admin/giveaway/wins/:id/instagram/preview  ADMIN → aperçu Instagram : légende (IA ou repli), visuel temporaire, metricoolAvailable
+POST   /api/admin/giveaway/wins/:id/instagram/publish  ADMIN → { caption, imageUrl, publishAt? } → Metricool ; statut PUBLISHED / FAILED
+GET    /api/public/giveaway/image/:jeton.png PUBLIC → visuel Instagram d'un gagnant (24 h, jeton aléatoire)
 GET    /api/public/giveaway           PUBLIC → section de la landing : tirages allumés, lots, prochain tirage, compteurs, gagnants affichables (cache 60 s)
 GET    /api/admin/giveaway            ADMIN → tirage mensuel : 2 interrupteurs (éligibles maintenant, destinataires de l'annonce), prochain tirage, historique (commun/tirage-mensuel.md)
 PATCH  /api/admin/giveaway/settings   ADMIN → { pool, enabled } (allumer = annonce une fois par activation ; éteindre n'envoie rien)
