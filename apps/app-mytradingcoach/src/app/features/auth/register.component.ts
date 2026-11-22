@@ -8,7 +8,6 @@ import {
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { EyeIconComponent } from '../../shared/components/eye-icon/eye-icon.component';
 import { AuthService, type Acquisition } from '../../core/auth/auth.service';
@@ -35,7 +34,7 @@ export function referrerHost(referrer: string): string {
 
 @Component({
   selector: 'mtc-register',
-  imports: [FormsModule, RouterLink, EyeIconComponent, GoogleAuthButtonComponent, AuthLayoutComponent, SignupTermsNoteComponent],
+  imports: [RouterLink, EyeIconComponent, GoogleAuthButtonComponent, AuthLayoutComponent, SignupTermsNoteComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./auth-layout/auth-form.css', './register.component.css'],
   templateUrl: './register.component.html',
@@ -193,6 +192,22 @@ export class RegisterComponent {
       return 'Les mots de passe ne correspondent pas';
     return null;
   });
+
+  /**
+   * Champs liés aux signaux sans `@angular/forms` (#765, ~43 ko de moins dans le bundle initial : la
+   * page d'inscription est chargée d'office). Lecture de la valeur au fil de la frappe et de l'autoremplissage.
+   */
+  protected val(e: Event): string {
+    return (e.target as HTMLInputElement).value;
+  }
+  protected checked(e: Event): boolean {
+    return (e.target as HTMLInputElement).checked;
+  }
+  /** Envoi du formulaire : pas de rechargement de page (ce que faisait `ngSubmit`). */
+  protected submit(e: Event): void {
+    e.preventDefault();
+    this.onRegister();
+  }
 
   onRegister() {
     this.submitted.set(true);
