@@ -37,6 +37,12 @@
     ],
     "firms": [
       "bulenox"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-22",
+        "modification": "Relecture complète (lot 1, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://bulenox.com/help-center/fast-track": {
@@ -53,16 +59,27 @@
       {
         "date": "2026-11-02",
         "modification": "Fast Track 50K : drawdown 2 000 $, gel à 52 100 $."
+      },
+      {
+        "date": "2026-11-22",
+        "modification": "Relecture complète (lot 1, #1218) : aucune règle modifiée."
       }
     ]
   },
   "https://bulenox.com/help-center/funded": {
     "kind": "hash",
     "values": [
+      "7593ba252662cc8d",
       "23ec7aef2a2cd98d"
     ],
     "firms": [
       "bulenox"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-22",
+        "modification": "Relecture complète (lot 1, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://bulenox.com/help-center/master": {
@@ -78,6 +95,10 @@
       {
         "date": "2026-11-02",
         "modification": "Master : consistency remise à zéro après chaque payout, plafond à partir du 4e payout."
+      },
+      {
+        "date": "2026-11-22",
+        "modification": "Relecture complète (lot 1, #1218) : aucune règle modifiée."
       }
     ]
   },
@@ -94,16 +115,27 @@
       {
         "date": "2026-11-02",
         "modification": "Momentum : drawdown 50K / 100K / 150K, gel déduit, objectif par cycle, 30 jours."
+      },
+      {
+        "date": "2026-11-22",
+        "modification": "Relecture complète (lot 1, #1218) : aucune règle modifiée."
       }
     ]
   },
   "https://bulenox.com/help-center/qualification": {
     "kind": "hash",
     "values": [
+      "71fa47011c8b16b6",
       "8ecbccef19885a64"
     ],
     "firms": [
       "bulenox"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-22",
+        "modification": "Relecture complète (lot 1, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://elitetraderfunding.app/1-step-evaluation": {
@@ -1101,6 +1133,12 @@
     ],
     "firms": [
       "phidias"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-22",
+        "modification": "Relecture complète (lot 1, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://helpcenter.phidiaspropfirm.com/help/11-trading-de-news-economiques": {
@@ -1110,6 +1148,12 @@
     ],
     "firms": [
       "phidias"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-22",
+        "modification": "Relecture complète (lot 1, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://helpcenter.phidiaspropfirm.com/help/17-liste-des-tarifs-d-activations-des-comptes-phidias-cash": {
@@ -1119,6 +1163,12 @@
     ],
     "firms": [
       "phidias"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-22",
+        "modification": "Relecture complète (lot 1, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://helpcenter.phidiaspropfirm.com/help/19-regle-de-constance-de-30-sur-les-comptes-phidias-propfirm": {
@@ -1128,6 +1178,12 @@
     ],
     "firms": [
       "phidias"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-22",
+        "modification": "Relecture complète (lot 1, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://helpcenter.phidiaspropfirm.com/help/20-regles-compte-express-to-live-etl-e2l": {
@@ -1137,6 +1193,12 @@
     ],
     "firms": [
       "phidias"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-22",
+        "modification": "Relecture complète (lot 1, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://helpcenter.phidiaspropfirm.com/help/3-regles-generales": {
@@ -1146,6 +1208,12 @@
     ],
     "firms": [
       "phidias"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-22",
+        "modification": "Relecture complète (lot 1, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://helpcenter.phidiaspropfirm.com/help/4-regles-du-end-of-day-eod": {
@@ -1155,6 +1223,12 @@
     ],
     "firms": [
       "phidias"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-22",
+        "modification": "Relecture complète (lot 1, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://helpcenter.phidiaspropfirm.com/help/6-demandes-de-retraits-et-nombre-de-jours-par-retrait": {
@@ -1164,6 +1238,12 @@
     ],
     "firms": [
       "phidias"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-22",
+        "modification": "Relecture complète (lot 1, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://helpcenter.phidiaspropfirm.com/help/9-positions-ouvertes-over-night-et-over-week": {
@@ -1173,6 +1253,12 @@
     ],
     "firms": [
       "phidias"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-22",
+        "modification": "Relecture complète (lot 1, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://helpcenter.phidiaspropfirm.com/help/cest-quoi-les-comptes-fundamental": {
@@ -1182,6 +1268,12 @@
     ],
     "firms": [
       "phidias"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-22",
+        "modification": "Relecture complète (lot 1, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://helpcenter.phidiaspropfirm.com/help/regles-compte-premium": {
@@ -1191,6 +1283,12 @@
     ],
     "firms": [
       "phidias"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-22",
+        "modification": "Relecture complète (lot 1, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://intercom.help/funded-futures-family/en/articles/15650785-account-fees": {
@@ -1581,6 +1679,12 @@
     ],
     "firms": [
       "oneuptrader"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-22",
+        "modification": "Relecture complète (lot 1, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://oneuptrader.helpscoutdocs.com/article/372-funded-trader-rules": {
@@ -1590,15 +1694,28 @@
     ],
     "firms": [
       "oneuptrader"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-22",
+        "modification": "Relecture complète (lot 1, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://oneuptrader.helpscoutdocs.com/article/376-profit-info": {
     "kind": "hash",
     "values": [
+      "6a46c57200c54a2e",
       "c5e0e3cd1840da6c"
     ],
     "firms": [
       "oneuptrader"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-22",
+        "modification": "Relecture complète (lot 1, #1218) : retrait prioritaire payant (10 %) au-delà d’un retrait par semaine, ajouté aux notes de payout."
+      }
     ]
   },
   "https://oneuptrader.helpscoutdocs.com/article/385-evaluation-rules-parameters": {
@@ -1608,6 +1725,12 @@
     ],
     "firms": [
       "oneuptrader"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-22",
+        "modification": "Relecture complète (lot 1, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://oneuptrader.helpscoutdocs.com/article/386-funded-trader-dynamic-scaling-targets": {
@@ -1617,6 +1740,12 @@
     ],
     "firms": [
       "oneuptrader"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-22",
+        "modification": "Relecture complète (lot 1, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://oneuptrader.helpscoutdocs.com/article/388-funded-trader-trailing-drawdown": {
@@ -1626,6 +1755,12 @@
     ],
     "firms": [
       "oneuptrader"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-22",
+        "modification": "Relecture complète (lot 1, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://oneuptrader.helpscoutdocs.com/article/389-rules-definitions": {
@@ -1635,6 +1770,12 @@
     ],
     "firms": [
       "oneuptrader"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-22",
+        "modification": "Relecture complète (lot 1, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://oneuptrader.helpscoutdocs.com/article/390-permissible-products-times": {
@@ -1644,6 +1785,12 @@
     ],
     "firms": [
       "oneuptrader"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-22",
+        "modification": "Relecture complète (lot 1, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://oneuptrader.helpscoutdocs.com/article/391-important-evaluation-info": {
@@ -1653,6 +1800,12 @@
     ],
     "firms": [
       "oneuptrader"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-22",
+        "modification": "Relecture complète (lot 1, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://phidiaspropfirm.com/accounts": {
@@ -1662,6 +1815,12 @@
     ],
     "firms": [
       "phidias"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-22",
+        "modification": "Relecture complète (lot 1, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://support.lucidtrading.com/en/articles/11404614-lucid-trading-supported-platforms": {
@@ -2350,10 +2509,16 @@
   "https://www.oneuptrader.com/": {
     "kind": "date",
     "values": [
-      "2026-09-16T15:30:13+00:00"
+      "2026-11-05T09:28:45+00:00"
     ],
     "firms": [
       "oneuptrader"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-22",
+        "modification": "Relecture complète (lot 1, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://www.toponefutures.com/": {

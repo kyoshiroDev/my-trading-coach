@@ -10,7 +10,7 @@
       "ninjatrader"
     ]
   },
-  "verified_at": "2026-11-02",
+  "verified_at": "2026-11-22",
   "plans": [
     {
       "id": "bulenox-qualification-trailing-25k",
@@ -80,7 +80,7 @@
           "consistency": {
             "max_single_day_pct": 0.4,
             "applies_to": "payout",
-            "notes": "Meilleur jour au plus 40 % du P&L total de la période de payout, remis à zéro après chaque payout (à confirmer par le support (traduction française)). Le Safety Threshold Reserve compte au 1er payout."
+            "notes": "Meilleur jour au plus 40 % du P&L total de la période de payout, remis à zéro après chaque payout. Le Safety Threshold Reserve compte au 1er payout."
           },
           "min_trading_days": null,
           "max_duration_days": null,
@@ -115,7 +115,7 @@
             ],
             "max_payouts": null,
             "safety_net_balance": 26600,
-            "notes": "10 jours de trading avant chaque payout (comptés après le versement précédent). Minimum 1 000 $, plafond 1000 $ pour les 3 premiers, puis, à partir du 4e, moins de 50 % du profit total du compte Master (à confirmer par le support (traduction française)). Garder 26600 $ après le retrait (réserve 1600 $). Partage 90/10 dès le 1er payout : les 100 % sur les 10 000 premiers dollars ont disparu du site et des articles (« Keep up to 90% of profits », relevé du 2026-10-18). Versements le mercredi."
+            "notes": "10 jours de trading avant chaque payout (comptés après le versement précédent). Minimum 1 000 $, plafond 1000 $ pour les 3 premiers, puis, à partir du 4e, moins de 50 % du profit total du compte Master. Garder 26600 $ après le retrait (réserve 1600 $). Partage 90/10 dès le 1er payout : les 100 % sur les 10 000 premiers dollars ont disparu du site et des articles (« Keep up to 90% of profits », relevé du 2026-10-18). Versements le mercredi."
           }
         }
       ],
@@ -127,8 +127,8 @@
         "https://bulenox.com/help-center/momentum",
         "https://bulenox.com/help-center/funded"
       ],
-      "needs_review": true,
-      "notes": "Option 1 (trailing, sans scaling). Compte Master : activation unique, 5 comptes Master-level maximum. Live après 3 payouts, sur décision de Bulenox. Consistency du Master et plafond à partir du 4e payout à confirmer par le support (traduction française)."
+      "needs_review": false,
+      "notes": "Option 1 (trailing, sans scaling). Compte Master : activation unique, 5 comptes Master-level maximum. Live après 3 payouts, sur décision de Bulenox."
     },
     {
       "id": "bulenox-qualification-trailing-50k",
@@ -198,7 +198,7 @@
           "consistency": {
             "max_single_day_pct": 0.4,
             "applies_to": "payout",
-            "notes": "Meilleur jour au plus 40 % du P&L total de la période de payout, remis à zéro après chaque payout (à confirmer par le support (traduction française)). Le Safety Threshold Reserve compte au 1er payout."
+            "notes": "Meilleur jour au plus 40 % du P&L total de la période de payout, remis à zéro après chaque payout. Le Safety Threshold Reserve compte au 1er payout."
           },
           "min_trading_days": null,
           "max_duration_days": null,
@@ -233,7 +233,7 @@
             ],
             "max_payouts": null,
             "safety_net_balance": 52600,
-            "notes": "10 jours de trading avant chaque payout (comptés après le versement précédent). Minimum 1 000 $, plafond 1500 $ pour les 3 premiers, puis, à partir du 4e, moins de 50 % du profit total du compte Master (à confirmer par le support (traduction française)). Garder 52600 $ après le retrait (réserve 2600 $). Partage 90/10 dès le 1er payout : les 100 % sur les 10 000 premiers dollars ont disparu du site et des articles (« Keep up to 90% of profits », relevé du 2026-10-18). Versements le mercredi."
+            "notes": "10 jours de trading avant chaque payout (comptés après le versement précédent). Minimum 1 000 $, plafond 1500 $ pour les 3 premiers, puis, à partir du 4e, moins de 50 % du profit total du compte Master. Garder 52600 $ après le retrait (réserve 2600 $). Partage 90/10 dès le 1er payout : les 100 % sur les 10 000 premiers dollars ont disparu du site et des articles (« Keep up to 90% of profits », relevé du 2026-10-18). Versements le mercredi."
           }
         }
       ],
@@ -245,8 +245,8 @@
         "https://bulenox.com/help-center/momentum",
         "https://bulenox.com/help-center/funded"
       ],
-      "needs_review": true,
-      "notes": "Option 1 (trailing, sans scaling). Compte Master : activation unique, 5 comptes Master-level maximum. Live après 3 payouts, sur décision de Bulenox. Consistency du Master et plafond à partir du 4e payout à confirmer par le support (traduction française)."
+      "needs_review": false,
+      "notes": "Option 1 (trailing, sans scaling). Compte Master : activation unique, 5 comptes Master-level maximum. Live après 3 payouts, sur décision de Bulenox."
     },
     {
       "id": "bulenox-qualification-trailing-100k",
@@ -316,7 +316,7 @@
           "consistency": {
             "max_single_day_pct": 0.4,
             "applies_to": "payout",
-            "notes": "Meilleur jour au plus 40 % du P&L total de la période de payout, remis à zéro après chaque payout (à confirmer par le support (traduction française)). Le Safety Threshold Reserve compte au 1er payout."
+            "notes": "Meilleur jour au plus 40 % du P&L total de la période de payout, remis à zéro après chaque payout. Le Safety Threshold Reserve compte au 1er payout."
           },
           "min_trading_days": null,
           "max_duration_days": null,
@@ -351,7 +351,7 @@
             ],
             "max_payouts": null,
             "safety_net_balance": 103100,
-            "notes": "10 jours de trading avant chaque payout (comptés après le versement précédent). Minimum 1 000 $, plafond 1750 $ pour les 3 premiers, puis, à partir du 4e, moins de 50 % du profit total du compte Master (à confirmer par le support (traduction française)). Garder 103100 $ après le retrait (réserve 3100 $). Partage 90/10 dès le 1er payout : les 100 % sur les 10 000 premiers dollars ont disparu du site et des articles (« Keep up to 90% of profits », relevé du 2026-10-18). Versements le mercredi."
+            "notes": "10 jours de trading avant chaque payout (comptés après le versement précédent). Minimum 1 000 $, plafond 1750 $ pour les 3 premiers, puis, à partir du 4e, moins de 50 % du profit total du compte Master. Garder 103100 $ après le retrait (réserve 3100 $). Partage 90/10 dès le 1er payout : les 100 % sur les 10 000 premiers dollars ont disparu du site et des articles (« Keep up to 90% of profits », relevé du 2026-10-18). Versements le mercredi."
           }
         }
       ],
@@ -363,8 +363,8 @@
         "https://bulenox.com/help-center/momentum",
         "https://bulenox.com/help-center/funded"
       ],
-      "needs_review": true,
-      "notes": "Option 1 (trailing, sans scaling). Compte Master : activation unique, 5 comptes Master-level maximum. Live après 3 payouts, sur décision de Bulenox. Consistency du Master et plafond à partir du 4e payout à confirmer par le support (traduction française)."
+      "needs_review": false,
+      "notes": "Option 1 (trailing, sans scaling). Compte Master : activation unique, 5 comptes Master-level maximum. Live après 3 payouts, sur décision de Bulenox."
     },
     {
       "id": "bulenox-qualification-trailing-150k",
@@ -434,7 +434,7 @@
           "consistency": {
             "max_single_day_pct": 0.4,
             "applies_to": "payout",
-            "notes": "Meilleur jour au plus 40 % du P&L total de la période de payout, remis à zéro après chaque payout (à confirmer par le support (traduction française)). Le Safety Threshold Reserve compte au 1er payout."
+            "notes": "Meilleur jour au plus 40 % du P&L total de la période de payout, remis à zéro après chaque payout. Le Safety Threshold Reserve compte au 1er payout."
           },
           "min_trading_days": null,
           "max_duration_days": null,
@@ -469,7 +469,7 @@
             ],
             "max_payouts": null,
             "safety_net_balance": 154600,
-            "notes": "10 jours de trading avant chaque payout (comptés après le versement précédent). Minimum 1 000 $, plafond 2000 $ pour les 3 premiers, puis, à partir du 4e, moins de 50 % du profit total du compte Master (à confirmer par le support (traduction française)). Garder 154600 $ après le retrait (réserve 4600 $). Partage 90/10 dès le 1er payout : les 100 % sur les 10 000 premiers dollars ont disparu du site et des articles (« Keep up to 90% of profits », relevé du 2026-10-18). Versements le mercredi."
+            "notes": "10 jours de trading avant chaque payout (comptés après le versement précédent). Minimum 1 000 $, plafond 2000 $ pour les 3 premiers, puis, à partir du 4e, moins de 50 % du profit total du compte Master. Garder 154600 $ après le retrait (réserve 4600 $). Partage 90/10 dès le 1er payout : les 100 % sur les 10 000 premiers dollars ont disparu du site et des articles (« Keep up to 90% of profits », relevé du 2026-10-18). Versements le mercredi."
           }
         }
       ],
@@ -481,8 +481,8 @@
         "https://bulenox.com/help-center/momentum",
         "https://bulenox.com/help-center/funded"
       ],
-      "needs_review": true,
-      "notes": "Option 1 (trailing, sans scaling). Compte Master : activation unique, 5 comptes Master-level maximum. Live après 3 payouts, sur décision de Bulenox. Consistency du Master et plafond à partir du 4e payout à confirmer par le support (traduction française)."
+      "needs_review": false,
+      "notes": "Option 1 (trailing, sans scaling). Compte Master : activation unique, 5 comptes Master-level maximum. Live après 3 payouts, sur décision de Bulenox."
     },
     {
       "id": "bulenox-qualification-eod-25k",
@@ -581,7 +581,7 @@
           "consistency": {
             "max_single_day_pct": 0.4,
             "applies_to": "payout",
-            "notes": "Meilleur jour au plus 40 % du P&L total de la période de payout, remis à zéro après chaque payout (à confirmer par le support (traduction française)). Le Safety Threshold Reserve compte au 1er payout."
+            "notes": "Meilleur jour au plus 40 % du P&L total de la période de payout, remis à zéro après chaque payout. Le Safety Threshold Reserve compte au 1er payout."
           },
           "min_trading_days": null,
           "max_duration_days": null,
@@ -629,7 +629,7 @@
             ],
             "max_payouts": null,
             "safety_net_balance": 26600,
-            "notes": "10 jours de trading avant chaque payout (comptés après le versement précédent). Minimum 1 000 $, plafond 1000 $ pour les 3 premiers, puis, à partir du 4e, moins de 50 % du profit total du compte Master (à confirmer par le support (traduction française)). Garder 26600 $ après le retrait (réserve 1600 $). Partage 90/10 dès le 1er payout : les 100 % sur les 10 000 premiers dollars ont disparu du site et des articles (« Keep up to 90% of profits », relevé du 2026-10-18). Versements le mercredi."
+            "notes": "10 jours de trading avant chaque payout (comptés après le versement précédent). Minimum 1 000 $, plafond 1000 $ pour les 3 premiers, puis, à partir du 4e, moins de 50 % du profit total du compte Master. Garder 26600 $ après le retrait (réserve 1600 $). Partage 90/10 dès le 1er payout : les 100 % sur les 10 000 premiers dollars ont disparu du site et des articles (« Keep up to 90% of profits », relevé du 2026-10-18). Versements le mercredi."
           }
         }
       ],
@@ -641,8 +641,8 @@
         "https://bulenox.com/help-center/momentum",
         "https://bulenox.com/help-center/funded"
       ],
-      "needs_review": true,
-      "notes": "Option 2 (EOD, DLL et scaling). Compte Master : activation unique, 5 comptes Master-level maximum. Live après 3 payouts, sur décision de Bulenox. Consistency du Master et plafond à partir du 4e payout à confirmer par le support (traduction française)."
+      "needs_review": false,
+      "notes": "Option 2 (EOD, DLL et scaling). Compte Master : activation unique, 5 comptes Master-level maximum. Live après 3 payouts, sur décision de Bulenox."
     },
     {
       "id": "bulenox-qualification-eod-50k",
@@ -747,7 +747,7 @@
           "consistency": {
             "max_single_day_pct": 0.4,
             "applies_to": "payout",
-            "notes": "Meilleur jour au plus 40 % du P&L total de la période de payout, remis à zéro après chaque payout (à confirmer par le support (traduction française)). Le Safety Threshold Reserve compte au 1er payout."
+            "notes": "Meilleur jour au plus 40 % du P&L total de la période de payout, remis à zéro après chaque payout. Le Safety Threshold Reserve compte au 1er payout."
           },
           "min_trading_days": null,
           "max_duration_days": null,
@@ -801,7 +801,7 @@
             ],
             "max_payouts": null,
             "safety_net_balance": 52600,
-            "notes": "10 jours de trading avant chaque payout (comptés après le versement précédent). Minimum 1 000 $, plafond 1500 $ pour les 3 premiers, puis, à partir du 4e, moins de 50 % du profit total du compte Master (à confirmer par le support (traduction française)). Garder 52600 $ après le retrait (réserve 2600 $). Partage 90/10 dès le 1er payout : les 100 % sur les 10 000 premiers dollars ont disparu du site et des articles (« Keep up to 90% of profits », relevé du 2026-10-18). Versements le mercredi."
+            "notes": "10 jours de trading avant chaque payout (comptés après le versement précédent). Minimum 1 000 $, plafond 1500 $ pour les 3 premiers, puis, à partir du 4e, moins de 50 % du profit total du compte Master. Garder 52600 $ après le retrait (réserve 2600 $). Partage 90/10 dès le 1er payout : les 100 % sur les 10 000 premiers dollars ont disparu du site et des articles (« Keep up to 90% of profits », relevé du 2026-10-18). Versements le mercredi."
           }
         }
       ],
@@ -813,8 +813,8 @@
         "https://bulenox.com/help-center/momentum",
         "https://bulenox.com/help-center/funded"
       ],
-      "needs_review": true,
-      "notes": "Option 2 (EOD, DLL et scaling). Compte Master : activation unique, 5 comptes Master-level maximum. Live après 3 payouts, sur décision de Bulenox. Consistency du Master et plafond à partir du 4e payout à confirmer par le support (traduction française)."
+      "needs_review": false,
+      "notes": "Option 2 (EOD, DLL et scaling). Compte Master : activation unique, 5 comptes Master-level maximum. Live après 3 payouts, sur décision de Bulenox."
     },
     {
       "id": "bulenox-qualification-eod-100k",
@@ -925,7 +925,7 @@
           "consistency": {
             "max_single_day_pct": 0.4,
             "applies_to": "payout",
-            "notes": "Meilleur jour au plus 40 % du P&L total de la période de payout, remis à zéro après chaque payout (à confirmer par le support (traduction française)). Le Safety Threshold Reserve compte au 1er payout."
+            "notes": "Meilleur jour au plus 40 % du P&L total de la période de payout, remis à zéro après chaque payout. Le Safety Threshold Reserve compte au 1er payout."
           },
           "min_trading_days": null,
           "max_duration_days": null,
@@ -985,7 +985,7 @@
             ],
             "max_payouts": null,
             "safety_net_balance": 103100,
-            "notes": "10 jours de trading avant chaque payout (comptés après le versement précédent). Minimum 1 000 $, plafond 1750 $ pour les 3 premiers, puis, à partir du 4e, moins de 50 % du profit total du compte Master (à confirmer par le support (traduction française)). Garder 103100 $ après le retrait (réserve 3100 $). Partage 90/10 dès le 1er payout : les 100 % sur les 10 000 premiers dollars ont disparu du site et des articles (« Keep up to 90% of profits », relevé du 2026-10-18). Versements le mercredi."
+            "notes": "10 jours de trading avant chaque payout (comptés après le versement précédent). Minimum 1 000 $, plafond 1750 $ pour les 3 premiers, puis, à partir du 4e, moins de 50 % du profit total du compte Master. Garder 103100 $ après le retrait (réserve 3100 $). Partage 90/10 dès le 1er payout : les 100 % sur les 10 000 premiers dollars ont disparu du site et des articles (« Keep up to 90% of profits », relevé du 2026-10-18). Versements le mercredi."
           }
         }
       ],
@@ -997,8 +997,8 @@
         "https://bulenox.com/help-center/momentum",
         "https://bulenox.com/help-center/funded"
       ],
-      "needs_review": true,
-      "notes": "Option 2 (EOD, DLL et scaling). Compte Master : activation unique, 5 comptes Master-level maximum. Live après 3 payouts, sur décision de Bulenox. Consistency du Master et plafond à partir du 4e payout à confirmer par le support (traduction française)."
+      "needs_review": false,
+      "notes": "Option 2 (EOD, DLL et scaling). Compte Master : activation unique, 5 comptes Master-level maximum. Live après 3 payouts, sur décision de Bulenox."
     },
     {
       "id": "bulenox-qualification-eod-150k",
@@ -1109,7 +1109,7 @@
           "consistency": {
             "max_single_day_pct": 0.4,
             "applies_to": "payout",
-            "notes": "Meilleur jour au plus 40 % du P&L total de la période de payout, remis à zéro après chaque payout (à confirmer par le support (traduction française)). Le Safety Threshold Reserve compte au 1er payout."
+            "notes": "Meilleur jour au plus 40 % du P&L total de la période de payout, remis à zéro après chaque payout. Le Safety Threshold Reserve compte au 1er payout."
           },
           "min_trading_days": null,
           "max_duration_days": null,
@@ -1169,7 +1169,7 @@
             ],
             "max_payouts": null,
             "safety_net_balance": 154600,
-            "notes": "10 jours de trading avant chaque payout (comptés après le versement précédent). Minimum 1 000 $, plafond 2000 $ pour les 3 premiers, puis, à partir du 4e, moins de 50 % du profit total du compte Master (à confirmer par le support (traduction française)). Garder 154600 $ après le retrait (réserve 4600 $). Partage 90/10 dès le 1er payout : les 100 % sur les 10 000 premiers dollars ont disparu du site et des articles (« Keep up to 90% of profits », relevé du 2026-10-18). Versements le mercredi."
+            "notes": "10 jours de trading avant chaque payout (comptés après le versement précédent). Minimum 1 000 $, plafond 2000 $ pour les 3 premiers, puis, à partir du 4e, moins de 50 % du profit total du compte Master. Garder 154600 $ après le retrait (réserve 4600 $). Partage 90/10 dès le 1er payout : les 100 % sur les 10 000 premiers dollars ont disparu du site et des articles (« Keep up to 90% of profits », relevé du 2026-10-18). Versements le mercredi."
           }
         }
       ],
@@ -1181,8 +1181,8 @@
         "https://bulenox.com/help-center/momentum",
         "https://bulenox.com/help-center/funded"
       ],
-      "needs_review": true,
-      "notes": "Option 2 (EOD, DLL et scaling). Compte Master : activation unique, 5 comptes Master-level maximum. Live après 3 payouts, sur décision de Bulenox. Consistency du Master et plafond à partir du 4e payout à confirmer par le support (traduction française)."
+      "needs_review": false,
+      "notes": "Option 2 (EOD, DLL et scaling). Compte Master : activation unique, 5 comptes Master-level maximum. Live après 3 payouts, sur décision de Bulenox."
     },
     {
       "id": "bulenox-fast-track-trailing-25k",
@@ -2066,7 +2066,7 @@
             ],
             "max_payouts": null,
             "safety_net_balance": 26500,
-            "notes": "5 jours gagnants d'au moins 100 $ par cycle, solde minimum 26500 $ pour demander, minimum 500 $. Plafonds par numéro de payout : 1000, 1000, 1000, 1000 $ (le dernier reste ensuite). Partage 90/10 dès le 1er payout : les 100 % sur les 10 000 premiers dollars ont disparu du site et des articles (« Keep up to 90% of profits », relevé du 2026-10-18). Après le 1er payout, 1000 $ de nouveau profit net par cycle (à confirmer par le support (traduction française))."
+            "notes": "5 jours gagnants d'au moins 100 $ par cycle, solde minimum 26500 $ pour demander, minimum 500 $. Plafonds par numéro de payout : 1000, 1000, 1000, 1000 $ (le dernier reste ensuite). Partage 90/10 dès le 1er payout : les 100 % sur les 10 000 premiers dollars ont disparu du site et des articles (« Keep up to 90% of profits », relevé du 2026-10-18). Après le 1er payout, 1000 $ de nouveau profit net par cycle."
           }
         }
       ],
@@ -2187,7 +2187,7 @@
             ],
             "max_payouts": null,
             "safety_net_balance": 53000,
-            "notes": "5 jours gagnants d'au moins 150 $ par cycle, solde minimum 53000 $ pour demander, minimum 1000 $. Plafonds par numéro de payout : 1500, 2000, 2500, 3000 $ (le dernier reste ensuite). Partage 90/10 dès le 1er payout : les 100 % sur les 10 000 premiers dollars ont disparu du site et des articles (« Keep up to 90% of profits », relevé du 2026-10-18). Après le 1er payout, 2000 $ de nouveau profit net par cycle (à confirmer par le support (traduction française))."
+            "notes": "5 jours gagnants d'au moins 150 $ par cycle, solde minimum 53000 $ pour demander, minimum 1000 $. Plafonds par numéro de payout : 1500, 2000, 2500, 3000 $ (le dernier reste ensuite). Partage 90/10 dès le 1er payout : les 100 % sur les 10 000 premiers dollars ont disparu du site et des articles (« Keep up to 90% of profits », relevé du 2026-10-18). Après le 1er payout, 2000 $ de nouveau profit net par cycle."
           }
         }
       ],
@@ -2308,7 +2308,7 @@
             ],
             "max_payouts": null,
             "safety_net_balance": 104500,
-            "notes": "5 jours gagnants d'au moins 200 $ par cycle, solde minimum 104500 $ pour demander, minimum 1000 $. Plafonds par numéro de payout : 2000, 2500, 3000, 4000 $ (le dernier reste ensuite). Partage 90/10 dès le 1er payout : les 100 % sur les 10 000 premiers dollars ont disparu du site et des articles (« Keep up to 90% of profits », relevé du 2026-10-18). Après le 1er payout, 3500 $ de nouveau profit net par cycle (à confirmer par le support (traduction française))."
+            "notes": "5 jours gagnants d'au moins 200 $ par cycle, solde minimum 104500 $ pour demander, minimum 1000 $. Plafonds par numéro de payout : 2000, 2500, 3000, 4000 $ (le dernier reste ensuite). Partage 90/10 dès le 1er payout : les 100 % sur les 10 000 premiers dollars ont disparu du site et des articles (« Keep up to 90% of profits », relevé du 2026-10-18). Après le 1er payout, 3500 $ de nouveau profit net par cycle."
           }
         }
       ],
@@ -2429,7 +2429,7 @@
             ],
             "max_payouts": null,
             "safety_net_balance": 156500,
-            "notes": "5 jours gagnants d'au moins 250 $ par cycle, solde minimum 156500 $ pour demander, minimum 1000 $. Plafonds par numéro de payout : 2500, 3000, 4000, 5000 $ (le dernier reste ensuite). Partage 90/10 dès le 1er payout : les 100 % sur les 10 000 premiers dollars ont disparu du site et des articles (« Keep up to 90% of profits », relevé du 2026-10-18). Après le 1er payout, 5000 $ de nouveau profit net par cycle (à confirmer par le support (traduction française))."
+            "notes": "5 jours gagnants d'au moins 250 $ par cycle, solde minimum 156500 $ pour demander, minimum 1000 $. Plafonds par numéro de payout : 2500, 3000, 4000, 5000 $ (le dernier reste ensuite). Partage 90/10 dès le 1er payout : les 100 % sur les 10 000 premiers dollars ont disparu du site et des articles (« Keep up to 90% of profits », relevé du 2026-10-18). Après le 1er payout, 5000 $ de nouveau profit net par cycle."
           }
         }
       ],
@@ -2566,7 +2566,7 @@
             ],
             "max_payouts": null,
             "safety_net_balance": 26500,
-            "notes": "5 jours gagnants d'au moins 100 $ par cycle, solde minimum 26500 $ pour demander, minimum 500 $. Plafonds par numéro de payout : 1000, 1000, 1000, 1000 $ (le dernier reste ensuite). Partage 90/10 dès le 1er payout : les 100 % sur les 10 000 premiers dollars ont disparu du site et des articles (« Keep up to 90% of profits », relevé du 2026-10-18). Après le 1er payout, 1000 $ de nouveau profit net par cycle (à confirmer par le support (traduction française))."
+            "notes": "5 jours gagnants d'au moins 100 $ par cycle, solde minimum 26500 $ pour demander, minimum 500 $. Plafonds par numéro de payout : 1000, 1000, 1000, 1000 $ (le dernier reste ensuite). Partage 90/10 dès le 1er payout : les 100 % sur les 10 000 premiers dollars ont disparu du site et des articles (« Keep up to 90% of profits », relevé du 2026-10-18). Après le 1er payout, 1000 $ de nouveau profit net par cycle."
           }
         }
       ],
@@ -2703,7 +2703,7 @@
             ],
             "max_payouts": null,
             "safety_net_balance": 53000,
-            "notes": "5 jours gagnants d'au moins 150 $ par cycle, solde minimum 53000 $ pour demander, minimum 1000 $. Plafonds par numéro de payout : 1500, 2000, 2500, 3000 $ (le dernier reste ensuite). Partage 90/10 dès le 1er payout : les 100 % sur les 10 000 premiers dollars ont disparu du site et des articles (« Keep up to 90% of profits », relevé du 2026-10-18). Après le 1er payout, 2000 $ de nouveau profit net par cycle (à confirmer par le support (traduction française))."
+            "notes": "5 jours gagnants d'au moins 150 $ par cycle, solde minimum 53000 $ pour demander, minimum 1000 $. Plafonds par numéro de payout : 1500, 2000, 2500, 3000 $ (le dernier reste ensuite). Partage 90/10 dès le 1er payout : les 100 % sur les 10 000 premiers dollars ont disparu du site et des articles (« Keep up to 90% of profits », relevé du 2026-10-18). Après le 1er payout, 2000 $ de nouveau profit net par cycle."
           }
         }
       ],
@@ -2840,7 +2840,7 @@
             ],
             "max_payouts": null,
             "safety_net_balance": 104500,
-            "notes": "5 jours gagnants d'au moins 200 $ par cycle, solde minimum 104500 $ pour demander, minimum 1000 $. Plafonds par numéro de payout : 2000, 2500, 3000, 4000 $ (le dernier reste ensuite). Partage 90/10 dès le 1er payout : les 100 % sur les 10 000 premiers dollars ont disparu du site et des articles (« Keep up to 90% of profits », relevé du 2026-10-18). Après le 1er payout, 3500 $ de nouveau profit net par cycle (à confirmer par le support (traduction française))."
+            "notes": "5 jours gagnants d'au moins 200 $ par cycle, solde minimum 104500 $ pour demander, minimum 1000 $. Plafonds par numéro de payout : 2000, 2500, 3000, 4000 $ (le dernier reste ensuite). Partage 90/10 dès le 1er payout : les 100 % sur les 10 000 premiers dollars ont disparu du site et des articles (« Keep up to 90% of profits », relevé du 2026-10-18). Après le 1er payout, 3500 $ de nouveau profit net par cycle."
           }
         }
       ],
@@ -2977,7 +2977,7 @@
             ],
             "max_payouts": null,
             "safety_net_balance": 156500,
-            "notes": "5 jours gagnants d'au moins 250 $ par cycle, solde minimum 156500 $ pour demander, minimum 1000 $. Plafonds par numéro de payout : 2500, 3000, 4000, 5000 $ (le dernier reste ensuite). Partage 90/10 dès le 1er payout : les 100 % sur les 10 000 premiers dollars ont disparu du site et des articles (« Keep up to 90% of profits », relevé du 2026-10-18). Après le 1er payout, 5000 $ de nouveau profit net par cycle (à confirmer par le support (traduction française))."
+            "notes": "5 jours gagnants d'au moins 250 $ par cycle, solde minimum 156500 $ pour demander, minimum 1000 $. Plafonds par numéro de payout : 2500, 3000, 4000, 5000 $ (le dernier reste ensuite). Partage 90/10 dès le 1er payout : les 100 % sur les 10 000 premiers dollars ont disparu du site et des articles (« Keep up to 90% of profits », relevé du 2026-10-18). Après le 1er payout, 5000 $ de nouveau profit net par cycle."
           }
         }
       ],
