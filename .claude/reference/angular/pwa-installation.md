@@ -97,6 +97,6 @@ Maquette qui fait foi : `maquettes/mockup-installation-pwa.html` (v4). Décision
   build par la dépendance de dev `qrcode` (landing seulement), adresse `${APP_URL}/installer`, affiché
   seulement sur ordinateur (`min-width: 900px` et `hover: hover`), bouton toujours présent. Voir
   `astro/prop-firm.md`.
-- **E-mail** : ligne d'installation dans l'e-mail de bienvenue en attente de l'OK de Greg (consigne de #715).
+- **E-mail** : ligne d'installation dans l'e-mail de bienvenue (`welcomeFreeTemplate`, texte validé par Greg le 22/11), en lien texte suivi vers `/installer` (`utm_campaign=welcome`), un seul bouton dans l'e-mail.
 - Spec : `installer-page.component.spec.ts` (un écran par appareil, copie du lien).
 

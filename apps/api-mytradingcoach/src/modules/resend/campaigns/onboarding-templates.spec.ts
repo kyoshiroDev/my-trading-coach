@@ -94,6 +94,13 @@ describe('contenu de chaque e-mail', () => {
     expect(t).toContain('sans aucun prélèvement');
   });
 
+  it('bienvenue : ligne d’installation sur le téléphone, lien texte suivi vers /installer (#1198)', () => {
+    const { html } = EMAILS.welcome;
+    expect(text(html)).toContain('Sur ton téléphone, ajoute MyTradingCoach à ton écran d\'accueil : ton journal s\'ouvre en un geste, en plein écran. Voir comment faire');
+    expect(appLinks(html)).toContain(`${APP}/installer?utm_source=email&utm_medium=onboarding&utm_campaign=welcome`);
+    expect(buttons(html)).toBe(1); // lien texte, toujours un seul bouton
+  });
+
   it('bienvenue sans essai (réinscription récente) : aucune mention d’essai', () => {
     const t = text(welcomeFreeTemplate({ userName: 'Alex', appUrl: APP, trialEndsAt: null }).html);
     expect(t).not.toMatch(/Premium offerts|jours offerts/);
