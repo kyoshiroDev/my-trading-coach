@@ -16,8 +16,12 @@
   initial même derrière `@defer` : l'importer par un chemin direct (ex. `@mtc/front-ui/confirm-dialog`,
   alias dans `tsconfig.base.json` ET `vitest.config.mts`).
 - **Point sensible : la page d'inscription** est volontairement chargée d'office (fae5a8c8, −1,3 s en
-  4G lente) et embarque `@angular/forms` (~43 ko) pour son formulaire. N'y toucher qu'avec l'accord
-  de Greg (conversion des inscriptions).
+  4G lente). Depuis #765 (accord de Greg du 22/11), elle n'embarque plus `@angular/forms` : champs liés
+  aux signaux par `[value]` / `(input)`, case marketing par `[checked]` / `(change)`, envoi par
+  `(submit)` avec `preventDefault`, `<form novalidate>` (sans lui, les bulles de validation natives
+  reviennent). Verrou : `bundle-initial.spec.ts` (aucun import de `@angular/forms` dans la page et ses
+  composants) ; formulaire : `register-form.spec.ts`. Autoremplissage : à vérifier sur iPhone et Android
+  réels à chaque changement de ce formulaire.
 - Polices : `src/styles/fonts.css` GÉNÉRÉ (`tools/scripts/generate-font-faces.mjs`), latin + latin-ext
   seulement ; `src/styles/fonts.spec.ts`. Verrous du chargement à la demande : `src/app/bundle-initial.spec.ts`.
 - Mesures : 495,04 ko le 26/10 (`dev` ce2d8f2e) → 479,17 ko après le lot 1 (polices −13,19 ; page 404
@@ -25,6 +29,8 @@
   de `RouterModule` dans `App` : 0, non retenu). Marge 20,83 ko.
   Remontée à 494,57 ko le 22/11 (marge 5,43 ko, sous l'alerte) → **486,70 ko** après #766 (conteneur de
   toasts au premier toast, `@defer (when toasts.visible().length; prefetch on idle)`, −7,87 ko). Marge 13,30 ko.
+  → **441,61 ko** après #765 (inscription sans `@angular/forms`, −45,24 ko, mesuré le 22/11 sur 486,85 ko). Marge 58,39 ko,
+  sous le seuil d'avertissement de 450 ko.
 - Toasts (#766) : « un seul toast sur téléphone » est posé par `ToastService` (créé avant le premier toast),
   pas par le conteneur chargé à la demande ; le préchargement au repos garantit le toast d'erreur réseau
   même hors ligne (contre-épreuve Chromium : 0 requête après coupure, animation et barre conservées).

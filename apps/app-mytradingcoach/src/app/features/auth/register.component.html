@@ -39,14 +39,15 @@
     <div class="error-msg google-error" role="alert">{{ googleError() }}</div>
   }
 
-  <form (ngSubmit)="onRegister()">
+  <!-- Sans @angular/forms (#765) : novalidate, sinon les bulles de validation du navigateur reviendraient. -->
+  <form novalidate (submit)="submit($event)">
     <div class="form-group">
       <label for="name">Prénom <span class="optional">(optionnel)</span></label>
       <input
         id="name"
         type="text"
-        [ngModel]="name()"
-        (ngModelChange)="name.set($event)"
+        [value]="name()"
+        (input)="name.set(val($event))"
         name="name"
         placeholder="Alex"
         autocomplete="given-name"
@@ -61,8 +62,8 @@
         [attr.aria-describedby]="emailError() ? 'email-error' : null"
         data-testid="register-email"
         type="email"
-        [ngModel]="email()"
-        (ngModelChange)="email.set($event)"
+        [value]="email()"
+        (input)="email.set(val($event))"
         name="email"
         placeholder="trader@email.com"
         autocomplete="email"
@@ -84,8 +85,8 @@
           [attr.aria-describedby]="passwordError() ? 'password-error' : null"
           data-testid="register-password"
           [type]="showPassword() ? 'text' : 'password'"
-          [ngModel]="password()"
-          (ngModelChange)="password.set($event)"
+          [value]="password()"
+          (input)="password.set(val($event))"
           name="password"
           placeholder="••••••••"
           autocomplete="new-password"
@@ -123,8 +124,8 @@
           "
           data-testid="register-confirm"
           [type]="showConfirm() ? 'text' : 'password'"
-          [ngModel]="confirmPassword()"
-          (ngModelChange)="confirmPassword.set($event)"
+          [value]="confirmPassword()"
+          (input)="confirmPassword.set(val($event))"
           name="confirmPassword"
           placeholder="••••••••"
           autocomplete="new-password"
@@ -155,8 +156,8 @@
       <input
         type="checkbox"
         name="marketingConsent"
-        [ngModel]="marketingConsent()"
-        (ngModelChange)="marketingConsent.set($event)"
+        [checked]="marketingConsent()"
+        (change)="marketingConsent.set(checked($event))"
       />
       <span>
         <strong class="consent-title"
