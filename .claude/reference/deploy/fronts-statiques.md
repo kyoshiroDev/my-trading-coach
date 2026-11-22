@@ -72,13 +72,22 @@ côté SPA, `/_assets/` côté landing : c'est le `build.assets` d'Astro, pas `/
 par empreinte (`sha256-…`) : modifier le script `mtc-register-view` de l'index de l'app, ou ajouter un script ou un
 `on…=` inline dans un index, demande de recalculer l'empreinte dans la conf (le test
 `apps/app-mytradingcoach/src/csp-nginx.spec.ts` échoue sinon), puis de reporter la conf sur les deux VPS. Un nouvel
-environnement d'API (`apiUrl` / `wsUrl`) ou un nouveau service tiers appelé par le navigateur s'ajoute à `connect-src`. État au 21/11/2026 : Report-Only appliqué sur
-l'ancien VPS (admin, app dev, app beta) le 21/11 à 21 h 36, VPS prod (app) à suivre. Relevé sur dev.app (compte démo,
+environnement d'API (`apiUrl` / `wsUrl`) ou un nouveau service tiers appelé par le navigateur s'ajoute à `connect-src`. État au 22/11/2026 : Report-Only appliqué sur
+l'ancien VPS (admin, app dev, app beta) le 21/11 à 21 h 36, conf finale (Stripe et police) le 22/11 à 10 h 35 ; VPS prod (app)
+le 22/11 à 11 h 36. Relevé sur dev.app (compte démo,
 12 pages, tableau de bord compris) : seules violations, Stripe.js et ses frames (page de paiement intégrée, origines Stripe ajoutées ensuite) et un
-`script-src eval` signalé par Zod 4 (test `allowsEval` dans un `try/catch`, sans effet : Zod se rabat sans `eval`, à ignorer).
+`script-src eval` signalé par Zod 4 (test `allowsEval` dans un `try/catch`, sans effet : Zod se rabat sans `eval`),
+supprimé par `z.config({ jitless: true })` dans `core/schemas/trade.schema.ts` (seul module zod de l'app, chargé à la
+demande : pas dans `main.ts`, pour ne pas grossir le bundle initial ; un nouveau module zod chargé avant lui refait ce réglage).
 Paiement test complet sur dev.app le 22/11 (clé `pk_test_`, carte 3D Secure, Link et Google Pay affichés,
 compte jetable supprimé) : une seule violation, `connect-src fonts.googleapis.com` (police lue par Stripe Elements),
-ajoutée ensuite. La PR de phase 2 (mode bloquant) met cet état à jour.
+ajoutée ensuite. Admin connecté relevé le 22/11 sur banc local (build prod de l'admin servi par nginx avec cette conf,
+`connect-src` complété de l'API locale, compte admin du seed local, script espion `securitypolicyviolation` chargé en
+tête de l'index, contrôlé par une violation volontaire) : 18 pages (les 17 routes + une fiche utilisateur), aucune
+violation. L'aperçu des e-mails est une iframe `srcdoc` isolée (`sandbox=""`, sans script) qui hérite de la politique :
+son logo vient de `${FRONTEND_URL}/logo-email.png` (app.mytradingcoach.app en prod) : un `img-src` resserré en phase 2
+doit garder cette origine. Piège du relevé : le service worker de l'admin sert l'index en cache, le désinscrire avant.
+La PR de phase 2 (mode bloquant) met cet état à jour.
 
 Fichiers à nom fixe, avant la règle des assets (`location =`, prioritaire sur la regex) : les service
 workers (`ngsw-worker.js`, `push-sw.js`, …) en `no-cache`, sinon la règle des `.js` leur donnait un

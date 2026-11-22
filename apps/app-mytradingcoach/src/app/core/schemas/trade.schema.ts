@@ -30,6 +30,13 @@ import { z } from 'zod';
  * tester les cas limites d'un trade venant de la synchro et d'un import CSV.
  */
 
+// CSP (#1068) : sans ce réglage, zod teste `new Function` à la construction de z.object (validation
+// accélérée) et la CSP, sans 'unsafe-eval', le signale. jitless = validation sans eval, même
+// résultat. Placé ici, avant tout z.object, et non dans main.ts : ce module est le seul à utiliser
+// zod et se charge à la demande, alors qu'un import dans main.ts gonflerait le bundle initial.
+// Un nouveau module zod chargé avant celui-ci devra faire le même réglage.
+z.config({ jitless: true });
+
 // ngModel sur <input type="number"> produit null quand le champ est vidé.
 // On normalise null → undefined pour que .optional() accepte les champs vides.
 const nullToUndef = (v: unknown) => (v == null ? undefined : v);
