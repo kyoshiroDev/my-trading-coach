@@ -43,9 +43,6 @@ import type { SyncPauseAccount } from './tradovate-sync-pause';
 /** Ce que la vue lit du compte pour dire si la synchro est en pause (#684). */
 const SYNC_PAUSE_ACCOUNT_SELECT = { status: true, statusChangedAt: true } as const;
 
-/** #1004 : préfixe des compteurs du `state` renvoyé par Tradovate au callback (voir `countStateReturned`). */
-export const TRADOVATE_STATE_COUNTER_KEY = 'tradovate:oauth-callback:state';
-
 // Réexports : les appelants existants importent ces noms depuis le service.
 export { ACCOUNT_GONE_GRACE_MS, REFUSAL_COOLDOWN_S } from './tradovate-connection.constants';
 export type { CallbackOutcome, FirstSyncSummary, TradovateConnectionView } from './tradovate-connection.view';
@@ -101,27 +98,14 @@ export class TradovateConnectionService {
   }
 
   /**
-   * #1004 : compteur durable du constat de `completeAuthorization` (son log est effacé à chaque déploiement, qui
-   * recrée les conteneurs). Clés Redis sans TTL `tradovate:oauth-callback:state:oui|non`, lues
-   * à la main ; à retirer avec le log quand `state` sera exigé. Une panne Redis ne casse jamais
-   * le callback.
-   */
-  private async countStateReturned(returned: boolean): Promise<void> {
-    try {
-      await this.redis.client.incr(`${TRADOVATE_STATE_COUNTER_KEY}:${returned ? 'oui' : 'non'}`);
-    } catch (err) {
-      this.logger.warn(`Compteur du state Tradovate non incrémenté : ${(err as Error).message}`);
-    }
-  }
-
-  /**
    * Retour de Tradovate. Ne lève jamais : renvoie toujours un résultat, converti en URL de
    * l'app par `frontendRedirect`. L'utilisateur ne voit jamais une page d'erreur de l'API.
    *
    * `cookieState` (posé par l'API au démarrage, httpOnly) est OBLIGATOIRE : il prouve que ce
    * navigateur a lui-même lancé la connexion. Sans lui, un tiers pourrait envoyer son propre
    * lien de consentement à une victime et recevoir les trades Tradovate de celle-ci dans son
-   * compte MTC. Si Tradovate renvoie aussi `state`, les deux doivent être identiques.
+   * compte MTC. Le `state` renvoyé par Tradovate est OBLIGATOIRE aussi et doit égaler le cookie
+   * (#1004) : sans lui, un code tiers passait tant que le cookie d'une tentative abandonnée vivait.
    */
   async completeAuthorization(
     query: { code?: string; state?: string; error?: string },
@@ -131,14 +115,14 @@ export class TradovateConnectionService {
     // Sans state lisible, on ne sait pas d'où il vient : les réglages, jamais une page morte.
     if (!payload) return { status: 'error', reason: 'session_expired', origin: 'settings' };
     const { userId, accountId, origin } = payload;
-    // #994 (S4) : la doc ne dit pas si Tradovate renvoie `state`. Constat avant de l'exiger : un
-    // `state` absent laisse passer un code tiers tant qu'un cookie d'une tentative abandonnée vit.
-    this.logger.log(`Callback Tradovate : state renvoyé = ${query.state ? 'oui' : 'non'}`);
-    await this.countStateReturned(Boolean(query.state));
     if (query.state && query.state !== cookieState) {
       return { status: 'error', reason: 'state_mismatch', accountId, origin };
     }
+    // Refus chez Tradovate : rien n'est échangé, le message de refus reste juste même sans `state`.
     if (query.error) return { status: 'error', reason: 'denied', accountId, origin };
+    // #1004 (S4 de #994) : Tradovate renvoie `state` (constaté en prod le 22/11) : exigé avant
+    // tout échange de code.
+    if (query.state !== cookieState) return { status: 'error', reason: 'state_mismatch', accountId, origin };
     if (!query.code) return { status: 'error', reason: 'missing_code', accountId, origin };
 
     const account = await this.prisma.tradingAccount.findFirst({
