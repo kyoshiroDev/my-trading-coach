@@ -33,3 +33,13 @@ export function devicePlace(env: BrowserEnv): DevicePlace {
   if (isIos(env)) return isIosOtherBrowser(env) ? 'ios-other' : 'ios';
   return isAndroid(env) ? 'android' : 'desktop';
 }
+
+/** Appli dont le navigateur intégré est ouvert, pour le texte « il faut quitter … ». */
+export function inAppName(ua: string): string {
+  if (/Instagram/i.test(ua)) return 'Instagram';
+  if (/FBAN|FBAV|FB_IAB/i.test(ua)) return 'Facebook';
+  if (/musical_ly|BytedanceWebview/i.test(ua)) return 'TikTok';
+  if (/Twitter/i.test(ua)) return 'X';
+  if (/LinkedInApp/i.test(ua)) return 'LinkedIn';
+  return 'cette application';
+}
