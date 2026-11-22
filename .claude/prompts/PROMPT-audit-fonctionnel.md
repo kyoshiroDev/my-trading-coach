@@ -195,3 +195,9 @@ Texte exact de Greg : « ok continue alors »
 Texte exact de Greg : « oui je t'autorise pour #1004 »
 
 Lecture seule sur le VPS prod : 0 ligne « state renvoyé » dans les logs des conteneurs API (recréés au déploiement du 22/11 à 15 h 40 UTC, pilote json-file : logs d'avant perdus), 0 callback dans le journal d'accès Traefik (stdout, redémarré à 11 h 09), aucune connexion Tradovate neuve en base depuis le 14/11. Sur la recommandation du relecteur : compteur Redis durable `tradovate:oauth-callback:state:oui|non` au callback (après le contrôle du cookie, try/catch), log gardé, pas d'affichage admin. Redis prod persistant (`appendonly yes`, `save`) : le compteur survit aux redémarrages.
+
+## Complément #1004, state obligatoire (2026-11-22)
+
+Texte exact de Greg : « j'ai un compte connecter avec [adresse e-mail de Greg, masquée : dépôt public] en prod »
+
+Compteur lu en prod après la promotion #1220 (lecture seule, autorisation #1004) : `oui=1`, `non` vide ; log « Callback Tradovate : state renvoyé = oui » à 21 h 30 UTC. Tradovate renvoie `state` : il devient obligatoire (égal au cookie) avant tout échange de code ; log et compteur retirés. Un refus `error` sans `state` reste « refusé » (aucun échange). La clé Redis restante (`tradovate:oauth-callback:state:oui`) est inoffensive : la supprimer serait une écriture en prod, laissée en place.
