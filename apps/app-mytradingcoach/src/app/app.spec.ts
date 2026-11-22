@@ -6,6 +6,7 @@ import { provideRouter, Router } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { ToastsComponent } from './shared/components/toasts/toasts.component';
 import { CheckoutReturnService } from './core/services/checkout-return.service';
+import { ToastService } from './core/services/toast.service';
 
 // Le conteneur de toasts a un templateUrl/styleUrl : en JIT sous vitest, ses ressources
 // doivent être résolues avant que le composant racine ne le référence (même parade que les
@@ -39,10 +40,20 @@ describe('App', () => {
     expect(fixture.componentInstance).toBeTruthy();
   });
 
-  it('monte le conteneur de toasts UNE seule fois, à la racine (hors routeur)', () => {
+  it('conteneur de toasts : absent au démarrage, monté UNE fois au premier toast, puis gardé (#766)', async () => {
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
-    expect((fixture.nativeElement as HTMLElement).querySelectorAll('mtc-toasts')).toHaveLength(1);
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelectorAll('mtc-toasts')).toHaveLength(0);
+    const toast = TestBed.inject(ToastService);
+    const id = toast.error('Connexion au serveur impossible');
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(el.querySelectorAll('mtc-toasts')).toHaveLength(1);
+    toast.dismiss(id);
+    fixture.detectChanges();
+    expect(el.querySelectorAll('mtc-toasts')).toHaveLength(1); // reste monté pour les suivants
   });
 
   it("retire l'écran de chargement d'index.html une fois la première page affichée", async () => {

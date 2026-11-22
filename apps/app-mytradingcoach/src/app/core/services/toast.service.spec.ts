@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { MAX_VISIBLE_TOASTS, TOAST_ACTION_MIN_DURATION, TOAST_DURATIONS, ToastService } from './toast.service';
+import { MAX_VISIBLE_TOASTS, PHONE_QUERY, TOAST_ACTION_MIN_DURATION, TOAST_DURATIONS, ToastService } from './toast.service';
 
 describe('ToastService — file, durées, pause', () => {
   let toast: ToastService;
@@ -139,6 +139,25 @@ describe('ToastService — file, durées, pause', () => {
       expect(svc.queued()).toBe(2);
       svc.dismiss(svc.visible()[0].id);
       expect(svc.visible().map((t) => t.message)).toEqual(['b']);
+    });
+
+    it('téléphone : un seul toast visible dès la création du service, sans attendre le conteneur (#766)', () => {
+      // Le conteneur n'est chargé qu'au premier toast (@defer) : la règle doit venir du service, sinon
+      // les toasts 2 et 3 lanceraient leur minuteur sans être vus.
+      const mm = vi.fn().mockReturnValue({ matches: true, addEventListener: vi.fn(), removeEventListener: vi.fn() });
+      vi.stubGlobal('matchMedia', mm);
+      try {
+        const svc = new ToastService();
+        expect(mm).toHaveBeenCalledWith(PHONE_QUERY);
+        const avant = vi.getTimerCount();
+        svc.info('a'); svc.info('b'); svc.info('c');
+        expect(svc.visible().map((t) => t.message)).toEqual(['a']);
+        expect(svc.queued()).toBe(2);
+        expect(vi.getTimerCount() - avant).toBe(1); // seul le toast affiché décompte
+        svc.clear();
+      } finally {
+        vi.unstubAllGlobals();
+      }
     });
 
     it('refus « mode démo » : pas de toast, l’invite d’inscription le dit déjà', () => {

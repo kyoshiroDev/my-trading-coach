@@ -23,7 +23,9 @@ import { ConfirmService } from '@mtc/front-ui';
 // Chemin direct, pas le barrel : un composant importé par `@mtc/front-ui` resterait dans le bundle
 // initial, même derrière `@defer`.
 import { ConfirmDialogComponent } from '@mtc/front-ui/confirm-dialog';
+// Chemin direct (pas de barrel) : sinon le conteneur resterait dans le bundle initial malgré `@defer` (#766).
 import { ToastsComponent } from './shared/components/toasts/toasts.component';
+import { ToastService } from './core/services/toast.service';
 import { InternalBadgeComponent } from './shared/components/internal-badge/internal-badge.component';
 import { SignupFunnelService } from './core/services/signup-funnel.service';
 import { InstallCapture } from './core/install/install-capture';
@@ -36,9 +38,15 @@ import { InstallSheetComponent } from './features/install/install-sheet.componen
   selector: 'mtc-root',
   changeDetection: ChangeDetectionStrategy.OnPush,
   // Toasts et dialogue de confirmation montés UNE fois, hors du routeur : ils survivent aux navigations.
-  // Dialogue de confirmation et feuille d'installation : chargés à la demande (`@defer`, budget du
-  // bundle), à leur première ouverture. Le dialogue reste ensuite monté.
-  template: `<router-outlet /><mtc-toasts /><mtc-internal-badge />
+  // Toasts, dialogue de confirmation et feuille d'installation : chargés à la demande (`@defer`, budget
+  // du bundle), à leur première ouverture, puis restent montés. Toasts préchargés au repos
+  // (`prefetch on idle`, #766) : le toast « Connexion au serveur impossible » doit s'afficher même
+  // quand le réseau vient de tomber.
+  template: `<router-outlet />
+    @defer (when toasts.visible().length; prefetch on idle) {
+      <mtc-toasts />
+    }
+    <mtc-internal-badge />
     @defer (when confirm.pending()) {
       <mtc-confirm-dialog />
     }
@@ -56,6 +64,8 @@ export class App implements OnInit {
   private readonly injector = inject(Injector);
   /** Créé au démarrage : il garde `beforeinstallprompt`, envoyé tôt par Chrome (le parcours, lui, est paresseux). */
   protected readonly install = inject(InstallCapture);
+  /** Lu par le `@defer` des toasts : le premier toast charge le conteneur (#766). */
+  protected readonly toasts = inject(ToastService);
   /** Lu par le `@defer` du dialogue : la première demande de confirmation le charge. */
   protected readonly confirm = inject(ConfirmService);
   private readonly browser = inject(PUSH_BROWSER);
