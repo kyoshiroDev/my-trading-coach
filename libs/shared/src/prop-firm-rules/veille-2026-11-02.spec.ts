@@ -110,14 +110,14 @@ describe('Bulenox', () => {
     expect(phaseOf('bulenox-fast-track-eod-150k', 'direct').max_drawdown.amount).toBe(5500);
   });
 
-  it('Master : consistency remise à zéro et plafond du 4e payout, à confirmer', () => {
+  it('Master : consistency remise à zéro et plafond du 4e payout (confirmés le 2026-11-22, #1218)', () => {
     const funded = phaseOf('bulenox-qualification-trailing-50k', 'funded');
     expect(funded.consistency?.notes).toContain('remis à zéro après chaque payout');
-    expect(funded.consistency?.notes).toContain('à confirmer');
+    expect(funded.consistency?.notes).not.toContain('à confirmer');
     expect(funded.payout?.notes).toContain('moins de 50 % du profit total');
     expect(funded.payout?.notes).not.toContain('puis aucun');
     expect(funded.payout?.max_amount_schedule).toEqual([1500, 1500, 1500, null]);
-    expect(get('bulenox-qualification-trailing-50k').needs_review).toBe(true);
+    expect(get('bulenox-qualification-trailing-50k').needs_review).toBe(false);
   });
 
   describe('non-régression des alertes : plancher et marge', () => {

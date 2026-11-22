@@ -571,3 +571,15 @@ Pages lues dans Chrome le 2026-11-02. La source de chaque modification est aussi
 | Lucid | https://lucidtrading.com/ | 150K Pro avec DLL à 365 $ ; prix différent sans DLL. | Prix du seul `lucid-pro-dll-150k`. `verified_at` inchangé : relecture partielle |
 
 Catalogue à 311 plans. Restent à vérifier : Bulenox Funded, Lucid (63 plans), Apex (28 articles), Tradeify (7 articles sur 13), Phidias.
+
+## Veille du 2026-11-22 : Phidias, OneUp Trader, Bulenox (lot 1, #1218)
+
+Relecture complète des trois firms, sans navigateur, par les sources documentées dans le README : script `shared-scripts-3.js` (version EN, USD) et API du centre d'aide pour Phidias ; Help Scout (désormais `help.oneuptrader.com`, redirection 301) et tableau de la page d'accueil pour OneUp ; CMS Directus et bundle `index-*.js` pour Bulenox. Les 49 plans ont été comparés champ par champ ; `verified_at` passe au 2026-11-22 pour les trois firms.
+
+| Firm | Source | Constat | Effet |
+|---|---|---|---|
+| Phidias | `shared-scripts-3.js` (DATA) et articles 3, 4, 6, 9, 10, 17, 19, 20, Premium | Drawdowns, objectifs, jours, contrats, planchers, seuils de retrait, PnL quotidien minimum, frais d'activation (83 / 149 / 149 / 169 $) : identiques pour les 10 plans. Prix en paiement unique du script identiques au catalogue (Premium 150K 550 $, Fundamental 150K 437 $) ; la page affiche 1 123 $ et 863 $ « without code », non repris faute d'accord avec le script. Bascule en live : 5 payouts / 100 000 $ (article 6). « 10K Drawdown Challenge » toujours présent, toujours exclu (concours). | Aucune valeur modifiée |
+| OneUp Trader | Page d'accueil et articles 371, 372, 376, 385, 386, 388, 389, 390, 391 | Tailles, objectifs, drawdowns, contrats, jours minimum, prix Evaluation et Pro : identiques. Article 376 (modifié le 2026-11-05) : un retrait gratuit par semaine calendaire, chaque retrait suivant coûte 10 % de la part du trader (« Priority Withdrawal »). Express toujours sans prix publié. | Notes de payout des 15 plans complétées |
+| Bulenox | CMS Directus (qualification, master, funded, fast-track, momentum) et bundle `index-*.js` | Tous les tableaux identiques au catalogue (prix, objectifs, drawdowns, DLL, scaling, plafonds, réserves, objectifs de cycle). Le centre d'aide anglais confirme la consistency Master à 40 % par période de payout et le plafond « moins de 50 % du profit total » à partir du 4e payout, ainsi que les objectifs de cycle Momentum. | Réserves « à confirmer par le support » retirées ; 8 plans Qualification sortent de `needs_review`. Momentum reste en `needs_review` (gel du drawdown non publié) |
+
+Catalogue à 311 plans.
