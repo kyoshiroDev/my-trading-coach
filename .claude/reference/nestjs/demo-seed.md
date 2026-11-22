@@ -97,8 +97,8 @@ affichaient **0 $ / 0 trade / 0 compte**. Deux pages qui se contredisent.
 `Apex 50k · Éval #2` (EVALUATION), `Tradeify 50k · Funded` (FUNDED) et `Elite 25k · Static`
 (EVALUATION, plancher statique, journées tirées à part), **futures d'indices US uniquement**
 (MES / MNQ, quelques ES / NQ). Le compte perso Forex & Crypto et l'or ont été retirés : la
-démo s'adresse à des traders de futures prop firm. Plusieurs comptes plutôt qu'un : le
-multi-comptes est l'une des ancres Premium (`plans.md`).
+démo s'adresse à des traders de futures prop firm. Plusieurs comptes plutôt qu'un : les
+comptes illimités sont l'une des ancres Premium (`plans.md`).
 
 **Comptes perdus de la démo (compte perdu, phase 3)** : `demo-data/lost-accounts.ts` ajoute
 `Apex 50k · Éval #1` (FAILED, plancher dépassé), dont l'Apex actif `#2` est la nouvelle tentative,
