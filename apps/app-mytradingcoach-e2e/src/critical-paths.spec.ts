@@ -53,7 +53,7 @@ test('HP4 — FREE voit les blocs verrouillés sur analytics', async ({
   await login(page, FREE_USER);
   await page.goto('/analytics');
   await expect(
-    page.locator('[data-testid="locked-overlay"]').first(),
+    page.locator('[data-testid="premium-lock"]').first(),
   ).toBeVisible();
 });
 

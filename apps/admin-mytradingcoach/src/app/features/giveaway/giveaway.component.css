@@ -39,8 +39,11 @@
 
 .tbl-wrap { overflow-x: auto; }
 .tbl th.num, .tbl td.num { text-align: right; }
+.tbl td.nowrap { white-space: nowrap; }
+/* Cellules à plusieurs éléments : un seul bloc, pour que la carte mobile (td en flex) ne les répartisse pas. */
+.cell { min-width: 0; }
 .btn-sm { padding: var(--space-1) var(--space-2); margin-top: var(--space-1); }
-.msg-cell { max-width: 260px; }
+.msg-cell { max-width: 260px; min-width: 200px; }
 .msg { display: block; font-size: var(--fs-xs); color: var(--text2); line-height: 1.5; overflow-wrap: anywhere; }
 .mod-row { display: flex; align-items: center; gap: var(--space-1); flex-wrap: wrap; }
 
@@ -48,3 +51,23 @@
 .st-ok { background: var(--teal-dim); color: var(--teal); }
 .st-warn { background: var(--amber-dim); color: var(--amber); }
 .st-err { background: var(--red-dim); color: var(--red); }
+
+/* ── Publication Instagram (lot C) ── */
+.ig-body { display: grid; grid-template-columns: minmax(0, 280px) minmax(0, 1fr); gap: var(--space-4); align-items: start; }
+@media (max-width: 1024px) { .ig-body { grid-template-columns: minmax(0, 1fr); } }
+.ig-img { width: 100%; height: auto; border-radius: var(--r-sm); border: 1px solid var(--border2); }
+.ig-side { display: flex; flex-direction: column; gap: var(--space-3); min-width: 0; }
+.ig-field { display: flex; flex-direction: column; gap: var(--space-1); }
+.ig-lbl { font-size: var(--fs-xs); color: var(--text3); }
+.ig-input { background: var(--bg3); border: 1px solid var(--border2); border-radius: var(--r-sm); padding: var(--space-2); color: var(--text); font-size: var(--fs-sm); font-family: inherit; resize: vertical; min-width: 0; }
+.ig-input:focus-visible { outline: 2px solid var(--teal); outline-offset: 1px; }
+.ig-note { font-size: var(--fs-sm); color: var(--text2); margin: 0; }
+.ig-actions { display: flex; gap: var(--space-2); flex-wrap: wrap; }
+@media (max-width: 768px) { .ig-input { font-size: 16px; } }
+
+/* Carte mobile de l'historique : en fin de fichier pour passer après les règles de bureau (même spécificité). */
+@media (max-width: 768px) {
+  .cell { text-align: right; overflow-wrap: anywhere; }
+  .cell .mod-row { justify-content: flex-end; }
+  .msg-cell { max-width: none; min-width: 0; }
+}

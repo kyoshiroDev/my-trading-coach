@@ -50,7 +50,7 @@ describe('paywalls : un seul libellé, « 30 jours d’essai » (Q1, E3)', () =>
       expect(html).not.toContain('1 mois offert');
     });
   }
-  const PAYWALLS = { ANALYTICS, SCORING, AI_INSIGHTS, DEBRIEF, PROFILE, AUTOPSY }; // cadenas : premium-lock.component.spec
+  const PAYWALLS = { SCORING, AI_INSIGHTS, DEBRIEF, PROFILE, AUTOPSY }; // cadenas (statistiques comprises, #1178) : premium-lock.component.spec
   for (const [name, html] of Object.entries(PAYWALLS)) {
     it(`${name} : bouton de paywall = paywall.label()`, () => {
       expect(html).toContain('paywall.label()');

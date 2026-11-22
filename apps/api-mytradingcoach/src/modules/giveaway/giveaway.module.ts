@@ -3,6 +3,9 @@ import { PrismaModule } from '../../prisma/prisma.module';
 import { ResendModule } from '../resend/resend.module';
 import { StripeModule } from '../stripe/stripe.module';
 import { UsersModule } from '../users/users.module';
+import { PdfModule } from '../pdf/pdf.module';
+import { GiveawayInstagramService } from './giveaway-instagram.service';
+import { MetricoolClient } from './metricool.client';
 import { AdminGiveawayController } from './admin-giveaway.controller';
 import { GiveawayController, PublicGiveawayController } from './giveaway.controller';
 import { GiveawayPublicService } from './giveaway-public.service';
@@ -15,7 +18,7 @@ import { GiveawaySettingsService } from './giveaway-settings.service';
 
 /** Tirage au sort mensuel (PROMPT-tirage-mensuel) : éteint par défaut, piloté dans l'admin. */
 @Module({
-  imports: [PrismaModule, ResendModule, StripeModule, UsersModule],
+  imports: [PrismaModule, ResendModule, StripeModule, UsersModule, PdfModule],
   controllers: [AdminGiveawayController, GiveawayController, PublicGiveawayController],
   providers: [
     GiveawaySettingsService,
@@ -25,6 +28,8 @@ import { GiveawaySettingsService } from './giveaway-settings.service';
     GiveawayAdminService,
     GiveawayCron,
     GiveawayPublicService,
+    GiveawayInstagramService,
+    MetricoolClient,
   ],
   exports: [GiveawaySettingsService, GiveawayEligibilityService],
 })

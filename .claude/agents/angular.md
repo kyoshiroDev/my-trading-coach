@@ -157,7 +157,7 @@ autres icônes). L'aperçu derrière l'overlay est un **mock** (jamais la vraie 
 <div data-testid="win-rate" />
 <div data-testid="pnl-total" />
 <table data-testid="heatmap" />
-<div data-testid="locked-overlay" />
+<div data-testid="premium-lock" />
 
 <!-- Dashboard V2 — Session Mode (BETA_TESTER + ADMIN) -->
 <button data-testid="tab-dashboard" />

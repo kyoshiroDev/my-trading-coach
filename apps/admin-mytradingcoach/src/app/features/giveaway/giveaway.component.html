@@ -70,7 +70,45 @@
       }
     </div>
 
-    <div class="card fill">
+    @if (igWin(); as w) {
+      <div class="card ig-panel" data-testid="ig-panel">
+        <div class="card-head">
+          <span class="card-label">Publier sur Instagram · {{ w.displayName }}</span>
+          <button type="button" class="btn btn-sm" (click)="closeInstagram()" data-testid="ig-close">Fermer</button>
+        </div>
+        <div class="card-body ig-body">
+          @if (igPreview(); as p) {
+            <img class="ig-img" [src]="p.imageUrl" alt="Visuel Instagram du gagnant" width="1080" height="1350" data-testid="ig-image" />
+            <div class="ig-side">
+              <label class="ig-field">
+                <span class="ig-lbl">Légende{{ p.aiGenerated ? ' (rédigée par l’IA, modifiable)' : ' (modèle, modifiable)' }}</span>
+                <textarea class="ig-input" rows="8" [value]="igCaption()" (input)="igCaption.set($any($event.target).value)" data-testid="ig-caption"></textarea>
+              </label>
+              @if (igError(); as e) { <p class="err-text" role="alert" data-testid="ig-error">{{ e }}</p> }
+              @if (p.metricoolAvailable && !igFallback()) {
+                <label class="ig-field">
+                  <span class="ig-lbl">Heure de publication (facultatif, sinon dans 2 minutes)</span>
+                  <input class="ig-input" type="datetime-local" [value]="igPublishAt()" (input)="igPublishAt.set($any($event.target).value)" data-testid="ig-publish-at" />
+                </label>
+                <button type="button" class="btn btn-primary" [disabled]="busy() !== null" (click)="confirmInstagram()" data-testid="ig-confirm">
+                  {{ busy() === 'ig-pub-' + w.id ? 'Envoi…' : 'Confirmer la publication' }}
+                </button>
+              } @else {
+                <p class="ig-note" data-testid="ig-fallback">{{ p.metricoolAvailable ? 'Metricool a refusé la publication' : 'Metricool n’est pas configuré' }}&nbsp;: publie à la main.</p>
+                <div class="ig-actions">
+                  <button type="button" class="btn" (click)="downloadImage()" data-testid="ig-download">Télécharger l’image</button>
+                  <button type="button" class="btn" (click)="copyCaption()" data-testid="ig-copy">{{ igCopied() ? 'Légende copiée' : 'Copier la légende' }}</button>
+                </div>
+              }
+            </div>
+          } @else {
+            <div class="empty">Préparation de l’aperçu…</div>
+          }
+        </div>
+      </div>
+    }
+
+    <div class="card">
       <div class="card-head"><span class="card-label">Historique</span></div>
       <div class="tbl-wrap">
         <table class="tbl" data-testid="giveaway-history">
@@ -83,21 +121,21 @@
           <tbody>
             @for (r of d.history; track r.drawId) {
               <tr [attr.data-testid]="'draw-' + r.drawId">
-                <td data-label="Mois" class="mono">{{ r.period }}</td>
+                <td data-label="Mois" class="mono nowrap">{{ r.period }}</td>
                 <td data-label="Tirage">{{ r.pool === 'FREE' ? 'Gratuits' : 'Premium' }}</td>
                 @if (r.win; as w) {
-                  <td data-label="Gagnant">
+                  <td data-label="Gagnant"><div class="cell">
                     @if (w.userId) { <a class="u-link" [routerLink]="['/users', w.userId]">{{ w.email }}</a> } @else { <span class="muted">compte supprimé</span> }
-                    <div class="sub">{{ w.displayName }}</div>
+                    <div class="sub">{{ w.displayName }}</div></div>
                   </td>
-                  <td data-label="Lot" class="num mono">
+                  <td data-label="Lot" class="num mono nowrap"><div class="cell">
                     {{ w.prizeMonths }} mois
-                    @if (w.creditCents) { <div class="sub">{{ euros(w.creditCents) }}</div> }
+                    @if (w.creditCents) { <div class="sub">{{ euros(w.creditCents) }}</div> }</div>
                   </td>
                   <td data-label="Début" class="mono muted">{{ w.startsAt | date:'dd/MM/yyyy' }}</td>
                   <td data-label="Fin" class="mono muted">{{ w.endsAt | date:'dd/MM/yyyy' }}</td>
                   <td data-label="Éligibles" class="num mono">{{ r.eligibleCount }}</td>
-                  <td data-label="Attribution">
+                  <td data-label="Attribution"><div class="cell">
                     <span class="st-pill" [class.st-ok]="w.activationStatus === 'APPLIED'" [class.st-warn]="w.activationStatus === 'PENDING'"
                       [class.st-err]="w.activationStatus === 'FAILED'">{{ ACTIVATION_LABEL[w.activationStatus] }}</span>
                     @if (w.activationStatus === 'FAILED') {
@@ -105,10 +143,10 @@
                       <button type="button" class="btn btn-sm" [disabled]="busy() !== null" (click)="retry(w)" [attr.data-testid]="'retry-' + w.id">
                         Relancer l'attribution
                       </button>
-                    }
+                    }</div>
                   </td>
                   <td data-label="Affichage">{{ CONSENT_LABEL[w.displayConsent] }}</td>
-                  <td data-label="Message" class="msg-cell">
+                  <td data-label="Message" class="msg-cell"><div class="cell">
                     @if (w.message) {
                       <q class="msg">{{ w.message }}</q>
                       <div class="mod-row">
@@ -123,11 +161,17 @@
                       </div>
                     } @else {
                       <span class="muted">-</span>
-                    }
+                    }</div>
                   </td>
-                  <td data-label="Instagram">
+                  <td data-label="Instagram"><div class="cell">
                     {{ w.instagramConsent ? 'Accord' + (w.instagramHandle ? ' · @' + w.instagramHandle : '') : 'Non' }}
-                    <div class="sub">{{ PUBLICATION_LABEL[w.publicationStatus] }}</div>
+                    <div class="sub" [attr.data-testid]="'ig-status-' + w.id">{{ publicationLabel(w) }}</div>
+                    @if (w.publishedUrl) { <a class="u-link sub" [href]="w.publishedUrl" target="_blank" rel="noopener" [attr.data-testid]="'ig-post-' + w.id">Voir le post</a> }
+                    @if (canPublish(w)) {
+                      <button type="button" class="btn btn-sm" [disabled]="busy() !== null" (click)="openInstagram(w, r.period)" [attr.data-testid]="'ig-publish-' + w.id">
+                        {{ busy() === 'ig-' + w.id ? 'Préparation…' : 'Publier' }}
+                      </button>
+                    }</div>
                   </td>
                 } @else {
                   <td data-label="Gagnant" colspan="4" class="muted">Aucun éligible, aucun gagnant</td>
