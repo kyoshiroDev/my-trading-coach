@@ -15,22 +15,25 @@
 .ip-lead { margin: 0; font-size: 14px; line-height: 1.6; color: var(--text-2); }
 .ip-steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
 .ip-steps li { display: flex; gap: 12px; align-items: flex-start; font-size: 14px; }
+.ip-steps li > span:last-child { min-width: 0; }
+.ip-card > * { min-width: 0; }
 .ip-steps small { display: block; color: var(--text-3); font-size: 12px; margin-top: 2px; }
 .ip-n {
   flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center;
-  background: var(--blue-glow); color: var(--blue-bright); font: 600 13px var(--font-mono);
+  background: var(--blue-glow); color: var(--blue-bright); font: 600 13px var(--font-mono); font-variant-numeric: tabular-nums;
 }
 .ip-pill {
   display: inline-flex; align-items: center; gap: 4px; padding: 1px 6px; border-radius: 6px;
   background: var(--bg-3); color: var(--text); font-size: 12px; vertical-align: baseline;
 }
-.ip-pill svg { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.ip-pill svg.lucide { width: 12px; height: 12px; color: var(--blue-bright); }
 .ip-btn {
   display: flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 16px; border-radius: 10px;
   font: 600 14px var(--font-body); text-decoration: none; cursor: pointer; border: 1px solid transparent;
 }
-.ip-btn--primary { background: var(--primary); color: var(--text); }
-.ip-btn--primary:hover { background: var(--primary-hover); }
+/* Même bouton que la feuille d'installation : blanc sur --primary (seule exception au « jamais #fff », 5,2:1). */
+.ip-btn--primary { background: var(--primary); border-color: var(--primary); color: #fff; }
+.ip-btn--primary:hover { background: var(--primary-hover); border-color: var(--primary-hover); }
 .ip-btn--ghost { background: transparent; color: var(--text-2); border-color: var(--border-hover); }
 .ip-btn:focus-visible { outline: 2px solid var(--blue-bright); outline-offset: 2px; }
 .ip-note { margin: 0; font-size: 12px; color: var(--text-3); overflow-wrap: anywhere; }

@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { LucideDynamicIcon, LucideShare as Share } from '@lucide/angular';
 import { InstallCapture } from '../../core/install/install-capture';
 import { installState } from '../../core/install/install-prompt.service';
 import { PUSH_BROWSER } from '../../core/push/push-browser';
@@ -13,12 +14,13 @@ import { devicePlace, inAppName } from '../../core/push/push-device';
  */
 @Component({
   selector: 'mtc-installer-page',
-  imports: [RouterLink],
+  imports: [RouterLink, LucideDynamicIcon],
   templateUrl: './installer-page.component.html',
   styleUrl: './installer-page.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InstallerPageComponent {
+  protected readonly ShareIcon = Share;
   private readonly browser = inject(PUSH_BROWSER);
   private readonly capture = inject(InstallCapture);
 

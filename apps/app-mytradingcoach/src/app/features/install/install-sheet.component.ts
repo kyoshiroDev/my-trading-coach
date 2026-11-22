@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { DialogDirective } from '@mtc/front-ui';
+import { LucideDynamicIcon, LucideShare as Share } from '@lucide/angular';
 import { InstallPromptService } from '../../core/install/install-prompt.service';
 import { PushService } from '../../core/push/push.service';
 import { PUSH_BROWSER } from '../../core/push/push-browser';
@@ -25,12 +26,13 @@ export const LOCK_SCREEN_EXAMPLES = [
  */
 @Component({
   selector: 'mtc-install-sheet',
-  imports: [DialogDirective],
+  imports: [DialogDirective, LucideDynamicIcon],
   templateUrl: './install-sheet.component.html',
   styleUrl: './install-sheet.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InstallSheetComponent implements OnInit {
+  protected readonly ShareIcon = Share;
   protected readonly install = inject(InstallPromptService);
   private readonly push = inject(PushService);
   private readonly browser = inject(PUSH_BROWSER);

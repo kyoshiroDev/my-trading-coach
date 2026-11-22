@@ -23,16 +23,16 @@ const qrSvg = await QRCode.toString(installUrl, {
   <div class="in-in">
     <div class="in-text">
       <span class="pf-eyebrow">Sur ton téléphone</span>
-      <h2 class="pf-h2 pf-h2-sm" id="pf-install-title">Installe MyTradingCoach sur ton écran d'accueil</h2>
+      <h2 class="pf-h2 pf-h2-sm" id="pf-install-title">Installe MyTradingCoach sur ton écran d’accueil</h2>
       <ul class="in-list">
-        <li>Ton journal s'ouvre en un geste, en plein écran, comme une app.</li>
-        <li>Pas de store, rien à télécharger&nbsp;: c'est ton navigateur qui l'ajoute.</li>
-        <li>Sur iPhone, c'est ce qui permet de recevoir tes alertes.</li>
+        <li>Ton journal s’ouvre en un geste, en plein écran, comme une app.</li>
+        <li>Pas de store, rien à télécharger&nbsp;: c’est ton navigateur qui l’ajoute.</li>
+        <li>Sur iPhone, c’est ce qui permet de recevoir tes alertes.</li>
       </ul>
       <a href={installUrl} class="in-btn" data-ga-event="install_app" data-ga-place="prop-firm">Installer sur mon téléphone</a>
     </div>
     <figure class="in-qr" data-install-qr>
-      <div class="in-qr-img" role="img" aria-label="QR code vers la page d'installation de MyTradingCoach" set:html={qrSvg} />
+      <div class="in-qr-img" role="img" aria-label="QR code vers la page d’installation de MyTradingCoach" set:html={qrSvg} />
       <figcaption>Scanne avec ton téléphone<br /><a href={installUrl} data-ga-event="install_app" data-ga-place="prop-firm-qr">{shownUrl}</a></figcaption>
     </figure>
   </div>

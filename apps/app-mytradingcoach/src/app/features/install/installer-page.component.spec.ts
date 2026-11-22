@@ -76,6 +76,15 @@ describe('Page /installer : les bonnes étapes selon l’appareil', () => {
     expect(q('installer-copied')).not.toBeNull();
   });
 
+  it('copie refusée par le navigateur : le lien s’affiche à copier à la main', async () => {
+    vi.stubGlobal('navigator', { ...navigator, clipboard: { writeText: vi.fn(async () => { throw new Error('refus'); }) } });
+    const { q, fixture } = mount(env({ userAgent: UA.desktopFirefox, maxTouchPoints: 0 }));
+    q('installer-copy')!.click();
+    await new Promise((r) => setTimeout(r));
+    fixture.detectChanges();
+    expect(q('installer-copy-error')!.textContent).toContain('/installer');
+  });
+
   it('ordinateur avec invite : « Installer sur cet ordinateur » en plus', () => {
     const { q } = mount(env({ userAgent: UA.desktopChrome, maxTouchPoints: 0 }), { prompt: true });
     expect(q('installer-desktop-install')).not.toBeNull();
