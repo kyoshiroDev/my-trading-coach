@@ -65,6 +65,13 @@ export const DEMO_ACCOUNTS = [
 ];
 
 export type AccountKey = (typeof DEMO_ACCOUNTS)[number]['key'];
+/**
+ * Vue multi-comptes (#668) : un compte de la démo proche de sa limite, pour que le tri par exposition
+ * et « Le plus exposé » s'y voient. Compte Elite (plancher STATIQUE, sans perte max du jour) : une
+ * position ouverte en perte latente le ramène à 18 % de sa marge, sans toucher aux trades seedés ni au
+ * solde (solde = départ + Σ nets). Sur l'Apex, le même latent consommerait aussi sa perte max du jour.
+ */
+export const DEMO_NEAR_LIMIT = { key: 'elite' as AccountKey, marginPct: 0.18 };
 /** Perte journalière du plan `apex-eod-50k` (catalogue) : rejouée par le journal de risque démo. */
 export const APEX_DAILY_LOSS_LIMIT = 1_000;
 export const STARTING_CAPITAL = DEMO_ACCOUNTS.reduce((s, a) => s + a.startingBalance, 0);

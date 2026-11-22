@@ -55,6 +55,13 @@ export const appRoutes: Routes = [
       import('./features/auth/google-finalize.component').then((m) => m.GoogleFinalizeComponent),
   },
   {
+    // Page publique (#1198) : lien de l'e-mail et du QR code de la landing, étapes selon l'appareil.
+    path: 'installer',
+    data: { seo: { title: 'Installer MyTradingCoach', noindex: true } },
+    loadComponent: () =>
+      import('./features/install/installer-page.component').then((m) => m.InstallerPageComponent),
+  },
+  {
     path: 'forgot-password',
     data: { seo: { title: 'Mot de passe oublié', noindex: true } },
     loadComponent: () =>

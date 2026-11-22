@@ -67,7 +67,7 @@ Filets posés par `DemoSeedCron` (`modules/admin/demo-seed.cron.ts`) :
 - **Trade encore ouvert gardé après la bascule** : `getTodayTrades` = trades du jour **ou** trade sans
   P&L rattaché à la session active (`sessionId`, `pnl: null`). Vaut pour tous les comptes (position
   ouverte à 23:50) et sert la position de la vitrine.
-- **Les deux comptes prop firm de la démo sont « connectés »** (vitrine, faux jeton, une connexion
+- **Les trois comptes prop firm de la démo sont « connectés »** (vitrine, faux jeton, une connexion
   et des clôtures officielles par compte, `tradovateAccount` dans `demo-data/config.ts`) : la session
   live exige un compte connecté pour montrer le suivi prop firm, et « Mes comptes » n'affiche plus de
   bouton « Connecter » orange sur Tradeify.
@@ -93,11 +93,12 @@ Le seed créait 56 trades mais **aucun `TradingAccount`** : trades « flottants 
 pendant que « Mes comptes » et le sélecteur agrégé, qui passent par les comptes,
 affichaient **0 $ / 0 trade / 0 compte**. Deux pages qui se contredisent.
 
-`DEMO_ACCOUNTS` crée 2 comptes prop firm ACTIVE en USD (PROMPT-215) : `Apex 50k · Éval #2`
-(EVALUATION) et `Tradeify 50k · Funded` (FUNDED), **futures d'indices US uniquement**
+`DEMO_ACCOUNTS` crée 3 comptes prop firm ACTIVE en USD (PROMPT-215, puis le plan statique) :
+`Apex 50k · Éval #2` (EVALUATION), `Tradeify 50k · Funded` (FUNDED) et `Elite 25k · Static`
+(EVALUATION, plancher statique, journées tirées à part), **futures d'indices US uniquement**
 (MES / MNQ, quelques ES / NQ). Le compte perso Forex & Crypto et l'or ont été retirés : la
-démo s'adresse à des traders de futures prop firm. Deux comptes plutôt qu'un : le
-multi-comptes est l'une des ancres Premium (`plans.md`).
+démo s'adresse à des traders de futures prop firm. Plusieurs comptes plutôt qu'un : les
+comptes illimités sont l'une des ancres Premium (`plans.md`).
 
 **Comptes perdus de la démo (compte perdu, phase 3)** : `demo-data/lost-accounts.ts` ajoute
 `Apex 50k · Éval #1` (FAILED, plancher dépassé), dont l'Apex actif `#2` est la nouvelle tentative,
@@ -153,7 +154,7 @@ déjà passée se lirait comme une promesse de réussite.
 **Contrat de cohérence, à ne pas casser** :
 
 ```
-Σ startingBalance des comptes ACTIVE === PROFILE.startingCapital   (50 000 + 50 000 = 100 000)
+Σ startingBalance des comptes ACTIVE === PROFILE.startingCapital   (50 000 + 50 000 + 25 000 = 125 000)
 ```
 
 `dashboard.baseCapital` somme les `startingBalance` **dès qu'un compte existe** et ne
@@ -180,3 +181,15 @@ statut « Encore N trades » / « Tu es dans le tirage » se calcule sur les tra
 cours, que le re-seed nocturne date en relatif (`daysAgo`) : les premiers jours d'un mois, la démo
 peut afficher « Encore N trades », ce qui est exact. Rien à enrichir dans le seed tant que la page ne
 montre que ces données.
+
+## Compte proche de sa limite (vue multi-comptes, #668)
+
+`DEMO_NEAR_LIMIT` (`demo-data/config.ts`) : le compte **Elite** (plancher statique, sans perte max du
+jour) porte, sur la connexion vitrine, une position ouverte en perte latente qui ramène son equity à
+plancher + 18 % de la marge (24 180 $ sur 24 000 $, `nearLimitOpenPnl`, jamais positive). Le solde
+(`brokerCashBalance` = départ + Σ nets) et les trades seedés ne changent pas ; `brokerOpenPositions` = 1.
+Il passe en rouge, en « À surveiller » et en tête de Mes comptes (« Le plus exposé ») et du bandeau
+de la Session live. Pas sur l'Apex : le même latent y consommerait aussi la perte max du jour (base
+equity, 1 000 $) et la ferait dépasser. Apex et Tradeify gardent equity = solde (aucun latent inventé).
+Vérifié par `demo-seed-idempotence.spec.ts` (« compte proche de sa limite »).
+

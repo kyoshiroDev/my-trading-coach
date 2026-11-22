@@ -1,0 +1,60 @@
+@if (visible()) {
+  <section class="las" aria-label="Mes comptes, du plus exposé au moins exposé" data-testid="live-accounts-strip">
+    <span class="las-title">MES COMPTES</span>
+    <div class="las-chips">
+      @for (a of tracked(); track a.id; let first = $first) {
+        <button type="button" [class]="'las-chip tone-' + tone(a)" [class.is-first]="first" [class.is-session]="a.id === sessionAccountId()"
+                [attr.aria-label]="label(a)" (click)="openId.set(a.id)" [attr.data-testid]="'live-account-chip-' + a.id">
+          <span class="las-name">{{ a.label }}</span>
+          <span class="las-pct">{{ pct(a) }}</span>
+        </button>
+      }
+    </div>
+  </section>
+}
+
+@if (opened(); as a) {
+  <div class="las-overlay" role="button" tabindex="-1" (click)="openId.set(null)" (keydown.escape)="openId.set(null)">
+    <div class="las-sheet" role="dialog" aria-modal="true" mtcDialog (mtcDialogClose)="openId.set(null)"
+         aria-labelledby="las-sheet-title" data-testid="live-account-sheet"
+         (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
+      <div class="las-sheet-head">
+        <h2 id="las-sheet-title" class="las-sheet-title">{{ a.label }}</h2>
+        <button type="button" class="las-close" (click)="openId.set(null)" data-testid="live-account-sheet-close">Fermer</button>
+      </div>
+      @if (a.id === sessionAccountId()) {
+        <p class="las-session" data-testid="live-account-sheet-session">Compte de la séance en cours.</p>
+      } @else {
+        <p class="las-session" data-testid="live-account-sheet-other">
+          @if (sessionLabel(); as s) { Lecture seule&nbsp;: ta séance continue sur {{ s }}. } @else { Lecture seule&nbsp;: ta séance garde son compte. }
+        </p>
+      }
+
+      <dl class="las-rows">
+        @if (a.metrics.dailyLoss; as dl) {
+          <div class="las-row" data-testid="live-account-sheet-daily">
+            <dt>Perte max du jour</dt>
+            <dd [class]="'tone-' + toneOf(dl)">{{ dl.breached ? 'limite atteinte' : money(a, dl.remaining) + ' · ' + marginPct(dl) }}</dd>
+          </div>
+        }
+        @if (a.metrics.drawdown; as dd) {
+          <div class="las-row" data-testid="live-account-sheet-drawdown">
+            <dt>{{ ddLabels.margin.label }}</dt>
+            <dd [class]="'tone-' + toneOf(dd)">{{ dd.breached ? 'dépassé' : money(a, dd.margin) + ' · ' + marginPct(dd) }}</dd>
+          </div>
+        }
+        @if (a.metrics.objective; as obj) {
+          <div class="las-row" data-testid="live-account-sheet-objective">
+            <dt>Objectif</dt>
+            <dd>{{ obj.pct >= 1 ? 'atteint' : money(a, objRemaining(a)) + ' pour l’objectif · ' + marginPct(obj) + '\u00a0atteint' }}</dd>
+          </div>
+        }
+      </dl>
+
+      <p class="las-note">
+        Estimation MyTradingCoach, pas le calcul officiel de ta firm.
+        @if (age(a); as ago) { Relevé {{ ago }}. }
+      </p>
+    </div>
+  </div>
+}

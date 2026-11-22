@@ -16,6 +16,7 @@ import PfHeader from '../components/prop-firm-page/PfHeader.astro';
 import PfRules from '../components/prop-firm-page/PfRules.astro';
 import PfPricing from '../components/prop-firm-page/PfPricing.astro';
 import PfGiveaway from '../components/prop-firm-page/PfGiveaway.astro';
+import PfInstall from '../components/prop-firm-page/PfInstall.astro';
 import { ORGANIZATION, SOFTWARE_APPLICATION, WEBSITE, faqPage, webPage } from '../data/schema';
 import { TEMOIGNAGES } from '../data/temoignages';
 import { founderOpenAtBuild } from '../lib/founder-build';
@@ -243,6 +244,9 @@ const schema = [
         </dl>
       </div>
     </section>
+
+    {/* Installer l'app sur le téléphone (#1198) : bouton vers /installer, QR code sur ordinateur. */}
+    <PfInstall />
 
     {/* 13. Dernier appel */}
     <section class="pf-sec pf-final">

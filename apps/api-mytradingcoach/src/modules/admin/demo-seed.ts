@@ -2,7 +2,7 @@ import { hashPassword } from '../auth/password-hashing';
 import { Prisma, SessionStatus, AccountStatus, BrokerProvider, BrokerConnectionStatus } from '@prisma/client';
 import { computeTradeStats, maxDrawdownOfTrades, type EcoResultAnalysis } from '@mtc/shared';
 import { seedDefaultSetups } from '../setups/setups.defaults';
-import { type AccountKey, APEX_DAILY_LOSS_LIMIT, DEMO_ACCOUNTS, DEMO_EMAIL, round2 } from './demo-data/config';
+import { type AccountKey, APEX_DAILY_LOSS_LIMIT, DEMO_ACCOUNTS, DEMO_EMAIL, DEMO_NEAR_LIMIT, round2 } from './demo-data/config';
 import { ONELINERS, PLANS, REFLECTIONS_GREEN, REFLECTIONS_RED, REFLECTION_REVENGE } from './demo-data/texts';
 import { type DemoDay, type DemoStats, net } from './demo-data/model';
 import { assertDemoCalendar, buildDemoDataset, dayAt } from './demo-data/generate';
@@ -402,9 +402,11 @@ export async function seedTradingData(
     for (const a of DEMO_ACCOUNTS) {
       const accountId = accountIdByKey.get(a.key)!;
       const tv = { ...a.tradovateAccount, env: 'demo' };
-      // Solde « lu chez le broker » : cohérent avec les trades seedés (aucun écart), sans position
-      // ouverte → equity = solde. Montre le suivi en direct sans inventer de latent.
+      // Solde « lu chez le broker » : cohérent avec les trades seedés (aucun écart). Sans position
+      // ouverte → equity = solde. Seul le compte « proche de sa limite » (#668) porte une position en
+      // perte latente : equity = plancher statique + 18 % de la marge, le solde reste celui des trades.
       const balance = round2(a.startingBalance + stats.byAccount[a.key].netPnl);
+      const openPnl = a.key === DEMO_NEAR_LIMIT.key ? nearLimitOpenPnl(a, balance) : 0;
       await prisma.brokerConnection.create({
         data: {
           userId: user.id, accountId, provider: BrokerProvider.TRADOVATE,
@@ -415,8 +417,8 @@ export async function seedTradingData(
           lastSyncAt: new Date(now.getTime() - 2 * 60 * 60 * 1000),
           tradesImported: stats.byAccount[a.key].trades,
           brokerCashBalance: balance, brokerCashBalanceAt: new Date(now.getTime() - 4 * 60 * 1000),
-          brokerNetLiq: balance, brokerOpenPnl: 0,
-          brokerEquityAt: new Date(now.getTime() - 4 * 60 * 1000), brokerOpenPositions: 0,
+          brokerNetLiq: round2(balance + openPnl), brokerOpenPnl: openPnl,
+          brokerEquityAt: new Date(now.getTime() - 4 * 60 * 1000), brokerOpenPositions: openPnl ? 1 : 0,
         },
       });
 
@@ -566,6 +568,16 @@ export function fakePastReleaseAnalyses(
 }
 
 // Réexports : API publique historique de ce module (cron, service, spec, script).
+/**
+ * Perte latente qui ramène un compte à plancher STATIQUE à `DEMO_NEAR_LIMIT.marginPct` de sa marge
+ * (#668) : equity visée = départ − drawdown max + part de la marge. Jamais positive (pas de gain inventé).
+ */
+export function nearLimitOpenPnl(a: { startingBalance: number; maxDrawdown: number }, balance: number): number {
+  const floor = a.startingBalance - a.maxDrawdown;
+  const target = floor + a.maxDrawdown * DEMO_NEAR_LIMIT.marginPct;
+  return Math.min(0, round2(target - balance));
+}
+
 export { DEMO_EMAIL, DEMO_WINDOW_DAYS } from './demo-data/config';
 export { meetsTargets } from './demo-data/model';
 export { assertDemoCalendar, buildDemoDataset } from './demo-data/generate';

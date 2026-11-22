@@ -113,3 +113,14 @@ newsletter.
 > par défaut et affichée côté navigateur seulement si `GET /public/giveaway` dit `enabled` (aucune
 > donnée personnelle sans accord). Règlement : `/reglement-tirage` (noindex, exclu du sitemap dans
 > `astro.config.mjs`). Détail : `commun/tirage-mensuel.md`.
+
+## Bloc « Installe MyTradingCoach sur ton écran d'accueil » (#1198)
+
+`components/prop-firm-page/PfInstall.astro`, entre la FAQ et le dernier appel. Textes validés par le
+relecteur : sur-titre « Sur ton téléphone », titre, 3 lignes (ouverture en un geste ; « Pas de store, rien
+à télécharger » pour ne pas contredire « rien à installer » de `contexte-com.md` ; alertes sur iPhone, sans
+parler de plan), bouton « Installer sur mon téléphone » vers `${APP_URL}/installer`
+(`data-ga-event="install_app"`, `data-ga-place="prop-firm"`). Sur ordinateur (`min-width: 900px` et
+`hover: hover`, CSS seulement) : QR code (SVG inline généré au build par `qrcode`, modules sombres sur
+fond clair, `aria-label`) et l'adresse en lien texte. Aucun JS côté navigateur.
+Couleurs du QR en dur (`#06090f` sur `#e2eaf5`, valeur de `--text`) : exception voulue, le SVG est produit au build et ne peut pas lire les variables CSS, et des modules sombres sur fond clair restent lisibles par tous les lecteurs de QR.

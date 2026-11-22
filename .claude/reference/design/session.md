@@ -70,7 +70,8 @@ Maquettes : `docs/mockups/mockup-session-live-v3-mobile.html` (390 px, référen
 `docs/mockups/mockup-session-live-v3.html` (PC). Base = mobile, paliers `@media (min-width: 768px)`
 et `(min-width: 1100px)` ; **aucune `max-width`**, aucun scroll horizontal à 360 px.
 
-- **Hiérarchie** : bandeau collant → prochaine annonce → trade en cours → suivi du compte →
+- **Hiérarchie** : bandeau collant → bandeau « Mes comptes » (#668, à partir de 2 comptes suivis) →
+  prochaine annonce → trade en cours → suivi du compte →
   trades clôturés → (mobile) Contexte marché + Clôturer la session en bas de page.
 - **Couleurs** : vert = gains, rouge = pertes, **cyan = live / IA** (chrono, pastille, badge LIVE,
   analyse IA d'une annonce publiée), violet = chip de plan. Ligne d'annonce : **rouge si impact
@@ -87,7 +88,8 @@ et `(min-width: 1100px)` ; **aucune `max-width`**, aucun scroll horizontal à 36
   perte max du jour = part **consommée**, neutre `--text-faint` < 50 %, ambre ≥ 50 %, rouge ≥ 75 %
   (seuils `drawdownTone`, comme « Mes comptes » — pas de seuil propre) ; marge plancher = gris
   ardoise `--text-faint` ; objectif = vert. Teaser Premium : même place, même hauteur (78 px),
-  une ligne, bordure pointillée, badge violet.
+  une ligne, bordure pointillée, badge violet ; libellé « Perte max du jour + alertes » si le plan en
+  prévoit une (`metrics.planHasDailyLoss`), sinon « Alertes avant le plancher » (#668).
 - **Barre SL / entrée / TP** : piste `--bg-3` 10 px, segment perte `--red` 35 %, gain `--green` 28 %,
   trait d'entrée 2×20 px `--text`, pastille 18 px (rouge en perte, verte en gain). Libellés :
   montants sous les prix jusqu'à 1100 px, sur la même ligne au-delà.
@@ -96,3 +98,15 @@ et `(min-width: 1100px)` ; **aucune `max-width`**, aucun scroll horizontal à 36
   en mobile (≥ 40 px en PC). **Aucun emoji** dans la vue (humeur en texte seul).
 - **Clôturer la session** : rouge discret (bordure rouge 45 %, fond rouge 8 %, texte rouge éclairci),
   bien séparé de « Clôturer ce trade » (neutre `--bg-3`).
+
+## Bandeau « Mes comptes » (#668)
+
+`mtc-live-accounts-strip`, sous la barre live, seulement avec au moins 2 comptes suivis (actifs avec une
+marge) : une pastille par compte (nom + marge la plus serrée en %, mono tabulaire), du plus exposé au
+moins exposé, couleur `drawdownTone` sur le pourcentage, bordure à la couleur pour le premier ; compte
+de la séance en bordure pointillée. Rangée qui glisse horizontalement (son propre défilement, jamais
+celui de la page). Un tap : feuille en bas sur mobile, boîte de 440 px à partir de 768 px (`mtcDialog`) :
+perte max du jour, `ddLabels.margin`, objectif (« … $ pour l'objectif »), disclaimer « Estimation
+MyTradingCoach, pas le calcul officiel de ta firm. » et « Relevé il y a … ». Vue en lecture : le compte de
+la séance reste verrouillé (#880), la feuille le rappelle.
+

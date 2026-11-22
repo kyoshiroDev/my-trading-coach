@@ -31,7 +31,7 @@ et `accounts.component.css` :
 - ce qui ne tient pas à l'écran étroit passe derrière un **dépli** (signal `expandedId`, une
   ligne ouverte à la fois), jamais derrière un scroll horizontal ;
 - la bascule en repli suit la largeur du **tableau** (`container: acct-table / inline-size` +
-  `@container acct-table (max-width: 980px)`), pas celle de la fenêtre : la barre latérale prend
+  `@container acct-table (max-width: 1000px)`, 980 px avant la 9ᵉ colonne « Perte max du jour », #668, colonnes resserrées pour garder le tableau complet à 1280 et 1366 px de fenêtre), pas celle de la fenêtre : la barre latérale prend
   70 à 216 px, et un seuil en `@media` laissait les colonnes se chevaucher (Mes comptes à 1100 px).
 
 ⚠️ **Deux pièges de sélecteurs**, tous deux rencontrés en vrai sur « Mes comptes » :

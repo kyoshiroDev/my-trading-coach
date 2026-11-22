@@ -169,3 +169,11 @@ Texte exact de Greg : « fait toi même le necessaire »
 PR dédiée avant la phase 2, demandée par le relecteur : `z.config({ jitless: true })` pour que Zod ne teste plus `new Function` (signalement `script-src eval`). Posé dans `trade.schema.ts`, seul module zod de l'app, chargé à la demande : le bundle initial n'avait que 5,4 ko de marge sous la limite de 500 ko (494,57 ko avant, 494,56 ko après). Le relevé de la console de l'admin connecté se fait sans le compte de Greg, sur un banc local (compte admin du seed local).
 
 Relevé fait le 22/11 sur banc local (base dédiée supprimée ensuite) : 18 pages de l'admin connecté, aucune violation. Logo de l'aperçu des e-mails servi par l'app (`FRONTEND_URL`) : à garder dans `img-src` en phase 2.
+
+## Complément #1068, phase 2 : CSP bloquante (2026-11-22)
+
+Texte exact de Greg : « c'est mergé, continue l'audite »
+
+PR #1207 (Zod sans eval) mergée. Phase 2 : `Content-Security-Policy` au lieu de `-Report-Only` dans `spa-releases.conf`, test qui exige le mode bloquant. `img-src https:` gardé (logo des e-mails servi par l'app, visuel du tirage servi par l'API, images Stripe et Google : une liste fermée casserait une image pour un gain faible). Préalable du relecteur : aucun signalement `script-src eval` sur dev.app après le déploiement de #1207 (compte démo, formulaire de trade). Report sur les VPS ensuite, sous l'autorisation du complément « #1068, report sur les VPS ».
+
+Préalable vérifié le 22/11 après le déploiement de #1207 sur dev.app (`te.config({jitless:!0})` présent dans le bundle servi) : compte démo, `/journal` dans une iframe de même origine, écouteur `securitypolicyviolation` posé pendant le chargement (avant les scripts), chunk zod chargé, aucun signalement `script-src eval` (seule violation : la sonde volontaire). Mode bloquant testé en local (build prod de l'app et de l'admin derrière nginx avec la nouvelle conf) : `/register`, `/login` de l'app et `/login` de l'admin affichés avec leurs polices, aucune violation, script injecté refusé (`enforce`).

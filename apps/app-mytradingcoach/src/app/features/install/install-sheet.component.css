@@ -71,7 +71,7 @@ h2 { font-family: var(--font-display); font-size: 18px; font-weight: 700; line-h
 .is-steps small { font-size: 12.5px; color: var(--text-2); }
 .is-n { width: 34px; height: 34px; border-radius: 50%; background: var(--blue-glow); color: var(--blue-bright); display: grid; place-items: center; font-family: var(--font-mono); font-weight: 700; font-size: 14px; }
 .is-pill { display: inline-flex; align-items: center; gap: 6px; background: var(--bg-3); border: 1px solid var(--border-hover); border-radius: 8px; padding: 2px 8px; font-size: 12.5px; color: var(--text); }
-.is-pill svg { width: 14px; height: 14px; fill: none; stroke: var(--blue-bright); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.is-pill svg.lucide { width: 14px; height: 14px; color: var(--blue-bright); }
 
 /* Invitation aux alertes */
 .is-al { background: var(--bg); border: 1px solid var(--border); border-left: 3px solid var(--yellow); border-radius: 10px; padding: 10px 12px; margin-bottom: 12px; font-size: 13px; color: var(--text); line-height: 1.45; }

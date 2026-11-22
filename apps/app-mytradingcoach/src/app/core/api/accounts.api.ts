@@ -118,6 +118,8 @@ export interface AccountRuleMetrics {
   progress: AccountProgress | null;
   /** Perte journalière (PREMIUM) : null hors Premium, sans plan relié ou sans montant publié. */
   dailyLoss: DailyLossMetrics | null;
+  /** Le plan relié prévoit une perte max du jour (montant publié), quel que soit le plan de l'utilisateur (#668). */
+  planHasDailyLoss: boolean;
   /**
    * Solde et equity lus chez le broker (compte connecté). Présent → `currentBalance` est le solde
    * du broker et la marge se calcule sur l'equity, latent compris (sauf `referenceMismatch`).
