@@ -189,3 +189,9 @@ PR #1209 mergée. Report sous l'autorisation du complément « #1068, report sur
 Texte exact de Greg : « ok continue alors »
 
 #1002 est en prod depuis le 14/11 à 17 h 48 UTC (promotion #1017) : les refresh tokens d'avant ont tous expiré (7 j). Retrait de la lecture de `auth:revoked-refresh:<jti>` dans le script Lua de `refresh-rotation.ts` (une seule clé), de `legacyRevokedRefreshKey` et du test « liste noire d'avant #1002 » ; référence `connexion-google.md` mise à jour. `security.md` ne mentionnait pas cette clé : rien à y changer. La famille dérivée `j:<jti>` des jetons sans `fid` n'est pas touchée (hors ticket).
+
+## Complément #1004, constat en prod et compteur durable (2026-11-22)
+
+Texte exact de Greg : « oui je t'autorise pour #1004 »
+
+Lecture seule sur le VPS prod : 0 ligne « state renvoyé » dans les logs des conteneurs API (recréés au déploiement du 22/11 à 15 h 40 UTC, pilote json-file : logs d'avant perdus), 0 callback dans le journal d'accès Traefik (stdout, redémarré à 11 h 09), aucune connexion Tradovate neuve en base depuis le 14/11. Sur la recommandation du relecteur : compteur Redis durable `tradovate:oauth-callback:state:oui|non` au callback (après le contrôle du cookie, try/catch), log gardé, pas d'affichage admin. Redis prod persistant (`appendonly yes`, `save`) : le compteur survit aux redémarrages.

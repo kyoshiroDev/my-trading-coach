@@ -299,7 +299,7 @@ sont en direct.
 - **`state` signé + cookie httpOnly** (`mtc_tradovate_oauth`, SameSite=Lax, path du callback).
   Le cookie est **obligatoire** au callback : sans lui, un tiers pourrait faire consentir une
   victime avec SON lien et recevoir les trades de la victime. La doc ne dit pas si Tradovate
-  renvoie `state` : s'il le renvoie, il doit égaler le cookie. Le callback journalise « state renvoyé = oui/non » (#1004) : quand la prod montre « oui », exiger `state` (un cookie d'une tentative abandonnée vit 10 min et laisse passer un code tiers sans `state`). Côté front, l'appel `authorize`
+  renvoie `state` : s'il le renvoie, il doit égaler le cookie. Le callback journalise « state renvoyé = oui/non » (#1004) et incrémente un compteur Redis durable, sans TTL, `tradovate:oauth-callback:state:oui` ou `:non` (seulement si le cookie est valide ; une panne Redis ne casse pas le callback), car les logs sont effacés à chaque déploiement. Lecture sur le VPS prod : `docker exec mtc_redis redis-cli GET <REDIS_PREFIX>tradovate:oauth-callback:state:oui` (le mot de passe vient de `REDISCLI_AUTH` dans le conteneur, ne jamais l'afficher ; Redis prod persistant, `appendonly yes`). Quand un « oui » apparaît, exiger `state` (un cookie d'une tentative abandonnée vit 10 min et laisse passer un code tiers sans `state`) et retirer le log et le compteur. Côté front, l'appel `authorize`
   doit partir **avec credentials** pour que le cookie soit posé.
 - **Jamais de choix d'office à la première connexion** (#332, 2026-10-03) : même avec UN seul
   compte, `saveConnection` laisse `externalAccountId` vide → `select_account`, et rien n'est
