@@ -32,6 +32,11 @@ describe('CSP de spa-releases.conf (#1068)', () => {
     expect(conf.match(/add_header Content-Security-Policy/g)).toHaveLength(1);
   });
 
+  it('la politique est bloquante (phase 2), pas en Report-Only', () => {
+    expect(conf).toMatch(/add_header Content-Security-Policy "/);
+    expect(conf).not.toContain('Content-Security-Policy-Report-Only');
+  });
+
   it("chaque script inline des index de l'app et de l'admin est autorisé par son empreinte", () => {
     const inline = indexes.flatMap((html) =>
       [...html.matchAll(/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/g)].map((m) => m[1]),

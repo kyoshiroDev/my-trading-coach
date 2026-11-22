@@ -66,9 +66,12 @@ côté SPA, `/_assets/` côté landing : c'est le `build.assets` d'Astro, pas `/
 `try_files /current$uri /previous$uri =404`.
 
 **CSP de l'app et de l'admin (#1068, 2026-11-21)** : `spa-releases.conf` pose une seule politique sur
-`index.html` (`location /`) pour l'app (prod, dev, beta) et l'admin. Phase 1 en
-`Content-Security-Policy-Report-Only` (violations dans la console, rien de bloqué), puis passage en
-`Content-Security-Policy` une fois l'app et l'admin vérifiés sans violation. Les scripts inline sont autorisés
+`index.html` (`location /`) pour l'app (prod, dev, beta) et l'admin. **Bloquante** (`Content-Security-Policy`)
+depuis la phase 2 : une ressource hors liste est refusée par le navigateur. Phase 1 en
+`Content-Security-Policy-Report-Only` du 21 au 22/11 (relevés ci-dessous). Le dépôt fait foi, mais la conf n'est pas
+déployée par la CD : chaque VPS sert ce qui y a été reporté à la main (voir l'état). Urgence : remettre le suffixe
+`-Report-Only` sur le VPS et recharger nginx, plus rien n'est bloqué. `img-src` garde `https:` (logo des e-mails servi
+par l'app, visuel du tirage servi par l'API, images de Stripe et de Google). Les scripts inline sont autorisés
 par empreinte (`sha256-…`) : modifier le script `mtc-register-view` de l'index de l'app, ou ajouter un script ou un
 `on…=` inline dans un index, demande de recalculer l'empreinte dans la conf (le test
 `apps/app-mytradingcoach/src/csp-nginx.spec.ts` échoue sinon), puis de reporter la conf sur les deux VPS. Un nouvel
@@ -85,9 +88,10 @@ ajoutée ensuite. Admin connecté relevé le 22/11 sur banc local (build prod de
 `connect-src` complété de l'API locale, compte admin du seed local, script espion `securitypolicyviolation` chargé en
 tête de l'index, contrôlé par une violation volontaire) : 18 pages (les 17 routes + une fiche utilisateur), aucune
 violation. L'aperçu des e-mails est une iframe `srcdoc` isolée (`sandbox=""`, sans script) qui hérite de la politique :
-son logo vient de `${FRONTEND_URL}/logo-email.png` (app.mytradingcoach.app en prod) : un `img-src` resserré en phase 2
-doit garder cette origine. Piège du relevé : le service worker de l'admin sert l'index en cache, le désinscrire avant.
-La PR de phase 2 (mode bloquant) met cet état à jour.
+son logo vient de `${FRONTEND_URL}/logo-email.png` (app.mytradingcoach.app en prod) : un `img-src` resserré
+doit garder cette origine. Piège du relevé : le service worker de l'admin sert l'index en cache, le désinscrire avant
+(il garde aussi l'en-tête CSP de l'ancien index jusqu'à sa mise à jour). Phase 2 (mode bloquant) mergée dans le dépôt ;
+report sur les VPS à faire : l'état ci-dessus reste Report-Only jusqu'à ce report.
 
 Fichiers à nom fixe, avant la règle des assets (`location =`, prioritaire sur la regex) : les service
 workers (`ngsw-worker.js`, `push-sw.js`, …) en `no-cache`, sinon la règle des `.js` leur donnait un
