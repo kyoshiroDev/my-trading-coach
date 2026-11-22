@@ -52,7 +52,7 @@ describe('Session live · bandeau multi-comptes (#668)', () => {
     ]);
     const chips = [...el.querySelectorAll('[data-testid^="live-account-chip-"]')];
     expect(chips.map((c) => c.getAttribute('data-testid'))).toEqual(['live-account-chip-hot', 'live-account-chip-mid', 'live-account-chip-safe']);
-    expect(chips[0].textContent).toContain('12 %');
+    expect(chips[0].textContent).toContain('12\u00a0%');
     expect(chips[0].className).toContain('tone-red');
     expect(chips[0].className).toContain('is-first');
   });
