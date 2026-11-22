@@ -23,6 +23,11 @@
 - Mesures : 495,04 ko le 26/10 (`dev` ce2d8f2e) → 479,17 ko après le lot 1 (polices −13,19 ; page 404
   paresseuse −1,33 ; dialogue de confirmation à la première demande −1,35 ; `RouterOutlet` à la place
   de `RouterModule` dans `App` : 0, non retenu). Marge 20,83 ko.
+  Remontée à 494,57 ko le 22/11 (marge 5,43 ko, sous l'alerte) → **486,70 ko** après #766 (conteneur de
+  toasts au premier toast, `@defer (when toasts.visible().length; prefetch on idle)`, −7,87 ko). Marge 13,30 ko.
+- Toasts (#766) : « un seul toast sur téléphone » est posé par `ToastService` (créé avant le premier toast),
+  pas par le conteneur chargé à la demande ; le préchargement au repos garantit le toast d'erreur réseau
+  même hors ligne (contre-épreuve Chromium : 0 requête après coupure, animation et barre conservées).
 
 <!-- Origine : angular.md · Gestion erreurs API · 2026-04-25 -->
 > **Origine** : `angular.md` · « Gestion erreurs API » · 2026-04-25
