@@ -303,7 +303,7 @@
     <div class="locked-blocks">
       <!-- Bloc 1 : Equity Curve & Drawdown -->
       <div class="locked-feature">
-        <div class="locked-preview">
+        <div class="locked-preview" aria-hidden="true">
           <div class="preview-curves">
             <svg
               viewBox="0 0 400 100"
@@ -347,26 +347,12 @@
             </svg>
           </div>
         </div>
-        <div class="locked-overlay" data-testid="locked-overlay">
-          <span class="locked-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg></span>
-          <h3 class="locked-title">Equity Curve &amp; Drawdown</h3>
-          <p class="locked-desc">
-            Visualise l'évolution de ton capital et tes périodes de drawdown
-            pour identifier tes biais comportementaux.
-          </p>
-          <button
-            class="locked-cta"
-            data-testid="upgrade-cta"
-            (click)="showPlanModal.set(true)"
-          >
-            {{ paywall.label() }}
-          </button>
-        </div>
+        <mtc-premium-lock title="Equity Curve &amp; Drawdown" subtitle="Visualise l'évolution de ton capital et tes périodes de drawdown pour identifier tes biais comportementaux." />
       </div>
 
       <!-- Bloc 2 : Heatmap horaire -->
       <div class="locked-feature">
-        <div class="locked-preview">
+        <div class="locked-preview" aria-hidden="true">
           <div class="heatmap-preview-mock">
             @for (cell of mockCells; track $index) {
               <div
@@ -379,26 +365,12 @@
             }
           </div>
         </div>
-        <div class="locked-overlay" data-testid="locked-overlay">
-          <span class="locked-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg></span>
-          <h3 class="locked-title">Heatmap de performance horaire</h3>
-          <p class="locked-desc">
-            Découvre tes meilleures heures&nbsp;: quand tu gagnes vraiment et quand
-            tu perds le plus.
-          </p>
-          <button
-            class="locked-cta"
-            data-testid="upgrade-cta"
-            (click)="showPlanModal.set(true)"
-          >
-            {{ paywall.label() }}
-          </button>
-        </div>
+        <mtc-premium-lock title="Heatmap de performance horaire" subtitle="Découvre tes meilleures heures&nbsp;: quand tu gagnes vraiment et quand tu perds le plus." />
       </div>
 
       <!-- Bloc 3 : Top Actifs & Setup -->
       <div class="locked-feature">
-        <div class="locked-preview">
+        <div class="locked-preview" aria-hidden="true">
           <div class="bars-preview-mock">
             @for (bar of mockBars; track $index) {
               <div class="mock-bar-row">
@@ -410,26 +382,8 @@
             }
           </div>
         </div>
-        <div class="locked-overlay" data-testid="locked-overlay">
-          <span class="locked-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg></span>
-          <h3 class="locked-title">Top Actifs &amp; Performance par Setup</h3>
-          <p class="locked-desc">
-            Tes résultats par actif et par setup. Win rate par émotion, par
-            session et par actif.
-          </p>
-          <button
-            class="locked-cta"
-            data-testid="upgrade-cta"
-            (click)="showPlanModal.set(true)"
-          >
-            {{ paywall.label() }}
-          </button>
-        </div>
+        <mtc-premium-lock title="Top Actifs &amp; Performance par Setup" subtitle="Tes résultats par actif et par setup. Win rate par émotion, par session et par actif." />
       </div>
     </div>
   }
 </div>
-
-@if (showPlanModal()) {
-  <mtc-plan-modal (closed)="showPlanModal.set(false)" />
-}
