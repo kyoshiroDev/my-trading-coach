@@ -1,18 +1,20 @@
 import { ChangeDetectionStrategy, Component, inject, input } from '@angular/core';
+import { LucideDynamicIcon, LucideLock as Lock } from '@lucide/angular';
 import { ProductEventsService } from '@app/core/services/product-events.service';
 import { OfferIntentService } from '@app/core/services/offer-intent.service';
 import { PaywallCtaService } from '@app/core/services/paywall-cta.service';
 
 @Component({
   selector: 'mtc-premium-lock',
+  imports: [LucideDynamicIcon],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './premium-lock.component.css',
   template: `
     <div class="premium-lock" data-testid="premium-lock">
       <div class="pl-content">
-        <span class="pl-icon">✦</span>
+        <svg class="pl-icon" [lucideIcon]="LockIcon" [size]="16" aria-hidden="true"></svg>
         <div class="pl-text">
-          <div class="pl-title">{{ title() }}</div>
+          <h3 class="pl-title">{{ heading() }}</h3>
           @if (subtitle()) {
             <div class="pl-sub">{{ subtitle() }}</div>
           }
@@ -29,7 +31,9 @@ import { PaywallCtaService } from '@app/core/services/paywall-cta.service';
 export class PremiumLockComponent {
   /** Libellé unique des boutons de paywall (E3 #1013). */
   protected readonly paywall = inject(PaywallCtaService);
-  readonly title    = input<string>('Fonctionnalité Premium');
+  protected readonly LockIcon = Lock;
+  /** Titre du bloc. Pas « title » : un attribut statique title= poserait aussi l'info-bulle native du navigateur (#1189). */
+  readonly heading  = input<string>('Fonctionnalité Premium');
   readonly subtitle = input<string>('');
 
   protected readonly intent = inject(OfferIntentService);
