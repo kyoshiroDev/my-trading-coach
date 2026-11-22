@@ -72,7 +72,7 @@ côté SPA, `/_assets/` côté landing : c'est le `build.assets` d'Astro, pas `/
 par empreinte (`sha256-…`) : modifier le script `mtc-register-view` de l'index de l'app, ou ajouter un script ou un
 `on…=` inline dans un index, demande de recalculer l'empreinte dans la conf (le test
 `apps/app-mytradingcoach/src/csp-nginx.spec.ts` échoue sinon), puis de reporter la conf sur les deux VPS. Un nouvel
-environnement d'API (`apiUrl` / `wsUrl`) ou un nouveau service tiers appelé par le navigateur s'ajoute à `connect-src`. État au 21/11/2026 : Report-Only appliqué sur
+environnement d'API (`apiUrl` / `wsUrl`) ou un nouveau service tiers appelé par le navigateur s'ajoute à `connect-src`. État au 22/11/2026 : Report-Only appliqué sur
 l'ancien VPS (admin, app dev, app beta) le 21/11 à 21 h 36, conf finale (Stripe et police) le 22/11 à 10 h 35 ; VPS prod (app)
 le 22/11 à 11 h 36. Relevé sur dev.app (compte démo,
 12 pages, tableau de bord compris) : seules violations, Stripe.js et ses frames (page de paiement intégrée, origines Stripe ajoutées ensuite) et un
