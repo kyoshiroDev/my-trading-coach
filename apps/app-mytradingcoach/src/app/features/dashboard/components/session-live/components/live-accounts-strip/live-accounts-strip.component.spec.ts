@@ -64,7 +64,7 @@ describe('Session live · bandeau multi-comptes (#668)', () => {
     expect(q('live-account-sheet-session')!.textContent).toContain('Compte de la séance');
     expect(q('live-account-sheet-daily')!.textContent).toContain('500');
     expect(q('live-account-sheet-drawdown')!.textContent).toContain('600');
-    expect(q('live-account-sheet-objective')!.textContent).toContain('pour l’objectif');
+    expect(q('live-account-sheet-objective')!.textContent).toContain('pour l’objectif · 33\u00a0%\u00a0atteint');
     expect(q('live-account-sheet')!.textContent).toContain('Estimation MyTradingCoach, pas le calcul officiel de ta firm.');
     q('live-account-sheet-close')!.click();
     fixture.detectChanges();

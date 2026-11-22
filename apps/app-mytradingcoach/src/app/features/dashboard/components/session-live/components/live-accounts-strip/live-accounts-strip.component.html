@@ -44,7 +44,7 @@
         @if (a.metrics.objective; as obj) {
           <div class="las-row" data-testid="live-account-sheet-objective">
             <dt>Objectif</dt>
-            <dd>{{ obj.pct >= 1 ? 'atteint' : money(a, objRemaining(a)) + ' pour l’objectif · ' + marginPct(obj) + ' atteint' }}</dd>
+            <dd>{{ obj.pct >= 1 ? 'atteint' : money(a, objRemaining(a)) + ' pour l’objectif · ' + marginPct(obj) + '\u00a0atteint' }}</dd>
           </div>
         }
       </dl>
