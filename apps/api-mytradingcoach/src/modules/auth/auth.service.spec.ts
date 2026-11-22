@@ -769,8 +769,9 @@ describe('AuthService', () => {
       const [payload, opts] = refreshSign() as [{ fid: string }, { jwtid: string }];
       expect(payload.fid).toBe('fam-1');
       expect(opts.jwtid).not.toBe('jti-1');
-      const [, nKeys, famKey, legacyKey, jti, nextJti] = mockRedis.client.eval.mock.calls[0];
-      expect([nKeys, famKey, legacyKey, jti, nextJti]).toEqual([2, 'auth:refresh-family:fam-1', 'auth:revoked-refresh:jti-1', 'jti-1', opts.jwtid]);
+      const [, nKeys, famKey, jti, nextJti] = mockRedis.client.eval.mock.calls[0];
+      // Une seule clé : la liste noire par jti d'avant #1002 n'est plus lue (#1014).
+      expect([nKeys, famKey, jti, nextJti]).toEqual([1, 'auth:refresh-family:fam-1', 'jti-1', opts.jwtid]);
     });
 
     it('jeton d’avant #1002 (jti sans famille) : famille dérivée du jti, gardée ensuite', async () => {

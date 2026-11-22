@@ -31,6 +31,24 @@ describe('Bundle initial : chargé à la demande', () => {
     expect(app).toContain("import { ToastsComponent } from './shared/components/toasts/toasts.component';");
   });
 
+  it('page d’inscription (chargée d’office) : aucun @angular/forms, ni elle ni ses composants (#765, ~43 ko)', () => {
+    const files = [
+      'features/auth/register.component.ts',
+      'features/auth/register.component.html',
+      'features/auth/auth-layout/auth-layout.component.ts',
+      'features/auth/auth-layout/signup-terms-note.component.ts',
+      'shared/components/google-auth-button/google-auth-button.component.ts',
+      'shared/components/eye-icon/eye-icon.component.ts',
+    ];
+    for (const f of files) {
+      const src = read(f);
+      expect(src, f).not.toMatch(/from ['"]@angular\/forms['"]/);
+      if (f.endsWith('.html')) expect(src, f).not.toMatch(/ngModel|ngSubmit|formControl/);
+    }
+    // Toujours chargée d'office (fae5a8c8 : −1,3 s avant le formulaire en 4G lente).
+    expect(routes).toMatch(/import \{ RegisterComponent \}/);
+  });
+
   it('le barrel @mtc/front-ui n’exporte pas le dialogue (sinon il resterait dans le bundle initial)', () => {
     expect(frontUi).not.toMatch(/^export .*confirm-dialog\.component/m);
     expect(frontUi).toMatch(/^export \* from '\.\/lib\/confirm-dialog\/confirm\.service';/m);

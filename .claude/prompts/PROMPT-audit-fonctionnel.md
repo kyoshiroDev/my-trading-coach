@@ -177,3 +177,21 @@ Texte exact de Greg : « c'est mergé, continue l'audite »
 PR #1207 (Zod sans eval) mergée. Phase 2 : `Content-Security-Policy` au lieu de `-Report-Only` dans `spa-releases.conf`, test qui exige le mode bloquant. `img-src https:` gardé (logo des e-mails servi par l'app, visuel du tirage servi par l'API, images Stripe et Google : une liste fermée casserait une image pour un gain faible). Préalable du relecteur : aucun signalement `script-src eval` sur dev.app après le déploiement de #1207 (compte démo, formulaire de trade). Report sur les VPS ensuite, sous l'autorisation du complément « #1068, report sur les VPS ».
 
 Préalable vérifié le 22/11 après le déploiement de #1207 sur dev.app (`te.config({jitless:!0})` présent dans le bundle servi) : compte démo, `/journal` dans une iframe de même origine, écouteur `securitypolicyviolation` posé pendant le chargement (avant les scripts), chunk zod chargé, aucun signalement `script-src eval` (seule violation : la sonde volontaire). Mode bloquant testé en local (build prod de l'app et de l'admin derrière nginx avec la nouvelle conf) : `/register`, `/login` de l'app et `/login` de l'admin affichés avec leurs polices, aucune violation, script injecté refusé (`enforce`).
+
+## Complément #1068, report de la phase 2 sur les VPS (2026-11-22)
+
+Texte exact de Greg : « fait les actions necessaire tu a mon feux vert »
+
+PR #1209 mergée. Report sous l'autorisation du complément « #1068, report sur les VPS » : ancien VPS (dev 18 h 58, beta 19 h 06, admin 19 h 07), VPS prod (20 h 09), sauvegardes datées, réécriture en place, politique comparée identique, `nginx -t`, reload, contrôles grep ancrés, `curl -sI`, santé des API. dev.app en bloquant : 19 pages et paiement test sans violation (compte jetable supprimé, 204 puis 401). Écart beta (ancien `mtc-register-view` bloqué, branche figée) : option (1) du relecteur, gardé et documenté. Prod : pas de contrôle au navigateur (session réelle de Greg dans Chrome), contrôle statique de l'index servi conforme.
+
+## Complément #1014, fin de la liste noire d'avant #1002 (2026-11-22)
+
+Texte exact de Greg : « ok continue alors »
+
+#1002 est en prod depuis le 14/11 à 17 h 48 UTC (promotion #1017) : les refresh tokens d'avant ont tous expiré (7 j). Retrait de la lecture de `auth:revoked-refresh:<jti>` dans le script Lua de `refresh-rotation.ts` (une seule clé), de `legacyRevokedRefreshKey` et du test « liste noire d'avant #1002 » ; référence `connexion-google.md` mise à jour. `security.md` ne mentionnait pas cette clé : rien à y changer. La famille dérivée `j:<jti>` des jetons sans `fid` n'est pas touchée (hors ticket).
+
+## Complément #1004, constat en prod et compteur durable (2026-11-22)
+
+Texte exact de Greg : « oui je t'autorise pour #1004 »
+
+Lecture seule sur le VPS prod : 0 ligne « state renvoyé » dans les logs des conteneurs API (recréés au déploiement du 22/11 à 15 h 40 UTC, pilote json-file : logs d'avant perdus), 0 callback dans le journal d'accès Traefik (stdout, redémarré à 11 h 09), aucune connexion Tradovate neuve en base depuis le 14/11. Sur la recommandation du relecteur : compteur Redis durable `tradovate:oauth-callback:state:oui|non` au callback (après le contrôle du cookie, try/catch), log gardé, pas d'affichage admin. Redis prod persistant (`appendonly yes`, `save`) : le compteur survit aux redémarrages.

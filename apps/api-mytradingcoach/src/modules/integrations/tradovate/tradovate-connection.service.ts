@@ -43,6 +43,9 @@ import type { SyncPauseAccount } from './tradovate-sync-pause';
 /** Ce que la vue lit du compte pour dire si la synchro est en pause (#684). */
 const SYNC_PAUSE_ACCOUNT_SELECT = { status: true, statusChangedAt: true } as const;
 
+/** #1004 : préfixe des compteurs du `state` renvoyé par Tradovate au callback (voir `countStateReturned`). */
+export const TRADOVATE_STATE_COUNTER_KEY = 'tradovate:oauth-callback:state';
+
 // Réexports : les appelants existants importent ces noms depuis le service.
 export { ACCOUNT_GONE_GRACE_MS, REFUSAL_COOLDOWN_S } from './tradovate-connection.constants';
 export type { CallbackOutcome, FirstSyncSummary, TradovateConnectionView } from './tradovate-connection.view';
@@ -98,6 +101,20 @@ export class TradovateConnectionService {
   }
 
   /**
+   * #1004 : compteur durable du constat de `completeAuthorization` (son log est effacé à chaque déploiement, qui
+   * recrée les conteneurs). Clés Redis sans TTL `tradovate:oauth-callback:state:oui|non`, lues
+   * à la main ; à retirer avec le log quand `state` sera exigé. Une panne Redis ne casse jamais
+   * le callback.
+   */
+  private async countStateReturned(returned: boolean): Promise<void> {
+    try {
+      await this.redis.client.incr(`${TRADOVATE_STATE_COUNTER_KEY}:${returned ? 'oui' : 'non'}`);
+    } catch (err) {
+      this.logger.warn(`Compteur du state Tradovate non incrémenté : ${(err as Error).message}`);
+    }
+  }
+
+  /**
    * Retour de Tradovate. Ne lève jamais : renvoie toujours un résultat, converti en URL de
    * l'app par `frontendRedirect`. L'utilisateur ne voit jamais une page d'erreur de l'API.
    *
@@ -117,6 +134,7 @@ export class TradovateConnectionService {
     // #994 (S4) : la doc ne dit pas si Tradovate renvoie `state`. Constat avant de l'exiger : un
     // `state` absent laisse passer un code tiers tant qu'un cookie d'une tentative abandonnée vit.
     this.logger.log(`Callback Tradovate : state renvoyé = ${query.state ? 'oui' : 'non'}`);
+    await this.countStateReturned(Boolean(query.state));
     if (query.state && query.state !== cookieState) {
       return { status: 'error', reason: 'state_mismatch', accountId, origin };
     }

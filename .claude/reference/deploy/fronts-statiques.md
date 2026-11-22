@@ -84,9 +84,17 @@ par l'app, visuel du tirage servi par l'API, images de Stripe et de Google). Les
 par empreinte (`sha256-…`) : modifier le script `mtc-register-view` de l'index de l'app, ou ajouter un script ou un
 `on…=` inline dans un index, demande de recalculer l'empreinte dans la conf (le test
 `apps/app-mytradingcoach/src/csp-nginx.spec.ts` échoue sinon), puis de reporter la conf sur les deux VPS. Un nouvel
-environnement d'API (`apiUrl` / `wsUrl`) ou un nouveau service tiers appelé par le navigateur s'ajoute à `connect-src`. État au 22/11/2026 : Report-Only appliqué sur
-l'ancien VPS (admin, app dev, app beta) le 21/11 à 21 h 36, conf finale (Stripe et police) le 22/11 à 10 h 35 ; VPS prod (app)
-le 22/11 à 11 h 36. Relevé sur dev.app (compte démo,
+environnement d'API (`apiUrl` / `wsUrl`) ou un nouveau service tiers appelé par le navigateur s'ajoute à `connect-src`. État au 22/11/2026 : **bloquante sur les 4 conteneurs** le 22/11
+(ancien VPS : `mtc_app_dev_static` 18 h 58, `mtc_app_beta_static` 19 h 06, `mtc_admin` 19 h 07, sauvegarde
+`~/spa-releases.conf.bak-20261122-1858` ; VPS prod : `mtc_app_prod` 20 h 09, sauvegarde `~/spa-releases.conf.bak-20261122-2009`).
+Phase 1 (Report-Only) du 21/11 21 h 36 au 22/11 : ancien VPS le 21/11 à 21 h 36, conf finale (Stripe et police) le 22/11 à
+10 h 35 ; VPS prod le 22/11 à 11 h 36. Contrôles du passage en bloquant : dev.app au navigateur (écouteur posé pendant le
+chargement, iframe de même origine), `/login`, `/register`, 17 pages du compte démo et paiement test complet (carte 3D Secure,
+Link et Google Pay), aucune violation ; bouton Google rendu sans violation sur beta (Google éteint sur dev) ; admin et app prod :
+en-tête servi et empreintes de l'index servi conformes (pas de relevé au navigateur : comptes réels). **Écart connu sur beta** :
+la branche `beta` est figée (9f1dfbe0) et son index porte une ancienne version de `mtc-register-view`, dont l'empreinte n'est
+pas autorisée : ce script y est bloqué, les vues de `/register` de beta ne sont plus comptées dans le funnel (inscription
+intacte) ; beta signale aussi l'`eval` de Zod (sans effet, pas de #1207). À revoir si beta est resynchronisée. Relevé sur dev.app (compte démo,
 12 pages, tableau de bord compris) : seules violations, Stripe.js et ses frames (page de paiement intégrée, origines Stripe ajoutées ensuite) et un
 `script-src eval` signalé par Zod 4 (test `allowsEval` dans un `try/catch`, sans effet : Zod se rabat sans `eval`),
 supprimé par `z.config({ jitless: true })` dans `core/schemas/trade.schema.ts` (seul module zod de l'app, chargé à la
@@ -99,8 +107,10 @@ tête de l'index, contrôlé par une violation volontaire) : 18 pages (les 17 ro
 violation. L'aperçu des e-mails est une iframe `srcdoc` isolée (`sandbox=""`, sans script) qui hérite de la politique :
 son logo vient de `${FRONTEND_URL}/logo-email.png` (app.mytradingcoach.app en prod) : un `img-src` resserré
 doit garder cette origine. Piège du relevé : le service worker de l'admin sert l'index en cache, le désinscrire avant
-(il garde aussi l'en-tête CSP de l'ancien index jusqu'au prochain déploiement de l'admin). Phase 2 (mode bloquant) mergée dans le dépôt ;
-report sur les VPS à faire : l'état ci-dessus reste Report-Only jusqu'à ce report.
+(il garde aussi l'en-tête CSP de l'ancien index jusqu'au prochain déploiement de l'admin). Relevé de l'admin connecté en ligne :
+seulement par Greg (service worker désinscrit, console ouverte). Avant de contrôler une page au navigateur, vérifier qu'aucune
+session réelle n'est enregistrée pour l'origine (sinon on entrerait dans le compte de Greg) : contrôle statique de l'index servi
+à la place (empreintes des scripts et gestionnaires inline comparées à `script-src`).
 
 Fichiers à nom fixe, avant la règle des assets (`location =`, prioritaire sur la regex) : les service
 workers (`ngsw-worker.js`, `push-sw.js`, …) en `no-cache`, sinon la règle des `.js` leur donnait un
