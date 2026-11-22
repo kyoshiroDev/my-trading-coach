@@ -151,3 +151,7 @@ Textes exacts de Greg :
 > je t'autorise à lancer les commandes sur l'ancien VPS et le VPS prod pour #1068 et #1110 SEULEMENT, sudo par moi
 
 Conf Report-Only appliquée sur l'ancien VPS (admin, app dev, app beta). Le relevé sur dev.app avec le compte démo montre que Stripe.js (page de paiement intégrée) n'était pas autorisé : origines Stripe ajoutées avant le report sur le VPS prod.
+
+## Complément #1110 (2026-11-21)
+
+Même autorisation que le complément « #1068, report sur les VPS » (#1068 et #1110 SEULEMENT, sudo par Greg). `SHOW CONFIG` demande le mot de passe de `mtc_user` : aucun secret lu. Preuve prise à la place dans `/etc/pgbouncer/pgbouncer.ini` du conteneur prod (filtré, sans secret), généré à son démarrage : `pool_mode = session`, pool de la base prod 25. Correction des agents prisma et deploy et de la référence pgbouncer.

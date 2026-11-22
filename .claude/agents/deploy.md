@@ -97,7 +97,7 @@ NestJS (4 workers) → mtc_pgbouncer:6432 → mtc_postgres:5432
 ```
 
 Les migrations Prisma passent par `DATABASE_DIRECT_URL` (Postgres direct),
-jamais par PgBouncer (transaction mode incompatible DDL).
+jamais par PgBouncer (mode réel : session, constaté le 2026-11-21, #1110 ; voir `reference/commun/pgbouncer.md`).
 
 ---
 
@@ -211,7 +211,7 @@ CMD ["sh", "entrypoint.sh"]
 #!/bin/sh
 set -e
 echo "[entrypoint] Running Prisma migrations..."
-# Migrations via connexion directe — PgBouncer (transaction mode) incompatible DDL
+# Migrations via connexion directe, jamais via PgBouncer
 DATABASE_URL="${DATABASE_DIRECT_URL:-$DATABASE_URL}" \
   ./node_modules/.bin/prisma migrate deploy --config=./prisma/prisma.config.ts
 echo "[entrypoint] Migrations complete. Starting NestJS..."
