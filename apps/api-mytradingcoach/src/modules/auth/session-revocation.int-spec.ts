@@ -14,7 +14,7 @@ import cookieParser from 'cookie-parser';
 import { createIntegrationApp } from '../../test/integration-app.helper';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../infra/redis.service';
-import { REFRESH_REUSE_GRACE_MS, legacyRevokedRefreshKey, refreshFamilyKey } from './refresh-rotation';
+import { REFRESH_REUSE_GRACE_MS, refreshFamilyKey } from './refresh-rotation';
 
 const PREFIX = 'int-session-revocation-';
 
@@ -136,11 +136,5 @@ describe('Fin de session côté serveur (#994)', () => {
     const c1 = refreshCookie(await post('refresh', c0));
     expect((await post('logout', c0)).status).toBe(201);
     expect((await post('refresh', c1)).status).toBe(401);
-  }, 60_000);
-
-  it('liste noire d’avant #1002 (par jti) : encore respectée', async () => {
-    const { cookie: c0 } = await register(`${PREFIX}legacy-${uid()}@test.local`);
-    await redis.client.set(legacyRevokedRefreshKey(claims(c0).jti), '1', 'EX', 60);
-    expect((await post('refresh', c0)).status).toBe(401);
   }, 60_000);
 });

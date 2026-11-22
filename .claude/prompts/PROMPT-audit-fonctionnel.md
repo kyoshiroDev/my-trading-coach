@@ -183,3 +183,9 @@ Préalable vérifié le 22/11 après le déploiement de #1207 sur dev.app (`te.c
 Texte exact de Greg : « fait les actions necessaire tu a mon feux vert »
 
 PR #1209 mergée. Report sous l'autorisation du complément « #1068, report sur les VPS » : ancien VPS (dev 18 h 58, beta 19 h 06, admin 19 h 07), VPS prod (20 h 09), sauvegardes datées, réécriture en place, politique comparée identique, `nginx -t`, reload, contrôles grep ancrés, `curl -sI`, santé des API. dev.app en bloquant : 19 pages et paiement test sans violation (compte jetable supprimé, 204 puis 401). Écart beta (ancien `mtc-register-view` bloqué, branche figée) : option (1) du relecteur, gardé et documenté. Prod : pas de contrôle au navigateur (session réelle de Greg dans Chrome), contrôle statique de l'index servi conforme.
+
+## Complément #1014, fin de la liste noire d'avant #1002 (2026-11-22)
+
+Texte exact de Greg : « ok continue alors »
+
+#1002 est en prod depuis le 14/11 à 17 h 48 UTC (promotion #1017) : les refresh tokens d'avant ont tous expiré (7 j). Retrait de la lecture de `auth:revoked-refresh:<jti>` dans le script Lua de `refresh-rotation.ts` (une seule clé), de `legacyRevokedRefreshKey` et du test « liste noire d'avant #1002 » ; référence `connexion-google.md` mise à jour. `security.md` ne mentionnait pas cette clé : rien à y changer. La famille dérivée `j:<jti>` des jetons sans `fid` n'est pas touchée (hors ticket).

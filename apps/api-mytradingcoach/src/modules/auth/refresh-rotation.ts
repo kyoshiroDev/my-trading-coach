@@ -29,9 +29,6 @@ export type RotationOutcome = 'ok' | 'revoked' | 'reused';
 /** Famille de refresh tokens. */
 export const refreshFamilyKey = (fid: string) => `auth:refresh-family:${fid}`;
 
-/** Liste noire par `jti` posée par les déconnexions d'avant #1002 : encore lue tant que ces jetons vivent (7 j). */
-export const legacyRevokedRefreshKey = (jti: string) => `auth:revoked-refresh:${jti}`;
-
 /**
  * Famille d'un jeton. Jeton d'avant #1002 (sans `fid`) mais avec `jti` : famille dérivée du `jti`, pour
  * qu'un rejeu de ce jeton après sa rotation retombe sur la même famille et soit détecté.
@@ -41,11 +38,10 @@ export function familyOf(payload: { fid?: string; jti?: string }): string | null
   return payload.jti ? `j:${payload.jti}` : null;
 }
 
-// KEYS[1] famille · KEYS[2] liste noire legacy du jti
+// KEYS[1] famille (la liste noire par jti d'avant #1002 n'est plus lue depuis #1014 : ses jetons ont expiré)
 // ARGV : jti présenté · nouveau jti · maintenant (ms) · tolérance (ms) · TTL (s)
 // Retour : 1 = ok · 0 = famille ou jeton révoqué · 2 = réutilisation détectée (famille coupée)
 const ROTATE_LUA = `
-if redis.call('EXISTS', KEYS[2]) == 1 then return 0 end
 if redis.call('HGET', KEYS[1], 'revoked') then return 0 end
 local valid = redis.call('HGET', KEYS[1], 'valid')
 local jti, nxt, now, grace, ttl = ARGV[1], ARGV[2], tonumber(ARGV[3]), tonumber(ARGV[4]), ARGV[5]
@@ -80,9 +76,8 @@ export async function rotateRefresh(
 ): Promise<RotationOutcome> {
   const r = await redis.eval(
     ROTATE_LUA,
-    2,
+    1,
     refreshFamilyKey(args.fid),
-    legacyRevokedRefreshKey(args.jti),
     args.jti,
     args.nextJti,
     String(args.now ?? Date.now()),
