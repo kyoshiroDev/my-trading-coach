@@ -155,3 +155,9 @@ Conf Report-Only appliquée sur l'ancien VPS (admin, app dev, app beta). Le rele
 ## Complément #1110 (2026-11-21)
 
 Même autorisation que le complément « #1068, report sur les VPS » (#1068 et #1110 SEULEMENT, sudo par Greg). `SHOW CONFIG` demande le mot de passe de `mtc_user` : aucun secret lu. Preuve prise à la place dans `/etc/pgbouncer/pgbouncer.ini` du conteneur prod (filtré, sans secret), généré à son démarrage : `pool_mode = session`, pool de la base prod 25. Correction des agents prisma et deploy et de la référence pgbouncer.
+
+## Complément #1068, paiement test (2026-11-22)
+
+Texte exact de Greg : « oui pour le compte de test et le paiement test sur dev.app.mytradingcoach.app »
+
+Paiement test complet sur dev.app (clé `pk_test_`, carte 3D Secure de test, Link et Google Pay affichés), écouteur de violations actif, compte `delivered+csp-1068@resend.dev` supprimé ensuite (`DELETE /api/users/me` → 204). Seule violation : `connect-src https://fonts.googleapis.com` depuis Stripe Elements, ajoutée avant le report sur le VPS prod.

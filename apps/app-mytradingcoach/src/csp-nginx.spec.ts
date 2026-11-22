@@ -63,6 +63,8 @@ describe('CSP de spa-releases.conf (#1068)', () => {
     }
     expect(directive('frame-src')).toContain('https://hooks.stripe.com');
     expect(directive('connect-src')).toContain('https://api.stripe.com');
+    // Stripe Elements lit la feuille Google Fonts de la page (police du formulaire de carte).
+    expect(directive('connect-src')).toContain('https://fonts.googleapis.com');
   });
 
   it('aucun repli permissif', () => {
