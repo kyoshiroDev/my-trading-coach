@@ -72,7 +72,9 @@ depuis la phase 2 : une ressource hors liste est refusée par le navigateur. Pha
 déployée par la CD : chaque VPS sert ce qui y a été reporté à la main (voir l'état). Urgence : remettre le suffixe
 `-Report-Only` sur le VPS, plus rien n'est bloqué : réécriture **en place** (même inode, `cat … >`, jamais `sed -i`,
 voir la procédure plus bas), puis dans chaque conteneur `nginx -t`, `nginx -s reload` et
-`grep -c 'Content-Security-Policy-Report-Only'` qui doit répondre 1 (0 = inode changé → `docker restart`). `img-src` garde `https:` (logo des e-mails servi
+`grep -c 'add_header Content-Security-Policy-Report-Only'` qui doit répondre 1 (0 = inode changé →
+`docker restart`). Motif ancré sur `add_header` exprès : les commentaires de la conf ne doivent pas fausser le
+compte. Contrôle symétrique après un report en mode bloquant : `grep -c 'add_header Content-Security-Policy "'` = 1. `img-src` garde `https:` (logo des e-mails servi
 par l'app, visuel du tirage servi par l'API, images de Stripe et de Google). Les scripts inline sont autorisés
 par empreinte (`sha256-…`) : modifier le script `mtc-register-view` de l'index de l'app, ou ajouter un script ou un
 `on…=` inline dans un index, demande de recalculer l'empreinte dans la conf (le test
