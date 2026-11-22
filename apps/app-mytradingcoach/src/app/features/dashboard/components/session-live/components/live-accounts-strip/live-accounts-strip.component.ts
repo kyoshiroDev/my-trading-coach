@@ -50,7 +50,7 @@ export class LiveAccountsStripComponent {
     return formatPercent(g.pct * 100);
   }
   protected money(a: TradingAccount, v: number): string {
-    return formatMoney(v, a.currency, { decimals: 0 });
+    return formatMoney(v, a.currency, { decimals: 0, sign: false });
   }
   protected toneOf(g: { pct: number; breached: boolean }): string {
     return drawdownTone(g);

@@ -699,4 +699,9 @@ a.lost-btn { text-decoration: none; }
   font-family: var(--font-mono); font-size: var(--fs-2xs); font-weight: 700; letter-spacing: .04em;
   color: var(--purple-bright); background: var(--purple-dim); border-radius: 5px; padding: 1px 6px;
 }
+/* Objectif « … $ pour l'objectif » : passe à la ligne dans sa cellule plutôt que de déborder sur la marge. */
+.cell-obj .gauge-top { flex-wrap: wrap; row-gap: 0; }
+.cell-obj .gauge-val { white-space: normal; flex-shrink: 1; min-width: 0; }
+/* Repli : solde (avec l'heure du relevé) et P&L alignés en haut, pas centrés l'un sur l'autre. */
+@container acct-table (max-width: 1100px) { .acct-line .cell.num.right { align-self: start; } }
 

@@ -58,7 +58,7 @@ textes (la déconnexion supprime nos jetons, elle ne révoque rien chez Tradovat
   colonne **« Perte max du jour »** (restant en $ + %, « limite atteinte ») ; compte gratuit relié à un
   plan : badge PREMIUM en pointillé qui ouvre la fenêtre Premium (pas de flou). 9 colonnes, repli du
   tableau à 1100 px. Heure du relevé broker visible sous le solde (« relevé il y a 4 min »).
-- **« À surveiller »** : `isAtRisk`, marge la plus serrée (perte max du jour comprise) ≤ `ALERT_WARNING_PCT`.
+- **« À surveiller »** : `isAtRisk`, marge la plus serrée (perte max du jour comprise) ≤ `ALERT_WARNING_PCT` ; sous-titre « proche d'une limite » (plus seulement le plancher).
 - **Gating** : ouvert à tous les plans (décision du 22/11, `MULTI_ACCOUNT_VIEW_FOR_ALL_PLANS`) ; la
   perte max du jour reste Premium (calculée seulement en Premium par l'API).
 - Specs : `account-exposure.util.spec.ts`, `accounts-multi-comptes.spec.ts` (vrai gabarit),
