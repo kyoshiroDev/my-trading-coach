@@ -88,6 +88,14 @@ import { KeptAccountPanelComponent } from './kept-account/kept-account-panel.com
 import { AccountPayoutsComponent } from './account-payouts/account-payouts.component';
 import { LostAccountFlowService } from '../../core/services/lost-account-flow.service';
 import { countsInAggregate, statusBadgeClass, statusLabel } from '../../core/utils/account-status.util';
+import {
+  MULTI_ACCOUNT_VIEW_FOR_ALL_PLANS,
+  accountExposure,
+  drawdownTone,
+  groupByExposure,
+  isAtRisk,
+  type ExposureGroups,
+} from '../../core/utils/account-exposure.util';
 import { InfoTooltipComponent } from '@app/shared/components/info-tooltip/info-tooltip.component';
 import { DRAWDOWN_LABELS } from '@app/core/constants/drawdown-labels.const';
 
@@ -258,6 +266,38 @@ export class AccountsComponent implements OnInit {
     const all = this.store.accounts();
     return sel === 'all' ? all.filter((a) => a.status !== 'ARCHIVED') : all.filter((a) => a.id === sel);
   });
+  /**
+   * Vue multi-comptes (#668) : en « Tous les comptes », lignes rangées du plus exposé au moins exposé,
+   * puis comptes sans marge, « Sans plan relié », validés et échoués. Ouverte à tous les plans
+   * (décision du 22/11) : réglage unique ici si la décision change.
+   */
+  protected readonly multiAccountViewEnabled = computed(() => MULTI_ACCOUNT_VIEW_FOR_ALL_PLANS || this.userStore.isPremium());
+  protected readonly rowGroups = computed<ExposureGroups>(() => {
+    const rows = this.displayedAccounts();
+    if (this.store.selectedAccountId() !== 'all' || !this.multiAccountViewEnabled()) {
+      return { tracked: rows, other: [], noPlan: [], inactive: [] };
+    }
+    return groupByExposure(rows);
+  });
+  /** Compte le plus exposé, mis en avant à partir de 2 comptes suivis. */
+  protected readonly mostExposedId = computed(() => {
+    if (this.store.selectedAccountId() !== 'all' || !this.multiAccountViewEnabled()) return null;
+    const tracked = this.rowGroups().tracked;
+    return tracked.length >= 2 ? tracked[0].id : null;
+  });
+  /** Couleur de la marge la plus serrée (étiquette « Le plus exposé »). */
+  protected exposureTone(a: TradingAccount): string {
+    return drawdownTone(accountExposure(a));
+  }
+  /** Infobulle de l'étiquette : quelle marge rend le compte le plus exposé. */
+  protected exposureHelp(a: TradingAccount): string {
+    const e = accountExposure(a);
+    if (!e) return '';
+    const which = e.source === 'daily' ? 'perte max du jour' : 'marge avant le plancher';
+    const free = a.metrics.dailyLoss ? '' : ' (plancher seul : la perte max du jour est suivie en Premium)';
+    return `Marge la plus serrée de tes comptes : ${which}, ${formatPercent(e.pct * 100)} restants${free}.`;
+  }
+
   /** Section repliée « n comptes archivés » (vue « Tous les comptes » seulement). */
   protected readonly archivedAccounts = computed(() =>
     this.store.selectedAccountId() === 'all' ? this.store.accounts().filter((a) => a.status === 'ARCHIVED') : [],
@@ -340,14 +380,8 @@ export class AccountsComponent implements OnInit {
   protected money(value: number | null | undefined, currency: string | null, sign = false): string {
     return formatMoney(value ?? 0, currency, { decimals: 0, sign });
   }
-  // Comptes proches du drawdown (marge ≤ 25 % du max, ou dépassée) : à surveiller.
-  protected readonly atRiskCount = computed(
-    () =>
-      this.visibleAccounts().filter((a) => {
-        const dd = a.metrics.drawdown;
-        return dd && (dd.breached || dd.pct <= 0.25);
-      }).length,
-  );
+  // À surveiller : marge la plus serrée (plancher ou perte max du jour) ≤ 25 %, ou dépassée (#668).
+  protected readonly atRiskCount = computed(() => this.visibleAccounts().filter(isAtRisk).length);
   // Au moins un compte prop firm (éval / funded) → affiche la note disclaimer globale unique.
   protected readonly hasPropAccount = computed(() =>
     this.store.accounts().some((a) => a.type === 'EVALUATION' || a.type === 'FUNDED'),
@@ -627,10 +661,28 @@ export class AccountsComponent implements OnInit {
   }
   protected ddColor(a: TradingAccount): string {
     const dd = a.metrics.drawdown;
-    if (!dd) return 'var(--blue)';
-    if (dd.breached || dd.pct <= 0.25) return 'var(--red)';
-    if (dd.pct <= 0.5) return 'var(--yellow)';
-    return 'var(--green)';
+    return dd ? `var(--${drawdownTone(dd)})` : 'var(--blue)';
+  }
+  /** Part restante d'une marge, en % entier. */
+  protected marginPct(g: { pct: number }): string {
+    return formatPercent(g.pct * 100);
+  }
+  // Perte max du jour (Premium, plan relié) : barre = marge restante, mêmes couleurs que la marge.
+  protected dlWidth(a: TradingAccount): number {
+    return this.barWidth(a.metrics.dailyLoss?.pct);
+  }
+  protected dlColor(a: TradingAccount): string {
+    const dl = a.metrics.dailyLoss;
+    return dl ? `var(--${drawdownTone(dl)})` : 'var(--blue)';
+  }
+  /** Compte gratuit relié à un plan : la perte max du jour est l'argument Premium (pas de flou). */
+  protected dailyLossTeaser(a: TradingAccount): boolean {
+    return !a.metrics.dailyLoss && !this.userStore.isPremium() && !!a.propFirmPlanId && a.status === 'ACTIVE';
+  }
+  /** Reste à faire pour l'objectif (jamais négatif). */
+  protected objRemaining(a: TradingAccount): number {
+    const o = a.metrics.objective;
+    return o ? Math.max(0, o.target - o.current) : 0;
   }
 
   protected isPropFirm(t: AccountType): boolean {

@@ -22,17 +22,8 @@ export function barWidth(ratio: number | null | undefined): number {
   return Math.round(Math.min(1, Math.max(0, ratio)) * 100);
 }
 
-/**
- * Couleur d'une marge (drawdown, perte journalière) : mêmes seuils que « Mes comptes » (rouge
- * ≤ 25 % de marge ou dépassé, jaune ≤ 50 %, vert au-delà), pour qu'un compte ait la même couleur
- * partout. 25 % est aussi le premier seuil d'alerte (#370).
- */
-export function drawdownTone(gauge: { pct: number; breached: boolean } | null): 'green' | 'yellow' | 'red' {
-  if (!gauge) return 'green';
-  if (gauge.breached || gauge.pct <= 0.25) return 'red';
-  if (gauge.pct <= 0.5) return 'yellow';
-  return 'green';
-}
+/** Couleur d'une marge : règle unique partagée avec Mes comptes (#668). */
+export { drawdownTone } from '../../../../../../core/utils/account-exposure.util';
 
 /**
  * Encart du gratuit (#769, B4) : seuil d'alerte Premium franchi par la marge avant le plancher,

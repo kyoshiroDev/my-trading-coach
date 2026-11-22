@@ -29,6 +29,7 @@ import { LivePositionComponent } from './components/live-position/live-position.
 import { LIVE_POSITION_ROLES, laggingBrokerPanel, liveTotals } from './components/live-position/live-position.util';
 import { LiveBarComponent } from './components/live-bar/live-bar.component';
 import { LiveNextEventComponent } from './components/live-next-event/live-next-event.component';
+import { LiveAccountsStripComponent } from './components/live-accounts-strip/live-accounts-strip.component';
 import { LiveClosedTradesComponent } from './components/live-closed-trades/live-closed-trades.component';
 import { SessionStore } from '@app/core/stores/session.store';
 import { bannerTickers, moodLabel, planKindShort } from './session-live.util';
@@ -46,7 +47,7 @@ import { bannerTickers, moodLabel, planKindShort } from './session-live.util';
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './session-live.component.css',
   imports: [
-    MarketContextBarComponent, LiveNewsComponent, QuickTradeComponent, LivePropFirmComponent,
+    LiveAccountsStripComponent, MarketContextBarComponent, LiveNewsComponent, QuickTradeComponent, LivePropFirmComponent,
     LivePositionComponent, LiveBarComponent, LiveNextEventComponent, LiveClosedTradesComponent,
     RouterLink, DialogDirective,
   ],

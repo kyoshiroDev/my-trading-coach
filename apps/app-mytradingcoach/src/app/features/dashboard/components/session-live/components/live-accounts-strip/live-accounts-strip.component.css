@@ -1,0 +1,54 @@
+/* Bandeau « Mes comptes » de la Session live (#668) : mobile d'abord, couleurs de drawdownTone. */
+.las {
+  background: var(--bg-2); border: 1px solid var(--border); border-radius: 14px; padding: 12px 14px;
+  display: flex; flex-direction: column; gap: 8px; min-width: 0;
+}
+.las-title { font-family: var(--font-mono); font-size: 11px; letter-spacing: .08em; color: var(--text-2); }
+/* Rangée de pastilles : défilement horizontal propre (carrousel), jamais celui de la page. */
+.las-chips { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; min-width: 0; padding-bottom: 2px; }
+.las-chips::-webkit-scrollbar { display: none; }
+.las-chip {
+  flex-shrink: 0; display: inline-flex; align-items: baseline; gap: 8px; min-height: 40px; max-width: 220px;
+  padding: 0 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-card);
+  color: var(--text); font: 13px var(--font-body); cursor: pointer; align-items: center;
+}
+.las-chip:hover { border-color: var(--border-hover); }
+.las-chip:focus-visible { outline: 2px solid var(--blue-bright); outline-offset: 2px; }
+.las-chip.is-session { border-style: dashed; }
+.las-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.las-pct { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: 12px; font-weight: 600; flex-shrink: 0; }
+.las-chip.tone-red .las-pct, .las-row dd.tone-red { color: var(--red); }
+.las-chip.tone-yellow .las-pct, .las-row dd.tone-yellow { color: var(--yellow); }
+.las-chip.tone-green .las-pct, .las-row dd.tone-green { color: var(--green); }
+/* Le plus exposé : bordure à sa couleur. */
+.las-chip.is-first.tone-red { border-color: var(--red); }
+.las-chip.is-first.tone-yellow { border-color: var(--yellow); }
+
+/* Détail d'un compte : feuille en bas sur mobile, boîte centrée à partir de 768 px. */
+.las-overlay {
+  position: fixed; inset: 0; z-index: 1000; display: flex; align-items: flex-end; justify-content: center;
+  background: rgba(8, 12, 20, .72);
+}
+.las-sheet {
+  width: 100%; max-height: calc(100dvh - 32px); overflow-y: auto;
+  background: var(--bg-card); border: 1px solid var(--border-hover); border-radius: 16px 16px 0 0;
+  padding: 18px 18px calc(env(safe-area-inset-bottom) + 18px);
+}
+.las-sheet-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.las-sheet-title { font: 600 17px var(--font-display); color: var(--text); margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.las-close {
+  flex-shrink: 0; min-height: 40px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--border);
+  background: transparent; color: var(--text-2); font: 13px var(--font-body); cursor: pointer;
+}
+.las-close:focus-visible { outline: 2px solid var(--blue-bright); outline-offset: 2px; }
+.las-session { font-size: 12px; color: var(--text-3); margin: 6px 0 12px; }
+.las-rows { margin: 0; display: flex; flex-direction: column; }
+.las-row { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid var(--border); }
+.las-row dt { font-size: 13px; color: var(--text-2); }
+.las-row dd { margin: 0; font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: 13px; color: var(--text); text-align: right; }
+.las-note { font-size: 11px; color: var(--text-3); margin: 12px 0 0; line-height: 1.5; }
+
+@media (min-width: 768px) {
+  .las-overlay { align-items: center; padding: 16px; }
+  .las-sheet { width: min(440px, 100%); border-radius: 16px; padding: 22px; }
+}

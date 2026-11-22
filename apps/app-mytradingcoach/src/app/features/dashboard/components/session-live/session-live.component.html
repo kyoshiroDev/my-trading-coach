@@ -38,6 +38,9 @@
   />
 
   <div class="lv-body">
+    <!-- Mes comptes (#668) : pastilles du plus exposé au moins exposé, à partir de 2 comptes suivis. -->
+    <mtc-live-accounts-strip [sessionAccountId]="session()?.accountId ?? null" />
+
     <!-- 2. Prochaine annonce (absente s'il n'en reste aucune) ; à la publication : chiffre + analyse IA -->
     <mtc-live-next-event [events]="ecoCalendar()?.events ?? []" (ecoCalendarRefreshed)="ecoCalendarRefreshed.emit($event)" />
 

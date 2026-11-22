@@ -22,7 +22,7 @@ import { describe, it, expect, vi, beforeAll, afterAll, afterEach } from 'vitest
 // régression de code alors que c'était l'horloge. Même valeur que `vitest.integration.config.mts`.
 vi.setConfig({ testTimeout: 60_000 });
 import { PrismaClient } from '@prisma/client';
-import { seedDemo, assertDemoCalendar, buildDemoDataset, DEMO_EMAIL, DEMO_WINDOW_DAYS } from './demo-seed';
+import { seedDemo, assertDemoCalendar, buildDemoDataset, DEMO_EMAIL, DEMO_WINDOW_DAYS, nearLimitOpenPnl } from './demo-seed';
 import { generate } from './demo-data/generate';
 import { activeSessionWhere } from '../session/active-session';
 
@@ -569,6 +569,31 @@ describe('seedDemo — connexion Tradovate démo', () => {
       expect(String(conn['accessTokenEnc']).startsWith('v1:')).toBe(false);
       expect(conn['refreshTokenEnc']).toBeUndefined();
     }
+  });
+});
+
+describe('seedDemo — compte proche de sa limite (#668)', () => {
+  it('Elite (plancher statique) : position en perte latente, equity à 18 % de la marge, solde des trades inchangé', async () => {
+    const calls: Call[] = [];
+    const { prisma, created } = fakePrisma(calls);
+    await seedDemo(prisma);
+    const [apex, tradeify, elite] = created['brokerConnection'] ?? [];
+    // Les deux autres comptes : aucun latent inventé (equity = solde).
+    for (const c of [apex, tradeify]) {
+      expect(c['brokerOpenPnl']).toBe(0);
+      expect(c['brokerNetLiq']).toBe(c['brokerCashBalance']);
+      expect(c['brokerOpenPositions']).toBe(0);
+    }
+    expect(elite['brokerOpenPnl'] as number).toBeLessThan(0);
+    expect(elite['brokerOpenPositions']).toBe(1);
+    // Plancher statique 24 000 $ + 18 % de 1 000 $ = 24 180 $.
+    expect(elite['brokerNetLiq']).toBeCloseTo(24_180, 2);
+    expect(elite['brokerNetLiq'] as number).toBeCloseTo((elite['brokerCashBalance'] as number) + (elite['brokerOpenPnl'] as number), 2);
+  });
+
+  it('nearLimitOpenPnl : jamais de gain inventé', () => {
+    expect(nearLimitOpenPnl({ startingBalance: 25_000, maxDrawdown: 1_000 }, 25_900)).toBe(-1_720);
+    expect(nearLimitOpenPnl({ startingBalance: 25_000, maxDrawdown: 1_000 }, 24_100)).toBe(0);
   });
 });
 
