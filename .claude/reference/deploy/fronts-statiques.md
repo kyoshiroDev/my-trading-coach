@@ -76,7 +76,9 @@ environnement d'API (`apiUrl` / `wsUrl`) ou un nouveau service tiers appelé par
 l'ancien VPS (admin, app dev, app beta) le 21/11 à 21 h 36, VPS prod (app) à suivre. Relevé sur dev.app (compte démo,
 12 pages, tableau de bord compris) : seules violations, Stripe.js et ses frames (page de paiement intégrée, origines Stripe ajoutées ensuite) et un
 `script-src eval` signalé par Zod 4 (test `allowsEval` dans un `try/catch`, sans effet : Zod se rabat sans `eval`, à ignorer).
-La PR de phase 2 (mode bloquant) met cet état à jour.
+Paiement test complet sur dev.app le 22/11 (clé `pk_test_`, carte 3D Secure, Link et Google Pay affichés,
+compte jetable supprimé) : une seule violation, `connect-src fonts.googleapis.com` (police lue par Stripe Elements),
+ajoutée ensuite. La PR de phase 2 (mode bloquant) met cet état à jour.
 
 Fichiers à nom fixe, avant la règle des assets (`location =`, prioritaire sur la regex) : les service
 workers (`ngsw-worker.js`, `push-sw.js`, …) en `no-cache`, sinon la règle des `.js` leur donnait un
