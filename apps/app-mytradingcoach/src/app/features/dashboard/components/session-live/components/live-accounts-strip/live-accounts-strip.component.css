@@ -8,7 +8,7 @@
 .las-chips { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; min-width: 0; padding-bottom: 2px; }
 .las-chips::-webkit-scrollbar { display: none; }
 .las-chip {
-  flex-shrink: 0; display: inline-flex; align-items: baseline; gap: 8px; min-height: 40px; max-width: 220px;
+  flex-shrink: 0; display: inline-flex; gap: 8px; min-height: 44px; max-width: 220px;
   padding: 0 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-card);
   color: var(--text); font: 13px var(--font-body); cursor: pointer; align-items: center;
 }
@@ -37,7 +37,7 @@
 .las-sheet-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
 .las-sheet-title { font: 600 17px var(--font-display); color: var(--text); margin: 0; min-width: 0; overflow-wrap: anywhere; }
 .las-close {
-  flex-shrink: 0; min-height: 40px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--border);
+  flex-shrink: 0; min-height: 44px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--border);
   background: transparent; color: var(--text-2); font: 13px var(--font-body); cursor: pointer;
 }
 .las-close:focus-visible { outline: 2px solid var(--blue-bright); outline-offset: 2px; }
@@ -46,9 +46,10 @@
 .las-row { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid var(--border); }
 .las-row dt { font-size: 13px; color: var(--text-2); }
 .las-row dd { margin: 0; font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: 13px; color: var(--text); text-align: right; }
-.las-note { font-size: 11px; color: var(--text-3); margin: 12px 0 0; line-height: 1.5; }
+.las-note { font-size: 12px; color: var(--text-3); margin: 12px 0 0; line-height: 1.5; }
 
 @media (min-width: 768px) {
   .las-overlay { align-items: center; padding: 16px; }
   .las-sheet { width: min(440px, 100%); border-radius: 16px; padding: 22px; }
+  .las-chip, .las-close { min-height: 40px; }
 }

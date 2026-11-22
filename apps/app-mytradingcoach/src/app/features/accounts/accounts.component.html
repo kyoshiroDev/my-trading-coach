@@ -221,8 +221,8 @@
                   @if (objReached(a)) {
                     <span class="gauge-val text-green">atteint</span>
                   } @else {
-                    <span class="gauge-val" [title]="money(obj.current, a.currency) + ' / ' + money(obj.target, a.currency)">{{ money(objRemaining(a), a.currency) }} pour l'objectif</span>
-                    <span class="gauge-pct">{{ objPct(a) }}&nbsp;%</span>
+                    <span class="gauge-val" [title]="money(obj.current, a.currency) + ' / ' + money(obj.target, a.currency)">{{ money(objRemaining(a), a.currency) }} pour l’objectif</span>
+                    <span class="gauge-pct">{{ objPct(a) }}&nbsp;% atteint</span>
                   }
                 </div>
                 <div class="bar-track xs">
@@ -271,7 +271,7 @@
                   <div class="bar-fill" [style.width.%]="dlWidth(a)" [style.background]="dlColor(a)"></div>
                 </div>
               } @else if (dailyLossTeaser(a)) {
-                <button type="button" class="dl-teaser" (click)="showPlanModal.set(true)" [attr.data-testid]="'account-daily-loss-teaser-' + a.id">
+                <button type="button" class="dl-teaser" (click)="showPlanModal.set(true)" aria-label="Perte max du jour&nbsp;: disponible en Premium" [attr.data-testid]="'account-daily-loss-teaser-' + a.id">
                   <span class="pf-badge">PREMIUM</span>
                 </button>
               } @else {

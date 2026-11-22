@@ -54,7 +54,7 @@ textes (la déconnexion supprime nos jetons, elle ne révoque rien chez Tradovat
 - **« Le plus exposé »** : étiquette sous le nom et liseré à la couleur de sa marge la plus serrée
   (`drawdownTone`, même règle qu'en Session live), à partir de 2 comptes suivis et seulement en vue
   « Tous les comptes ». Infobulle : quelle marge (plancher seul pour un compte sans perte max du jour).
-- **Colonnes** : Objectif « … $ pour l'objectif » + % ; `ddLabels.margin` (marge en $ + %) ; nouvelle
+- **Colonnes** : Objectif « … $ pour l’objectif » + « N % atteint » (part déjà faite, à ne pas confondre avec les marges restantes) ; `ddLabels.margin` (marge en $ + %) ; nouvelle
   colonne **« Perte max du jour »** (restant en $ + %, « limite atteinte ») ; compte gratuit relié à un
   plan : badge PREMIUM en pointillé qui ouvre la fenêtre Premium (pas de flou). 9 colonnes, repli du
   tableau à 1100 px. Heure du relevé broker visible sous le solde (« relevé il y a 4 min »).

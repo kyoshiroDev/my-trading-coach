@@ -294,7 +294,7 @@ export class AccountsComponent implements OnInit {
     const e = accountExposure(a);
     if (!e) return '';
     const which = e.source === 'daily' ? 'perte max du jour' : 'marge avant le plancher';
-    const free = a.metrics.dailyLoss ? '' : ' (plancher seul : la perte max du jour est suivie en Premium)';
+    const free = this.dailyLossTeaser(a) ? ' (plancher seul : la perte max du jour est suivie en Premium)' : '';
     return `Marge la plus serrée de tes comptes : ${which}, ${formatPercent(e.pct * 100)} restants${free}.`;
   }
 

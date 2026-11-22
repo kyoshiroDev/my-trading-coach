@@ -67,7 +67,7 @@ Filets posés par `DemoSeedCron` (`modules/admin/demo-seed.cron.ts`) :
 - **Trade encore ouvert gardé après la bascule** : `getTodayTrades` = trades du jour **ou** trade sans
   P&L rattaché à la session active (`sessionId`, `pnl: null`). Vaut pour tous les comptes (position
   ouverte à 23:50) et sert la position de la vitrine.
-- **Les deux comptes prop firm de la démo sont « connectés »** (vitrine, faux jeton, une connexion
+- **Les trois comptes prop firm de la démo sont « connectés »** (vitrine, faux jeton, une connexion
   et des clôtures officielles par compte, `tradovateAccount` dans `demo-data/config.ts`) : la session
   live exige un compte connecté pour montrer le suivi prop firm, et « Mes comptes » n'affiche plus de
   bouton « Connecter » orange sur Tradeify.
@@ -97,7 +97,7 @@ affichaient **0 $ / 0 trade / 0 compte**. Deux pages qui se contredisent.
 `Apex 50k · Éval #2` (EVALUATION), `Tradeify 50k · Funded` (FUNDED) et `Elite 25k · Static`
 (EVALUATION, plancher statique, journées tirées à part), **futures d'indices US uniquement**
 (MES / MNQ, quelques ES / NQ). Le compte perso Forex & Crypto et l'or ont été retirés : la
-démo s'adresse à des traders de futures prop firm. Deux comptes plutôt qu'un : le
+démo s'adresse à des traders de futures prop firm. Plusieurs comptes plutôt qu'un : le
 multi-comptes est l'une des ancres Premium (`plans.md`).
 
 **Comptes perdus de la démo (compte perdu, phase 3)** : `demo-data/lost-accounts.ts` ajoute
