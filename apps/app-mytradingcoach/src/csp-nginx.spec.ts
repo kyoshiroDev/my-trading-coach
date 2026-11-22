@@ -10,7 +10,11 @@ import { environment as dev } from './environments/environment.dev';
 // inline y sont autorisés par leur empreinte : modifier un script d'index.html sans recalculer son
 // empreinte le ferait bloquer en prod. Ce test garde la conf alignée sur les index et les environnements.
 const root = resolve(import.meta.dirname, '../../..');
-const conf = readFileSync(resolve(root, 'infra/static/nginx/spa-releases.conf'), 'utf8');
+// Lignes de commentaire retirées : un commentaire qui cite l'en-tête ne doit ni compter ni masquer la vraie directive.
+const conf = readFileSync(resolve(root, 'infra/static/nginx/spa-releases.conf'), 'utf8')
+  .split('\n')
+  .filter((l) => !l.trim().startsWith('#'))
+  .join('\n');
 const header = /add_header Content-Security-Policy(?:-Report-Only)? "([^"]+)";/.exec(conf)?.[1] ?? '';
 const directive = (name: string) =>
   header
@@ -30,6 +34,11 @@ describe('CSP de spa-releases.conf (#1068)', () => {
     // Une seule ligne CSP : une seconde (autre location, ou bloquante à côté de la Report-Only)
     // échapperait aux contrôles ci-dessous.
     expect(conf.match(/add_header Content-Security-Policy/g)).toHaveLength(1);
+  });
+
+  it('la politique est bloquante (phase 2), pas en Report-Only', () => {
+    expect(conf).toMatch(/add_header Content-Security-Policy "/);
+    expect(conf).not.toContain('Content-Security-Policy-Report-Only');
   });
 
   it("chaque script inline des index de l'app et de l'admin est autorisé par son empreinte", () => {
