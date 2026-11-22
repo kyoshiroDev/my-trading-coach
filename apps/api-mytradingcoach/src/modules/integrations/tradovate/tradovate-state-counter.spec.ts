@@ -44,12 +44,23 @@ describe('Callback Tradovate — compteur du state renvoyé (#1004)', () => {
     expect(incr).not.toHaveBeenCalled();
   });
 
+  it('cookie signé avec un autre secret → rien compté', async () => {
+    const { service, incr } = setup();
+    const forge = signOAuthState({ userId: 'u1', accountId: 'a1', origin: 'settings' }, 'autre-secret');
+    await expect(service.completeAuthorization({ state: forge, error: 'access_denied' }, forge)).resolves.toMatchObject({
+      reason: 'session_expired',
+    });
+    expect(incr).not.toHaveBeenCalled();
+  });
+
   it('Redis en panne → le callback rend le même résultat, sans lever', async () => {
-    const { service, cookie } = setup(vi.fn().mockRejectedValue(new Error('redis down')));
+    const incr = vi.fn().mockRejectedValue(new Error('redis down'));
+    const { service, cookie } = setup(incr);
     await expect(service.completeAuthorization({ state: 'autre', code: 'c' }, cookie)).resolves.toMatchObject({
       status: 'error',
       reason: 'state_mismatch',
       accountId: 'a1',
     });
+    expect(incr).toHaveBeenCalledOnce();
   });
 });
