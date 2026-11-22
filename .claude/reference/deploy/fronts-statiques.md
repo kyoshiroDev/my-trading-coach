@@ -68,13 +68,18 @@ côté SPA, `/_assets/` côté landing : c'est le `build.assets` d'Astro, pas `/
 **CSP de l'app et de l'admin (#1068, 2026-11-21)** : `spa-releases.conf` pose une seule politique sur
 `index.html` (`location /`) pour l'app (prod, dev, beta) et l'admin. **Bloquante** (`Content-Security-Policy`)
 depuis la phase 2 : une ressource hors liste est refusée par le navigateur. Phase 1 en
-`Content-Security-Policy-Report-Only` du 21 au 22/11 (relevés ci-dessous). Le dépôt fait foi, mais la conf n'est pas
+`Content-Security-Policy-Report-Only` à partir du 21/11 (relevés ci-dessous). Le dépôt fait foi, mais la conf n'est pas
 déployée par la CD : chaque VPS sert ce qui y a été reporté à la main (voir l'état). Urgence : remettre le suffixe
 `-Report-Only` sur le VPS, plus rien n'est bloqué : réécriture **en place** (même inode, `cat … >`, jamais `sed -i`,
 voir la procédure plus bas), puis dans chaque conteneur `nginx -t`, `nginx -s reload` et
 `grep -c 'add_header Content-Security-Policy-Report-Only'` qui doit répondre 1 (0 = inode changé →
 `docker restart`). Motif ancré sur `add_header` exprès : les commentaires de la conf ne doivent pas fausser le
-compte. Contrôle symétrique après un report en mode bloquant : `grep -c 'add_header Content-Security-Policy "'` = 1. `img-src` garde `https:` (logo des e-mails servi
+compte. Contrôle symétrique après un report en mode bloquant : `grep -c 'add_header Content-Security-Policy "'` = 1.
+Piège du service worker : celui de l'admin (ngsw) met `/index.html` en cache avec ses en-têtes, et un changement de
+conf nginx ne change pas `ngsw.json` : dans un navigateur déjà passé sur l'admin, le passage en bloquant comme le retour
+en Report-Only ne s'appliquent qu'au prochain déploiement de l'admin, ou après désinscription du service worker (ou
+Maj + rechargement). L'app n'a pas de service worker qui intercepte les pages (`push-sw.js` sans gestionnaire `fetch`) :
+chez elle, l'en-tête s'applique tout de suite. `img-src` garde `https:` (logo des e-mails servi
 par l'app, visuel du tirage servi par l'API, images de Stripe et de Google). Les scripts inline sont autorisés
 par empreinte (`sha256-…`) : modifier le script `mtc-register-view` de l'index de l'app, ou ajouter un script ou un
 `on…=` inline dans un index, demande de recalculer l'empreinte dans la conf (le test
@@ -94,7 +99,7 @@ tête de l'index, contrôlé par une violation volontaire) : 18 pages (les 17 ro
 violation. L'aperçu des e-mails est une iframe `srcdoc` isolée (`sandbox=""`, sans script) qui hérite de la politique :
 son logo vient de `${FRONTEND_URL}/logo-email.png` (app.mytradingcoach.app en prod) : un `img-src` resserré
 doit garder cette origine. Piège du relevé : le service worker de l'admin sert l'index en cache, le désinscrire avant
-(il garde aussi l'en-tête CSP de l'ancien index jusqu'à sa mise à jour). Phase 2 (mode bloquant) mergée dans le dépôt ;
+(il garde aussi l'en-tête CSP de l'ancien index jusqu'au prochain déploiement de l'admin). Phase 2 (mode bloquant) mergée dans le dépôt ;
 report sur les VPS à faire : l'état ci-dessus reste Report-Only jusqu'à ce report.
 
 Fichiers à nom fixe, avant la règle des assets (`location =`, prioritaire sur la regex) : les service
