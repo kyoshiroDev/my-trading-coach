@@ -391,6 +391,11 @@ export function welcomeFreeTemplate(params: {
       <p style="${FONT}font-size:13px;color:#8fa3bf;margin:16px 0 0 0;line-height:1.6;">
         Tu ne trades pas sur Tradovate ? Tu peux ${textLink('importer un fichier CSV ou noter tes trades à la main', link('/journal'))}.
       </p>
+
+      <p style="${FONT}font-size:13px;color:#8fa3bf;margin:12px 0 0 0;line-height:1.6;">
+        Sur ton téléphone, ajoute MyTradingCoach à ton écran d'accueil&nbsp;: ton journal s'ouvre en un geste,
+        en plein écran. ${textLink('Voir comment faire', link('/installer'))}
+      </p>
     `)}
 
     <div style="background:#0f1824;border:1px solid rgba(88,101,242,.5);border-radius:12px;padding:20px 24px;margin-bottom:16px;">
