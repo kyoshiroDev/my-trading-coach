@@ -188,6 +188,11 @@ describe('Session live — suivi prop firm', () => {
       expect(q('live-prop-firm-premium-teaser')).toBeNull();
     });
 
+    it('gratuit, plan avec perte max du jour (#668) : teaser « Perte max du jour + alertes »', () => {
+      const { q } = setup(metrics({ planHasDailyLoss: true }), { premium: false, permission: 'default' });
+      expect(q('live-prop-firm-premium-teaser')!.textContent).toContain('Perte max du jour + alertes');
+    });
+
     it('Premium, limite atteinte : le dit en clair', () => {
       const { text } = setup(metrics({ dailyLoss: { ...dl, remaining: -20, pct: 0, breached: true, breach: 'account_failed' } }), { premium: true });
       expect(text('live-prop-firm-daily-loss')).toContain('limite atteinte');
@@ -197,6 +202,9 @@ describe('Session live — suivi prop firm', () => {
     it('gratuit avec plan relié : teaser Premium, ni perte du jour ni bouton de notifications', () => {
       const { q } = setup(metrics(), { premium: false, permission: 'default' });
       expect(q('live-prop-firm-premium-teaser')).not.toBeNull();
+      // Plan sans perte max du jour (#668) : seules les alertes avant le plancher sont promises.
+      expect(q('live-prop-firm-premium-teaser')!.textContent).toContain('Alertes avant le plancher');
+      expect(q('live-prop-firm-premium-teaser')!.textContent).not.toContain('Perte max du jour');
       expect(q('live-prop-firm-daily-loss')).toBeNull();
       expect(q('live-prop-firm-enable-notifications')).toBeNull();
     });

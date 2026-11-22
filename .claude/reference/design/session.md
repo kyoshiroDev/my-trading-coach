@@ -88,7 +88,8 @@ et `(min-width: 1100px)` ; **aucune `max-width`**, aucun scroll horizontal à 36
   perte max du jour = part **consommée**, neutre `--text-faint` < 50 %, ambre ≥ 50 %, rouge ≥ 75 %
   (seuils `drawdownTone`, comme « Mes comptes » — pas de seuil propre) ; marge plancher = gris
   ardoise `--text-faint` ; objectif = vert. Teaser Premium : même place, même hauteur (78 px),
-  une ligne, bordure pointillée, badge violet.
+  une ligne, bordure pointillée, badge violet ; libellé « Perte max du jour + alertes » si le plan en
+  prévoit une (`metrics.planHasDailyLoss`), sinon « Alertes avant le plancher » (#668).
 - **Barre SL / entrée / TP** : piste `--bg-3` 10 px, segment perte `--red` 35 %, gain `--green` 28 %,
   trait d'entrée 2×20 px `--text`, pastille 18 px (rouge en perte, verte en gain). Libellés :
   montants sous les prix jusqu'à 1100 px, sur la même ligne au-delà.
