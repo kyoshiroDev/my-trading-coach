@@ -123,4 +123,4 @@ parler de plan), bouton « Installer sur mon téléphone » vers `${APP_URL}/ins
 (`data-ga-event="install_app"`, `data-ga-place="prop-firm"`). Sur ordinateur (`min-width: 900px` et
 `hover: hover`, CSS seulement) : QR code (SVG inline généré au build par `qrcode`, modules sombres sur
 fond clair, `aria-label`) et l'adresse en lien texte. Aucun JS côté navigateur.
-
+Couleurs du QR en dur (`#06090f` sur `#e2eaf5`, valeur de `--text`) : exception voulue, le SVG est produit au build et ne peut pas lire les variables CSS, et des modules sombres sur fond clair restent lisibles par tous les lecteurs de QR.
