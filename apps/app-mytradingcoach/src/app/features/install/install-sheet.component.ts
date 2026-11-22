@@ -4,6 +4,7 @@ import { DialogDirective } from '@mtc/front-ui';
 import { InstallPromptService } from '../../core/install/install-prompt.service';
 import { PushService } from '../../core/push/push.service';
 import { PUSH_BROWSER } from '../../core/push/push-browser';
+import { inAppName } from '../../core/push/push-device';
 import { UserStore } from '../../core/stores/user.store';
 import { ToastService } from '../../core/services/toast.service';
 
@@ -14,15 +15,6 @@ export const LOCK_SCREEN_EXAMPLES = [
   { when: 'hier', text: 'Connexion Tradovate à renouveler · Synchro interrompue pour Apex 50K\u00a0: reconnecte-le depuis Comptes.' },
 ] as const;
 
-/** Appli dont le navigateur intégré est ouvert, pour le texte « il faut quitter … ». */
-function inAppName(ua: string): string {
-  if (/Instagram/i.test(ua)) return 'Instagram';
-  if (/FBAN|FBAV|FB_IAB/i.test(ua)) return 'Facebook';
-  if (/musical_ly|BytedanceWebview/i.test(ua)) return 'TikTok';
-  if (/Twitter/i.test(ua)) return 'X';
-  if (/LinkedInApp/i.test(ua)) return 'LinkedIn';
-  return 'cette application';
-}
 
 /**
  * Feuille d'installation (maquette `mockup-installation-pwa.html`), chargée à la demande par `App`

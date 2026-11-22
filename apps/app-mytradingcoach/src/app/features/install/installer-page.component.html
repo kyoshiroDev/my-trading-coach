@@ -1,0 +1,74 @@
+<main class="ip" data-testid="installer-page">
+  <a class="ip-brand" routerLink="/dashboard" aria-label="MyTradingCoach">MyTrading<span>Coach</span></a>
+
+  <section class="ip-card" aria-labelledby="ip-title">
+    @switch (state()) {
+      @case ('installed') {
+        <h1 id="ip-title">MyTradingCoach est déjà installé</h1>
+        <p class="ip-lead">Ouvre-le depuis ton écran d'accueil, ou continue ici.</p>
+        <a class="ip-btn ip-btn--primary" routerLink="/dashboard" data-testid="installer-open">Ouvrir MyTradingCoach</a>
+      }
+
+      @case ('in-app-browser') {
+        <h1 id="ip-title">Ouvre dans ton navigateur</h1>
+        <p class="ip-lead" data-testid="installer-inapp">Pour installer MTC, il faut quitter {{ appName }}. Touche les <b>trois points</b> en haut à droite,
+          puis <b>«&nbsp;Ouvrir dans le navigateur&nbsp;»</b>.</p>
+        <button type="button" class="ip-btn ip-btn--primary" (click)="copyLink()" data-testid="installer-copy">Copier le lien</button>
+      }
+
+      @case ('ios-other') {
+        <h1 id="ip-title">Ouvre MyTradingCoach dans Safari pour l'installer</h1>
+        <p class="ip-lead" data-testid="installer-ios-other">Sur iPhone, seul Safari ajoute une app à l'écran d'accueil. Copie le lien, puis colle-le dans Safari.</p>
+        <button type="button" class="ip-btn ip-btn--primary" (click)="copyLink()" data-testid="installer-copy">Copier le lien</button>
+      }
+
+      @case ('ios-manual') {
+        <h1 id="ip-title">Ajoute MTC à ton écran d'accueil</h1>
+        <p class="ip-lead">3 gestes, 15 secondes. Sur iPhone, c'est aussi ce qui permet de recevoir les alertes.</p>
+        <ol class="ip-steps" data-testid="installer-ios">
+          <li>
+            <span class="ip-n" aria-hidden="true">1</span>
+            <span><b>Touche Partager</b>
+              <small>Le bouton <span class="ip-pill"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M8 7l4-4 4 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/></svg>Partager</span> en bas de Safari</small></span>
+          </li>
+          <li>
+            <span class="ip-n" aria-hidden="true">2</span>
+            <span><b>«&nbsp;Sur l'écran d'accueil&nbsp;»</b><small>Fais défiler la liste si besoin</small></span>
+          </li>
+          <li>
+            <span class="ip-n" aria-hidden="true">3</span>
+            <span><b>Touche «&nbsp;Ajouter&nbsp;»</b><small>MTC apparaît avec son icône</small></span>
+          </li>
+        </ol>
+      }
+
+      @default {
+        @if (isDesktop) {
+          <!-- Ordinateur : la page se lit sur le téléphone ; installation ici seulement si l'invite existe. -->
+          <h1 id="ip-title">Installe MyTradingCoach sur ton téléphone</h1>
+          <p class="ip-lead" data-testid="installer-desktop">Ouvre cette page sur ton téléphone&nbsp;: elle t'affiche les bonnes étapes pour ton appareil.</p>
+          <button type="button" class="ip-btn ip-btn--primary" (click)="copyLink()" data-testid="installer-copy">Copier le lien</button>
+          @if (state() === 'can-prompt') {
+            <button type="button" class="ip-btn ip-btn--ghost" (click)="install()" data-testid="installer-desktop-install">Installer sur cet ordinateur</button>
+          }
+        } @else {
+          <h1 id="ip-title">Ajoute MTC à ton écran d'accueil</h1>
+          @if (state() === 'can-prompt') {
+            <p class="ip-lead">Ton journal s'ouvre en un geste, en plein écran, comme une app.</p>
+            <button type="button" class="ip-btn ip-btn--primary" (click)="install()" data-testid="installer-install">Installer</button>
+          } @else {
+            <p class="ip-lead" data-testid="installer-android-help">Ouvre le menu <b>⋮</b> de ton navigateur, puis <b>«&nbsp;Installer l'application&nbsp;»</b> ou <b>«&nbsp;Ajouter à l'écran d'accueil&nbsp;»</b>.</p>
+          }
+        }
+      }
+    }
+
+    @if (copied() === 'ok') {
+      <p class="ip-note" role="status" data-testid="installer-copied">Lien copié.</p>
+    } @else if (copied() === 'error') {
+      <p class="ip-note" role="status" data-testid="installer-copy-error">Copie ce lien&nbsp;: {{ link }}</p>
+    }
+  </section>
+
+  <p class="ip-foot">Pas de store, rien à télécharger&nbsp;: c'est ton navigateur qui ajoute MyTradingCoach.</p>
+</main>

@@ -80,3 +80,23 @@ Maquette qui fait foi : `maquettes/mockup-installation-pwa.html` (v4). Décision
 - Paliers : voile 1100, feuille 1101 (au-dessus des modales et du burger, sous les toasts) ;
   `install.styles.spec.ts`. Tests : `install-capture.spec.ts` (événements reçus avant le chargement),
   `install-prompt.service.spec.ts`, `install-sheet.component.spec.ts`, `install-settings.component.spec.ts`.
+
+## Page publique `/installer` et bloc de la landing (#1198, étape 3 de #715)
+
+- **`/installer`** (app, route publique sans connexion, `features/install/installer-page.component`,
+  chargée à la demande : aucun poids dans le bundle initial, `noindex`) : lien du QR code de la landing et
+  de l'e-mail. Détecte l'appareil par la fonction pure `installState` (`install-prompt.service.ts`) et la
+  capture de l'invite (`InstallCapture`), PAS par `InstallPromptService` (qui suppose un compte connecté et
+  envoie des événements) : aucune mesure sur cette page. Écrans : iPhone Safari (3 gestes), iPhone autre
+  navigateur et navigateur intégré (« Copier le lien »), Android (« Installer » si l'invite existe, sinon
+  menu ⋮), déjà installée (« Ouvrir MyTradingCoach »), ordinateur (« Installe MyTradingCoach sur ton
+  téléphone », « Copier le lien », et « Installer sur cet ordinateur » si l'invite existe). Pas de QR dans
+  la page (un build Angular unique ne connaît pas l'adresse de chaque environnement).
+  `inAppName` est passé dans `core/push/push-device.ts` (partagé avec la feuille).
+- **Landing** : bloc `PfInstall` sur `/prop-firm`, avant le dernier appel ; QR code en SVG produit au
+  build par la dépendance de dev `qrcode` (landing seulement), adresse `${APP_URL}/installer`, affiché
+  seulement sur ordinateur (`min-width: 900px` et `hover: hover`), bouton toujours présent. Voir
+  `astro/prop-firm.md`.
+- **E-mail** : ligne d'installation dans l'e-mail de bienvenue en attente de l'OK de Greg (consigne de #715).
+- Spec : `installer-page.component.spec.ts` (un écran par appareil, copie du lien).
+

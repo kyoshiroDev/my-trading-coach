@@ -1,0 +1,72 @@
+---
+/**
+ * Bloc « Installe MyTradingCoach sur ton écran d'accueil » (#1198, étape 3 de #715). Bouton vers la
+ * page `/installer` de l'app (étapes selon l'appareil) ; sur ordinateur, QR code vers la même adresse.
+ * QR généré au build (`qrcode`, aucun service tiers, aucun JS côté navigateur), adresse de
+ * l'environnement (`APP_URL`). Bascule mobile / ordinateur en CSS seulement.
+ */
+import QRCode from 'qrcode';
+import { APP_URL } from '../../config';
+
+const installUrl = `${APP_URL}/installer`;
+const shownUrl = installUrl.replace(/^https?:\/\//, '');
+// Modules sombres sur fond clair : le seul sens que tous les lecteurs de QR lisent sans faute.
+const qrSvg = await QRCode.toString(installUrl, {
+  type: 'svg',
+  margin: 2,
+  errorCorrectionLevel: 'M',
+  color: { dark: '#06090f', light: '#e2eaf5' },
+});
+---
+
+<section class="pf-install" aria-labelledby="pf-install-title">
+  <div class="in-in">
+    <div class="in-text">
+      <span class="pf-eyebrow">Sur ton téléphone</span>
+      <h2 class="pf-h2 pf-h2-sm" id="pf-install-title">Installe MyTradingCoach sur ton écran d'accueil</h2>
+      <ul class="in-list">
+        <li>Ton journal s'ouvre en un geste, en plein écran, comme une app.</li>
+        <li>Pas de store, rien à télécharger&nbsp;: c'est ton navigateur qui l'ajoute.</li>
+        <li>Sur iPhone, c'est ce qui permet de recevoir tes alertes.</li>
+      </ul>
+      <a href={installUrl} class="in-btn" data-ga-event="install_app" data-ga-place="prop-firm">Installer sur mon téléphone</a>
+    </div>
+    <figure class="in-qr" data-install-qr>
+      <div class="in-qr-img" role="img" aria-label="QR code vers la page d'installation de MyTradingCoach" set:html={qrSvg} />
+      <figcaption>Scanne avec ton téléphone<br /><a href={installUrl} data-ga-event="install_app" data-ga-place="prop-firm-qr">{shownUrl}</a></figcaption>
+    </figure>
+  </div>
+</section>
+
+<style>
+  /* Section propre (les utilitaires .pf-in / .pf-btn de la page sont scopés à prop-firm.astro). */
+  .pf-install { padding: 88px 20px; border-top: 1px solid var(--b); }
+  .in-in { max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 40px; }
+  .in-text { display: flex; flex-direction: column; gap: 16px; min-width: 0; max-width: 640px; }
+  .in-list { margin: 0 0 8px; padding: 0 0 0 20px; display: flex; flex-direction: column; gap: 8px; font-size: 18px; line-height: 1.55; color: var(--txt2); }
+  .in-btn {
+    align-self: flex-start; display: inline-block; text-align: center; text-decoration: none;
+    background: var(--blue); color: var(--on-blue);
+    font-family: var(--disp); font-size: 18px; font-weight: 700;
+    padding: 18px 30px; border-radius: 14px;
+    box-shadow: 0 0 32px color-mix(in srgb, var(--blue) 35%, transparent);
+    transition: background 0.2s, transform 0.2s;
+  }
+  .in-btn:hover { background: var(--blue2); transform: translateY(-2px); }
+  .in-btn:focus-visible { outline: 2px solid var(--blue2); outline-offset: 3px; }
+  /* QR : seulement sur un ordinateur (écran large et souris) ; le bouton reste toujours là. */
+  .in-qr { display: none; margin: 0; flex-shrink: 0; text-align: center; }
+  .in-qr-img { width: 180px; height: 180px; border-radius: 12px; overflow: hidden; }
+  .in-qr-img :global(svg) { display: block; width: 100%; height: 100%; }
+  .in-qr figcaption { margin-top: 12px; font-family: var(--mono); font-size: 13px; color: var(--txt2); line-height: 1.6; }
+  .in-qr a { color: var(--blue2); }
+  .in-qr a:focus-visible { outline: 2px solid var(--blue2); outline-offset: 3px; }
+  @media (min-width: 900px) and (hover: hover) {
+    .in-qr { display: block; }
+  }
+  @media (max-width: 640px) {
+    .pf-install { padding: 56px 20px; }
+    .in-list { font-size: 16px; }
+    .in-btn { align-self: stretch; }
+  }
+</style>
