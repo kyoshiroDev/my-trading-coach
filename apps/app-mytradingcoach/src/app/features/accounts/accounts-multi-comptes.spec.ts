@@ -146,10 +146,10 @@ describe('Mes comptes · vue multi-comptes (#668)', () => {
   });
 
   it('compte gratuit relié à un plan SANS perte max du jour : « — », ni teaser ni mention Premium', () => {
-    const { q, cmp } = setup([tracked('a', { pct: 0.3 }), tracked('b', { pct: 0.9 })], 'all', [], false);
+    const { q } = setup([tracked('a', { pct: 0.3 }), tracked('b', { pct: 0.9 })], 'all', [], false);
     expect(q('account-daily-loss-teaser-a')).toBeNull();
+    expect(q('tradovate-row-a')!.querySelector('.cell-dl')!.textContent!.trim()).toBe('—');
     expect(q('account-most-exposed')!.getAttribute('title')).not.toContain('Premium');
-    expect(cmp).toBeTruthy();
   });
 
   it('gating (décision du 22/11) : gratuit avec 3 comptes actifs, tri et mise en avant quand même', () => {

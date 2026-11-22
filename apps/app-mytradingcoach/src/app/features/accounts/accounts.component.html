@@ -194,12 +194,10 @@
 
             <!-- 2 · Solde -->
             <div class="cell num right cell-balance" data-label="Solde">
-              @if (a.metrics.broker; as b) {
-                <span class="live-dot" [class.is-stale]="b.referenceMismatch"
+              <!-- Point et montant insécables : le point ne reste jamais seul sur sa ligne (#668). -->
+              <span class="bal-amount">@if (a.metrics.broker; as b) {<span class="live-dot" [class.is-stale]="b.referenceMismatch"
                       [attr.title]="b.referenceMismatch ? 'Solde de départ incompatible avec le solde du broker' : 'Solde lu chez le broker, ' + brokerAge(b)"
-                      [attr.aria-label]="'Solde lu chez le broker, ' + brokerAge(b)"></span>
-              }
-              {{ money(a.metrics.currentBalance, a.currency) }}
+                      [attr.aria-label]="'Solde lu chez le broker, ' + brokerAge(b)"></span> }{{ money(a.metrics.currentBalance, a.currency) }}</span>
               @if (a.metrics.broker; as b) {
                 <span class="bal-age" [attr.data-testid]="'account-broker-age-' + a.id">relevé {{ brokerAge(b) }}</span>
               }

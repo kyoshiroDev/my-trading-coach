@@ -55,8 +55,8 @@ textes (la déconnexion supprime nos jetons, elle ne révoque rien chez Tradovat
   (`drawdownTone`, même règle qu'en Session live), à partir de 2 comptes suivis et seulement en vue
   « Tous les comptes ». Infobulle : quelle marge (plancher seul pour un compte sans perte max du jour).
 - **Colonnes** : Objectif « … $ pour l’objectif » + « N % atteint » (part déjà faite, à ne pas confondre avec les marges restantes) ; `ddLabels.margin` (marge en $ + %) ; nouvelle
-  colonne **« Perte max du jour »** (restant en $ + %, « limite atteinte ») ; compte gratuit relié à un
-  plan : badge PREMIUM en pointillé qui ouvre la fenêtre Premium (pas de flou). 9 colonnes, repli du
+  colonne **« Perte max du jour »** (restant en $ + %, « limite atteinte ») ; compte gratuit actif relié à un
+  plan qui prévoit une perte max du jour (`metrics.planHasDailyLoss`) : badge PREMIUM en pointillé qui ouvre la fenêtre Premium (pas de flou). 9 colonnes, repli du
   tableau à 1000 px (tableau complet à 1280 et 1366 px de fenêtre). Heure du relevé broker visible sous le solde (« relevé il y a 4 min »).
 - **« À surveiller »** : `isAtRisk`, marge la plus serrée (perte max du jour comprise) ≤ `ALERT_WARNING_PCT` ; sous-titre « proche d'une limite » (plus seulement le plancher).
 - **Gating** : ouvert à tous les plans (décision du 22/11, `MULTI_ACCOUNT_VIEW_FOR_ALL_PLANS`) ; la

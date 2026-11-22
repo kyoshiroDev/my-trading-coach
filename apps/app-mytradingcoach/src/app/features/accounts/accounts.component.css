@@ -691,7 +691,8 @@ a.lost-btn { text-decoration: none; }
   color: var(--text-2);
 }
 /* Heure du relevé broker, visible sous le solde (plus seulement en infobulle). */
-.bal-age { display: block; font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: var(--fs-2xs); font-weight: 400; color: var(--text-3); white-space: nowrap; }
+.bal-age { display: block; font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: var(--fs-2xs); font-weight: 400; color: var(--text-3); }
+.bal-amount { white-space: nowrap; }
 /* Perte max du jour d'un compte gratuit relié à un plan : l'argument Premium, sans flou. */
 .dl-teaser { background: transparent; border: 1px dashed var(--border-hover); border-radius: 6px; padding: 3px 8px; cursor: pointer; }
 .dl-teaser:hover { border-color: var(--blue-bright); }
