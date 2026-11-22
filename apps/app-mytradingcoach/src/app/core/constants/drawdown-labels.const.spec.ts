@@ -60,10 +60,11 @@ describe('vocabulaire du drawdown', () => {
     expect(ts).toContain('DRAWDOWN_LABELS.margin.label');
   });
 
-  it('Mes comptes : la carte « À surveiller » dit « proche du plancher » (#939)', () => {
+  it('Mes comptes : la carte « À surveiller » ne dit jamais « proche du drawdown » (#939)', () => {
     const html = visible('features/accounts/accounts.component.html');
     expect(html).not.toMatch(/proche du drawdown/);
-    expect(html).toContain('proche du plancher');
+    // #668 : la carte compte aussi la perte max du jour, d'où « proche d'une limite » (texte validé).
+    expect(html).toContain('proche d’une limite');
   });
 
   it('tableau de bord : « Drawdown max » reste le nom de la baisse mesurée', () => {
