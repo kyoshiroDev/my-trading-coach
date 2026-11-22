@@ -29,7 +29,7 @@ import {
   type RuleAgg, type RuleTrade, type SessionPnl,
 } from './account-rules';
 import { computeProgress, type AccountProgress, type ProgressInput } from './account-progress';
-import { computeDailyLoss, type DailyLossMetrics } from './daily-loss';
+import { computeDailyLoss, dailyLossLimitAmount, type DailyLossMetrics } from './daily-loss';
 import {
   floorDismissalExpired, isFloorReached, newerAttempt, nextAttemptLabel, readFloorDismissal, retryAccountData,
   withoutFloorDismissal, type FloorDismissal,
@@ -211,6 +211,12 @@ export interface AccountRuleMetrics {
    * ou sans montant publié. Cf. `daily-loss.ts`.
    */
   dailyLoss: DailyLossMetrics | null;
+  /**
+   * Le plan relié (phase du compte) prévoit une perte max du jour avec un montant publié. Calculé pour
+   * TOUS les plans d'utilisateur : c'est l'existence de la règle, pas le calcul (Premium). Sert au
+   * teaser « Perte max du jour » d'un compte gratuit, jamais montré pour un plan qui n'en a pas (#668).
+   */
+  planHasDailyLoss: boolean;
   /**
    * Solde et equity lus chez le broker. Présent → `currentBalance` est le solde du broker et la
    * marge de drawdown se calcule sur l'equity (latent compris), sauf `referenceMismatch`.
@@ -616,6 +622,7 @@ export class AccountsService {
         })
         : null,
       dailyLoss,
+      planHasDailyLoss: !!phase?.daily_loss_limit && dailyLossLimitAmount(phase.daily_loss_limit, 0) != null,
       estimated: true,
       disclaimer: drawdown?.rule ? planDisclaimer(drawdown.rule, broker) : broker ? BROKER_DISCLAIMER : RULE_DISCLAIMER,
     };

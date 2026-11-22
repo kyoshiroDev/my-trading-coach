@@ -27,7 +27,7 @@ function acct(id: string, label: string, p: Partial<TradingAccount> = {}, pnl = 
     metrics: {
       startingBalance: 50000, realizedPnl: pnl, tradingPnl: pnl, currentBalance: 50000 + pnl, tradesCount: trades,
       winRate: null, bestDay: null, worstDay: null,
-      objective: null, drawdown: null, drawdownUnconfirmed: false, dailyLoss: null, progress: null, broker: null, estimated: true, disclaimer: 'estimé',
+      objective: null, drawdown: null, drawdownUnconfirmed: false, dailyLoss: null, planHasDailyLoss: false, progress: null, broker: null, estimated: true, disclaimer: 'estimé',
     },
     ...p,
   };

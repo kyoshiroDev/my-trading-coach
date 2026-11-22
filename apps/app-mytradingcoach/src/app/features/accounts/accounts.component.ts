@@ -675,9 +675,12 @@ export class AccountsComponent implements OnInit {
     const dl = a.metrics.dailyLoss;
     return dl ? `var(--${drawdownTone(dl)})` : 'var(--blue)';
   }
-  /** Compte gratuit relié à un plan : la perte max du jour est l'argument Premium (pas de flou). */
+  /**
+   * Compte gratuit relié à un plan qui PRÉVOIT une perte max du jour : argument Premium (pas de flou).
+   * Plan sans perte max du jour : « — », jamais une fonction qui n'existerait pas sur ce compte.
+   */
   protected dailyLossTeaser(a: TradingAccount): boolean {
-    return !a.metrics.dailyLoss && !this.userStore.isPremium() && !!a.propFirmPlanId && a.status === 'ACTIVE';
+    return !a.metrics.dailyLoss && !this.userStore.isPremium() && a.metrics.planHasDailyLoss && a.status === 'ACTIVE';
   }
   /** Reste à faire pour l'objectif (jamais négatif). */
   protected objRemaining(a: TradingAccount): number {

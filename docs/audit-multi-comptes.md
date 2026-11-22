@@ -61,8 +61,10 @@ Plan court (étape 2 des consignes du ticket). Base : `origin/dev` adc36458, bra
    exposition, la plus exposée en premier et colorée selon le même ton. Un tap ouvre le détail du
    compte (3 distances, heure du relevé, disclaimer) dans une feuille. Le compte de la séance reste
    celui de la séance (#880) : le bandeau est une vue agrégée en lecture, pas un changement de séance.
-4. **Démo** (`admin/demo-seed.ts`, `demo-data/config.ts`) : le compte éval Apex proche de sa limite
-   (marge plancher ≈ 15-20 %, rouge et « À surveiller »), sans 4e compte ni invariant cassé.
+4. **Démo** (`admin/demo-seed.ts`, `demo-data/config.ts`) : le compte Elite (plancher statique, sans
+   perte max du jour) ramené à 18 % par une perte latente sur la connexion vitrine (rouge, « À
+   surveiller ») ; solde et trades inchangés ; Apex écarté (le latent ferait aussi dépasser sa perte
+   max du jour) ; aucun 4e compte.
    Enrichir la référence `nestjs/demo-seed.md` (périmée : « 2 comptes »).
 5. **Docs** : `reference/angular/comptes-prop-firm.md` (tri, groupes, colonnes),
    `reference/design/session.md` (bandeau multi-comptes), `reference/nestjs/demo-seed.md`.
@@ -99,7 +101,7 @@ Aucune route ni migration nouvelle : tout est déjà dans `GET /accounts`.
 4. Session live : bandeau de pastilles en lecture, feuille au tap (3 distances, relevé, disclaimer,
    rappel du compte de la séance) ; compte de la séance inchangé.
 5. « Sans plan relié » : comptes sans marge calculable seulement.
-6. Démo : éval Apex vers 15-20 %, référence `nestjs/demo-seed.md` à jour.
+6. Démo : compte Elite (plancher statique, sans perte max du jour) ramené à 18 % par une perte latente sur la connexion vitrine, solde et trades inchangés ; Apex écarté car le latent ferait aussi dépasser sa perte max du jour ; aucun 4e compte ; référence `nestjs/demo-seed.md` à jour.
 7. Pas de maquette : captures 360, 390, 1440, gratuit et Premium, Mes comptes et Session live.
 8. Textes validés : « Le plus exposé », « Sans plan relié », « Perte max du jour »,
    `ddLabels.margin.label`, « relevé il y a … », disclaimer existant, « … $ pour l'objectif ».

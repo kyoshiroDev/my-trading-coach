@@ -136,7 +136,7 @@
   display: grid;
   grid-template-columns:
     minmax(190px, 1.65fr) 0.75fr 0.75fr 0.45fr minmax(140px, 1fr)
-    minmax(115px, 1fr) minmax(115px, 1fr) minmax(190px, 1.7fr) 38px;
+    minmax(105px, 0.9fr) minmax(100px, 0.9fr) minmax(160px, 1.4fr) 38px;
   gap: 0 14px;
   align-items: center;
 }
@@ -268,7 +268,7 @@
    colonnes à une ligne (Solde, P&L, Trades). Un retrait égal à barre + écart (4 + 4 px)
    recentre le TEXTE sur la ligne, la barre pendant dessous. Sans barre (« — »), rien.
    Desktop seulement : en mobile la jauge est une ligne pleine largeur, sous son libellé. */
-@container acct-table (min-width: 1101px) { .cell-gauge:has(> .bar-track) { padding-top: 8px; } }
+@container acct-table (min-width: 1001px) { .cell-gauge:has(> .bar-track) { padding-top: 8px; } }
 /* Valeur et suffixe COLLÉS : repoussé à droite de la cellule, le « 30 % » ou le
    « restants » se lisait comme appartenant à la colonne voisine. */
 .gauge-top { display: flex; align-items: baseline; justify-content: flex-start; gap: 5px; min-width: 0; }
@@ -464,10 +464,11 @@
 }
 
 /* ── Repli tablette : 8 colonnes ne tiennent plus, les jauges passent au dépli ── */
-/* Sous 1100 px de TABLEAU (980 px avant la colonne « Perte max du jour », #668), les 9 colonnes ne tiennent plus : Solde et P&L tombaient à 18-38 px pour
+/* Sous 1000 px de TABLEAU (980 px avant la colonne « Perte max du jour », #668 ; colonnes Marge, Perte max du
+   jour et Synchro resserrées pour garder le tableau complet sur les portables 1280 et 1366 px), les 9 colonnes ne tiennent plus : Solde et P&L tombaient à 18-38 px pour
    56 px de texte et se chevauchaient, l'Objectif (« 1 078 / $3,000 36 % ») débordait. Mesuré sur la
    largeur de la fenêtre, le seuil (1024 puis 1080 px, #642) ignorait la barre latérale. */
-@container acct-table (max-width: 1100px) {
+@container acct-table (max-width: 1000px) {
   .acct-thead { display: none; }
   /* En repli, chaque ligne cache des colonnes : le chevron redevient utile partout. */
   .acct-expand { visibility: visible; }
@@ -703,5 +704,5 @@ a.lost-btn { text-decoration: none; }
 .cell-obj .gauge-top { flex-wrap: wrap; row-gap: 0; }
 .cell-obj .gauge-val { white-space: normal; flex-shrink: 1; min-width: 0; }
 /* Repli : solde (avec l'heure du relevé) et P&L alignés en haut, pas centrés l'un sur l'autre. */
-@container acct-table (max-width: 1100px) { .acct-line .cell.num.right { align-self: start; } }
+@container acct-table (max-width: 1000px) { .acct-line .cell.num.right { align-self: start; } }
 

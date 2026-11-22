@@ -28,7 +28,7 @@ const metrics = (p: Partial<AccountRuleMetrics> = {}): AccountRuleMetrics => ({
       peakSource: 'broker', peakBalance: 50820, officialThrough: null, platform: null, platformChoices: [],
     },
   },
-  drawdownUnconfirmed: false, dailyLoss: null,
+  drawdownUnconfirmed: false, dailyLoss: null, planHasDailyLoss: false,
   progress: {
     kind: 'objective', remaining: 2180, done: false, cycleAfter: null, cycleSource: null,
     payoutsReceived: null, lastPayout: null, unconfirmed: false,
@@ -281,7 +281,7 @@ describe('Session live — suivi prop firm', () => {
     });
 
     it('plan sans perte journalière (dailyLoss null, Premium) : jauge masquée, pas de teaser', () => {
-      const { q } = setup(metrics({ dailyLoss: null, }), { premium: true });
+      const { q } = setup(metrics({ dailyLoss: null, planHasDailyLoss: false, }), { premium: true });
       expect(q('live-prop-firm-daily-loss')).toBeNull();
       expect(q('live-prop-firm-premium-teaser')).toBeNull();
     });

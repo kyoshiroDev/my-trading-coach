@@ -27,7 +27,7 @@ function acct(id: string, label: string, p: Partial<TradingAccount> = {}, pnl = 
     metrics: {
       startingBalance: 50000, realizedPnl: pnl, tradingPnl: pnl, currentBalance: 50000 + pnl, tradesCount: trades,
       winRate: null, bestDay: null, worstDay: null,
-      objective: null, drawdown: null, drawdownUnconfirmed: false, dailyLoss: null, progress: null, broker: null, estimated: true, disclaimer: 'estimé',
+      objective: null, drawdown: null, drawdownUnconfirmed: false, dailyLoss: null, planHasDailyLoss: false, progress: null, broker: null, estimated: true, disclaimer: 'estimé',
     },
     ...p,
   };
@@ -135,11 +135,21 @@ describe('Mes comptes · vue multi-comptes (#668)', () => {
     expect(q('account-daily-loss-a')!.textContent).toContain('48\u00a0%');
   });
 
-  it('compte gratuit relié à un plan : perte max du jour en teaser Premium (ouvre la fenêtre Premium)', () => {
-    const { q, fixture } = setup([tracked('a', { pct: 0.62 })], 'all', [], false);
+  it('compte gratuit relié à un plan qui prévoit une perte max du jour : teaser Premium (ouvre la fenêtre Premium)', () => {
+    const a = tracked('a', { pct: 0.62 });
+    a.metrics.planHasDailyLoss = true;
+    const { q, fixture } = setup([a], 'all', [], false);
+    expect(q('account-daily-loss-teaser-a')!.getAttribute('aria-label')).toBe('Perte max du jour\u00a0: disponible en Premium');
     q('account-daily-loss-teaser-a')!.click();
     fixture.detectChanges();
     expect((fixture.componentInstance as unknown as { showPlanModal: () => boolean }).showPlanModal()).toBe(true);
+  });
+
+  it('compte gratuit relié à un plan SANS perte max du jour : « — », ni teaser ni mention Premium', () => {
+    const { q, cmp } = setup([tracked('a', { pct: 0.3 }), tracked('b', { pct: 0.9 })], 'all', [], false);
+    expect(q('account-daily-loss-teaser-a')).toBeNull();
+    expect(q('account-most-exposed')!.getAttribute('title')).not.toContain('Premium');
+    expect(cmp).toBeTruthy();
   });
 
   it('gating (décision du 22/11) : gratuit avec 3 comptes actifs, tri et mise en avant quand même', () => {

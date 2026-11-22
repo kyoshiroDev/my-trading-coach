@@ -25,7 +25,9 @@
       @if (a.id === sessionAccountId()) {
         <p class="las-session" data-testid="live-account-sheet-session">Compte de la séance en cours.</p>
       } @else {
-        <p class="las-session">La séance reste sur son compte&nbsp;: ce détail est en lecture.</p>
+        <p class="las-session" data-testid="live-account-sheet-other">
+          @if (sessionLabel(); as s) { Lecture seule&nbsp;: ta séance continue sur {{ s }}. } @else { Lecture seule&nbsp;: ta séance garde son compte. }
+        </p>
       }
 
       <dl class="las-rows">

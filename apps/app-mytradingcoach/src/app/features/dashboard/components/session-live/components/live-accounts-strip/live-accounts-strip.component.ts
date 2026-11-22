@@ -38,6 +38,8 @@ export class LiveAccountsStripComponent {
   );
   protected readonly visible = computed(() => this.tracked().length >= 2);
   protected readonly opened = computed(() => this.tracked().find((a) => a.id === this.openId()) ?? null);
+  /** Nom du compte de la séance (rappelé quand la feuille montre un autre compte). */
+  protected readonly sessionLabel = computed(() => this.store.accounts().find((a) => a.id === this.sessionAccountId())?.label ?? null);
 
   protected tone(a: TradingAccount): string {
     return drawdownTone(accountExposure(a));

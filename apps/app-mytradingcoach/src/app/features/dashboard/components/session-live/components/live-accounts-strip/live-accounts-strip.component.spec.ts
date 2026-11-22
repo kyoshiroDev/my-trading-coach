@@ -57,6 +57,13 @@ describe('Session live · bandeau multi-comptes (#668)', () => {
     expect(chips[0].className).toContain('is-first');
   });
 
+  it('autre compte que celui de la séance : « Lecture seule : ta séance continue sur … »', () => {
+    const { q, fixture } = setup([acct('a', { pct: 0.9 }), acct('b', { pct: 0.3 })], 'a');
+    q('live-account-chip-b')!.click();
+    fixture.detectChanges();
+    expect(q('live-account-sheet-other')!.textContent!.trim()).toBe('Lecture seule\u00a0: ta séance continue sur Compte a.');
+  });
+
   it('un tap : détail en lecture (3 distances, disclaimer), compte de la séance rappelé', () => {
     const { q, fixture } = setup([acct('a', { pct: 0.9 }), acct('b', { pct: 0.3 }, { pct: 0.5 })], 'b');
     q('live-account-chip-b')!.click();

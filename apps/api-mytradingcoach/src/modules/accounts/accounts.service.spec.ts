@@ -561,6 +561,17 @@ describe('AccountsService', () => {
         const m = svc.ruleMetricsFromAgg(acct, agg, topstep, null, null, null, now, sessions, null, { premium: true });
         expect(m.dailyLoss).toBeNull();
       });
+
+      it('planHasDailyLoss (#668) : existence de la règle, pour tous les plans d\'utilisateur', () => {
+        // Hors Premium : rien de calculé, mais la règle existe (teaser du compte gratuit).
+        expect(svc.ruleMetricsFromAgg(acct, agg, withDll, null, null, null, now, sessions, null).planHasDailyLoss).toBe(true);
+        expect(svc.ruleMetricsFromAgg(acct, agg, withDll, null, null, null, now, sessions, null, { premium: true }).planHasDailyLoss).toBe(true);
+        // Plan sans perte journalière, montant non publié, ou aucun plan : faux.
+        expect(svc.ruleMetricsFromAgg(acct, agg, topstep, null, null, null, now, sessions, null).planHasDailyLoss).toBe(false);
+        const unpublished: RulePlan = { ...topstep, phases: [{ ...topstep.phases[0], daily_loss_limit: { ...dll, amount: null } }] };
+        expect(svc.ruleMetricsFromAgg(acct, agg, unpublished, null, null, null, now, sessions, null).planHasDailyLoss).toBe(false);
+        expect(svc.ruleMetricsFromAgg(acct, agg, null, null, null, null, now, sessions, null).planHasDailyLoss).toBe(false);
+      });
     });
 
     it('évaluation : le plan remplace la saisie manuelle (montant, type)', () => {
