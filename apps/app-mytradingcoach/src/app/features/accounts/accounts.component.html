@@ -44,7 +44,7 @@
       <div class="stat-card" style="--c:var(--yellow)">
         <div class="stat-label"><svg [lucideIcon]="EyeIcon" [size]="13"></svg>À surveiller</div>
         <div class="stat-value" [class.text-yellow]="atRiskCount() > 0">{{ atRiskCount() }}</div>
-        <div class="stat-sub">proche du plancher</div>
+        <div class="stat-sub">proche d’une limite</div>
       </div>
       <div class="stat-card" style="--c:var(--cyan)">
         <div class="stat-label"><svg [lucideIcon]="LayersIcon" [size]="13"></svg>Comptes</div>
@@ -93,11 +93,27 @@
         <span class="right">Trades</span>
         <span>Objectif</span>
         <span [title]="ddLabels.margin.help">{{ ddLabels.margin.label }}</span>
+        <span>Perte max du jour</span>
         <span>Synchro</span>
         <span></span>
       </div>
 
-      @for (a of displayedAccounts(); track a.id) {
+      <!-- Vue multi-comptes (#668) : du plus exposé au moins exposé, puis sans marge, « Sans plan
+           relié », validés et échoués. Un seul compte choisi : sa ligne seule. -->
+      @let groups = rowGroups();
+      @for (a of groups.tracked; track a.id) {
+        <ng-container *ngTemplateOutlet="acctRow; context: { $implicit: a }" />
+      }
+      @for (a of groups.other; track a.id) {
+        <ng-container *ngTemplateOutlet="acctRow; context: { $implicit: a }" />
+      }
+      @if (groups.noPlan.length) {
+        <div class="acct-group" data-testid="accounts-no-plan-group">Sans plan relié</div>
+        @for (a of groups.noPlan; track a.id) {
+          <ng-container *ngTemplateOutlet="acctRow; context: { $implicit: a }" />
+        }
+      }
+      @for (a of groups.inactive; track a.id) {
         <ng-container *ngTemplateOutlet="acctRow; context: { $implicit: a }" />
       }
 
@@ -129,6 +145,8 @@
         <div class="acct-block" [style.--ac]="accentVar(a)"
              [class.is-archived]="a.status === 'ARCHIVED'"
              [class.is-failed]="a.status === 'FAILED'"
+             [class.is-most-exposed]="mostExposedId() === a.id"
+             [style.--tone]="mostExposedId() === a.id ? 'var(--' + exposureTone(a) + ')' : null"
              [class.has-detail]="(!a.metrics.objective && !a.metrics.drawdown) || !!a.propFirmPlanId || !!a.metrics.broker || a.type === 'FUNDED'"
              [class.is-open]="expandedId() === a.id"
              [attr.data-testid]="'tradovate-row-' + a.id">
@@ -160,6 +178,9 @@
               </div>
               <div class="acct-id">
                 <div class="acct-name">{{ a.label }}</div>
+                @if (mostExposedId() === a.id) {
+                  <span class="most-exposed" [title]="exposureHelp(a)" data-testid="account-most-exposed">Le plus exposé</span>
+                }
                 <div class="acct-meta">
                   @if (a.broker) { <span class="tag firm" [attr.title]="a.broker">{{ a.broker }}</span> }
                   <!-- Type + statut : un seul bloc insécable, le statut ne se retrouve jamais seul. -->
@@ -173,12 +194,13 @@
 
             <!-- 2 · Solde -->
             <div class="cell num right cell-balance" data-label="Solde">
-              @if (a.metrics.broker; as b) {
-                <span class="live-dot" [class.is-stale]="b.referenceMismatch"
+              <!-- Point et montant insécables : le point ne reste jamais seul sur sa ligne (#668). -->
+              <span class="bal-amount">@if (a.metrics.broker; as b) {<span class="live-dot" [class.is-stale]="b.referenceMismatch"
                       [attr.title]="b.referenceMismatch ? 'Solde de départ incompatible avec le solde du broker' : 'Solde lu chez le broker, ' + brokerAge(b)"
-                      [attr.aria-label]="'Solde lu chez le broker, ' + brokerAge(b)"></span>
+                      [attr.aria-label]="'Solde lu chez le broker, ' + brokerAge(b)"></span> }{{ money(a.metrics.currentBalance, a.currency) }}</span>
+              @if (a.metrics.broker; as b) {
+                <span class="bal-age" [attr.data-testid]="'account-broker-age-' + a.id">relevé {{ brokerAge(b) }}</span>
               }
-              {{ money(a.metrics.currentBalance, a.currency) }}
             </div>
 
             <!-- 3 · P&L -->
@@ -197,8 +219,8 @@
                   @if (objReached(a)) {
                     <span class="gauge-val text-green">atteint</span>
                   } @else {
-                    <span class="gauge-val">{{ money(obj.current, a.currency) }} / {{ money(obj.target, a.currency) }}</span>
-                    <span class="gauge-pct">{{ objPct(a) }}&nbsp;%</span>
+                    <span class="gauge-val" [title]="money(obj.current, a.currency) + ' / ' + money(obj.target, a.currency)">{{ money(objRemaining(a), a.currency) }} pour l’objectif</span>
+                    <span class="gauge-pct">{{ objPct(a) }}&nbsp;%&nbsp;atteint</span>
                   }
                 </div>
                 <div class="bar-track xs">
@@ -218,7 +240,7 @@
                     <span class="gauge-val text-red">dépassé</span>
                   } @else {
                     <span class="gauge-val" [style.color]="ddColor(a)">{{ money(dd.margin, a.currency) }}</span>
-                    <span class="gauge-pct">restants</span>
+                    <span class="gauge-pct" [attr.data-testid]="'account-dd-pct-' + a.id">{{ marginPct(dd) }}</span>
                   }
                 </div>
                 <div class="bar-track xs">
@@ -231,7 +253,31 @@
               }
             </div>
 
-            <!-- 7 · Synchro : pastille d'état, actions, puis le détail en texte discret.
+            <!-- 7 · Perte max du jour (Premium, plan relié) : marge restante en $ et en %. Compte
+                 gratuit relié à un plan : teaser Premium à la même place, sans flou (#668). -->
+            <div class="cell cell-gauge cell-dl" data-label="Perte max du jour">
+              @if (a.metrics.dailyLoss; as dl) {
+                <div class="gauge-top" [attr.data-testid]="'account-daily-loss-' + a.id">
+                  @if (dl.breached) {
+                    <span class="gauge-val text-red">limite atteinte</span>
+                  } @else {
+                    <span class="gauge-val" [style.color]="dlColor(a)">{{ money(dl.remaining, a.currency) }}</span>
+                    <span class="gauge-pct">{{ marginPct(dl) }}</span>
+                  }
+                </div>
+                <div class="bar-track xs">
+                  <div class="bar-fill" [style.width.%]="dlWidth(a)" [style.background]="dlColor(a)"></div>
+                </div>
+              } @else if (dailyLossTeaser(a)) {
+                <button type="button" class="dl-teaser" (click)="showPlanModal.set(true)" aria-label="Perte max du jour&nbsp;: disponible en Premium" [attr.data-testid]="'account-daily-loss-teaser-' + a.id">
+                  <span class="pf-badge">PREMIUM</span>
+                </button>
+              } @else {
+                <span class="cell-none" title="Pas de perte max du jour pour ce compte">—</span>
+              }
+            </div>
+
+            <!-- 8 · Synchro : pastille d'état, actions, puis le détail en texte discret.
                  Ce détail vivait sous le nom du compte : il parlait de la synchro tout en
                  pointant la colonne Compte. Il est désormais sous la pastille qu'il explique. -->
             <div class="cell cell-sync" data-label="Synchro">

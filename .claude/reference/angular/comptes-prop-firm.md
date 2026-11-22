@@ -39,3 +39,28 @@ masquée, sous-ligne `tradovate-paused-<id>` avec le texte validé (« échoué 
 Tradovate de ce compte ? », puis, s'il y a des trades importés, « La synchro s'arrête. Tes trades
 déjà importés restent, sauf si tu choisis de les supprimer. » Jamais le mot « révoqué » dans ces
 textes (la déconnexion supprime nos jetons, elle ne révoque rien chez Tradovate).
+
+## Vue multi-comptes : le compte le plus exposé en premier (#668)
+
+- **Exposition** (`core/utils/account-exposure.util.ts`, `accountExposure`) = la plus petite marge
+  restante en part de la limite : marge avant le plancher, et perte max du jour si l'API la renvoie
+  (Premium avec plan relié). L'objectif n'entre pas en compte. Montant non publié
+  (`drawdownUnconfirmed`) ou aucune règle : pas d'exposition.
+- **Mes comptes, vue « Tous les comptes »** (`groupByExposure`) : comptes actifs suivis du plus exposé
+  au moins exposé (égalité : ordre de l'API), puis comptes actifs sans marge (personnel, firm hors
+  catalogue), puis le groupe **« Sans plan relié »** (`needsPlanLink`, sans marge calculable, bouton
+  « Relier » de la ligne), puis validés et échoués ; archivés repliés comme avant. Un compte à
+  règles manuelles a une vraie marge : trié avec les autres, il garde son bandeau « Relie ce compte… ».
+- **« Le plus exposé »** : étiquette sous le nom et liseré à la couleur de sa marge la plus serrée
+  (`drawdownTone`, même règle qu'en Session live), à partir de 2 comptes suivis et seulement en vue
+  « Tous les comptes ». Infobulle : quelle marge (plancher seul pour un compte sans perte max du jour).
+- **Colonnes** : Objectif « … $ pour l’objectif » + « N % atteint » (part déjà faite, à ne pas confondre avec les marges restantes) ; `ddLabels.margin` (marge en $ + %) ; nouvelle
+  colonne **« Perte max du jour »** (restant en $ + %, « limite atteinte ») ; compte gratuit actif relié à un
+  plan qui prévoit une perte max du jour (`metrics.planHasDailyLoss`) : badge PREMIUM en pointillé qui ouvre la fenêtre Premium (pas de flou). 9 colonnes, repli du
+  tableau à 1000 px (tableau complet à 1280 et 1366 px de fenêtre). Heure du relevé broker visible sous le solde (« relevé il y a 4 min »).
+- **« À surveiller »** : `isAtRisk`, marge la plus serrée (perte max du jour comprise) ≤ `ALERT_WARNING_PCT` ; sous-titre « proche d'une limite » (plus seulement le plancher).
+- **Gating** : ouvert à tous les plans (décision du 22/11, `MULTI_ACCOUNT_VIEW_FOR_ALL_PLANS`) ; la
+  perte max du jour reste Premium (calculée seulement en Premium par l'API).
+- Specs : `account-exposure.util.spec.ts`, `accounts-multi-comptes.spec.ts` (vrai gabarit),
+  `live-accounts-strip.component.spec.ts`.
+

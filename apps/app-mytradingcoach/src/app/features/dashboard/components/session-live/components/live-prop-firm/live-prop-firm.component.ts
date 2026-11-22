@@ -104,6 +104,13 @@ export class LivePropFirmComponent {
   });
   /** Plan relié et compte gratuit : la couche Premium (perte journalière + alertes) en teaser. */
   protected readonly premiumTeaser = computed(() => !this.userStore.isPremium() && !!this.account()?.propFirmPlanId);
+  /**
+   * Libellé du teaser (#668) : la perte max du jour n'est promise que si le plan en prévoit une ; sinon
+   * seules les alertes avant le plancher (Premium pour tous les plans).
+   */
+  protected readonly teaserLabel = computed(() =>
+    this.account()?.metrics.planHasDailyLoss ? 'Perte max du jour + alertes' : 'Alertes avant le plancher',
+  );
   protected readonly ddWidth = computed(() => barWidth(this.drawdown()?.pct));
 
   // ── Encart du gratuit « avec Premium, tu aurais été alerté » (#769, B4) ──

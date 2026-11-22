@@ -130,13 +130,13 @@
   border-radius: 12px;
 }
 
-/* Colonnes : compte · solde · P&L · trades · objectif · marge · synchro · menu */
+/* Colonnes : compte · solde · P&L · trades · objectif · marge · perte max du jour · synchro · menu */
 .acct-thead,
 .acct-line {
   display: grid;
   grid-template-columns:
     minmax(190px, 1.65fr) 0.75fr 0.75fr 0.45fr minmax(140px, 1fr)
-    minmax(115px, 1fr) minmax(190px, 1.7fr) 38px;
+    minmax(105px, 0.9fr) minmax(100px, 0.9fr) minmax(160px, 1.4fr) 38px;
   gap: 0 14px;
   align-items: center;
 }
@@ -268,15 +268,15 @@
    colonnes à une ligne (Solde, P&L, Trades). Un retrait égal à barre + écart (4 + 4 px)
    recentre le TEXTE sur la ligne, la barre pendant dessous. Sans barre (« — »), rien.
    Desktop seulement : en mobile la jauge est une ligne pleine largeur, sous son libellé. */
-@container acct-table (min-width: 981px) { .cell-gauge:has(> .bar-track) { padding-top: 8px; } }
+@container acct-table (min-width: 1001px) { .cell-gauge:has(> .bar-track) { padding-top: 8px; } }
 /* Valeur et suffixe COLLÉS : repoussé à droite de la cellule, le « 30 % » ou le
    « restants » se lisait comme appartenant à la colonne voisine. */
 .gauge-top { display: flex; align-items: baseline; justify-content: flex-start; gap: 5px; min-width: 0; }
 .gauge-val {
-  font-family: var(--font-mono); font-size: 11.5px; color: var(--text);
+  font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: 11.5px; color: var(--text);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-shrink: 0;
 }
-.gauge-pct { font-family: var(--font-mono); font-size: var(--fs-2xs); color: var(--text-3); white-space: nowrap; }
+.gauge-pct { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: var(--fs-2xs); color: var(--text-3); white-space: nowrap; }
 .bar-track { height: 9px; background: var(--bg-3); border-radius: 5px; overflow: hidden; }
 .bar-track.xs { height: 4px; border-radius: 3px; }
 .bar-fill { height: 100%; border-radius: 5px; transition: width .3s; }
@@ -464,10 +464,11 @@
 }
 
 /* ── Repli tablette : 8 colonnes ne tiennent plus, les jauges passent au dépli ── */
-/* Sous 980 px de TABLEAU, les 8 colonnes ne tiennent plus : Solde et P&L tombaient à 18-38 px pour
+/* Sous 1000 px de TABLEAU (980 px avant la colonne « Perte max du jour », #668 ; colonnes Marge, Perte max du
+   jour et Synchro resserrées pour garder le tableau complet sur les portables 1280 et 1366 px), les 9 colonnes ne tiennent plus : Solde et P&L tombaient à 18-38 px pour
    56 px de texte et se chevauchaient, l'Objectif (« 1 078 / $3,000 36 % ») débordait. Mesuré sur la
    largeur de la fenêtre, le seuil (1024 puis 1080 px, #642) ignorait la barre latérale. */
-@container acct-table (max-width: 980px) {
+@container acct-table (max-width: 1000px) {
   .acct-thead { display: none; }
   /* En repli, chaque ligne cache des colonnes : le chevron redevient utile partout. */
   .acct-expand { visibility: visible; }
@@ -498,6 +499,7 @@
   .acct-block.is-open .cell-gauge { display: flex; }
   .acct-block.is-open .cell-obj { grid-row: 4; }
   .acct-block.is-open .cell-dd { grid-row: 5; }
+  .acct-block.is-open .cell-dl { grid-row: 6; }
   .cell-gauge::before {
     content: attr(data-label);
     font-size: var(--fs-2xs); font-weight: 600; letter-spacing: .1em; text-transform: uppercase;
@@ -525,7 +527,7 @@
   .cell-trades { display: none; }
   /* 5 classes : doit battre `.acct-line .cell.num.right` (4 classes, grid-row: 2 du repli),
      sinon Trades restait en ligne 2 et se superposait au Solde une fois la ligne dépliée. */
-  .acct-block.is-open .acct-line .cell.cell-trades { display: block; grid-column: 1; grid-row: 6; }
+  .acct-block.is-open .acct-line .cell.cell-trades { display: block; grid-column: 1; grid-row: 7; }
   /* Colonne pleine largeur : l'en-tête doit s'étirer pour que le bouton suive. */
   .cell-sync, .sync-head { width: 100%; }
   .cell-sync .tv-btn { flex: 1 1 auto; justify-content: center; }
@@ -672,3 +674,36 @@ a.lost-btn { text-decoration: none; }
 @media (prefers-reduced-motion: reduce) {
   .acct-archived-sum svg.lucide { transition: none; }
 }
+
+/* ── Vue multi-comptes (#668) ── */
+/* Compte le plus exposé : liseré et étiquette à la couleur de sa marge la plus serrée (drawdownTone). */
+.acct-block.is-most-exposed .acct-line { border-left-color: var(--tone); background: var(--bg-2); }
+.most-exposed {
+  display: inline-block; margin: 2px 0 3px;
+  font: 600 var(--fs-2xs) var(--font-mono); letter-spacing: .06em; text-transform: uppercase;
+  color: var(--tone); border: 1px solid var(--tone); border-radius: 5px; padding: 1px 6px;
+}
+/* Titre du groupe « Sans plan relié » : même grammaire que la section des archivés. */
+.acct-group {
+  border-top: 1px solid var(--border);
+  padding: 12px 16px 6px;
+  font: 600 11px var(--font-mono); letter-spacing: .08em; text-transform: uppercase;
+  color: var(--text-2);
+}
+/* Heure du relevé broker, visible sous le solde (plus seulement en infobulle). */
+.bal-age { display: block; font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: var(--fs-2xs); font-weight: 400; color: var(--text-3); }
+.bal-amount { white-space: nowrap; }
+/* Perte max du jour d'un compte gratuit relié à un plan : l'argument Premium, sans flou. */
+.dl-teaser { background: transparent; border: 1px dashed var(--border-hover); border-radius: 6px; padding: 3px 8px; cursor: pointer; }
+.dl-teaser:hover { border-color: var(--blue-bright); }
+.dl-teaser:focus-visible { outline: 2px solid var(--blue-bright); outline-offset: 2px; }
+.dl-teaser .pf-badge {
+  font-family: var(--font-mono); font-size: var(--fs-2xs); font-weight: 700; letter-spacing: .04em;
+  color: var(--purple-bright); background: var(--purple-dim); border-radius: 5px; padding: 1px 6px;
+}
+/* Objectif « … $ pour l'objectif » : passe à la ligne dans sa cellule plutôt que de déborder sur la marge. */
+.cell-obj .gauge-top { flex-wrap: wrap; row-gap: 0; }
+.cell-obj .gauge-val { white-space: normal; flex-shrink: 1; min-width: 0; }
+/* Repli : solde (avec l'heure du relevé) et P&L alignés en haut, pas centrés l'un sur l'autre. */
+@container acct-table (max-width: 1000px) { .acct-line .cell.num.right { align-self: start; } }
+
