@@ -3,7 +3,7 @@
 # Publication : infra/deploy-static.sh app-prod … (releases + lien current, voir deploy.md).
 services:
   app-prod:
-    image: nginx:1.31.7-alpine
+    image: nginx:1.31.9-alpine
     container_name: mtc_app_prod
     restart: unless-stopped
     volumes:

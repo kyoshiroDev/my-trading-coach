@@ -28,8 +28,8 @@
                    [class.paused]="toasts.isPaused(t.id)"></div>
             }
           }
-          <!-- SVG en ligne (tracés Lucide) : ce composant est chargé au démarrage, importer
-               @lucide/angular ici mettrait toutes les icônes de l'app dans le bundle initial. -->
+          <!-- SVG en ligne (tracés Lucide) : ce composant est chargé au premier toast (@defer, #766) ;
+               importer @lucide/angular ici alourdirait ce fichier chargé à la demande. -->
           <svg class="toast-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             @switch (t.type) {

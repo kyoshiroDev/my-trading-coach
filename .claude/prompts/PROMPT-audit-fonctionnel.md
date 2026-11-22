@@ -161,3 +161,11 @@ Même autorisation que le complément « #1068, report sur les VPS » (#1068 et 
 Texte exact de Greg : « oui pour le compte de test et le paiement test sur dev.app.mytradingcoach.app »
 
 Paiement test complet sur dev.app (clé `pk_test_`, carte 3D Secure de test, Link et Google Pay affichés), écouteur de violations actif, compte `delivered+csp-1068@resend.dev` supprimé ensuite (`DELETE /api/users/me` → 204). Seule violation : `connect-src https://fonts.googleapis.com` depuis Stripe Elements, ajoutée avant le report sur le VPS prod.
+
+## Complément #1068, Zod sans eval et relevé de l'admin (2026-11-22)
+
+Texte exact de Greg : « fait toi même le necessaire »
+
+PR dédiée avant la phase 2, demandée par le relecteur : `z.config({ jitless: true })` pour que Zod ne teste plus `new Function` (signalement `script-src eval`). Posé dans `trade.schema.ts`, seul module zod de l'app, chargé à la demande : le bundle initial n'avait que 5,4 ko de marge sous la limite de 500 ko (494,57 ko avant, 494,56 ko après). Le relevé de la console de l'admin connecté se fait sans le compte de Greg, sur un banc local (compte admin du seed local).
+
+Relevé fait le 22/11 sur banc local (base dédiée supprimée ensuite) : 18 pages de l'admin connecté, aucune violation. Logo de l'aperçu des e-mails servi par l'app (`FRONTEND_URL`) : à garder dans `img-src` en phase 2.
