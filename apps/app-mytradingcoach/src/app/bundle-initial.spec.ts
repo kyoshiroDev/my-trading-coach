@@ -25,6 +25,12 @@ describe('Bundle initial : chargé à la demande', () => {
     expect(app).toContain("import { ConfirmDialogComponent } from '@mtc/front-ui/confirm-dialog';");
   });
 
+  it('toasts : derrière @defer au premier toast, préchargés au repos, importés par leur chemin direct (#766)', () => {
+    expect(app).toMatch(/@defer \(when toasts\.visible\(\)\.length; prefetch on idle\) \{\s*<mtc-toasts \/>\s*\}/);
+    expect(app.match(/<mtc-toasts/g)).toHaveLength(1);
+    expect(app).toContain("import { ToastsComponent } from './shared/components/toasts/toasts.component';");
+  });
+
   it('le barrel @mtc/front-ui n’exporte pas le dialogue (sinon il resterait dans le bundle initial)', () => {
     expect(frontUi).not.toMatch(/^export .*confirm-dialog\.component/m);
     expect(frontUi).toMatch(/^export \* from '\.\/lib\/confirm-dialog\/confirm\.service';/m);

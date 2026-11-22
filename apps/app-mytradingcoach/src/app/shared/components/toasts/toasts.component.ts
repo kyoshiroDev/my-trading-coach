@@ -1,8 +1,5 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
-import { MAX_VISIBLE_TOASTS, ToastService, ToastType } from '@app/core/services/toast.service';
-
-/** Téléphone : même seuil que le reste du responsive de l'app. */
-const PHONE_QUERY = '(max-width: 768px)';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ToastService, ToastType } from '@app/core/services/toast.service';
 
 /** Distance minimale de glisser pour fermer (px), ou 35 % de la largeur si plus grand. */
 export const SWIPE_MIN_PX = 80;
@@ -16,7 +13,8 @@ interface Drag {
 }
 
 /**
- * Pile de toasts, montée UNE seule fois dans le composant racine (`mtc-root`). Au-dessus de
+ * Pile de toasts, montée UNE seule fois dans le composant racine (`mtc-root`), au premier toast
+ * (`@defer`, préchargée au repos : #766). « Un seul toast sur téléphone » est posé par ToastService. Au-dessus de
  * tout (z-index 10000, cf. hiérarchie angular.md) : une modale ouverte ne masque jamais
  * un message d'erreur.
  *
@@ -37,16 +35,6 @@ export class ToastsComponent {
   protected readonly drag = signal<Drag | null>(null);
   /** Toasts chassés vers la gauche : leur sortie part de ce côté. */
   private readonly leftExits = signal<ReadonlySet<number>>(new Set());
-
-  constructor() {
-    // Téléphone : un seul toast visible (en haut, cf. CSS), le reste en file.
-    const mq = typeof window !== 'undefined' && window.matchMedia ? window.matchMedia(PHONE_QUERY) : null;
-    if (!mq) return;
-    const apply = () => this.toasts.setMaxVisible(mq.matches ? 1 : MAX_VISIBLE_TOASTS);
-    apply();
-    mq.addEventListener('change', apply);
-    inject(DestroyRef).onDestroy(() => mq.removeEventListener('change', apply));
-  }
 
   /** Erreur : annoncée immédiatement ; le reste attend la fin de la phrase en cours. */
   protected live(type: ToastType): 'assertive' | 'polite' {

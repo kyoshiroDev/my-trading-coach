@@ -9,7 +9,7 @@
 ## Fronts statiques sur les VPS (pas de Vercel)
 
 App Angular, admin et landing Astro sont **buildés dans GitHub Actions** puis publiés **en releases**
-(app prod sur le VPS prod ; admin, landing et tout dev/beta sur l'ancien VPS) (voir plus bas), servis par des conteneurs **nginx:alpine derrière Traefik** (TLS
+(app prod sur le VPS prod ; admin, landing et tout dev/beta sur l'ancien VPS) (voir plus bas), servis par des conteneurs **nginx derrière Traefik** (prod `mtc_app_prod` : image épinglée dans `infra/prod/static-docker-compose.yml`, qui fait foi ; ancien VPS : tag flottant `nginx:alpine`, compose hors dépôt dans `/opt/infra/static/`) (TLS
 letsencrypt + routing par Host + redirect non-www→www en middleware Traefik).
 
 | Site (`/opt/static/<site>`) | Build | Hôte | Workflow | Conteneur (compose) |

@@ -55,6 +55,9 @@ export const TOAST_ACTION_MIN_DURATION = 10_000;
 /** Au-delà, les toasts attendent leur tour : une rafale ne recouvre pas l'écran. */
 export const MAX_VISIBLE_TOASTS = 3;
 
+/** Téléphone : même seuil que le reste du responsive de l'app. */
+export const PHONE_QUERY = '(max-width: 768px)';
+
 /** Refus « Action non disponible en mode démo » (DemoReadOnlyGuard) : couvert par l'invite démo. */
 const DEMO_BLOCKED = /mode démo/i;
 
@@ -72,13 +75,24 @@ export class ToastService {
   private readonly pausedIds = signal<ReadonlySet<number>>(new Set());
   private nextId = 1;
 
-  /** Places affichées : MAX_VISIBLE_TOASTS, 1 sur téléphone (posé par le conteneur). */
+  /** Places affichées : MAX_VISIBLE_TOASTS, 1 sur téléphone (posé au démarrage du service). */
   private readonly maxVisible = signal(MAX_VISIBLE_TOASTS);
 
   /** Toasts affichés (les plus anciens d'abord), au plus `maxVisible`. */
   readonly visible = computed(() => this.all().slice(0, this.maxVisible()));
   /** Nombre de toasts en file, affichés dès qu'une place se libère. */
   readonly queued = computed(() => Math.max(0, this.all().length - this.maxVisible()));
+
+  constructor() {
+    // Téléphone : un seul toast visible, le reste en file. Posé par le SERVICE (créé avant le premier
+    // toast) et non par le conteneur, chargé seulement au premier toast (`@defer`, #766) : sinon les
+    // toasts suivants lanceraient leur minuteur sans être vus.
+    const mq = typeof window !== 'undefined' && window.matchMedia ? window.matchMedia(PHONE_QUERY) : null;
+    if (!mq) return;
+    const apply = () => this.setMaxVisible(mq.matches ? 1 : MAX_VISIBLE_TOASTS);
+    apply();
+    mq.addEventListener('change', apply); // service racine : vit autant que l'app
+  }
 
   /** Téléphone : un seul toast à la fois, les autres attendent (« +N »). */
   setMaxVisible(n: number): void {
