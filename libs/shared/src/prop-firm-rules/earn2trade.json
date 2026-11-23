@@ -18,11 +18,935 @@
       "finamark"
     ]
   },
-  "verified_at": "2026-10-18",
+  "verified_at": "2026-11-22",
   "plans": [
     {
+      "id": "earn2trade-tcp-nov02-25k",
+      "plan_name": "Trader Career Path (achat depuis le 2026-11-02)",
+      "account_size": 25000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": 150,
+        "billing": "monthly",
+        "activation_fee": 139,
+        "notes": "Abonnement mensuel 150 $ (page non-US, prix affiché « à partir de »). Un reset gratuit à chaque renouvellement (TCP). Reset à prix dynamique selon les promotions. Activation 139 $ non payée d'avance : déduite du premier retrait LiveSim."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 1750,
+          "daily_loss_limit": {
+            "amount": 550,
+            "basis": "equity",
+            "resets_at": "17:00 America/Chicago",
+            "breach": "account_failed",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "P&L du jour (ouvert + fermé + commissions) mesuré depuis le solde d'ouverture de la journée, de 17:00 à 17:00 CT. L'atteindre, même sans clôturer, fait échouer le compte."
+          },
+          "max_drawdown": {
+            "amount": 1500,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 26500,
+            "locked_floor": 25000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "EOD : solde minimum relevé à la clôture (1500 $ sous le plus haut solde de fin de journée), mis à jour par Rithmic entre 16:00 et 17:00 CT. S'arrête au solde de départ (25000 $). Les pertes latentes comptent en séance : une position ouverte qui passe sous le minimum fait échouer."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.3,
+            "applies_to": "profit_target",
+            "notes": "Aucun jour ne peut faire 30 % ou plus du PnL total ; pas un échec, il faut continuer jusqu'à repasser sous 30 %. Donc au moins 4 jours gagnants."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 2,
+            "micros": 20,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Nombre fixe de contrats pour les abonnements achetés depuis le 2026-11-02 (plus de Progression Ladder). Jusqu’à 10 micros (MES, MNQ, MYM, M2K, MGC, MCL, M6B, M6E, MHG) comptent pour 1 contrat standard. Même limite en évaluation, en LiveSim et en Live de même taille."
+          },
+          "time_rules": {
+            "must_close_by": "15:50 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Trading à partir de 17:00 CT (ouverture de l'actif). Positions et ordres fermés de 15:50 à 17:00 CT, pas d'overnight. GF/HE/LE fermés dès 13:05 CT ; grains (XC/XK/ZC/ZL/ZM/ZS/ZW) fermés de 07:45 à 08:30 puis de 13:20 à 17:00 CT. News autorisées."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": 1750,
+          "daily_loss_limit": {
+            "amount": 550,
+            "basis": "equity",
+            "resets_at": "17:00 America/Chicago",
+            "breach": "account_failed",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "P&L du jour (ouvert + fermé + commissions) mesuré depuis le solde d'ouverture de la journée, de 17:00 à 17:00 CT. L'atteindre, même sans clôturer, fait échouer le compte."
+          },
+          "max_drawdown": {
+            "amount": 1500,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 26500,
+            "locked_floor": 25000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "EOD : solde minimum relevé à la clôture (1500 $ sous le plus haut solde de fin de journée), mis à jour par Rithmic entre 16:00 et 17:00 CT. S'arrête au solde de départ (25000 $). Les pertes latentes comptent en séance : une position ouverte qui passe sous le minimum fait échouer."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 2,
+            "micros": 20,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Nombre fixe de contrats pour les abonnements achetés depuis le 2026-11-02 (plus de Progression Ladder). Jusqu’à 10 micros (MES, MNQ, MYM, M2K, MGC, MCL, M6B, M6E, MHG) comptent pour 1 contrat standard. Même limite en évaluation, en LiveSim et en Live de même taille."
+          },
+          "time_rules": {
+            "must_close_by": "15:50 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Trading à partir de 17:00 CT (ouverture de l'actif). Positions et ordres fermés de 15:50 à 17:00 CT, pas d'overnight. GF/HE/LE fermés dès 13:05 CT ; grains (XC/XK/ZC/ZL/ZM/ZS/ZW) fermés de 07:45 à 08:30 puis de 13:20 à 17:00 CT. News autorisées."
+          },
+          "payout": {
+            "min_days": 5,
+            "min_daily_profit": 100,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.5,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": 100,
+            "max_amount": null,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": null,
+            "notes": "Le partage dépend du montant de CHAQUE retrait : 50 % sous 1500 $, 80 % à partir de 1500 $. Plafond LiveSim : 1750 $ retirés au total avant le passage automatique en compte Live (pas un plafond par retrait), minimum net 100 $, versements hebdomadaires (mercredi). Activation LiveSim 139 $ prélevée sur le premier retrait seulement. Pas de buffer, pas de consistency. Avant CHAQUE retrait : 5 nouveaux jours gagnants (non consécutifs) d’au moins 100 $ de gain net chacun, même sous le solde de départ ; les jours déjà comptés pour un retrait ne servent plus. Growth plan : retirer l'objectif fait passer au palier supérieur (comptes Live, drawdown trailing intraday ; 200K et 400K à drawdown fixe)."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://www.earn2trade.com/trader-career-path",
+        "https://help.earn2trade.com/en/articles/5941958-what-are-the-evaluation-rules",
+        "https://help.earn2trade.com/en/articles/3224507-what-is-the-maximum-drawdown-on-the-trader-career-path-and-the-gauntlet-mini-challenges",
+        "https://help.earn2trade.com/en/articles/5372687-how-does-end-of-day-drawdown-work",
+        "https://help.earn2trade.com/en/articles/8117088-drawdown-types",
+        "https://help.earn2trade.com/en/articles/3292356-what-is-a-trailing-drawdown",
+        "https://help.earn2trade.com/en/articles/3395926-how-is-my-daily-loss-calculated",
+        "https://help.earn2trade.com/en/articles/3849975-what-is-the-maintain-consistency-rule",
+        "https://help.earn2trade.com/en/articles/3224526-are-there-any-restrictions-on-when-i-can-trade-in-my-evaluation-account",
+        "https://help.earn2trade.com/en/articles/6877364-what-happens-when-i-complete-my-evaluation",
+        "https://help.earn2trade.com/en/articles/5452472-what-is-the-withdrawal-policy",
+        "https://help.earn2trade.com/en/articles/2280137-what-is-the-fee-structure-on-the-live-or-livesim-accounts",
+        "https://help.earn2trade.com/en/articles/11183609-reset-pricing-for-earn2trade-accounts",
+        "https://help.earn2trade.com/en/articles/17779875-how-many-contracts-can-i-trade-on-my-evaluation-or-livesim-live-account"
+      ],
+      "needs_review": false,
+      "notes": "Phase funded modélisée en LiveSim (drawdown EOD). Le partenaire peut proposer un compte Live à la place : drawdown trailing intraday, mêmes montants. Choix LiveSim / Live fait par le partenaire, non modélisé en plan séparé : sur un compte Live, le seuil réel est plus strict que celui affiché."
+    },
+    {
+      "id": "earn2trade-tcp-nov02-50k",
+      "plan_name": "Trader Career Path (achat depuis le 2026-11-02)",
+      "account_size": 50000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": 190,
+        "billing": "monthly",
+        "activation_fee": 139,
+        "notes": "Abonnement mensuel 190 $ (page non-US, prix affiché « à partir de »). Un reset gratuit à chaque renouvellement (TCP). Reset à prix dynamique selon les promotions. Activation 139 $ non payée d'avance : déduite du premier retrait LiveSim."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 3000,
+          "daily_loss_limit": {
+            "amount": 1100,
+            "basis": "equity",
+            "resets_at": "17:00 America/Chicago",
+            "breach": "account_failed",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "P&L du jour (ouvert + fermé + commissions) mesuré depuis le solde d'ouverture de la journée, de 17:00 à 17:00 CT. L'atteindre, même sans clôturer, fait échouer le compte."
+          },
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 52000,
+            "locked_floor": 50000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "EOD : solde minimum relevé à la clôture (2000 $ sous le plus haut solde de fin de journée), mis à jour par Rithmic entre 16:00 et 17:00 CT. S'arrête au solde de départ (50000 $). Les pertes latentes comptent en séance : une position ouverte qui passe sous le minimum fait échouer."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.3,
+            "applies_to": "profit_target",
+            "notes": "Aucun jour ne peut faire 30 % ou plus du PnL total ; pas un échec, il faut continuer jusqu'à repasser sous 30 %. Donc au moins 4 jours gagnants."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 4,
+            "micros": 40,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Nombre fixe de contrats pour les abonnements achetés depuis le 2026-11-02 (plus de Progression Ladder). Jusqu’à 10 micros (MES, MNQ, MYM, M2K, MGC, MCL, M6B, M6E, MHG) comptent pour 1 contrat standard. Même limite en évaluation, en LiveSim et en Live de même taille."
+          },
+          "time_rules": {
+            "must_close_by": "15:50 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Trading à partir de 17:00 CT (ouverture de l'actif). Positions et ordres fermés de 15:50 à 17:00 CT, pas d'overnight. GF/HE/LE fermés dès 13:05 CT ; grains (XC/XK/ZC/ZL/ZM/ZS/ZW) fermés de 07:45 à 08:30 puis de 13:20 à 17:00 CT. News autorisées."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": 3000,
+          "daily_loss_limit": {
+            "amount": 1100,
+            "basis": "equity",
+            "resets_at": "17:00 America/Chicago",
+            "breach": "account_failed",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "P&L du jour (ouvert + fermé + commissions) mesuré depuis le solde d'ouverture de la journée, de 17:00 à 17:00 CT. L'atteindre, même sans clôturer, fait échouer le compte."
+          },
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 52000,
+            "locked_floor": 50000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "EOD : solde minimum relevé à la clôture (2000 $ sous le plus haut solde de fin de journée), mis à jour par Rithmic entre 16:00 et 17:00 CT. S'arrête au solde de départ (50000 $). Les pertes latentes comptent en séance : une position ouverte qui passe sous le minimum fait échouer."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 4,
+            "micros": 40,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Nombre fixe de contrats pour les abonnements achetés depuis le 2026-11-02 (plus de Progression Ladder). Jusqu’à 10 micros (MES, MNQ, MYM, M2K, MGC, MCL, M6B, M6E, MHG) comptent pour 1 contrat standard. Même limite en évaluation, en LiveSim et en Live de même taille."
+          },
+          "time_rules": {
+            "must_close_by": "15:50 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Trading à partir de 17:00 CT (ouverture de l'actif). Positions et ordres fermés de 15:50 à 17:00 CT, pas d'overnight. GF/HE/LE fermés dès 13:05 CT ; grains (XC/XK/ZC/ZL/ZM/ZS/ZW) fermés de 07:45 à 08:30 puis de 13:20 à 17:00 CT. News autorisées."
+          },
+          "payout": {
+            "min_days": 5,
+            "min_daily_profit": 150,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.5,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": 100,
+            "max_amount": null,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": null,
+            "notes": "Le partage dépend du montant de CHAQUE retrait : 50 % sous 2250 $, 80 % à partir de 2250 $. Plafond LiveSim : 3000 $ retirés au total avant le passage automatique en compte Live (pas un plafond par retrait), minimum net 100 $, versements hebdomadaires (mercredi). Activation LiveSim 139 $ prélevée sur le premier retrait seulement. Pas de buffer, pas de consistency. Avant CHAQUE retrait : 5 nouveaux jours gagnants (non consécutifs) d’au moins 150 $ de gain net chacun, même sous le solde de départ ; les jours déjà comptés pour un retrait ne servent plus. Growth plan : retirer l'objectif fait passer au palier supérieur (comptes Live, drawdown trailing intraday ; 200K et 400K à drawdown fixe)."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://www.earn2trade.com/trader-career-path",
+        "https://help.earn2trade.com/en/articles/5941958-what-are-the-evaluation-rules",
+        "https://help.earn2trade.com/en/articles/3224507-what-is-the-maximum-drawdown-on-the-trader-career-path-and-the-gauntlet-mini-challenges",
+        "https://help.earn2trade.com/en/articles/5372687-how-does-end-of-day-drawdown-work",
+        "https://help.earn2trade.com/en/articles/8117088-drawdown-types",
+        "https://help.earn2trade.com/en/articles/3292356-what-is-a-trailing-drawdown",
+        "https://help.earn2trade.com/en/articles/3395926-how-is-my-daily-loss-calculated",
+        "https://help.earn2trade.com/en/articles/3849975-what-is-the-maintain-consistency-rule",
+        "https://help.earn2trade.com/en/articles/3224526-are-there-any-restrictions-on-when-i-can-trade-in-my-evaluation-account",
+        "https://help.earn2trade.com/en/articles/6877364-what-happens-when-i-complete-my-evaluation",
+        "https://help.earn2trade.com/en/articles/5452472-what-is-the-withdrawal-policy",
+        "https://help.earn2trade.com/en/articles/2280137-what-is-the-fee-structure-on-the-live-or-livesim-accounts",
+        "https://help.earn2trade.com/en/articles/11183609-reset-pricing-for-earn2trade-accounts",
+        "https://help.earn2trade.com/en/articles/17779875-how-many-contracts-can-i-trade-on-my-evaluation-or-livesim-live-account"
+      ],
+      "needs_review": false,
+      "notes": "Phase funded modélisée en LiveSim (drawdown EOD). Le partenaire peut proposer un compte Live à la place : drawdown trailing intraday, mêmes montants. Choix LiveSim / Live fait par le partenaire, non modélisé en plan séparé : sur un compte Live, le seuil réel est plus strict que celui affiché."
+    },
+    {
+      "id": "earn2trade-tcp-nov02-100k",
+      "plan_name": "Trader Career Path (achat depuis le 2026-11-02)",
+      "account_size": 100000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": 350,
+        "billing": "monthly",
+        "activation_fee": 139,
+        "notes": "Abonnement mensuel 350 $ (page non-US, prix affiché « à partir de »). Un reset gratuit à chaque renouvellement (TCP). Reset 100 $ (prix fixe). Activation 139 $ non payée d'avance : déduite du premier retrait LiveSim."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 6000,
+          "daily_loss_limit": {
+            "amount": 2200,
+            "basis": "equity",
+            "resets_at": "17:00 America/Chicago",
+            "breach": "account_failed",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "P&L du jour (ouvert + fermé + commissions) mesuré depuis le solde d'ouverture de la journée, de 17:00 à 17:00 CT. L'atteindre, même sans clôturer, fait échouer le compte."
+          },
+          "max_drawdown": {
+            "amount": 3500,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 103500,
+            "locked_floor": 100000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "EOD : solde minimum relevé à la clôture (3500 $ sous le plus haut solde de fin de journée), mis à jour par Rithmic entre 16:00 et 17:00 CT. S'arrête au solde de départ (100000 $). Les pertes latentes comptent en séance : une position ouverte qui passe sous le minimum fait échouer."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.3,
+            "applies_to": "profit_target",
+            "notes": "Aucun jour ne peut faire 30 % ou plus du PnL total ; pas un échec, il faut continuer jusqu'à repasser sous 30 %. Donc au moins 4 jours gagnants."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 8,
+            "micros": 80,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Nombre fixe de contrats pour les abonnements achetés depuis le 2026-11-02 (plus de Progression Ladder). Jusqu’à 10 micros (MES, MNQ, MYM, M2K, MGC, MCL, M6B, M6E, MHG) comptent pour 1 contrat standard. Même limite en évaluation, en LiveSim et en Live de même taille."
+          },
+          "time_rules": {
+            "must_close_by": "15:50 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Trading à partir de 17:00 CT (ouverture de l'actif). Positions et ordres fermés de 15:50 à 17:00 CT, pas d'overnight. GF/HE/LE fermés dès 13:05 CT ; grains (XC/XK/ZC/ZL/ZM/ZS/ZW) fermés de 07:45 à 08:30 puis de 13:20 à 17:00 CT. News autorisées."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": 6000,
+          "daily_loss_limit": {
+            "amount": 2200,
+            "basis": "equity",
+            "resets_at": "17:00 America/Chicago",
+            "breach": "account_failed",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "P&L du jour (ouvert + fermé + commissions) mesuré depuis le solde d'ouverture de la journée, de 17:00 à 17:00 CT. L'atteindre, même sans clôturer, fait échouer le compte."
+          },
+          "max_drawdown": {
+            "amount": 3500,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 103500,
+            "locked_floor": 100000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "EOD : solde minimum relevé à la clôture (3500 $ sous le plus haut solde de fin de journée), mis à jour par Rithmic entre 16:00 et 17:00 CT. S'arrête au solde de départ (100000 $). Les pertes latentes comptent en séance : une position ouverte qui passe sous le minimum fait échouer."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 8,
+            "micros": 80,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Nombre fixe de contrats pour les abonnements achetés depuis le 2026-11-02 (plus de Progression Ladder). Jusqu’à 10 micros (MES, MNQ, MYM, M2K, MGC, MCL, M6B, M6E, MHG) comptent pour 1 contrat standard. Même limite en évaluation, en LiveSim et en Live de même taille."
+          },
+          "time_rules": {
+            "must_close_by": "15:50 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Trading à partir de 17:00 CT (ouverture de l'actif). Positions et ordres fermés de 15:50 à 17:00 CT, pas d'overnight. GF/HE/LE fermés dès 13:05 CT ; grains (XC/XK/ZC/ZL/ZM/ZS/ZW) fermés de 07:45 à 08:30 puis de 13:20 à 17:00 CT. News autorisées."
+          },
+          "payout": {
+            "min_days": 5,
+            "min_daily_profit": 200,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.5,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": 100,
+            "max_amount": null,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": null,
+            "notes": "Le partage dépend du montant de CHAQUE retrait : 50 % sous 3000 $, 80 % à partir de 3000 $. Plafond LiveSim : 6000 $ retirés au total avant le passage automatique en compte Live (pas un plafond par retrait), minimum net 100 $, versements hebdomadaires (mercredi). Activation LiveSim 139 $ prélevée sur le premier retrait seulement. Pas de buffer, pas de consistency. Avant CHAQUE retrait : 5 nouveaux jours gagnants (non consécutifs) d’au moins 200 $ de gain net chacun, même sous le solde de départ ; les jours déjà comptés pour un retrait ne servent plus. Growth plan : retirer l'objectif fait passer au palier supérieur (comptes Live, drawdown trailing intraday ; 200K et 400K à drawdown fixe)."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://www.earn2trade.com/trader-career-path",
+        "https://help.earn2trade.com/en/articles/5941958-what-are-the-evaluation-rules",
+        "https://help.earn2trade.com/en/articles/3224507-what-is-the-maximum-drawdown-on-the-trader-career-path-and-the-gauntlet-mini-challenges",
+        "https://help.earn2trade.com/en/articles/5372687-how-does-end-of-day-drawdown-work",
+        "https://help.earn2trade.com/en/articles/8117088-drawdown-types",
+        "https://help.earn2trade.com/en/articles/3292356-what-is-a-trailing-drawdown",
+        "https://help.earn2trade.com/en/articles/3395926-how-is-my-daily-loss-calculated",
+        "https://help.earn2trade.com/en/articles/3849975-what-is-the-maintain-consistency-rule",
+        "https://help.earn2trade.com/en/articles/3224526-are-there-any-restrictions-on-when-i-can-trade-in-my-evaluation-account",
+        "https://help.earn2trade.com/en/articles/6877364-what-happens-when-i-complete-my-evaluation",
+        "https://help.earn2trade.com/en/articles/5452472-what-is-the-withdrawal-policy",
+        "https://help.earn2trade.com/en/articles/2280137-what-is-the-fee-structure-on-the-live-or-livesim-accounts",
+        "https://help.earn2trade.com/en/articles/11183609-reset-pricing-for-earn2trade-accounts",
+        "https://help.earn2trade.com/en/articles/17779875-how-many-contracts-can-i-trade-on-my-evaluation-or-livesim-live-account"
+      ],
+      "needs_review": false,
+      "notes": "Phase funded modélisée en LiveSim (drawdown EOD). Le partenaire peut proposer un compte Live à la place : drawdown trailing intraday, mêmes montants. Choix LiveSim / Live fait par le partenaire, non modélisé en plan séparé : sur un compte Live, le seuil réel est plus strict que celui affiché."
+    },
+    {
+      "id": "earn2trade-gauntlet-nov02-50k",
+      "plan_name": "Gauntlet Mini (achat depuis le 2026-11-02)",
+      "account_size": 50000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": 170,
+        "billing": "monthly",
+        "activation_fee": 139,
+        "notes": "Abonnement mensuel 170 $ (page non-US, prix affiché « à partir de »). Un reset gratuit à chaque renouvellement (TCP). Reset à prix dynamique selon les promotions. Activation 139 $ non payée d'avance : déduite du premier retrait LiveSim."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 3000,
+          "daily_loss_limit": {
+            "amount": 1100,
+            "basis": "equity",
+            "resets_at": "17:00 America/Chicago",
+            "breach": "account_failed",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "P&L du jour (ouvert + fermé + commissions) mesuré depuis le solde d'ouverture de la journée, de 17:00 à 17:00 CT. L'atteindre, même sans clôturer, fait échouer le compte."
+          },
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 52000,
+            "locked_floor": 50000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "EOD : solde minimum relevé à la clôture (2000 $ sous le plus haut solde de fin de journée), mis à jour par Rithmic entre 16:00 et 17:00 CT. S'arrête au solde de départ (50000 $). Les pertes latentes comptent en séance : une position ouverte qui passe sous le minimum fait échouer."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.3,
+            "applies_to": "profit_target",
+            "notes": "Aucun jour ne peut faire 30 % ou plus du PnL total ; pas un échec, il faut continuer jusqu'à repasser sous 30 %. Donc au moins 4 jours gagnants."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 4,
+            "micros": 40,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Nombre fixe de contrats pour les abonnements achetés depuis le 2026-11-02 (plus de Progression Ladder). Jusqu’à 10 micros (MES, MNQ, MYM, M2K, MGC, MCL, M6B, M6E, MHG) comptent pour 1 contrat standard. Même limite en évaluation, en LiveSim et en Live de même taille."
+          },
+          "time_rules": {
+            "must_close_by": "15:50 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Trading à partir de 17:00 CT (ouverture de l'actif). Positions et ordres fermés de 15:50 à 17:00 CT, pas d'overnight. GF/HE/LE fermés dès 13:05 CT ; grains (XC/XK/ZC/ZL/ZM/ZS/ZW) fermés de 07:45 à 08:30 puis de 13:20 à 17:00 CT. News autorisées."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 1100,
+            "basis": "equity",
+            "resets_at": "17:00 America/Chicago",
+            "breach": "account_failed",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "P&L du jour (ouvert + fermé + commissions) mesuré depuis le solde d'ouverture de la journée, de 17:00 à 17:00 CT. L'atteindre, même sans clôturer, fait échouer le compte."
+          },
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 52000,
+            "locked_floor": 50000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "EOD : solde minimum relevé à la clôture (2000 $ sous le plus haut solde de fin de journée), mis à jour par Rithmic entre 16:00 et 17:00 CT. S'arrête au solde de départ (50000 $). Les pertes latentes comptent en séance : une position ouverte qui passe sous le minimum fait échouer."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 4,
+            "micros": 40,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Nombre fixe de contrats pour les abonnements achetés depuis le 2026-11-02 (plus de Progression Ladder). Jusqu’à 10 micros (MES, MNQ, MYM, M2K, MGC, MCL, M6B, M6E, MHG) comptent pour 1 contrat standard. Même limite en évaluation, en LiveSim et en Live de même taille."
+          },
+          "time_rules": {
+            "must_close_by": "15:50 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Trading à partir de 17:00 CT (ouverture de l'actif). Positions et ordres fermés de 15:50 à 17:00 CT, pas d'overnight. GF/HE/LE fermés dès 13:05 CT ; grains (XC/XK/ZC/ZL/ZM/ZS/ZW) fermés de 07:45 à 08:30 puis de 13:20 à 17:00 CT. News autorisées."
+          },
+          "payout": {
+            "min_days": 5,
+            "min_daily_profit": 150,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.5,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": 100,
+            "max_amount": null,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": null,
+            "notes": "Le partage dépend du montant de CHAQUE retrait : 50 % sous 2250 $, 80 % à partir de 2250 $. Plafond LiveSim : 5000 $ retirés au total avant le passage automatique en compte Live (pas un plafond par retrait), minimum net 100 $, versements hebdomadaires (mercredi). Activation LiveSim 139 $ prélevée sur le premier retrait seulement. Pas de buffer, pas de consistency. Avant CHAQUE retrait : 5 nouveaux jours gagnants (non consécutifs) d’au moins 150 $ de gain net chacun, même sous le solde de départ ; les jours déjà comptés pour un retrait ne servent plus."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://www.earn2trade.com/gauntlet-mini",
+        "https://help.earn2trade.com/en/articles/5941958-what-are-the-evaluation-rules",
+        "https://help.earn2trade.com/en/articles/3224507-what-is-the-maximum-drawdown-on-the-trader-career-path-and-the-gauntlet-mini-challenges",
+        "https://help.earn2trade.com/en/articles/5372687-how-does-end-of-day-drawdown-work",
+        "https://help.earn2trade.com/en/articles/8117088-drawdown-types",
+        "https://help.earn2trade.com/en/articles/3292356-what-is-a-trailing-drawdown",
+        "https://help.earn2trade.com/en/articles/3395926-how-is-my-daily-loss-calculated",
+        "https://help.earn2trade.com/en/articles/3849975-what-is-the-maintain-consistency-rule",
+        "https://help.earn2trade.com/en/articles/3224526-are-there-any-restrictions-on-when-i-can-trade-in-my-evaluation-account",
+        "https://help.earn2trade.com/en/articles/6877364-what-happens-when-i-complete-my-evaluation",
+        "https://help.earn2trade.com/en/articles/5452472-what-is-the-withdrawal-policy",
+        "https://help.earn2trade.com/en/articles/2280137-what-is-the-fee-structure-on-the-live-or-livesim-accounts",
+        "https://help.earn2trade.com/en/articles/11183609-reset-pricing-for-earn2trade-accounts",
+        "https://help.earn2trade.com/en/articles/17779875-how-many-contracts-can-i-trade-on-my-evaluation-or-livesim-live-account"
+      ],
+      "needs_review": false,
+      "notes": "Phase funded modélisée en LiveSim (drawdown EOD). Le partenaire peut proposer un compte Live à la place : drawdown trailing intraday, mêmes montants. Choix LiveSim / Live fait par le partenaire, non modélisé en plan séparé : sur un compte Live, le seuil réel est plus strict que celui affiché."
+    },
+    {
+      "id": "earn2trade-gauntlet-nov02-100k",
+      "plan_name": "Gauntlet Mini (achat depuis le 2026-11-02)",
+      "account_size": 100000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": 315,
+        "billing": "monthly",
+        "activation_fee": 139,
+        "notes": "Abonnement mensuel 315 $ (page non-US, prix affiché « à partir de »). Un reset gratuit à chaque renouvellement (TCP). Reset 100 $ (prix fixe). Activation 139 $ non payée d'avance : déduite du premier retrait LiveSim."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 6000,
+          "daily_loss_limit": {
+            "amount": 2200,
+            "basis": "equity",
+            "resets_at": "17:00 America/Chicago",
+            "breach": "account_failed",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "P&L du jour (ouvert + fermé + commissions) mesuré depuis le solde d'ouverture de la journée, de 17:00 à 17:00 CT. L'atteindre, même sans clôturer, fait échouer le compte."
+          },
+          "max_drawdown": {
+            "amount": 3500,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 103500,
+            "locked_floor": 100000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "EOD : solde minimum relevé à la clôture (3500 $ sous le plus haut solde de fin de journée), mis à jour par Rithmic entre 16:00 et 17:00 CT. S'arrête au solde de départ (100000 $). Les pertes latentes comptent en séance : une position ouverte qui passe sous le minimum fait échouer."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.3,
+            "applies_to": "profit_target",
+            "notes": "Aucun jour ne peut faire 30 % ou plus du PnL total ; pas un échec, il faut continuer jusqu'à repasser sous 30 %. Donc au moins 4 jours gagnants."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 8,
+            "micros": 80,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Nombre fixe de contrats pour les abonnements achetés depuis le 2026-11-02 (plus de Progression Ladder). Jusqu’à 10 micros (MES, MNQ, MYM, M2K, MGC, MCL, M6B, M6E, MHG) comptent pour 1 contrat standard. Même limite en évaluation, en LiveSim et en Live de même taille."
+          },
+          "time_rules": {
+            "must_close_by": "15:50 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Trading à partir de 17:00 CT (ouverture de l'actif). Positions et ordres fermés de 15:50 à 17:00 CT, pas d'overnight. GF/HE/LE fermés dès 13:05 CT ; grains (XC/XK/ZC/ZL/ZM/ZS/ZW) fermés de 07:45 à 08:30 puis de 13:20 à 17:00 CT. News autorisées."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 2200,
+            "basis": "equity",
+            "resets_at": "17:00 America/Chicago",
+            "breach": "account_failed",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "P&L du jour (ouvert + fermé + commissions) mesuré depuis le solde d'ouverture de la journée, de 17:00 à 17:00 CT. L'atteindre, même sans clôturer, fait échouer le compte."
+          },
+          "max_drawdown": {
+            "amount": 3500,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 103500,
+            "locked_floor": 100000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "EOD : solde minimum relevé à la clôture (3500 $ sous le plus haut solde de fin de journée), mis à jour par Rithmic entre 16:00 et 17:00 CT. S'arrête au solde de départ (100000 $). Les pertes latentes comptent en séance : une position ouverte qui passe sous le minimum fait échouer."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 8,
+            "micros": 80,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Nombre fixe de contrats pour les abonnements achetés depuis le 2026-11-02 (plus de Progression Ladder). Jusqu’à 10 micros (MES, MNQ, MYM, M2K, MGC, MCL, M6B, M6E, MHG) comptent pour 1 contrat standard. Même limite en évaluation, en LiveSim et en Live de même taille."
+          },
+          "time_rules": {
+            "must_close_by": "15:50 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Trading à partir de 17:00 CT (ouverture de l'actif). Positions et ordres fermés de 15:50 à 17:00 CT, pas d'overnight. GF/HE/LE fermés dès 13:05 CT ; grains (XC/XK/ZC/ZL/ZM/ZS/ZW) fermés de 07:45 à 08:30 puis de 13:20 à 17:00 CT. News autorisées."
+          },
+          "payout": {
+            "min_days": 5,
+            "min_daily_profit": 200,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.5,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": 100,
+            "max_amount": null,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": null,
+            "notes": "Le partage dépend du montant de CHAQUE retrait : 50 % sous 3000 $, 80 % à partir de 3000 $. Plafond LiveSim : 5000 $ retirés au total avant le passage automatique en compte Live (pas un plafond par retrait), minimum net 100 $, versements hebdomadaires (mercredi). Activation LiveSim 139 $ prélevée sur le premier retrait seulement. Pas de buffer, pas de consistency. Avant CHAQUE retrait : 5 nouveaux jours gagnants (non consécutifs) d’au moins 200 $ de gain net chacun, même sous le solde de départ ; les jours déjà comptés pour un retrait ne servent plus."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://www.earn2trade.com/gauntlet-mini",
+        "https://help.earn2trade.com/en/articles/5941958-what-are-the-evaluation-rules",
+        "https://help.earn2trade.com/en/articles/3224507-what-is-the-maximum-drawdown-on-the-trader-career-path-and-the-gauntlet-mini-challenges",
+        "https://help.earn2trade.com/en/articles/5372687-how-does-end-of-day-drawdown-work",
+        "https://help.earn2trade.com/en/articles/8117088-drawdown-types",
+        "https://help.earn2trade.com/en/articles/3292356-what-is-a-trailing-drawdown",
+        "https://help.earn2trade.com/en/articles/3395926-how-is-my-daily-loss-calculated",
+        "https://help.earn2trade.com/en/articles/3849975-what-is-the-maintain-consistency-rule",
+        "https://help.earn2trade.com/en/articles/3224526-are-there-any-restrictions-on-when-i-can-trade-in-my-evaluation-account",
+        "https://help.earn2trade.com/en/articles/6877364-what-happens-when-i-complete-my-evaluation",
+        "https://help.earn2trade.com/en/articles/5452472-what-is-the-withdrawal-policy",
+        "https://help.earn2trade.com/en/articles/2280137-what-is-the-fee-structure-on-the-live-or-livesim-accounts",
+        "https://help.earn2trade.com/en/articles/11183609-reset-pricing-for-earn2trade-accounts",
+        "https://help.earn2trade.com/en/articles/17779875-how-many-contracts-can-i-trade-on-my-evaluation-or-livesim-live-account"
+      ],
+      "needs_review": false,
+      "notes": "Phase funded modélisée en LiveSim (drawdown EOD). Le partenaire peut proposer un compte Live à la place : drawdown trailing intraday, mêmes montants. Choix LiveSim / Live fait par le partenaire, non modélisé en plan séparé : sur un compte Live, le seuil réel est plus strict que celui affiché."
+    },
+    {
+      "id": "earn2trade-gauntlet-nov02-150k",
+      "plan_name": "Gauntlet Mini (achat depuis le 2026-11-02)",
+      "account_size": 150000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": 375,
+        "billing": "monthly",
+        "activation_fee": 139,
+        "notes": "Abonnement mensuel 375 $ (page non-US, prix affiché « à partir de »). Un reset gratuit à chaque renouvellement (TCP). Reset 130 $ (prix fixe). Activation 139 $ non payée d'avance : déduite du premier retrait LiveSim."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 9000,
+          "daily_loss_limit": {
+            "amount": 3300,
+            "basis": "equity",
+            "resets_at": "17:00 America/Chicago",
+            "breach": "account_failed",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "P&L du jour (ouvert + fermé + commissions) mesuré depuis le solde d'ouverture de la journée, de 17:00 à 17:00 CT. L'atteindre, même sans clôturer, fait échouer le compte."
+          },
+          "max_drawdown": {
+            "amount": 4500,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 154500,
+            "locked_floor": 150000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "EOD : solde minimum relevé à la clôture (4500 $ sous le plus haut solde de fin de journée), mis à jour par Rithmic entre 16:00 et 17:00 CT. S'arrête au solde de départ (150000 $). Les pertes latentes comptent en séance : une position ouverte qui passe sous le minimum fait échouer."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.3,
+            "applies_to": "profit_target",
+            "notes": "Aucun jour ne peut faire 30 % ou plus du PnL total ; pas un échec, il faut continuer jusqu'à repasser sous 30 %. Donc au moins 4 jours gagnants."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 12,
+            "micros": 120,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Nombre fixe de contrats pour les abonnements achetés depuis le 2026-11-02 (plus de Progression Ladder). Jusqu’à 10 micros (MES, MNQ, MYM, M2K, MGC, MCL, M6B, M6E, MHG) comptent pour 1 contrat standard. Même limite en évaluation, en LiveSim et en Live de même taille."
+          },
+          "time_rules": {
+            "must_close_by": "15:50 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Trading à partir de 17:00 CT (ouverture de l'actif). Positions et ordres fermés de 15:50 à 17:00 CT, pas d'overnight. GF/HE/LE fermés dès 13:05 CT ; grains (XC/XK/ZC/ZL/ZM/ZS/ZW) fermés de 07:45 à 08:30 puis de 13:20 à 17:00 CT. News autorisées."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 3300,
+            "basis": "equity",
+            "resets_at": "17:00 America/Chicago",
+            "breach": "account_failed",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "P&L du jour (ouvert + fermé + commissions) mesuré depuis le solde d'ouverture de la journée, de 17:00 à 17:00 CT. L'atteindre, même sans clôturer, fait échouer le compte."
+          },
+          "max_drawdown": {
+            "amount": 4500,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 154500,
+            "locked_floor": 150000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "EOD : solde minimum relevé à la clôture (4500 $ sous le plus haut solde de fin de journée), mis à jour par Rithmic entre 16:00 et 17:00 CT. S'arrête au solde de départ (150000 $). Les pertes latentes comptent en séance : une position ouverte qui passe sous le minimum fait échouer."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 12,
+            "micros": 120,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Nombre fixe de contrats pour les abonnements achetés depuis le 2026-11-02 (plus de Progression Ladder). Jusqu’à 10 micros (MES, MNQ, MYM, M2K, MGC, MCL, M6B, M6E, MHG) comptent pour 1 contrat standard. Même limite en évaluation, en LiveSim et en Live de même taille."
+          },
+          "time_rules": {
+            "must_close_by": "15:50 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Trading à partir de 17:00 CT (ouverture de l'actif). Positions et ordres fermés de 15:50 à 17:00 CT, pas d'overnight. GF/HE/LE fermés dès 13:05 CT ; grains (XC/XK/ZC/ZL/ZM/ZS/ZW) fermés de 07:45 à 08:30 puis de 13:20 à 17:00 CT. News autorisées."
+          },
+          "payout": {
+            "min_days": 5,
+            "min_daily_profit": 250,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.5,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": 100,
+            "max_amount": null,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": null,
+            "notes": "Le partage dépend du montant de CHAQUE retrait : 50 % sous 4000 $, 80 % à partir de 4000 $. Plafond LiveSim : 5000 $ retirés au total avant le passage automatique en compte Live (pas un plafond par retrait), minimum net 100 $, versements hebdomadaires (mercredi). Activation LiveSim 139 $ prélevée sur le premier retrait seulement. Pas de buffer, pas de consistency. Avant CHAQUE retrait : 5 nouveaux jours gagnants (non consécutifs) d’au moins 250 $ de gain net chacun, même sous le solde de départ ; les jours déjà comptés pour un retrait ne servent plus."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://www.earn2trade.com/gauntlet-mini",
+        "https://help.earn2trade.com/en/articles/5941958-what-are-the-evaluation-rules",
+        "https://help.earn2trade.com/en/articles/3224507-what-is-the-maximum-drawdown-on-the-trader-career-path-and-the-gauntlet-mini-challenges",
+        "https://help.earn2trade.com/en/articles/5372687-how-does-end-of-day-drawdown-work",
+        "https://help.earn2trade.com/en/articles/8117088-drawdown-types",
+        "https://help.earn2trade.com/en/articles/3292356-what-is-a-trailing-drawdown",
+        "https://help.earn2trade.com/en/articles/3395926-how-is-my-daily-loss-calculated",
+        "https://help.earn2trade.com/en/articles/3849975-what-is-the-maintain-consistency-rule",
+        "https://help.earn2trade.com/en/articles/3224526-are-there-any-restrictions-on-when-i-can-trade-in-my-evaluation-account",
+        "https://help.earn2trade.com/en/articles/6877364-what-happens-when-i-complete-my-evaluation",
+        "https://help.earn2trade.com/en/articles/5452472-what-is-the-withdrawal-policy",
+        "https://help.earn2trade.com/en/articles/2280137-what-is-the-fee-structure-on-the-live-or-livesim-accounts",
+        "https://help.earn2trade.com/en/articles/11183609-reset-pricing-for-earn2trade-accounts",
+        "https://help.earn2trade.com/en/articles/17779875-how-many-contracts-can-i-trade-on-my-evaluation-or-livesim-live-account"
+      ],
+      "needs_review": false,
+      "notes": "Phase funded modélisée en LiveSim (drawdown EOD). Le partenaire peut proposer un compte Live à la place : drawdown trailing intraday, mêmes montants. Choix LiveSim / Live fait par le partenaire, non modélisé en plan séparé : sur un compte Live, le seuil réel est plus strict que celui affiché."
+    },
+    {
+      "id": "earn2trade-gauntlet-nov02-200k",
+      "plan_name": "Gauntlet Mini (achat depuis le 2026-11-02)",
+      "account_size": 200000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": 550,
+        "billing": "monthly",
+        "activation_fee": 139,
+        "notes": "Abonnement mensuel 550 $ (page non-US, prix affiché « à partir de »). Un reset gratuit à chaque renouvellement (TCP). Reset 155 $ (prix fixe). Activation 139 $ non payée d'avance : déduite du premier retrait LiveSim."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 11000,
+          "daily_loss_limit": {
+            "amount": 4400,
+            "basis": "equity",
+            "resets_at": "17:00 America/Chicago",
+            "breach": "account_failed",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "P&L du jour (ouvert + fermé + commissions) mesuré depuis le solde d'ouverture de la journée, de 17:00 à 17:00 CT. L'atteindre, même sans clôturer, fait échouer le compte."
+          },
+          "max_drawdown": {
+            "amount": 6000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 206000,
+            "locked_floor": 200000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "EOD : solde minimum relevé à la clôture (6000 $ sous le plus haut solde de fin de journée), mis à jour par Rithmic entre 16:00 et 17:00 CT. S'arrête au solde de départ (200000 $). Les pertes latentes comptent en séance : une position ouverte qui passe sous le minimum fait échouer."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.3,
+            "applies_to": "profit_target",
+            "notes": "Aucun jour ne peut faire 30 % ou plus du PnL total ; pas un échec, il faut continuer jusqu'à repasser sous 30 %. Donc au moins 4 jours gagnants."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 15,
+            "micros": 150,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Nombre fixe de contrats pour les abonnements achetés depuis le 2026-11-02 (plus de Progression Ladder). Jusqu’à 10 micros (MES, MNQ, MYM, M2K, MGC, MCL, M6B, M6E, MHG) comptent pour 1 contrat standard. Même limite en évaluation, en LiveSim et en Live de même taille."
+          },
+          "time_rules": {
+            "must_close_by": "15:50 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Trading à partir de 17:00 CT (ouverture de l'actif). Positions et ordres fermés de 15:50 à 17:00 CT, pas d'overnight. GF/HE/LE fermés dès 13:05 CT ; grains (XC/XK/ZC/ZL/ZM/ZS/ZW) fermés de 07:45 à 08:30 puis de 13:20 à 17:00 CT. News autorisées."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 4400,
+            "basis": "equity",
+            "resets_at": "17:00 America/Chicago",
+            "breach": "account_failed",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "P&L du jour (ouvert + fermé + commissions) mesuré depuis le solde d'ouverture de la journée, de 17:00 à 17:00 CT. L'atteindre, même sans clôturer, fait échouer le compte."
+          },
+          "max_drawdown": {
+            "amount": 6000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 206000,
+            "locked_floor": 200000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "EOD : solde minimum relevé à la clôture (6000 $ sous le plus haut solde de fin de journée), mis à jour par Rithmic entre 16:00 et 17:00 CT. S'arrête au solde de départ (200000 $). Les pertes latentes comptent en séance : une position ouverte qui passe sous le minimum fait échouer."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 15,
+            "micros": 150,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Nombre fixe de contrats pour les abonnements achetés depuis le 2026-11-02 (plus de Progression Ladder). Jusqu’à 10 micros (MES, MNQ, MYM, M2K, MGC, MCL, M6B, M6E, MHG) comptent pour 1 contrat standard. Même limite en évaluation, en LiveSim et en Live de même taille."
+          },
+          "time_rules": {
+            "must_close_by": "15:50 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Trading à partir de 17:00 CT (ouverture de l'actif). Positions et ordres fermés de 15:50 à 17:00 CT, pas d'overnight. GF/HE/LE fermés dès 13:05 CT ; grains (XC/XK/ZC/ZL/ZM/ZS/ZW) fermés de 07:45 à 08:30 puis de 13:20 à 17:00 CT. News autorisées."
+          },
+          "payout": {
+            "min_days": 5,
+            "min_daily_profit": 350,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.5,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": 100,
+            "max_amount": null,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": null,
+            "notes": "Le partage dépend du montant de CHAQUE retrait : 50 % sous 5000 $, 80 % à partir de 5000 $. Plafond LiveSim : 5000 $ retirés au total avant le passage automatique en compte Live (pas un plafond par retrait), minimum net 100 $, versements hebdomadaires (mercredi). Activation LiveSim 139 $ prélevée sur le premier retrait seulement. Pas de buffer, pas de consistency. Avant CHAQUE retrait : 5 nouveaux jours gagnants (non consécutifs) d’au moins 350 $ de gain net chacun, même sous le solde de départ ; les jours déjà comptés pour un retrait ne servent plus."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://www.earn2trade.com/gauntlet-mini",
+        "https://help.earn2trade.com/en/articles/5941958-what-are-the-evaluation-rules",
+        "https://help.earn2trade.com/en/articles/3224507-what-is-the-maximum-drawdown-on-the-trader-career-path-and-the-gauntlet-mini-challenges",
+        "https://help.earn2trade.com/en/articles/5372687-how-does-end-of-day-drawdown-work",
+        "https://help.earn2trade.com/en/articles/8117088-drawdown-types",
+        "https://help.earn2trade.com/en/articles/3292356-what-is-a-trailing-drawdown",
+        "https://help.earn2trade.com/en/articles/3395926-how-is-my-daily-loss-calculated",
+        "https://help.earn2trade.com/en/articles/3849975-what-is-the-maintain-consistency-rule",
+        "https://help.earn2trade.com/en/articles/3224526-are-there-any-restrictions-on-when-i-can-trade-in-my-evaluation-account",
+        "https://help.earn2trade.com/en/articles/6877364-what-happens-when-i-complete-my-evaluation",
+        "https://help.earn2trade.com/en/articles/5452472-what-is-the-withdrawal-policy",
+        "https://help.earn2trade.com/en/articles/2280137-what-is-the-fee-structure-on-the-live-or-livesim-accounts",
+        "https://help.earn2trade.com/en/articles/11183609-reset-pricing-for-earn2trade-accounts",
+        "https://help.earn2trade.com/en/articles/17779875-how-many-contracts-can-i-trade-on-my-evaluation-or-livesim-live-account"
+      ],
+      "needs_review": false,
+      "notes": "Phase funded modélisée en LiveSim (drawdown EOD). Le partenaire peut proposer un compte Live à la place : drawdown trailing intraday, mêmes montants. Choix LiveSim / Live fait par le partenaire, non modélisé en plan séparé : sur un compte Live, le seuil réel est plus strict que celui affiché."
+    },
+    {
       "id": "earn2trade-tcp-25k",
-      "plan_name": "Trader Career Path",
+      "plan_name": "Trader Career Path (achat avant le 2026-11-02)",
       "account_size": 25000,
       "currency": "USD",
       "availability": "public",
@@ -81,7 +1005,7 @@
                 "micros": 30
               }
             ],
-            "notes": "Progression Ladder : taille max selon le profit en cours (solde et profit en temps réel, auto-régulé par le trader) ; dépasser le palier fait échouer le compte immédiatement. Jusqu'à 10 micros comptent pour 1 contrat standard (micros = 10 par contrat, borne prudente). Même grille en évaluation, en LiveSim et en Live de même taille."
+            "notes": "Progression Ladder : taille max selon le profit en cours (solde et profit en temps réel, auto-régulé par le trader) ; dépasser le palier fait échouer le compte immédiatement. Jusqu'à 10 micros comptent pour 1 contrat standard (micros = 10 par contrat, borne prudente). Même grille en évaluation, en LiveSim et en Live de même taille. Grille réservée aux abonnements achetés avant le 2026-11-02 (ensuite : nombre fixe de contrats)."
           },
           "time_rules": {
             "must_close_by": "15:50 America/Chicago",
@@ -134,7 +1058,7 @@
                 "micros": 30
               }
             ],
-            "notes": "Progression Ladder : taille max selon le profit en cours (solde et profit en temps réel, auto-régulé par le trader) ; dépasser le palier fait échouer le compte immédiatement. Jusqu'à 10 micros comptent pour 1 contrat standard (micros = 10 par contrat, borne prudente). Même grille en évaluation, en LiveSim et en Live de même taille."
+            "notes": "Progression Ladder : taille max selon le profit en cours (solde et profit en temps réel, auto-régulé par le trader) ; dépasser le palier fait échouer le compte immédiatement. Jusqu'à 10 micros comptent pour 1 contrat standard (micros = 10 par contrat, borne prudente). Même grille en évaluation, en LiveSim et en Live de même taille. Grille réservée aux abonnements achetés avant le 2026-11-02 (ensuite : nombre fixe de contrats)."
           },
           "time_rules": {
             "must_close_by": "15:50 America/Chicago",
@@ -143,19 +1067,19 @@
             "notes": "Trading à partir de 17:00 CT (ouverture de l'actif). Positions et ordres fermés de 15:50 à 17:00 CT, pas d'overnight. GF/HE/LE fermés dès 13:05 CT ; grains (XC/XK/ZC/ZL/ZM/ZS/ZW) fermés de 07:45 à 08:30 puis de 13:20 à 17:00 CT. News autorisées."
           },
           "payout": {
-            "min_days": null,
-            "min_daily_profit": null,
+            "min_days": 5,
+            "min_daily_profit": 100,
             "min_cycle_profit": null,
             "min_cycle_profit_schedule": null,
             "split_pct": 0.5,
             "split_after": null,
             "split_by_profit": null,
             "min_amount": 100,
-            "max_amount": 1750,
+            "max_amount": null,
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": null,
-            "notes": "Le partage dépend du montant de CHAQUE retrait : 50 % sous 1500 $, 80 % à partir de 1500 $. Plafond LiveSim 1750 $ par retrait, minimum net 100 $, versements hebdomadaires (mercredi). Activation LiveSim 139 $ prélevée sur le premier retrait seulement. Pas de buffer, pas de consistency, pas de jours minimum. Growth plan : retirer l'objectif fait passer au palier supérieur (comptes Live, drawdown trailing intraday ; 200K et 400K à drawdown fixe)."
+            "notes": "Le partage dépend du montant de CHAQUE retrait : 50 % sous 1500 $, 80 % à partir de 1500 $. Plafond LiveSim : 1750 $ retirés au total avant le passage automatique en compte Live (pas un plafond par retrait), minimum net 100 $, versements hebdomadaires (mercredi). Activation LiveSim 139 $ prélevée sur le premier retrait seulement. Pas de buffer, pas de consistency. Avant CHAQUE retrait : 5 nouveaux jours gagnants (non consécutifs) d’au moins 100 $ de gain net chacun, même sous le solde de départ ; les jours déjà comptés pour un retrait ne servent plus. Growth plan : retirer l'objectif fait passer au palier supérieur (comptes Live, drawdown trailing intraday ; 200K et 400K à drawdown fixe)."
           }
         }
       ],
@@ -180,7 +1104,7 @@
     },
     {
       "id": "earn2trade-tcp-50k",
-      "plan_name": "Trader Career Path",
+      "plan_name": "Trader Career Path (achat avant le 2026-11-02)",
       "account_size": 50000,
       "currency": "USD",
       "availability": "public",
@@ -245,7 +1169,7 @@
                 "micros": 60
               }
             ],
-            "notes": "Progression Ladder : taille max selon le profit en cours (solde et profit en temps réel, auto-régulé par le trader) ; dépasser le palier fait échouer le compte immédiatement. Jusqu'à 10 micros comptent pour 1 contrat standard (micros = 10 par contrat, borne prudente). Même grille en évaluation, en LiveSim et en Live de même taille."
+            "notes": "Progression Ladder : taille max selon le profit en cours (solde et profit en temps réel, auto-régulé par le trader) ; dépasser le palier fait échouer le compte immédiatement. Jusqu'à 10 micros comptent pour 1 contrat standard (micros = 10 par contrat, borne prudente). Même grille en évaluation, en LiveSim et en Live de même taille. Grille réservée aux abonnements achetés avant le 2026-11-02 (ensuite : nombre fixe de contrats)."
           },
           "time_rules": {
             "must_close_by": "15:50 America/Chicago",
@@ -304,7 +1228,7 @@
                 "micros": 60
               }
             ],
-            "notes": "Progression Ladder : taille max selon le profit en cours (solde et profit en temps réel, auto-régulé par le trader) ; dépasser le palier fait échouer le compte immédiatement. Jusqu'à 10 micros comptent pour 1 contrat standard (micros = 10 par contrat, borne prudente). Même grille en évaluation, en LiveSim et en Live de même taille."
+            "notes": "Progression Ladder : taille max selon le profit en cours (solde et profit en temps réel, auto-régulé par le trader) ; dépasser le palier fait échouer le compte immédiatement. Jusqu'à 10 micros comptent pour 1 contrat standard (micros = 10 par contrat, borne prudente). Même grille en évaluation, en LiveSim et en Live de même taille. Grille réservée aux abonnements achetés avant le 2026-11-02 (ensuite : nombre fixe de contrats)."
           },
           "time_rules": {
             "must_close_by": "15:50 America/Chicago",
@@ -313,19 +1237,19 @@
             "notes": "Trading à partir de 17:00 CT (ouverture de l'actif). Positions et ordres fermés de 15:50 à 17:00 CT, pas d'overnight. GF/HE/LE fermés dès 13:05 CT ; grains (XC/XK/ZC/ZL/ZM/ZS/ZW) fermés de 07:45 à 08:30 puis de 13:20 à 17:00 CT. News autorisées."
           },
           "payout": {
-            "min_days": null,
-            "min_daily_profit": null,
+            "min_days": 5,
+            "min_daily_profit": 150,
             "min_cycle_profit": null,
             "min_cycle_profit_schedule": null,
             "split_pct": 0.5,
             "split_after": null,
             "split_by_profit": null,
             "min_amount": 100,
-            "max_amount": 3000,
+            "max_amount": null,
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": null,
-            "notes": "Le partage dépend du montant de CHAQUE retrait : 50 % sous 2250 $, 80 % à partir de 2250 $. Plafond LiveSim 3000 $ par retrait, minimum net 100 $, versements hebdomadaires (mercredi). Activation LiveSim 139 $ prélevée sur le premier retrait seulement. Pas de buffer, pas de consistency, pas de jours minimum. Growth plan : retirer l'objectif fait passer au palier supérieur (comptes Live, drawdown trailing intraday ; 200K et 400K à drawdown fixe)."
+            "notes": "Le partage dépend du montant de CHAQUE retrait : 50 % sous 2250 $, 80 % à partir de 2250 $. Plafond LiveSim : 3000 $ retirés au total avant le passage automatique en compte Live (pas un plafond par retrait), minimum net 100 $, versements hebdomadaires (mercredi). Activation LiveSim 139 $ prélevée sur le premier retrait seulement. Pas de buffer, pas de consistency. Avant CHAQUE retrait : 5 nouveaux jours gagnants (non consécutifs) d’au moins 150 $ de gain net chacun, même sous le solde de départ ; les jours déjà comptés pour un retrait ne servent plus. Growth plan : retirer l'objectif fait passer au palier supérieur (comptes Live, drawdown trailing intraday ; 200K et 400K à drawdown fixe)."
           }
         }
       ],
@@ -350,7 +1274,7 @@
     },
     {
       "id": "earn2trade-tcp-100k",
-      "plan_name": "Trader Career Path",
+      "plan_name": "Trader Career Path (achat avant le 2026-11-02)",
       "account_size": 100000,
       "currency": "USD",
       "availability": "public",
@@ -421,7 +1345,7 @@
                 "micros": 120
               }
             ],
-            "notes": "Progression Ladder : taille max selon le profit en cours (solde et profit en temps réel, auto-régulé par le trader) ; dépasser le palier fait échouer le compte immédiatement. Jusqu'à 10 micros comptent pour 1 contrat standard (micros = 10 par contrat, borne prudente). Même grille en évaluation, en LiveSim et en Live de même taille."
+            "notes": "Progression Ladder : taille max selon le profit en cours (solde et profit en temps réel, auto-régulé par le trader) ; dépasser le palier fait échouer le compte immédiatement. Jusqu'à 10 micros comptent pour 1 contrat standard (micros = 10 par contrat, borne prudente). Même grille en évaluation, en LiveSim et en Live de même taille. Grille réservée aux abonnements achetés avant le 2026-11-02 (ensuite : nombre fixe de contrats)."
           },
           "time_rules": {
             "must_close_by": "15:50 America/Chicago",
@@ -486,7 +1410,7 @@
                 "micros": 120
               }
             ],
-            "notes": "Progression Ladder : taille max selon le profit en cours (solde et profit en temps réel, auto-régulé par le trader) ; dépasser le palier fait échouer le compte immédiatement. Jusqu'à 10 micros comptent pour 1 contrat standard (micros = 10 par contrat, borne prudente). Même grille en évaluation, en LiveSim et en Live de même taille."
+            "notes": "Progression Ladder : taille max selon le profit en cours (solde et profit en temps réel, auto-régulé par le trader) ; dépasser le palier fait échouer le compte immédiatement. Jusqu'à 10 micros comptent pour 1 contrat standard (micros = 10 par contrat, borne prudente). Même grille en évaluation, en LiveSim et en Live de même taille. Grille réservée aux abonnements achetés avant le 2026-11-02 (ensuite : nombre fixe de contrats)."
           },
           "time_rules": {
             "must_close_by": "15:50 America/Chicago",
@@ -495,19 +1419,19 @@
             "notes": "Trading à partir de 17:00 CT (ouverture de l'actif). Positions et ordres fermés de 15:50 à 17:00 CT, pas d'overnight. GF/HE/LE fermés dès 13:05 CT ; grains (XC/XK/ZC/ZL/ZM/ZS/ZW) fermés de 07:45 à 08:30 puis de 13:20 à 17:00 CT. News autorisées."
           },
           "payout": {
-            "min_days": null,
-            "min_daily_profit": null,
+            "min_days": 5,
+            "min_daily_profit": 200,
             "min_cycle_profit": null,
             "min_cycle_profit_schedule": null,
             "split_pct": 0.5,
             "split_after": null,
             "split_by_profit": null,
             "min_amount": 100,
-            "max_amount": 6000,
+            "max_amount": null,
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": null,
-            "notes": "Le partage dépend du montant de CHAQUE retrait : 50 % sous 3000 $, 80 % à partir de 3000 $. Plafond LiveSim 6000 $ par retrait, minimum net 100 $, versements hebdomadaires (mercredi). Activation LiveSim 139 $ prélevée sur le premier retrait seulement. Pas de buffer, pas de consistency, pas de jours minimum. Growth plan : retirer l'objectif fait passer au palier supérieur (comptes Live, drawdown trailing intraday ; 200K et 400K à drawdown fixe)."
+            "notes": "Le partage dépend du montant de CHAQUE retrait : 50 % sous 3000 $, 80 % à partir de 3000 $. Plafond LiveSim : 6000 $ retirés au total avant le passage automatique en compte Live (pas un plafond par retrait), minimum net 100 $, versements hebdomadaires (mercredi). Activation LiveSim 139 $ prélevée sur le premier retrait seulement. Pas de buffer, pas de consistency. Avant CHAQUE retrait : 5 nouveaux jours gagnants (non consécutifs) d’au moins 200 $ de gain net chacun, même sous le solde de départ ; les jours déjà comptés pour un retrait ne servent plus. Growth plan : retirer l'objectif fait passer au palier supérieur (comptes Live, drawdown trailing intraday ; 200K et 400K à drawdown fixe)."
           }
         }
       ],
@@ -532,7 +1456,7 @@
     },
     {
       "id": "earn2trade-gauntlet-50k",
-      "plan_name": "Gauntlet Mini",
+      "plan_name": "Gauntlet Mini (achat avant le 2026-11-02)",
       "account_size": 50000,
       "currency": "USD",
       "availability": "public",
@@ -597,7 +1521,7 @@
                 "micros": 60
               }
             ],
-            "notes": "Progression Ladder : taille max selon le profit en cours (solde et profit en temps réel, auto-régulé par le trader) ; dépasser le palier fait échouer le compte immédiatement. Jusqu'à 10 micros comptent pour 1 contrat standard (micros = 10 par contrat, borne prudente). Même grille en évaluation, en LiveSim et en Live de même taille."
+            "notes": "Progression Ladder : taille max selon le profit en cours (solde et profit en temps réel, auto-régulé par le trader) ; dépasser le palier fait échouer le compte immédiatement. Jusqu'à 10 micros comptent pour 1 contrat standard (micros = 10 par contrat, borne prudente). Même grille en évaluation, en LiveSim et en Live de même taille. Grille réservée aux abonnements achetés avant le 2026-11-02 (ensuite : nombre fixe de contrats)."
           },
           "time_rules": {
             "must_close_by": "15:50 America/Chicago",
@@ -656,7 +1580,7 @@
                 "micros": 60
               }
             ],
-            "notes": "Progression Ladder : taille max selon le profit en cours (solde et profit en temps réel, auto-régulé par le trader) ; dépasser le palier fait échouer le compte immédiatement. Jusqu'à 10 micros comptent pour 1 contrat standard (micros = 10 par contrat, borne prudente). Même grille en évaluation, en LiveSim et en Live de même taille."
+            "notes": "Progression Ladder : taille max selon le profit en cours (solde et profit en temps réel, auto-régulé par le trader) ; dépasser le palier fait échouer le compte immédiatement. Jusqu'à 10 micros comptent pour 1 contrat standard (micros = 10 par contrat, borne prudente). Même grille en évaluation, en LiveSim et en Live de même taille. Grille réservée aux abonnements achetés avant le 2026-11-02 (ensuite : nombre fixe de contrats)."
           },
           "time_rules": {
             "must_close_by": "15:50 America/Chicago",
@@ -665,19 +1589,19 @@
             "notes": "Trading à partir de 17:00 CT (ouverture de l'actif). Positions et ordres fermés de 15:50 à 17:00 CT, pas d'overnight. GF/HE/LE fermés dès 13:05 CT ; grains (XC/XK/ZC/ZL/ZM/ZS/ZW) fermés de 07:45 à 08:30 puis de 13:20 à 17:00 CT. News autorisées."
           },
           "payout": {
-            "min_days": null,
-            "min_daily_profit": null,
+            "min_days": 5,
+            "min_daily_profit": 150,
             "min_cycle_profit": null,
             "min_cycle_profit_schedule": null,
             "split_pct": 0.5,
             "split_after": null,
             "split_by_profit": null,
             "min_amount": 100,
-            "max_amount": 5000,
+            "max_amount": null,
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": null,
-            "notes": "Le partage dépend du montant de CHAQUE retrait : 50 % sous 2250 $, 80 % à partir de 2250 $. Plafond LiveSim 5000 $ par retrait, minimum net 100 $, versements hebdomadaires (mercredi). Activation LiveSim 139 $ prélevée sur le premier retrait seulement. Pas de buffer, pas de consistency, pas de jours minimum."
+            "notes": "Le partage dépend du montant de CHAQUE retrait : 50 % sous 2250 $, 80 % à partir de 2250 $. Plafond LiveSim : 5000 $ retirés au total avant le passage automatique en compte Live (pas un plafond par retrait), minimum net 100 $, versements hebdomadaires (mercredi). Activation LiveSim 139 $ prélevée sur le premier retrait seulement. Pas de buffer, pas de consistency. Avant CHAQUE retrait : 5 nouveaux jours gagnants (non consécutifs) d’au moins 150 $ de gain net chacun, même sous le solde de départ ; les jours déjà comptés pour un retrait ne servent plus."
           }
         }
       ],
@@ -702,7 +1626,7 @@
     },
     {
       "id": "earn2trade-gauntlet-100k",
-      "plan_name": "Gauntlet Mini",
+      "plan_name": "Gauntlet Mini (achat avant le 2026-11-02)",
       "account_size": 100000,
       "currency": "USD",
       "availability": "public",
@@ -773,7 +1697,7 @@
                 "micros": 120
               }
             ],
-            "notes": "Progression Ladder : taille max selon le profit en cours (solde et profit en temps réel, auto-régulé par le trader) ; dépasser le palier fait échouer le compte immédiatement. Jusqu'à 10 micros comptent pour 1 contrat standard (micros = 10 par contrat, borne prudente). Même grille en évaluation, en LiveSim et en Live de même taille."
+            "notes": "Progression Ladder : taille max selon le profit en cours (solde et profit en temps réel, auto-régulé par le trader) ; dépasser le palier fait échouer le compte immédiatement. Jusqu'à 10 micros comptent pour 1 contrat standard (micros = 10 par contrat, borne prudente). Même grille en évaluation, en LiveSim et en Live de même taille. Grille réservée aux abonnements achetés avant le 2026-11-02 (ensuite : nombre fixe de contrats)."
           },
           "time_rules": {
             "must_close_by": "15:50 America/Chicago",
@@ -838,7 +1762,7 @@
                 "micros": 120
               }
             ],
-            "notes": "Progression Ladder : taille max selon le profit en cours (solde et profit en temps réel, auto-régulé par le trader) ; dépasser le palier fait échouer le compte immédiatement. Jusqu'à 10 micros comptent pour 1 contrat standard (micros = 10 par contrat, borne prudente). Même grille en évaluation, en LiveSim et en Live de même taille."
+            "notes": "Progression Ladder : taille max selon le profit en cours (solde et profit en temps réel, auto-régulé par le trader) ; dépasser le palier fait échouer le compte immédiatement. Jusqu'à 10 micros comptent pour 1 contrat standard (micros = 10 par contrat, borne prudente). Même grille en évaluation, en LiveSim et en Live de même taille. Grille réservée aux abonnements achetés avant le 2026-11-02 (ensuite : nombre fixe de contrats)."
           },
           "time_rules": {
             "must_close_by": "15:50 America/Chicago",
@@ -847,19 +1771,19 @@
             "notes": "Trading à partir de 17:00 CT (ouverture de l'actif). Positions et ordres fermés de 15:50 à 17:00 CT, pas d'overnight. GF/HE/LE fermés dès 13:05 CT ; grains (XC/XK/ZC/ZL/ZM/ZS/ZW) fermés de 07:45 à 08:30 puis de 13:20 à 17:00 CT. News autorisées."
           },
           "payout": {
-            "min_days": null,
-            "min_daily_profit": null,
+            "min_days": 5,
+            "min_daily_profit": 200,
             "min_cycle_profit": null,
             "min_cycle_profit_schedule": null,
             "split_pct": 0.5,
             "split_after": null,
             "split_by_profit": null,
             "min_amount": 100,
-            "max_amount": 5000,
+            "max_amount": null,
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": null,
-            "notes": "Le partage dépend du montant de CHAQUE retrait : 50 % sous 3000 $, 80 % à partir de 3000 $. Plafond LiveSim 5000 $ par retrait, minimum net 100 $, versements hebdomadaires (mercredi). Activation LiveSim 139 $ prélevée sur le premier retrait seulement. Pas de buffer, pas de consistency, pas de jours minimum."
+            "notes": "Le partage dépend du montant de CHAQUE retrait : 50 % sous 3000 $, 80 % à partir de 3000 $. Plafond LiveSim : 5000 $ retirés au total avant le passage automatique en compte Live (pas un plafond par retrait), minimum net 100 $, versements hebdomadaires (mercredi). Activation LiveSim 139 $ prélevée sur le premier retrait seulement. Pas de buffer, pas de consistency. Avant CHAQUE retrait : 5 nouveaux jours gagnants (non consécutifs) d’au moins 200 $ de gain net chacun, même sous le solde de départ ; les jours déjà comptés pour un retrait ne servent plus."
           }
         }
       ],
@@ -884,7 +1808,7 @@
     },
     {
       "id": "earn2trade-gauntlet-150k",
-      "plan_name": "Gauntlet Mini",
+      "plan_name": "Gauntlet Mini (achat avant le 2026-11-02)",
       "account_size": 150000,
       "currency": "USD",
       "availability": "public",
@@ -955,7 +1879,7 @@
                 "micros": 150
               }
             ],
-            "notes": "Progression Ladder : taille max selon le profit en cours (solde et profit en temps réel, auto-régulé par le trader) ; dépasser le palier fait échouer le compte immédiatement. Jusqu'à 10 micros comptent pour 1 contrat standard (micros = 10 par contrat, borne prudente). Même grille en évaluation, en LiveSim et en Live de même taille."
+            "notes": "Progression Ladder : taille max selon le profit en cours (solde et profit en temps réel, auto-régulé par le trader) ; dépasser le palier fait échouer le compte immédiatement. Jusqu'à 10 micros comptent pour 1 contrat standard (micros = 10 par contrat, borne prudente). Même grille en évaluation, en LiveSim et en Live de même taille. Grille réservée aux abonnements achetés avant le 2026-11-02 (ensuite : nombre fixe de contrats)."
           },
           "time_rules": {
             "must_close_by": "15:50 America/Chicago",
@@ -1020,7 +1944,7 @@
                 "micros": 150
               }
             ],
-            "notes": "Progression Ladder : taille max selon le profit en cours (solde et profit en temps réel, auto-régulé par le trader) ; dépasser le palier fait échouer le compte immédiatement. Jusqu'à 10 micros comptent pour 1 contrat standard (micros = 10 par contrat, borne prudente). Même grille en évaluation, en LiveSim et en Live de même taille."
+            "notes": "Progression Ladder : taille max selon le profit en cours (solde et profit en temps réel, auto-régulé par le trader) ; dépasser le palier fait échouer le compte immédiatement. Jusqu'à 10 micros comptent pour 1 contrat standard (micros = 10 par contrat, borne prudente). Même grille en évaluation, en LiveSim et en Live de même taille. Grille réservée aux abonnements achetés avant le 2026-11-02 (ensuite : nombre fixe de contrats)."
           },
           "time_rules": {
             "must_close_by": "15:50 America/Chicago",
@@ -1029,19 +1953,19 @@
             "notes": "Trading à partir de 17:00 CT (ouverture de l'actif). Positions et ordres fermés de 15:50 à 17:00 CT, pas d'overnight. GF/HE/LE fermés dès 13:05 CT ; grains (XC/XK/ZC/ZL/ZM/ZS/ZW) fermés de 07:45 à 08:30 puis de 13:20 à 17:00 CT. News autorisées."
           },
           "payout": {
-            "min_days": null,
-            "min_daily_profit": null,
+            "min_days": 5,
+            "min_daily_profit": 250,
             "min_cycle_profit": null,
             "min_cycle_profit_schedule": null,
             "split_pct": 0.5,
             "split_after": null,
             "split_by_profit": null,
             "min_amount": 100,
-            "max_amount": 5000,
+            "max_amount": null,
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": null,
-            "notes": "Le partage dépend du montant de CHAQUE retrait : 50 % sous 4000 $, 80 % à partir de 4000 $. Plafond LiveSim 5000 $ par retrait, minimum net 100 $, versements hebdomadaires (mercredi). Activation LiveSim 139 $ prélevée sur le premier retrait seulement. Pas de buffer, pas de consistency, pas de jours minimum."
+            "notes": "Le partage dépend du montant de CHAQUE retrait : 50 % sous 4000 $, 80 % à partir de 4000 $. Plafond LiveSim : 5000 $ retirés au total avant le passage automatique en compte Live (pas un plafond par retrait), minimum net 100 $, versements hebdomadaires (mercredi). Activation LiveSim 139 $ prélevée sur le premier retrait seulement. Pas de buffer, pas de consistency. Avant CHAQUE retrait : 5 nouveaux jours gagnants (non consécutifs) d’au moins 250 $ de gain net chacun, même sous le solde de départ ; les jours déjà comptés pour un retrait ne servent plus."
           }
         }
       ],
@@ -1066,7 +1990,7 @@
     },
     {
       "id": "earn2trade-gauntlet-200k",
-      "plan_name": "Gauntlet Mini",
+      "plan_name": "Gauntlet Mini (achat avant le 2026-11-02)",
       "account_size": 200000,
       "currency": "USD",
       "availability": "public",
@@ -1137,7 +2061,7 @@
                 "micros": 160
               }
             ],
-            "notes": "Progression Ladder : taille max selon le profit en cours (solde et profit en temps réel, auto-régulé par le trader) ; dépasser le palier fait échouer le compte immédiatement. Jusqu'à 10 micros comptent pour 1 contrat standard (micros = 10 par contrat, borne prudente). Même grille en évaluation, en LiveSim et en Live de même taille."
+            "notes": "Progression Ladder : taille max selon le profit en cours (solde et profit en temps réel, auto-régulé par le trader) ; dépasser le palier fait échouer le compte immédiatement. Jusqu'à 10 micros comptent pour 1 contrat standard (micros = 10 par contrat, borne prudente). Même grille en évaluation, en LiveSim et en Live de même taille. Grille réservée aux abonnements achetés avant le 2026-11-02 (ensuite : nombre fixe de contrats)."
           },
           "time_rules": {
             "must_close_by": "15:50 America/Chicago",
@@ -1202,7 +2126,7 @@
                 "micros": 160
               }
             ],
-            "notes": "Progression Ladder : taille max selon le profit en cours (solde et profit en temps réel, auto-régulé par le trader) ; dépasser le palier fait échouer le compte immédiatement. Jusqu'à 10 micros comptent pour 1 contrat standard (micros = 10 par contrat, borne prudente). Même grille en évaluation, en LiveSim et en Live de même taille."
+            "notes": "Progression Ladder : taille max selon le profit en cours (solde et profit en temps réel, auto-régulé par le trader) ; dépasser le palier fait échouer le compte immédiatement. Jusqu'à 10 micros comptent pour 1 contrat standard (micros = 10 par contrat, borne prudente). Même grille en évaluation, en LiveSim et en Live de même taille. Grille réservée aux abonnements achetés avant le 2026-11-02 (ensuite : nombre fixe de contrats)."
           },
           "time_rules": {
             "must_close_by": "15:50 America/Chicago",
@@ -1211,19 +2135,19 @@
             "notes": "Trading à partir de 17:00 CT (ouverture de l'actif). Positions et ordres fermés de 15:50 à 17:00 CT, pas d'overnight. GF/HE/LE fermés dès 13:05 CT ; grains (XC/XK/ZC/ZL/ZM/ZS/ZW) fermés de 07:45 à 08:30 puis de 13:20 à 17:00 CT. News autorisées."
           },
           "payout": {
-            "min_days": null,
-            "min_daily_profit": null,
+            "min_days": 5,
+            "min_daily_profit": 350,
             "min_cycle_profit": null,
             "min_cycle_profit_schedule": null,
             "split_pct": 0.5,
             "split_after": null,
             "split_by_profit": null,
             "min_amount": 100,
-            "max_amount": 5000,
+            "max_amount": null,
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": null,
-            "notes": "Le partage dépend du montant de CHAQUE retrait : 50 % sous 5000 $, 80 % à partir de 5000 $. Plafond LiveSim 5000 $ par retrait, minimum net 100 $, versements hebdomadaires (mercredi). Activation LiveSim 139 $ prélevée sur le premier retrait seulement. Pas de buffer, pas de consistency, pas de jours minimum."
+            "notes": "Le partage dépend du montant de CHAQUE retrait : 50 % sous 5000 $, 80 % à partir de 5000 $. Plafond LiveSim : 5000 $ retirés au total avant le passage automatique en compte Live (pas un plafond par retrait), minimum net 100 $, versements hebdomadaires (mercredi). Activation LiveSim 139 $ prélevée sur le premier retrait seulement. Pas de buffer, pas de consistency. Avant CHAQUE retrait : 5 nouveaux jours gagnants (non consécutifs) d’au moins 350 $ de gain net chacun, même sous le solde de départ ; les jours déjà comptés pour un retrait ne servent plus."
           }
         }
       ],

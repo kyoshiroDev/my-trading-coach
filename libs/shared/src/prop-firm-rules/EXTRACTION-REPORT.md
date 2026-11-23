@@ -583,3 +583,17 @@ Relecture complète des trois firms, sans navigateur, par les sources documenté
 | Bulenox | CMS Directus (qualification, master, funded, fast-track, momentum) et bundle `index-*.js` | Tous les tableaux identiques au catalogue (prix, objectifs, drawdowns, DLL, scaling, plafonds, réserves, objectifs de cycle). Le centre d'aide anglais confirme la consistency Master à 40 % par période de payout et le plafond « moins de 50 % du profit total » à partir du 4e payout, ainsi que les objectifs de cycle Momentum. | Réserves « à confirmer par le support » retirées ; 8 plans Qualification sortent de `needs_review`. Momentum reste en `needs_review` (gel du drawdown non publié) |
 
 Catalogue à 311 plans.
+
+## Veille du 2026-11-22 (suite) : Earn2Trade, Elite Trader Funding, Take Profit Trader (lot 2, #1218)
+
+Relecture complète des trois firms par les sources du README : help center Intercom et onglets des pages programme (Chrome, page publique) pour Earn2Trade ; JSON-LD des pages programme et page /payouts pour Elite ; API Zendesk et page d'accueil pour Take Profit Trader.
+
+| Firm | Source | Constat | Effet |
+|---|---|---|---|
+| Earn2Trade | Article 17779875 (2026-11-19), articles 5922873, 3292351, 5941958 (2026-11-10) | « Evaluations, LiveSims and Live accounts following subscriptions purchased after November 2, 2026 have a fixed maximum number of contracts » : 25K 2/20, 50K 4/40, 100K 8/80, 150K 12/120, 200K 15/150. La Progression Ladder ne vaut plus que pour les achats antérieurs. | Plans d'origine gardés (ids inchangés), renommés « achat avant le 2026-11-02 » ; 7 plans `earn2trade-*-nov02-*` ajoutés (contrats fixes, `scaling: false`), le reste copié. Pages programme (TCP 25/50/100K, Gauntlet 50/100/150/200K) : objectifs, drawdowns, DLL, prix identiques, contrats = la nouvelle grille |
+| Earn2Trade | Article 5452472 (2026-11-02) | « Traders must complete at least 5 profitable trading days before each withdrawal request », gain minimum TCP 100 / 150 / 200 $, Gauntlet 150 / 200 / 250 / 350 $. « LiveSim Max Withdrawal is the total you can withdraw from a LiveSim account before you are automatically moved to a Live account. It is not a limit on any single withdrawal. » L'article ne limite pas ces règles aux achats récents. | Les 14 plans : `min_days: 5`, `min_daily_profit` par taille, `max_amount` retiré (plafond LiveSim cumulé en note). Partage selon la taille du retrait (50 % / 80 %) déjà en note |
+| Earn2Trade | Articles 3395926, 3849975, 6877364, 8117088 | DLL 17:00-17:00 CT, consistency 30 % en évaluation seulement, LiveSim EOD / Live trailing / 200K-400K fixe, 3 comptes funded : conformes. | Aucun |
+| Elite Trader Funding | JSON-LD des 7 pages programme, /payouts | Tailles, drawdowns, objectifs, DLL, contrats et prix des 14 plans identiques. /payouts : « Per-cycle minimum $100 » ; 250 $ est le minimum LIVE ELITE. 250K 1-Step : contradiction connue (2026-10-18), inchangée. | `min_amount` du 1-Step 250 → 100 $ (la note disait déjà 100 $). `elitetraderfunding-static-25k` (seed démo) inchangé |
+| Take Profit Trader | API Zendesk (10 articles suivis, aucun modifié depuis le 2026-10-18), page d'accueil | Grille, drawdowns, consistency 50 %, 3 jours, buffers, split 80 %, prix 150 / 170 / 245 / 330 / 360 $, activation 130 $ : identiques. Parcours « Legacy / Classic / EOD / Intraday », « 5PM Rule », « Daily Profit Limit in PRO » et DLL soft / hard présents dans le code de la page d'accueil, non publiés (achat derrière connexion), à revérifier. | `verified_at` seul |
+
+Catalogue à 318 plans.
