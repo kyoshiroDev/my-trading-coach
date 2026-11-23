@@ -165,17 +165,19 @@
           <div class="card cmp-card" data-testid="debrief-news-window">
             <div class="card-header nw-header">
               <div class="card-title">Tes trades autour des annonces</div>
-              <span class="nw-sub">{{ nw.windowMinutes }} min avant ou après une annonce à fort impact</span>
+              <span class="nw-sub">Clôturés de {{ nw.windowMinutes }} min avant à {{ nw.windowMinutes }} min après une annonce à fort impact</span>
             </div>
             <div class="cmp">
-              @for (row of [{ label: 'Autour des annonces', b: nw.inside, id: 'inside' }, { label: 'Reste de la semaine', b: nw.outside, id: 'outside' }]; track row.id) {
-                <div class="cmp-row" [attr.data-testid]="'debrief-news-' + row.id">
+              @for (row of nw.rows; track row.key) {
+                <div class="cmp-row" [attr.data-testid]="'debrief-news-' + row.key">
                   <div class="cmp-name">{{ row.label }}</div>
                   <div class="cmp-stat"><span class="cmp-l">Trades</span>{{ row.b.count }}</div>
                   <div class="cmp-stat"><span class="cmp-l">Win rate</span>
                     @if (row.b.count) { <span class="b">{{ row.b.winRate | pct }}</span> } @else { <span class="muted">—</span> }
                   </div>
-                  <!-- Pas de P&L ici : la stat couvre tous les comptes, de devises parfois différentes (#947). -->
+                  <div class="cmp-stat"><span class="cmp-l">P&amp;L</span>
+                    @if (row.b.count) { <span [class.g]="row.b.pnl >= 0" [class.r]="row.b.pnl < 0">{{ row.b.pnl | pnlFormat : null : row.accountId }}</span> } @else { <span class="muted">—</span> }
+                  </div>
                 </div>
               }
             </div>

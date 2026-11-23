@@ -397,7 +397,9 @@ export async function seedTradingData(
         stats: {
           winRate: s.winRate, totalPnl: s.totalPnl, totalTrades: trades.length,
           // Bouclier annonces (#670) : la semaine du vendredi de l'exemple montre la stat.
-          ...(inExampleWeek ? { newsWindow: newsWindowStats(trades, newsExample.events, 5) } : {}),
+          ...(inExampleWeek
+            ? { newsWindow: newsWindowStats(trades.map((t) => ({ ...t, accountId: accountIdByKey.get(t.account) ?? null })), newsExample.events, 5) }
+            : {}),
         } as Prisma.InputJsonValue,
       },
     });

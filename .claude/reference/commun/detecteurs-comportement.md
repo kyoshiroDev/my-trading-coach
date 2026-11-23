@@ -93,11 +93,12 @@ Message factuel : « NFP dans 4 min, position ouverte sur NQ. » (libellé `name
 - Coupe-circuit **`NEWS_SHIELD_ENABLED`** (`true` seulement, absente = coupé) : allumé sur dev au merge,
   en prod par Greg après vérification sur dev.
 - Gating : alerte en séance gratuite ; stat du débrief Premium (avec le Weekly Debrief).
-- Débrief : `WeeklyDebrief.stats.newsWindow` (`debrief-news-window.ts`, pur, sans IA, hors prompt IA) :
-  trades dont `tradedAt` (clôture pour un trade synchronisé) tombe de X min avant à X min après une annonce
-  forte de leurs devises, contre le reste : nombre, P&L net, taux de réussite. Fenêtre du trader, défaut si
-  coupé. Absente si aucun trade clôturé ou en cas d'échec (le débrief se génère quand même). L'app masque le
-  bloc si absent ou sans trade dans une fenêtre, et **n'affiche pas le P&L** (tous comptes confondus,
-  devises parfois différentes, #947).
+- Débrief : `WeeklyDebrief.stats.newsWindow` (`debrief-news-window.ts`, pur, sans IA, hors prompt IA),
+  **par compte** (`{ windowMinutes, accounts: [{ accountId, inside, outside }] }`) : trades dont `tradedAt`
+  (clôture pour un trade synchronisé) tombe de X min avant à X min après une annonce forte de leurs
+  devises, contre le reste du compte : nombre, P&L net, taux de réussite. Fenêtre du trader, défaut si
+  coupé. Absente si aucun trade clôturé ou en cas d'échec (le débrief se génère quand même). L'app montre
+  deux lignes par compte ayant au moins un trade autour d'une annonce, P&L par `pnlFormat` avec
+  l'`accountId` (devise du compte, #947), et masque le bloc sinon.
 - Démo : trade NQ à 14:27 le vendredi précédent (3 min avant le NFP du faux vendredi), alerte D1 et stat
   dans le débrief de la semaine (`demo-data/news-shield-example.ts`).

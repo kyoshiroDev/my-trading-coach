@@ -319,7 +319,7 @@ export class DebriefService {
   /** Stat « Tes trades autour des annonces » (#670) : annonces fortes de la semaine, heure de Paris → UTC. */
   private async newsWindow(
     userId: string,
-    trades: { asset: string; tradedAt: Date; pnl: number | null; commission?: number | null }[],
+    trades: { asset: string; tradedAt: Date; pnl: number | null; commission?: number | null; accountId?: string | null }[],
     startDate: Date,
     endDate: Date,
   ): Promise<NewsWindowStats | null> {
@@ -334,7 +334,7 @@ export class DebriefService {
 
   private async computeNewsWindow(
     userId: string,
-    trades: { asset: string; tradedAt: Date; pnl: number | null; commission?: number | null }[],
+    trades: { asset: string; tradedAt: Date; pnl: number | null; commission?: number | null; accountId?: string | null }[],
     startDate: Date,
     endDate: Date,
   ): Promise<NewsWindowStats | null> {

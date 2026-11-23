@@ -228,7 +228,7 @@ describe('DebriefService', () => {
       it('annonce forte dans la semaine : stat écrite en création et en mise à jour, jamais envoyée à l’IA', async () => {
         prepare(null);
         await service.generate('user-123', Role.USER, true, REF);
-        const expected = { windowMinutes: 5, inside: { count: 1, pnl: 98, winRate: 100 }, outside: { count: 0, pnl: 0, winRate: 0 } };
+        const expected = { windowMinutes: 5, accounts: [{ accountId: null, inside: { count: 1, pnl: 98, winRate: 100 }, outside: { count: 0, pnl: 0, winRate: 0 } }] };
         expect(saved().create.stats['newsWindow']).toEqual(expected);
         expect(saved().update.stats['newsWindow']).toEqual(expected);
         expect((mockAiService.generateDebrief.mock.calls[0][0] as { stats: object }).stats).not.toHaveProperty('newsWindow');

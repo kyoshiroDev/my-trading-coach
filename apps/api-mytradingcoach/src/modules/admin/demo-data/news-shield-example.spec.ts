@@ -18,8 +18,9 @@ describe('démo : exemple du bouclier annonces (#670)', () => {
 
   it('la stat du débrief compte le trade dans la fenêtre, et ses comptes concordent avec le total', () => {
     const ex = newsShieldExample(NOW);
-    const s = newsWindowStats([ex.trade], ex.events, 5);
-    expect(s).toMatchObject({ inside: { count: 1, pnl: -164.5 }, outside: { count: 0 } });
-    expect(s!.inside.count + s!.outside.count).toBe(1);
+    const s = newsWindowStats([{ ...ex.trade, accountId: 'apex-id' }], ex.events, 5);
+    expect(s?.accounts).toEqual([{ accountId: 'apex-id', inside: { count: 1, pnl: -164.5, winRate: 0 }, outside: { count: 0, pnl: 0, winRate: 0 } }]);
+    const [a] = s!.accounts;
+    expect(a.inside.count + a.outside.count).toBe(1);
   });
 });

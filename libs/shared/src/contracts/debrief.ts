@@ -61,14 +61,22 @@ export interface DebriefNewsBucket {
   winRate: number;
 }
 
+/** Stat d'un compte : trades autour des annonces et reste du compte, P&L dans la devise du compte. */
+export interface DebriefNewsAccount {
+  /** null = trades sans compte. */
+  accountId: string | null;
+  inside: DebriefNewsBucket;
+  outside: DebriefNewsBucket;
+}
+
 /**
- * Stat « Tes trades autour des annonces » (#670) : trades entre X min avant et X min après une
- * annonce à fort impact de leurs devises, comparés au reste. Absente des anciens débriefs.
+ * Stat « Tes trades autour des annonces » (#670), par compte (#947) : trades clôturés entre X min
+ * avant et X min après une annonce à fort impact de leurs devises, comparés au reste. Absente des
+ * anciens débriefs.
  */
 export interface DebriefNewsWindow {
   windowMinutes: number;
-  inside: DebriefNewsBucket;
-  outside: DebriefNewsBucket;
+  accounts: DebriefNewsAccount[];
 }
 
 export interface WeeklyDebrief {

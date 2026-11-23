@@ -93,21 +93,34 @@ describe('DebriefComponent — onglets par compte', () => {
 
 describe('DebriefComponent — trades autour des annonces (#670)', () => {
   beforeEach(() => TestBed.resetTestingModule());
-  const nw = (inside: number) => ({
-    windowMinutes: 5, inside: { count: inside, pnl: -104, winRate: 33 }, outside: { count: 2, pnl: 78, winRate: 100 },
+  const acc = (accountId: string | null, inside: number) => ({
+    accountId, inside: { count: inside, pnl: -63, winRate: 50 }, outside: { count: 2, pnl: 78, winRate: 100 },
   });
 
-  it('stat présente avec au moins un trade autour d’une annonce : bloc affiché', () => {
+  it('deux lignes par compte ayant un trade autour d’une annonce, nom du compte, P&L dans sa devise', () => {
     const cmp = setup();
-    setDebrief(cmp, {}, { stats: { winRate: 0, totalPnl: 0, totalTrades: 5, newsWindow: nw(3) } });
-    expect(cmp.newsWindow()).toEqual(nw(3));
+    setDebrief(cmp, { overview: { summary: 's' }, accounts: [account('acc-apex', { name: 'Apex 50k' })] }, {
+      stats: { winRate: 0, totalPnl: 0, totalTrades: 6, newsWindow: { windowMinutes: 5, accounts: [acc('acc-apex', 2), acc('acc-perso', 0)] } },
+    });
+    const nw = cmp.newsWindow();
+    expect(nw.windowMinutes).toBe(5);
+    expect(nw.rows.map((r: { label: string; accountId: string }) => [r.label, r.accountId])).toEqual([
+      ['Apex 50k · autour des annonces', 'acc-apex'],
+      ['Apex 50k · reste de la semaine', 'acc-apex'],
+    ]);
   });
 
   it('ancien débrief sans la stat, ou aucun trade dans une fenêtre : bloc masqué (jamais « 0 »)', () => {
     const cmp = setup();
     setDebrief(cmp, {});
     expect(cmp.newsWindow()).toBeNull();
-    setDebrief(cmp, {}, { stats: { winRate: 0, totalPnl: 0, totalTrades: 2, newsWindow: nw(0) } });
+    setDebrief(cmp, {}, { stats: { winRate: 0, totalPnl: 0, totalTrades: 2, newsWindow: { windowMinutes: 5, accounts: [acc('a', 0)] } } });
     expect(cmp.newsWindow()).toBeNull();
+  });
+
+  it('trades sans compte : libellé « Sans compte »', () => {
+    const cmp = setup();
+    setDebrief(cmp, {}, { stats: { winRate: 0, totalPnl: 0, totalTrades: 3, newsWindow: { windowMinutes: 5, accounts: [acc(null, 1)] } } });
+    expect(cmp.newsWindow().rows[0].label).toBe('Sans compte · autour des annonces');
   });
 });
