@@ -597,3 +597,17 @@ Relecture complète des trois firms par les sources du README : help center Inte
 | Take Profit Trader | API Zendesk (10 articles suivis, aucun modifié depuis le 2026-10-18), page d'accueil | Grille, drawdowns, consistency 50 %, 3 jours, buffers, split 80 %, prix 150 / 170 / 245 / 330 / 360 $, activation 130 $ : identiques. Parcours « Legacy / Classic / EOD / Intraday », « 5PM Rule », « Daily Profit Limit in PRO » et DLL soft / hard présents dans le code de la page d'accueil, non publiés (achat derrière connexion), à revérifier. | `verified_at` seul |
 
 Catalogue à 318 plans.
+
+## Veille du 2026-11-22 (suite) : Apex, Lucid (lot 3, #1218)
+
+Apex relu en entier dans Chrome (sitemap du help center, sélecteur de la page d'accueil, /legacy-products/) : `verified_at` au 2026-11-22. Lucid : articles modifiés depuis le 2026-10-22 relus ; accueil relu en partie seulement (règles Pro / Flex / Daily 25K à 100K conformes, prix dépendant d'options dont l'état n'est pas lisible de façon fiable dans le carrousel, 150K / Direct / Maxx non relus) : `verified_at` de Lucid inchangé.
+
+| Firm | Source | Constat | Effet |
+|---|---|---|---|
+| Apex | scaling-levels-pa-explained (2026-11-16), consistency Legacy (2026-11-16), sélecteur d'accueil | Paliers de contrats et de DLL des PA, consistency Legacy 30 %, safety net, 8 jours dont 5 à 50 $ ; évaluations Intraday / EOD 25K à 150K (contrats, objectifs, drawdowns, DLL, prix 167 / 249 / 790 / 1 190 $ et 490 / 590 / 1 190 / 2 190 $) : identiques. | Aucun. Seed démo `apex-eod-50k` inchangé |
+| Apex | https://apextraderfunding.com/legacy-products/ | Règles Legacy identiques. Tarifs : WealthCharts et Rithmic 177 / 197 / 397 / 597 / 397 / 397 $, Tradovate 227 / 247 / 447 / 647 / 447 / 447 $ (25K à 300K), frais de PA 99 $ partout. 250K et 300K affichés moins chers que le 150K (promotion possible). | `apex-legacy-250k` 697 → 397 $, `-300k` 797 → 397 $, `activation_fee` 99 $ partout, notes |
+| Lucid | LucidDaily Customization (2026-11-18) | « Option 4 : Daily Loss Limit OFF + End-of-Day Evaluation + End-of-Day Funded Drawdown […] Choice of 30% or 40% Consistency ». 50 % impossible avec funded EOD. DLL activée + funded EOD : non montré. | 8 plans `lucid-daily-eod-funded-eod-*` (40 %) et `lucid-daily-c30-eod-funded-eod-*` (30 %) ajoutés, copiés de `lucid-daily-eod-*`, funded en `trailing_eod` ; blocage du MLL repris de l'évaluation EOD, à confirmer → `needs_review`, prix non publié. Notes des 32 plans LucidDaily : funded intraday par défaut, option EOD en plans dédiés ; plans DLL + éval EOD : funded EOD avec DLL non confirmé |
+| Lucid | LucidDaily Funded / Payouts / Drawdown (2026-11-16) | Tailles, MLL, contrats, buffers, profit journalier max, minimum 500 $, split 90 %, news USD rouges = hard breach : identiques. | Aucun |
+| Lucid | LucidPro Customization (2026-11-17), Other trading activities (2026-11-16) | Avec DLL : payouts à la demande, trading suspendu jusqu'à la fin de la séance après une demande en séance. Violation news → pas de payout à la demande pendant 30 jours (LucidDaily). | Notes seulement |
+
+Catalogue à 326 plans (lot 2 compris).
