@@ -255,7 +255,7 @@ Aucun plan en `needs_review`. Deux déductions à connaître :
 | **DLL qui dépasse le drawdown max** (Apex PA : 25K palier 3 = 1 250 $ pour un drawdown de 1 000 $, 50K palier 4 = 3 000 $ pour 2 000 $, 100K palier 5 = 3 500 $ pour 3 000 $) | `daily_loss_limit.tiers` | Le contrôle « DLL <= drawdown » ne porte que sur le montant de base. Côté calcul, la limite effective du jour est `min(DLL du palier, distance au seuil de drawdown)`. |
 | **LucidScale DLL** : au-delà de l'Initial Trail Balance, DLL = 60 % du plus haut profit EOD, sans plafond tabulé | `daily_loss_limit.scaling_rule` (texte) | Au prompt du seed, ajouter un champ structuré (`{ "kind": "pct_of_peak_eod_profit", "pct": 0.6, "after_balance": 52100 }`) pour pouvoir le calculer. |
 | **Blocage du trailing selon la plateforme** (évaluations Apex) | `max_drawdown.platform_overrides` | Le calcul doit lire la plateforme du compte (Tradovate pour MTC aujourd'hui). |
-| **Flex : MLL figé dès la 1re demande de payout**, même sous l'Initial Trail Balance | `basis_notes` (funded Flex) | Événement « payout demandé » à suivre côté MTC ; champ dédié possible (`locks_on_first_payout: true`). |
+| **Flex : MLL figé dès la 1re demande de payout**, même sous l'Initial Trail Balance | `basis_notes` (funded Flex) | Modélisé (#696) : `locks_on_first_payout: "request"` sur les phases funded Flex. |
 | **Profit journalier maximum LucidDaily** (6 000 à 12 000 $ selon taille) : l'atteindre fait passer le compte en live | `payout.notes` | Champ `max_daily_profit` si on veut l'afficher comme objectif. |
 | **Inactivité** (Apex PA : 2 jours à 50 $ net par période glissante de 30 jours) | `payout.notes` | Champ `inactivity` si on veut alerter avant la fermeture. |
 | **Règle news LucidDaily** : être flat de 1 min avant à 1 min après une news USD à fort impact, sinon hard breach | `time_rules.notes`, `news_trading_allowed: false` | Brancher sur le calendrier éco MTC (`eco-event-key.ts`) pour une alerte. |
@@ -662,3 +662,18 @@ Top One relu en entier (11 articles modifiés du 2026-10-26 au 2026-11-18, page 
 | Top One | Ignite, Instant, Elite Daily (prix), contrats max | Prix Elite Daily 178 / 218 / 398 / 549 $, Ignite 218 / 398 / 563 / 799 $, Instant 419 / 679 / 821 / 939 $ ; règles Ignite et Instant 2.0 identiques. | Aucun |
 
 Catalogue à 334 plans.
+
+## Gel du plancher au premier payout (#696, 2026-11-23)
+
+Champ `max_drawdown.locks_on_first_payout` ajouté et renseigné sur 92 phases, à partir des règles déjà lues (`basis_notes` et lectures datées de `veille/sources.json`), sans nouvelle lecture :
+
+| Firm | Phases | Déclencheur |
+|------|--------|-------------|
+| Lucid Trading | Flex funded (×16) | `request` |
+| Top One Futures | Elite Access Intraday (+ sans DLL) funded | `request` |
+| Top One Futures | Elite Daily, Elite Access (+ sans DLL), X-Ultra funded ; Instant, Ignite (+ sans DLL) direct | `payout` |
+| Tradeify | Growth, Select funded ; Lightning direct | `request` |
+| Tradeify | Select Flex 300K (v1 et actuel) | `approval` |
+| MyFundedFutures | Pro 50K / 100K / 150K | `approval` |
+
+Hors périmètre (règle laissée dans les notes) : Topstep, Funded Futures Family, TradeDay, MyFundedFutures Rapid, Tradeify Daily 300K, LucidPro / Daily / Direct, Top One X-Daily Spark.
