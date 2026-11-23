@@ -40,7 +40,7 @@ des payouts (`AccountsApi.listPayouts`) : « saisi » (supprimable, `ConfirmServ
 `addPayout` ; compte connecté : pas de saisie (l'API répondrait 409). `changed` → `store.load()` : solde,
 marge et cycle repartent du serveur. Note du cycle : `cycleSource === 'manual'` → « saisi dans la liste
 des payouts ». En spec (JIT), remplacer les signaux d'`input()` sur l'instance (`setInput` échoue).
-Gel du plancher au premier payout (#696, remplace la note `payouts-floor-lock-note` de #695) : entrée
+Gel du plancher au premier payout (#696, la note « pas encore pris en compte » de #695 est retirée) : entrée
 `floorLock` (= `metrics.drawdown.rule.locksOnFirstPayout`). Le premier payout connu (plus ancien payout
 détecté ou saisi, ou `lastPayoutAt` du compte, dates ≤ aujourd'hui) fige le plancher côté API
 (`firstPayoutDay`, `lockedBy: 'payout'`, `payoutLockedSince`). Note `payouts-floor-lock-note` dès que `floorLock` est renseigné, liste vide comprise, une phrase par
