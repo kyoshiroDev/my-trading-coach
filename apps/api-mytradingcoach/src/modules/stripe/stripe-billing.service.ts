@@ -115,7 +115,7 @@ export class StripeBillingService {
     // 1. Tenter le cache Redis
     const cached = await this.redis.get(billingCacheKey(userId)).catch(() => null);
     if (cached) {
-      this.logger.debug(`Cache hit billing status | user: ${userId}`);
+      this.logger.debug('Cache hit billing status');
       const parsed = JSON.parse(cached) as CachedStripeStatus;
       return {
         ...parsed,
@@ -232,7 +232,7 @@ export class StripeBillingService {
       if (!v.valid) throw new BadRequestException(`${v.message} Tu peux toujours passer Premium au prix normal.`);
       const partnerCost = partnerFirstYearCost(v, interval);
       if (referralCoupon && referralFirstYearCost(interval) <= partnerCost) {
-        this.logger.log(`Code ${v.code} non appliqué : parrainage plus avantageux | user: ${userId}`);
+        this.logger.log(`Code ${v.code} non appliqué : parrainage plus avantageux`);
       } else {
         partnerCode = v.code;
         partnerTerms = {
@@ -588,7 +588,7 @@ export class StripeBillingService {
       { idempotencyKey: `interval-${sub.id}-${target}-${extractId(sub.latest_invoice) ?? 'none'}` },
     );
     await this.redis.del(billingCacheKey(userId)).catch(() => undefined);
-    this.logger.log(`Intervalle changé | user: ${userId}, ${current} → ${target}${founder ? ' (fondateur)' : ''}`);
+    this.logger.log(`Intervalle changé | sub: ${sub.id}, ${current} → ${target}${founder ? ' (fondateur)' : ''}`);
     return { changed: true };
   }
 

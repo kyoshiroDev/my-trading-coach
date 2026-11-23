@@ -594,6 +594,15 @@ describe('checkout avec code partenaire', () => {
     expect(create.mock.calls[0][0].metadata.offer).toBe('premium');
     expect(create.mock.calls[0][0].discounts[0].coupon).not.toBe('cp_20');
   });
+
+  it('code non appliqué (parrainage plus avantageux) : journal sans identifiant d’utilisateur (#790)', async () => {
+    const spy = vi.spyOn(Logger.prototype, 'log').mockImplementation(() => undefined);
+    const { svc } = partnerBilling({ validation: { ...TRADER10, priceMonthlyEur: 48, priceAnnualEur: 480, durationMonths: 1 } });
+    await withPromo(svc);
+    const line = spy.mock.calls.map((c) => String(c[0])).find((t) => t.includes('non appliqué'));
+    spy.mockRestore();
+    expect(line).toBe('Code TRADER10 non appliqué : parrainage plus avantageux');
+  });
 });
 
 describe('webhooks code partenaire', () => {
