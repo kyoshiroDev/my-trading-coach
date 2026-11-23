@@ -80,6 +80,6 @@ Script `tools/scripts/ops/export-user-data.mjs` : périmètre en **liste blanche
 passe, jetons de réinitialisation / session / désinscription, jetons courtier chiffrés, `apiHosts`,
 adresse et clés de notification, identifiants et abonnements des autres comptes (parrainage :
 rôle à la place de l'autre partie). **Règle : nouvelle table reliée à un compte (`userId`,
-`accountId`, `connectionId`, `parrainId`, `filleulId`, `ambassadorId`, `referredUserId`, `winnerId`,
+`accountId`, `connectionId`, `sessionId`, `tradeId`, `drawId`, `parrainId`, `filleulId`, `ambassadorId`, `referredUserId`, `winnerId`,
 `validatedById`) ou nouvelle colonne d'une table exportée = la classer dans le script**, sinon
 `--check` échoue (code 1) et l'export est bloqué.

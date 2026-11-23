@@ -124,7 +124,7 @@ const EXCLUDED_TABLES = {
 };
 
 /** Colonnes qui relient une table à un compte : toute table qui en porte une doit être classée. */
-const LINK_COLUMNS = ['userId', 'accountId', 'connectionId', 'parrainId', 'filleulId', 'ambassadorId', 'referredUserId', 'winnerId', 'validatedById'];
+const LINK_COLUMNS = ['userId', 'accountId', 'connectionId', 'sessionId', 'tradeId', 'drawId', 'parrainId', 'filleulId', 'ambassadorId', 'referredUserId', 'winnerId', 'validatedById'];
 
 const SCALARS = new Set(['String', 'Int', 'Float', 'Boolean', 'DateTime', 'Json', 'Decimal', 'BigInt', 'Bytes']);
 
