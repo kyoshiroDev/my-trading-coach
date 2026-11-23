@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { Logger } from '@nestjs/common';
 import { Role } from '@prisma/client';
 import { FOUNDER_OFFER } from '@mtc/shared';
 import { FounderOfferService, RESERVATION_TTL_MS } from './founder-offer.service';
@@ -124,5 +125,35 @@ describe('FounderOfferService.refundFirstPayment — remboursement intégral, qu
     const lost = setup({ seat: { number: 7, status: 'LOST', takenAt: new Date('2026-10-15T12:00:00Z') } });
     expect(await lost.service.refundFirstPayment('u1', now)).toBeNull();
     expect(lost.prisma.founderSeat.update).not.toHaveBeenCalled();
+  });
+});
+
+/** #790 : journaux de facturation sans identifiant d'utilisateur, identifiant Stripe à la place. */
+describe('FounderOfferService.claimSeat — journal sans identifiant d’utilisateur (#790)', () => {
+  it('place prise : abonnement Stripe, pas l’utilisateur', async () => {
+    const USER = 'user_secret_790';
+    const spy = vi.spyOn(Logger.prototype, 'log').mockImplementation(() => undefined);
+    const tx = {
+      $executeRaw: vi.fn().mockResolvedValue(1),
+      $queryRaw: vi.fn().mockResolvedValue([]),
+      founderSeat: {
+        findUnique: vi.fn().mockResolvedValue(null),
+        count: vi.fn().mockResolvedValue(0),
+        aggregate: vi.fn().mockResolvedValue({ _max: { number: 6 } }),
+        create: vi.fn(async ({ data }) => ({ ...data })),
+      },
+      checkoutReservation: { findFirst: vi.fn().mockResolvedValue(null), count: vi.fn().mockResolvedValue(0), deleteMany: vi.fn().mockResolvedValue({ count: 0 }) },
+      founderOfferConfig: { findUnique: vi.fn().mockResolvedValue({ id: 1, notifiedMilestones: [] }), upsert: vi.fn() },
+    };
+    const prisma = { $transaction: vi.fn(async (fn: (t: typeof tx) => unknown) => fn(tx)) };
+    const redis = { client: { del: vi.fn().mockResolvedValue(1) } };
+    const seat = await new FounderOfferService(prisma as never, redis as never).claimSeat({
+      userId: USER, interval: 'month', stripeSubscriptionId: 'sub_790',
+    });
+    const lines = spy.mock.calls.map((c) => String(c[0]));
+    spy.mockRestore();
+    expect(seat).toMatchObject({ number: 7 });
+    expect(lines).toContain('Fondateur n° 7 | sub sub_790');
+    expect(lines.join('\n')).not.toContain(USER);
   });
 });
