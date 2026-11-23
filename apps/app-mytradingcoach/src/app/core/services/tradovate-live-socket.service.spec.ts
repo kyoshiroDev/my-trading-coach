@@ -37,7 +37,7 @@ function setup(activeSession = false) {
   const accounts = { load: vi.fn(), reloadSoon: vi.fn() };
   const tradovate = { load: vi.fn() };
   const session = { hasActiveSession: signal(activeSession), refreshLive: vi.fn(), refreshLiveSoon: vi.fn() };
-  const alerts = { handle: vi.fn(), handleTilt: vi.fn() };
+  const alerts = { handle: vi.fn(), handleTilt: vi.fn(), handleNews: vi.fn() };
   TestBed.configureTestingModule({
     providers: [
       { provide: PropAlertsService, useValue: alerts },
@@ -131,6 +131,14 @@ describe('TradovateLiveSocketService — temps réel Tradovate côté app', () =
     const e = { accountId: 'acc-1', accountLabel: 'Apex', signal: 'revenge', ref: 't', minutes: 1, moodStart: null };
     fake.sockets[0].emit('tilt:alert', e);
     expect(alerts.handleTilt).toHaveBeenCalledWith(e);
+  });
+
+  it('bouclier annonces (#670) poussé → relayé au service d’alertes', () => {
+    const { service, alerts } = setup();
+    service.connect();
+    const e = { id: 'n1', accountId: 'acc-1', type: 'D1_NEWS_WINDOW', message: 'NFP dans 4 min, position ouverte sur NQ.', context: {} };
+    fake.sockets[0].emit('news:alert', e);
+    expect(alerts.handleNews).toHaveBeenCalledWith(e);
   });
 
   it('position déjà importée qui a grandi (#956) : écrans rechargés, sans toast', () => {

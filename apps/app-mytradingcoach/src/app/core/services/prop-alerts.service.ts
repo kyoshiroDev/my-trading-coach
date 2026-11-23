@@ -39,6 +39,22 @@ export interface TiltAlertEvent {
 /** Un nudge reste assez longtemps pour être lu entre deux trades, sans bloquer. */
 export const TILT_TOAST_MS = 15_000;
 
+/**
+ * Événement `news:alert` (bouclier annonces, #670) : position ouverte, ou qui s'ouvre, moins de X min
+ * avant une annonce à fort impact. `message` est déjà factuel (« NFP dans 4 min, position ouverte
+ * sur NQ. »), écrit par le serveur.
+ */
+export interface NewsAlertEvent {
+  id: string;
+  accountId: string;
+  type: 'D1_NEWS_WINDOW';
+  message: string;
+  context: { slot?: string; minutesBefore?: number };
+}
+
+/** Le toast reste jusqu'à l'annonce : il disparaît seul après la fenêtre la plus longue (30 min). */
+export const NEWS_TOAST_MS = 60_000;
+
 const MOOD_LABEL: Partial<Record<NonNullable<TiltAlertEvent['moodStart']>, string>> = {
   TIRED: 'fatigué',
   STRESSED: 'stressé',
@@ -132,6 +148,13 @@ export class PropAlertsService {
     this.toast.warning(message, { duration: TILT_TOAST_MS });
     this.sound.play('tilt');
     this.show('MyTradingCoach · pause\u00a0?', message, `${e.accountId}:tilt:${e.signal}`);
+  }
+
+  /** Bouclier annonces (#670) : avertissement en séance + notification système. */
+  handleNews(e: NewsAlertEvent): void {
+    this.toast.warning(e.message, { duration: NEWS_TOAST_MS });
+    this.sound.play('warning');
+    this.show('MyTradingCoach · annonce à venir', e.message, `${e.accountId}:news:${e.context.slot ?? ''}`);
   }
 
   /** Demande l'autorisation des notifications système (sur un clic de l'utilisateur). */

@@ -18,6 +18,8 @@ export interface CompleteOnboardingDto {
   tradingSessions?: string[];
   tradesPerDayMin?: number;
   tradesPerDayMax?: number;
+  /** Bouclier annonces (#670) : minutes avant une annonce forte, 0 = coupé, null = défaut (5). */
+  newsShieldMinutes?: number | null;
   strategyDescription?: string;
 }
 
@@ -31,6 +33,8 @@ export interface UpdatePreferencesDto {
   tradingSessions?: string[];
   tradesPerDayMin?: number;
   tradesPerDayMax?: number;
+  /** Bouclier annonces (#670) : minutes avant une annonce forte, 0 = coupé, null = défaut (5). */
+  newsShieldMinutes?: number | null;
   strategyDescription?: string;
 }
 

@@ -96,6 +96,11 @@ export class DebriefComponent {
     () => this.insights()?.overview?.summary ?? this.debrief()?.aiSummary ?? this.insights()?.summary ?? '',
   );
   protected readonly emotionInsight = computed(() => this.insights()?.emotionInsight ?? '');
+  /** Bouclier annonces (#670) : absent des anciens débriefs ou sans trade dans une fenêtre → bloc masqué. */
+  protected readonly newsWindow = computed(() => {
+    const w = this.debrief()?.stats.newsWindow;
+    return w && w.inside.count > 0 ? w : null;
+  });
   protected readonly legacyStrengths = computed<DebriefItem[]>(() => this.insights()?.strengths ?? []);
   protected readonly legacyWeaknesses = computed<DebriefItem[]>(() => this.insights()?.weaknesses ?? []);
 

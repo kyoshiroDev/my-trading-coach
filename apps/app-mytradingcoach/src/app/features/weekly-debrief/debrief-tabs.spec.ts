@@ -90,3 +90,24 @@ describe('DebriefComponent — onglets par compte', () => {
     expect(cmp.overviewSummary()).toBe('résumé legacy');
   });
 });
+
+describe('DebriefComponent — trades autour des annonces (#670)', () => {
+  beforeEach(() => TestBed.resetTestingModule());
+  const nw = (inside: number) => ({
+    windowMinutes: 5, inside: { count: inside, pnl: -104, winRate: 33 }, outside: { count: 2, pnl: 78, winRate: 100 },
+  });
+
+  it('stat présente avec au moins un trade autour d’une annonce : bloc affiché', () => {
+    const cmp = setup();
+    setDebrief(cmp, {}, { stats: { winRate: 0, totalPnl: 0, totalTrades: 5, newsWindow: nw(3) } });
+    expect(cmp.newsWindow()).toEqual(nw(3));
+  });
+
+  it('ancien débrief sans la stat, ou aucun trade dans une fenêtre : bloc masqué (jamais « 0 »)', () => {
+    const cmp = setup();
+    setDebrief(cmp, {});
+    expect(cmp.newsWindow()).toBeNull();
+    setDebrief(cmp, {}, { stats: { winRate: 0, totalPnl: 0, totalTrades: 2, newsWindow: nw(0) } });
+    expect(cmp.newsWindow()).toBeNull();
+  });
+});
