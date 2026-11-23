@@ -27,9 +27,10 @@
   (`.wrap` = conteneur 1100 px). Exception tolérée : valeurs uniques de dessin dans `components/mockup/`
   (positions, largeurs de barres). Survol : `:hover` en CSS, jamais `onmouseover`.
 - **Emojis** (#1092) : landing, toutes pages en ligne : pas d'emoji hors footer, icônes en SVG
-  (exceptions : 🔥 du bandeau d'offre, ligne de confiance 🇫🇷). `/accueil` (302 + noindex + hors
-  sitemap, décision du 2026-11-08) garde ses emojis tant qu'elle n'est pas remise en ligne : sa remise
-  en ligne ou sa refonte commence par les remplacer par des SVG.
+  (exceptions : 🔥 du bandeau d'offre, mention de confiance 🇫🇷, y compris la meta description par
+  défaut de Base.astro). `/accueil` (302 + noindex + hors sitemap, décision du 2026-11-08) garde
+  ses emojis tant qu'elle n'est pas remise en ligne : sa remise en ligne ou sa refonte commence par
+  les remplacer par des SVG.
 - Aucun composant orphelin : un composant non rendu est branché ou supprimé.
 - **Hero + « Ta prop firm, en direct »** (`PropFirmLive.astro`, audit du 2026-10-06) : la home vise
   d'abord le prop trader futures (Tradovate / NinjaTrader). Le sélecteur firm → plan → phase lit le
