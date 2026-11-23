@@ -41,4 +41,8 @@
 }
 .legal-box-title { font-weight: 600; margin: 0 0 8px; }
 .legal-box.warning .legal-box-title { color: var(--yel); font-weight: 700; font-size: 1rem; margin: 0 0 6px; }
+.legal-box-icon {
+  display: inline-block; vertical-align: -0.2em; margin-right: 8px;
+  fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+}
 .legal-box-text { font-size: 0.9rem; margin: 0; }
