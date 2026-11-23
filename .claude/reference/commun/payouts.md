@@ -43,7 +43,7 @@ des payouts ». En spec (JIT), remplacer les signaux d'`input()` sur l'instance 
 Gel du plancher au premier payout (#696, remplace la note `payouts-floor-lock-note` de #695) : entrée
 `floorLock` (= `metrics.drawdown.rule.locksOnFirstPayout`). Le premier payout connu (plus ancien payout
 détecté ou saisi, ou `lastPayoutAt` du compte, dates ≤ aujourd'hui) fige le plancher côté API
-(`firstPayoutDay`, `lockedBy: 'payout'`, `payoutLockedSince`). `floorLock === 'request'` → note
-`payouts-floor-lock-request` : la firm fige dès la demande, donc tant que le payout n'apparaît pas,
-le plancher réel peut être plus haut que l'estimation. Texte du formulaire : plus de « Le plancher ne
+(`firstPayoutDay`, `lockedBy: 'payout'`, `payoutLockedSince`). Note `payouts-floor-lock-note` dès que `floorLock` est renseigné, liste vide comprise, une phrase par
+déclencheur (demande, approbation, premier payout) : la firm fige avant que le payout reçu apparaisse
+dans MTC, donc le plancher réel peut déjà être plus haut que l'estimation. Texte du formulaire : plus de « Le plancher ne
 bouge pas » ; avec `floorLock`, phrase sur le gel à la date du premier payout enregistré.

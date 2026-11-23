@@ -52,29 +52,39 @@ const type = (input: HTMLInputElement, value: string) => {
 describe('AccountPayoutsComponent (payouts d\'un compte funded)', () => {
   beforeEach(() => TestBed.resetTestingModule());
 
-  it('gel au premier payout modélisé (#696) : plus de note « pas encore pris en compte »', () => {
+  it('plan sans gel au premier payout : aucune note de gel', () => {
     const { q } = setup();
     expect(q('payouts-floor-lock-note')).toBeNull();
-    expect(q('payouts-floor-lock-request')).toBeNull();
   });
 
-  it('plan gelé dès la demande de payout : note sur le retard possible de l’estimation', () => {
+  const lockNote = (q: (id: string) => HTMLElement | null) => q('payouts-floor-lock-note')!.textContent!.replace(/[ \n]+/g, ' ').trim();
+
+  it('gel à la demande : note sur le retard possible de l’estimation', () => {
     const { q } = setup({ floorLock: 'request' });
-    expect(q('payouts-floor-lock-request')!.textContent!.replace(/[ \n]+/g, ' ').trim()).toBe(
+    expect(lockNote(q)).toBe(
       'Ta firm fige le plancher dès ta demande de payout\u00a0: tant que le payout n\'apparaît pas ici, ton plancher réel peut déjà être plus haut que l\'estimation.',
     );
-    expect(q('payouts-floor-lock-request')!.className).toBe('ap-note');
+    expect(q('payouts-floor-lock-note')!.className).toBe('ap-note');
   });
 
-  it('gel au payout approuvé : pas de note de retard', () => {
+  it('gel au payout approuvé : note adaptée', () => {
     const { q } = setup({ floorLock: 'approval' });
-    expect(q('payouts-floor-lock-request')).toBeNull();
+    expect(lockNote(q)).toBe(
+      'Ta firm fige le plancher dès que ton payout est approuvé\u00a0: tant qu\'il n\'apparaît pas ici, ton plancher réel peut déjà être plus haut que l\'estimation.',
+    );
   });
 
-  it('gel à la demande, aucun payout encore enregistré : note de retard aussi', () => {
+  it('gel au premier payout (non précisé) : note adaptée', () => {
+    const { q } = setup({ floorLock: 'payout' });
+    expect(lockNote(q)).toBe(
+      'Ta firm fige le plancher dès ton premier payout\u00a0: tant qu\'il n\'apparaît pas ici, ton plancher réel peut déjà être plus haut que l\'estimation.',
+    );
+  });
+
+  it('aucun payout encore enregistré : note de gel aussi', () => {
     const { q } = setup({ list: [], floorLock: 'request' });
     expect(q('payouts-empty')).not.toBeNull();
-    expect(q('payouts-floor-lock-request')).not.toBeNull();
+    expect(q('payouts-floor-lock-note')).not.toBeNull();
   });
 
   it('texte du formulaire : gel au premier payout seulement si le plan le prévoit', () => {

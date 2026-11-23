@@ -23,8 +23,16 @@
     } @else {
       <p class="ap-note" data-testid="payouts-empty">Aucun payout enregistré.</p>
     }
-    @if (floorLock() === 'request') {
-      <p class="ap-note" data-testid="payouts-floor-lock-request">Ta firm fige le plancher dès ta demande de payout&nbsp;: tant que le payout n'apparaît pas ici, ton plancher réel peut déjà être plus haut que l'estimation.</p>
+    @switch (floorLock()) {
+      @case ('request') {
+        <p class="ap-note" data-testid="payouts-floor-lock-note">Ta firm fige le plancher dès ta demande de payout&nbsp;: tant que le payout n'apparaît pas ici, ton plancher réel peut déjà être plus haut que l'estimation.</p>
+      }
+      @case ('approval') {
+        <p class="ap-note" data-testid="payouts-floor-lock-note">Ta firm fige le plancher dès que ton payout est approuvé&nbsp;: tant qu'il n'apparaît pas ici, ton plancher réel peut déjà être plus haut que l'estimation.</p>
+      }
+      @case ('payout') {
+        <p class="ap-note" data-testid="payouts-floor-lock-note">Ta firm fige le plancher dès ton premier payout&nbsp;: tant qu'il n'apparaît pas ici, ton plancher réel peut déjà être plus haut que l'estimation.</p>
+      }
     }
   }
 
