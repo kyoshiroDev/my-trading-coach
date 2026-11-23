@@ -255,7 +255,7 @@ Aucun plan en `needs_review`. Deux déductions à connaître :
 | **DLL qui dépasse le drawdown max** (Apex PA : 25K palier 3 = 1 250 $ pour un drawdown de 1 000 $, 50K palier 4 = 3 000 $ pour 2 000 $, 100K palier 5 = 3 500 $ pour 3 000 $) | `daily_loss_limit.tiers` | Le contrôle « DLL <= drawdown » ne porte que sur le montant de base. Côté calcul, la limite effective du jour est `min(DLL du palier, distance au seuil de drawdown)`. |
 | **LucidScale DLL** : au-delà de l'Initial Trail Balance, DLL = 60 % du plus haut profit EOD, sans plafond tabulé | `daily_loss_limit.scaling_rule` (texte) | Au prompt du seed, ajouter un champ structuré (`{ "kind": "pct_of_peak_eod_profit", "pct": 0.6, "after_balance": 52100 }`) pour pouvoir le calculer. |
 | **Blocage du trailing selon la plateforme** (évaluations Apex) | `max_drawdown.platform_overrides` | Le calcul doit lire la plateforme du compte (Tradovate pour MTC aujourd'hui). |
-| **Flex : MLL figé dès la 1re demande de payout**, même sous l'Initial Trail Balance | `basis_notes` (funded Flex) | Événement « payout demandé » à suivre côté MTC ; champ dédié possible (`locks_on_first_payout: true`). |
+| **Flex : MLL figé dès la 1re demande de payout**, même sous l'Initial Trail Balance | `basis_notes` (funded Flex) | Modélisé (#696) : `locks_on_first_payout: "request"` sur les phases funded Flex. |
 | **Profit journalier maximum LucidDaily** (6 000 à 12 000 $ selon taille) : l'atteindre fait passer le compte en live | `payout.notes` | Champ `max_daily_profit` si on veut l'afficher comme objectif. |
 | **Inactivité** (Apex PA : 2 jours à 50 $ net par période glissante de 30 jours) | `payout.notes` | Champ `inactivity` si on veut alerter avant la fermeture. |
 | **Règle news LucidDaily** : être flat de 1 min avant à 1 min après une news USD à fort impact, sinon hard breach | `time_rules.notes`, `news_trading_allowed: false` | Brancher sur le calendrier éco MTC (`eco-event-key.ts`) pour une alerte. |
@@ -571,3 +571,121 @@ Pages lues dans Chrome le 2026-11-02. La source de chaque modification est aussi
 | Lucid | https://lucidtrading.com/ | 150K Pro avec DLL à 365 $ ; prix différent sans DLL. | Prix du seul `lucid-pro-dll-150k`. `verified_at` inchangé : relecture partielle |
 
 Catalogue à 311 plans. Restent à vérifier : Bulenox Funded, Lucid (63 plans), Apex (28 articles), Tradeify (7 articles sur 13), Phidias.
+
+## Veille du 2026-11-22 : Phidias, OneUp Trader, Bulenox (lot 1, #1218)
+
+Relecture complète des trois firms, sans navigateur, par les sources documentées dans le README : script `shared-scripts-3.js` (version EN, USD) et API du centre d'aide pour Phidias ; Help Scout (désormais `help.oneuptrader.com`, redirection 301) et tableau de la page d'accueil pour OneUp ; CMS Directus et bundle `index-*.js` pour Bulenox. Les 49 plans ont été comparés champ par champ ; `verified_at` passe au 2026-11-22 pour les trois firms.
+
+| Firm | Source | Constat | Effet |
+|---|---|---|---|
+| Phidias | `shared-scripts-3.js` (DATA) et articles 3, 4, 6, 9, 10, 17, 19, 20, Premium | Drawdowns, objectifs, jours, contrats, planchers, seuils de retrait, PnL quotidien minimum, frais d'activation (83 / 149 / 149 / 169 $) : identiques pour les 10 plans. Prix en paiement unique du script identiques au catalogue (Premium 150K 550 $, Fundamental 150K 437 $) ; la page affiche 1 123 $ et 863 $ « without code », non repris faute d'accord avec le script. Bascule en live : 5 payouts / 100 000 $ (article 6). « 10K Drawdown Challenge » toujours présent, toujours exclu (concours). | Aucune valeur modifiée |
+| OneUp Trader | Page d'accueil et articles 371, 372, 376, 385, 386, 388, 389, 390, 391 | Tailles, objectifs, drawdowns, contrats, jours minimum, prix Evaluation et Pro : identiques. Article 376 (modifié le 2026-11-05) : un retrait gratuit par semaine calendaire, chaque retrait suivant coûte 10 % de la part du trader (« Priority Withdrawal »). Express toujours sans prix publié. | Notes de payout des 15 plans complétées |
+| Bulenox | CMS Directus (qualification, master, funded, fast-track, momentum) et bundle `index-*.js` | Tous les tableaux identiques au catalogue (prix, objectifs, drawdowns, DLL, scaling, plafonds, réserves, objectifs de cycle). Le centre d'aide anglais confirme la consistency Master à 40 % par période de payout et le plafond « moins de 50 % du profit total » à partir du 4e payout, ainsi que les objectifs de cycle Momentum. | Réserves « à confirmer par le support » retirées ; 8 plans Qualification sortent de `needs_review`. Momentum reste en `needs_review` (gel du drawdown non publié) |
+
+Catalogue à 311 plans.
+
+## Veille du 2026-11-22 (suite) : Earn2Trade, Elite Trader Funding, Take Profit Trader (lot 2, #1218)
+
+Relecture complète des trois firms par les sources du README : help center Intercom et onglets des pages programme (Chrome, page publique) pour Earn2Trade ; JSON-LD des pages programme et page /payouts pour Elite ; API Zendesk et page d'accueil pour Take Profit Trader.
+
+| Firm | Source | Constat | Effet |
+|---|---|---|---|
+| Earn2Trade | Article 17779875 (2026-11-19), articles 5922873, 3292351, 5941958 (2026-11-10) | « Evaluations, LiveSims and Live accounts following subscriptions purchased after November 2, 2026 have a fixed maximum number of contracts » : 25K 2/20, 50K 4/40, 100K 8/80, 150K 12/120, 200K 15/150. La Progression Ladder ne vaut plus que pour les achats antérieurs. | Plans d'origine gardés (ids inchangés), renommés « Trader Career Path / Gauntlet Mini (achat avant le 02/11/2026) » ; 7 plans `earn2trade-*-nov02-*` ajoutés sous le nom simple (contrats fixes, `scaling: false`), le reste copié. Pages programme (TCP 25/50/100K, Gauntlet 50/100/150/200K) : objectifs, drawdowns, DLL, prix identiques, contrats = la nouvelle grille |
+| Earn2Trade | Article 5452472 (2026-11-02) | « Traders must complete at least 5 profitable trading days before each withdrawal request », gain minimum TCP 100 / 150 / 200 $, Gauntlet 150 / 200 / 250 / 350 $. « LiveSim Max Withdrawal is the total you can withdraw from a LiveSim account before you are automatically moved to a Live account. It is not a limit on any single withdrawal. » L'article ne limite pas ces règles aux achats récents. | Les 14 plans : `min_days: 5`, `min_daily_profit` par taille, `max_amount` retiré (plafond LiveSim cumulé en note). Partage selon la taille du retrait (50 % / 80 %) déjà en note |
+| Earn2Trade | Articles 3395926, 3849975, 6877364, 8117088 | DLL 17:00-17:00 CT, consistency 30 % en évaluation seulement, LiveSim EOD / Live trailing / 200K-400K fixe, 3 comptes funded : conformes. | Aucun |
+| Elite Trader Funding | JSON-LD des 7 pages programme, /payouts | Tailles, drawdowns, objectifs, DLL, contrats et prix des 14 plans identiques. /payouts : « Per-cycle minimum $100 » ; 250 $ est le minimum LIVE ELITE. 250K 1-Step : contradiction connue (2026-10-18), inchangée. | `min_amount` du 1-Step 250 → 100 $ (la note disait déjà 100 $). `elitetraderfunding-static-25k` (seed démo) inchangé |
+| Take Profit Trader | API Zendesk (10 articles suivis, aucun modifié depuis le 2026-10-18), page d'accueil | Grille, drawdowns, consistency 50 %, 3 jours, buffers, split 80 %, prix 150 / 170 / 245 / 330 / 360 $, activation 130 $ : identiques. Parcours « Legacy / Classic / EOD / Intraday », « 5PM Rule », « Daily Profit Limit in PRO » et DLL soft / hard présents dans le code de la page d'accueil, non publiés (achat derrière connexion), à revérifier. | `verified_at` seul |
+
+Catalogue à 318 plans.
+
+## Veille du 2026-11-22 (suite) : Apex, Lucid (lot 3, #1218)
+
+Apex relu en entier dans Chrome (sitemap du help center, sélecteur de la page d'accueil, /legacy-products/) : `verified_at` au 2026-11-22. Lucid : articles modifiés depuis le 2026-10-22 relus ; accueil relu en partie seulement (règles Pro / Flex / Daily 25K à 100K conformes, prix dépendant d'options dont l'état n'est pas lisible de façon fiable dans le carrousel, 150K / Direct / Maxx non relus) : `verified_at` de Lucid inchangé.
+
+| Firm | Source | Constat | Effet |
+|---|---|---|---|
+| Apex | scaling-levels-pa-explained (2026-11-16), consistency Legacy (2026-11-16), sélecteur d'accueil | Paliers de contrats et de DLL des PA, consistency Legacy 30 %, safety net, 8 jours dont 5 à 50 $ ; évaluations Intraday / EOD 25K à 150K (contrats, objectifs, drawdowns, DLL, prix 167 / 249 / 790 / 1 190 $ et 490 / 590 / 1 190 / 2 190 $) : identiques. | Aucun. Seed démo `apex-eod-50k` inchangé |
+| Apex | https://apextraderfunding.com/legacy-products/ | Règles Legacy identiques. Tarifs : WealthCharts et Rithmic 177 / 197 / 397 / 597 / 397 / 397 $, Tradovate 227 / 247 / 447 / 647 / 447 / 447 $ (25K à 300K), frais de PA 99 $ partout. 250K et 300K affichés moins chers que le 150K (promotion possible). | `apex-legacy-250k` 697 → 397 $, `-300k` 797 → 397 $, `activation_fee` 99 $ partout, notes |
+| Lucid | LucidDaily Customization (2026-11-18) | « Option 4 : Daily Loss Limit OFF + End-of-Day Evaluation + End-of-Day Funded Drawdown […] Choice of 30% or 40% Consistency ». 50 % impossible avec funded EOD. DLL activée + funded EOD : non montré. | 8 plans `lucid-daily-eod-funded-eod-*` (40 %) et `lucid-daily-c30-eod-funded-eod-*` (30 %) ajoutés, copiés de `lucid-daily-eod-*`, funded en `trailing_eod` ; blocage du MLL repris de l'évaluation EOD, à confirmer → `needs_review`, prix non publié. Notes des 32 plans LucidDaily : funded intraday par défaut, option EOD en plans dédiés ; plans DLL + éval EOD : funded EOD avec DLL non confirmé |
+| Lucid | LucidDaily Funded / Payouts / Drawdown (2026-11-16) | Tailles, MLL, contrats, buffers, profit journalier max, minimum 500 $, split 90 %, news USD rouges = hard breach : identiques. | Aucun |
+| Lucid | LucidPro Customization (2026-11-17), Other trading activities (2026-11-16) | Avec DLL : payouts à la demande, trading suspendu jusqu'à la fin de la séance après une demande en séance. Violation news → pas de payout à la demande pendant 30 jours (LucidDaily). | Notes seulement |
+
+Catalogue à 326 plans (lot 2 compris).
+
+## Veille du 2026-11-23 : MyFundedFutures, Tradeify (lot 4, #1218)
+
+Relecture complète des deux firms dans Chrome (pages des plans MyFundedFutures, help center Intercom Tradeify, dateModified) : `verified_at` au 2026-11-23. Aucun drawdown, objectif ni perte max du jour ne change.
+
+| Firm | Source | Constat | Effet |
+|---|---|---|---|
+| MyFundedFutures | Pages /plans/rapid, /rapid-eod, /pro, /builder ; articles d'aide (le Pro remanié modifié le 2026-11-19) | Rapid, Pro, Builder : contrats, objectifs, drawdowns, prix identiques. Rapid EOD : règles identiques, prix 25K 162 $ et 50K 275 $ (hors promotion). Variante « Pro 50k - One Day » toujours non couverte. | `price.amount` Rapid EOD 25K 145 → 162 $, 50K 225 → 275 $ |
+| Tradeify | Tradeify Pricing Reference (2026-11-22), Select Evaluation Accounts (2026-11-22) | Nouvelle option Select consistency 30 % (« Choose your consistency option (40% or 30%) ») : évaluation moins chère (99 / 145 / 229 / 319 $, resets 69 / 105 / 164 / 225 $), au moins 4 jours, mêmes règles funded ; pas pour le 300K. Select 50K 165 → 174 $, option 50 % 50K 205 → 216 $. | 8 plans `tradeify-select-{flex,daily}-c30-{25,50,100,150}k` ajoutés (copie des plans standard, consistency 0,3, 4 jours) ; prix 50K |
+| Tradeify | Select Flex and Select Daily Payout Policies (2026-11-04) | « Select accounts with the 50% Consistency add-on have lower Select Flex payout caps » : 50K 2 000, 100K 3 000, 150K 4 000 $ (Daily inchangé, 25K non cité), sans condition de date d'achat. | `max_amount` flex-c50 50/100/150K 2 500 / 3 500 / 4 500 → 2 000 / 3 000 / 4 000 $ ; option 30 % : plafonds standard (aucun plafond propre publié) |
+| Tradeify | 300k Select Account - Permanent Plan (17845238 ; l'ancien article 16497699 n'existe plus) | Plus une édition limitée : plan permanent, 570 $, 5 achats 300K max par 30 jours glissants, 3 funded 300K max comptés dans les 5 funded. Règles identiques. | 300K : prix 349 → 570 $, notes, source remplacée |
+
+Seed démo `tradeify-select-flex-50k` : seul son prix change (174 $), le seed ne recopie pas le prix. Catalogue à 334 plans (lots 2 et 3 compris).
+
+## Veille du 2026-11-23 (suite) : Topstep, TradeDay, UProfit (lot 5a, #1218)
+
+Lot 5 découpé en trois PR (5a Topstep / TradeDay / UProfit, 5b BluSky / Top One, 5c FFF ; découpage dans le prompt). Relecture complète des trois firms : `verified_at` au 2026-11-23. Aucun drawdown, objectif ni perte max du jour ne change.
+
+| Firm | Source | Constat | Effet |
+|---|---|---|---|
+| Topstep | 7 articles modifiés (Trading Combine, MLL, consistency, XFA, payout, prix, horaires) | Objectifs, MLL, consistency 55 %, contrats, DLL optionnelle, XFA Standard / Consistency, plafonds de payout (doublés avec DLL), prix et horaires : identiques aux 12 plans. L'article MLL décrit aussi un « Static Trading Combine » (Topstep Labs / produits limités, 25K à 150K), pages non lues. | `verified_at` seul ; Static Combine suivi dans #1238 |
+| TradeDay | Page d'accueil #pricing (TradeDay 2.0, lancé le 2026-05-29), article objectifs (2026-11-12) | « No subscriptions » : paiement unique. Quick Pay intraday 99 / 124 / 248 / 398 $, Quick Pay EOD (funded intraday) 124 / 174 / 298 / 440 $, Fast Pass EOD 173 / 248 / 498 / 725 $ (prix lus dans le HTML ; l'onglet ne bascule pas dans le navigateur) ; promotion SALE60 en cours. Règles (objectifs, drawdowns, contrats, consistency 30 / 45 %, jours, funded) identiques. | 12 plans : `billing` monthly → one_time, nouveaux prix |
+| UProfit | 21 pages d'aide, page DAY 2.0 | « Contenu modifié » = bandeau « DAY 2.0 — choose Day Soft or Day Flex » et menu ; articles datés du 2026-08-03 au 2026-10-08, valeurs identiques. « Day Soft / Day Flex » = gammes Soft / Flex du catalogue (renommage commercial). | `verified_at` seul |
+
+Catalogue à 334 plans (lots 2 à 4 compris).
+
+## Veille du 2026-11-23 (suite) : BluSky (lot 5b, #1218)
+
+Top One passe dans sa propre PR (5b-bis), avant FFF (5c). BluSky relu en entier (10 articles modifiés les 19-20/11, sélecteur de blusky.pro dans Chrome) : `verified_at` au 2026-11-23. Aucun drawdown ni perte max du jour ne change.
+
+| Firm | Source | Constat | Effet |
+|---|---|---|---|
+| BluSky | Evaluation Rules, Understanding the Consistency Rule, articles Launch et Propel (2026-11-19/20) | « 55% Consistency Rule in Launch and Propel … Evaluations (34% in the Buffer) », 21 % dans la Buffer du 300K. Le doute du 2026-11-02 (50 % / 55 % sur Launch) est levé. | `evaluation.consistency` 0,5 (Launch) / 0,34 (Propel 25K-200K) / 0,21 (Propel 300K) → 0,55 sur les 9 plans ; Buffer Zone inchangée en note ; Launch 50/100/200K sortent de `needs_review` |
+| BluSky | Article Propel (2026-11-20), sélecteur de blusky.pro | Propel 25K : 4 minis / 40 micros en évaluation. | `max_contracts` d'évaluation 2/20 → 4/40, sort de `needs_review` |
+| BluSky | Buffer Stage, Sim Funded, Orbit, Instant / Direct to Funded, Resets ; sélecteur | Buffer Zone, Sim Funded (soldes, minimum 100 $, payout 500 $, plafonds 7 jours), Orbit, Instant, Direct, resets et prix (Launch 59 / 69 / 79 $ + frais, Propel 150 à 320 $, Orbit 199 à 419 $, Instant 599 $, Direct 749 $) : identiques. | Aucun |
+
+## Veille du 2026-11-23 (suite) : Top One (lot 5b-bis, #1218)
+
+Top One relu en entier (11 articles modifiés du 2026-10-26 au 2026-11-18, page d'accueil et page LaunchPad dans Chrome, bascules des cartes Elite ACCESS) : `verified_at` au 2026-11-23.
+
+| Firm | Source | Constat | Effet |
+|---|---|---|---|
+| Top One | Elite Daily V2 Overview, DLL évaluation et funded (2026-11-17), page d'accueil | Elite Daily V2 150K : perte journalière 1 750 $ en évaluation et en funded (articles et accueil concordants ; le 2026-11-02, 1 850 $ avait été gardé faute d'accord entre sources). Autres règles identiques. | `daily_loss_limit` 150K 1 850 → 1 750 $ (éval + funded) |
+| Top One | Elite ACCESS DLL et Access Intraday DLL (2026-11-17), Daily drawdown, accueil | La carte de l'accueil affiche 1 850 $ de perte journalière funded en 150K, les trois articles 1 750 $. | 1 750 $ gardé (les articles font foi), écart noté sur `elite-access-150k` et `elite-access-intraday-150k` |
+| Top One | No Daily Loss Limit Add-On (2026-11-17), accueil | « available on Elite ACCESS accounts only » ; aucune bascule sans DLL sur Elite Daily ni Ignite à l'accueil. | 8 plans `elite-daily-nodll-*` et `ignite-nodll-*` → `discontinued` |
+| Top One | Elite ACCESS Intraday Activation Fees (2026-11-18), bascules de l'accueil | Activation hors promo : Intraday 90 / 123 / 168 / 233 $, Intraday sans DLL 144 / 196 / 269 / 373 $, EOD sans DLL 222 / 302 / 414 / 574 $ (les attributs de la page portent le prix promo, le prix plein est le prix barré). EOD standard 139 / 189 / 259 / 359 $ inchangé. | `activation_fee` de 12 plans Elite ACCESS |
+| Top One | /launchpad (404) → /launchpad-8 | « Sold out · all 1,500 X-DAILY SPARK accounts are gone », LP-03 fermé. | `toponefutures-x-daily-spark-50k` → `discontinued`, source remplacée |
+| Top One | Daily drawdown, No DLL add-on | « Elite ACCESS Static » cité (DLL funded 500 / 1 000 / 1 250 / 1 750 $), non lu. | Non ajouté, suivi dans #1241 |
+| Top One | Ignite, Instant, Elite Daily (prix), contrats max | Prix Elite Daily 178 / 218 / 398 / 549 $, Ignite 218 / 398 / 563 / 799 $, Instant 419 / 679 / 821 / 939 $ ; règles Ignite et Instant 2.0 identiques. | Aucun |
+
+Catalogue à 334 plans.
+
+## Veille du 2026-11-23 (suite) : Funded Futures Family (lot 5c, #1218)
+
+FFF relu en entier (33 articles Intercom, la plupart modifiés le 2026-11-10, Straight to Funded le 2026-11-20 ; accueil et page « plan update ») : `verified_at` au 2026-11-23.
+
+| Firm | Source | Constat | Effet |
+|---|---|---|---|
+| FFF | Articles Straight to Funded (Funded Account, Payout Requirements, Consistency, Drawdown, Scaling) du 2026-11-20 ; versions archivées (Wayback Machine) jusqu'au 2026-11-18 ; accueil | Nouvelle version : DLL soft 1 250 / 2 500 / 3 000 $ (50K-150K, aucune en 25K), drawdown EOD 1 000 / 2 000 / **4 000 / 5 500** $, 25K plafonné à 1 mini, paiement unique 329 / 489 / 629 / 749 $, 7 jours, 25 %, minimum 1 000 $, objectifs et plafonds par payout ; blocage du drawdown plus mentionné. La version archivée du 2026-11-18 donne encore les anciennes règles (3 000 / 4 500 $, pas de DLL, blocage au solde de départ). Aucune date d'achat publiée ; vendu sur TruTik seulement. | 4 plans d'origine gardés (ids), renommés « Straight to Funded (règles relevées le 02/11/2026) », `needs_review` ; 4 plans `fundedfuturesfamily-s2f-nov20-*` ajoutés sous le nom simple, `needs_review` (blocage non publié) |
+| FFF | Checklist #1218 (convention Earn2Trade) | Noms Accelerate harmonisés : plan en vente sous le nom simple, anciennes versions « (achat avant le 22/10/2026) » / « (achat du 22/10/2026 au 29/10/2026) ». | `plan_name` de 4 plans Accelerate, ids inchangés |
+| FFF | Prime, Premier+, Velocity (évaluation, funded, payouts, consistency, drawdown, scaling), Payday 50K, Accelerate 25K / 50K, fees, horaires, news | Identiques au catalogue. | Aucun |
+
+Catalogue à 338 plans sur la base de dev actuelle.
+
+## Gel du plancher au premier payout (#696, 2026-11-23)
+
+Champ `max_drawdown.locks_on_first_payout` ajouté et renseigné sur 92 phases, à partir des règles déjà lues (`basis_notes` et lectures datées de `veille/sources.json`), sans nouvelle lecture :
+
+| Firm | Phases | Déclencheur |
+|------|--------|-------------|
+| Lucid Trading | Flex funded (×16) | `request` |
+| Top One Futures | Elite Access Intraday (+ sans DLL) funded | `request` |
+| Top One Futures | Elite Daily, Elite Access (+ sans DLL), X-Ultra funded ; Instant, Ignite (+ sans DLL) direct | `payout` |
+| Tradeify | Growth, Select funded ; Lightning direct | `request` |
+| Tradeify | Select Flex 300K (v1 et actuel) | `approval` |
+| MyFundedFutures | Pro 50K / 100K / 150K | `approval` |
+
+Hors périmètre (règle laissée dans les notes) : Topstep, Funded Futures Family, TradeDay, MyFundedFutures Rapid, Tradeify Daily 300K, LucidPro / Daily / Direct, Top One X-Daily Spark.

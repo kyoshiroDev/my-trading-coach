@@ -1,4 +1,5 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
+import { Logger } from '@nestjs/common';
 import * as Sentry from '@sentry/nestjs';
 import { StripeCustomerService } from './stripe-customer.service';
 import { StripeReferralService } from './stripe-referral.service';
@@ -390,5 +391,50 @@ describe('customer.subscription.deleted pendant l’essai d’inscription (#845)
     await deleted(svc);
 
     expect(resend.sendSubscriptionCanceled.mock.calls[0][0].offered).toBeUndefined();
+  });
+});
+
+/** #790 : journaux de facturation sans identifiant d'utilisateur, identifiants Stripe à la place. */
+describe('StripeWebhookService — journaux sans identifiant d’utilisateur (#790)', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  const USER = 'user_secret_790';
+  const capture = () => {
+    const spies = (['log', 'warn', 'error', 'debug'] as const).map((m) => vi.spyOn(Logger.prototype, m).mockImplementation(() => undefined));
+    return () => {
+      const lines = spies.flatMap((s) => s.mock.calls.map((c) => String(c[0])));
+      spies.forEach((s) => s.mockRestore());
+      return lines;
+    };
+  };
+
+  it('checkout complété : abonnement et client Stripe, pas client_reference_id', async () => {
+    const { svc, prisma, retrieve } = makeSvc();
+    retrieve.mockResolvedValue(subscription());
+    prisma.user.findUnique.mockResolvedValue({ id: USER, email: 'trader@exemple.test', name: 'T', trialUsed: false, stripeSubscriptionStatus: null });
+    const done = capture();
+    await svc.processWebhookEvent({
+      type: 'checkout.session.completed',
+      data: { object: { mode: 'subscription', subscription: 'sub_1', customer: 'cus_1', client_reference_id: USER } },
+    } as any);
+    const lines = done();
+    expect(lines).toContain('Checkout complété | sub: sub_1, customer: cus_1');
+    expect(lines.join('\n')).not.toContain(USER);
+    expect(lines.join('\n')).not.toContain('trader@exemple.test');
+  });
+
+  it('« abonnement résilié » non enregistré : abonnement Stripe et nom de l’erreur seulement', async () => {
+    const { svc, prisma } = makeSvc();
+    prisma.user.findFirst.mockResolvedValue({ id: USER, email: 'trader@exemple.test', name: 'T' });
+    prisma.emailSend.create.mockRejectedValue(new Error(`échec pour ${USER}`));
+    const done = capture();
+    await svc.processWebhookEvent({
+      type: 'customer.subscription.deleted',
+      data: { object: subscription({ items: { data: [{ price: { unit_amount: 7900, recurring: { interval: 'month' } } }] } }) },
+    } as any);
+    const lines = done();
+    expect(lines).toContain('Envoi « abonnement résilié » non enregistré (sub sub_1) : Error');
+    expect(lines.join('\n')).not.toContain(USER);
+    expect(lines.join('\n')).not.toContain('trader@exemple.test');
   });
 });

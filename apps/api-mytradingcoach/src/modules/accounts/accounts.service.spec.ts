@@ -577,7 +577,7 @@ describe('AccountsService', () => {
     it('évaluation : le plan remplace la saisie manuelle (montant, type)', () => {
       const m = svc.computeRuleMetrics({ ...manual, startingBalance: 50000, type: 'EVALUATION' }, [d(500, 1), d(700, 2)], topstep);
       expect(m.drawdown).toMatchObject({ source: 'plan', type: 'TRAILING', maxDrawdown: 2000, floor: 49200, margin: 2000, breached: false });
-      expect(m.drawdown?.rule).toMatchObject({ firmName: 'Topstep', phase: 'evaluation', kind: 'trailing_eod', locked: false, realtimeEquity: true });
+      expect(m.drawdown?.rule).toMatchObject({ firmName: 'Topstep', phase: 'evaluation', kind: 'trailing_eod', locked: false, locksOnFirstPayout: null, lockedBy: null, payoutLockedSince: null, realtimeEquity: true });
       expect(m.disclaimer).toContain('positions ouvertes comprises : elles ne sont pas incluses ici');
     });
 

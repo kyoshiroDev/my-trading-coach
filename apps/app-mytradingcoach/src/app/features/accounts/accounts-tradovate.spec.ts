@@ -529,7 +529,7 @@ describe('Mes comptes — verrouillage selon la plateforme', () => {
 
   const rule = (over: Partial<NonNullable<NonNullable<TradingAccount['metrics']['drawdown']>['rule']>>) => ({
     firmName: 'Apex Trader Funding', planName: 'EOD Trail', phase: 'evaluation' as const, kind: 'trailing_eod' as const,
-    locksAt: null, lockedFloor: null, locked: false, realtimeEquity: true, platform: null, platformChoices: [],
+    locksAt: null, lockedFloor: null, locked: false, locksOnFirstPayout: null, lockedBy: null, payoutLockedSince: null, realtimeEquity: true, platform: null, platformChoices: [],
     peakSource: null as 'broker' | 'trades' | null, peakBalance: null as number | null, officialThrough: null as string | null, ...over,
   });
   const withRule = (r: ReturnType<typeof rule>) => acct('a', 'Apex 50k', {
@@ -565,7 +565,7 @@ describe('Mes comptes — plus haut de clôture', () => {
       ...acct('a', '').metrics,
       drawdown: { type: 'TRAILING', floor: 49_400, margin: 1_600, maxDrawdown: 2_000, pct: 0.8, breached: false, source: 'plan',
         rule: { firmName: 'Lucid Trading', planName: 'LucidFlex', phase: 'evaluation', kind: 'trailing_eod', locksAt: null, lockedFloor: null,
-          locked: false, realtimeEquity: false, platform: null, platformChoices: [], peakSource: 'trades', peakBalance: 51_400, officialThrough: null, ...over } },
+          locked: false, locksOnFirstPayout: null, lockedBy: null, payoutLockedSince: null, realtimeEquity: false, platform: null, platformChoices: [], peakSource: 'trades', peakBalance: 51_400, officialThrough: null, ...over } },
     },
   });
 
@@ -581,6 +581,18 @@ describe('Mes comptes — plus haut de clôture', () => {
     const { q, click } = setup({ accounts: [withPeak({})] });
     click('account-expand-a');
     expect(q('dd-peak')!.textContent).toContain('reconstitué depuis tes trades');
+  });
+
+  it('gel au premier payout (#696) : règle affichée, puis figé depuis le payout', () => {
+    const { q, click } = setup({ accounts: [withPeak({ phase: 'funded', locksAt: 52_100, lockedFloor: 50_100, locksOnFirstPayout: 'request' })] });
+    click('account-expand-a');
+    expect(q('dd-basis')!.textContent!.replace(/\s+/g, ' ')).toContain('se fige à $50,100 quand le solde atteint $52,100, ou dès ta première demande de payout');
+  });
+
+  it('figé par un payout : date du premier payout dans la ligne des règles', () => {
+    const { q, click } = setup({ accounts: [withPeak({ phase: 'funded', locksAt: 52_100, lockedFloor: 50_100, locksOnFirstPayout: 'request', locked: true, lockedBy: 'payout', payoutLockedSince: '2026-10-02' })] });
+    click('account-expand-a');
+    expect(q('dd-basis')!.textContent!.replace(/\s+/g, ' ')).toContain('figé depuis ton payout du 02/10/2026');
   });
 });
 

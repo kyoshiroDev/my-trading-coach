@@ -308,7 +308,7 @@ export class FounderOfferService {
     });
     await this.invalidateSeatsLeft();
     if (result.created && result.seat) {
-      this.logger.log(`Fondateur n° ${result.seat.number} | user ${args.userId}`);
+      this.logger.log(`Fondateur n° ${result.seat.number} | sub ${args.stripeSubscriptionId}`);
       const reached = 'milestones' in result ? result.milestones : null;
       if (reached) {
         await this.resend

@@ -1,4 +1,6 @@
 import { formatPercent } from '@mtc/shared';
+import type { DrawdownPlanRule } from '../../core/api/accounts.api';
+import { floorLockText } from './floor-lock.util';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -376,6 +378,11 @@ export class AccountsComponent implements OnInit {
     const id = this.editingId();
     return !!id && this.tv.byAccount().has(id);
   });
+  /** Gel du plancher dans la ligne des règles appliquées (#696). */
+  protected floorLock(rule: DrawdownPlanRule, currency: string | null): string | null {
+    return floorLockText(rule, (v) => this.money(v, currency));
+  }
+
   /** Montant dans la devise donnée (celle du compte), sans conversion. */
   protected money(value: number | null | undefined, currency: string | null, sign = false): string {
     return formatMoney(value ?? 0, currency, { decimals: 0, sign });

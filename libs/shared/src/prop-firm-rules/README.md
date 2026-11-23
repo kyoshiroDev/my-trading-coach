@@ -64,6 +64,7 @@ Tous documentés dans `schema.json`. Aucun champ du format de départ n'a été 
 | `daily_loss_limit.scaling_rule` | DLL dynamique non tabulable (LucidScale : 60 % du pic de profit EOD). |
 | `daily_loss_limit.notes` | Subtilités (soft breach, base non documentée, contradictions). |
 | `max_drawdown.locked_floor` | Niveau du seuil une fois figé. `locks_at` reste le solde qui déclenche le blocage. |
+| `max_drawdown.locks_on_first_payout` | Seuil figé (à `locked_floor`, ou `locks_at − amount`) dès le premier payout : `request` (demande), `approval` (approbation), `payout` (non précisé). Exige un drawdown suiveur et un niveau figé connu. |
 | `max_drawdown.enforced_on` | **Critique pour le calcul** : `equity_realtime` = l'equity (P&L latent inclus) ne doit jamais toucher le seuil en séance. `null` = non documenté par la firm. |
 | `max_drawdown.platform_overrides` | Blocage du trailing différent selon la plateforme (évaluations Apex : jamais sur Tradovate, au solde objectif sur Rithmic / WealthCharts). |
 | `max_contracts.tiers` | Taille max par palier de profit (scaling plan). |
@@ -82,7 +83,7 @@ Tous documentés dans `schema.json`. Aucun champ du format de départ n'a été 
 ### Lire un drawdown
 
 - `type` : `trailing_eod` = le seuil suit le plus haut **solde de clôture** ; `trailing_intraday` = il suit le plus haut **pic intraday** (P&L latent inclus) ; `static` = il ne bouge pas.
-- Seuil courant = `max(pic suivi) - amount`, plafonné à `locked_floor` une fois `locks_at` atteint (`platform_overrides[<plateforme>]` prime s'il existe).
+- Seuil courant = `max(pic suivi) - amount`, plafonné à `locked_floor` une fois `locks_at` atteint (`platform_overrides[<plateforme>]` prime s'il existe). Avec `locks_on_first_payout`, figé aussi dès le premier payout, sans jamais descendre sous le niveau figé.
 - `enforced_on` dit ce qu'on compare au seuil en séance. À `null`, le calcul doit rester prudent (comparer l'equity) et l'UI doit le signaler.
 
 ## Ajouter une firm

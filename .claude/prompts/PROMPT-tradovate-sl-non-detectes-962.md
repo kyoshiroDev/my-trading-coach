@@ -3,7 +3,7 @@
 Pas de prompt collé : messages de Greg en session (texte exact).
 
 12/11/2026 ~00:25 :
-> aujourd'hui a l'instant le 12/11/2026 j'ai pris 2SL mais rien de detecter sur mon compte tahir.gregory@gmail.com en prod
+> aujourd'hui a l'instant le 12/11/2026 j'ai pris 2SL mais rien de detecter sur mon compte [adresse e-mail de Greg, masquée : dépôt public] en prod
 
 12/11/2026 :
 > oui ce sont mes 2 SL, rien dans le journal

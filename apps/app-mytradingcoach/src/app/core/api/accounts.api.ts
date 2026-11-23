@@ -25,6 +25,12 @@ export interface DrawdownPlanRule {
   locksAt: number | null;
   lockedFloor: number | null;
   locked: boolean;
+  /** Gel du plancher dès le premier payout (#696) : demande, approbation ou non précisé. */
+  locksOnFirstPayout: 'request' | 'approval' | 'payout' | null;
+  /** Origine du gel : seuil atteint ou premier payout connu ; null si non figé. */
+  lockedBy: 'threshold' | 'payout' | null;
+  /** Premier payout connu qui fige le plancher (`AAAA-MM-JJ`), sinon null. */
+  payoutLockedSince: string | null;
   realtimeEquity: boolean;
   /** Origine du plus haut retenu (trailing EOD) : clôtures officielles ou trades ; null hors EOD. */
   peakSource: 'broker' | 'trades' | null;

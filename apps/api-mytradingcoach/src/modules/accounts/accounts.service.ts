@@ -7,7 +7,7 @@ import {
   NotFoundException,
   Optional,
 } from '@nestjs/common';
-import type { AccountPlanHint, PropFirmDrawdownKind, PropFirmPhaseRules } from '@mtc/shared';
+import type { AccountPlanHint, PropFirmDrawdownKind, PropFirmPayoutLockTrigger, PropFirmPhaseRules } from '@mtc/shared';
 import { ACCOUNT_LIMITS, drawdownFloor, drawdownPeakProfit, planDrawdownRule, roundCents } from '@mtc/shared';
 import {
   AccountStatus,
@@ -55,6 +55,19 @@ export interface RulePlan {
 }
 
 export type { RulePayouts } from './account-payouts';
+
+/**
+ * Premier jour où un payout est certain (#696) : plus ancien payout enregistré (détecté ou saisi,
+ * déjà reçu) et date saisie du dernier payout dans le formulaire du compte ; seulement les dates
+ * ≤ aujourd'hui. Un payout reçu est postérieur à sa demande et à son approbation : le gel qui en
+ * découle n'est jamais en avance sur la firm.
+ */
+export function firstPayoutDay(payouts: RulePayouts | null, userDate: Date | null | undefined, today: string): string | null {
+  const days = [payouts?.first ?? payouts?.last, userDate ? userDate.toISOString().slice(0, 10) : undefined].filter(
+    (d): d is string => !!d && d <= today,
+  );
+  return days.length ? days.sort()[0] : null;
+}
 
 /**
  * Début du cycle de payout : le plus récent entre le dernier payout enregistré (détecté chez le
@@ -156,6 +169,12 @@ export interface DrawdownPlanRule {
   locksAt: number | null;
   lockedFloor: number | null;
   locked: boolean;
+  /** Gel du plancher dès le premier payout (#696) ; null = gel au seuil seulement. */
+  locksOnFirstPayout: PropFirmPayoutLockTrigger | null;
+  /** Origine du gel : seuil `locksAt` atteint ou premier payout connu ; null si non figé. */
+  lockedBy: 'threshold' | 'payout' | null;
+  /** Premier payout connu qui fige le plancher (`AAAA-MM-JJ`), sinon null. */
+  payoutLockedSince: string | null;
   /** La firm contrôle le seuil en temps réel, positions ouvertes comprises. */
   realtimeEquity: boolean;
   /** Plateforme dont la règle a été appliquée (verrouillage propre à la plateforme), sinon null. */
@@ -527,8 +546,13 @@ export class AccountsService {
           usable ? { profit: usable.peakClose - startingBalance, fresh } : null,
         );
         const { locksAt, lockedFloor } = floorRule;
+        const locksOnFirstPayout = floorRule.locksOnFirstPayout ?? null;
+        // Gel au premier payout (#696) : le plus haut au moment du payout n'est pas connu jour par
+        // jour ici, on retient le plus haut actuel (plancher au moins aussi haut : prudent).
+        const payoutLockedSince = locksOnFirstPayout ? firstPayoutDay(payouts, account.lastPayoutAt, tradingDay(now)) : null;
         // Mêmes fonctions que la courbe de drawdown des Statistiques (plancher jour par jour).
-        const { floor, locked } = drawdownFloor(floorRule, peakProfit);
+        const { floor, locked } = drawdownFloor(floorRule, peakProfit, payoutLockedSince ? peakProfit : null);
+        const lockedBy = !locked ? null : drawdownFloor(floorRule, peakProfit).locked ? 'threshold' : 'payout';
         const margin = equity - floor;
         drawdown = {
           type: md.type === 'static' ? DrawdownType.STATIC : DrawdownType.TRAILING,
@@ -544,8 +568,11 @@ export class AccountsService {
             phase: phase.phase,
             kind: md.type,
             locksAt,
-            lockedFloor: locksAt != null ? lockedFloor ?? locksAt - md.amount : null,
+            lockedFloor: locksAt != null || locksOnFirstPayout ? lockedFloor ?? (locksAt != null ? locksAt - md.amount : null) : null,
             locked,
+            locksOnFirstPayout,
+            lockedBy,
+            payoutLockedSince: lockedBy === 'payout' ? payoutLockedSince : null,
             realtimeEquity: md.enforced_on === 'equity_realtime',
             peakSource: md.type === 'trailing_eod' ? (fresh ? 'broker' : 'trades') : null,
             peakBalance: md.type === 'trailing_eod' ? startingBalance + peakProfit : null,

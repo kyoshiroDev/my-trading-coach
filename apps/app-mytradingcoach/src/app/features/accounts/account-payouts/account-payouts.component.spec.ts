@@ -14,7 +14,7 @@ const LIST: AccountPayout[] = [
   { id: 'b1', tradeDate: '2026-09-01', amount: 700, manual: false, confidence: 'probable' },
 ];
 
-function setup(opts: { connected?: boolean; list?: AccountPayout[]; confirm?: boolean } = {}) {
+function setup(opts: { connected?: boolean; list?: AccountPayout[]; confirm?: boolean; floorLock?: 'request' | 'approval' | 'payout' | null } = {}) {
   const api = {
     listPayouts: vi.fn(() => of({ data: opts.list ?? LIST })),
     addPayout: vi.fn(() => of({ data: { id: 'm2', tradeDate: '2026-10-20', amount: 500, manual: true, confidence: 'certain' } })),
@@ -35,6 +35,7 @@ function setup(opts: { connected?: boolean; list?: AccountPayout[]; confirm?: bo
   cmp['accountId'] = signal('a1');
   cmp['currency'] = signal('USD');
   cmp['connected'] = signal(opts.connected ?? false);
+  cmp['floorLock'] = signal(opts.floorLock ?? null);
   fixture.detectChanges();
   const el = fixture.nativeElement as HTMLElement;
   const q = (id: string) => el.querySelector(`[data-testid="${id}"]`) as HTMLElement | null;
@@ -51,11 +52,50 @@ const type = (input: HTMLInputElement, value: string) => {
 describe('AccountPayoutsComponent (payouts d\'un compte funded)', () => {
   beforeEach(() => TestBed.resetTestingModule());
 
-  it('au moins un payout : note discrète sur le plancher gelé, pas encore estimé', () => {
+  it('plan sans gel au premier payout : aucune note de gel', () => {
     const { q } = setup();
-    expect(q('payouts-floor-lock-note')!.textContent!.trim())
-      .toBe('Le plancher gelé après un payout n\'est pas encore pris en compte dans l\'estimation. Vérifie chez ta firm.');
+    expect(q('payouts-floor-lock-note')).toBeNull();
+  });
+
+  const lockNote = (q: (id: string) => HTMLElement | null) => q('payouts-floor-lock-note')!.textContent!.replace(/[ \n]+/g, ' ').trim();
+
+  it('gel à la demande : note sur le retard possible de l’estimation', () => {
+    const { q } = setup({ floorLock: 'request' });
+    expect(lockNote(q)).toBe(
+      'Ta firm fige le plancher dès ta demande de payout\u00a0: tant que le payout n\'apparaît pas ici, ton plancher réel peut déjà être plus haut que l\'estimation.',
+    );
     expect(q('payouts-floor-lock-note')!.className).toBe('ap-note');
+  });
+
+  it('gel au payout approuvé : note adaptée', () => {
+    const { q } = setup({ floorLock: 'approval' });
+    expect(lockNote(q)).toBe(
+      'Ta firm fige le plancher dès que ton payout est approuvé\u00a0: tant qu\'il n\'apparaît pas ici, ton plancher réel peut déjà être plus haut que l\'estimation.',
+    );
+  });
+
+  it('gel au premier payout (non précisé) : note adaptée', () => {
+    const { q } = setup({ floorLock: 'payout' });
+    expect(lockNote(q)).toBe(
+      'Ta firm fige le plancher dès ton premier payout\u00a0: tant qu\'il n\'apparaît pas ici, ton plancher réel peut déjà être plus haut que l\'estimation.',
+    );
+  });
+
+  it('aucun payout encore enregistré : note de gel aussi', () => {
+    const { q } = setup({ list: [], floorLock: 'request' });
+    expect(q('payouts-empty')).not.toBeNull();
+    expect(q('payouts-floor-lock-note')).not.toBeNull();
+  });
+
+  it('texte du formulaire : gel au premier payout seulement si le plan le prévoit', () => {
+    const note = (el: HTMLElement) => [...el.querySelectorAll('.ap-note')].map((n) => n.textContent!.replace(/[ \n]+/g, ' ').trim()).find((t) => t.startsWith('Le montant est retiré'));
+    expect(note(setup({ floorLock: 'payout' }).el)).toBe(
+      'Le montant est retiré du solde, des courbes et de la marge du compte. Ton plan fige le plancher au premier payout\u00a0: MyTradingCoach retient la date du premier payout enregistré. Estimation MyTradingCoach\u00a0: vérifie chez ta firm.',
+    );
+    TestBed.resetTestingModule();
+    const plain = note(setup({ floorLock: null }).el)!;
+    expect(plain).toBe('Le montant est retiré du solde, des courbes et de la marge du compte. Estimation MyTradingCoach\u00a0: vérifie chez ta firm.');
+    expect(plain).not.toContain('ne bouge pas');
   });
 
   it('aucun payout : pas de note sur le plancher gelé', () => {

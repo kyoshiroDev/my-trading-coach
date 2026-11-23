@@ -52,7 +52,7 @@
         }
         <li>{{ fmt.drawdownKindLabel(ph.max_drawdown) }}</li>
         <li [class.unknown]="!ph.max_drawdown.enforced_on">{{ fmt.enforcementLabel(ph.max_drawdown) }}</li>
-        @if (fmt.lockLabel(ph.max_drawdown.locked_floor, ph.max_drawdown.locks_at, cur); as lock) { <li>{{ lock }}</li> }
+        @if (fmt.lockLabel(ph.max_drawdown.locked_floor, ph.max_drawdown.locks_at, cur, ph.max_drawdown.locks_on_first_payout); as lock) { <li>{{ lock }}</li> }
         @for (o of overrides(); track o.platform) {
           <li class="pfr-override"><b>{{ o.platform }}</b> :
             {{ fmt.lockLabel(o.locked_floor, o.locks_at, cur) ?? 'ne se fige jamais' }}</li>

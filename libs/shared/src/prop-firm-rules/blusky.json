@@ -15,7 +15,7 @@
       "tradesea"
     ]
   },
-  "verified_at": "2026-11-02",
+  "verified_at": "2026-11-23",
   "plans": [
     {
       "id": "blusky-launch-50k",
@@ -46,9 +46,9 @@
             "basis_notes": "EOD : 2000 $ sous le plus haut solde de clôture (journée à partir de 18:00), ne redescend pas. Toucher le seuil à n'importe quel moment fait échouer (c'est la seule cause d'échec de l'évaluation). Pas de blocage publié en évaluation."
           },
           "consistency": {
-            "max_single_day_pct": 0.5,
+            "max_single_day_pct": 0.55,
             "applies_to": "profit_target",
-            "notes": "Calculée sur la somme des jours GAGNANTS (les jours perdants sont exclus du dénominateur). Pas un échec : vérifiée au passage de phase ou à la demande de payout."
+            "notes": "Calculée sur la somme des jours GAGNANTS (les jours perdants sont exclus du dénominateur). Pas un échec : vérifiée au passage de phase ou à la demande de payout. 55 % en évaluation (« 55% Consistency Rule in Launch and Propel … Evaluations », articles Evaluation Rules et Understanding the Consistency Rule, 2026-11-19) ; la Buffer Zone garde 34 % (21 % pour le 300K)."
           },
           "min_trading_days": null,
           "max_duration_days": null,
@@ -125,8 +125,8 @@
         "https://help.blusky.pro/en/articles/12434092-resets",
         "https://blusky.pro/"
       ],
-      "needs_review": true,
-      "notes": "Entre l'évaluation et le Sim Funded, une Buffer Zone (non modélisée comme phase) : objectif 3000 $, drawdown 2000 $ trailing EOD qui se fige au solde de départ de la Buffer Zone (exemple du support : 50 000 $ avec 2 500 $ de drawdown, seuil figé à 50 000 $ une fois le solde de clôture au-dessus de 52 500 $) (support BluSky, Mike, chat, 2026-10-06), consistency 34 %, pas de DLL. Son profit devient le solde de départ du Sim Funded ; un échec ne remet en cause que la Buffer Zone (reset 250 $ les trois premiers). Consistency d'évaluation à confirmer par le support : 50 % dans l'article Evaluation Rules, 55 % dans le sélecteur de blusky.pro (lus le 2026-11-02)."
+      "needs_review": false,
+      "notes": "Entre l'évaluation et le Sim Funded, une Buffer Zone (non modélisée comme phase) : objectif 3000 $, drawdown 2000 $ trailing EOD qui se fige au solde de départ de la Buffer Zone (exemple du support : 50 000 $ avec 2 500 $ de drawdown, seuil figé à 50 000 $ une fois le solde de clôture au-dessus de 52 500 $) (support BluSky, Mike, chat, 2026-10-06), consistency 34 %, pas de DLL. Son profit devient le solde de départ du Sim Funded ; un échec ne remet en cause que la Buffer Zone (reset 250 $ les trois premiers)."
     },
     {
       "id": "blusky-launch-100k",
@@ -157,9 +157,9 @@
             "basis_notes": "EOD : 2500 $ sous le plus haut solde de clôture (journée à partir de 18:00), ne redescend pas. Toucher le seuil à n'importe quel moment fait échouer (c'est la seule cause d'échec de l'évaluation). Pas de blocage publié en évaluation."
           },
           "consistency": {
-            "max_single_day_pct": 0.5,
+            "max_single_day_pct": 0.55,
             "applies_to": "profit_target",
-            "notes": "Calculée sur la somme des jours GAGNANTS (les jours perdants sont exclus du dénominateur). Pas un échec : vérifiée au passage de phase ou à la demande de payout."
+            "notes": "Calculée sur la somme des jours GAGNANTS (les jours perdants sont exclus du dénominateur). Pas un échec : vérifiée au passage de phase ou à la demande de payout. 55 % en évaluation (« 55% Consistency Rule in Launch and Propel … Evaluations », articles Evaluation Rules et Understanding the Consistency Rule, 2026-11-19) ; la Buffer Zone garde 34 % (21 % pour le 300K)."
           },
           "min_trading_days": null,
           "max_duration_days": null,
@@ -236,8 +236,8 @@
         "https://help.blusky.pro/en/articles/12434092-resets",
         "https://blusky.pro/"
       ],
-      "needs_review": true,
-      "notes": "Entre l'évaluation et le Sim Funded, une Buffer Zone (non modélisée comme phase) : objectif 3500 $, drawdown 2500 $ trailing EOD qui se fige au solde de départ de la Buffer Zone (exemple du support : 50 000 $ avec 2 500 $ de drawdown, seuil figé à 50 000 $ une fois le solde de clôture au-dessus de 52 500 $) (support BluSky, Mike, chat, 2026-10-06), consistency 34 %, pas de DLL. Son profit devient le solde de départ du Sim Funded ; un échec ne remet en cause que la Buffer Zone (reset 250 $ les trois premiers). Consistency d'évaluation à confirmer par le support : 50 % dans l'article Evaluation Rules, 55 % dans le sélecteur de blusky.pro (lus le 2026-11-02)."
+      "needs_review": false,
+      "notes": "Entre l'évaluation et le Sim Funded, une Buffer Zone (non modélisée comme phase) : objectif 3500 $, drawdown 2500 $ trailing EOD qui se fige au solde de départ de la Buffer Zone (exemple du support : 50 000 $ avec 2 500 $ de drawdown, seuil figé à 50 000 $ une fois le solde de clôture au-dessus de 52 500 $) (support BluSky, Mike, chat, 2026-10-06), consistency 34 %, pas de DLL. Son profit devient le solde de départ du Sim Funded ; un échec ne remet en cause que la Buffer Zone (reset 250 $ les trois premiers)."
     },
     {
       "id": "blusky-launch-200k",
@@ -268,9 +268,9 @@
             "basis_notes": "Static : seuil fixe à 198000 $."
           },
           "consistency": {
-            "max_single_day_pct": 0.5,
+            "max_single_day_pct": 0.55,
             "applies_to": "profit_target",
-            "notes": "Calculée sur la somme des jours GAGNANTS (les jours perdants sont exclus du dénominateur). Pas un échec : vérifiée au passage de phase ou à la demande de payout."
+            "notes": "Calculée sur la somme des jours GAGNANTS (les jours perdants sont exclus du dénominateur). Pas un échec : vérifiée au passage de phase ou à la demande de payout. 55 % en évaluation (« 55% Consistency Rule in Launch and Propel … Evaluations », articles Evaluation Rules et Understanding the Consistency Rule, 2026-11-19) ; la Buffer Zone garde 34 % (21 % pour le 300K)."
           },
           "min_trading_days": null,
           "max_duration_days": null,
@@ -347,8 +347,8 @@
         "https://help.blusky.pro/en/articles/12434092-resets",
         "https://blusky.pro/"
       ],
-      "needs_review": true,
-      "notes": "Entre l'évaluation et le Sim Funded, une Buffer Zone (non modélisée comme phase) : objectif 3000 $, drawdown 2000 $ static, consistency 34 %, pas de DLL. Son profit devient le solde de départ du Sim Funded ; un échec ne remet en cause que la Buffer Zone (reset 250 $ les trois premiers). Consistency d'évaluation à confirmer par le support : 50 % dans l'article Evaluation Rules, 55 % dans le sélecteur de blusky.pro (lus le 2026-11-02)."
+      "needs_review": false,
+      "notes": "Entre l'évaluation et le Sim Funded, une Buffer Zone (non modélisée comme phase) : objectif 3000 $, drawdown 2000 $ static, consistency 34 %, pas de DLL. Son profit devient le solde de départ du Sim Funded ; un échec ne remet en cause que la Buffer Zone (reset 250 $ les trois premiers)."
     },
     {
       "id": "blusky-propel-25k",
@@ -379,15 +379,15 @@
             "basis_notes": "EOD : 1200 $ sous le plus haut solde de clôture (journée à partir de 18:00), ne redescend pas. Toucher le seuil à n'importe quel moment fait échouer (c'est la seule cause d'échec de l'évaluation). Pas de blocage publié en évaluation."
           },
           "consistency": {
-            "max_single_day_pct": 0.34,
+            "max_single_day_pct": 0.55,
             "applies_to": "profit_target",
-            "notes": "Calculée sur la somme des jours GAGNANTS (les jours perdants sont exclus du dénominateur). Pas un échec : vérifiée au passage de phase ou à la demande de payout."
+            "notes": "Calculée sur la somme des jours GAGNANTS (les jours perdants sont exclus du dénominateur). Pas un échec : vérifiée au passage de phase ou à la demande de payout. 55 % en évaluation (« 55% Consistency Rule in Launch and Propel … Evaluations », articles Evaluation Rules et Understanding the Consistency Rule, 2026-11-19) ; la Buffer Zone garde 34 % (21 % pour le 300K)."
           },
           "min_trading_days": null,
           "max_duration_days": null,
           "max_contracts": {
-            "minis": 2,
-            "micros": 20,
+            "minis": 4,
+            "micros": 40,
             "scaling": false,
             "tiers": null,
             "notes": null
@@ -458,8 +458,8 @@
         "https://help.blusky.pro/en/articles/12434092-resets",
         "https://blusky.pro/"
       ],
-      "needs_review": true,
-      "notes": "Entre l'évaluation et le Sim Funded, une Buffer Zone (non modélisée comme phase) : objectif 1500 $, drawdown 1200 $ trailing EOD qui se fige au solde de départ de la Buffer Zone (exemple du support : 50 000 $ avec 2 500 $ de drawdown, seuil figé à 50 000 $ une fois le solde de clôture au-dessus de 52 500 $) (support BluSky, Mike, chat, 2026-10-06), consistency 34 %, pas de DLL. Son profit devient le solde de départ du Sim Funded ; un échec ne remet en cause que la Buffer Zone (reset 250 $ les trois premiers). Contrats à confirmer par le support : 2 minis dans l'article Propel, 4 minis dans le sélecteur de blusky.pro (lus le 2026-11-02)."
+      "needs_review": false,
+      "notes": "Entre l'évaluation et le Sim Funded, une Buffer Zone (non modélisée comme phase) : objectif 1500 $, drawdown 1200 $ trailing EOD qui se fige au solde de départ de la Buffer Zone (exemple du support : 50 000 $ avec 2 500 $ de drawdown, seuil figé à 50 000 $ une fois le solde de clôture au-dessus de 52 500 $) (support BluSky, Mike, chat, 2026-10-06), consistency 34 %, pas de DLL. Son profit devient le solde de départ du Sim Funded ; un échec ne remet en cause que la Buffer Zone (reset 250 $ les trois premiers). Évaluation : 4 minis / 40 micros (article Propel du 2026-11-20 et sélecteur de blusky.pro, 2026-11-23)."
     },
     {
       "id": "blusky-propel-50k",
@@ -490,9 +490,9 @@
             "basis_notes": "EOD : 2000 $ sous le plus haut solde de clôture (journée à partir de 18:00), ne redescend pas. Toucher le seuil à n'importe quel moment fait échouer (c'est la seule cause d'échec de l'évaluation). Pas de blocage publié en évaluation."
           },
           "consistency": {
-            "max_single_day_pct": 0.34,
+            "max_single_day_pct": 0.55,
             "applies_to": "profit_target",
-            "notes": "Calculée sur la somme des jours GAGNANTS (les jours perdants sont exclus du dénominateur). Pas un échec : vérifiée au passage de phase ou à la demande de payout."
+            "notes": "Calculée sur la somme des jours GAGNANTS (les jours perdants sont exclus du dénominateur). Pas un échec : vérifiée au passage de phase ou à la demande de payout. 55 % en évaluation (« 55% Consistency Rule in Launch and Propel … Evaluations », articles Evaluation Rules et Understanding the Consistency Rule, 2026-11-19) ; la Buffer Zone garde 34 % (21 % pour le 300K)."
           },
           "min_trading_days": null,
           "max_duration_days": null,
@@ -601,9 +601,9 @@
             "basis_notes": "EOD : 2500 $ sous le plus haut solde de clôture (journée à partir de 18:00), ne redescend pas. Toucher le seuil à n'importe quel moment fait échouer (c'est la seule cause d'échec de l'évaluation). Pas de blocage publié en évaluation."
           },
           "consistency": {
-            "max_single_day_pct": 0.34,
+            "max_single_day_pct": 0.55,
             "applies_to": "profit_target",
-            "notes": "Calculée sur la somme des jours GAGNANTS (les jours perdants sont exclus du dénominateur). Pas un échec : vérifiée au passage de phase ou à la demande de payout."
+            "notes": "Calculée sur la somme des jours GAGNANTS (les jours perdants sont exclus du dénominateur). Pas un échec : vérifiée au passage de phase ou à la demande de payout. 55 % en évaluation (« 55% Consistency Rule in Launch and Propel … Evaluations », articles Evaluation Rules et Understanding the Consistency Rule, 2026-11-19) ; la Buffer Zone garde 34 % (21 % pour le 300K)."
           },
           "min_trading_days": null,
           "max_duration_days": null,
@@ -712,9 +712,9 @@
             "basis_notes": "Static : seuil fixe à 149000 $."
           },
           "consistency": {
-            "max_single_day_pct": 0.34,
+            "max_single_day_pct": 0.55,
             "applies_to": "profit_target",
-            "notes": "Calculée sur la somme des jours GAGNANTS (les jours perdants sont exclus du dénominateur). Pas un échec : vérifiée au passage de phase ou à la demande de payout."
+            "notes": "Calculée sur la somme des jours GAGNANTS (les jours perdants sont exclus du dénominateur). Pas un échec : vérifiée au passage de phase ou à la demande de payout. 55 % en évaluation (« 55% Consistency Rule in Launch and Propel … Evaluations », articles Evaluation Rules et Understanding the Consistency Rule, 2026-11-19) ; la Buffer Zone garde 34 % (21 % pour le 300K)."
           },
           "min_trading_days": null,
           "max_duration_days": null,
@@ -823,9 +823,9 @@
             "basis_notes": "Static : seuil fixe à 198000 $."
           },
           "consistency": {
-            "max_single_day_pct": 0.34,
+            "max_single_day_pct": 0.55,
             "applies_to": "profit_target",
-            "notes": "Calculée sur la somme des jours GAGNANTS (les jours perdants sont exclus du dénominateur). Pas un échec : vérifiée au passage de phase ou à la demande de payout."
+            "notes": "Calculée sur la somme des jours GAGNANTS (les jours perdants sont exclus du dénominateur). Pas un échec : vérifiée au passage de phase ou à la demande de payout. 55 % en évaluation (« 55% Consistency Rule in Launch and Propel … Evaluations », articles Evaluation Rules et Understanding the Consistency Rule, 2026-11-19) ; la Buffer Zone garde 34 % (21 % pour le 300K)."
           },
           "min_trading_days": null,
           "max_duration_days": null,
@@ -934,9 +934,9 @@
             "basis_notes": "Static : seuil fixe à 295000 $."
           },
           "consistency": {
-            "max_single_day_pct": 0.21,
+            "max_single_day_pct": 0.55,
             "applies_to": "profit_target",
-            "notes": "Calculée sur la somme des jours GAGNANTS (les jours perdants sont exclus du dénominateur). Pas un échec : vérifiée au passage de phase ou à la demande de payout."
+            "notes": "Calculée sur la somme des jours GAGNANTS (les jours perdants sont exclus du dénominateur). Pas un échec : vérifiée au passage de phase ou à la demande de payout. 55 % en évaluation (« 55% Consistency Rule in Launch and Propel … Evaluations », articles Evaluation Rules et Understanding the Consistency Rule, 2026-11-19) ; la Buffer Zone garde 34 % (21 % pour le 300K)."
           },
           "min_trading_days": null,
           "max_duration_days": null,

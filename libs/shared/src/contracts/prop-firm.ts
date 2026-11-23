@@ -93,12 +93,21 @@ export interface PropFirmPlatformOverride {
   notes?: string | null;
 }
 
+/**
+ * Gel du plancher au premier payout (#696) : `request` = dès la demande, `approval` = dès le payout
+ * approuvé, `payout` = la firm ne précise pas lequel. Le plancher se fige au niveau `locked_floor`
+ * (sinon `locks_at − amount`), sans jamais redescendre sous le plancher suiveur du moment.
+ */
+export type PropFirmPayoutLockTrigger = 'request' | 'approval' | 'payout';
+
 export interface PropFirmMaxDrawdown {
   amount: number;
   type: PropFirmDrawdownKind;
   trails_on: 'balance' | 'equity' | null;
   locks_at: number | null;
   locked_floor?: number | null;
+  /** Gel du plancher dès le premier payout ; absent ou null = gel au seuil `locks_at` seulement. */
+  locks_on_first_payout?: PropFirmPayoutLockTrigger | null;
   /** Ce qui est comparé au seuil en séance ; null = non documenté par la firm. */
   enforced_on?: 'equity_realtime' | 'balance_realtime' | 'eod_balance' | null;
   platform_overrides?: Nullable<Record<string, PropFirmPlatformOverride>>;

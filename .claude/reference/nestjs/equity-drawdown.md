@@ -26,3 +26,10 @@
 Source unique du plancher : `accounts.service` (suivi du compte → Mes comptes, séance) et la courbe
 de drawdown des Statistiques appellent `drawdownFloor(rule, peakProfit)`. Ne jamais recalculer un
 plancher à la main ailleurs : modifier la règle (verrouillage, statique) dans cette fonction seulement.
+
+Gel au premier payout (#696) : 3ᵉ argument `payoutFreezePeak` (plus haut retenu au moment du gel,
+`null` = pas de payout). `rule.locksOnFirstPayout` vient de `planDrawdownRule`. Le seuil `locksAt`
+atteint prime (`lockedBy: 'threshold'`). Côté API, le plus haut au jour du premier payout n'est pas
+connu (pas d'historique jour par jour dans le suivi) : on passe le **plus haut actuel**, plancher au
+moins aussi haut que la firm, donc prudent. La courbe de l'app (`floorSeries`) gèle, elle, avec le
+plus haut à la date de `payoutLockedSince`.

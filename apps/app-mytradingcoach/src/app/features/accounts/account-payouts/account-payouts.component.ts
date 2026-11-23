@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, inject, input, output, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ConfirmService } from '@mtc/front-ui';
-import { formatMoney } from '@mtc/shared';
+import { formatMoney, type PropFirmPayoutLockTrigger } from '@mtc/shared';
 import { AccountPayout, AccountsApi } from '@app/core/api/accounts.api';
 import { ToastService } from '@app/core/services/toast.service';
 import { apiErrorMessage } from '@app/core/utils/api-error';
@@ -28,6 +28,8 @@ export class AccountPayoutsComponent implements OnInit {
   readonly currency = input<string>('USD');
   /** Compte connecté au broker : payouts détectés, saisie masquée. */
   readonly connected = input(false);
+  /** Gel du plancher au premier payout du plan relié (#696) ; null = pas de gel au payout. */
+  readonly floorLock = input<PropFirmPayoutLockTrigger | null>(null);
   readonly changed = output<void>();
 
   private readonly api = inject(AccountsApi);

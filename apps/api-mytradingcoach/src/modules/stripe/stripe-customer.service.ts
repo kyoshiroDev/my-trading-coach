@@ -40,7 +40,7 @@ export class StripeCustomerService {
         { idempotencyKey: `customer-create-${userId}` },
       );
       customerId = customer.id;
-      this.logger.log(`Customer Stripe créé : ${customerId} | user: ${userId}`);
+      this.logger.log(`Customer Stripe créé : ${customerId}`);
     }
 
     await this.prisma.user.update({
