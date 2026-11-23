@@ -55,7 +55,6 @@
       </div>
     </div>
 
-
     @if (store.isLoading() && store.accounts().length === 0) {
       <div class="acct-empty">Chargement des comptes…</div>
     } @else if (store.loadError() && store.accounts().length === 0) {
@@ -131,7 +130,7 @@
         @let fb = tv.feedback()[a.id];
 
         <!-- `has-detail` : la ligne cache une info que les colonnes n'affichent pas (activité
-             d'un compte perso, règles du plan prop firm relié). Sans elle, le chevron n'a rien à déplier sur desktop, où les
+             d'un compte perso, règles du plan relié ou calcul de la marge d'un compte prop firm, #1225). Sans elle, le chevron n'a rien à déplier sur desktop, où les
              8 colonnes sont déjà à l'écran — il n'y sert qu'au repli mobile. -->
         <!-- --ac sur le BLOC (et non la seule ligne) : les sous-lignes du dépli (règles du plan,
              activité, synchro) héritent du même liseré que la ligne. -->

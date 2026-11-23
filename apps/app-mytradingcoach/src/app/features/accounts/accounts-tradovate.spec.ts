@@ -650,9 +650,16 @@ describe('Mes comptes — payout probable', () => {
 // #1225 : plus de note générale « Règles prop firm estimées » en tête de page ; chaque compte prop
 // firm porte le message de l'API qui le concerne (plan du catalogue, broker ou trades loggés).
 describe('Mes comptes — comment la marge est calculée, compte par compte (#1225)', () => {
+  beforeEach(() => TestBed.resetTestingModule());
+
   const manual = (id: string, disclaimer: string) => acct(id, 'Éval perso', {
     profitTarget: 3000, maxDrawdown: 2500,
-    metrics: { ...acct(id, '').metrics, objective: { target: 3000, current: 0, remaining: 3000, pct: 0 } as never, drawdown: { limit: 2500, used: 0, remaining: 2500, pct: 0, floor: 47500, rule: null } as never, disclaimer },
+    metrics: {
+      ...acct(id, '').metrics,
+      objective: { current: 0, target: 3000, pct: 0 },
+      drawdown: { type: 'TRAILING', floor: 47_500, margin: 2_500, maxDrawdown: 2_500, pct: 1, breached: false, source: 'manual', rule: null },
+      disclaimer,
+    },
   });
 
   it('aucune note générale en tête de page', () => {
