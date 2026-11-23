@@ -101,7 +101,8 @@
     </div>
   </div>
 
-  <a routerLink="/accounts" class="acct-add">
+  <!-- Ouvre la modale d'ajout de Mes comptes (avant : simple lien vers la page, sans modale). -->
+  <a routerLink="/accounts" [queryParams]="addAccountQuery" class="acct-add" aria-label="Ajouter un compte" data-testid="acct-add">
     <svg [lucideIcon]="PlusIcon" [size]="14"></svg>
     Compte
   </a>

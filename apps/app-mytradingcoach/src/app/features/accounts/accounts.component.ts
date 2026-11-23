@@ -16,6 +16,7 @@ import { FormsModule } from '@angular/forms';
 import { NgTemplateOutlet } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router, RouterLink } from '@angular/router';
+import { ADD_ACCOUNT_PARAM } from '../../shared/components/account-selector/add-account-link';
 import {
   LucideDynamicIcon,
   LucideUser as User,
@@ -462,6 +463,27 @@ export class AccountsComponent implements OnInit {
       this.store.selectedAccountId();
       untracked(() => this.deleteError.set(null));
     });
+    // « + Compte » du sélecteur de compte (toutes les pages) arrive ici avec `?ajout=1` : on ouvre
+    // la modale d'ajout, une fois les comptes chargés (le quota du plan en dépend). Le paramètre
+    // est retiré aussitôt lu : un rechargement ne rouvre pas la modale. Déjà sur la page, le lien
+    // ne recrée pas le composant : d'où l'abonnement aux paramètres plutôt qu'une lecture unique
+    // (racine du routeur, comme le retour Tradovate : les query params y sont communs).
+    this.router.routerState.root.queryParamMap.pipe(takeUntilDestroyed()).subscribe((params) => {
+      if (params.get(ADD_ACCOUNT_PARAM) !== '1') return;
+      this.createRequested.set(true);
+      this.router.navigate([], {
+        queryParams: { [ADD_ACCOUNT_PARAM]: null },
+        queryParamsHandling: 'merge',
+        replaceUrl: true,
+      });
+    });
+    effect(() => {
+      if (!this.createRequested() || !this.store.loaded()) return;
+      untracked(() => {
+        this.createRequested.set(false);
+        this.openCreate();
+      });
+    });
     // Un compte prop firm sans plan : le catalogue sert à lui proposer le sien.
     effect(() => {
       if (this.store.accounts().some((a) => this.isPropFirm(a.type) && !a.propFirmPlanId)) {
@@ -789,6 +811,8 @@ export class AccountsComponent implements OnInit {
   }
 
   // ── Formulaire create / edit ────────────────────────────────────────────
+  /** Demande d'ouverture venue de « + Compte » (`?ajout=1`), servie une fois les comptes chargés. */
+  private readonly createRequested = signal(false);
   protected openCreate(): void {
     // Quota du plan atteint → on propose l'upgrade au lieu d'ouvrir le formulaire.
     if (this.atLimit()) {

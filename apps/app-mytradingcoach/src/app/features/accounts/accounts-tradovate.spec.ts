@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { NO_ERRORS_SCHEMA, computed, signal } from '@angular/core';
 import { DecimalPipe, NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, convertToParamMap } from '@angular/router';
 import { of } from 'rxjs';
 import { AccountsComponent } from './accounts.component';
 import { AccountsApi, TradingAccount } from '../../core/api/accounts.api';
@@ -65,7 +65,8 @@ function setup(opts: {
     load: vi.fn(), sync: vi.fn(), selectThenSync: vi.fn(), disconnect: vi.fn(), setFeedback: vi.fn(),
   };
   const router = {
-    routerState: { snapshot: { root: { queryParams: opts.query ?? {} } } },
+    // `root.queryParamMap` : lien « + Compte » (?ajout=1), lu dès la création du composant.
+    routerState: { root: { queryParamMap: of(convertToParamMap({})) }, snapshot: { root: { queryParams: opts.query ?? {} } } },
     navigate: vi.fn(),
   };
   const store = {
