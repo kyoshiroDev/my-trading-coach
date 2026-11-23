@@ -634,6 +634,12 @@
     ],
     "firms": [
       "myfundedfutures"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture complète (lot 4, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://help.myfundedfutures.com/en/articles/13134709-rapid-plan-50k-a-comprehensive-look": {
@@ -643,6 +649,12 @@
     ],
     "firms": [
       "myfundedfutures"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture complète (lot 4, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://help.myfundedfutures.com/en/articles/16158363-rapid-eod-50k-a-comprehensive-look": {
@@ -652,6 +664,12 @@
     ],
     "firms": [
       "myfundedfutures"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture complète (lot 4, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://help.myfundedfutures.com/en/articles/16727601-rapid-eod-25k-a-comprehensive-look": {
@@ -661,6 +679,12 @@
     ],
     "firms": [
       "myfundedfutures"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture complète (lot 4, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://help.myfundedfutures.com/en/articles/8230009-news-trading-policy": {
@@ -670,6 +694,12 @@
     ],
     "firms": [
       "myfundedfutures"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture complète (lot 4, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://help.myfundedfutures.com/en/articles/8348565-end-of-day-eod-drawdown-explained": {
@@ -679,6 +709,12 @@
     ],
     "firms": [
       "myfundedfutures"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture complète (lot 4, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://help.myfundedfutures.com/en/articles/9558251-permitted-times-to-trade": {
@@ -688,6 +724,12 @@
     ],
     "firms": [
       "myfundedfutures"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture complète (lot 4, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://help.toponefutures.com/en/articles/10906950-maximum-contracts-explained": {
@@ -1789,42 +1831,70 @@
   "https://myfundedfutures.com/plans/builder": {
     "kind": "hash",
     "values": [
+      "7199cf86b76cf9ba",
       "d0bb1c21eb49d0ab",
       "ce0e8c930f45e2bf"
     ],
     "firms": [
       "myfundedfutures"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture complète (lot 4, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://myfundedfutures.com/plans/pro": {
     "kind": "hash",
     "values": [
+      "66ba9244e1bc337b",
       "b0538b3d4d1cfd74",
       "70991549f5dc6732"
     ],
     "firms": [
       "myfundedfutures"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture complète (lot 4, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://myfundedfutures.com/plans/rapid": {
     "kind": "hash",
     "values": [
+      "4d885a0314e0e15b",
       "a808f1f5dbe3b7ee",
       "a788009c3df6c750"
     ],
     "firms": [
       "myfundedfutures"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture complète (lot 4, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://myfundedfutures.com/plans/rapid-eod": {
     "kind": "hash",
     "values": [
+      "e19d19d58f8b2266",
       "c177c5a6f8305c7f",
       "e3b0c44298fc1c14",
       "6c08e59a6ed62a64"
     ],
     "firms": [
       "myfundedfutures"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 4, #1218) : prix Rapid EOD 25K / 50K 162 / 275 $."
+      }
     ]
   },
   "https://oneuptrader.helpscoutdocs.com/article/371-how-does-the-billing-work": {
@@ -2842,6 +2912,36 @@
       {
         "date": "2026-11-22",
         "modification": "Nouvelle source (lot 2, #1218) : nombre fixe de contrats pour les abonnements achetés depuis le 2026-11-02 → 7 plans earn2trade-*-nov02-* ajoutés."
+      }
+    ]
+  },
+  "https://help.myfundedfutures.com/en/articles/17035331-builder-plan-150k-comprehensive-guide": {
+    "kind": "date",
+    "values": [
+      "2026-09-25T20:41:25Z"
+    ],
+    "firms": [
+      "myfundedfutures"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture complète (lot 4, #1218) : aucune règle modifiée."
+      }
+    ]
+  },
+  "https://help.myfundedfutures.com/en/articles/17573707-comprehensive-look-into-redesigned-pro-plan": {
+    "kind": "date",
+    "values": [
+      "2026-11-19T23:52:48Z"
+    ],
+    "firms": [
+      "myfundedfutures"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 4, #1218, article modifié le 2026-11-19) : règles Pro 50/100/150K identiques ; variante « Pro 50k - One Day » toujours non couverte (déjà notée le 2026-10-22)."
       }
     ]
   }
