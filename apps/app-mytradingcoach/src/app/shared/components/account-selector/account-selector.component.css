@@ -272,6 +272,10 @@
     min-width: 0;
     width: max(280px, 100%);
   }
+  /* Seule entrée d'ajout sur téléphone depuis le retrait du bouton flottant de Mes comptes (#1226). */
+  .acct-add {
+    min-height: var(--tap-min);
+  }
 }
 
 /* Téléphone : deux lignes propres (#879). Le nom prend toute la largeur en haut ; dessous, le

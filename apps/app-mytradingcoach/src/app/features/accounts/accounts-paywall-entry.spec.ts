@@ -13,11 +13,15 @@
  *
  * Le trou de test : rien ne couvrait le chemin topbar → paywall. Ces tests vérifient les
  * deux entrées, y compris en vue « compte unique ».
+ *
+ * Depuis le retrait du bouton du topbar (doublon), l'entrée est « + Compte » du sélecteur de
+ * compte : lien `/accounts?ajout=1`, lu par la page qui appelle `openCreate()`.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { signal, NO_ERRORS_SCHEMA } from '@angular/core';
-import { of } from 'rxjs';
+import { BehaviorSubject, of } from 'rxjs';
+import { Router, convertToParamMap, type ParamMap } from '@angular/router';
 import { AccountsComponent } from './accounts.component';
 import { AccountsApi, TradingAccount } from '../../core/api/accounts.api';
 import { SelectedAccountStore } from '../../core/stores/selected-account.store';
@@ -43,8 +47,6 @@ function acct(id: string): TradingAccount {
  * sur `accounts.component.html`.
  */
 const TEMPLATE = `
-  <button data-testid="topbar-add" (click)="openCreate()">Ajouter un compte</button>
-
   @if (atLimit()) {
     <button data-testid="add-account-limit" (click)="showPlanModal.set(true)">
       Limite de {{ accountLimit() }} compte(s) atteinte
@@ -64,12 +66,17 @@ function setup(nbComptes: number, limite: number | null, vue: string | 'all') {
     isLoading: signal(false), loadError: signal(false), loaded: signal(true), load: vi.fn(),
   };
   const userStore = { isDemo: () => false, isPremium: () => limite === null, maxAccounts: signal(limite) };
+  // Paramètres de l'URL : « + Compte » du sélecteur mène à `/accounts?ajout=1`.
+  const params = new BehaviorSubject<ParamMap>(convertToParamMap({}));
+  // `snapshot` : lu par le retour Tradovate (ngOnInit).
+  const router = { routerState: { root: { queryParamMap: params }, snapshot: { root: { queryParams: {} } } }, navigate: vi.fn() };
 
   TestBed.configureTestingModule({
     providers: [
       { provide: AccountsApi, useValue: { create: vi.fn(() => of({ data: {} })), getAll: vi.fn(() => of({ data: [] })) } },
       { provide: SelectedAccountStore, useValue: store },
       { provide: UserStore, useValue: userStore },
+      { provide: Router, useValue: router },
     ],
   });
   TestBed.overrideComponent(AccountsComponent, {
@@ -85,30 +92,29 @@ function setup(nbComptes: number, limite: number | null, vue: string | 'all') {
     fixture,
     cmp: fixture.componentInstance as any,
     q: (id: string) => el.querySelector(`[data-testid="${id}"]`) as HTMLButtonElement | null,
+    plusCompte: () => {
+      params.next(convertToParamMap({ ajout: '1' }));
+      fixture.detectChanges();
+    },
   };
 }
 
-describe('Comptes — le bouton du topbar mène au paywall au quota', () => {
+describe('Comptes — « + Compte » du sélecteur mène au paywall au quota', () => {
   beforeEach(() => TestBed.resetTestingModule());
 
-  it('FREE au quota : le bouton reste présent et ouvre la modale Premium', () => {
-    const { q, cmp, fixture } = setup(1, 1, 'a0');
+  it('FREE au quota : « + Compte » ouvre la modale Premium', () => {
+    const { q, cmp, plusCompte } = setup(1, 1, 'a0');
 
-    const bouton = q('topbar-add');
-    expect(bouton, 'Bouton retiré du DOM : plus aucun chemin vers l\'upsell').toBeTruthy();
-
-    bouton!.click();
-    fixture.detectChanges();
+    plusCompte();
 
     expect(cmp.showPlanModal()).toBe(true);
     expect(q('plan-modal')).toBeTruthy();
   });
 
-  it('sous le quota : le même bouton ouvre le formulaire, pas la modale', () => {
-    const { q, cmp, fixture } = setup(1, null, 'all'); // Premium, illimité
+  it('sous le quota : « + Compte » ouvre le formulaire, pas la modale', () => {
+    const { cmp, plusCompte } = setup(1, null, 'all'); // Premium, illimité
 
-    q('topbar-add')!.click();
-    fixture.detectChanges();
+    plusCompte();
 
     expect(cmp.showPlanModal()).toBe(false);
     expect(cmp.formOpen()).toBe(true);
