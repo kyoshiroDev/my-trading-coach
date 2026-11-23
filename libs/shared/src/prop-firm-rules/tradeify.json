@@ -101,6 +101,7 @@
             "trails_on": "balance",
             "locks_at": 26100,
             "locked_floor": 25100,
+            "locks_on_first_payout": "request",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "Trailing EOD, appliqué en temps réel sur la valeur de liquidation nette (latent compris), hard breach. Verrouillage (comptes funded uniquement) quand le solde de fin de journée atteint 26100 $, ou immédiatement à la première demande de payout : plancher fixe à 25100 $."
@@ -238,6 +239,7 @@
             "trails_on": "balance",
             "locks_at": 52100,
             "locked_floor": 50100,
+            "locks_on_first_payout": "request",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "Trailing EOD, appliqué en temps réel sur la valeur de liquidation nette (latent compris), hard breach. Verrouillage (comptes funded uniquement) quand le solde de fin de journée atteint 52100 $, ou immédiatement à la première demande de payout : plancher fixe à 50100 $."
@@ -378,6 +380,7 @@
             "trails_on": "balance",
             "locks_at": 103600,
             "locked_floor": 100100,
+            "locks_on_first_payout": "request",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "Trailing EOD, appliqué en temps réel sur la valeur de liquidation nette (latent compris), hard breach. Verrouillage (comptes funded uniquement) quand le solde de fin de journée atteint 103600 $, ou immédiatement à la première demande de payout : plancher fixe à 100100 $."
@@ -518,6 +521,7 @@
             "trails_on": "balance",
             "locks_at": 155100,
             "locked_floor": 150100,
+            "locks_on_first_payout": "request",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "Trailing EOD, appliqué en temps réel sur la valeur de liquidation nette (latent compris), hard breach. Verrouillage (comptes funded uniquement) quand le solde de fin de journée atteint 155100 $, ou immédiatement à la première demande de payout : plancher fixe à 150100 $."
@@ -599,6 +603,7 @@
             "trails_on": "balance",
             "locks_at": 26100,
             "locked_floor": 25100,
+            "locks_on_first_payout": "request",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "Trailing EOD, appliqué en temps réel sur la valeur de liquidation nette (latent compris), hard breach. Verrouillage (comptes funded uniquement) quand le solde de fin de journée atteint 26100 $, ou immédiatement à la première demande de payout : plancher fixe à 25100 $."
@@ -704,6 +709,7 @@
             "trails_on": "balance",
             "locks_at": 52100,
             "locked_floor": 50100,
+            "locks_on_first_payout": "request",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "Trailing EOD, appliqué en temps réel sur la valeur de liquidation nette (latent compris), hard breach. Verrouillage (comptes funded uniquement) quand le solde de fin de journée atteint 52100 $, ou immédiatement à la première demande de payout : plancher fixe à 50100 $."
@@ -812,6 +818,7 @@
             "trails_on": "balance",
             "locks_at": 104100,
             "locked_floor": 100100,
+            "locks_on_first_payout": "request",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "Trailing EOD, appliqué en temps réel sur la valeur de liquidation nette (latent compris), hard breach. Verrouillage (comptes funded uniquement) quand le solde de fin de journée atteint 104100 $, ou immédiatement à la première demande de payout : plancher fixe à 100100 $."
@@ -920,6 +927,7 @@
             "trails_on": "balance",
             "locks_at": 155350,
             "locked_floor": 150100,
+            "locks_on_first_payout": "request",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "Trailing EOD, appliqué en temps réel sur la valeur de liquidation nette (latent compris), hard breach. Verrouillage (comptes funded uniquement) quand le solde de fin de journée atteint 155350 $, ou immédiatement à la première demande de payout : plancher fixe à 150100 $. 5 250 $ pour les comptes actuels ; les 6 000 $ (déclenchement 156 100 $) ne valent que pour les 150K achetés avant le nouveau dashboard, qui gardent aussi une DLL de 3 750 $ (article Lightning Funded, section « Legacy 150K Risk Parameters »)."
@@ -1050,6 +1058,7 @@
             "trails_on": "balance",
             "locks_at": 26100,
             "locked_floor": 25100,
+            "locks_on_first_payout": "request",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "Trailing EOD, appliqué en temps réel sur la valeur de liquidation nette (latent compris), hard breach. Verrouillage (comptes funded uniquement) quand le solde de fin de journée atteint 26100 $, ou immédiatement à la première demande de payout : plancher fixe à 25100 $."
@@ -1176,6 +1185,7 @@
             "trails_on": "balance",
             "locks_at": 26100,
             "locked_floor": 25100,
+            "locks_on_first_payout": "request",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "Trailing EOD, appliqué en temps réel sur la valeur de liquidation nette (latent compris), hard breach. Verrouillage (comptes funded uniquement) quand le solde de fin de journée atteint 26100 $, ou immédiatement à la première demande de payout : plancher fixe à 25100 $."
@@ -1310,6 +1320,7 @@
             "trails_on": "balance",
             "locks_at": 26100,
             "locked_floor": 25100,
+            "locks_on_first_payout": "request",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "Trailing EOD, appliqué en temps réel sur la valeur de liquidation nette (latent compris), hard breach. Verrouillage (comptes funded uniquement) quand le solde de fin de journée atteint 26100 $, ou immédiatement à la première demande de payout : plancher fixe à 25100 $."
@@ -1444,6 +1455,7 @@
             "trails_on": "balance",
             "locks_at": 26100,
             "locked_floor": 25100,
+            "locks_on_first_payout": "request",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "Trailing EOD, appliqué en temps réel sur la valeur de liquidation nette (latent compris), hard breach. Verrouillage (comptes funded uniquement) quand le solde de fin de journée atteint 26100 $, ou immédiatement à la première demande de payout : plancher fixe à 25100 $."
@@ -1570,6 +1582,7 @@
             "trails_on": "balance",
             "locks_at": 52100,
             "locked_floor": 50100,
+            "locks_on_first_payout": "request",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "Trailing EOD, appliqué en temps réel sur la valeur de liquidation nette (latent compris), hard breach. Verrouillage (comptes funded uniquement) quand le solde de fin de journée atteint 52100 $, ou immédiatement à la première demande de payout : plancher fixe à 50100 $."
@@ -1702,6 +1715,7 @@
             "trails_on": "balance",
             "locks_at": 52100,
             "locked_floor": 50100,
+            "locks_on_first_payout": "request",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "Trailing EOD, appliqué en temps réel sur la valeur de liquidation nette (latent compris), hard breach. Verrouillage (comptes funded uniquement) quand le solde de fin de journée atteint 52100 $, ou immédiatement à la première demande de payout : plancher fixe à 50100 $."
@@ -1842,6 +1856,7 @@
             "trails_on": "balance",
             "locks_at": 52100,
             "locked_floor": 50100,
+            "locks_on_first_payout": "request",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "Trailing EOD, appliqué en temps réel sur la valeur de liquidation nette (latent compris), hard breach. Verrouillage (comptes funded uniquement) quand le solde de fin de journée atteint 52100 $, ou immédiatement à la première demande de payout : plancher fixe à 50100 $."
@@ -1982,6 +1997,7 @@
             "trails_on": "balance",
             "locks_at": 52100,
             "locked_floor": 50100,
+            "locks_on_first_payout": "request",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "Trailing EOD, appliqué en temps réel sur la valeur de liquidation nette (latent compris), hard breach. Verrouillage (comptes funded uniquement) quand le solde de fin de journée atteint 52100 $, ou immédiatement à la première demande de payout : plancher fixe à 50100 $."
@@ -2114,6 +2130,7 @@
             "trails_on": "balance",
             "locks_at": 103100,
             "locked_floor": 100100,
+            "locks_on_first_payout": "request",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "Trailing EOD, appliqué en temps réel sur la valeur de liquidation nette (latent compris), hard breach. Verrouillage (comptes funded uniquement) quand le solde de fin de journée atteint 103100 $, ou immédiatement à la première demande de payout : plancher fixe à 100100 $."
@@ -2252,6 +2269,7 @@
             "trails_on": "balance",
             "locks_at": 103100,
             "locked_floor": 100100,
+            "locks_on_first_payout": "request",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "Trailing EOD, appliqué en temps réel sur la valeur de liquidation nette (latent compris), hard breach. Verrouillage (comptes funded uniquement) quand le solde de fin de journée atteint 103100 $, ou immédiatement à la première demande de payout : plancher fixe à 100100 $."
@@ -2398,6 +2416,7 @@
             "trails_on": "balance",
             "locks_at": 102600,
             "locked_floor": 100100,
+            "locks_on_first_payout": "request",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "Trailing EOD, appliqué en temps réel sur la valeur de liquidation nette (latent compris), hard breach. Verrouillage (comptes funded uniquement) quand le solde de fin de journée atteint 102600 $, ou immédiatement à la première demande de payout : plancher fixe à 100100 $."
@@ -2544,6 +2563,7 @@
             "trails_on": "balance",
             "locks_at": 102600,
             "locked_floor": 100100,
+            "locks_on_first_payout": "request",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "Trailing EOD, appliqué en temps réel sur la valeur de liquidation nette (latent compris), hard breach. Verrouillage (comptes funded uniquement) quand le solde de fin de journée atteint 102600 $, ou immédiatement à la première demande de payout : plancher fixe à 100100 $."
@@ -2682,6 +2702,7 @@
             "trails_on": "balance",
             "locks_at": 154600,
             "locked_floor": 150100,
+            "locks_on_first_payout": "request",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "Trailing EOD, appliqué en temps réel sur la valeur de liquidation nette (latent compris), hard breach. Verrouillage (comptes funded uniquement) quand le solde de fin de journée atteint 154600 $, ou immédiatement à la première demande de payout : plancher fixe à 150100 $."
@@ -2826,6 +2847,7 @@
             "trails_on": "balance",
             "locks_at": 154600,
             "locked_floor": 150100,
+            "locks_on_first_payout": "request",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "Trailing EOD, appliqué en temps réel sur la valeur de liquidation nette (latent compris), hard breach. Verrouillage (comptes funded uniquement) quand le solde de fin de journée atteint 154600 $, ou immédiatement à la première demande de payout : plancher fixe à 150100 $."
@@ -2978,6 +3000,7 @@
             "trails_on": "balance",
             "locks_at": 153600,
             "locked_floor": 150100,
+            "locks_on_first_payout": "request",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "Trailing EOD, appliqué en temps réel sur la valeur de liquidation nette (latent compris), hard breach. Verrouillage (comptes funded uniquement) quand le solde de fin de journée atteint 153600 $, ou immédiatement à la première demande de payout : plancher fixe à 150100 $."
@@ -3130,6 +3153,7 @@
             "trails_on": "balance",
             "locks_at": 153600,
             "locked_floor": 150100,
+            "locks_on_first_payout": "request",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "Trailing EOD, appliqué en temps réel sur la valeur de liquidation nette (latent compris), hard breach. Verrouillage (comptes funded uniquement) quand le solde de fin de journée atteint 153600 $, ou immédiatement à la première demande de payout : plancher fixe à 150100 $."
@@ -3274,6 +3298,7 @@
             "trails_on": "balance",
             "locks_at": 26100,
             "locked_floor": 25100,
+            "locks_on_first_payout": "request",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "Trailing EOD, appliqué en temps réel sur la valeur de liquidation nette (latent compris), hard breach. Verrouillage (comptes funded uniquement) quand le solde de fin de journée atteint 26100 $, ou immédiatement à la première demande de payout : plancher fixe à 25100 $."
@@ -3400,6 +3425,7 @@
             "trails_on": "balance",
             "locks_at": 52100,
             "locked_floor": 50100,
+            "locks_on_first_payout": "request",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "Trailing EOD, appliqué en temps réel sur la valeur de liquidation nette (latent compris), hard breach. Verrouillage (comptes funded uniquement) quand le solde de fin de journée atteint 52100 $, ou immédiatement à la première demande de payout : plancher fixe à 50100 $."
@@ -3532,6 +3558,7 @@
             "trails_on": "balance",
             "locks_at": 103100,
             "locked_floor": 100100,
+            "locks_on_first_payout": "request",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "Trailing EOD, appliqué en temps réel sur la valeur de liquidation nette (latent compris), hard breach. Verrouillage (comptes funded uniquement) quand le solde de fin de journée atteint 103100 $, ou immédiatement à la première demande de payout : plancher fixe à 100100 $."
@@ -3670,6 +3697,7 @@
             "trails_on": "balance",
             "locks_at": 154600,
             "locked_floor": 150100,
+            "locks_on_first_payout": "request",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "Trailing EOD, appliqué en temps réel sur la valeur de liquidation nette (latent compris), hard breach. Verrouillage (comptes funded uniquement) quand le solde de fin de journée atteint 154600 $, ou immédiatement à la première demande de payout : plancher fixe à 150100 $."
@@ -3822,6 +3850,7 @@
             "trails_on": "balance",
             "locks_at": 26100,
             "locked_floor": 25100,
+            "locks_on_first_payout": "request",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "Trailing EOD, appliqué en temps réel sur la valeur de liquidation nette (latent compris), hard breach. Verrouillage (comptes funded uniquement) quand le solde de fin de journée atteint 26100 $, ou immédiatement à la première demande de payout : plancher fixe à 25100 $."
@@ -3956,6 +3985,7 @@
             "trails_on": "balance",
             "locks_at": 52100,
             "locked_floor": 50100,
+            "locks_on_first_payout": "request",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "Trailing EOD, appliqué en temps réel sur la valeur de liquidation nette (latent compris), hard breach. Verrouillage (comptes funded uniquement) quand le solde de fin de journée atteint 52100 $, ou immédiatement à la première demande de payout : plancher fixe à 50100 $."
@@ -4096,6 +4126,7 @@
             "trails_on": "balance",
             "locks_at": 102600,
             "locked_floor": 100100,
+            "locks_on_first_payout": "request",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "Trailing EOD, appliqué en temps réel sur la valeur de liquidation nette (latent compris), hard breach. Verrouillage (comptes funded uniquement) quand le solde de fin de journée atteint 102600 $, ou immédiatement à la première demande de payout : plancher fixe à 100100 $."
@@ -4242,6 +4273,7 @@
             "trails_on": "balance",
             "locks_at": 153600,
             "locked_floor": 150100,
+            "locks_on_first_payout": "request",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "Trailing EOD, appliqué en temps réel sur la valeur de liquidation nette (latent compris), hard breach. Verrouillage (comptes funded uniquement) quand le solde de fin de journée atteint 153600 $, ou immédiatement à la première demande de payout : plancher fixe à 150100 $."
@@ -4402,6 +4434,7 @@
             "trails_on": "balance",
             "locks_at": 308100,
             "locked_floor": 300100,
+            "locks_on_first_payout": "approval",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "Trailing EOD, appliqué en temps réel sur la valeur de liquidation nette (latent compris), hard breach. Verrouillage quand le solde de fin de journée atteint 308100 $, ou dès l'approbation d'un payout pris avant ce seuil : plancher fixe à 300100 $."
@@ -4708,6 +4741,7 @@
             "trails_on": "balance",
             "locks_at": 306100,
             "locked_floor": 300100,
+            "locks_on_first_payout": "approval",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "Trailing EOD, appliqué en temps réel sur la valeur de liquidation nette (latent compris), hard breach. Verrouillage quand le solde de fin de journée atteint 306100 $, ou dès l'approbation d'un payout pris avant ce seuil : plancher fixe à 300100 $."
