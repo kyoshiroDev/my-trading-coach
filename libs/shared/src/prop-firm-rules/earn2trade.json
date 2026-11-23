@@ -22,7 +22,7 @@
   "plans": [
     {
       "id": "earn2trade-tcp-nov02-25k",
-      "plan_name": "Trader Career Path (achat depuis le 2026-11-02)",
+      "plan_name": "Trader Career Path",
       "account_size": 25000,
       "currency": "USD",
       "availability": "public",
@@ -154,7 +154,7 @@
     },
     {
       "id": "earn2trade-tcp-nov02-50k",
-      "plan_name": "Trader Career Path (achat depuis le 2026-11-02)",
+      "plan_name": "Trader Career Path",
       "account_size": 50000,
       "currency": "USD",
       "availability": "public",
@@ -286,7 +286,7 @@
     },
     {
       "id": "earn2trade-tcp-nov02-100k",
-      "plan_name": "Trader Career Path (achat depuis le 2026-11-02)",
+      "plan_name": "Trader Career Path",
       "account_size": 100000,
       "currency": "USD",
       "availability": "public",
@@ -418,7 +418,7 @@
     },
     {
       "id": "earn2trade-gauntlet-nov02-50k",
-      "plan_name": "Gauntlet Mini (achat depuis le 2026-11-02)",
+      "plan_name": "Gauntlet Mini",
       "account_size": 50000,
       "currency": "USD",
       "availability": "public",
@@ -550,7 +550,7 @@
     },
     {
       "id": "earn2trade-gauntlet-nov02-100k",
-      "plan_name": "Gauntlet Mini (achat depuis le 2026-11-02)",
+      "plan_name": "Gauntlet Mini",
       "account_size": 100000,
       "currency": "USD",
       "availability": "public",
@@ -682,7 +682,7 @@
     },
     {
       "id": "earn2trade-gauntlet-nov02-150k",
-      "plan_name": "Gauntlet Mini (achat depuis le 2026-11-02)",
+      "plan_name": "Gauntlet Mini",
       "account_size": 150000,
       "currency": "USD",
       "availability": "public",
@@ -814,7 +814,7 @@
     },
     {
       "id": "earn2trade-gauntlet-nov02-200k",
-      "plan_name": "Gauntlet Mini (achat depuis le 2026-11-02)",
+      "plan_name": "Gauntlet Mini",
       "account_size": 200000,
       "currency": "USD",
       "availability": "public",
@@ -946,7 +946,7 @@
     },
     {
       "id": "earn2trade-tcp-25k",
-      "plan_name": "Trader Career Path (achat avant le 2026-11-02)",
+      "plan_name": "Trader Career Path (achat avant le 02/11/2026)",
       "account_size": 25000,
       "currency": "USD",
       "availability": "public",
@@ -1104,7 +1104,7 @@
     },
     {
       "id": "earn2trade-tcp-50k",
-      "plan_name": "Trader Career Path (achat avant le 2026-11-02)",
+      "plan_name": "Trader Career Path (achat avant le 02/11/2026)",
       "account_size": 50000,
       "currency": "USD",
       "availability": "public",
@@ -1274,7 +1274,7 @@
     },
     {
       "id": "earn2trade-tcp-100k",
-      "plan_name": "Trader Career Path (achat avant le 2026-11-02)",
+      "plan_name": "Trader Career Path (achat avant le 02/11/2026)",
       "account_size": 100000,
       "currency": "USD",
       "availability": "public",
@@ -1456,7 +1456,7 @@
     },
     {
       "id": "earn2trade-gauntlet-50k",
-      "plan_name": "Gauntlet Mini (achat avant le 2026-11-02)",
+      "plan_name": "Gauntlet Mini (achat avant le 02/11/2026)",
       "account_size": 50000,
       "currency": "USD",
       "availability": "public",
@@ -1626,7 +1626,7 @@
     },
     {
       "id": "earn2trade-gauntlet-100k",
-      "plan_name": "Gauntlet Mini (achat avant le 2026-11-02)",
+      "plan_name": "Gauntlet Mini (achat avant le 02/11/2026)",
       "account_size": 100000,
       "currency": "USD",
       "availability": "public",
@@ -1808,7 +1808,7 @@
     },
     {
       "id": "earn2trade-gauntlet-150k",
-      "plan_name": "Gauntlet Mini (achat avant le 2026-11-02)",
+      "plan_name": "Gauntlet Mini (achat avant le 02/11/2026)",
       "account_size": 150000,
       "currency": "USD",
       "availability": "public",
@@ -1990,7 +1990,7 @@
     },
     {
       "id": "earn2trade-gauntlet-200k",
-      "plan_name": "Gauntlet Mini (achat avant le 2026-11-02)",
+      "plan_name": "Gauntlet Mini (achat avant le 02/11/2026)",
       "account_size": 200000,
       "currency": "USD",
       "availability": "public",

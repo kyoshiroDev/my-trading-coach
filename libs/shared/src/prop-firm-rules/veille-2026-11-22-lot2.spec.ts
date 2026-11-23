@@ -52,8 +52,8 @@ describe('veille du 2026-11-22', () => {
   ])('Earn2Trade %s %s depuis le 02/11 : contrats fixes, le reste copié du plan d’origine', (kind, size, minis, micros) => {
     const before = get(`earn2trade-${kind}-${size}`);
     const after = get(`earn2trade-${kind}-nov02-${size}`);
-    expect(before.plan_name).toContain('achat avant le 2026-11-02');
-    expect(after.plan_name).toContain('achat depuis le 2026-11-02');
+    expect(before.plan_name).toContain('achat avant le 02/11/2026');
+    expect(after.plan_name).toBe(kind === 'tcp' ? 'Trader Career Path' : 'Gauntlet Mini');
     expect(after.phases).toHaveLength(before.phases.length);
     after.phases.forEach((phase, i) => {
       expect(phase.max_contracts).toMatchObject({ minis, micros, scaling: false, tiers: null });
