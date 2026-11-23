@@ -105,9 +105,10 @@ export class StripeWebhookService {
         this.config.getOrThrow<string>('STRIPE_WEBHOOK_SECRET'),
       );
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'signature invalide';
-      this.logger.warn(`Webhook rejeté : ${message}`);
-      throw new BadRequestException(`Webhook invalide : ${message}`);
+      // Nom de l'erreur seulement (#1251), réponse fixe : le message (signature, ou clé de
+      // configuration absente) ne part ni au journal ni à l'appelant.
+      this.logger.warn(`Webhook rejeté : ${err instanceof Error ? err.name : 'Error'}`);
+      throw new BadRequestException('Webhook invalide : signature invalide');
     }
 
     this.logger.log(`Webhook reçu : ${event.type} [${event.id}]`);
@@ -143,7 +144,7 @@ export class StripeWebhookService {
       await this.unmarkEvent(event.id);
       this.logger.error(
         `Enqueue impossible pour l'event ${event.id} (${event.type}) : ${
-          err instanceof Error ? err.message : String(err)
+          err instanceof Error ? err.name : 'Error'
         }. Marque d'idempotence retirée → la redélivrance Stripe sera retraitée.`,
       );
       throw err;
@@ -493,7 +494,7 @@ export class StripeWebhookService {
       })
       .catch((err: unknown) =>
         this.logger.warn(
-          `Reçu de paiement non envoyé (invoice ${invoice.id}) : ${err instanceof Error ? err.message : err}`,
+          `Reçu de paiement non envoyé (invoice ${invoice.id}) : ${err instanceof Error ? err.name : 'Error'}`,
         ),
       );
   }
@@ -564,21 +565,26 @@ export class StripeWebhookService {
    * qu'un échec ici ne prive pas l'abonné du reste.
    */
   private async cancelSupersededTrials(synced: SyncedSubscription): Promise<void> {
+    // Deux listes (#1251) : le journal ne garde que le nom de l'erreur ; l'alerte admin (e-mail
+    // interne) garde le message Stripe, utile pour annuler l'essai à la main.
     const failed: string[] = [];
+    const logged: string[] = [];
+    const fail = (what: string, err: unknown) => {
+      failed.push(`${what} (${err instanceof Error ? err.message : String(err)})`);
+      logged.push(`${what} (${err instanceof Error ? err.name : 'Error'})`);
+    };
     const trials = await this.stripe.subscriptions
       .list({ customer: synced.customerId, status: 'trialing', limit: 10 })
-      .catch((err: Error) => {
-        failed.push(`liste des essais (${err.message})`);
+      .catch((err: unknown) => {
+        fail('liste des essais', err);
         return null;
       });
     for (const t of trials?.data ?? []) {
       if (t.id === synced.subscriptionId) continue;
-      await this.stripe.subscriptions.cancel(t.id).catch((err: Error) => {
-        failed.push(`${t.id} (${err.message})`);
-      });
+      await this.stripe.subscriptions.cancel(t.id).catch((err: unknown) => fail(t.id, err));
     }
     if (failed.length === 0) return;
-    this.logger.error(`[FONDATEUR] Essai non annulé après bascule | sub: ${synced.subscriptionId} : ${failed.join(', ')}`);
+    this.logger.error(`[FONDATEUR] Essai non annulé après bascule | sub: ${synced.subscriptionId} : ${logged.join(', ')}`);
     await this.sendOnce(`founder-trial-cancel:${synced.subscriptionId}`, () =>
       this.resend.sendAdminAlert(
         'Offre fondateur : essai au prix normal non annulé',
@@ -729,8 +735,8 @@ export class StripeWebhookService {
 
     if (founderSub) await this.founders.refundFirstPayment(user.id);
     else await this.partners.release(subscriptionId);
-    await this.stripe.subscriptions.cancel(subscriptionId).catch((err: Error) =>
-      this.logger.warn(`Abonnement ${subscriptionId} non annulé après remboursement : ${err.message}`),
+    await this.stripe.subscriptions.cancel(subscriptionId).catch((err: unknown) =>
+      this.logger.warn(`Abonnement ${subscriptionId} non annulé après remboursement : ${err instanceof Error ? err.name : 'Error'}`),
     );
   }
 

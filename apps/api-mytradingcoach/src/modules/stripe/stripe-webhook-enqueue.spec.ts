@@ -1,4 +1,5 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
+import { BadRequestException, Logger } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { StripeWebhookService } from './stripe-webhook.service';
 
@@ -95,5 +96,46 @@ describe('StripeWebhookService.handleWebhook — idempotence vs enqueue', () => 
     expect(res).toEqual({ received: true });
     expect(queue.add, 'Un event déjà traité ne doit pas être ré-enfilé').not.toHaveBeenCalled();
     expect(stripeEvent.delete, 'Rien à compenser : la marque appartient au 1er passage').not.toHaveBeenCalled();
+  });
+});
+
+/** #1251 : enqueue impossible : nom de l'erreur seulement dans le journal. */
+describe('StripeWebhookService.handleWebhook — enqueue raté : nom de l’erreur seulement (#1251)', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  it('erreur dont le message recopie une donnée → journal avec le nom seul', async () => {
+    const error = vi.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
+    vi.spyOn(Logger.prototype, 'log').mockImplementation(() => undefined);
+    const { svc, queue } = makeSvc({ enqueueFails: true });
+    queue.add.mockRejectedValue(Object.assign(new Error('READONLY client@exemple.test'), { name: 'ReplyError' }));
+    await expect(svc.handleWebhook(Buffer.from('{}'), 'sig')).rejects.toThrow();
+    const lines = error.mock.calls.map((c) => String(c[0]));
+    expect(lines.find((t) => t.startsWith('Enqueue impossible'))).toBe(
+      `Enqueue impossible pour l'event ${EVENT.id} (${EVENT.type}) : ReplyError. Marque d'idempotence retirée → la redélivrance Stripe sera retraitée.`,
+    );
+    // Contre-épreuve : le message de l'erreur n'est pas recopié.
+    expect(lines.join('\n')).not.toContain('client@exemple.test');
+  });
+});
+
+/** #1251 : webhook rejeté : nom de l'erreur au journal, réponse fixe. */
+describe('StripeWebhookService.handleWebhook — webhook rejeté sans le message de l’erreur (#1251)', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  it('clé de configuration absente → journal avec le nom seul, réponse 400 au texte fixe', async () => {
+    const warn = vi.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
+    const { svc } = makeSvc();
+    const config = (svc as unknown as { config: { getOrThrow: ReturnType<typeof vi.fn> } }).config;
+    config.getOrThrow.mockImplementation(() => {
+      throw Object.assign(new Error('Configuration key "STRIPE_WEBHOOK_SECRET" does not exist'), { name: 'TypeError' });
+    });
+    const rejected = await svc.handleWebhook(Buffer.from('{}'), 'sig').catch((e: unknown) => e);
+    // Réponse exacte (pas une sous-chaîne) : rien du message d'origine n'est ajouté.
+    expect(rejected).toBeInstanceOf(BadRequestException);
+    expect((rejected as BadRequestException).message).toBe('Webhook invalide : signature invalide');
+    const lines = warn.mock.calls.map((c) => String(c[0]));
+    expect(lines).toContain('Webhook rejeté : TypeError');
+    // Contre-épreuve : le message n'est ni au journal ni dans la réponse.
+    expect(lines.join('\n')).not.toContain('STRIPE_WEBHOOK_SECRET');
   });
 });

@@ -438,3 +438,31 @@ describe('StripeWebhookService — journaux sans identifiant d’utilisateur (#7
     expect(lines.join('\n')).not.toContain('trader@exemple.test');
   });
 });
+
+/** #1251 : reçu de paiement non envoyé : nom de l'erreur seulement (le message Resend recopie l'adresse). */
+describe('StripeWebhookService — reçu non envoyé : nom de l’erreur seulement (#1251)', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  it('erreur Resend avec l’adresse dans le message → journal avec le nom seul', async () => {
+    const warn = vi.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
+    vi.spyOn(Logger.prototype, 'log').mockImplementation(() => undefined);
+    const ctx = makeSvc();
+    ctx.retrieve.mockResolvedValue(subscription());
+    ctx.prisma.user.findUnique.mockResolvedValue({ id: 'user_1', email: 'client@exemple.test', name: 'U', trialUsed: false });
+    ctx.resend.sendPaymentSucceeded.mockRejectedValue(
+      Object.assign(new Error('Invalid `to` field: client@exemple.test'), { name: 'ResendError' }),
+    );
+    await ctx.svc.processWebhookEvent({
+      type: 'invoice.payment_succeeded',
+      data: { object: {
+        id: 'in_1251', customer: 'cus_1', billing_reason: 'subscription_cycle', amount_paid: 4900, currency: 'eur',
+        hosted_invoice_url: 'https://invoice.stripe.com/i/in_1251', parent: { subscription_details: { subscription: 'sub_1' } },
+      } },
+    } as any);
+    expect(ctx.resend.sendPaymentSucceeded).toHaveBeenCalledOnce();
+    const lines = warn.mock.calls.map((c) => String(c[0]));
+    expect(lines).toContain('Reçu de paiement non envoyé (invoice in_1251) : ResendError');
+    // Contre-épreuve : ni le message ni l'adresse.
+    expect(lines.join('\n')).not.toContain('client@exemple.test');
+  });
+});
