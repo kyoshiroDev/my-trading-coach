@@ -76,8 +76,7 @@ prod ne serait pas vue par `--check`. Dans un nouveau terminal, redéfinir `ID` 
    en archive tar vers l'ordinateur, puis effacés du conteneur. Rien n'est copié sur l'hôte du VPS.
 
    ```bash
-   : "${ID:?ID non défini}"
-   ssh greg@149.202.40.240 "docker exec -i mtc_postgres sh -c 'rm -rf /tmp/mtc-export-$ID && mkdir -m 700 /tmp/mtc-export-$ID && psql -X -q -U mtc_readonly -d mytradingcoach_prod > /dev/null && tar -C /tmp -cf - mtc-export-$ID; rc=\$?; rm -rf /tmp/mtc-export-$ID; exit \$rc'" < export.sql > export.tar
+   [[ $ID =~ ^c[a-z0-9]{20,32}$ ]] && ssh greg@149.202.40.240 "docker exec -i mtc_postgres sh -c 'rm -rf /tmp/mtc-export-$ID && mkdir -m 700 /tmp/mtc-export-$ID && psql -X -q -U mtc_readonly -d mytradingcoach_prod > /dev/null && tar -C /tmp -cf - mtc-export-$ID; rc=\$?; rm -rf /tmp/mtc-export-$ID; exit \$rc'" < export.sql > export.tar
    ```
 
    Attendu : aucune sortie, `export.tar` de quelques ko ou plus. En cas d'erreur (`ERROR: division by
@@ -94,8 +93,7 @@ prod ne serait pas vue par `--check`. Dans un nouveau terminal, redéfinir `ID` 
    vérification :
 
    ```bash
-   : "${ID:?ID non défini}"
-   ssh greg@149.202.40.240 "docker exec mtc_postgres rm -rf /tmp/mtc-export-$ID"
+   [[ $ID =~ ^c[a-z0-9]{20,32}$ ]] && ssh greg@149.202.40.240 "docker exec mtc_postgres rm -rf /tmp/mtc-export-$ID"
    ```
 
 5. **Contrôle rapide** : `tar -xf export.tar`, ouvrir `mtc-export-$ID/LISEZMOI.txt` et `compte.csv`
