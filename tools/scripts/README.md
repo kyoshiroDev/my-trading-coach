@@ -18,6 +18,7 @@ Typecheck : `pnpm nx typecheck tools-scripts`.
 | `watch-prop-firm-sources.ts` | Veille des sources du catalogue prop firm (articles modifiés, firms à revérifier) ; `--update` enregistre le relevé. Lancé chaque lundi par le workflow « Veille règles prop firm ». | `pnpm prop-firms:watch [--update]` |
 | `ops/ensure-referral-coupon.ts` | Crée (idempotent) les deux coupons de parrainage dans Stripe. | idem, `ops/ensure-referral-coupon.ts` |
 | `ops/preview-trial-emails.ts` | Aperçu des e-mails J+11 et fin d'essai d'inscription (#769) avec les vrais gabarits : HTML dans `--out`, envoi `[APERÇU]` à `--to` (refusé avec l'env de prod). | `pnpm exec tsx --env-file=apps/api-mytradingcoach/.env --tsconfig tools/scripts/tsconfig.check.json tools/scripts/ops/preview-trial-emails.ts --out <dossier> [--to <adresse>]` |
+| `ops/export-user-data.mjs` | Export RGPD des données d'un compte (#825) : SQL psql en lecture seule, un CSV par table + `LISEZMOI.txt` ; `--check` vérifie que chaque table et colonne liée à un compte est classée. **Lancé par Greg** (procédure `docs/ops/export-donnees-sur-demande.md`). | `node tools/scripts/ops/export-user-data.mjs --check` puis `node tools/scripts/ops/export-user-data.mjs <userId> > export.sql` |
 | `ops/send-welcome.mjs` | Envoie l'email de bienvenue (test de rendu Resend). | `node tools/scripts/ops/send-welcome.mjs <email>` |
 | `ops/send-debrief-email.mjs` | Envoie un email de débrief hebdo d'exemple. | `node tools/scripts/ops/send-debrief-email.mjs <email>` |
 
