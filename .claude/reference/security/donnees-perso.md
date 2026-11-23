@@ -94,3 +94,5 @@ client Stripe du parrain à la place des deux comptes. Chaque journal corrigé a
 de l'identifiant de test absente, identifiant Stripe présent) avec contre-épreuve sur l'ancienne source.
 Les données envoyées à Stripe (description et metadata `referralFilleulId` de l'avoir) ne sont pas des
 journaux : elles restent, Stripe en a besoin pour le lien.
+`stripeCustomerId` (`cus_`) reste interdit dans les réponses API (security.md, « Ne jamais exposer ») ;
+il est autorisé dans les journaux, c'est l'identifiant demandé par #790 pour retrouver un cas.
