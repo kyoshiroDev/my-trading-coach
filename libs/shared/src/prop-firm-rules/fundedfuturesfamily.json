@@ -3343,7 +3343,7 @@
             ],
             "max_payouts": null,
             "safety_net_balance": null,
-            "notes": "7 jours de trading avant le payout, consistency 25 %, minimum 1 000 $. Profit requis entre deux demandes : 1500 / 1500 $ puis 1000 $ à partir du 3e. Plafond 1000 $ (payouts 1 à 3) puis 1000 $. 90/10. 5 comptes funded maximum."
+            "notes": "7 jours de trading avant le payout, consistency 25 %, minimum 1 000 $. Profit requis entre deux demandes : 1500 / 1500 $ puis 1000 $ à partir du 3e. Plafond 1 000 $ par payout (égal au minimum : chaque payout fait 1 000 $). 90/10. 5 comptes funded maximum."
           }
         }
       ],
