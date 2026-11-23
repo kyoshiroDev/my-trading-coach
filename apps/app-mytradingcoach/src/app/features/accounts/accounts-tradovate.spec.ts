@@ -658,3 +658,43 @@ describe('Mes comptes — payout probable', () => {
   });
 });
 
+
+// #1225 : plus de note générale « Règles prop firm estimées » en tête de page ; chaque compte prop
+// firm porte le message de l'API qui le concerne (plan du catalogue, broker ou trades loggés).
+describe('Mes comptes — comment la marge est calculée, compte par compte (#1225)', () => {
+  beforeEach(() => TestBed.resetTestingModule());
+
+  const manual = (id: string, disclaimer: string) => acct(id, 'Éval perso', {
+    profitTarget: 3000, maxDrawdown: 2500,
+    metrics: {
+      ...acct(id, '').metrics,
+      objective: { current: 0, target: 3000, pct: 0 },
+      drawdown: { type: 'TRAILING', floor: 47_500, margin: 2_500, maxDrawdown: 2_500, pct: 1, breached: false, source: 'manual', rule: null },
+      disclaimer,
+    },
+  });
+
+  it('aucune note générale en tête de page', () => {
+    const { q } = setup({ accounts: [manual('a', 'Estimation basée uniquement sur les trades loggés')] });
+    const page = q('account-row')!.ownerDocument.body.textContent!;
+    expect(page).not.toMatch(/Règles prop firm estimées/);
+  });
+
+  it('compte prop firm sans plan : dépliable, son message affiché au dépli', () => {
+    const { q, click } = setup({ accounts: [manual('a', 'Estimation basée uniquement sur les trades loggés')] });
+    expect(q('account-disclaimer-a')).toBeNull();
+    click('account-expand-a');
+    expect(q('account-disclaimer-a')!.textContent).toContain('Estimation basée uniquement sur les trades loggés');
+  });
+
+  it('compte relié au catalogue : pas de doublon, le message reste avec les règles du plan', () => {
+    const { q, click } = setup({ accounts: [acct('a', 'Apex 50K', { propFirmPlanId: 'apex-eod-50k' })] });
+    click('account-expand-a');
+    expect(q('account-disclaimer-a')).toBeNull();
+  });
+
+  it('compte perso : pas de message prop firm', () => {
+    const { q } = setup({ accounts: [acct('a', 'Perso', { type: 'PERSONAL' })] });
+    expect(q('account-disclaimer-a')).toBeNull();
+  });
+});

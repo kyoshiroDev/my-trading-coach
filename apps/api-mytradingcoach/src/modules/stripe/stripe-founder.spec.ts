@@ -1229,3 +1229,43 @@ describe('webhooks — journaux sans identifiant d’utilisateur (#790)', () => 
     expect(done()).toContain('Commission c_pending annulée : 1er paiement remboursé (sub sub_n)');
   });
 });
+
+/** #1251 : abonnement non annulé après remboursement : nom de l'erreur seulement. */
+describe('StripeWebhookService — annulation ratée après remboursement : nom de l’erreur seulement (#1251)', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  it('erreur Stripe qui recopie un e-mail → journal avec le nom seul', async () => {
+    const warn = vi.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
+    const w = makeWebhook({ id: 'sub_f', price: 'price_29' });
+    w.prisma.founderSeat.findUnique.mockResolvedValue({ status: 'ACTIVE', stripeSubscriptionId: 'sub_f' });
+    w.invoicesList.mockResolvedValue({ data: [{ id: 'in_first', amount_paid: 2900, created: 1_000, payment_intent: 'pi_1' }] });
+    w.cancel.mockRejectedValue(Object.assign(new Error('No such subscription for client@exemple.test'), { name: 'StripeInvalidRequestError' }));
+    await w.svc.processWebhookEvent(event('charge.refunded', {
+      refunded: true, customer: 'cus_1', invoice: 'in_first', created: 1_000,
+    }));
+    const lines = warn.mock.calls.map((c) => String(c[0]));
+    expect(lines).toContain('Abonnement sub_f non annulé après remboursement : StripeInvalidRequestError');
+    // Contre-épreuve : le message de l'erreur n'est pas recopié.
+    expect(lines.join('\n')).not.toContain('client@exemple.test');
+  });
+});
+
+/** #1251 : essai non annulé après bascule : journal avec le nom de l'erreur, alerte admin avec le message. */
+describe('StripeWebhookService — essai non annulé : journal sans le message de l’erreur (#1251)', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  it('liste et annulation en échec → noms au journal, messages dans l’alerte admin seulement', async () => {
+    const error = vi.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
+    const w = makeWebhook({ id: 'sub_f', price: 'price_29' });
+    w.cancel.mockRejectedValue(Object.assign(new Error('No such subscription for client@exemple.test'), { name: 'StripeInvalidRequestError' }));
+    await expect(
+      w.svc.processWebhookEvent(event('invoice.payment_succeeded', invoice('sub_f', 'subscription_create'))),
+    ).rejects.toThrow(/non annulé/);
+    const line = error.mock.calls.map((c) => String(c[0])).find((t) => t.startsWith('[FONDATEUR] Essai non annulé'));
+    expect(line).toBe('[FONDATEUR] Essai non annulé après bascule | sub: sub_f : sub_trial (StripeInvalidRequestError)');
+    // Contre-épreuve : le message n'est pas au journal, mais reste dans l'e-mail interne.
+    expect(error.mock.calls.flat().map(String).join('\n')).not.toContain('client@exemple.test');
+    const alert = w.resend.sendAdminAlert.mock.calls.find(([subject]) => String(subject).includes('essai au prix normal'));
+    expect(String(alert?.[1])).toContain('No such subscription for client@exemple.test');
+  });
+});

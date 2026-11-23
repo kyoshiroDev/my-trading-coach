@@ -5,6 +5,16 @@ import { StripeWebhookService } from './stripe-webhook.service';
 import { STRIPE_QUEUE } from './stripe.helpers';
 import { StripeWebhookJobPayload } from './stripe.types';
 
+/**
+ * Pile d'appels sans le message de l'erreur (#1251) : la première ligne d'une pile recopie le
+ * message (Prisma ou Stripe : identifiant, e-mail), parfois sur plusieurs lignes. On ne garde que
+ * le nom de l'erreur et les lignes « at … », utiles au diagnostic.
+ */
+export function stackWithoutMessage(error: Error): string {
+  const frames = (error.stack ?? '').split('\n').filter((l) => /^\s+at /.test(l));
+  return [error.name, ...frames].join('\n');
+}
+
 // ── Processor BullMQ : Traitement async des webhooks Stripe ──────────────────
 //
 // Ce processor tourne en arrière-plan et traite les events Stripe de façon
@@ -46,8 +56,8 @@ export class StripeProcessor extends WorkerHost {
     const { event } = job.data;
 
     this.logger.error(
-      `Webhook échoué (${job.attemptsMade}/${job.opts.attempts ?? '?'} tentatives) | type: ${event.type}, id: ${event.id} : ${error.message}`,
-      error.stack,
+      `Webhook échoué (${job.attemptsMade}/${job.opts.attempts ?? '?'} tentatives) | type: ${event.type}, id: ${event.id} : ${error.name}`,
+      stackWithoutMessage(error),
     );
 
     // 🔴 Si toutes les tentatives sont épuisées → alerter

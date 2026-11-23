@@ -10,3 +10,4 @@ dans le Projet sur git hub tu t'occupe de la colonne Bugs remontés fait les tac
 
 - 2026-11-21 : « non tu créer les PR vers dev l'autre session s'en charge ensuite et toi tu passe au suivant ».
 - 2026-11-21 : #1159, réponse de Greg à « on garde le vert ou bleu de marque ? » : « Bleu de marque ».
+- 2026-11-23 : « tu as du boulot dans ta colonne Bugs remontés » → #1252, #1251 (texte de l'issue = consigne de la tâche).
