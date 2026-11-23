@@ -512,7 +512,7 @@
             "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": null,
-            "notes": "Calculé sur le solde de clôture de la veille ; pertes latentes et frais compris. Soft breach : positions liquidées, pause jusqu'à la session suivante. Montant 150K : 1 750 $ (articles Elite Daily V2 Overview et DLL évaluation / funded du 2026-11-17, page d’accueil du 2026-11-23) dans le tableau général des DLL."
+            "notes": "Calculé sur le solde de clôture de la veille ; pertes latentes et frais compris. Soft breach : positions liquidées, pause jusqu'à la session suivante. Montant 150K : 1 750 $ (articles Elite Daily V2 Overview et DLL évaluation / funded du 2026-11-17, tableau « Daily drawdown » et page d’accueil du 2026-11-23)."
           },
           "max_drawdown": {
             "amount": 4500,
@@ -556,7 +556,7 @@
             "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": null,
-            "notes": "Calculé sur le solde de clôture de la veille ; pertes latentes et frais compris. Soft breach : positions liquidées, pause jusqu'à la session suivante. Montant 150K : 1 750 $ (articles Elite Daily V2 Overview et DLL évaluation / funded du 2026-11-17, page d’accueil du 2026-11-23) dans le tableau général des DLL."
+            "notes": "Calculé sur le solde de clôture de la veille ; pertes latentes et frais compris. Soft breach : positions liquidées, pause jusqu'à la session suivante. Montant 150K : 1 750 $ (articles Elite Daily V2 Overview et DLL évaluation / funded du 2026-11-17, tableau « Daily drawdown » et page d’accueil du 2026-11-23)."
           },
           "max_drawdown": {
             "amount": 3500,
