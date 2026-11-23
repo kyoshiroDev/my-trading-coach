@@ -66,3 +66,14 @@ paragraphe à part, section 4 ; exception écrite dans la ligne Anthropic (nom a
 Instagram pour la légende) ; conservation : annonce publiée retirée sur demande, visuel effacé sous 24 h ; seules
 les données affichables du gagnant (nom selon l'accord, lot, mois, pseudo Instagram) partent, et
 seulement avec son accord Instagram.
+
+## Journaux de facturation sans identifiant d'utilisateur (#790, 2026-11-23)
+
+Journaux de `stripe/*`, `founder-offer` et `partner-codes` : identifiants Stripe seulement (`cus_`,
+`sub_`, `cs_`, commission, facture), **jamais `userId`, code ambassadeur ni e-mail** ; échecs : nom de
+l'erreur (`err instanceof Error ? err.name : 'Error'`), jamais `err.message` (un message Resend ou
+Prisma peut recopier l'e-mail ou l'identifiant). Parrainage : abonnement du filleul (`sub filleul`) et
+client Stripe du parrain à la place des deux comptes. Chaque journal corrigé a un test (valeur exacte
+de l'identifiant de test absente, identifiant Stripe présent) avec contre-épreuve sur l'ancienne source.
+Les données envoyées à Stripe (description et metadata `referralFilleulId` de l'avoir) ne sont pas des
+journaux : elles restent, Stripe en a besoin pour le lien.
