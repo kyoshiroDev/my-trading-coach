@@ -84,6 +84,7 @@
             "trails_on": "balance",
             "locks_at": 26100,
             "locked_floor": 25100,
+            "locks_on_first_payout": "request",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "Source (LucidFlex Drawdown) : même trailing EOD que l'évaluation, figé à capital initial + 100 $ au-delà de 26100. Particularité Flex : dès la première demande de payout, le MLL passe automatiquement au niveau figé (25100). À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
@@ -211,6 +212,7 @@
             "trails_on": "balance",
             "locks_at": 52100,
             "locked_floor": 50100,
+            "locks_on_first_payout": "request",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "Source (LucidFlex Drawdown) : même trailing EOD que l'évaluation, figé à capital initial + 100 $ au-delà de 52100. Particularité Flex : dès la première demande de payout, le MLL passe automatiquement au niveau figé (50100). À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
@@ -344,6 +346,7 @@
             "trails_on": "balance",
             "locks_at": 103100,
             "locked_floor": 100100,
+            "locks_on_first_payout": "request",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "Source (LucidFlex Drawdown) : même trailing EOD que l'évaluation, figé à capital initial + 100 $ au-delà de 103100. Particularité Flex : dès la première demande de payout, le MLL passe automatiquement au niveau figé (100100). À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
@@ -483,6 +486,7 @@
             "trails_on": "balance",
             "locks_at": 154600,
             "locked_floor": 150100,
+            "locks_on_first_payout": "request",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "Source (LucidFlex Drawdown) : même trailing EOD que l'évaluation, figé à capital initial + 100 $ au-delà de 154600. Particularité Flex : dès la première demande de payout, le MLL passe automatiquement au niveau figé (150100). À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
@@ -644,6 +648,7 @@
             "trails_on": "balance",
             "locks_at": 26100,
             "locked_floor": 25100,
+            "locks_on_first_payout": "request",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "Source (LucidFlex Drawdown) : même trailing EOD que l'évaluation, figé à capital initial + 100 $ au-delà de 26100. Particularité Flex : dès la première demande de payout, le MLL passe automatiquement au niveau figé (25100). À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
@@ -787,6 +792,7 @@
             "trails_on": "balance",
             "locks_at": 52100,
             "locked_floor": 50100,
+            "locks_on_first_payout": "request",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "Source (LucidFlex Drawdown) : même trailing EOD que l'évaluation, figé à capital initial + 100 $ au-delà de 52100. Particularité Flex : dès la première demande de payout, le MLL passe automatiquement au niveau figé (50100). À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
@@ -936,6 +942,7 @@
             "trails_on": "balance",
             "locks_at": 103100,
             "locked_floor": 100100,
+            "locks_on_first_payout": "request",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "Source (LucidFlex Drawdown) : même trailing EOD que l'évaluation, figé à capital initial + 100 $ au-delà de 103100. Particularité Flex : dès la première demande de payout, le MLL passe automatiquement au niveau figé (100100). À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
@@ -1091,6 +1098,7 @@
             "trails_on": "balance",
             "locks_at": 154600,
             "locked_floor": 150100,
+            "locks_on_first_payout": "request",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "Source (LucidFlex Drawdown) : même trailing EOD que l'évaluation, figé à capital initial + 100 $ au-delà de 154600. Particularité Flex : dès la première demande de payout, le MLL passe automatiquement au niveau figé (150100). À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
@@ -1237,6 +1245,7 @@
             "trails_on": "balance",
             "locks_at": 26100,
             "locked_floor": 25100,
+            "locks_on_first_payout": "request",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "Source (LucidFlex Drawdown) : même trailing EOD que l'évaluation, figé à capital initial + 100 $ au-delà de 26100. Particularité Flex : dès la première demande de payout, le MLL passe automatiquement au niveau figé (25100). À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
@@ -1365,6 +1374,7 @@
             "trails_on": "balance",
             "locks_at": 52100,
             "locked_floor": 50100,
+            "locks_on_first_payout": "request",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "Source (LucidFlex Drawdown) : même trailing EOD que l'évaluation, figé à capital initial + 100 $ au-delà de 52100. Particularité Flex : dès la première demande de payout, le MLL passe automatiquement au niveau figé (50100). À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
@@ -1499,6 +1509,7 @@
             "trails_on": "balance",
             "locks_at": 103100,
             "locked_floor": 100100,
+            "locks_on_first_payout": "request",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "Source (LucidFlex Drawdown) : même trailing EOD que l'évaluation, figé à capital initial + 100 $ au-delà de 103100. Particularité Flex : dès la première demande de payout, le MLL passe automatiquement au niveau figé (100100). À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
@@ -1639,6 +1650,7 @@
             "trails_on": "balance",
             "locks_at": 154600,
             "locked_floor": 150100,
+            "locks_on_first_payout": "request",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "Source (LucidFlex Drawdown) : même trailing EOD que l'évaluation, figé à capital initial + 100 $ au-delà de 154600. Particularité Flex : dès la première demande de payout, le MLL passe automatiquement au niveau figé (150100). À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
@@ -1801,6 +1813,7 @@
             "trails_on": "balance",
             "locks_at": 26100,
             "locked_floor": 25100,
+            "locks_on_first_payout": "request",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "Source (LucidFlex Drawdown) : même trailing EOD que l'évaluation, figé à capital initial + 100 $ au-delà de 26100. Particularité Flex : dès la première demande de payout, le MLL passe automatiquement au niveau figé (25100). À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
@@ -1945,6 +1958,7 @@
             "trails_on": "balance",
             "locks_at": 52100,
             "locked_floor": 50100,
+            "locks_on_first_payout": "request",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "Source (LucidFlex Drawdown) : même trailing EOD que l'évaluation, figé à capital initial + 100 $ au-delà de 52100. Particularité Flex : dès la première demande de payout, le MLL passe automatiquement au niveau figé (50100). À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
@@ -2095,6 +2109,7 @@
             "trails_on": "balance",
             "locks_at": 103100,
             "locked_floor": 100100,
+            "locks_on_first_payout": "request",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "Source (LucidFlex Drawdown) : même trailing EOD que l'évaluation, figé à capital initial + 100 $ au-delà de 103100. Particularité Flex : dès la première demande de payout, le MLL passe automatiquement au niveau figé (100100). À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
@@ -2251,6 +2266,7 @@
             "trails_on": "balance",
             "locks_at": 154600,
             "locked_floor": 150100,
+            "locks_on_first_payout": "request",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "Source (LucidFlex Drawdown) : même trailing EOD que l'évaluation, figé à capital initial + 100 $ au-delà de 154600. Particularité Flex : dès la première demande de payout, le MLL passe automatiquement au niveau figé (150100). À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
