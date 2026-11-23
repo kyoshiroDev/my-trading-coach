@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { NO_ERRORS_SCHEMA, computed, signal } from '@angular/core';
 import { DecimalPipe, NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, convertToParamMap } from '@angular/router';
 import { of } from 'rxjs';
 import { newerAttempt } from '@mtc/shared';
 import { AccountsComponent } from './accounts.component';
@@ -57,7 +57,7 @@ function setup(accounts: TradingAccount[], selected: string | 'all' = 'all', con
       { provide: TradovateStore, useValue: tv },
       { provide: TradovateApi, useValue: { refreshBalance: vi.fn(() => of({ data: {} })) } },
       { provide: TradesStore, useValue: { reset: vi.fn() } },
-      { provide: Router, useValue: { routerState: { snapshot: { root: { queryParams: {} } } }, navigate: vi.fn() } },
+      { provide: Router, useValue: { routerState: { root: { queryParamMap: of(convertToParamMap({})) }, snapshot: { root: { queryParams: {} } } }, navigate: vi.fn() } },
       { provide: LostAccountFlowService, useValue: flow },
     ],
   });

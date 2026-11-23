@@ -20,6 +20,7 @@ import { SelectedAccountStore } from '@app/core/stores/selected-account.store';
 import { AccountType, TradingAccount } from '@app/core/api/accounts.api';
 import { formatMoney } from '@mtc/shared';
 import { isInactiveStatus, statusBadgeClass, statusLabel } from '@app/core/utils/account-status.util';
+import { ADD_ACCOUNT_QUERY } from './add-account-link';
 
 // Sélecteur de compte réutilisable (dashboard, etc.) : trigger compact affichant le compte
 // courant (ou « Tous les comptes ») + menu déroulant listant tous les comptes. Largeur fixe,
@@ -40,6 +41,7 @@ export class AccountSelectorComponent implements OnInit {
   protected readonly PlusIcon = Plus;
   protected readonly CheckIcon = Check;
   protected readonly ChevronDownIcon = ChevronDown;
+  protected readonly addAccountQuery = ADD_ACCOUNT_QUERY;
 
   /** État d'ouverture du menu déroulant. */
   protected readonly open = signal(false);

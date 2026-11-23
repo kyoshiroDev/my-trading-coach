@@ -1,10 +1,8 @@
+<!-- Pas de bouton « Ajouter un compte » dans le topbar : il doublait « + Compte » du sélecteur,
+     qui ouvre la même modale (y compris l'offre Premium au quota). -->
 <mtc-topbar
   title="Mes comptes"
-  [showAddButton]="true"
   [showAccountSelector]="true"
-  addLabel="Ajouter un compte"
-  addTestId="add-account-btn"
-  (addClick)="openCreate()"
 />
 
 <div class="content">
@@ -615,7 +613,8 @@
          modale Premium depuis cette page, et un FREE au quota n'a qu'UN compte : le
          sélecteur pointe donc sur ce compte, jamais sur « Tous les comptes ».
          La grosse tuile vide « Ajouter un compte » a disparu avec les cartes : elle
-         doublonnait le bouton du topbar et trouait la mise en page à 2 comptes. -->
+         doublonnait le bouton d'ajout (aujourd'hui « + Compte » du sélecteur) et trouait
+         la mise en page à 2 comptes. -->
     @if (atLimit()) {
       <button class="quota-banner" (click)="showPlanModal.set(true)" data-testid="add-account-limit">
         <svg [lucideIcon]="LockIcon" [size]="16"></svg>
