@@ -14,7 +14,7 @@
       "motivewave"
     ]
   },
-  "verified_at": "2026-10-18",
+  "verified_at": "2026-11-22",
   "plans": [
     {
       "id": "elitetraderfunding-1step-50k",
@@ -103,7 +103,7 @@
               "split_pct": 0.8
             },
             "split_by_profit": null,
-            "min_amount": 250,
+            "min_amount": 100,
             "max_amount": null,
             "max_amount_schedule": [
               1000,
@@ -113,7 +113,7 @@
             ],
             "max_payouts": null,
             "safety_net_balance": 52100,
-            "notes": "Elite Sim-Funded : jours de trading actifs (8 pour le 1er cycle, 10 ensuite), minimum 100 $, plafond par cycle selon la taille (max_amount_schedule). Jusqu'à 100 % du profit jusqu'à 25 000 $ de payouts cumulés, puis LIVE ELITE (80/20, sans plafond). Après 20 % de profit, rendre plus de 35 % du profit accumulé peut exclure le compte."
+            "notes": "Elite Sim-Funded : jours de trading actifs (8 pour le 1er cycle, 10 ensuite), minimum 100 $ par cycle (250 $ = minimum de retrait sur LIVE ELITE), plafond par cycle selon la taille (max_amount_schedule). Jusqu'à 100 % du profit jusqu'à 25 000 $ de payouts cumulés, puis LIVE ELITE (80/20, sans plafond). Après 20 % de profit, rendre plus de 35 % du profit accumulé peut exclure le compte."
           }
         }
       ],
@@ -214,7 +214,7 @@
               "split_pct": 0.8
             },
             "split_by_profit": null,
-            "min_amount": 250,
+            "min_amount": 100,
             "max_amount": null,
             "max_amount_schedule": [
               1250,
@@ -224,7 +224,7 @@
             ],
             "max_payouts": null,
             "safety_net_balance": 103100,
-            "notes": "Elite Sim-Funded : jours de trading actifs (8 pour le 1er cycle, 10 ensuite), minimum 100 $, plafond par cycle selon la taille (max_amount_schedule). Jusqu'à 100 % du profit jusqu'à 25 000 $ de payouts cumulés, puis LIVE ELITE (80/20, sans plafond). Après 20 % de profit, rendre plus de 35 % du profit accumulé peut exclure le compte."
+            "notes": "Elite Sim-Funded : jours de trading actifs (8 pour le 1er cycle, 10 ensuite), minimum 100 $ par cycle (250 $ = minimum de retrait sur LIVE ELITE), plafond par cycle selon la taille (max_amount_schedule). Jusqu'à 100 % du profit jusqu'à 25 000 $ de payouts cumulés, puis LIVE ELITE (80/20, sans plafond). Après 20 % de profit, rendre plus de 35 % du profit accumulé peut exclure le compte."
           }
         }
       ],
@@ -325,7 +325,7 @@
               "split_pct": 0.8
             },
             "split_by_profit": null,
-            "min_amount": 250,
+            "min_amount": 100,
             "max_amount": null,
             "max_amount_schedule": [
               1500,
@@ -335,7 +335,7 @@
             ],
             "max_payouts": null,
             "safety_net_balance": 155100,
-            "notes": "Elite Sim-Funded : jours de trading actifs (8 pour le 1er cycle, 10 ensuite), minimum 100 $, plafond par cycle selon la taille (max_amount_schedule). Jusqu'à 100 % du profit jusqu'à 25 000 $ de payouts cumulés, puis LIVE ELITE (80/20, sans plafond). Après 20 % de profit, rendre plus de 35 % du profit accumulé peut exclure le compte."
+            "notes": "Elite Sim-Funded : jours de trading actifs (8 pour le 1er cycle, 10 ensuite), minimum 100 $ par cycle (250 $ = minimum de retrait sur LIVE ELITE), plafond par cycle selon la taille (max_amount_schedule). Jusqu'à 100 % du profit jusqu'à 25 000 $ de payouts cumulés, puis LIVE ELITE (80/20, sans plafond). Après 20 % de profit, rendre plus de 35 % du profit accumulé peut exclure le compte."
           }
         }
       ],
