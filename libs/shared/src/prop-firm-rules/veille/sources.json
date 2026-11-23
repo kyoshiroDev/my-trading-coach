@@ -794,19 +794,31 @@
   "https://help.toponefutures.com/en/articles/10906950-maximum-contracts-explained": {
     "kind": "date",
     "values": [
-      "2026-10-01T23:09:59Z"
+      "2026-10-26T11:10:03Z"
     ],
     "firms": [
       "toponefutures"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5b-bis, #1218) : prix identiques ; plus de bascule sans DLL sur Elite Daily et Ignite ; activations Elite ACCESS lues sur les bascules."
+      }
     ]
   },
   "https://help.toponefutures.com/en/articles/10907081-daily-drawdown-what-you-need-to-know": {
     "kind": "date",
     "values": [
-      "2026-10-17T13:16:54Z"
+      "2026-11-17T11:58:13Z"
     ],
     "firms": [
       "toponefutures"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5b-bis, #1218) : DLL par programme ; option sans DLL réservée à Elite ACCESS ; Elite ACCESS Static non couvert (#1241)."
+      }
     ]
   },
   "https://help.toponefutures.com/en/articles/10907150-understanding-the-drawdown-lock": {
@@ -816,6 +828,12 @@
     ],
     "firms": [
       "toponefutures"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5b-bis, #1218) : prix identiques ; plus de bascule sans DLL sur Elite Daily et Ignite ; activations Elite ACCESS lues sur les bascules."
+      }
     ]
   },
   "https://help.toponefutures.com/en/articles/10907367-maximum-payout-until-live-explained": {
@@ -825,6 +843,12 @@
     ],
     "firms": [
       "toponefutures"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5b-bis, #1218) : prix identiques ; plus de bascule sans DLL sur Elite Daily et Ignite ; activations Elite ACCESS lues sur les bascules."
+      }
     ]
   },
   "https://help.toponefutures.com/en/articles/10907430-understanding-the-profit-split-on-sim-funded-accounts": {
@@ -834,6 +858,12 @@
     ],
     "firms": [
       "toponefutures"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5b-bis, #1218) : prix identiques ; plus de bascule sans DLL sur Elite Daily et Ignite ; activations Elite ACCESS lues sur les bascules."
+      }
     ]
   },
   "https://help.toponefutures.com/en/articles/10907901-can-i-hold-trades-overnight": {
@@ -843,24 +873,42 @@
     ],
     "firms": [
       "toponefutures"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5b-bis, #1218) : prix identiques ; plus de bascule sans DLL sur Elite Daily et Ignite ; activations Elite ACCESS lues sur les bascules."
+      }
     ]
   },
   "https://help.toponefutures.com/en/articles/10907951-can-i-trade-news": {
     "kind": "date",
     "values": [
-      "2026-10-01T23:55:43Z"
+      "2026-10-28T15:13:28Z"
     ],
     "firms": [
       "toponefutures"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5b-bis, #1218) : prix identiques ; plus de bascule sans DLL sur Elite Daily et Ignite ; activations Elite ACCESS lues sur les bascules."
+      }
     ]
   },
   "https://help.toponefutures.com/en/articles/10908119-trailing-drawdown-on-instant-sim-funded-accounts-how-it-works": {
     "kind": "date",
     "values": [
-      "2026-10-01T22:57:26Z"
+      "2026-10-27T14:57:44Z"
     ],
     "firms": [
       "toponefutures"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5b-bis, #1218) : prix identiques ; plus de bascule sans DLL sur Elite Daily et Ignite ; activations Elite ACCESS lues sur les bascules."
+      }
     ]
   },
   "https://help.toponefutures.com/en/articles/10908767-consistency-rule-in-instant-sim-funded-accounts-explained": {
@@ -870,15 +918,27 @@
     ],
     "firms": [
       "toponefutures"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5b-bis, #1218) : prix identiques ; plus de bascule sans DLL sur Elite Daily et Ignite ; activations Elite ACCESS lues sur les bascules."
+      }
     ]
   },
   "https://help.toponefutures.com/en/articles/11020805-overview-of-the-instant-sim-funded-program": {
     "kind": "date",
     "values": [
-      "2026-10-11T00:22:56Z"
+      "2026-10-27T14:58:15Z"
     ],
     "firms": [
       "toponefutures"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5b-bis, #1218) : prix identiques ; plus de bascule sans DLL sur Elite Daily et Ignite ; activations Elite ACCESS lues sur les bascules."
+      }
     ]
   },
   "https://help.toponefutures.com/en/articles/11165893-trading-hours-at-top-one-futures": {
@@ -888,15 +948,27 @@
     ],
     "firms": [
       "toponefutures"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5b-bis, #1218) : prix identiques ; plus de bascule sans DLL sur Elite Daily et Ignite ; activations Elite ACCESS lues sur les bascules."
+      }
     ]
   },
   "https://help.toponefutures.com/en/articles/12671168-ignite-accounts-overview": {
     "kind": "date",
     "values": [
-      "2026-10-17T13:16:11Z"
+      "2026-11-09T22:32:40Z"
     ],
     "firms": [
       "toponefutures"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5b-bis, #1218) : prix identiques ; plus de bascule sans DLL sur Elite Daily et Ignite ; activations Elite ACCESS lues sur les bascules."
+      }
     ]
   },
   "https://help.toponefutures.com/en/articles/12707415-ignite-accounts-payout-requirements": {
@@ -906,6 +978,12 @@
     ],
     "firms": [
       "toponefutures"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5b-bis, #1218) : prix identiques ; plus de bascule sans DLL sur Elite Daily et Ignite ; activations Elite ACCESS lues sur les bascules."
+      }
     ]
   },
   "https://help.toponefutures.com/en/articles/12718011-ignite-accounts-15-consistency-rule": {
@@ -915,6 +993,12 @@
     ],
     "firms": [
       "toponefutures"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5b-bis, #1218) : prix identiques ; plus de bascule sans DLL sur Elite Daily et Ignite ; activations Elite ACCESS lues sur les bascules."
+      }
     ]
   },
   "https://help.toponefutures.com/en/articles/12718038-instant-sim-funded-account-payout-requirements": {
@@ -924,24 +1008,42 @@
     ],
     "firms": [
       "toponefutures"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5b-bis, #1218) : prix identiques ; plus de bascule sans DLL sur Elite Daily et Ignite ; activations Elite ACCESS lues sur les bascules."
+      }
     ]
   },
   "https://help.toponefutures.com/en/articles/13904706-elite-daily-v2-daily-loss-limit-dll-funded-phase": {
     "kind": "date",
     "values": [
-      "2026-10-17T13:15:39Z"
+      "2026-11-17T11:55:11Z"
     ],
     "firms": [
       "toponefutures"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5b-bis, #1218) : DLL funded 150K 1 750 $."
+      }
     ]
   },
   "https://help.toponefutures.com/en/articles/13904722-elite-daily-v2-max-loss-limit-mll": {
     "kind": "date",
     "values": [
-      "2026-10-02T18:00:30Z"
+      "2026-10-27T14:53:27Z"
     ],
     "firms": [
       "toponefutures"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5b-bis, #1218) : prix identiques ; plus de bascule sans DLL sur Elite Daily et Ignite ; activations Elite ACCESS lues sur les bascules."
+      }
     ]
   },
   "https://help.toponefutures.com/en/articles/13904824-elite-daily-v2-contract-scaling-plan": {
@@ -951,6 +1053,12 @@
     ],
     "firms": [
       "toponefutures"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5b-bis, #1218) : prix identiques ; plus de bascule sans DLL sur Elite Daily et Ignite ; activations Elite ACCESS lues sur les bascules."
+      }
     ]
   },
   "https://help.toponefutures.com/en/articles/13904852-elite-daily-v2-news-trading-rule-funded-only": {
@@ -960,15 +1068,27 @@
     ],
     "firms": [
       "toponefutures"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5b-bis, #1218) : prix identiques ; plus de bascule sans DLL sur Elite Daily et Ignite ; activations Elite ACCESS lues sur les bascules."
+      }
     ]
   },
   "https://help.toponefutures.com/en/articles/14595016-elite-access-accounts-overview": {
     "kind": "date",
     "values": [
-      "2026-10-13T18:43:03Z"
+      "2026-10-27T15:00:26Z"
     ],
     "firms": [
       "toponefutures"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5b-bis, #1218) : prix identiques ; plus de bascule sans DLL sur Elite Daily et Ignite ; activations Elite ACCESS lues sur les bascules."
+      }
     ]
   },
   "https://help.toponefutures.com/en/articles/14595053-elite-access-contract-scaling-plan": {
@@ -978,24 +1098,42 @@
     ],
     "firms": [
       "toponefutures"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5b-bis, #1218) : prix identiques ; plus de bascule sans DLL sur Elite Daily et Ignite ; activations Elite ACCESS lues sur les bascules."
+      }
     ]
   },
   "https://help.toponefutures.com/en/articles/14595138-elite-access-daily-loss-limit-dll": {
     "kind": "date",
     "values": [
-      "2026-10-17T13:18:50Z"
+      "2026-11-17T22:46:17Z"
     ],
     "firms": [
       "toponefutures"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5b-bis, #1218) : prix identiques ; plus de bascule sans DLL sur Elite Daily et Ignite ; activations Elite ACCESS lues sur les bascules."
+      }
     ]
   },
   "https://help.toponefutures.com/en/articles/14595145-elite-access-maximum-loss-limit-mll-eod": {
     "kind": "date",
     "values": [
-      "2026-10-01T20:27:57Z"
+      "2026-10-27T14:39:03Z"
     ],
     "firms": [
       "toponefutures"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5b-bis, #1218) : prix identiques ; plus de bascule sans DLL sur Elite Daily et Ignite ; activations Elite ACCESS lues sur les bascules."
+      }
     ]
   },
   "https://help.toponefutures.com/en/articles/14595151-elite-access-funded-consistency-rule-40": {
@@ -1005,6 +1143,12 @@
     ],
     "firms": [
       "toponefutures"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5b-bis, #1218) : prix identiques ; plus de bascule sans DLL sur Elite Daily et Ignite ; activations Elite ACCESS lues sur les bascules."
+      }
     ]
   },
   "https://help.toponefutures.com/en/articles/14595161-elite-access-payout-requirements": {
@@ -1014,6 +1158,12 @@
     ],
     "firms": [
       "toponefutures"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5b-bis, #1218) : prix identiques ; plus de bascule sans DLL sur Elite Daily et Ignite ; activations Elite ACCESS lues sur les bascules."
+      }
     ]
   },
   "https://help.toponefutures.com/en/articles/14595174-elite-access-news-trading-rule": {
@@ -1023,6 +1173,12 @@
     ],
     "firms": [
       "toponefutures"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5b-bis, #1218) : prix identiques ; plus de bascule sans DLL sur Elite Daily et Ignite ; activations Elite ACCESS lues sur les bascules."
+      }
     ]
   },
   "https://help.toponefutures.com/en/articles/14623577-elite-access-reset-fees": {
@@ -1032,24 +1188,42 @@
     ],
     "firms": [
       "toponefutures"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5b-bis, #1218) : prix identiques ; plus de bascule sans DLL sur Elite Daily et Ignite ; activations Elite ACCESS lues sur les bascules."
+      }
     ]
   },
   "https://help.toponefutures.com/en/articles/15056075-elite-daily-v2-overview": {
     "kind": "date",
     "values": [
-      "2026-10-13T08:42:00Z"
+      "2026-11-17T11:56:16Z"
     ],
     "firms": [
       "toponefutures"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5b-bis, #1218) : DLL Elite Daily V2 150K 1 750 $ → éval et funded."
+      }
     ]
   },
   "https://help.toponefutures.com/en/articles/15056388-elite-daily-v2-daily-loss-limit-dll-evaluation-phase": {
     "kind": "date",
     "values": [
-      "2026-10-17T13:15:05Z"
+      "2026-11-17T11:53:57Z"
     ],
     "firms": [
       "toponefutures"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5b-bis, #1218) : DLL d’évaluation 150K 1 750 $."
+      }
     ]
   },
   "https://help.toponefutures.com/en/articles/15056446-elite-daily-v2-daily-payout-rules": {
@@ -1059,6 +1233,12 @@
     ],
     "firms": [
       "toponefutures"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5b-bis, #1218) : prix identiques ; plus de bascule sans DLL sur Elite Daily et Ignite ; activations Elite ACCESS lues sur les bascules."
+      }
     ]
   },
   "https://help.toponefutures.com/en/articles/15069348-elite-daily-v2-reset-fees": {
@@ -1068,6 +1248,12 @@
     ],
     "firms": [
       "toponefutures"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5b-bis, #1218) : prix identiques ; plus de bascule sans DLL sur Elite Daily et Ignite ; activations Elite ACCESS lues sur les bascules."
+      }
     ]
   },
   "https://help.toponefutures.com/en/articles/16150794-elite-access-activation-fees-explained": {
@@ -1077,33 +1263,57 @@
     ],
     "firms": [
       "toponefutures"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5b-bis, #1218) : prix identiques ; plus de bascule sans DLL sur Elite Daily et Ignite ; activations Elite ACCESS lues sur les bascules."
+      }
     ]
   },
   "https://help.toponefutures.com/en/articles/17059267-elite-access-intraday-accounts-overview": {
     "kind": "date",
     "values": [
-      "2026-10-13T18:44:01Z"
+      "2026-11-18T15:20:40Z"
     ],
     "firms": [
       "toponefutures"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5b-bis, #1218) : prix identiques ; plus de bascule sans DLL sur Elite Daily et Ignite ; activations Elite ACCESS lues sur les bascules."
+      }
     ]
   },
   "https://help.toponefutures.com/en/articles/17059623-elite-access-intraday-daily-loss-limit-dll": {
     "kind": "date",
     "values": [
-      "2026-10-17T13:14:30Z"
+      "2026-11-17T22:46:48Z"
     ],
     "firms": [
       "toponefutures"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5b-bis, #1218) : prix identiques ; plus de bascule sans DLL sur Elite Daily et Ignite ; activations Elite ACCESS lues sur les bascules."
+      }
     ]
   },
   "https://help.toponefutures.com/en/articles/17059654-elite-access-intraday-maximum-loss-limit-evaluation-phase-eod": {
     "kind": "date",
     "values": [
-      "2026-10-01T21:42:46Z"
+      "2026-10-27T14:54:49Z"
     ],
     "firms": [
       "toponefutures"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5b-bis, #1218) : prix identiques ; plus de bascule sans DLL sur Elite Daily et Ignite ; activations Elite ACCESS lues sur les bascules."
+      }
     ]
   },
   "https://help.toponefutures.com/en/articles/17059688-elite-access-intraday-maximum-loss-limit-funded-phase-intraday": {
@@ -1113,6 +1323,12 @@
     ],
     "firms": [
       "toponefutures"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5b-bis, #1218) : prix identiques ; plus de bascule sans DLL sur Elite Daily et Ignite ; activations Elite ACCESS lues sur les bascules."
+      }
     ]
   },
   "https://help.toponefutures.com/en/articles/17059773-elite-access-intraday-payout-requirements": {
@@ -1122,6 +1338,12 @@
     ],
     "firms": [
       "toponefutures"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5b-bis, #1218) : prix identiques ; plus de bascule sans DLL sur Elite Daily et Ignite ; activations Elite ACCESS lues sur les bascules."
+      }
     ]
   },
   "https://help.toponefutures.com/en/articles/17059891-elite-access-intraday-reset-fees": {
@@ -1131,96 +1353,162 @@
     ],
     "firms": [
       "toponefutures"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5b-bis, #1218) : prix identiques ; plus de bascule sans DLL sur Elite Daily et Ignite ; activations Elite ACCESS lues sur les bascules."
+      }
     ]
   },
   "https://help.toponefutures.com/en/articles/17059911-elite-access-intraday-activation-fees-explained": {
     "kind": "date",
     "values": [
-      "2026-10-01T21:49:22Z"
+      "2026-11-18T15:19:51Z"
     ],
     "firms": [
       "toponefutures"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5b-bis, #1218) : activation Elite ACCESS Intraday 90 / 123 / 168 / 233 $."
+      }
     ]
   },
   "https://help.toponefutures.com/en/articles/17244414-x-ultra-accounts-overview": {
     "kind": "date",
     "values": [
-      "2026-10-01T12:58:08Z"
+      "2026-10-22T12:56:00Z"
     ],
     "firms": [
       "toponefutures"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5b-bis, #1218) : prix identiques ; plus de bascule sans DLL sur Elite Daily et Ignite ; activations Elite ACCESS lues sur les bascules."
+      }
     ]
   },
   "https://help.toponefutures.com/en/articles/17244455-x-ultra-evaluation-profit-target-consistency-50": {
     "kind": "date",
     "values": [
-      "2026-10-01T12:49:57Z"
+      "2026-10-22T12:57:23Z"
     ],
     "firms": [
       "toponefutures"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5b-bis, #1218) : prix identiques ; plus de bascule sans DLL sur Elite Daily et Ignite ; activations Elite ACCESS lues sur les bascules."
+      }
     ]
   },
   "https://help.toponefutures.com/en/articles/17244484-x-ultra-daily-loss-limit-dll": {
     "kind": "date",
     "values": [
-      "2026-10-01T12:58:23Z"
+      "2026-10-22T12:58:12Z"
     ],
     "firms": [
       "toponefutures"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5b-bis, #1218) : prix identiques ; plus de bascule sans DLL sur Elite Daily et Ignite ; activations Elite ACCESS lues sur les bascules."
+      }
     ]
   },
   "https://help.toponefutures.com/en/articles/17244517-x-ultra-maximum-drawdown-mll-eod": {
     "kind": "date",
     "values": [
-      "2026-10-01T12:50:00Z"
+      "2026-10-27T14:56:42Z"
     ],
     "firms": [
       "toponefutures"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5b-bis, #1218) : prix identiques ; plus de bascule sans DLL sur Elite Daily et Ignite ; activations Elite ACCESS lues sur les bascules."
+      }
     ]
   },
   "https://help.toponefutures.com/en/articles/17244610-x-ultra-contract-limits-scaling": {
     "kind": "date",
     "values": [
-      "2026-10-01T12:49:49Z"
+      "2026-10-22T13:05:33Z"
     ],
     "firms": [
       "toponefutures"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5b-bis, #1218) : prix identiques ; plus de bascule sans DLL sur Elite Daily et Ignite ; activations Elite ACCESS lues sur les bascules."
+      }
     ]
   },
   "https://help.toponefutures.com/en/articles/17244734-x-ultra-payout-requirements": {
     "kind": "date",
     "values": [
-      "2026-10-01T12:50:09Z"
+      "2026-10-22T13:04:39Z"
     ],
     "firms": [
       "toponefutures"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5b-bis, #1218) : prix identiques ; plus de bascule sans DLL sur Elite Daily et Ignite ; activations Elite ACCESS lues sur les bascules."
+      }
     ]
   },
   "https://help.toponefutures.com/en/articles/17244856-x-ultra-activation-fee-resets-account-limits": {
     "kind": "date",
     "values": [
-      "2026-10-01T12:59:31Z"
+      "2026-10-22T13:02:25Z"
     ],
     "firms": [
       "toponefutures"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5b-bis, #1218) : prix identiques ; plus de bascule sans DLL sur Elite Daily et Ignite ; activations Elite ACCESS lues sur les bascules."
+      }
     ]
   },
   "https://help.toponefutures.com/en/articles/17244951-x-ultra-other-trading-rules": {
     "kind": "date",
     "values": [
-      "2026-10-01T12:50:05Z"
+      "2026-10-22T13:06:12Z"
     ],
     "firms": [
       "toponefutures"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5b-bis, #1218) : prix identiques ; plus de bascule sans DLL sur Elite Daily et Ignite ; activations Elite ACCESS lues sur les bascules."
+      }
     ]
   },
   "https://help.toponefutures.com/en/articles/17635087-no-daily-loss-limit-add-on-trade-without-daily-limits": {
     "kind": "date",
     "values": [
-      "2026-10-16T09:54:02Z"
+      "2026-11-17T22:45:41Z"
     ],
     "firms": [
       "toponefutures"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5b-bis, #1218) : option sans DLL réservée à Elite ACCESS → nodll Elite Daily et Ignite discontinued."
+      }
     ]
   },
   "https://help.toponefutures.com/en/articles/17678693-x-daily-spark-accounts-overview": {
@@ -1235,6 +1523,10 @@
       {
         "date": "2026-11-02",
         "modification": "X-Daily Spark 50K ajouté."
+      },
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5b-bis, #1218) : prix identiques ; plus de bascule sans DLL sur Elite Daily et Ignite ; activations Elite ACCESS lues sur les bascules."
       }
     ]
   },
@@ -1250,6 +1542,10 @@
       {
         "date": "2026-11-02",
         "modification": "X-Daily Spark : drawdown et gel."
+      },
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5b-bis, #1218) : prix identiques ; plus de bascule sans DLL sur Elite Daily et Ignite ; activations Elite ACCESS lues sur les bascules."
       }
     ]
   },
@@ -1265,6 +1561,10 @@
       {
         "date": "2026-11-02",
         "modification": "X-Daily Spark : paliers de scaling."
+      },
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5b-bis, #1218) : prix identiques ; plus de bascule sans DLL sur Elite Daily et Ignite ; activations Elite ACCESS lues sur les bascules."
       }
     ]
   },
@@ -1280,6 +1580,10 @@
       {
         "date": "2026-11-02",
         "modification": "X-Daily Spark : horaires et news."
+      },
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5b-bis, #1218) : prix identiques ; plus de bascule sans DLL sur Elite Daily et Ignite ; activations Elite ACCESS lues sur les bascules."
       }
     ]
   },
@@ -3174,11 +3478,18 @@
   "https://www.toponefutures.com/": {
     "kind": "hash",
     "values": [
+      "e3bda846ea50c516",
       "2a0b5caf55111c5f",
       "57b3f38a59d9941f"
     ],
     "firms": [
       "toponefutures"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5b-bis, #1218) : prix identiques ; plus de bascule sans DLL sur Elite Daily et Ignite ; activations Elite ACCESS lues sur les bascules."
+      }
     ]
   },
   "https://www.toponefutures.com/launchpad": {
@@ -3195,6 +3506,10 @@
       {
         "date": "2026-11-02",
         "modification": "X-Ultra plus vendu ; X-Daily Spark 50K ajouté."
+      },
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5b-bis, #1218) : prix identiques ; plus de bascule sans DLL sur Elite Daily et Ignite ; activations Elite ACCESS lues sur les bascules."
       }
     ]
   },
@@ -3257,6 +3572,21 @@
       {
         "date": "2026-11-23",
         "modification": "Relecture (lot 4, #1218, article modifié le 2026-11-19) : règles Pro 50/100/150K identiques ; variante « Pro 50k - One Day » toujours non couverte (déjà notée le 2026-10-22)."
+      }
+    ]
+  },
+  "https://www.toponefutures.com/launchpad-8": {
+    "kind": "hash",
+    "values": [
+      "d11d89519ddc4cb2"
+    ],
+    "firms": [
+      "toponefutures"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5b-bis, #1218) : prix identiques ; plus de bascule sans DLL sur Elite Daily et Ignite ; activations Elite ACCESS lues sur les bascules."
       }
     ]
   }
