@@ -49,7 +49,7 @@
                   <td data-label="Plan"><span class="badge" [class.b-premium]="a.plan==='PREMIUM'" [class.b-free]="a.plan==='FREE'">{{ a.plan }}</span></td>
                   <td data-label="A tradé">@if (a.hadTraded) { <span class="badge b-ok">oui</span> } @else { <span class="badge b-free">jamais</span> }</td>
                   <td data-label="Parrainé par" class="td-mono" [class.muted]="!a.referredBy" [class.ref]="a.referredBy">{{ a.referredBy ?? '-' }}</td>
-                  <td data-label="Par"><span class="role-tag">{{ a.deletedBy === 'self' ? 'utilisateur' : 'admin' }}</span></td>
+                  <td data-label="Par"><span class="role-tag">{{ a.deletedBy === 'self' ? 'utilisateur' : a.deletedBy === 'inactivity' ? 'inactivité' : 'admin' }}</span></td>
                   <td data-label="Motif" class="td-mono" [class.muted]="!a.reason">{{ a.reason ?? '-' }}</td>
                 </tr>
               } @empty {

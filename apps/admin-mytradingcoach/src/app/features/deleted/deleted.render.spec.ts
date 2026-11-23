@@ -138,3 +138,21 @@ describe('Comptes supprimés — compte interne (#823)', () => {
     expect(lignes[1].querySelector('[data-testid="internal-badge"]')).toBeNull();
   });
 });
+
+describe('Comptes supprimés — colonne « Par » (#824)', () => {
+  beforeEach(() => TestBed.resetTestingModule());
+  afterEach(() => TestBed.inject(HttpTestingController).verify());
+
+  it('utilisateur, admin et purge pour inactivité : trois libellés distincts', async () => {
+    const data = donneesAvecMotifs();
+    const base = data.accounts[0];
+    data.accounts = [
+      { ...base, id: 's', deletedBy: 'self' },
+      { ...base, id: 'a', deletedBy: 'admin' },
+      { ...base, id: 'i', deletedBy: 'inactivity' },
+    ];
+    const { el } = await rendre(data);
+    const tags = [...el.querySelectorAll('td[data-label="Par"] .role-tag')].map((t) => t.textContent?.trim());
+    expect(tags).toEqual(['utilisateur', 'admin', 'inactivité']);
+  });
+});

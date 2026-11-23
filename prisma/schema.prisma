@@ -1131,7 +1131,7 @@ model DeletedAccount {
   hadTraded    Boolean
   tradesCount  Int
   referredBy   String?
-  deletedBy    String // "self" | "admin"
+  deletedBy    String // "self" | "admin" | "inactivity" (purge des comptes inactifs, #824)
   reason       String?
   anonymizedAt DateTime?
   /// Recopié de `User.isInternal` à la suppression (#823) : hors des chiffres, visible dans la liste.

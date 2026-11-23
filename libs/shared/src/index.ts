@@ -10,6 +10,7 @@ export * from './api-error';
 export * from './currency';
 export * from './percent';
 export * from './pricing';
+export * from './inactivity-purge';
 export * from './plan-benefits';
 export * from './signup-pitch';
 export * from './trade-stats';

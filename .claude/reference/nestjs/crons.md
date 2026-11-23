@@ -73,3 +73,22 @@ timeout de 20 s, et referme toujours la page. Ne jamais revenir à `puppeteer.la
 150 à 300 Mo par instance, 3 ou 4 téléchargements simultanés suffisaient à l'OOM.
 Tout texte IA ou utilisateur injecté dans le HTML passe par `escapeHtml()`.
 Pas de cache Redis des PDF : Redis prod (256 Mo, `noeviction`) porte les files BullMQ.
+
+## Purge des comptes inactifs (#824, 2026-11-23)
+
+`InactivityPurgeService` (`modules/inactivity-purge`), `@Cron('0 10 * * *', Europe/Paris)`, worker cron.
+Compte sans connexion depuis 2 ans (`INACTIVITY_PURGE_DAYS`, `@mtc/shared`) : préavis J-28, J-21,
+J-14, J-7, puis suppression par `UsersService.deleteForInactivity` (même chemin qu'une suppression
+demandée, `deletedBy: 'inactivity'`). Calcul pur et en jours de Paris dans `inactivity-purge.util.ts` :
+date annoncée = date plancher, jamais devancée ; préavis du cycle = lignes `EmailSend`
+`inactivity_purge_notice` postérieures à la dernière connexion (une connexion remet à zéro).
+Sélection et exclusions dans le `where` (`inactiveWhere`, prouvé par `inactivity-purge.int-spec.ts`).
+Plafonds par passage : 50 suppressions, 500 préavis. Échec d'un compte (Stripe, Resend) : compté,
+journalisé par id et nom d'erreur, le passage continue. `INACTIVITY_PURGE_ENABLED` ≠ `true` = journal
+seul : aucune écriture, aucun appel, une ligne « Comptes inactifs (journal seul) » avec les comptes
+par rang de préavis, les suppressions dues et les exclus par motif. Le worker dev tourne sans crons :
+la preuve passe par les tests puis par ce journal en prod.
+Examen limité à 5 000 comptes par passage (`INACTIVITY_SCAN_LIMIT`), triés par inscription : voir
+l'issue #1257 avant de dépasser ce volume. Si Resend envoie mais que l'écriture `EmailSend` échoue, le
+même préavis repart au passage suivant : le compte reçoit un doublon mais la date plancher reste la
+même, donc jamais de suppression anticipée.

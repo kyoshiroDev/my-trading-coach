@@ -230,6 +230,15 @@ export class UsersService {
   }
 
   /**
+   * Purge d'un compte inactif depuis 2 ans (#824), appelée par le cron après les 4 préavis : même
+   * chemin que la suppression demandée (Stripe résilié, DeletedAccount, caches, Discord), tracé
+   * `deletedBy: 'inactivity'`. Lève comme `archiveAndDelete` (503 si Stripe échoue).
+   */
+  async deleteForInactivity(userId: string): Promise<void> {
+    await this.archiveAndDelete(userId, 'inactivity');
+  }
+
+  /**
    * Archive une trace analytique (DeletedAccount) PUIS supprime le User, le tout
    * dans une transaction : on ne perd jamais la trace et on ne laisse pas d'orphelin.
    * L'identité (name/email) est anonymisée par cron après 90 j.
@@ -240,7 +249,7 @@ export class UsersService {
    */
   private async archiveAndDelete(
     userId: string,
-    deletedBy: 'self' | 'admin',
+    deletedBy: 'self' | 'admin' | 'inactivity',
     reason?: string,
   ): Promise<void> {
     const user = await this.prisma.user.findUnique({

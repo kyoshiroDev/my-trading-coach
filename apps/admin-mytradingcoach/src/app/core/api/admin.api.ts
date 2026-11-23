@@ -151,7 +151,7 @@ export interface DeletedAccount {
   hadTraded: boolean;
   tradesCount: number;
   referredBy: string | null;
-  deletedBy: string; // "self" | "admin"
+  deletedBy: string; // "self" | "admin" | "inactivity" (purge des comptes inactifs, #824)
   reason: string | null;
   anonymizedAt: string | null;
   /** Compte interne (#823) : affiché avec un badge, hors des chiffres. */

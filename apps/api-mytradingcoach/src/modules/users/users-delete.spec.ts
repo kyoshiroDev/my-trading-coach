@@ -155,6 +155,15 @@ describe('UsersService — suppression + trace DeletedAccount', () => {
     expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);
   });
 
+  it('purge pour inactivité (#824) : Stripe résilié avant, trace deletedBy=inactivity', async () => {
+    mockPrisma.user.findUnique.mockResolvedValue({ ...baseUser, stripeCustomerId: 'cus_1' });
+    await service.deleteForInactivity('user-1');
+    expect(billingClosure.cancelAllSubscriptions).toHaveBeenCalledWith('cus_1');
+    expect(billingClosure.cancelAllSubscriptions.mock.invocationCallOrder[0]).toBeLessThan(mockPrisma.$transaction.mock.invocationCallOrder[0]);
+    expect(mockPrisma.deletedAccount.create.mock.calls[0][0].data.deletedBy).toBe('inactivity');
+    expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);
+  });
+
   it('adminDelete refuse de supprimer un ADMIN (aucune trace, aucune suppression)', async () => {
     mockPrisma.user.findUnique.mockResolvedValue({ ...baseUser, role: 'ADMIN' });
     await expect(service.adminDelete('admin-1')).rejects.toBeInstanceOf(ForbiddenException);

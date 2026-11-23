@@ -133,3 +133,12 @@ conteneur redémarre en pleine boucle, `*AnnouncedAt` est déjà posé et le res
 relancer : éteindre puis rallumer le tirage (une seconde annonce n'atteint pas ceux qui l'ont déjà
 reçue dans la journée, cooldown 1 j). Exception assumée à `REAL_USERS_WHERE` « jamais pour cibler
 des envois » : les comptes internes ne reçoivent aucun e-mail du tirage.
+
+## Préavis de purge pour inactivité (#824, 2026-11-23)
+
+`ResendService.sendInactivityNotice` / `inactivityNoticeTemplate` : information obligatoire avant la
+suppression d'un compte inactif depuis 2 ans. **Transactionnel** : hors consentement marketing, hors
+`serviceEmailsOptOutAt`, hors plafond de fréquence, sans lien de désinscription ; enregistré dans
+`EmailSend` (`inactivity_purge_notice`, kind `transactional`). Texte arrêté par le relecteur : date de
+suppression (date longue de Paris), « connecte-toi avant cette date », bouton « Me connecter »
+(`/login`), données sur demande à support@, rappel hebdomadaire ou « dernier rappel » (4ᵉ préavis).

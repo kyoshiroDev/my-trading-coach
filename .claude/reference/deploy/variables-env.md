@@ -24,6 +24,11 @@ JWT_SECRET=...           # 64 chars minimum
 JWT_REFRESH_SECRET=...   # 64 chars minimum
 ANTHROPIC_API_KEY=sk-ant-...
 AI_MAX_CONCURRENCY=4     # optionnel : appels modèle simultanés, tous process confondus (SCA-B5-06)
+# INACTIVITY_PURGE_ENABLED=true  # purge des comptes inactifs (#824), lue par le WORKER CRON. Absente/false = journal
+#                                # seul (rien envoyé ni supprimé). Allumée par Greg seulement après la PR politique §3 + CGU
+#                                # déployée et la lecture du journal « Comptes inactifs (journal seul) » en prod.
+#                                # Allumer ou couper = recréer le worker (`up -d --no-deps --force-recreate worker`
+#                                # avec docker-compose.prod.yml) : `docker restart` ne relit pas l'env_file.
 # RESEND_DRY_RUN=true    # beta/dev, le temps d'un test de charge : aucun e-mail envoyé (ignoré en prod)
 STRIPE_SECRET_KEY=sk_live_...
 STRIPE_WEBHOOK_SECRET=whsec_...
