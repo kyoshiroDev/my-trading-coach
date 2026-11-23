@@ -96,3 +96,10 @@ Les données envoyées à Stripe (description et metadata `referralFilleulId` de
 journaux : elles restent, Stripe en a besoin pour le lien.
 `stripeCustomerId` (`cus_`) reste interdit dans les réponses API (security.md, « Ne jamais exposer ») ;
 il est autorisé dans les journaux, c'est l'identifiant demandé par #790 pour retrouver un cas.
+Les derniers `err.message` (palier fondateur, parrainage, enqueue, reçu, annulation après
+remboursement, essai non annulé après bascule fondateur, webhook rejeté) sont passés au nom de
+l'erreur avec #1251 (2026-11-23). Essai non annulé : le message Stripe reste dans l'alerte admin
+(e-mail interne, utile pour annuler à la main), pas dans le journal. Webhook rejeté : réponse 400 au
+texte fixe (le message d'une clé de configuration absente partait aussi à l'appelant). Processeur BullMQ des webhooks
+(`StripeProcessor.onFailed`) : nom de l'erreur plus les seules lignes « at … » de la pile
+(`stackWithoutMessage`), car la première ligne d'une pile recopie le message, parfois sur plusieurs lignes.

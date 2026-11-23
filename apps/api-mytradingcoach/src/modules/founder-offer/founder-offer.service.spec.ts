@@ -159,3 +159,38 @@ describe('FounderOfferService.claimSeat — journal sans identifiant d’utilisa
     expect(lines.join('\n')).not.toContain(USER);
   });
 });
+
+/** #1251 : journal d'échec de la notification de palier : nom de l'erreur seulement. */
+describe('FounderOfferService.claimSeat — palier non notifié : nom de l’erreur seulement (#1251)', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  it('erreur Resend avec une adresse dans le message → journal sans le message', async () => {
+    const warn = vi.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
+    vi.spyOn(Logger.prototype, 'log').mockImplementation(() => undefined);
+    const tx = {
+      $executeRaw: vi.fn().mockResolvedValue(1),
+      $queryRaw: vi.fn().mockResolvedValue([]),
+      founderSeat: {
+        findUnique: vi.fn().mockResolvedValue(null),
+        // 49 places avant la prise (place libre), 50 après : palier de 50 atteint.
+        count: vi.fn().mockResolvedValueOnce(49).mockResolvedValue(50),
+        aggregate: vi.fn().mockResolvedValue({ _max: { number: 49 } }),
+        create: vi.fn(async ({ data }) => ({ ...data })),
+      },
+      checkoutReservation: { findFirst: vi.fn().mockResolvedValue(null), count: vi.fn().mockResolvedValue(0), deleteMany: vi.fn().mockResolvedValue({ count: 0 }) },
+      founderOfferConfig: { findUnique: vi.fn().mockResolvedValue({ id: 1, notifiedMilestones: [] }), upsert: vi.fn() },
+    };
+    const prisma = { $transaction: vi.fn(async (fn: (t: typeof tx) => unknown) => fn(tx)) };
+    const redis = { client: { del: vi.fn().mockResolvedValue(1) } };
+    const err = Object.assign(new Error('Invalid `to` field: admin@exemple.test'), { name: 'ResendError' });
+    const resend = { sendAdminAlert: vi.fn().mockRejectedValue(err) };
+    await new FounderOfferService(prisma as never, redis as never, resend as never).claimSeat({
+      userId: 'u1', interval: 'month', stripeSubscriptionId: 'sub_1251',
+    });
+    const lines = warn.mock.calls.map((c) => String(c[0]));
+    expect(resend.sendAdminAlert).toHaveBeenCalledTimes(1);
+    expect(lines).toContain('Notification de palier non envoyée : ResendError');
+    // Contre-épreuve : le message (et l'adresse qu'il recopie) n'apparaît nulle part.
+    expect(lines.join('\n')).not.toContain('admin@exemple.test');
+  });
+});
