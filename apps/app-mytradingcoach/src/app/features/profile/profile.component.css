@@ -667,6 +667,7 @@
 .stp-mb { padding: 20px 22px; display: flex; flex-direction: column; gap: 18px; max-height: 62vh; overflow-y: auto; }
 .stp-fld-label { display: block; font-family: var(--font-mono); font-size: var(--fs-2xs); letter-spacing: .08em; text-transform: uppercase; color: var(--text-3); margin-bottom: 8px; }
 .stp-fld-help { margin: 6px 0 0; font-size: var(--fs-xs); line-height: 1.5; color: var(--text-3); }
+.freq-slider-label.nw-delay { width: auto; min-width: 30px; }
 .stp-fld .opt { color: var(--text-3); text-transform: none; letter-spacing: 0; font-family: var(--font-body); font-size: 11px; }
 .stp-inp { width: 100%; background: var(--bg-2); border: 1px solid var(--border-hover); border-radius: 9px; padding: 11px 13px; color: var(--text); font-family: var(--font-body); font-size: 14px; outline: none; box-sizing: border-box; }
 .stp-inp:focus { border-color: var(--blue); }

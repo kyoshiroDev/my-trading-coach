@@ -1,6 +1,6 @@
 import { hashPassword } from '../auth/password-hashing';
 import { Prisma, SessionStatus, AccountStatus, BrokerProvider, BrokerConnectionStatus } from '@prisma/client';
-import { computeTradeStats, maxDrawdownOfTrades, type EcoResultAnalysis } from '@mtc/shared';
+import { NEWS_SHIELD_DEFAULT_MINUTES, computeTradeStats, maxDrawdownOfTrades, type EcoResultAnalysis } from '@mtc/shared';
 import { seedDefaultSetups } from '../setups/setups.defaults';
 import { type AccountKey, APEX_DAILY_LOSS_LIMIT, DEMO_ACCOUNTS, DEMO_EMAIL, DEMO_NEAR_LIMIT, round2 } from './demo-data/config';
 import { ONELINERS, PLANS, REFLECTIONS_GREEN, REFLECTIONS_RED, REFLECTION_REVENGE } from './demo-data/texts';
@@ -198,23 +198,15 @@ export async function seedTradingData(
     }
   }
 
-  // Bouclier annonces (#670) : trade NQ ouvert 3 min avant le NFP du vendredi précédent, et l'alerte
-  // du bouclier. Hors des journées générées (aucun objectif de la démo ne bouge, hors ce trade).
+  // Bouclier annonces (#670) : le trade NQ d'exemple est déjà dans la journée Apex du vendredi
+  // précédent (`injectNewsExample`, compté partout). Ici, l'alerte que le bouclier aurait levée.
   const newsExample = newsShieldExample(now);
-  {
-    const apex = accountIdByKey.get('apex')!;
-    const t = newsExample.trade;
-    await prisma.trade.create({
-      data: {
-        userId: user.id, accountId: apex, asset: t.asset, side: t.side, entry: t.entry, exit: t.exit,
-        quantity: t.quantity, pnl: t.pnl, commission: t.commission, setupId: setupIdFor(t.setup),
-        session: t.session, timeframe: t.timeframe, tags: ['DEMO'], tradedAt: t.tradedAt,
-      },
-    });
+  const exampleSeeded = days.some((d) => d.trades.some((t) => t.setup === 'News' && t.tradedAt.getTime() === newsExample.openedAt.getTime()));
+  if (exampleSeeded) {
     const a = newsExample.alert;
     await prisma.behaviorAlert.create({
       data: {
-        userId: user.id, accountId: apex, tradeDay: new Date(`${tradingDay(a.createdAt)}T00:00:00.000Z`),
+        userId: user.id, accountId: accountIdByKey.get('apex')!, tradeDay: new Date(`${tradingDay(a.createdAt)}T00:00:00.000Z`),
         type: a.type, severity: a.severity, message: a.message, context: a.context, createdAt: a.createdAt,
       },
     });
@@ -327,11 +319,10 @@ export async function seedTradingData(
     weeks.get(k)!.days.push(d);
   }
   let debriefs = 0;
-  // Semaine du trade d'exemple du bouclier : il compte dans tous les chiffres du débrief, comme au journal.
   const exampleWeek = isoWeek(newsExample.openedAt);
   for (const w of weeks.values()) {
-    const inExampleWeek = w.week === exampleWeek.week && w.year === exampleWeek.year;
-    const trades = [...w.days.flatMap((d) => d.trades), ...(inExampleWeek ? [newsExample.trade] : [])];
+    const inExampleWeek = exampleSeeded && w.week === exampleWeek.week && w.year === exampleWeek.year;
+    const trades = w.days.flatMap((d) => d.trades);
     if (!trades.length) continue;
     const s = computeTradeStats(trades);
     const fees = trades.reduce((a, t) => a + t.commission, 0);
@@ -398,7 +389,7 @@ export async function seedTradingData(
           winRate: s.winRate, totalPnl: s.totalPnl, totalTrades: trades.length,
           // Bouclier annonces (#670) : la semaine du vendredi de l'exemple montre la stat.
           ...(inExampleWeek
-            ? { newsWindow: newsWindowStats(trades.map((t) => ({ ...t, accountId: accountIdByKey.get(t.account) ?? null })), newsExample.events, 5) }
+            ? { newsWindow: newsWindowStats(trades.map((t) => ({ ...t, accountId: accountIdByKey.get(t.account) ?? null })), newsExample.events, NEWS_SHIELD_DEFAULT_MINUTES) }
             : {}),
         } as Prisma.InputJsonValue,
       },

@@ -23,7 +23,7 @@ import { describe, it, expect, vi, beforeAll, afterAll, afterEach } from 'vitest
 vi.setConfig({ testTimeout: 60_000 });
 import { PrismaClient } from '@prisma/client';
 import { seedDemo, assertDemoCalendar, buildDemoDataset, DEMO_EMAIL, DEMO_WINDOW_DAYS, nearLimitOpenPnl } from './demo-seed';
-import { generate } from './demo-data/generate';
+import { generate, injectNewsExample } from './demo-data/generate';
 import { activeSessionWhere } from '../session/active-session';
 
 // Date simulée, pour vérifier la robustesse du tirage (il dépend de la date du run) :
@@ -311,6 +311,7 @@ describe('seedDemo — comptes de trading (cohérence dashboard / Mes comptes)',
     // Le tirage principal ne dépend pas du compte statique.
     const main = days.filter((d) => d.account !== 'elite');
     const seedOnly = generate(now, buildDemoDataset(now).seed);
+    injectNewsExample(seedOnly, now); // trade d'exemple du bouclier annonces (#670), ajouté au même endroit
     expect(main.flatMap((d) => d.trades.map((t) => t.pnl))).toEqual(seedOnly.flatMap((d) => d.trades.map((t) => t.pnl)));
   });
 

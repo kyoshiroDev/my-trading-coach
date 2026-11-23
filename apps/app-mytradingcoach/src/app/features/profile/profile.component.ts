@@ -28,7 +28,7 @@ import { PlanModalComponent } from '../../shared/components/plan-modal/plan-moda
 import { PushSettingsComponent } from './notifications/push-settings.component';
 import { InstallSettingsComponent } from '../install/install-settings.component';
 import { UserStore, calendarDaysUntil } from '../../core/stores/user.store';
-import { currencyAffix, formatMoney, subscriptionState, NEWS_SHIELD_DEFAULT_MINUTES } from '@mtc/shared';
+import { currencyAffix, formatMoney, subscriptionState, NEWS_SHIELD_DEFAULT_MINUTES, NEWS_SHIELD_MAX_MINUTES } from '@mtc/shared';
 import { SelectedAccountStore } from '../../core/stores/selected-account.store';
 import { AuthService } from '../../core/auth/auth.service';
 import { BillingApi } from '../../core/api/billing.api';
@@ -192,6 +192,7 @@ export class ProfileComponent implements OnInit {
   /** Bouclier annonces (#670) : null = défaut, 0 = coupé. */
   protected readonly newsShield       = signal<number | null>(null);
   protected readonly draftNews        = signal(NEWS_SHIELD_DEFAULT_MINUTES);
+  protected readonly NEWS_SHIELD_MAX  = NEWS_SHIELD_MAX_MINUTES;
   protected readonly isSavingStrategy = signal(false);
 
   // Modale stratégie : brouillon (édité dans la modale, annulé sans persistance)

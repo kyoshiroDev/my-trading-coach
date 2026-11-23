@@ -5,6 +5,7 @@ import { type AccountKey, DEMO_ACCOUNTS, DEMO_WINDOW_DAYS, INSTRUMENTS, type Ran
 import { NOTES_LOSS, NOTES_WIN } from './texts';
 import { type DemoDay, type DemoOpenTrade, type DemoStats, type DemoTrade, meetsTargets, net, setupsContrasted, statsOf } from './model';
 import { isoWeek } from './reports';
+import { newsShieldExample } from './news-shield-example';
 
 // ── Génération ─────────────────────────────────────────────────────────────
 
@@ -346,6 +347,22 @@ function secondaryMeetsTargets(days: DemoDay[]): boolean {
  * les contraintes de crédibilité. Pur (aucune base) : testé et affiché sans Prisma. Le tirage
  * principal est choisi sur Apex + Tradeify seuls, puis le compte statique a son propre tirage.
  */
+/**
+ * Bouclier annonces (#670) : le trade NQ d'exemple (vendredi précédent, 14:27 Paris) rejoint la journée
+ * Apex générée ce jour-là, AVANT tous les calculs : solde, clôtures, récap du jour, journées rouges et
+ * débrief le comptent comme le journal. Sans journée Apex ce vendredi-là : pas d'exemple. Renvoie
+ * vrai si le trade a été ajouté.
+ */
+export function injectNewsExample(days: DemoDay[], now: Date): boolean {
+  const ex = newsShieldExample(now);
+  const day = days.find((d) => d.account === 'apex' && d.kind !== 'today'
+    && dayAt(now, d.daysAgo, 12, 0).toLocaleDateString('fr-CA', { timeZone: 'Europe/Paris' }) === ex.friday);
+  if (!day) return false;
+  day.trades.push({ ...ex.trade, daysAgo: day.daysAgo });
+  day.trades.sort((a, b) => a.tradedAt.getTime() - b.tradedAt.getTime());
+  return true;
+}
+
 export function buildDemoDataset(now: Date = new Date()): { days: DemoDay[]; stats: DemoStats; seed: number } {
   let main: { days: DemoDay[]; seed: number } | null = null;
   for (let seed = 20260919; seed < 20260919 + 5_000; seed++) {
@@ -360,6 +377,7 @@ export function buildDemoDataset(now: Date = new Date()): { days: DemoDay[]; sta
     days = merged;
     if (secondaryMeetsTargets(merged)) break;
   }
+  injectNewsExample(days, now);
   gradeAll(days);
   assertDemoCalendar(days);
   return { days, stats: statsOf(days), seed: main!.seed };

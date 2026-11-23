@@ -738,13 +738,13 @@
         <div class="stp-fld">
           <div class="stp-fld-label">Bouclier annonces <span class="opt">{{ newsShieldLabel(draftNews()) }}</span></div>
           <div class="freq-slider-row">
-            <span class="freq-slider-label">Min</span>
-            <input type="range" class="freq-slider" min="0" max="30" data-testid="profile-news-shield"
+            <span class="freq-slider-label nw-delay">Délai</span>
+            <input type="range" class="freq-slider" min="0" [max]="NEWS_SHIELD_MAX" data-testid="profile-news-shield"
               aria-label="Minutes avant une annonce à fort impact (0 = coupé)"
               [value]="draftNews()" (input)="draftNews.set(+$any($event.target).value)" />
-            <span class="freq-slider-val">{{ draftNews() }}</span>
+            <span class="freq-slider-val">{{ draftNews() }} min</span>
           </div>
-          <p class="stp-fld-help">Alerte quand une position est ouverte, ou s'ouvre, dans ce délai avant une annonce à fort impact de ses devises. 0 pour couper.</p>
+          <p class="stp-fld-help">Je t'alerte si tu as une position ouverte, ou si tu en ouvres une, dans ce délai avant une annonce à fort impact sur l'instrument. 0 pour couper.</p>
         </div>
 
         <!-- Description -->
