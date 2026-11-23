@@ -515,8 +515,8 @@
                 <p class="dd-basis" data-testid="dd-basis">
                   <b>Marge calculée avec ces règles</b> ({{ phaseLabel(r.phase) }})&nbsp;:
                   seuil actuel <b>{{ money(a.metrics.drawdown!.floor, a.currency) }}</b>
-                  @if (r.locksAt !== null) {
-                    · {{ r.locked ? 'figé' : 'se fige à ' + money(r.lockedFloor, a.currency) + ' quand le solde atteint ' + money(r.locksAt, a.currency) }}
+                  @if (floorLock(r, a.currency); as lock) {
+                    · {{ lock }}
                   }
                   @if (r.platform) {
                     <span class="dd-platform">(règle {{ platformLabel(r.platform) }})</span>
@@ -594,7 +594,7 @@
           <!-- Payouts d'un compte funded (au dépli) : détectés chez le broker, ou saisis s'il n'est pas connecté. -->
           @if (a.type === 'FUNDED' && expandedId() === a.id) {
             <div class="acct-sub acct-payouts" [attr.data-testid]="'account-payouts-' + a.id">
-              <mtc-account-payouts [accountId]="a.id" [currency]="a.currency" [connected]="!!conn" (changed)="onPayoutsChanged()" />
+              <mtc-account-payouts [accountId]="a.id" [currency]="a.currency" [connected]="!!conn" [floorLock]="a.metrics.drawdown?.rule?.locksOnFirstPayout ?? null" (changed)="onPayoutsChanged()" />
             </div>
           }
 

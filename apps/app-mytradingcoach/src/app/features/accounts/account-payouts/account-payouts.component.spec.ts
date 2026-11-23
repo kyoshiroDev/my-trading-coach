@@ -14,7 +14,7 @@ const LIST: AccountPayout[] = [
   { id: 'b1', tradeDate: '2026-09-01', amount: 700, manual: false, confidence: 'probable' },
 ];
 
-function setup(opts: { connected?: boolean; list?: AccountPayout[]; confirm?: boolean } = {}) {
+function setup(opts: { connected?: boolean; list?: AccountPayout[]; confirm?: boolean; floorLock?: 'request' | 'approval' | 'payout' | null } = {}) {
   const api = {
     listPayouts: vi.fn(() => of({ data: opts.list ?? LIST })),
     addPayout: vi.fn(() => of({ data: { id: 'm2', tradeDate: '2026-10-20', amount: 500, manual: true, confidence: 'certain' } })),
@@ -35,6 +35,7 @@ function setup(opts: { connected?: boolean; list?: AccountPayout[]; confirm?: bo
   cmp['accountId'] = signal('a1');
   cmp['currency'] = signal('USD');
   cmp['connected'] = signal(opts.connected ?? false);
+  cmp['floorLock'] = signal(opts.floorLock ?? null);
   fixture.detectChanges();
   const el = fixture.nativeElement as HTMLElement;
   const q = (id: string) => el.querySelector(`[data-testid="${id}"]`) as HTMLElement | null;
@@ -51,11 +52,23 @@ const type = (input: HTMLInputElement, value: string) => {
 describe('AccountPayoutsComponent (payouts d\'un compte funded)', () => {
   beforeEach(() => TestBed.resetTestingModule());
 
-  it('au moins un payout : note discrète sur le plancher gelé, pas encore estimé', () => {
+  it('gel au premier payout modélisé (#696) : plus de note « pas encore pris en compte »', () => {
     const { q } = setup();
-    expect(q('payouts-floor-lock-note')!.textContent!.trim())
-      .toBe('Le plancher gelé après un payout n\'est pas encore pris en compte dans l\'estimation. Vérifie chez ta firm.');
-    expect(q('payouts-floor-lock-note')!.className).toBe('ap-note');
+    expect(q('payouts-floor-lock-note')).toBeNull();
+    expect(q('payouts-floor-lock-request')).toBeNull();
+  });
+
+  it('plan gelé dès la demande de payout : note sur le retard possible de l’estimation', () => {
+    const { q } = setup({ floorLock: 'request' });
+    expect(q('payouts-floor-lock-request')!.textContent!.replace(/[ \n]+/g, ' ').trim()).toBe(
+      'Ta firm fige le plancher dès ta demande de payout\u00a0: tant que le payout n\'apparaît pas ici, ton plancher réel peut déjà être plus haut que l\'estimation.',
+    );
+    expect(q('payouts-floor-lock-request')!.className).toBe('ap-note');
+  });
+
+  it('gel au payout approuvé : pas de note de retard', () => {
+    const { q } = setup({ floorLock: 'approval' });
+    expect(q('payouts-floor-lock-request')).toBeNull();
   });
 
   it('aucun payout : pas de note sur le plancher gelé', () => {

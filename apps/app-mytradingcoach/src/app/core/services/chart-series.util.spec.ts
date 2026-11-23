@@ -348,10 +348,34 @@ describe('payout reçu (Apex 50K Funded, plancher gelé à 50 100) : courbes sur
   });
 });
 
+describe('courbe de drawdown : gel au premier payout (#696)', () => {
+  const lockPlan = (since: string | null) => ({
+    rule: { kind: 'trailing_eod' as const, amount: 2_000, startingBalance: 50_000, locksAt: 52_100, lockedFloor: 50_100, locksOnFirstPayout: 'request' as const },
+    floor: since ? 50_100 : 48_800, margin: 0, pct: 1, breached: false, peakProfit: since ? null : 800, balance: 50_800, locked: since !== null,
+    payoutLockedSince: since,
+  });
+  const points = [pt('2026-10-01', 500), pt('2026-10-02', 800), pt('2026-10-05', 800)];
+
+  it('plancher suiveur avant le payout, figé à partir du jour du premier payout', () => {
+    const f = floorSeries(points, 50_000, lockPlan('2026-10-02'));
+    expect(f.floor.slice(0, 3)).toEqual([48_000, 48_500, 50_100]);
+  });
+
+  it('payout d’avant la période : figé dès le départ', () => {
+    const f = floorSeries(points, 50_000, lockPlan('2026-09-20'));
+    expect(f.floor.slice(0, 3)).toEqual([50_100, 50_100, 50_100]);
+  });
+
+  it('sans payout : aucun changement', () => {
+    const f = floorSeries(points, 50_000, lockPlan(null));
+    expect(f.floor.slice(0, 3)).toEqual([48_000, 48_500, 48_800]);
+  });
+});
+
 describe('« ? » de la carte drawdown selon la règle du plan relié', () => {
   const plan = (rule: Record<string, unknown>) => ({
     rule: { kind: 'trailing_eod', amount: 1_000, startingBalance: 25_000, locksAt: null, lockedFloor: null, ...rule },
-    floor: 24_000, margin: 1_000, pct: 1, breached: false, peakProfit: 0, balance: 25_000, locked: false,
+    floor: 24_000, margin: 1_000, pct: 1, breached: false, peakProfit: 0, balance: 25_000, locked: false, payoutLockedSince: null,
   }) as Parameters<typeof drawdownHelp>[0];
 
   it('sans plan : drawdown classique', () => {
@@ -365,6 +389,14 @@ describe('« ? » de la carte drawdown selon la règle du plan relié', () => {
     const t = drawdownHelp(plan({ locksAt: 26_100, lockedFloor: 25_100 }), 'USD');
     expect(t).toContain('plus haut solde de clôture à $1,000');
     expect(t).toContain('se fige à $25,100 quand ton solde atteint $26,100');
+  });
+  it('gel au premier payout (#696) : seuil ou demande de payout, date du payout enregistré', () => {
+    const t = drawdownHelp(plan({ locksAt: 26_100, lockedFloor: 25_100, locksOnFirstPayout: 'request' }), 'USD');
+    expect(t).toContain('se fige à $25,100 quand ton solde atteint $26,100, ou dès ta première demande de payout');
+    expect(t).toContain('à la date du premier payout enregistré, sans jamais le faire baisser');
+    expect(drawdownHelp(plan({ lockedFloor: 25_100, locksOnFirstPayout: 'approval' }), 'USD')).toContain(
+      'Le plancher se fige à $25,100 dès ton premier payout approuvé.',
+    );
   });
   it('suiveur intraday : note sur les gains latents', () => {
     expect(drawdownHelp(plan({ kind: 'trailing_intraday' }), 'USD')).toContain('Calcul sur les trades clôturés\u00a0; ta prop firm peut tenir compte des gains latents.');
