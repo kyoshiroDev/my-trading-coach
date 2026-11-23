@@ -207,9 +207,9 @@ describe('Top One', () => {
     expect([md.amount, md.locks_at, md.locked_floor]).toEqual([3000, 53100, 50100]);
   });
 
-  it('X-Daily Spark 50K', () => {
+  it('X-Daily Spark 50K (épuisé, discontinued le 2026-11-23, lot 5b-bis #1218)', () => {
     const plan = get('toponefutures-x-daily-spark-50k');
-    expect([plan.price.amount, plan.price.activation_fee, plan.availability]).toEqual([39, 189, 'public']);
+    expect([plan.price.amount, plan.price.activation_fee, plan.availability]).toEqual([39, 189, 'discontinued']);
     const ev = phaseOf(plan.id, 'evaluation');
     expect([ev.max_drawdown.amount, ev.max_duration_days, ev.daily_loss_limit, ev.consistency]).toEqual([2000, 30, null, null]);
     const fu = phaseOf(plan.id, 'funded');

@@ -10,7 +10,7 @@
       "tradingview"
     ]
   },
-  "verified_at": "2026-11-02",
+  "verified_at": "2026-11-23",
   "plans": [
     {
       "id": "toponefutures-elite-daily-25k",
@@ -506,13 +506,13 @@
           "phase": "evaluation",
           "profit_target": 9000,
           "daily_loss_limit": {
-            "amount": 1850,
+            "amount": 1750,
             "basis": "equity",
             "resets_at": "18:00 America/New_York",
             "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": null,
-            "notes": "Calculé sur le solde de clôture de la veille ; pertes latentes et frais compris. Soft breach : positions liquidées, pause jusqu'à la session suivante. Montant 150K publié dans la fiche V2 mais « n/a » dans le tableau général des DLL."
+            "notes": "Calculé sur le solde de clôture de la veille ; pertes latentes et frais compris. Soft breach : positions liquidées, pause jusqu'à la session suivante. Montant 150K : 1 750 $ (articles Elite Daily V2 Overview et DLL évaluation / funded du 2026-11-17, page d’accueil du 2026-11-23) dans le tableau général des DLL."
           },
           "max_drawdown": {
             "amount": 4500,
@@ -550,13 +550,13 @@
           "phase": "funded",
           "profit_target": null,
           "daily_loss_limit": {
-            "amount": 1850,
+            "amount": 1750,
             "basis": "equity",
             "resets_at": "18:00 America/New_York",
             "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": null,
-            "notes": "Calculé sur le solde de clôture de la veille ; pertes latentes et frais compris. Soft breach : positions liquidées, pause jusqu'à la session suivante. Montant 150K publié dans la fiche V2 mais « n/a » dans le tableau général des DLL."
+            "notes": "Calculé sur le solde de clôture de la veille ; pertes latentes et frais compris. Soft breach : positions liquidées, pause jusqu'à la session suivante. Montant 150K : 1 750 $ (articles Elite Daily V2 Overview et DLL évaluation / funded du 2026-11-17, page d’accueil du 2026-11-23) dans le tableau général des DLL."
           },
           "max_drawdown": {
             "amount": 3500,
@@ -652,14 +652,14 @@
         "https://www.toponefutures.com/"
       ],
       "needs_review": false,
-      "notes": "Elite Daily V2 (5 comptes funded max). DLL de 1 850 $ en évaluation confirmée : le support indique que l'Elite Daily a bien une perte journalière (relance du 2026-10-05)."
+      "notes": "Elite Daily V2 (5 comptes funded max). Perte journalière confirmée (1 750 $ en 150K depuis la relecture du 2026-11-23) : le support indique que l'Elite Daily a bien une perte journalière (relance du 2026-10-05)."
     },
     {
       "id": "toponefutures-elite-daily-nodll-25k",
       "plan_name": "Elite Daily",
       "account_size": 25000,
       "currency": "USD",
-      "availability": "public",
+      "availability": "discontinued",
       "configuration": {
         "daily_loss_limit": false,
         "eval_drawdown": null,
@@ -784,14 +784,14 @@
         "https://help.toponefutures.com/en/articles/17635087-no-daily-loss-limit-add-on-trade-without-daily-limits"
       ],
       "needs_review": false,
-      "notes": "Elite Daily V2 (5 comptes funded max). Variante sans Daily Loss Limit, à choisir à l'achat uniquement (ni après, ni à l'activation, ni au reset). Autres règles identiques au plan avec DLL."
+      "notes": "Elite Daily V2 (5 comptes funded max). Variante sans Daily Loss Limit, à choisir à l'achat uniquement (ni après, ni à l'activation, ni au reset). Autres règles identiques au plan avec DLL. Option retirée : réservée aux comptes Elite ACCESS (article « No Daily Loss Limit Add-On » du 2026-11-17 ; plus de bascule sur la page d’accueil le 2026-11-23)."
     },
     {
       "id": "toponefutures-elite-daily-nodll-50k",
       "plan_name": "Elite Daily",
       "account_size": 50000,
       "currency": "USD",
-      "availability": "public",
+      "availability": "discontinued",
       "configuration": {
         "daily_loss_limit": false,
         "eval_drawdown": null,
@@ -928,14 +928,14 @@
         "https://help.toponefutures.com/en/articles/17635087-no-daily-loss-limit-add-on-trade-without-daily-limits"
       ],
       "needs_review": false,
-      "notes": "Elite Daily V2 (5 comptes funded max). Variante sans Daily Loss Limit, à choisir à l'achat uniquement (ni après, ni à l'activation, ni au reset). Autres règles identiques au plan avec DLL."
+      "notes": "Elite Daily V2 (5 comptes funded max). Variante sans Daily Loss Limit, à choisir à l'achat uniquement (ni après, ni à l'activation, ni au reset). Autres règles identiques au plan avec DLL. Option retirée : réservée aux comptes Elite ACCESS (article « No Daily Loss Limit Add-On » du 2026-11-17 ; plus de bascule sur la page d’accueil le 2026-11-23)."
     },
     {
       "id": "toponefutures-elite-daily-nodll-100k",
       "plan_name": "Elite Daily",
       "account_size": 100000,
       "currency": "USD",
-      "availability": "public",
+      "availability": "discontinued",
       "configuration": {
         "daily_loss_limit": false,
         "eval_drawdown": null,
@@ -1078,14 +1078,14 @@
         "https://help.toponefutures.com/en/articles/17635087-no-daily-loss-limit-add-on-trade-without-daily-limits"
       ],
       "needs_review": false,
-      "notes": "Elite Daily V2 (5 comptes funded max). Variante sans Daily Loss Limit, à choisir à l'achat uniquement (ni après, ni à l'activation, ni au reset). Autres règles identiques au plan avec DLL."
+      "notes": "Elite Daily V2 (5 comptes funded max). Variante sans Daily Loss Limit, à choisir à l'achat uniquement (ni après, ni à l'activation, ni au reset). Autres règles identiques au plan avec DLL. Option retirée : réservée aux comptes Elite ACCESS (article « No Daily Loss Limit Add-On » du 2026-11-17 ; plus de bascule sur la page d’accueil le 2026-11-23)."
     },
     {
       "id": "toponefutures-elite-daily-nodll-150k",
       "plan_name": "Elite Daily",
       "account_size": 150000,
       "currency": "USD",
-      "availability": "public",
+      "availability": "discontinued",
       "configuration": {
         "daily_loss_limit": false,
         "eval_drawdown": null,
@@ -1234,7 +1234,7 @@
         "https://help.toponefutures.com/en/articles/17635087-no-daily-loss-limit-add-on-trade-without-daily-limits"
       ],
       "needs_review": false,
-      "notes": "Elite Daily V2 (5 comptes funded max). DLL de 1 850 $ en évaluation confirmée : le support indique que l'Elite Daily a bien une perte journalière (relance du 2026-10-05). Variante sans Daily Loss Limit, à choisir à l'achat uniquement (ni après, ni à l'activation, ni au reset). Autres règles identiques au plan avec DLL."
+      "notes": "Elite Daily V2 (5 comptes funded max). Perte journalière confirmée (1 750 $ en 150K depuis la relecture du 2026-11-23) : le support indique que l'Elite Daily a bien une perte journalière (relance du 2026-10-05). Variante sans Daily Loss Limit, à choisir à l'achat uniquement (ni après, ni à l'activation, ni au reset). Autres règles identiques au plan avec DLL. Option retirée : réservée aux comptes Elite ACCESS (article « No Daily Loss Limit Add-On » du 2026-11-17 ; plus de bascule sur la page d’accueil le 2026-11-23)."
     },
     {
       "id": "toponefutures-elite-access-25k",
@@ -1848,7 +1848,7 @@
         "https://www.toponefutures.com/"
       ],
       "needs_review": false,
-      "notes": "Elite Access : 10 comptes maximum."
+      "notes": "Elite Access : 10 comptes maximum. La carte de la page d’accueil affiche une perte journalière funded de 1 850 $ (2026-11-23) ; les articles de règles (DLL Access et Access Intraday du 2026-11-17, Daily drawdown) disent 1 750 $ : ce sont les articles qui font foi."
     },
     {
       "id": "toponefutures-elite-access-nodll-25k",
@@ -1865,8 +1865,8 @@
       "price": {
         "amount": 39,
         "billing": "one_time",
-        "activation_fee": 180,
-        "notes": "Option « No Daily Loss Limit » choisie au checkout (depuis le 2026-10-16) : évaluation au même prix (39 $), activation 180 $ au lieu de 139 $ (environ +30 %, page d'accueil). Reset évaluation 35 $."
+        "activation_fee": 222,
+        "notes": "Option « No Daily Loss Limit » choisie au checkout (depuis le 2026-10-16) : évaluation au même prix (39 $), activation 222 $. Reset évaluation 35 $. Activation hors promo 222 $ (bascule de la carte Elite ACCESS sur la page d’accueil, 2026-11-23)."
       },
       "phases": [
         {
@@ -1998,8 +1998,8 @@
       "price": {
         "amount": 39,
         "billing": "one_time",
-        "activation_fee": 245,
-        "notes": "Option « No Daily Loss Limit » choisie au checkout (depuis le 2026-10-16) : évaluation au même prix (39 $), activation 245 $ au lieu de 189 $ (environ +30 %, page d'accueil). Reset évaluation 35 $."
+        "activation_fee": 302,
+        "notes": "Option « No Daily Loss Limit » choisie au checkout (depuis le 2026-10-16) : évaluation au même prix (39 $), activation 302 $. Reset évaluation 35 $. Activation hors promo 302 $ (bascule de la carte Elite ACCESS sur la page d’accueil, 2026-11-23)."
       },
       "phases": [
         {
@@ -2143,8 +2143,8 @@
       "price": {
         "amount": 39,
         "billing": "one_time",
-        "activation_fee": 336,
-        "notes": "Option « No Daily Loss Limit » choisie au checkout (depuis le 2026-10-16) : évaluation au même prix (39 $), activation 336 $ au lieu de 259 $ (environ +30 %, page d'accueil). Reset évaluation 35 $."
+        "activation_fee": 414,
+        "notes": "Option « No Daily Loss Limit » choisie au checkout (depuis le 2026-10-16) : évaluation au même prix (39 $), activation 414 $. Reset évaluation 35 $. Activation hors promo 414 $ (bascule de la carte Elite ACCESS sur la page d’accueil, 2026-11-23)."
       },
       "phases": [
         {
@@ -2294,8 +2294,8 @@
       "price": {
         "amount": 39,
         "billing": "one_time",
-        "activation_fee": 466,
-        "notes": "Option « No Daily Loss Limit » choisie au checkout (depuis le 2026-10-16) : évaluation au même prix (39 $), activation 466 $ au lieu de 359 $ (environ +30 %, page d'accueil). Reset évaluation 35 $."
+        "activation_fee": 574,
+        "notes": "Option « No Daily Loss Limit » choisie au checkout (depuis le 2026-10-16) : évaluation au même prix (39 $), activation 574 $. Reset évaluation 35 $. Activation hors promo 574 $ (bascule de la carte Elite ACCESS sur la page d’accueil, 2026-11-23)."
       },
       "phases": [
         {
@@ -2451,8 +2451,8 @@
       "price": {
         "amount": 39,
         "billing": "one_time",
-        "activation_fee": 69,
-        "notes": "Évaluation à 39 $ (paiement unique, toutes tailles), 30 jours pour réussir. Activation 69 $. Reset évaluation 35 $, reset funded 149 $."
+        "activation_fee": 90,
+        "notes": "Évaluation à 39 $ (paiement unique, toutes tailles), 30 jours pour réussir. Activation 90 $. Reset évaluation 35 $, reset funded 149 $. Activation hors promo 90 $ (bascule de la carte Elite ACCESS sur la page d’accueil, 2026-11-23)."
       },
       "phases": [
         {
@@ -2589,8 +2589,8 @@
       "price": {
         "amount": 39,
         "billing": "one_time",
-        "activation_fee": 94,
-        "notes": "Évaluation à 39 $ (paiement unique, toutes tailles), 30 jours pour réussir. Activation 94 $. Reset évaluation 35 $, reset funded 249 $."
+        "activation_fee": 123,
+        "notes": "Évaluation à 39 $ (paiement unique, toutes tailles), 30 jours pour réussir. Activation 123 $. Reset évaluation 35 $, reset funded 249 $. Activation hors promo 123 $ (bascule de la carte Elite ACCESS sur la page d’accueil, 2026-11-23)."
       },
       "phases": [
         {
@@ -2739,8 +2739,8 @@
       "price": {
         "amount": 39,
         "billing": "one_time",
-        "activation_fee": 129,
-        "notes": "Évaluation à 39 $ (paiement unique, toutes tailles), 30 jours pour réussir. Activation 129 $. Reset évaluation 35 $, reset funded 449 $."
+        "activation_fee": 168,
+        "notes": "Évaluation à 39 $ (paiement unique, toutes tailles), 30 jours pour réussir. Activation 168 $. Reset évaluation 35 $, reset funded 449 $. Activation hors promo 168 $ (bascule de la carte Elite ACCESS sur la page d’accueil, 2026-11-23)."
       },
       "phases": [
         {
@@ -2895,8 +2895,8 @@
       "price": {
         "amount": 39,
         "billing": "one_time",
-        "activation_fee": 179,
-        "notes": "Évaluation à 39 $ (paiement unique, toutes tailles), 30 jours pour réussir. Activation 179 $. Reset évaluation 35 $, reset funded 649 $."
+        "activation_fee": 233,
+        "notes": "Évaluation à 39 $ (paiement unique, toutes tailles), 30 jours pour réussir. Activation 233 $. Reset évaluation 35 $, reset funded 649 $. Activation hors promo 233 $ (bascule de la carte Elite ACCESS sur la page d’accueil, 2026-11-23)."
       },
       "phases": [
         {
@@ -3040,7 +3040,7 @@
         "https://www.toponefutures.com/"
       ],
       "needs_review": false,
-      "notes": "Elite Access Intraday : 10 comptes maximum."
+      "notes": "Elite Access Intraday : 10 comptes maximum. La carte de la page d’accueil affiche une perte journalière funded de 1 850 $ (2026-11-23) ; les articles de règles (DLL Access et Access Intraday du 2026-11-17, Daily drawdown) disent 1 750 $ : ce sont les articles qui font foi."
     },
     {
       "id": "toponefutures-elite-access-intraday-nodll-25k",
@@ -3057,8 +3057,8 @@
       "price": {
         "amount": 39,
         "billing": "one_time",
-        "activation_fee": 90,
-        "notes": "Option « No Daily Loss Limit » choisie au checkout (depuis le 2026-10-16) : évaluation au même prix (39 $), activation 90 $ au lieu de 69 $ (environ +30 %, page d'accueil). Reset évaluation 35 $."
+        "activation_fee": 144,
+        "notes": "Option « No Daily Loss Limit » choisie au checkout (depuis le 2026-10-16) : évaluation au même prix (39 $), activation 144 $. Reset évaluation 35 $. Activation hors promo 144 $ (bascule de la carte Elite ACCESS sur la page d’accueil, 2026-11-23)."
       },
       "phases": [
         {
@@ -3188,8 +3188,8 @@
       "price": {
         "amount": 39,
         "billing": "one_time",
-        "activation_fee": 122,
-        "notes": "Option « No Daily Loss Limit » choisie au checkout (depuis le 2026-10-16) : évaluation au même prix (39 $), activation 122 $ au lieu de 94 $ (environ +30 %, page d'accueil). Reset évaluation 35 $."
+        "activation_fee": 196,
+        "notes": "Option « No Daily Loss Limit » choisie au checkout (depuis le 2026-10-16) : évaluation au même prix (39 $), activation 196 $. Reset évaluation 35 $. Activation hors promo 196 $ (bascule de la carte Elite ACCESS sur la page d’accueil, 2026-11-23)."
       },
       "phases": [
         {
@@ -3331,8 +3331,8 @@
       "price": {
         "amount": 39,
         "billing": "one_time",
-        "activation_fee": 168,
-        "notes": "Option « No Daily Loss Limit » choisie au checkout (depuis le 2026-10-16) : évaluation au même prix (39 $), activation 168 $ au lieu de 129 $ (environ +30 %, page d'accueil). Reset évaluation 35 $."
+        "activation_fee": 269,
+        "notes": "Option « No Daily Loss Limit » choisie au checkout (depuis le 2026-10-16) : évaluation au même prix (39 $), activation 269 $. Reset évaluation 35 $. Activation hors promo 269 $ (bascule de la carte Elite ACCESS sur la page d’accueil, 2026-11-23)."
       },
       "phases": [
         {
@@ -3480,8 +3480,8 @@
       "price": {
         "amount": 39,
         "billing": "one_time",
-        "activation_fee": 233,
-        "notes": "Option « No Daily Loss Limit » choisie au checkout (depuis le 2026-10-16) : évaluation au même prix (39 $), activation 233 $ au lieu de 179 $ (environ +30 %, page d'accueil). Reset évaluation 35 $."
+        "activation_fee": 373,
+        "notes": "Option « No Daily Loss Limit » choisie au checkout (depuis le 2026-10-16) : évaluation au même prix (39 $), activation 373 $. Reset évaluation 35 $. Activation hors promo 373 $ (bascule de la carte Elite ACCESS sur la page d’accueil, 2026-11-23)."
       },
       "phases": [
         {
@@ -4369,7 +4369,7 @@
       "plan_name": "Ignite",
       "account_size": 25000,
       "currency": "USD",
-      "availability": "public",
+      "availability": "discontinued",
       "configuration": {
         "daily_loss_limit": false,
         "eval_drawdown": null,
@@ -4450,14 +4450,14 @@
         "https://help.toponefutures.com/en/articles/17635087-no-daily-loss-limit-add-on-trade-without-daily-limits"
       ],
       "needs_review": false,
-      "notes": "Ignite : 6 comptes maximum (copy trading jusqu'à 10 comptes selon la page d'accueil). Variante sans Daily Loss Limit, à choisir à l'achat uniquement (ni après, ni à l'activation, ni au reset). Autres règles identiques au plan avec DLL."
+      "notes": "Ignite : 6 comptes maximum (copy trading jusqu'à 10 comptes selon la page d'accueil). Variante sans Daily Loss Limit, à choisir à l'achat uniquement (ni après, ni à l'activation, ni au reset). Autres règles identiques au plan avec DLL. Option retirée : réservée aux comptes Elite ACCESS (article « No Daily Loss Limit Add-On » du 2026-11-17 ; plus de bascule sur la page d’accueil le 2026-11-23)."
     },
     {
       "id": "toponefutures-ignite-nodll-50k",
       "plan_name": "Ignite",
       "account_size": 50000,
       "currency": "USD",
-      "availability": "public",
+      "availability": "discontinued",
       "configuration": {
         "daily_loss_limit": false,
         "eval_drawdown": null,
@@ -4538,14 +4538,14 @@
         "https://help.toponefutures.com/en/articles/17635087-no-daily-loss-limit-add-on-trade-without-daily-limits"
       ],
       "needs_review": false,
-      "notes": "Ignite : 6 comptes maximum (copy trading jusqu'à 10 comptes selon la page d'accueil). Variante sans Daily Loss Limit, à choisir à l'achat uniquement (ni après, ni à l'activation, ni au reset). Autres règles identiques au plan avec DLL."
+      "notes": "Ignite : 6 comptes maximum (copy trading jusqu'à 10 comptes selon la page d'accueil). Variante sans Daily Loss Limit, à choisir à l'achat uniquement (ni après, ni à l'activation, ni au reset). Autres règles identiques au plan avec DLL. Option retirée : réservée aux comptes Elite ACCESS (article « No Daily Loss Limit Add-On » du 2026-11-17 ; plus de bascule sur la page d’accueil le 2026-11-23)."
     },
     {
       "id": "toponefutures-ignite-nodll-100k",
       "plan_name": "Ignite",
       "account_size": 100000,
       "currency": "USD",
-      "availability": "public",
+      "availability": "discontinued",
       "configuration": {
         "daily_loss_limit": false,
         "eval_drawdown": null,
@@ -4626,14 +4626,14 @@
         "https://help.toponefutures.com/en/articles/17635087-no-daily-loss-limit-add-on-trade-without-daily-limits"
       ],
       "needs_review": false,
-      "notes": "Ignite : 6 comptes maximum (copy trading jusqu'à 10 comptes selon la page d'accueil). Variante sans Daily Loss Limit, à choisir à l'achat uniquement (ni après, ni à l'activation, ni au reset). Autres règles identiques au plan avec DLL."
+      "notes": "Ignite : 6 comptes maximum (copy trading jusqu'à 10 comptes selon la page d'accueil). Variante sans Daily Loss Limit, à choisir à l'achat uniquement (ni après, ni à l'activation, ni au reset). Autres règles identiques au plan avec DLL. Option retirée : réservée aux comptes Elite ACCESS (article « No Daily Loss Limit Add-On » du 2026-11-17 ; plus de bascule sur la page d’accueil le 2026-11-23)."
     },
     {
       "id": "toponefutures-ignite-nodll-150k",
       "plan_name": "Ignite",
       "account_size": 150000,
       "currency": "USD",
-      "availability": "public",
+      "availability": "discontinued",
       "configuration": {
         "daily_loss_limit": false,
         "eval_drawdown": null,
@@ -4714,7 +4714,7 @@
         "https://help.toponefutures.com/en/articles/17635087-no-daily-loss-limit-add-on-trade-without-daily-limits"
       ],
       "needs_review": false,
-      "notes": "Ignite : 6 comptes maximum (copy trading jusqu'à 10 comptes selon la page d'accueil). Variante sans Daily Loss Limit, à choisir à l'achat uniquement (ni après, ni à l'activation, ni au reset). Autres règles identiques au plan avec DLL."
+      "notes": "Ignite : 6 comptes maximum (copy trading jusqu'à 10 comptes selon la page d'accueil). Variante sans Daily Loss Limit, à choisir à l'achat uniquement (ni après, ni à l'activation, ni au reset). Autres règles identiques au plan avec DLL. Option retirée : réservée aux comptes Elite ACCESS (article « No Daily Loss Limit Add-On » du 2026-11-17 ; plus de bascule sur la page d’accueil le 2026-11-23)."
     },
     {
       "id": "toponefutures-x-ultra-50k",
@@ -5191,7 +5191,7 @@
       "plan_name": "X-Daily Spark",
       "account_size": 50000,
       "currency": "USD",
-      "availability": "public",
+      "availability": "discontinued",
       "configuration": null,
       "price": {
         "amount": 39,
@@ -5307,14 +5307,14 @@
         }
       ],
       "source_urls": [
-        "https://www.toponefutures.com/launchpad",
+        "https://www.toponefutures.com/launchpad-8",
         "https://help.toponefutures.com/en/articles/17678693-x-daily-spark-accounts-overview",
         "https://help.toponefutures.com/en/articles/17678769-x-daily-spark-contract-limits-scaling",
         "https://help.toponefutures.com/en/articles/17678771-x-daily-spark-other-trading-rules",
         "https://help.toponefutures.com/en/articles/17678752-x-daily-spark-maximum-drawdown-mll-eod"
       ],
       "needs_review": false,
-      "notes": "Lancement limité à 1 500 comptes, 3 comptes maximum par trader. Options à l'évaluation non modélisées : drawdown statique +15 $, objectif 2 500 $ +15 $, objectif 2 000 $ +30 $."
+      "notes": "Lancement limité à 1 500 comptes, 3 comptes maximum par trader. Options à l'évaluation non modélisées : drawdown statique +15 $, objectif 2 500 $ +15 $, objectif 2 000 $ +30 $. Épuisé : « Sold out · all 1,500 X-DAILY SPARK accounts are gone », LP-03 fermé (page LaunchPad, déplacée sur /launchpad-8, 2026-11-23)."
     }
   ]
 }

@@ -636,3 +636,19 @@ Lot 5 découpé en trois PR (5a Topstep / TradeDay / UProfit, 5b BluSky / Top On
 | UProfit | 21 pages d'aide, page DAY 2.0 | « Contenu modifié » = bandeau « DAY 2.0 — choose Day Soft or Day Flex » et menu ; articles datés du 2026-08-03 au 2026-10-08, valeurs identiques. « Day Soft / Day Flex » = gammes Soft / Flex du catalogue (renommage commercial). | `verified_at` seul |
 
 Catalogue à 334 plans (lots 2 à 4 compris).
+
+## Veille du 2026-11-23 (suite) : Top One (lot 5b-bis, #1218)
+
+Top One relu en entier (11 articles modifiés du 2026-10-26 au 2026-11-18, page d'accueil et page LaunchPad dans Chrome, bascules des cartes Elite ACCESS) : `verified_at` au 2026-11-23.
+
+| Firm | Source | Constat | Effet |
+|---|---|---|---|
+| Top One | Elite Daily V2 Overview, DLL évaluation et funded (2026-11-17), page d'accueil | Elite Daily V2 150K : perte journalière 1 750 $ en évaluation et en funded (articles et accueil concordants ; le 2026-11-02, 1 850 $ avait été gardé faute d'accord entre sources). Autres règles identiques. | `daily_loss_limit` 150K 1 850 → 1 750 $ (éval + funded) |
+| Top One | Elite ACCESS DLL et Access Intraday DLL (2026-11-17), Daily drawdown, accueil | La carte de l'accueil affiche 1 850 $ de perte journalière funded en 150K, les trois articles 1 750 $. | 1 750 $ gardé (les articles font foi), écart noté sur `elite-access-150k` et `elite-access-intraday-150k` |
+| Top One | No Daily Loss Limit Add-On (2026-11-17), accueil | « available on Elite ACCESS accounts only » ; aucune bascule sans DLL sur Elite Daily ni Ignite à l'accueil. | 8 plans `elite-daily-nodll-*` et `ignite-nodll-*` → `discontinued` |
+| Top One | Elite ACCESS Intraday Activation Fees (2026-11-18), bascules de l'accueil | Activation hors promo : Intraday 90 / 123 / 168 / 233 $, Intraday sans DLL 144 / 196 / 269 / 373 $, EOD sans DLL 222 / 302 / 414 / 574 $ (les attributs de la page portent le prix promo, le prix plein est le prix barré). EOD standard 139 / 189 / 259 / 359 $ inchangé. | `activation_fee` de 12 plans Elite ACCESS |
+| Top One | /launchpad (404) → /launchpad-8 | « Sold out · all 1,500 X-DAILY SPARK accounts are gone », LP-03 fermé. | `toponefutures-x-daily-spark-50k` → `discontinued`, source remplacée |
+| Top One | Daily drawdown, No DLL add-on | « Elite ACCESS Static » cité (DLL funded 500 / 1 000 / 1 250 / 1 750 $), non lu. | Non ajouté, suivi dans #1241 |
+| Top One | Ignite, Instant, Elite Daily (prix), contrats max | Prix Elite Daily 178 / 218 / 398 / 549 $, Ignite 218 / 398 / 563 / 799 $, Instant 419 / 679 / 821 / 939 $ ; règles Ignite et Instant 2.0 identiques. | Aucun |
+
+Catalogue à 334 plans.
