@@ -23,7 +23,7 @@
       "overcharts"
     ]
   },
-  "verified_at": "2026-10-18",
+  "verified_at": "2026-11-23",
   "plans": [
     {
       "id": "tradeday-qp-intraday-25k",
@@ -38,10 +38,10 @@
         "addon": null
       },
       "price": {
-        "amount": 100,
-        "billing": "monthly",
+        "amount": 99,
+        "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Prix catalogue 100 $/mois ; promotion en cours à 45 $/mois (code TDNEW). Reset au prix promo."
+        "notes": "Paiement unique, pas d’abonnement (TradeDay 2.0, page tarifs 2026-11-23) ; promotion SALE60 en cours à 39 $."
       },
       "phases": [
         {
@@ -153,10 +153,10 @@
         "addon": null
       },
       "price": {
-        "amount": 131,
-        "billing": "monthly",
+        "amount": 124,
+        "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Prix catalogue 131 $/mois ; promotion en cours à 59 $/mois (code TDNEW). Reset au prix promo."
+        "notes": "Paiement unique, pas d’abonnement (TradeDay 2.0, page tarifs 2026-11-23) ; promotion SALE60 en cours à 49 $."
       },
       "phases": [
         {
@@ -268,10 +268,10 @@
         "addon": null
       },
       "price": {
-        "amount": 240,
-        "billing": "monthly",
+        "amount": 248,
+        "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Prix catalogue 240 $/mois ; promotion en cours à 108 $/mois (code TDNEW). Reset au prix promo."
+        "notes": "Paiement unique, pas d’abonnement (TradeDay 2.0, page tarifs 2026-11-23) ; promotion SALE60 en cours à 99 $."
       },
       "phases": [
         {
@@ -383,10 +383,10 @@
         "addon": null
       },
       "price": {
-        "amount": 360,
-        "billing": "monthly",
+        "amount": 398,
+        "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Prix catalogue 360 $/mois ; promotion en cours à 162 $/mois (code TDNEW). Reset au prix promo."
+        "notes": "Paiement unique, pas d’abonnement (TradeDay 2.0, page tarifs 2026-11-23) ; promotion SALE60 en cours à 159 $."
       },
       "phases": [
         {
@@ -498,10 +498,10 @@
         "addon": null
       },
       "price": {
-        "amount": 120,
-        "billing": "monthly",
+        "amount": 124,
+        "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Prix catalogue 120 $/mois ; promotion en cours à 54 $/mois (code TDNEW). Reset au prix promo."
+        "notes": "Paiement unique, pas d’abonnement (TradeDay 2.0, page tarifs 2026-11-23) ; promotion SALE60 en cours à 49 $."
       },
       "phases": [
         {
@@ -613,10 +613,10 @@
         "addon": null
       },
       "price": {
-        "amount": 175,
-        "billing": "monthly",
+        "amount": 174,
+        "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Prix catalogue 175 $/mois ; promotion en cours à 79 $/mois (code TDNEW). Reset au prix promo."
+        "notes": "Paiement unique, pas d’abonnement (TradeDay 2.0, page tarifs 2026-11-23) ; promotion SALE60 en cours à 69 $."
       },
       "phases": [
         {
@@ -728,10 +728,10 @@
         "addon": null
       },
       "price": {
-        "amount": 285,
-        "billing": "monthly",
+        "amount": 298,
+        "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Prix catalogue 285 $/mois ; promotion en cours à 129 $/mois (code TDNEW). Reset au prix promo."
+        "notes": "Paiement unique, pas d’abonnement (TradeDay 2.0, page tarifs 2026-11-23) ; promotion SALE60 en cours à 119 $."
       },
       "phases": [
         {
@@ -843,10 +843,10 @@
         "addon": null
       },
       "price": {
-        "amount": 400,
-        "billing": "monthly",
+        "amount": 440,
+        "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Prix catalogue 400 $/mois ; promotion en cours à 180 $/mois (code TDNEW). Reset au prix promo."
+        "notes": "Paiement unique, pas d’abonnement (TradeDay 2.0, page tarifs 2026-11-23) ; promotion SALE60 en cours à 176 $."
       },
       "phases": [
         {
@@ -958,10 +958,10 @@
         "addon": null
       },
       "price": {
-        "amount": 130,
-        "billing": "monthly",
+        "amount": 173,
+        "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Prix catalogue 130 $/mois ; promotion en cours à 65 $/mois (page tarifs, 2026-10-18). Reset au prix promo."
+        "notes": "Paiement unique, pas d’abonnement (TradeDay 2.0, page tarifs 2026-11-23) ; promotion SALE60 en cours à 69 $."
       },
       "phases": [
         {
@@ -1086,10 +1086,10 @@
         "addon": null
       },
       "price": {
-        "amount": 189,
-        "billing": "monthly",
+        "amount": 248,
+        "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Prix catalogue 189 $/mois ; promotion en cours à 95 $/mois (page tarifs, 2026-10-18). Reset au prix promo. Le support cite 180 $ le 2026-10-04 (promotion probable)."
+        "notes": "Paiement unique, pas d’abonnement (TradeDay 2.0, page tarifs 2026-11-23) ; promotion SALE60 en cours à 99 $."
       },
       "phases": [
         {
@@ -1201,10 +1201,10 @@
         "addon": null
       },
       "price": {
-        "amount": 350,
-        "billing": "monthly",
+        "amount": 498,
+        "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Prix catalogue 350 $/mois (prix catalogue relevé à 330 $ le 2026-10-03) ; promotion en cours à 175 $/mois (page tarifs, 2026-10-18). Reset au prix promo. Le support cite 320 $ le 2026-10-04 (promotion probable)."
+        "notes": "Paiement unique, pas d’abonnement (TradeDay 2.0, page tarifs 2026-11-23) ; promotion SALE60 en cours à 199 $."
       },
       "phases": [
         {
@@ -1316,10 +1316,10 @@
         "addon": null
       },
       "price": {
-        "amount": 530,
-        "billing": "monthly",
+        "amount": 725,
+        "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Prix catalogue 530 $/mois (prix catalogue relevé à 500 $ le 2026-10-03) ; promotion en cours à 265 $/mois (page tarifs, 2026-10-18). Reset au prix promo. Le support cite 480 $ le 2026-10-04 (promotion probable)."
+        "notes": "Paiement unique, pas d’abonnement (TradeDay 2.0, page tarifs 2026-11-23) ; promotion SALE60 en cours à 290 $."
       },
       "phases": [
         {

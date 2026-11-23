@@ -1290,6 +1290,12 @@
     ],
     "firms": [
       "topstep"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture complète (lot 5a, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://help.topstep.com/en/articles/10490293-daily-loss-limit-in-the-trading-combine-and-express-funded-account": {
@@ -1299,15 +1305,27 @@
     ],
     "firms": [
       "topstep"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture complète (lot 5a, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://help.topstep.com/en/articles/14289835-topstep-pricing-and-payment-questions": {
     "kind": "date",
     "values": [
-      "2026-10-15T22:44:35Z"
+      "2026-11-16T19:02:21Z"
     ],
     "firms": [
       "topstep"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture complète (lot 5a, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://help.topstep.com/en/articles/8284099-topstep-program-overview": {
@@ -1317,51 +1335,87 @@
     ],
     "firms": [
       "topstep"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture complète (lot 5a, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://help.topstep.com/en/articles/8284197-trading-combine-parameters": {
     "kind": "date",
     "values": [
-      "2026-09-24T20:21:06Z"
+      "2026-11-19T15:21:46Z"
     ],
     "firms": [
       "topstep"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture complète (lot 5a, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://help.topstep.com/en/articles/8284204-what-is-the-maximum-loss-limit": {
     "kind": "date",
     "values": [
-      "2026-09-18T18:51:37Z"
+      "2026-11-19T21:44:01Z"
     ],
     "firms": [
       "topstep"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5a, #1218) : MLL identique ; « Static Trading Combine » (Labs / produits limités) non couvert, suivi à part."
+      }
     ]
   },
   "https://help.topstep.com/en/articles/8284206-when-and-what-products-can-i-trade": {
     "kind": "date",
     "values": [
-      "2026-07-13T21:22:30Z"
+      "2026-10-28T13:29:17Z"
     ],
     "firms": [
       "topstep"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture complète (lot 5a, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://help.topstep.com/en/articles/8284208-consistency-at-topstep": {
     "kind": "date",
     "values": [
-      "2026-09-17T14:21:11Z"
+      "2026-11-19T19:35:16Z"
     ],
     "firms": [
       "topstep"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture complète (lot 5a, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://help.topstep.com/en/articles/8284215-express-funded-account-parameters": {
     "kind": "date",
     "values": [
-      "2026-08-05T19:49:02Z"
+      "2026-11-03T23:01:38Z"
     ],
     "firms": [
       "topstep"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture complète (lot 5a, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://help.topstep.com/en/articles/8284223-what-is-the-scaling-plan": {
@@ -1371,15 +1425,27 @@
     ],
     "firms": [
       "topstep"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture complète (lot 5a, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://help.topstep.com/en/articles/8284233-topstep-payout-policy": {
     "kind": "date",
     "values": [
-      "2026-10-13T14:26:14Z"
+      "2026-11-22T21:13:57Z"
     ],
     "firms": [
       "topstep"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture complète (lot 5a, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://helpcenter.phidiaspropfirm.com/help/10-horaires-de-negociations-concerne-uniquement-les-comptes-fundamental": {
@@ -2591,10 +2657,16 @@
   "https://tradeday.freshdesk.com/en/support/solutions/articles/103000008847-what-are-the-objectives-and-rules-of-the-quick-pay-and-fast-pass-evaluation-": {
     "kind": "date",
     "values": [
-      "Mon, 27 Jul at 12:01 PM"
+      "Thu, 12 Nov at 4:47 AM"
     ],
     "firms": [
       "tradeday"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture complète (lot 5a, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://tradeday.freshdesk.com/en/support/solutions/articles/103000008855-what-is-the-maximum-drawdown-rule-": {
@@ -2604,6 +2676,12 @@
     ],
     "firms": [
       "tradeday"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture complète (lot 5a, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://tradeday.freshdesk.com/en/support/solutions/articles/103000008889-what-are-the-rules-for-funded-funded-sim-and-funded-live-traders-": {
@@ -2613,6 +2691,12 @@
     ],
     "firms": [
       "tradeday"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture complète (lot 5a, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://tradeday.freshdesk.com/en/support/solutions/articles/103000018874-what-is-the-permitted-trading-times-guideline-": {
@@ -2622,6 +2706,12 @@
     ],
     "firms": [
       "tradeday"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture complète (lot 5a, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://tradeday.freshdesk.com/en/support/solutions/articles/103000335937-quick-pay-funded-sim-payout-policy": {
@@ -2631,6 +2721,12 @@
     ],
     "firms": [
       "tradeday"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture complète (lot 5a, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://uprofit.com/day-programs": {
@@ -2641,212 +2737,365 @@
     ],
     "firms": [
       "uprofit"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5a, #1218) : bandeau « DAY 2.0 » = renommage commercial, aucune règle modifiée."
+      }
     ]
   },
   "https://uprofit.com/help/-markets-and-trading-hours-38279727543188": {
     "kind": "hash",
     "values": [
+      "6b3a53bc84ba8a25",
       "8fbd426c96b6a672",
       "d3195b4e4c9e0e5e"
     ],
     "firms": [
       "uprofit"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5a, #1218) : bandeau « DAY 2.0 » = renommage commercial, aucune règle modifiée."
+      }
     ]
   },
   "https://uprofit.com/help/uprofit-flex-100k-52062454952980": {
     "kind": "hash",
     "values": [
+      "cba3e501afbe9809",
       "48246eb72ad56b79",
       "0c1940e5d38cbae5"
     ],
     "firms": [
       "uprofit"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5a, #1218) : bandeau « DAY 2.0 » = renommage commercial, aucune règle modifiée."
+      }
     ]
   },
   "https://uprofit.com/help/uprofit-flex-10k-54395134778260": {
     "kind": "hash",
     "values": [
+      "c83c67be9b9291a9",
       "d9f21d7002f6f76f"
     ],
     "firms": [
       "uprofit"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5a, #1218) : bandeau « DAY 2.0 » = renommage commercial, aucune règle modifiée."
+      }
     ]
   },
   "https://uprofit.com/help/uprofit-flex-150k-52062432918292": {
     "kind": "hash",
     "values": [
+      "26db14bca4f5e2cf",
       "17832b88f4b91c27",
       "b7d7cb16ca4d7489"
     ],
     "firms": [
       "uprofit"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5a, #1218) : bandeau « DAY 2.0 » = renommage commercial, aucune règle modifiée."
+      }
     ]
   },
   "https://uprofit.com/help/uprofit-flex-50k-52062400375060": {
     "kind": "hash",
     "values": [
+      "da2f25fb727b0572",
       "27b29bfe115ecc58",
       "65f9fc202d328e8f"
     ],
     "firms": [
       "uprofit"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5a, #1218) : bandeau « DAY 2.0 » = renommage commercial, aucune règle modifiée."
+      }
     ]
   },
   "https://uprofit.com/help/uprofit-flex-live-virtual-100k-52062625551636": {
     "kind": "hash",
     "values": [
+      "750dab2f3fe68b9f",
       "7a41f3c6ea5aa660",
       "4ac228ea44fa5afa"
     ],
     "firms": [
       "uprofit"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5a, #1218) : bandeau « DAY 2.0 » = renommage commercial, aucune règle modifiée."
+      }
     ]
   },
   "https://uprofit.com/help/uprofit-flex-live-virtual-10k-54395343573908": {
     "kind": "hash",
     "values": [
+      "6cbb70e278ae557c",
       "d3a0a89a542b5f9a"
     ],
     "firms": [
       "uprofit"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5a, #1218) : bandeau « DAY 2.0 » = renommage commercial, aucune règle modifiée."
+      }
     ]
   },
   "https://uprofit.com/help/uprofit-flex-live-virtual-150k-52062642415636": {
     "kind": "hash",
     "values": [
+      "42ac04b0a237f07b",
       "700732771eddc230",
       "cb315d9393151d02"
     ],
     "firms": [
       "uprofit"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5a, #1218) : bandeau « DAY 2.0 » = renommage commercial, aucune règle modifiée."
+      }
     ]
   },
   "https://uprofit.com/help/uprofit-flex-live-virtual-50k-52062598543508": {
     "kind": "hash",
     "values": [
+      "7c7e6953005ea8a0",
       "7332b5468cf92197",
       "c6dcc2dcc41a3c01"
     ],
     "firms": [
       "uprofit"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5a, #1218) : bandeau « DAY 2.0 » = renommage commercial, aucune règle modifiée."
+      }
     ]
   },
   "https://uprofit.com/help/uprofit-flex-payout-policy-52062715698580": {
     "kind": "hash",
     "values": [
+      "a205b1d6a7c7b291",
       "ea9e3dbf614f525a",
       "b4d621fe891b5c42"
     ],
     "firms": [
       "uprofit"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5a, #1218) : bandeau « DAY 2.0 » = renommage commercial, aucune règle modifiée."
+      }
     ]
   },
   "https://uprofit.com/help/uprofit-flex-trading-parameters-52062905513620": {
     "kind": "hash",
     "values": [
+      "2e1fc82565274c39",
       "b652f567dff1b44a",
       "9eb9f74b2d281649"
     ],
     "firms": [
       "uprofit"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5a, #1218) : bandeau « DAY 2.0 » = renommage commercial, aucune règle modifiée."
+      }
     ]
   },
   "https://uprofit.com/help/uprofit-soft-100k-52063415195668": {
     "kind": "hash",
     "values": [
+      "e15843c1744a4a11",
       "701e08af343d7349",
       "dd63893e632aab8c"
     ],
     "firms": [
       "uprofit"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5a, #1218) : bandeau « DAY 2.0 » = renommage commercial, aucune règle modifiée."
+      }
     ]
   },
   "https://uprofit.com/help/uprofit-soft-10k-54393437776020": {
     "kind": "hash",
     "values": [
+      "425d355dcf4377eb",
       "b2ae79d49c95b960"
     ],
     "firms": [
       "uprofit"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5a, #1218) : bandeau « DAY 2.0 » = renommage commercial, aucune règle modifiée."
+      }
     ]
   },
   "https://uprofit.com/help/uprofit-soft-150k-52063440373780": {
     "kind": "hash",
     "values": [
+      "0ac4b416d24bae7f",
       "73116af9293c00d9",
       "bceb3e9b949fa450"
     ],
     "firms": [
       "uprofit"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5a, #1218) : bandeau « DAY 2.0 » = renommage commercial, aucune règle modifiée."
+      }
     ]
   },
   "https://uprofit.com/help/uprofit-soft-50k-52063403210132": {
     "kind": "hash",
     "values": [
+      "b349985b611669bb",
       "091b066bdeeea231",
       "81fe95e2c65b105e"
     ],
     "firms": [
       "uprofit"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5a, #1218) : bandeau « DAY 2.0 » = renommage commercial, aucune règle modifiée."
+      }
     ]
   },
   "https://uprofit.com/help/uprofit-soft-live-virtual-100k-52063655534228": {
     "kind": "hash",
     "values": [
+      "50ea27f8da54244e",
       "8ac138f546c70c83",
       "30b007801692f782"
     ],
     "firms": [
       "uprofit"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5a, #1218) : bandeau « DAY 2.0 » = renommage commercial, aucune règle modifiée."
+      }
     ]
   },
   "https://uprofit.com/help/uprofit-soft-live-virtual-10k-54394490735252": {
     "kind": "hash",
     "values": [
+      "a1eeddd06c3c8374",
       "f042a6cefbe91b60"
     ],
     "firms": [
       "uprofit"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5a, #1218) : bandeau « DAY 2.0 » = renommage commercial, aucune règle modifiée."
+      }
     ]
   },
   "https://uprofit.com/help/uprofit-soft-live-virtual-150k-52063703228692": {
     "kind": "hash",
     "values": [
+      "a128410e38acdd95",
       "7413dbe036de31eb",
       "d4bff446528b12a5"
     ],
     "firms": [
       "uprofit"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5a, #1218) : bandeau « DAY 2.0 » = renommage commercial, aucune règle modifiée."
+      }
     ]
   },
   "https://uprofit.com/help/uprofit-soft-live-virtual-50k-52063647938580": {
     "kind": "hash",
     "values": [
+      "e92bed135072202a",
       "0022ce52e78b88d8",
       "047dc4658a0f3ec1"
     ],
     "firms": [
       "uprofit"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5a, #1218) : bandeau « DAY 2.0 » = renommage commercial, aucune règle modifiée."
+      }
     ]
   },
   "https://uprofit.com/help/uprofit-soft-payout-policy-52063548100500": {
     "kind": "hash",
     "values": [
+      "5506e899913b1f5b",
       "3ed2498183979ca4",
       "51a85e644c54e45a"
     ],
     "firms": [
       "uprofit"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5a, #1218) : bandeau « DAY 2.0 » = renommage commercial, aucune règle modifiée."
+      }
     ]
   },
   "https://uprofit.com/help/uprofit-soft-trading-parameters-52063207935892": {
     "kind": "hash",
     "values": [
+      "422001c78c010703",
       "3376cd0bf81b74fc",
       "0a8f46aa451ea7cc"
     ],
     "firms": [
       "uprofit"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5a, #1218) : bandeau « DAY 2.0 » = renommage commercial, aucune règle modifiée."
+      }
     ]
   },
   "https://www.earn2trade.com/gauntlet-mini": {
@@ -2952,11 +3201,18 @@
   "https://www.tradeday.com/#pricing": {
     "kind": "hash",
     "values": [
+      "382d2e4f377d6a99",
       "02013b3518e704c5",
       "dea277ffef61df91"
     ],
     "firms": [
       "tradeday"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5a, #1218) : TradeDay 2.0, paiement unique ; prix Quick Pay 99/124/248/398 et 124/174/298/440 $, Fast Pass 173/248/498/725 $."
+      }
     ]
   },
   "https://help.earn2trade.com/en/articles/17779875-how-many-contracts-can-i-trade-on-my-evaluation-or-livesim-live-account": {
