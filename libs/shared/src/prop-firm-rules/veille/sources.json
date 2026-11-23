@@ -141,28 +141,49 @@
   "https://elitetraderfunding.app/1-step-evaluation": {
     "kind": "hash",
     "values": [
+      "1c0d09d0eb1a2bf2",
       "8ff3b4841bd69d96"
     ],
     "firms": [
       "elitetraderfunding"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-22",
+        "modification": "Relecture complète (lot 2, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://elitetraderfunding.app/diamond-hands-evaluation": {
     "kind": "hash",
     "values": [
+      "c2ce2546b5c38121",
       "e297f2314071e98b"
     ],
     "firms": [
       "elitetraderfunding"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-22",
+        "modification": "Relecture complète (lot 2, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://elitetraderfunding.app/direct-to-funded": {
     "kind": "hash",
     "values": [
+      "31ca2b880addde90",
       "b866dae6beefef83"
     ],
     "firms": [
       "elitetraderfunding"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-22",
+        "modification": "Relecture complète (lot 2, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://elitetraderfunding.app/elite": {
@@ -173,33 +194,60 @@
     ],
     "firms": [
       "elitetraderfunding"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-22",
+        "modification": "Relecture complète (lot 2, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://elitetraderfunding.app/end-of-day-evaluation": {
     "kind": "hash",
     "values": [
+      "1f3d4809ca4a975a",
       "d3cbeaa9d32a8777"
     ],
     "firms": [
       "elitetraderfunding"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-22",
+        "modification": "Relecture complète (lot 2, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://elitetraderfunding.app/evaluations": {
     "kind": "hash",
     "values": [
+      "7e6a8d94940f6844",
       "9c7553517ad6c4c5"
     ],
     "firms": [
       "elitetraderfunding"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-22",
+        "modification": "Relecture complète (lot 2, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://elitetraderfunding.app/fast-track-evaluation": {
     "kind": "hash",
     "values": [
+      "de77c0e404b89fa1",
       "4500ca1bb1b3d9c2"
     ],
     "firms": [
       "elitetraderfunding"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-22",
+        "modification": "Relecture complète (lot 2, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://elitetraderfunding.app/help/tracking-real-time-drawdown-made-easy": {
@@ -209,6 +257,12 @@
     ],
     "firms": [
       "elitetraderfunding"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-22",
+        "modification": "Relecture complète (lot 2, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://elitetraderfunding.app/payouts": {
@@ -218,15 +272,28 @@
     ],
     "firms": [
       "elitetraderfunding"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-22",
+        "modification": "Relecture (lot 2) : minimum 100 $ par cycle → min_amount du 1-Step corrigé de 250 à 100 $ (250 $ = minimum LIVE ELITE)."
+      }
     ]
   },
   "https://elitetraderfunding.app/static-drawdown": {
     "kind": "hash",
     "values": [
+      "451f3928d986ce50",
       "2518d056af7215bb"
     ],
     "firms": [
       "elitetraderfunding"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-22",
+        "modification": "Relecture complète (lot 2, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://help.blusky.pro/en/articles/12292284-sim-funded-payouts": {
@@ -344,6 +411,12 @@
     ],
     "firms": [
       "earn2trade"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-22",
+        "modification": "Relecture complète (lot 2, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://help.earn2trade.com/en/articles/2280137-what-is-the-fee-structure-on-the-live-or-livesim-accounts": {
@@ -353,6 +426,12 @@
     ],
     "firms": [
       "earn2trade"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-22",
+        "modification": "Relecture complète (lot 2, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://help.earn2trade.com/en/articles/3224507-what-is-the-maximum-drawdown-on-the-trader-career-path-and-the-gauntlet-mini-challenges": {
@@ -362,6 +441,12 @@
     ],
     "firms": [
       "earn2trade"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-22",
+        "modification": "Relecture complète (lot 2, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://help.earn2trade.com/en/articles/3224526-are-there-any-restrictions-on-when-i-can-trade-in-my-evaluation-account": {
@@ -371,15 +456,27 @@
     ],
     "firms": [
       "earn2trade"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-22",
+        "modification": "Relecture complète (lot 2, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://help.earn2trade.com/en/articles/3292351-what-is-the-progression-ladder-in-the-gauntlet-mini": {
     "kind": "date",
     "values": [
-      "2026-07-06T10:13:08Z"
+      "2026-11-10T12:42:11Z"
     ],
     "firms": [
       "earn2trade"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-22",
+        "modification": "Relecture (lot 2) : Progression Ladder réservée aux achats d’avant le 2026-11-02 → plans d’origine renommés « (achat avant le 02/11/2026) », plans en vente sous le nom simple."
+      }
     ]
   },
   "https://help.earn2trade.com/en/articles/3292356-what-is-a-trailing-drawdown": {
@@ -389,24 +486,42 @@
     ],
     "firms": [
       "earn2trade"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-22",
+        "modification": "Relecture complète (lot 2, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://help.earn2trade.com/en/articles/3395926-how-is-my-daily-loss-calculated": {
     "kind": "date",
     "values": [
-      "2024-08-27T08:46:35Z"
+      "2026-11-17T08:11:52Z"
     ],
     "firms": [
       "earn2trade"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-22",
+        "modification": "Relecture complète (lot 2, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://help.earn2trade.com/en/articles/3849975-what-is-the-maintain-consistency-rule": {
     "kind": "date",
     "values": [
-      "2026-05-07T13:02:36Z"
+      "2026-11-17T07:44:05Z"
     ],
     "firms": [
       "earn2trade"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-22",
+        "modification": "Relecture complète (lot 2, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://help.earn2trade.com/en/articles/5372687-how-does-end-of-day-drawdown-work": {
@@ -416,51 +531,87 @@
     ],
     "firms": [
       "earn2trade"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-22",
+        "modification": "Relecture complète (lot 2, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://help.earn2trade.com/en/articles/5452472-what-is-the-withdrawal-policy": {
     "kind": "date",
     "values": [
-      "2026-10-13T09:27:17Z"
+      "2026-11-02T15:02:57Z"
     ],
     "firms": [
       "earn2trade"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-22",
+        "modification": "Relecture (lot 2) : 5 jours gagnants avec gain minimum avant chaque retrait (min_days, min_daily_profit) ; plafond LiveSim = total avant passage en Live, pas par retrait (max_amount retiré)."
+      }
     ]
   },
   "https://help.earn2trade.com/en/articles/5922873-what-is-the-progression-ladder-on-the-trader-career-path": {
     "kind": "date",
     "values": [
-      "2026-07-06T10:11:43Z"
+      "2026-11-10T12:45:06Z"
     ],
     "firms": [
       "earn2trade"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-22",
+        "modification": "Relecture (lot 2) : Progression Ladder réservée aux achats d’avant le 2026-11-02 → plans d’origine renommés « (achat avant le 02/11/2026) », plans en vente sous le nom simple."
+      }
     ]
   },
   "https://help.earn2trade.com/en/articles/5941958-what-are-the-evaluation-rules": {
     "kind": "date",
     "values": [
-      "2026-07-06T10:14:18Z"
+      "2026-11-10T12:47:00Z"
     ],
     "firms": [
       "earn2trade"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-22",
+        "modification": "Relecture (lot 2) : même mention de la Progression Ladder « legacy » ; autres règles inchangées."
+      }
     ]
   },
   "https://help.earn2trade.com/en/articles/6877364-what-happens-when-i-complete-my-evaluation": {
     "kind": "date",
     "values": [
-      "2026-07-06T11:20:43Z"
+      "2026-11-02T15:14:59Z"
     ],
     "firms": [
       "earn2trade"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-22",
+        "modification": "Relecture complète (lot 2, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://help.earn2trade.com/en/articles/8117088-drawdown-types": {
     "kind": "date",
     "values": [
-      "2026-08-10T11:24:57Z"
+      "2026-11-17T08:06:26Z"
     ],
     "firms": [
       "earn2trade"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-22",
+        "modification": "Relecture complète (lot 2, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://help.myfundedfutures.com/en/articles/11802674-pro-plan-sim-funded-and-live-account-highlights": {
@@ -2105,10 +2256,17 @@
   "https://takeprofittrader.com/": {
     "kind": "hash",
     "values": [
+      "6d789037196b9e7b",
       "1a0d7592bb09fda6"
     ],
     "firms": [
       "takeprofittrader"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-22",
+        "modification": "Relecture complète (lot 2, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15141145057053-Test-Subscriptions": {
@@ -2118,6 +2276,12 @@
     ],
     "firms": [
       "takeprofittrader"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-22",
+        "modification": "Relecture complète (lot 2, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15169066911133-Rule-2-Do-Not-Exceed-Maximum-Position-Size": {
@@ -2127,6 +2291,12 @@
     ],
     "firms": [
       "takeprofittrader"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-22",
+        "modification": "Relecture complète (lot 2, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15169070804125-Rule-1-Hit-Your-Profit-Target": {
@@ -2136,6 +2306,12 @@
     ],
     "firms": [
       "takeprofittrader"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-22",
+        "modification": "Relecture complète (lot 2, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15170265979165-Rule-3-Do-Not-Hit-End-Of-Day-EOD-Maximum-Trailing-Drawdown": {
@@ -2145,6 +2321,12 @@
     ],
     "firms": [
       "takeprofittrader"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-22",
+        "modification": "Relecture complète (lot 2, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15170316538013-Rule-5-Be-Consistent": {
@@ -2154,6 +2336,12 @@
     ],
     "firms": [
       "takeprofittrader"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-22",
+        "modification": "Relecture complète (lot 2, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15170347090461-Rule-4-Trade-Approved-Products-During-Approved-Hours": {
@@ -2163,6 +2351,12 @@
     ],
     "firms": [
       "takeprofittrader"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-22",
+        "modification": "Relecture complète (lot 2, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15171769361053-PRO-Account-Rules": {
@@ -2172,6 +2366,12 @@
     ],
     "firms": [
       "takeprofittrader"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-22",
+        "modification": "Relecture complète (lot 2, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15171820366109-How-to-Keep-Track-Of-Your-Drawdown": {
@@ -2181,6 +2381,12 @@
     ],
     "firms": [
       "takeprofittrader"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-22",
+        "modification": "Relecture complète (lot 2, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15172219527581-PRO-Account-Profit-Split-Withdrawal-Rules": {
@@ -2190,6 +2396,12 @@
     ],
     "firms": [
       "takeprofittrader"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-22",
+        "modification": "Relecture complète (lot 2, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15172354954525-Withdrawal-Fees": {
@@ -2199,6 +2411,12 @@
     ],
     "firms": [
       "takeprofittrader"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-22",
+        "modification": "Relecture complète (lot 2, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://tradeday.freshdesk.com/en/support/solutions/articles/103000008847-what-are-the-objectives-and-rules-of-the-quick-pay-and-fast-pass-evaluation-": {
@@ -2465,21 +2683,35 @@
   "https://www.earn2trade.com/gauntlet-mini": {
     "kind": "hash",
     "values": [
+      "9a2785894872bb14",
       "f592e45eb11cb8a1",
       "0812b6393d5cada0"
     ],
     "firms": [
       "earn2trade"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-22",
+        "modification": "Relecture complète (lot 2, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://www.earn2trade.com/trader-career-path": {
     "kind": "hash",
     "values": [
+      "12ea48dcbf4dea4c",
       "079b5c0146e4852e",
       "934c3287310b1633"
     ],
     "firms": [
       "earn2trade"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-22",
+        "modification": "Relecture complète (lot 2, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://www.fundedfuturesfamily.com/": {
@@ -2556,6 +2788,21 @@
     ],
     "firms": [
       "tradeday"
+    ]
+  },
+  "https://help.earn2trade.com/en/articles/17779875-how-many-contracts-can-i-trade-on-my-evaluation-or-livesim-live-account": {
+    "kind": "date",
+    "values": [
+      "2026-11-19T09:07:40Z"
+    ],
+    "firms": [
+      "earn2trade"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-22",
+        "modification": "Nouvelle source (lot 2, #1218) : nombre fixe de contrats pour les abonnements achetés depuis le 2026-11-02 → 7 plans earn2trade-*-nov02-* ajoutés."
+      }
     ]
   }
 }
