@@ -22,6 +22,8 @@ export interface PayoutRow {
 export interface RulePayouts {
   /** Séance du dernier payout (`AAAA-MM-JJ`). */
   last: string;
+  /** Séance du plus ancien payout (`AAAA-MM-JJ`) : date du gel du plancher au premier payout (#696). */
+  first?: string;
   count: number;
   /** Dernier payout : identifiant (pour l'écarter), montant, certitude de la détection. */
   lastId?: string;
@@ -49,6 +51,7 @@ export function summarizePayouts(rows: readonly PayoutRow[]): RulePayouts | null
   const manualTotal = rows.filter((r) => isManualPayout(r.changeType)).reduce((s, r) => s + r.amount, 0);
   return {
     last: last.tradeDate.toISOString().slice(0, 10),
+    first: rows[rows.length - 1].tradeDate.toISOString().slice(0, 10),
     count: rows.length,
     lastId: last.id,
     lastAmount: last.amount,

@@ -10,7 +10,7 @@ const apex: RiskContextAccount = {
       type: 'TRAILING', floor: 48820, margin: 1350, maxDrawdown: 2000, pct: 0.675, breached: false, source: 'plan',
       rule: {
         firmName: 'Apex', planName: 'EOD 50K', phase: 'evaluation', kind: 'trailing_eod', locksAt: null, lockedFloor: null,
-        locked: false, realtimeEquity: false, platform: null, peakSource: 'broker', peakBalance: 50820, officialThrough: null, platformChoices: [],
+        locked: false, locksOnFirstPayout: null, lockedBy: null, payoutLockedSince: null, realtimeEquity: false, platform: null, peakSource: 'broker', peakBalance: 50820, officialThrough: null, platformChoices: [],
       },
     },
     dailyLoss: {
