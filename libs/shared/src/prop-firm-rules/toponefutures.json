@@ -93,6 +93,7 @@
             "trails_on": "balance",
             "locks_at": 26100,
             "locked_floor": 25100,
+            "locks_on_first_payout": "payout",
             "enforced_on": "eod_balance",
             "platform_overrides": null,
             "basis_notes": "MLL EOD : 1000 $ sous le plus haut solde de clôture, ne suit pas l'intraday et n'est contrôlé qu'à la clôture (échec si la journée clôture au niveau ou en dessous). Se fige à 25100 $ (départ + 100 $) quand le solde atteint 26100 $, et dès le premier payout."
@@ -240,6 +241,7 @@
             "trails_on": "balance",
             "locks_at": 52100,
             "locked_floor": 50100,
+            "locks_on_first_payout": "payout",
             "enforced_on": "eod_balance",
             "platform_overrides": null,
             "basis_notes": "MLL EOD : 2000 $ sous le plus haut solde de clôture, ne suit pas l'intraday et n'est contrôlé qu'à la clôture (échec si la journée clôture au niveau ou en dessous). Se fige à 50100 $ (départ + 100 $) quand le solde atteint 52100 $, et dès le premier payout."
@@ -399,6 +401,7 @@
             "trails_on": "balance",
             "locks_at": 102600,
             "locked_floor": 100100,
+            "locks_on_first_payout": "payout",
             "enforced_on": "eod_balance",
             "platform_overrides": null,
             "basis_notes": "MLL EOD : 2500 $ sous le plus haut solde de clôture, ne suit pas l'intraday et n'est contrôlé qu'à la clôture (échec si la journée clôture au niveau ou en dessous). Se fige à 100100 $ (départ + 100 $) quand le solde atteint 102600 $, et dès le premier payout."
@@ -564,6 +567,7 @@
             "trails_on": "balance",
             "locks_at": 153600,
             "locked_floor": 150100,
+            "locks_on_first_payout": "payout",
             "enforced_on": "eod_balance",
             "platform_overrides": null,
             "basis_notes": "MLL EOD : 3500 $ sous le plus haut solde de clôture, ne suit pas l'intraday et n'est contrôlé qu'à la clôture (échec si la journée clôture au niveau ou en dessous). Se fige à 150100 $ (départ + 100 $) quand le solde atteint 153600 $, et dès le premier payout."
@@ -719,6 +723,7 @@
             "trails_on": "balance",
             "locks_at": 26100,
             "locked_floor": 25100,
+            "locks_on_first_payout": "payout",
             "enforced_on": "eod_balance",
             "platform_overrides": null,
             "basis_notes": "MLL EOD : 1000 $ sous le plus haut solde de clôture, ne suit pas l'intraday et n'est contrôlé qu'à la clôture (échec si la journée clôture au niveau ou en dessous). Se fige à 25100 $ (départ + 100 $) quand le solde atteint 26100 $, et dès le premier payout."
@@ -851,6 +856,7 @@
             "trails_on": "balance",
             "locks_at": 52100,
             "locked_floor": 50100,
+            "locks_on_first_payout": "payout",
             "enforced_on": "eod_balance",
             "platform_overrides": null,
             "basis_notes": "MLL EOD : 2000 $ sous le plus haut solde de clôture, ne suit pas l'intraday et n'est contrôlé qu'à la clôture (échec si la journée clôture au niveau ou en dessous). Se fige à 50100 $ (départ + 100 $) quand le solde atteint 52100 $, et dès le premier payout."
@@ -995,6 +1001,7 @@
             "trails_on": "balance",
             "locks_at": 102600,
             "locked_floor": 100100,
+            "locks_on_first_payout": "payout",
             "enforced_on": "eod_balance",
             "platform_overrides": null,
             "basis_notes": "MLL EOD : 2500 $ sous le plus haut solde de clôture, ne suit pas l'intraday et n'est contrôlé qu'à la clôture (échec si la journée clôture au niveau ou en dessous). Se fige à 100100 $ (départ + 100 $) quand le solde atteint 102600 $, et dès le premier payout."
@@ -1145,6 +1152,7 @@
             "trails_on": "balance",
             "locks_at": 153600,
             "locked_floor": 150100,
+            "locks_on_first_payout": "payout",
             "enforced_on": "eod_balance",
             "platform_overrides": null,
             "basis_notes": "MLL EOD : 3500 $ sous le plus haut solde de clôture, ne suit pas l'intraday et n'est contrôlé qu'à la clôture (échec si la journée clôture au niveau ou en dessous). Se fige à 150100 $ (départ + 100 $) quand le solde atteint 153600 $, et dès le premier payout."
@@ -1305,6 +1313,7 @@
             "trails_on": "balance",
             "locks_at": 26100,
             "locked_floor": 25100,
+            "locks_on_first_payout": "payout",
             "enforced_on": "eod_balance",
             "platform_overrides": null,
             "basis_notes": "MLL EOD : 1000 $ sous le plus haut solde de clôture, contrôlé à la clôture seulement. Se fige à 25100 $ (départ + 100 $) quand le solde atteint 26100 $, et dès le premier payout."
@@ -1445,6 +1454,7 @@
             "trails_on": "balance",
             "locks_at": 52100,
             "locked_floor": 50100,
+            "locks_on_first_payout": "payout",
             "enforced_on": "eod_balance",
             "platform_overrides": null,
             "basis_notes": "MLL EOD : 2000 $ sous le plus haut solde de clôture, contrôlé à la clôture seulement. Se fige à 50100 $ (départ + 100 $) quand le solde atteint 52100 $, et dès le premier payout."
@@ -1597,6 +1607,7 @@
             "trails_on": "balance",
             "locks_at": 103100,
             "locked_floor": 100100,
+            "locks_on_first_payout": "payout",
             "enforced_on": "eod_balance",
             "platform_overrides": null,
             "basis_notes": "MLL EOD : 3000 $ sous le plus haut solde de clôture, contrôlé à la clôture seulement. Se fige à 100100 $ (départ + 100 $) quand le solde atteint 103100 $, et dès le premier payout."
@@ -1755,6 +1766,7 @@
             "trails_on": "balance",
             "locks_at": 153600,
             "locked_floor": 150100,
+            "locks_on_first_payout": "payout",
             "enforced_on": "eod_balance",
             "platform_overrides": null,
             "basis_notes": "MLL EOD : 3500 $ sous le plus haut solde de clôture, contrôlé à la clôture seulement. Se fige à 150100 $ (départ + 100 $) quand le solde atteint 153600 $, et dès le premier payout."
@@ -1911,6 +1923,7 @@
             "trails_on": "balance",
             "locks_at": 26100,
             "locked_floor": 25100,
+            "locks_on_first_payout": "payout",
             "enforced_on": "eod_balance",
             "platform_overrides": null,
             "basis_notes": "MLL EOD : 1000 $ sous le plus haut solde de clôture, contrôlé à la clôture seulement. Se fige à 25100 $ (départ + 100 $) quand le solde atteint 26100 $, et dès le premier payout."
@@ -2044,6 +2057,7 @@
             "trails_on": "balance",
             "locks_at": 52100,
             "locked_floor": 50100,
+            "locks_on_first_payout": "payout",
             "enforced_on": "eod_balance",
             "platform_overrides": null,
             "basis_notes": "MLL EOD : 2000 $ sous le plus haut solde de clôture, contrôlé à la clôture seulement. Se fige à 50100 $ (départ + 100 $) quand le solde atteint 52100 $, et dès le premier payout."
@@ -2189,6 +2203,7 @@
             "trails_on": "balance",
             "locks_at": 103100,
             "locked_floor": 100100,
+            "locks_on_first_payout": "payout",
             "enforced_on": "eod_balance",
             "platform_overrides": null,
             "basis_notes": "MLL EOD : 3000 $ sous le plus haut solde de clôture, contrôlé à la clôture seulement. Se fige à 100100 $ (départ + 100 $) quand le solde atteint 103100 $, et dès le premier payout."
@@ -2340,6 +2355,7 @@
             "trails_on": "balance",
             "locks_at": 153600,
             "locked_floor": 150100,
+            "locks_on_first_payout": "payout",
             "enforced_on": "eod_balance",
             "platform_overrides": null,
             "basis_notes": "MLL EOD : 3500 $ sous le plus haut solde de clôture, contrôlé à la clôture seulement. Se fige à 150100 $ (départ + 100 $) quand le solde atteint 153600 $, et dès le premier payout."
@@ -2505,6 +2521,7 @@
             "trails_on": "equity",
             "locks_at": null,
             "locked_floor": 25100,
+            "locks_on_first_payout": "request",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "Funded : trailing intraday tick par tick sur le plus haut equity (latent compris), 1000 $ en dessous. Ne se fige à 25100 $ qu'au premier payout demandé, pas au franchissement d'un solde."
@@ -2643,6 +2660,7 @@
             "trails_on": "equity",
             "locks_at": null,
             "locked_floor": 50100,
+            "locks_on_first_payout": "request",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "Funded : trailing intraday tick par tick sur le plus haut equity (latent compris), 2000 $ en dessous. Ne se fige à 50100 $ qu'au premier payout demandé, pas au franchissement d'un solde."
@@ -2793,6 +2811,7 @@
             "trails_on": "equity",
             "locks_at": null,
             "locked_floor": 100100,
+            "locks_on_first_payout": "request",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "Funded : trailing intraday tick par tick sur le plus haut equity (latent compris), 3000 $ en dessous. Ne se fige à 100100 $ qu'au premier payout demandé, pas au franchissement d'un solde."
@@ -2949,6 +2968,7 @@
             "trails_on": "equity",
             "locks_at": null,
             "locked_floor": 150100,
+            "locks_on_first_payout": "request",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "Funded : trailing intraday tick par tick sur le plus haut equity (latent compris), 3500 $ en dessous. Ne se fige à 150100 $ qu'au premier payout demandé, pas au franchissement d'un solde."
@@ -3103,6 +3123,7 @@
             "trails_on": "equity",
             "locks_at": null,
             "locked_floor": 25100,
+            "locks_on_first_payout": "request",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "Funded : trailing intraday tick par tick sur le plus haut equity (latent compris), 1000 $ en dessous. Ne se fige à 25100 $ qu'au premier payout demandé, pas au franchissement d'un solde."
@@ -3234,6 +3255,7 @@
             "trails_on": "equity",
             "locks_at": null,
             "locked_floor": 50100,
+            "locks_on_first_payout": "request",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "Funded : trailing intraday tick par tick sur le plus haut equity (latent compris), 2000 $ en dessous. Ne se fige à 50100 $ qu'au premier payout demandé, pas au franchissement d'un solde."
@@ -3377,6 +3399,7 @@
             "trails_on": "equity",
             "locks_at": null,
             "locked_floor": 100100,
+            "locks_on_first_payout": "request",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "Funded : trailing intraday tick par tick sur le plus haut equity (latent compris), 3000 $ en dessous. Ne se fige à 100100 $ qu'au premier payout demandé, pas au franchissement d'un solde."
@@ -3526,6 +3549,7 @@
             "trails_on": "equity",
             "locks_at": null,
             "locked_floor": 150100,
+            "locks_on_first_payout": "request",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "Funded : trailing intraday tick par tick sur le plus haut equity (latent compris), 3500 $ en dessous. Ne se fige à 150100 $ qu'au premier payout demandé, pas au franchissement d'un solde."
@@ -3652,6 +3676,7 @@
             "trails_on": "balance",
             "locks_at": 26100,
             "locked_floor": 25100,
+            "locks_on_first_payout": "payout",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "EOD (17:00 heure de New York) : 1000 $ sous le plus haut solde de clôture ; « si le solde passe sous le niveau, le compte est clôturé ». Se fige à 25100 $ (départ + 100 $) quand le solde atteint 26100 $, et dès le premier payout. Le seuil ne monte qu'en fin de journée, mais le dépassement est vérifié en continu, pertes ouvertes comprises (support Top One Futures, e-mail du 2026-10-04)."
@@ -3743,6 +3768,7 @@
             "trails_on": "balance",
             "locks_at": 52100,
             "locked_floor": 50100,
+            "locks_on_first_payout": "payout",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "EOD (17:00 heure de New York) : 2000 $ sous le plus haut solde de clôture ; « si le solde passe sous le niveau, le compte est clôturé ». Se fige à 50100 $ (départ + 100 $) quand le solde atteint 52100 $, et dès le premier payout. Le seuil ne monte qu'en fin de journée, mais le dépassement est vérifié en continu, pertes ouvertes comprises (support Top One Futures, e-mail du 2026-10-04)."
@@ -3834,6 +3860,7 @@
             "trails_on": "balance",
             "locks_at": 104100,
             "locked_floor": 100100,
+            "locks_on_first_payout": "payout",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "EOD (17:00 heure de New York) : 4000 $ sous le plus haut solde de clôture ; « si le solde passe sous le niveau, le compte est clôturé ». Se fige à 100100 $ (départ + 100 $) quand le solde atteint 104100 $, et dès le premier payout. Le seuil ne monte qu'en fin de journée, mais le dépassement est vérifié en continu, pertes ouvertes comprises (support Top One Futures, e-mail du 2026-10-04)."
@@ -3925,6 +3952,7 @@
             "trails_on": "balance",
             "locks_at": 155350,
             "locked_floor": 150100,
+            "locks_on_first_payout": "payout",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "EOD (17:00 heure de New York) : 5250 $ sous le plus haut solde de clôture ; « si le solde passe sous le niveau, le compte est clôturé ». Se fige à 150100 $ (départ + 100 $) quand le solde atteint 155350 $, et dès le premier payout. Le seuil ne monte qu'en fin de journée, mais le dépassement est vérifié en continu, pertes ouvertes comprises (support Top One Futures, e-mail du 2026-10-04)."
@@ -4021,6 +4049,7 @@
             "trails_on": "balance",
             "locks_at": 26100,
             "locked_floor": 25100,
+            "locks_on_first_payout": "payout",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "EOD : 1000 $ sous le plus haut solde de clôture, seul le solde de fin de journée fait monter le seuil. Se fige à 25100 $ (départ + 100 $) quand le solde atteint 26100 $, et dès le premier payout. Le seuil ne monte qu'en fin de journée, mais le dépassement est vérifié en continu, pertes ouvertes comprises (support Top One Futures, e-mail du 2026-10-04)."
@@ -4116,6 +4145,7 @@
             "trails_on": "balance",
             "locks_at": 52100,
             "locked_floor": 50100,
+            "locks_on_first_payout": "payout",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "EOD : 2000 $ sous le plus haut solde de clôture, seul le solde de fin de journée fait monter le seuil. Se fige à 50100 $ (départ + 100 $) quand le solde atteint 52100 $, et dès le premier payout. Le seuil ne monte qu'en fin de journée, mais le dépassement est vérifié en continu, pertes ouvertes comprises (support Top One Futures, e-mail du 2026-10-04)."
@@ -4211,6 +4241,7 @@
             "trails_on": "balance",
             "locks_at": 104100,
             "locked_floor": 100100,
+            "locks_on_first_payout": "payout",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "EOD : 4000 $ sous le plus haut solde de clôture, seul le solde de fin de journée fait monter le seuil. Se fige à 100100 $ (départ + 100 $) quand le solde atteint 104100 $, et dès le premier payout. Le seuil ne monte qu'en fin de journée, mais le dépassement est vérifié en continu, pertes ouvertes comprises (support Top One Futures, e-mail du 2026-10-04)."
@@ -4306,6 +4337,7 @@
             "trails_on": "balance",
             "locks_at": 156100,
             "locked_floor": 150100,
+            "locks_on_first_payout": "payout",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "EOD : 6000 $ sous le plus haut solde de clôture, seul le solde de fin de journée fait monter le seuil. Se fige à 150100 $ (départ + 100 $) quand le solde atteint 156100 $, et dès le premier payout. Le seuil ne monte qu'en fin de journée, mais le dépassement est vérifié en continu, pertes ouvertes comprises (support Top One Futures, e-mail du 2026-10-04)."
@@ -4393,6 +4425,7 @@
             "trails_on": "balance",
             "locks_at": 26100,
             "locked_floor": 25100,
+            "locks_on_first_payout": "payout",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "EOD : 1000 $ sous le plus haut solde de clôture, seul le solde de fin de journée fait monter le seuil. Se fige à 25100 $ (départ + 100 $) quand le solde atteint 26100 $, et dès le premier payout. Le seuil ne monte qu'en fin de journée, mais le dépassement est vérifié en continu, pertes ouvertes comprises (support Top One Futures, e-mail du 2026-10-04)."
@@ -4481,6 +4514,7 @@
             "trails_on": "balance",
             "locks_at": 52100,
             "locked_floor": 50100,
+            "locks_on_first_payout": "payout",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "EOD : 2000 $ sous le plus haut solde de clôture, seul le solde de fin de journée fait monter le seuil. Se fige à 50100 $ (départ + 100 $) quand le solde atteint 52100 $, et dès le premier payout. Le seuil ne monte qu'en fin de journée, mais le dépassement est vérifié en continu, pertes ouvertes comprises (support Top One Futures, e-mail du 2026-10-04)."
@@ -4569,6 +4603,7 @@
             "trails_on": "balance",
             "locks_at": 104100,
             "locked_floor": 100100,
+            "locks_on_first_payout": "payout",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "EOD : 4000 $ sous le plus haut solde de clôture, seul le solde de fin de journée fait monter le seuil. Se fige à 100100 $ (départ + 100 $) quand le solde atteint 104100 $, et dès le premier payout. Le seuil ne monte qu'en fin de journée, mais le dépassement est vérifié en continu, pertes ouvertes comprises (support Top One Futures, e-mail du 2026-10-04)."
@@ -4657,6 +4692,7 @@
             "trails_on": "balance",
             "locks_at": 156100,
             "locked_floor": 150100,
+            "locks_on_first_payout": "payout",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "EOD : 6000 $ sous le plus haut solde de clôture, seul le solde de fin de journée fait monter le seuil. Se fige à 150100 $ (départ + 100 $) quand le solde atteint 156100 $, et dès le premier payout. Le seuil ne monte qu'en fin de journée, mais le dépassement est vérifié en continu, pertes ouvertes comprises (support Top One Futures, e-mail du 2026-10-04)."
@@ -4792,6 +4828,7 @@
             "trails_on": "balance",
             "locks_at": 53100,
             "locked_floor": 50100,
+            "locks_on_first_payout": "payout",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "MLL EOD : 3000 $ sous le plus haut solde de clôture ; échec si le solde passe sous le niveau. Se fige à 50100 $ (départ + 100 $) quand le solde atteint 53100 $, et dès le premier payout. Le seuil ne monte qu'en fin de journée, mais le dépassement est vérifié en continu, pertes ouvertes comprises (support Top One Futures, e-mail du 2026-10-04)."
@@ -4946,6 +4983,7 @@
             "trails_on": "balance",
             "locks_at": 104600,
             "locked_floor": 100100,
+            "locks_on_first_payout": "payout",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "MLL EOD : 4500 $ sous le plus haut solde de clôture ; échec si le solde passe sous le niveau. Se fige à 100100 $ (départ + 100 $) quand le solde atteint 104600 $, et dès le premier payout. Le seuil ne monte qu'en fin de journée, mais le dépassement est vérifié en continu, pertes ouvertes comprises (support Top One Futures, e-mail du 2026-10-04)."
@@ -5101,6 +5139,7 @@
             "trails_on": "balance",
             "locks_at": 156100,
             "locked_floor": 150100,
+            "locks_on_first_payout": "payout",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "MLL EOD : 6000 $ sous le plus haut solde de clôture ; échec si le solde passe sous le niveau. Se fige à 150100 $ (départ + 100 $) quand le solde atteint 156100 $, et dès le premier payout. Le seuil ne monte qu'en fin de journée, mais le dépassement est vérifié en continu, pertes ouvertes comprises (support Top One Futures, e-mail du 2026-10-04)."
