@@ -24,4 +24,5 @@ Lecture du relecteur : « cette feature » = toute la veille (lots 3, 4 puis 5),
 Une PR par sous-lot, même circuit que les lots 1 à 4 :
 - **5a** : Topstep, TradeDay, UProfit (`verified_at` les plus anciens, 18/10).
 - **5b** : BluSky, Top One (vérifier si `/launchpad` a déménagé ou si le programme n'existe plus).
+- **5b-bis** (relecteur, 23/11) : Top One sort du 5b, PR séparée avant 5c (vérifier `/launchpad`).
 - **5c** : FFF, avec la convention d'Earn2Trade (plans d'origine renommés « … (achat avant le JJ/MM/AAAA) », ids inchangés, nouvelles règles sous le nom simple).

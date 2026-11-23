@@ -636,3 +636,15 @@ Lot 5 découpé en trois PR (5a Topstep / TradeDay / UProfit, 5b BluSky / Top On
 | UProfit | 21 pages d'aide, page DAY 2.0 | « Contenu modifié » = bandeau « DAY 2.0 — choose Day Soft or Day Flex » et menu ; articles datés du 2026-08-03 au 2026-10-08, valeurs identiques. « Day Soft / Day Flex » = gammes Soft / Flex du catalogue (renommage commercial). | `verified_at` seul |
 
 Catalogue à 334 plans (lots 2 à 4 compris).
+
+## Veille du 2026-11-23 (suite) : BluSky (lot 5b, #1218)
+
+Top One passe dans sa propre PR (5b-bis), avant FFF (5c). BluSky relu en entier (10 articles modifiés les 19-20/11, sélecteur de blusky.pro dans Chrome) : `verified_at` au 2026-11-23. Aucun drawdown ni perte max du jour ne change.
+
+| Firm | Source | Constat | Effet |
+|---|---|---|---|
+| BluSky | Evaluation Rules, Understanding the Consistency Rule, articles Launch et Propel (2026-11-19/20) | « 55% Consistency Rule in Launch and Propel … Evaluations (34% in the Buffer) », 21 % dans la Buffer du 300K. Le doute du 2026-11-02 (50 % / 55 % sur Launch) est levé. | `evaluation.consistency` 0,5 (Launch) / 0,34 (Propel 25K-200K) / 0,21 (Propel 300K) → 0,55 sur les 9 plans ; Buffer Zone inchangée en note ; Launch 50/100/200K sortent de `needs_review` |
+| BluSky | Article Propel (2026-11-20), sélecteur de blusky.pro | Propel 25K : 4 minis / 40 micros en évaluation. | `max_contracts` d'évaluation 2/20 → 4/40, sort de `needs_review` |
+| BluSky | Buffer Stage, Sim Funded, Orbit, Instant / Direct to Funded, Resets ; sélecteur | Buffer Zone, Sim Funded (soldes, minimum 100 $, payout 500 $, plafonds 7 jours), Orbit, Instant, Direct, resets et prix (Launch 59 / 69 / 79 $ + frais, Propel 150 à 320 $, Orbit 199 à 419 $, Instant 599 $, Direct 749 $) : identiques. | Aucun |
+
+Catalogue à 334 plans.
