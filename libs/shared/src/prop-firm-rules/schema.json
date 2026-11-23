@@ -150,6 +150,10 @@
         "trails_on": { "enum": ["balance", "equity", null], "description": "Ce que suit le trailing : solde (de clôture pour trailing_eod) ou equity (P&L latent inclus). null pour static." },
         "locks_at": { "$ref": "#/$defs/nullableMoney", "description": "Solde (pic ou clôture selon type) à partir duquel le trailing se fige. null = ne se fige pas, ou dépend de la plateforme (voir platform_overrides)." },
         "locked_floor": { "$ref": "#/$defs/nullableMoney", "description": "Ajout : niveau du seuil une fois figé (souvent capital initial + 100)." },
+        "locks_on_first_payout": {
+          "enum": ["request", "approval", "payout", null],
+          "description": "Ajout (#696) : le plancher se fige dès le premier payout (request = demande, approval = payout approuvé, payout = la firm ne précise pas), au niveau locked_floor (sinon locks_at − amount), sans redescendre sous le plancher suiveur. Absent = gel au seuil seulement."
+        },
         "enforced_on": {
           "enum": ["equity_realtime", "balance_realtime", "eod_balance", null],
           "description": "Ajout : comment la violation est détectée. equity_realtime = l'equity (latent inclus) ne doit jamais toucher le seuil en séance. null = non documenté."

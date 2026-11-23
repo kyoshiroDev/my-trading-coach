@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
 import { MANUAL_PAYOUT_TYPE, manualPayoutError, summarizePayouts } from './account-payouts';
 import { aggregateRuleTrades, sessionPnls } from './account-rules';
-import { AccountsService, type RulePlan } from './accounts.service';
+import { AccountsService, firstPayoutDay, type RulePlan } from './accounts.service';
 
 const row = (id: string, day: string, amount: number, changeType = 'challengepayout', confidence = 'certain') =>
   ({ id, tradeDate: new Date(`${day}T00:00:00Z`), amount, changeType, confidence });
@@ -28,6 +28,10 @@ describe('summarizePayouts', () => {
 
   it('aucun payout → null', () => {
     expect(summarizePayouts([])).toBeNull();
+  });
+
+  it('plus ancien payout : date du gel au premier payout (#696)', () => {
+    expect(summarizePayouts([row('b2', '2026-10-10', 800), row('b1', '2026-10-01', 1_000)])?.first).toBe('2026-10-01');
   });
 });
 
@@ -75,6 +79,71 @@ describe('métriques d\'un compte avec payouts saisis', () => {
   it('le payout saisi démarre le cycle du prochain payout (source « manual », rien à écarter)', () => {
     expect(metrics({ last: '2026-10-05', count: 2, lastId: 'm1', lastManual: true, manualTotal: 1_000 }).progress)
       .toMatchObject({ cycleAfter: '2026-10-05', cycleSource: 'manual', payoutsReceived: 2, lastPayout: null });
+  });
+});
+
+describe('gel du plancher au premier payout (#696)', () => {
+  const svc = new AccountsService({} as never);
+  const at = (pnl: number, iso: string) => ({ pnl, tradedAt: new Date(iso) });
+  const now = new Date('2026-10-06T15:00:00Z');
+  const phase = (md: Record<string, unknown>) =>
+    ({
+      phase: 'funded', profit_target: null, consistency: null, min_trading_days: null,
+      max_drawdown: { amount: 2_000, type: 'trailing_eod', trails_on: 'balance', basis_notes: null, ...md },
+      payout: { min_days: 5, min_daily_profit: 150, min_cycle_profit: null, min_cycle_profit_schedule: null, safety_net_balance: null, min_amount: 500 },
+    }) as unknown as PropFirmPhaseRules;
+  const plan = (md: Record<string, unknown>): RulePlan => ({ firmName: 'Lucid Trading', planName: 'LucidFlex', accountSize: 50_000, phases: [phase(md)] });
+  const flex = plan({ locks_at: 52_100, locked_floor: 50_100, locks_on_first_payout: 'request' });
+  const acc = (lastPayoutAt: Date | null = null) =>
+    ({ startingBalance: 50_000, accountSize: 50_000, profitTarget: null, maxDrawdown: null, drawdownType: 'TRAILING' as const, type: 'FUNDED' as const, lastPayoutAt });
+  const trades = [at(500, '2026-10-01T15:00:00Z')];
+  const metrics = (p: RulePlan, payouts: Parameters<AccountsService['ruleMetricsFromAgg']>[8], a = acc(), t = trades) =>
+    svc.ruleMetricsFromAgg(a, aggregateRuleTrades(t), p, null, null, null, now, sessionPnls(t), payouts);
+  const detected = { last: '2026-10-05', first: '2026-10-02', count: 2, lastId: 'b2', lastManual: false, manualTotal: 0 };
+
+  it('sans payout : plancher suiveur, non figé', () => {
+    expect(metrics(flex, null).drawdown).toMatchObject({ floor: 48_500, rule: { locked: false, lockedBy: null, payoutLockedSince: null, locksOnFirstPayout: 'request' } });
+  });
+
+  it('payout détecté : figé à départ + 100 depuis le premier payout', () => {
+    expect(metrics(flex, detected).drawdown).toMatchObject({ floor: 50_100, rule: { locked: true, lockedBy: 'payout', payoutLockedSince: '2026-10-02' } });
+  });
+
+  it('payout saisi à la main : même gel', () => {
+    const manual = { last: '2026-10-03', first: '2026-10-03', count: 1, lastId: 'm1', lastManual: true, manualTotal: 1_000 };
+    expect(metrics(flex, manual).drawdown).toMatchObject({ floor: 50_100, rule: { lockedBy: 'payout', payoutLockedSince: '2026-10-03' } });
+  });
+
+  it('seule la date saisie du dernier payout : gelé à cette date', () => {
+    expect(metrics(flex, null, acc(new Date('2026-10-04T00:00:00Z'))).drawdown).toMatchObject({ floor: 50_100, rule: { payoutLockedSince: '2026-10-04' } });
+  });
+
+  it('date de payout future : pas de gel', () => {
+    expect(metrics(flex, null, acc(new Date('2026-10-20T00:00:00Z'))).drawdown).toMatchObject({ floor: 48_500, rule: { locked: false } });
+  });
+
+  it('seuil atteint : figé par le seuil, pas par le payout', () => {
+    const big = [at(2_500, '2026-10-01T15:00:00Z')];
+    expect(metrics(flex, detected, acc(), big).drawdown).toMatchObject({ floor: 50_100, rule: { lockedBy: 'threshold', payoutLockedSince: null } });
+  });
+
+  it('plan sans la règle : un payout ne fige rien', () => {
+    const plain = plan({ locks_at: 52_100, locked_floor: 50_100 });
+    expect(metrics(plain, detected).drawdown).toMatchObject({ floor: 48_500, rule: { locked: false, locksOnFirstPayout: null } });
+  });
+
+  it('MFF Pro (pas de locks_at) : niveau figé exposé, gel au payout sans jamais baisser le plancher', () => {
+    const pro = plan({ locks_at: null, locked_floor: 50_100, locks_on_first_payout: 'approval' });
+    expect(metrics(pro, null).drawdown).toMatchObject({ floor: 48_500, rule: { lockedFloor: 50_100, locked: false } });
+    expect(metrics(pro, detected).drawdown).toMatchObject({ floor: 50_100, rule: { lockedBy: 'payout' } });
+    const high = [at(3_000, '2026-10-01T15:00:00Z')];
+    expect(metrics(pro, detected, acc(), high).drawdown).toMatchObject({ floor: 51_000, rule: { lockedBy: 'payout' } });
+  });
+
+  it('firstPayoutDay : minimum des dates connues ≤ aujourd’hui', () => {
+    expect(firstPayoutDay(detected, new Date('2026-09-30T00:00:00Z'), '2026-10-06')).toBe('2026-09-30');
+    expect(firstPayoutDay(null, null, '2026-10-06')).toBeNull();
+    expect(firstPayoutDay({ last: '2026-10-09', count: 1 }, null, '2026-10-06')).toBeNull();
   });
 });
 

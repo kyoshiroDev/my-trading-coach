@@ -262,6 +262,8 @@ export interface PlanFloor {
   balance: number;
   /** Plancher gelé par la règle du plan (seuil de gel atteint) : en-tête « plancher gelé à $X ». */
   locked: boolean;
+  /** Premier payout qui fige le plancher (`AAAA-MM-JJ`, #696) : gel de la courbe à partir de ce jour. */
+  payoutLockedSince: string | null;
 }
 
 export function planFloorOf(account: TradingAccount | null): PlanFloor | null {
@@ -275,6 +277,7 @@ export function planFloorOf(account: TradingAccount | null): PlanFloor | null {
     startingBalance,
     locksAt: dd.rule.locksAt,
     lockedFloor: dd.rule.lockedFloor,
+    ...(dd.rule.locksOnFirstPayout ? { locksOnFirstPayout: dd.rule.locksOnFirstPayout } : {}),
   };
   // EOD : plus haut solde de clôture retenu ; intraday : déduit du plancher (départ + plus haut − drawdown).
   const peakProfit = dd.rule.locked
@@ -288,7 +291,16 @@ export function planFloorOf(account: TradingAccount | null): PlanFloor | null {
     rule, floor: dd.floor, margin: dd.margin, pct: dd.pct, breached: dd.breached, peakProfit,
     balance: account.metrics.currentBalance,
     locked: dd.rule.locked,
+    payoutLockedSince: dd.rule.payoutLockedSince ?? null,
   };
+}
+
+/** Déclencheur du gel au premier payout (#696), en fin de phrase « Se fige à X … ». */
+export function payoutLockPhrase(trigger: 'request' | 'approval' | 'payout' | null | undefined): string | null {
+  if (trigger === 'request') return 'dès ta première demande de payout';
+  if (trigger === 'approval') return 'dès ton premier payout approuvé';
+  if (trigger === 'payout') return 'dès ton premier payout';
+  return null;
 }
 
 /**
@@ -307,8 +319,15 @@ export function drawdownHelp(plan: PlanFloor | null, currency: string | null): s
       ? `Marge entre ton solde et le plancher fixe du plan (${limit}).`
       : `Marge entre ton solde et le plancher du plan, qui suit ${rule.kind === 'trailing_eod' ? 'ton plus haut solde de clôture' : 'ton plus haut solde'} à ${fmt(rule.amount)} de distance. La courbe touche la limite (${limit}) quand ton solde touche le plancher.`,
   ];
+  const fixed = rule.lockedFloor ?? (rule.locksAt != null ? rule.locksAt - rule.amount : null);
+  const onPayout = rule.kind !== 'static' && fixed != null ? payoutLockPhrase(rule.locksOnFirstPayout) : null;
   if (rule.kind !== 'static' && rule.locksAt != null) {
-    parts.push(`Le plancher se fige à ${fmt(rule.lockedFloor ?? rule.locksAt - rule.amount)} quand ton solde atteint ${fmt(rule.locksAt)}.`);
+    parts.push(`Le plancher se fige à ${fmt(fixed!)} quand ton solde atteint ${fmt(rule.locksAt)}${onPayout ? `, ou ${onPayout}` : ''}.`);
+  } else if (onPayout) {
+    parts.push(`Le plancher se fige à ${fmt(fixed!)} ${onPayout}.`);
+  }
+  if (onPayout) {
+    parts.push('MyTradingCoach le fige à la date du premier payout enregistré, sans jamais le faire baisser.');
   }
   if (rule.kind === 'trailing_intraday') {
     parts.push('Calcul sur les trades clôturés\u00a0; ta prop firm peut tenir compte des gains latents.');
@@ -361,9 +380,15 @@ export function floorSeries(
   const offset = periodStart - rule.startingBalance - before.pnl + (before.payouts ?? 0);
   let peak = Math.max(0, before.peak + offset);
   const cap = (v: number) => (plan.peakProfit === null ? v : Math.min(v, plan.peakProfit));
-  const floor = balance.map((b) => {
+  // Gel au premier payout (#696) : à partir du jour du premier payout, plus haut retenu à ce moment.
+  const since = plan.payoutLockedSince;
+  let freezePeak: number | null = null;
+  const floor = balance.map((b, i) => {
     peak = Math.max(peak, b - rule.startingBalance);
-    return drawdownFloor(rule, cap(peak)).floor;
+    const day = i === 0 ? null : points[i - 1].date.slice(0, 10);
+    const reached = since != null && (day === null ? points.length > 0 && since < points[0].date.slice(0, 10) : since <= day);
+    if (reached && freezePeak === null) freezePeak = cap(peak);
+    return drawdownFloor(rule, cap(peak), freezePeak).floor;
   });
   floor[floor.length - 1] = plan.floor;
   const margin = balance.map((b, i) => b - floor[i]);

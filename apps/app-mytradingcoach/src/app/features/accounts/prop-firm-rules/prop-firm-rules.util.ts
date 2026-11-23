@@ -1,4 +1,5 @@
-import { formatMoney, type AccountType, type PropFirmPhaseRules, type PropFirmPlanDetail } from '@mtc/shared';
+import { formatMoney, type AccountType, type PropFirmPayoutLockTrigger, type PropFirmPhaseRules, type PropFirmPlanDetail } from '@mtc/shared';
+import { payoutLockPhrase } from '../../../core/services/chart-series.util';
 
 /**
  * Mise en mots des règles d'un plan du catalogue (fonctions pures, testées à part).
@@ -112,14 +113,19 @@ export function enforcementLabel(dd: PropFirmPhaseRules['max_drawdown']): string
 }
 
 /** Blocage du trailing : « Se fige à $50,100 quand le solde atteint $52,100 ». */
-export function lockLabel(lockedFloor: number | null | undefined, locksAt: number | null, currency: string): string | null {
+export function lockLabel(
+  lockedFloor: number | null | undefined,
+  locksAt: number | null,
+  currency: string,
+  onPayout: PropFirmPayoutLockTrigger | null | undefined = null,
+): string | null {
   if (locksAt == null && lockedFloor == null) return null;
+  const payout = payoutLockPhrase(onPayout);
   if (lockedFloor != null && locksAt != null) {
-    return `Se fige à ${amount(lockedFloor, currency)} quand le solde atteint ${amount(locksAt, currency)}`;
+    return `Se fige à ${amount(lockedFloor, currency)} quand le solde atteint ${amount(locksAt, currency)}${payout ? `, ou ${payout}` : ''}`;
   }
-  return locksAt != null
-    ? `Cesse de suivre quand le solde atteint ${amount(locksAt, currency)}`
-    : `Se fige à ${amount(lockedFloor!, currency)}`;
+  if (locksAt != null) return `Cesse de suivre quand le solde atteint ${amount(locksAt, currency)}${payout ? `, ou ${payout}` : ''}`;
+  return `Se fige à ${amount(lockedFloor!, currency)}${payout ? ` ${payout}` : ''}`;
 }
 
 export function breachLabel(dll: NonNullable<PropFirmPhaseRules['daily_loss_limit']>): string {

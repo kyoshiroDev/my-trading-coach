@@ -20,10 +20,19 @@
           </li>
         }
       </ul>
-      <!-- Règle « plancher gelé au premier payout » pas encore modélisée au catalogue. -->
-      <p class="ap-note" data-testid="payouts-floor-lock-note">Le plancher gelé après un payout n'est pas encore pris en compte dans l'estimation. Vérifie chez ta firm.</p>
     } @else {
       <p class="ap-note" data-testid="payouts-empty">Aucun payout enregistré.</p>
+    }
+    @switch (floorLock()) {
+      @case ('request') {
+        <p class="ap-note" data-testid="payouts-floor-lock-note">Ta firm fige le plancher dès ta demande de payout&nbsp;: tant que le payout n'apparaît pas ici, ton plancher réel peut déjà être plus haut que l'estimation.</p>
+      }
+      @case ('approval') {
+        <p class="ap-note" data-testid="payouts-floor-lock-note">Ta firm fige le plancher dès que ton payout est approuvé&nbsp;: tant qu'il n'apparaît pas ici, ton plancher réel peut déjà être plus haut que l'estimation.</p>
+      }
+      @case ('payout') {
+        <p class="ap-note" data-testid="payouts-floor-lock-note">Ta firm fige le plancher dès ton premier payout&nbsp;: tant qu'il n'apparaît pas ici, ton plancher réel peut déjà être plus haut que l'estimation.</p>
+      }
     }
   }
 
@@ -44,6 +53,6 @@
         {{ saving() ? 'Enregistrement…' : 'Ajouter le payout' }}
       </button>
     </div>
-    <p class="ap-note">Le montant est retiré du solde, des courbes et de la marge du compte. Le plancher ne bouge pas. Estimation MyTradingCoach : vérifie chez ta firm.</p>
+    <p class="ap-note">Le montant est retiré du solde, des courbes et de la marge du compte.@if (floorLock()) { Ton plan fige le plancher au premier payout&nbsp;: MyTradingCoach retient la date du premier payout enregistré.} Estimation MyTradingCoach&nbsp;: vérifie chez ta firm.</p>
   }
 </section>

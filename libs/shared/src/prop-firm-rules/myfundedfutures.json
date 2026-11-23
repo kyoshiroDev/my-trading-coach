@@ -718,6 +718,7 @@
             "trails_on": "balance",
             "locks_at": null,
             "locked_floor": 50100,
+            "locks_on_first_payout": "approval",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "Trailing EOD sur le plus haut de fin de journée. Verrouillage APRÈS LE PREMIER PAYOUT approuvé, à capital + 100 $ (50100 $), puis statique. Avant le premier payout, il continue de suivre."
@@ -824,6 +825,7 @@
             "trails_on": "balance",
             "locks_at": null,
             "locked_floor": 100100,
+            "locks_on_first_payout": "approval",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "Trailing EOD sur le plus haut de fin de journée. Verrouillage APRÈS LE PREMIER PAYOUT approuvé, à capital + 100 $ (100100 $), puis statique. Avant le premier payout, il continue de suivre."
@@ -930,6 +932,7 @@
             "trails_on": "balance",
             "locks_at": null,
             "locked_floor": 150100,
+            "locks_on_first_payout": "approval",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "Trailing EOD sur le plus haut de fin de journée. Verrouillage APRÈS LE PREMIER PAYOUT approuvé, à capital + 100 $ (150100 $), puis statique. Avant le premier payout, il continue de suivre."

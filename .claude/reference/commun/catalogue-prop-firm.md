@@ -95,13 +95,16 @@ de l'API (`PropFirmCatalogSyncService`, cf. `nestjs.md`) écraserait la modifica
   séance, Mes comptes et cartes Courbe d'équité / Drawdown (`design.md`). Le seed démo relie ses
   3 comptes : `apex-eod-50k` (suiveur EOD), `tradeify-select-flex-50k` (funded, payout en jours),
   `elitetraderfunding-static-25k` (statique, 25K).
-- **Règles présentes seulement dans les notes du catalogue** (`basis_notes`), sans champ structuré,
-  donc NON appliquées par `drawdownFloor` (audit du 2026-10-20, 538 phases) : **gel du plancher au
-  premier payout** (124 phases funded : Tradeify, Top One, Topstep, MyFundedFutures Pro, Lucid Flex,
-  Funded Futures Family, TradeDay) et **suivi sur le profit brut payouts compris** (TradeDay Quick
-  Pay). Pour les appliquer : ajouter un champ au schéma (ex. `max_drawdown.locks_on_first_payout`)
-  et le lire dans `drawdownFloor` avec les payouts du compte (`progress.payoutsReceived`). Les
-  suiveurs intraday sont approchés (trades clôturés, pas le plus haut latent).
+- **Gel du plancher au premier payout** (#696) : champ `max_drawdown.locks_on_first_payout`
+  (`request` = dès la demande · `approval` = dès l'approbation · `payout` = non précisé par la firm),
+  sur 92 phases funded / direct : Lucid Flex, Top One (Elite, Access, X-Ultra, Instant, Ignite),
+  Tradeify (Growth, Select, Lightning, Select Flex 300K), MyFundedFutures Pro. Présent ⇒ drawdown
+  suiveur et niveau figé connu (`locked_floor`, ou `locks_at − amount`) : vérifié par
+  `payout-floor-lock.spec.ts`. Appliqué par `drawdownFloor(rule, peak, payoutFreezePeak)` : plancher
+  = max(niveau figé, suiveur au moment du gel), jamais plus bas que le niveau figé. **Hors périmètre**
+  (restent dans `basis_notes`) : Topstep, Funded Futures Family, TradeDay, et le **suivi sur le profit
+  brut payouts compris** (TradeDay Quick Pay). Les suiveurs intraday sont approchés (trades clôturés,
+  pas le plus haut latent).
 - `TradingAccount.planLinkChoice` (enum `PlanLinkChoice` : `LATER` · `PERSONAL` · `UNLISTED`) +
   `unlistedFirm` (migration `20261018140000_account_plan_link_choice`, additive, #612) : réponse à
   « Quel est ce compte ? » quand **aucun** plan n'est relié. Null = jamais demandé. Pas de valeur

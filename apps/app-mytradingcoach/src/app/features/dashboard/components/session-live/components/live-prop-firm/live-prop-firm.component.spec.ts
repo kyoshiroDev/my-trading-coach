@@ -24,7 +24,7 @@ const metrics = (p: Partial<AccountRuleMetrics> = {}): AccountRuleMetrics => ({
     source: 'plan',
     rule: {
       firmName: 'Apex', planName: 'EOD 50K', phase: 'evaluation', kind: 'trailing_eod',
-      locksAt: 52100, lockedFloor: 50100, locked: false, realtimeEquity: false,
+      locksAt: 52100, lockedFloor: 50100, locked: false, locksOnFirstPayout: null, lockedBy: null, payoutLockedSince: null, realtimeEquity: false,
       peakSource: 'broker', peakBalance: 50820, officialThrough: null, platform: null, platformChoices: [],
     },
   },
