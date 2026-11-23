@@ -1,4 +1,5 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
+import { Logger } from '@nestjs/common';
 import { StripeBillingService } from './stripe-billing.service';
 
 /**
@@ -151,5 +152,51 @@ describe('StripeBillingService.changeInterval — −10 % filleul pour les mois 
     const { svc, update } = make(null);
     await svc.changeInterval('u1', 'year');
     expect(update.mock.calls[0][1]).not.toHaveProperty('discounts');
+  });
+});
+
+/** #790 : journaux de facturation sans identifiant d'utilisateur, identifiant Stripe à la place. */
+describe('StripeBillingService — journaux sans identifiant d’utilisateur (#790)', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  const USER = 'user_secret_790';
+  const logs = () => {
+    const spies = (['log', 'warn', 'error', 'debug'] as const).map((m) => vi.spyOn(Logger.prototype, m).mockImplementation(() => undefined));
+    return { lines: () => spies.flatMap((s) => s.mock.calls.map((c) => String(c[0]))), restore: () => spies.forEach((s) => s.mockRestore()) };
+  };
+  const make = () => {
+    const prices: Record<string, string> = { STRIPE_PREMIUM_PRICE_MONTHLY_V2: 'price_49', STRIPE_PREMIUM_PRICE_YEARLY_V2: 'price_490' };
+    const stripe = {
+      subscriptions: {
+        retrieve: vi.fn(async () => ({ id: 'sub_790', status: 'active', latest_invoice: 'in_1', items: { data: [{ id: 'si_1', price: { id: 'price_49' } }] } })),
+        update: vi.fn(async () => ({})),
+      },
+    };
+    return new StripeBillingService(
+      { get: (k: string) => prices[k], getOrThrow: (k: string) => prices[k] } as never,
+      { user: { findUnique: vi.fn().mockResolvedValue({ id: USER, stripeSubscriptionId: 'sub_790' }) } } as never,
+      { client: { del: vi.fn().mockResolvedValue(1), get: vi.fn().mockResolvedValue('{"plan":"PREMIUM"}') } } as never,
+      {} as never, {} as never, {} as never,
+      { activeForSubscription: vi.fn().mockResolvedValue(null) } as never,
+      stripe as never,
+    );
+  };
+
+  it('cache du statut de facturation : aucun identifiant d’utilisateur', async () => {
+    const l = logs();
+    await make().getBillingStatus(USER);
+    const lines = l.lines();
+    l.restore();
+    expect(lines).toContain('Cache hit billing status');
+    expect(lines.join('\n')).not.toContain(USER);
+  });
+
+  it('intervalle changé : abonnement Stripe, pas l’utilisateur', async () => {
+    const l = logs();
+    await make().changeInterval(USER, 'year');
+    const lines = l.lines();
+    l.restore();
+    expect(lines.find((t) => t.startsWith('Intervalle changé'))).toContain('sub: sub_790');
+    expect(lines.join('\n')).not.toContain(USER);
   });
 });

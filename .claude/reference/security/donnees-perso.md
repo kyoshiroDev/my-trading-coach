@@ -83,3 +83,16 @@ rôle à la place de l'autre partie). **Règle : nouvelle table reliée à un co
 `accountId`, `connectionId`, `sessionId`, `tradeId`, `drawId`, `parrainId`, `filleulId`, `ambassadorId`, `referredUserId`, `winnerId`,
 `validatedById`) ou nouvelle colonne d'une table exportée = la classer dans le script**, sinon
 `--check` échoue (code 1) et l'export est bloqué.
+
+## Journaux de facturation sans identifiant d'utilisateur (#790, 2026-11-23)
+
+Journaux de `stripe/*`, `founder-offer` et `partner-codes` : identifiants Stripe seulement (`cus_`,
+`sub_`, `cs_`, commission, facture), **jamais `userId`, code ambassadeur ni e-mail** ; échecs : nom de
+l'erreur (`err instanceof Error ? err.name : 'Error'`), jamais `err.message` (un message Resend ou
+Prisma peut recopier l'e-mail ou l'identifiant). Parrainage : abonnement du filleul (`sub filleul`) et
+client Stripe du parrain à la place des deux comptes. Chaque journal corrigé a un test (valeur exacte
+de l'identifiant de test absente, identifiant Stripe présent) avec contre-épreuve sur l'ancienne source.
+Les données envoyées à Stripe (description et metadata `referralFilleulId` de l'avoir) ne sont pas des
+journaux : elles restent, Stripe en a besoin pour le lien.
+`stripeCustomerId` (`cus_`) reste interdit dans les réponses API (security.md, « Ne jamais exposer ») ;
+il est autorisé dans les journaux, c'est l'identifiant demandé par #790 pour retrouver un cas.

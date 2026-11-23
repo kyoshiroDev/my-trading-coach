@@ -120,8 +120,7 @@ export class StripeReferralService {
     });
 
     this.logger.log(
-      `Commission referral : ${commission}€ pour ambassadeur ${filleul.referredBy}` +
-      ` (plan: ${filleul.plan}, sub: ${subscriptionId})`,
+      `Commission referral : ${commission}€ (plan: ${filleul.plan}, sub: ${subscriptionId})`,
     );
   }
 
@@ -151,10 +150,10 @@ export class StripeReferralService {
       // manuel restait possible.
       const existing = await this.prisma.referralReward.findUnique({ where: { filleulId } });
       if (!existing || existing.status === 'APPLIED') {
-        this.logger.debug(`Mois offert déjà accordé pour le filleul ${filleulId}`);
+        this.logger.debug(`Mois offert déjà accordé (sub filleul ${subscriptionId})`);
         return;
       }
-      this.logger.log(`Mois offert encore PENDING pour le filleul ${filleulId} : nouvelle tentative.`);
+      this.logger.log(`Mois offert encore PENDING (sub filleul ${subscriptionId}) : nouvelle tentative.`);
       reward = existing;
     }
 
@@ -167,7 +166,7 @@ export class StripeReferralService {
     const monthCents = await this.resolveFreeMonthCents(parrain.stripeSubscriptionId);
     if (monthCents <= 0) {
       this.logger.warn(
-        `Mois offert non chiffrable (parrain ${parrainId}) : reward laissé PENDING, ` +
+        `Mois offert non chiffrable (sub filleul ${subscriptionId}) : reward laissé PENDING, ` +
         'il sera rejoué à la prochaine facture du filleul.',
       );
       return; // reste PENDING : visible dans « mois à appliquer » côté admin
@@ -183,7 +182,7 @@ export class StripeReferralService {
     // avoir ne porte déjà ce filleul avant d'en créer un.
     if (await this.hasReferralCredit(customerId, filleulId)) {
       this.logger.warn(
-        `Avoir de parrainage déjà présent chez Stripe pour le filleul ${filleulId} : ` +
+        `Avoir de parrainage déjà présent chez Stripe (sub filleul ${subscriptionId}) : ` +
         'pas de second crédit, la ligne est juste réconciliée.',
       );
     } else {
@@ -206,7 +205,7 @@ export class StripeReferralService {
     });
 
     this.logger.log(
-      `Mois offert (${(monthCents / 100).toFixed(2)}€) crédité au parrain ${parrainId} (filleul ${filleulId})`,
+      `Mois offert (${(monthCents / 100).toFixed(2)}€) crédité au client ${customerId} (sub filleul ${subscriptionId})`,
     );
   }
 

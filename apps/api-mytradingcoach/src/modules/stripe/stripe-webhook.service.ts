@@ -200,7 +200,7 @@ export class StripeWebhookService {
       });
     }
     this.logger.log(
-      `Checkout complété | sub: ${subscriptionId}, user: ${session.client_reference_id ?? 'unknown'}`,
+      `Checkout complété | sub: ${subscriptionId}, customer: ${extractId(session.customer) ?? 'unknown'}`,
     );
     if (user) {
       this.adminNotifier?.notify(
@@ -303,7 +303,7 @@ export class StripeWebhookService {
       if (!offered) {
         await this.prisma.emailSend
           .create({ data: { campaignKey: SUBSCRIPTION_CANCELED_EMAIL_KEY, userId: user.id, kind: 'transactional' } })
-          .catch((err: Error) => this.logger.warn(`Envoi « abonnement résilié » non enregistré (user ${user.id}) : ${err.message}`));
+          .catch((err: unknown) => this.logger.warn(`Envoi « abonnement résilié » non enregistré (sub ${subscription.id}) : ${err instanceof Error ? err.name : 'Error'}`));
       }
       await this.discord.syncDiscordRole(user.id).catch(() => undefined);
     }
@@ -524,7 +524,7 @@ export class StripeWebhookService {
     });
     if (!seat) {
       this.logger.error(
-        `[FONDATEUR] Paiement sans place | user: ${synced.id}, sub: ${synced.subscriptionId} : abonnement annulé, remboursement à faire`,
+        `[FONDATEUR] Paiement sans place | sub: ${synced.subscriptionId} : abonnement annulé, remboursement à faire`,
       );
       await this.stripe.subscriptions.cancel(synced.subscriptionId).catch(() => undefined);
       await this.resend
@@ -645,7 +645,7 @@ export class StripeWebhookService {
         durationMonths: redemption.durationMonths,
         trialEndsAt: synced.stripeSubscriptionStatus === 'trialing' ? synced.currentPeriodEnd : null,
       }),
-    ).catch((err: Error) => this.logger.warn(`Confirmation partenaire non envoyée (user ${synced.id}) : ${err.message}`));
+    ).catch((err: unknown) => this.logger.warn(`Confirmation partenaire non envoyée (sub ${synced.subscriptionId}) : ${err instanceof Error ? err.name : 'Error'}`));
   }
 
   /** Tarif conservé par l'abonné (place fondateur ou code partenaire actifs), sinon null. */
@@ -695,7 +695,7 @@ export class StripeWebhookService {
         renewalDate: new Date(when * 1000),
         keptTariff: kept?.label ?? null,
       })
-      .catch((err: Error) => this.logger.warn(`Rappel de reconduction non envoyé (user ${user.id}) : ${err.message}`));
+      .catch((err: unknown) => this.logger.warn(`Rappel de reconduction non envoyé (customer ${customerId}) : ${err instanceof Error ? err.name : 'Error'}`));
   }
 
   /** Session Checkout expirée (abandon) : la réservation fondateur rend sa place. */
@@ -766,7 +766,7 @@ export class StripeWebhookService {
             where: { id: c.id, status: 'pending' },
             data: { status: 'canceled' },
           });
-          this.logger.log(`Commission ${c.id} annulée : 1er paiement du filleul ${user.id} remboursé`);
+          this.logger.log(`Commission ${c.id} annulée : 1er paiement remboursé (sub ${subscriptionId})`);
         } else if (c.status === 'paid') {
           await this.sendOnce(`refund-commission:${c.id}`, () =>
             this.resend.sendAdminAlert(

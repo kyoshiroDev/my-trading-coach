@@ -319,7 +319,7 @@ export class PartnerCodeService {
       if (existing) return existing;
       const found = await tx.partnerCode.findUnique({ where: { code: normalizeCode(args.code) } });
       if (!found) {
-        this.logger.error(`[PARTENAIRE] Code ${args.code} introuvable au paiement | user: ${args.userId}`);
+        this.logger.error(`[PARTENAIRE] Code ${args.code} introuvable au paiement | sub: ${args.stripeSubscriptionId}`);
         return null;
       }
       const reservation = await tx.checkoutReservation.findFirst({
@@ -330,7 +330,7 @@ export class PartnerCodeService {
           where: { partnerCodeId: found.id, status: { in: USED_STATUSES } },
         });
         if (used >= found.maxRedemptions) {
-          this.logger.warn(`[PARTENAIRE] ${found.code} : utilisation au-delà du quota (réservation expirée) | user: ${args.userId}`);
+          this.logger.warn(`[PARTENAIRE] ${found.code} : utilisation au-delà du quota (réservation expirée) | sub: ${args.stripeSubscriptionId}`);
         }
       }
       await tx.checkoutReservation.deleteMany({ where: { userId: args.userId, kind: CheckoutReservationKind.PARTNER } });

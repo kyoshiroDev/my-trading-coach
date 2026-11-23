@@ -1,5 +1,5 @@
-import { describe, it, expect, vi } from 'vitest';
-import { BadRequestException, ConflictException } from '@nestjs/common';
+import { describe, it, expect, vi, afterEach } from 'vitest';
+import { BadRequestException, ConflictException, Logger } from '@nestjs/common';
 import { PartnerCodeService } from './partner-code.service';
 
 const TRADER10 = {
@@ -161,5 +161,38 @@ describe('changement d’intervalle : conditions figées de l’abonné', () => 
     expect(await service.couponForIntervalChange(r as never, 'month', now)).toBe('mtc-partner-2000-1');
     const old = { ...r, createdAt: new Date('2026-05-01') };
     expect(await service.couponForIntervalChange(old as never, 'year', now)).toBeNull();
+  });
+});
+
+/** #790 : journaux de facturation sans identifiant d'utilisateur, identifiant Stripe à la place. */
+describe('claim — journaux sans identifiant d’utilisateur (#790)', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  const USER = 'user_secret_790';
+  const claim = async (code: object | null, used: number) => {
+    const spies = (['error', 'warn'] as const).map((m) => vi.spyOn(Logger.prototype, m).mockImplementation(() => undefined));
+    const tx = {
+      $executeRaw: vi.fn().mockResolvedValue(1),
+      partnerRedemption: { findUnique: vi.fn().mockResolvedValue(null), count: vi.fn().mockResolvedValue(used), create: vi.fn(async ({ data }) => data) },
+      partnerCode: { findUnique: vi.fn().mockResolvedValue(code) },
+      checkoutReservation: { findFirst: vi.fn().mockResolvedValue(null), deleteMany: vi.fn().mockResolvedValue({ count: 0 }) },
+    };
+    const prisma = { $transaction: vi.fn(async (fn: (t: typeof tx) => unknown) => fn(tx)) };
+    await new PartnerCodeService(prisma as never, {} as never).claim({ userId: USER, code: 'trader10', stripeSubscriptionId: 'sub_790', interval: 'month' });
+    const lines = spies.flatMap((s) => s.mock.calls.map((c) => String(c[0])));
+    spies.forEach((s) => s.mockRestore());
+    return lines;
+  };
+
+  it('code introuvable au paiement : abonnement Stripe', async () => {
+    const lines = await claim(null, 0);
+    expect(lines).toContain('[PARTENAIRE] Code trader10 introuvable au paiement | sub: sub_790');
+    expect(lines.join('\n')).not.toContain(USER);
+  });
+
+  it('quota dépassé (réservation expirée) : abonnement Stripe', async () => {
+    const lines = await claim(TRADER10, 10);
+    expect(lines).toContain('[PARTENAIRE] TRADER10 : utilisation au-delà du quota (réservation expirée) | sub: sub_790');
+    expect(lines.join('\n')).not.toContain(USER);
   });
 });

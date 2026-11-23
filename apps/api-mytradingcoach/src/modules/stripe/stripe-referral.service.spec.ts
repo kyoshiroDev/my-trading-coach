@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { Logger } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { StripeCustomerService } from './stripe-customer.service';
 import { StripeReferralService } from './stripe-referral.service';
@@ -487,5 +488,86 @@ describe('StripeReferralService —une commission par facture (A1)', () => {
     await service.processReferral(inv('in_first'));
     const args = prisma.referralCommission.upsert.mock.calls[0][0] as { update: Record<string, unknown> };
     expect(args.update).toEqual({});
+  });
+});
+
+/** #790 : journaux de parrainage sans identifiant d'utilisateur ni code, identifiants Stripe à la place. */
+describe('StripeReferralService — journaux sans identifiant d’utilisateur (#790)', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  const FILLEUL = 'user_filleul_790';
+  const PARRAIN = 'user_parrain_790';
+  const CODE = 'CODE790';
+  const inv = () =>
+    ({ id: 'in_790', customer: 'cus_filleul', amount_paid: 4900, period_start: Math.floor(Date.UTC(2026, 1, 15) / 1000),
+      parent: { subscription_details: { subscription: 'sub_filleul_790' } } }) as never;
+  const run = async (opts: { role?: string; existingReward?: { id: string; status: string }; monthCents?: number; existingCredits?: object[] } = {}) => {
+    const spies = (['log', 'warn', 'error', 'debug'] as const).map((m) => vi.spyOn(Logger.prototype, m).mockImplementation(() => undefined));
+    const prisma = {
+      user: {
+        findFirst: vi.fn()
+          .mockResolvedValueOnce({ id: FILLEUL, referredBy: CODE, plan: 'PREMIUM' })
+          .mockResolvedValueOnce({ id: PARRAIN, role: opts.role ?? 'USER' }),
+        findUnique: vi.fn().mockResolvedValue({ email: 'parrain@exemple.test', stripeCustomerId: 'cus_parrain_790', stripeSubscriptionId: 'sub_parrain' }),
+        update: vi.fn(),
+      },
+      referralCommission: { upsert: vi.fn().mockResolvedValue({}) },
+      referralReward: {
+        create: opts.existingReward
+          ? vi.fn().mockRejectedValue(new Prisma.PrismaClientKnownRequestError('dup', { code: 'P2002', clientVersion: 'x' }))
+          : vi.fn().mockResolvedValue({ id: 'rw_new', status: 'PENDING' }),
+        findUnique: vi.fn().mockResolvedValue(opts.existingReward ?? null),
+        update: vi.fn().mockResolvedValue({}),
+      },
+    };
+    const cents = opts.monthCents ?? 4900;
+    const stripe = {
+      subscriptions: {
+        retrieve: cents > 0
+          ? vi.fn().mockResolvedValue({ items: { data: [{ price: { unit_amount: cents, recurring: { interval: 'month' } } }] } })
+          : vi.fn().mockRejectedValue(new Error('injoignable')),
+      },
+      prices: { retrieve: vi.fn().mockRejectedValue(new Error('placeholder')) },
+      customers: { createBalanceTransaction: vi.fn().mockResolvedValue({}), listBalanceTransactions: vi.fn().mockResolvedValue({ data: opts.existingCredits ?? [] }) },
+    };
+    await makeService(prisma, stripe).processReferral(inv());
+    const lines = spies.flatMap((s) => s.mock.calls.map((c) => String(c[0])));
+    spies.forEach((s) => s.mockRestore());
+    const all = lines.join('\n');
+    expect(all).not.toContain(FILLEUL);
+    expect(all).not.toContain(PARRAIN);
+    expect(all).not.toContain(CODE);
+    expect(all).not.toContain('parrain@exemple.test');
+    return lines;
+  };
+
+  it('commission ambassadeur : abonnement Stripe, sans code ambassadeur', async () => {
+    const lines = await run({ role: 'AMBASSADOR' });
+    expect(lines).toContain('Commission referral : 9.8€ (plan: PREMIUM, sub: sub_filleul_790)');
+  });
+
+  it('mois offert crédité : client Stripe du parrain et abonnement du filleul', async () => {
+    const lines = await run();
+    expect(lines).toContain('Mois offert (49.00€) crédité au client cus_parrain_790 (sub filleul sub_filleul_790)');
+  });
+
+  it('mois offert déjà accordé : abonnement du filleul', async () => {
+    const lines = await run({ existingReward: { id: 'rw_ok', status: 'APPLIED' } });
+    expect(lines).toContain('Mois offert déjà accordé (sub filleul sub_filleul_790)');
+  });
+
+  it('mois offert encore PENDING : abonnement du filleul', async () => {
+    const lines = await run({ existingReward: { id: 'rw_p', status: 'PENDING' } });
+    expect(lines).toContain('Mois offert encore PENDING (sub filleul sub_filleul_790) : nouvelle tentative.');
+  });
+
+  it('avoir déjà présent chez Stripe : abonnement du filleul', async () => {
+    const lines = await run({ existingReward: { id: 'rw_p', status: 'PENDING' }, existingCredits: [{ metadata: { referralFilleulId: FILLEUL } }] });
+    expect(lines.some((t) => t.startsWith('Avoir de parrainage déjà présent chez Stripe (sub filleul sub_filleul_790)'))).toBe(true);
+  });
+
+  it('mois offert non chiffrable : abonnement du filleul', async () => {
+    const lines = await run({ monthCents: 0 });
+    expect(lines.some((t) => t.startsWith('Mois offert non chiffrable (sub filleul sub_filleul_790)'))).toBe(true);
   });
 });
