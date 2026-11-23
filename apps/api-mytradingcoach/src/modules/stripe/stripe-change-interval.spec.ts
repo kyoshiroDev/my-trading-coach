@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import { Logger } from '@nestjs/common';
 import { StripeBillingService } from './stripe-billing.service';
 
@@ -157,6 +157,8 @@ describe('StripeBillingService.changeInterval — −10 % filleul pour les mois 
 
 /** #790 : journaux de facturation sans identifiant d'utilisateur, identifiant Stripe à la place. */
 describe('StripeBillingService — journaux sans identifiant d’utilisateur (#790)', () => {
+  afterEach(() => vi.restoreAllMocks());
+
   const USER = 'user_secret_790';
   const logs = () => {
     const spies = (['log', 'warn', 'error', 'debug'] as const).map((m) => vi.spyOn(Logger.prototype, m).mockImplementation(() => undefined));
@@ -183,17 +185,18 @@ describe('StripeBillingService — journaux sans identifiant d’utilisateur (#7
   it('cache du statut de facturation : aucun identifiant d’utilisateur', async () => {
     const l = logs();
     await make().getBillingStatus(USER);
-    expect(l.lines()).toContain('Cache hit billing status');
-    expect(l.lines().join('\n')).not.toContain(USER);
+    const lines = l.lines();
     l.restore();
+    expect(lines).toContain('Cache hit billing status');
+    expect(lines.join('\n')).not.toContain(USER);
   });
 
   it('intervalle changé : abonnement Stripe, pas l’utilisateur', async () => {
     const l = logs();
     await make().changeInterval(USER, 'year');
-    const line = l.lines().find((t) => t.startsWith('Intervalle changé'));
-    expect(line).toContain('sub: sub_790');
-    expect(l.lines().join('\n')).not.toContain(USER);
+    const lines = l.lines();
     l.restore();
+    expect(lines.find((t) => t.startsWith('Intervalle changé'))).toContain('sub: sub_790');
+    expect(lines.join('\n')).not.toContain(USER);
   });
 });

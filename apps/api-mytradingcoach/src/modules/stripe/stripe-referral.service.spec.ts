@@ -493,6 +493,8 @@ describe('StripeReferralService —une commission par facture (A1)', () => {
 
 /** #790 : journaux de parrainage sans identifiant d'utilisateur ni code, identifiants Stripe à la place. */
 describe('StripeReferralService — journaux sans identifiant d’utilisateur (#790)', () => {
+  afterEach(() => vi.restoreAllMocks());
+
   const FILLEUL = 'user_filleul_790';
   const PARRAIN = 'user_parrain_790';
   const CODE = 'CODE790';
@@ -535,6 +537,7 @@ describe('StripeReferralService — journaux sans identifiant d’utilisateur (#
     expect(all).not.toContain(FILLEUL);
     expect(all).not.toContain(PARRAIN);
     expect(all).not.toContain(CODE);
+    expect(all).not.toContain('parrain@exemple.test');
     return lines;
   };
 

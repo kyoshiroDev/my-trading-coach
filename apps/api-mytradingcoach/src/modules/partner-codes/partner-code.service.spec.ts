@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import { BadRequestException, ConflictException, Logger } from '@nestjs/common';
 import { PartnerCodeService } from './partner-code.service';
 
@@ -166,6 +166,8 @@ describe('changement d’intervalle : conditions figées de l’abonné', () => 
 
 /** #790 : journaux de facturation sans identifiant d'utilisateur, identifiant Stripe à la place. */
 describe('claim — journaux sans identifiant d’utilisateur (#790)', () => {
+  afterEach(() => vi.restoreAllMocks());
+
   const USER = 'user_secret_790';
   const claim = async (code: object | null, used: number) => {
     const spies = (['error', 'warn'] as const).map((m) => vi.spyOn(Logger.prototype, m).mockImplementation(() => undefined));

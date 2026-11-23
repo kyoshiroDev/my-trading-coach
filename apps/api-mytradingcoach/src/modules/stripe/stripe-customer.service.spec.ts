@@ -1,9 +1,11 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import { Logger } from '@nestjs/common';
 import { StripeCustomerService } from './stripe-customer.service';
 
 /** #790 : journaux de facturation sans identifiant d'utilisateur, identifiant Stripe à la place. */
 describe('StripeCustomerService — journaux sans identifiant d’utilisateur (#790)', () => {
+  afterEach(() => vi.restoreAllMocks());
+
   const USER = 'user_secret_790';
 
   it('client Stripe créé : identifiant cus_ seulement', async () => {
@@ -17,5 +19,6 @@ describe('StripeCustomerService — journaux sans identifiant d’utilisateur (#
     spy.mockRestore();
     expect(lines).toContain('Customer Stripe créé : cus_790');
     expect(lines.join('\n')).not.toContain(USER);
+    expect(lines.join('\n')).not.toContain('trader@exemple.test');
   });
 });

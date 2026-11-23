@@ -1,10 +1,12 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import { Logger } from '@nestjs/common';
 import type Stripe from 'stripe';
 import { StripeSubscriptionService } from './stripe-subscription.service';
 
 /** #790 : journaux de facturation sans identifiant d'utilisateur, identifiants Stripe à la place. */
 describe('StripeSubscriptionService — journaux sans identifiant d’utilisateur (#790)', () => {
+  afterEach(() => vi.restoreAllMocks());
+
   const USER = 'user_secret_790';
   const sub = (status: string) =>
     ({
@@ -35,12 +37,14 @@ describe('StripeSubscriptionService — journaux sans identifiant d’utilisateu
     const lines = await run('active');
     expect(lines.find((t) => t.startsWith('Sync |'))).toBe('Sync | customer: cus_790, sub: sub_790, plan: PREMIUM, status: active');
     expect(lines.join('\n')).not.toContain(USER);
+    expect(lines.join('\n')).not.toContain('trader@exemple.test');
   });
 
   it('synchronisation ignorée (abonnement inactif à côté de l’actif) : client Stripe', async () => {
     const lines = await run('canceled', { stripeSubscriptionId: 'sub_actif', stripeSubscriptionStatus: 'active' });
     expect(lines.find((t) => t.startsWith('Sync ignorée'))).toBe('Sync ignorée | customer: cus_790, sub inactive sub_790 (canceled) ≠ sub active sub_actif');
     expect(lines.join('\n')).not.toContain(USER);
+    expect(lines.join('\n')).not.toContain('trader@exemple.test');
   });
 
   it('synchronisation ignorée (essai à côté de la place fondateur) : client Stripe', async () => {
@@ -49,5 +53,6 @@ describe('StripeSubscriptionService — journaux sans identifiant d’utilisateu
       'Sync ignorée | customer: cus_790, sub sub_790 (trialing) active à côté de la place fondateur sub_seat',
     );
     expect(lines.join('\n')).not.toContain(USER);
+    expect(lines.join('\n')).not.toContain('trader@exemple.test');
   });
 });

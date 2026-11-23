@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import { BadRequestException, ConflictException, Logger } from '@nestjs/common';
 import { PAYMENT_PENDING_MESSAGE, StripeBillingService } from './stripe-billing.service';
 import { StripeCouponService } from './stripe-coupon.service';
@@ -597,10 +597,14 @@ describe('checkout avec code partenaire', () => {
 
   it('code non appliqué (parrainage plus avantageux) : journal sans identifiant d’utilisateur (#790)', async () => {
     const spy = vi.spyOn(Logger.prototype, 'log').mockImplementation(() => undefined);
-    const { svc } = partnerBilling({ validation: { ...TRADER10, priceMonthlyEur: 48, priceAnnualEur: 480, durationMonths: 1 } });
-    await withPromo(svc);
-    const line = spy.mock.calls.map((c) => String(c[0])).find((t) => t.includes('non appliqué'));
-    spy.mockRestore();
+    let line: string | undefined;
+    try {
+      const { svc } = partnerBilling({ validation: { ...TRADER10, priceMonthlyEur: 48, priceAnnualEur: 480, durationMonths: 1 } });
+      await withPromo(svc);
+      line = spy.mock.calls.map((c) => String(c[0])).find((t) => t.includes('non appliqué'));
+    } finally {
+      spy.mockRestore();
+    }
     expect(line).toBe('Code TRADER10 non appliqué : parrainage plus avantageux');
   });
 });
@@ -1178,6 +1182,8 @@ describe('remboursement du 1er paiement : récompenses de parrainage (A4)', () =
 
 /** #790 : journaux des webhooks sans identifiant ni e-mail d'utilisateur, identifiants Stripe à la place. */
 describe('webhooks — journaux sans identifiant d’utilisateur (#790)', () => {
+  afterEach(() => vi.restoreAllMocks());
+
   const capture = () => {
     const spies = (['log', 'warn', 'error', 'debug'] as const).map((m) => vi.spyOn(Logger.prototype, m).mockImplementation(() => undefined));
     return () => {

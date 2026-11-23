@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import { Logger } from '@nestjs/common';
 import * as Sentry from '@sentry/nestjs';
 import { StripeCustomerService } from './stripe-customer.service';
@@ -396,6 +396,8 @@ describe('customer.subscription.deleted pendant l’essai d’inscription (#845)
 
 /** #790 : journaux de facturation sans identifiant d'utilisateur, identifiants Stripe à la place. */
 describe('StripeWebhookService — journaux sans identifiant d’utilisateur (#790)', () => {
+  afterEach(() => vi.restoreAllMocks());
+
   const USER = 'user_secret_790';
   const capture = () => {
     const spies = (['log', 'warn', 'error', 'debug'] as const).map((m) => vi.spyOn(Logger.prototype, m).mockImplementation(() => undefined));
@@ -418,6 +420,7 @@ describe('StripeWebhookService — journaux sans identifiant d’utilisateur (#7
     const lines = done();
     expect(lines).toContain('Checkout complété | sub: sub_1, customer: cus_1');
     expect(lines.join('\n')).not.toContain(USER);
+    expect(lines.join('\n')).not.toContain('trader@exemple.test');
   });
 
   it('« abonnement résilié » non enregistré : abonnement Stripe et nom de l’erreur seulement', async () => {
@@ -432,5 +435,6 @@ describe('StripeWebhookService — journaux sans identifiant d’utilisateur (#7
     const lines = done();
     expect(lines).toContain('Envoi « abonnement résilié » non enregistré (sub sub_1) : Error');
     expect(lines.join('\n')).not.toContain(USER);
+    expect(lines.join('\n')).not.toContain('trader@exemple.test');
   });
 });

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { Logger } from '@nestjs/common';
 import { Role } from '@prisma/client';
 import { FOUNDER_OFFER } from '@mtc/shared';
@@ -130,6 +130,8 @@ describe('FounderOfferService.refundFirstPayment — remboursement intégral, qu
 
 /** #790 : journaux de facturation sans identifiant d'utilisateur, identifiant Stripe à la place. */
 describe('FounderOfferService.claimSeat — journal sans identifiant d’utilisateur (#790)', () => {
+  afterEach(() => vi.restoreAllMocks());
+
   it('place prise : abonnement Stripe, pas l’utilisateur', async () => {
     const USER = 'user_secret_790';
     const spy = vi.spyOn(Logger.prototype, 'log').mockImplementation(() => undefined);
