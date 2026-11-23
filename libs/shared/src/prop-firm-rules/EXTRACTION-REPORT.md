@@ -624,3 +624,15 @@ Relecture complète des deux firms dans Chrome (pages des plans MyFundedFutures,
 | Tradeify | 300k Select Account - Permanent Plan (17845238 ; l'ancien article 16497699 n'existe plus) | Plus une édition limitée : plan permanent, 570 $, 5 achats 300K max par 30 jours glissants, 3 funded 300K max comptés dans les 5 funded. Règles identiques. | 300K : prix 349 → 570 $, notes, source remplacée |
 
 Seed démo `tradeify-select-flex-50k` : seul son prix change (174 $), le seed ne recopie pas le prix. Catalogue à 334 plans (lots 2 et 3 compris).
+
+## Veille du 2026-11-23 (suite) : Topstep, TradeDay, UProfit (lot 5a, #1218)
+
+Lot 5 découpé en trois PR (5a Topstep / TradeDay / UProfit, 5b BluSky / Top One, 5c FFF ; découpage dans le prompt). Relecture complète des trois firms : `verified_at` au 2026-11-23. Aucun drawdown, objectif ni perte max du jour ne change.
+
+| Firm | Source | Constat | Effet |
+|---|---|---|---|
+| Topstep | 7 articles modifiés (Trading Combine, MLL, consistency, XFA, payout, prix, horaires) | Objectifs, MLL, consistency 55 %, contrats, DLL optionnelle, XFA Standard / Consistency, plafonds de payout (doublés avec DLL), prix et horaires : identiques aux 12 plans. L'article MLL décrit aussi un « Static Trading Combine » (Topstep Labs / produits limités, 25K à 150K), pages non lues. | `verified_at` seul ; Static Combine suivi dans #1238 |
+| TradeDay | Page d'accueil #pricing (TradeDay 2.0, lancé le 2026-05-29), article objectifs (2026-11-12) | « No subscriptions » : paiement unique. Quick Pay intraday 99 / 124 / 248 / 398 $, Quick Pay EOD (funded intraday) 124 / 174 / 298 / 440 $, Fast Pass EOD 173 / 248 / 498 / 725 $ (prix lus dans le HTML ; l'onglet ne bascule pas dans le navigateur) ; promotion SALE60 en cours. Règles (objectifs, drawdowns, contrats, consistency 30 / 45 %, jours, funded) identiques. | 12 plans : `billing` monthly → one_time, nouveaux prix |
+| UProfit | 21 pages d'aide, page DAY 2.0 | « Contenu modifié » = bandeau « DAY 2.0 — choose Day Soft or Day Flex » et menu ; articles datés du 2026-08-03 au 2026-10-08, valeurs identiques. « Day Soft / Day Flex » = gammes Soft / Flex du catalogue (renommage commercial). | `verified_at` seul |
+
+Catalogue à 334 plans (lots 2 à 4 compris).

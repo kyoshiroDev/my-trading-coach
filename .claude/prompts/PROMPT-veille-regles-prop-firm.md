@@ -18,3 +18,10 @@ Règles : Chrome sur les pages publiques seulement, jamais de connexion à un co
 > relance le commit une fois cette feature fini enchaine sur les autres de la moin urgente a la plus urgente si tu as des question pose les au relecteur et suit ce qu'il te dit
 
 Lecture du relecteur : « cette feature » = toute la veille (lots 3, 4 puis 5), ensuite de la plus urgente à la moins urgente : #696, #825, #790 (#824 bloquée).
+
+## Découpage du lot 5 validé par le relecteur (23/11)
+
+Une PR par sous-lot, même circuit que les lots 1 à 4 :
+- **5a** : Topstep, TradeDay, UProfit (`verified_at` les plus anciens, 18/10).
+- **5b** : BluSky, Top One (vérifier si `/launchpad` a déménagé ou si le programme n'existe plus).
+- **5c** : FFF, avec la convention d'Earn2Trade (plans d'origine renommés « … (achat avant le JJ/MM/AAAA) », ids inchangés, nouvelles règles sous le nom simple).
