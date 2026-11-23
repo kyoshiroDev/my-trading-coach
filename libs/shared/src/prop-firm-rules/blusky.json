@@ -126,7 +126,7 @@
         "https://blusky.pro/"
       ],
       "needs_review": false,
-      "notes": "Entre l'évaluation et le Sim Funded, une Buffer Zone (non modélisée comme phase) : objectif 3000 $, drawdown 2000 $ trailing EOD qui se fige au solde de départ de la Buffer Zone (exemple du support : 50 000 $ avec 2 500 $ de drawdown, seuil figé à 50 000 $ une fois le solde de clôture au-dessus de 52 500 $) (support BluSky, Mike, chat, 2026-10-06), consistency 34 %, pas de DLL. Son profit devient le solde de départ du Sim Funded ; un échec ne remet en cause que la Buffer Zone (reset 250 $ les trois premiers)"
+      "notes": "Entre l'évaluation et le Sim Funded, une Buffer Zone (non modélisée comme phase) : objectif 3000 $, drawdown 2000 $ trailing EOD qui se fige au solde de départ de la Buffer Zone (exemple du support : 50 000 $ avec 2 500 $ de drawdown, seuil figé à 50 000 $ une fois le solde de clôture au-dessus de 52 500 $) (support BluSky, Mike, chat, 2026-10-06), consistency 34 %, pas de DLL. Son profit devient le solde de départ du Sim Funded ; un échec ne remet en cause que la Buffer Zone (reset 250 $ les trois premiers)."
     },
     {
       "id": "blusky-launch-100k",
@@ -237,7 +237,7 @@
         "https://blusky.pro/"
       ],
       "needs_review": false,
-      "notes": "Entre l'évaluation et le Sim Funded, une Buffer Zone (non modélisée comme phase) : objectif 3500 $, drawdown 2500 $ trailing EOD qui se fige au solde de départ de la Buffer Zone (exemple du support : 50 000 $ avec 2 500 $ de drawdown, seuil figé à 50 000 $ une fois le solde de clôture au-dessus de 52 500 $) (support BluSky, Mike, chat, 2026-10-06), consistency 34 %, pas de DLL. Son profit devient le solde de départ du Sim Funded ; un échec ne remet en cause que la Buffer Zone (reset 250 $ les trois premiers)"
+      "notes": "Entre l'évaluation et le Sim Funded, une Buffer Zone (non modélisée comme phase) : objectif 3500 $, drawdown 2500 $ trailing EOD qui se fige au solde de départ de la Buffer Zone (exemple du support : 50 000 $ avec 2 500 $ de drawdown, seuil figé à 50 000 $ une fois le solde de clôture au-dessus de 52 500 $) (support BluSky, Mike, chat, 2026-10-06), consistency 34 %, pas de DLL. Son profit devient le solde de départ du Sim Funded ; un échec ne remet en cause que la Buffer Zone (reset 250 $ les trois premiers)."
     },
     {
       "id": "blusky-launch-200k",
@@ -348,7 +348,7 @@
         "https://blusky.pro/"
       ],
       "needs_review": false,
-      "notes": "Entre l'évaluation et le Sim Funded, une Buffer Zone (non modélisée comme phase) : objectif 3000 $, drawdown 2000 $ static, consistency 34 %, pas de DLL. Son profit devient le solde de départ du Sim Funded ; un échec ne remet en cause que la Buffer Zone (reset 250 $ les trois premiers)"
+      "notes": "Entre l'évaluation et le Sim Funded, une Buffer Zone (non modélisée comme phase) : objectif 3000 $, drawdown 2000 $ static, consistency 34 %, pas de DLL. Son profit devient le solde de départ du Sim Funded ; un échec ne remet en cause que la Buffer Zone (reset 250 $ les trois premiers)."
     },
     {
       "id": "blusky-propel-25k",
@@ -459,7 +459,7 @@
         "https://blusky.pro/"
       ],
       "needs_review": false,
-      "notes": "Entre l'évaluation et le Sim Funded, une Buffer Zone (non modélisée comme phase) : objectif 1500 $, drawdown 1200 $ trailing EOD qui se fige au solde de départ de la Buffer Zone (exemple du support : 50 000 $ avec 2 500 $ de drawdown, seuil figé à 50 000 $ une fois le solde de clôture au-dessus de 52 500 $) (support BluSky, Mike, chat, 2026-10-06), consistency 34 %, pas de DLL. Son profit devient le solde de départ du Sim Funded ; un échec ne remet en cause que la Buffer Zone (reset 250 $ les trois premiers) Évaluation : 4 minis / 40 micros (article Propel du 2026-11-20 et sélecteur de blusky.pro, 2026-11-23)."
+      "notes": "Entre l'évaluation et le Sim Funded, une Buffer Zone (non modélisée comme phase) : objectif 1500 $, drawdown 1200 $ trailing EOD qui se fige au solde de départ de la Buffer Zone (exemple du support : 50 000 $ avec 2 500 $ de drawdown, seuil figé à 50 000 $ une fois le solde de clôture au-dessus de 52 500 $) (support BluSky, Mike, chat, 2026-10-06), consistency 34 %, pas de DLL. Son profit devient le solde de départ du Sim Funded ; un échec ne remet en cause que la Buffer Zone (reset 250 $ les trois premiers). Évaluation : 4 minis / 40 micros (article Propel du 2026-11-20 et sélecteur de blusky.pro, 2026-11-23)."
     },
     {
       "id": "blusky-propel-50k",
