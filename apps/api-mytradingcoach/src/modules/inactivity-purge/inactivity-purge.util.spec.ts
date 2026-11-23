@@ -1,9 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { addDays, lastActivity, nextInactivityAction, parisDay, selectionCutoff } from './inactivity-purge.util';
+import { freezeClock } from '../../test/freeze-clock';
 
 // Dates fixes (règle du dépôt). Dernière connexion le 10/01/2024 à 15 h Paris → J = 09/01/2026 (730 jours).
 const ACTIVITY = new Date('2024-01-10T14:00:00Z');
 const at = (day: string) => new Date(`${day}T09:00:00Z`); // 10 h Paris (hiver)
+
+// Dates fixes : horloge figée (règle du dépôt).
+freezeClock('2026-01-09T09:00:00Z');
 
 describe('dates en jours de Paris', () => {
   it('jour de Paris, y compris juste après minuit Paris (encore la veille en UTC)', () => {
@@ -73,6 +77,6 @@ describe('cycle de préavis (J-28, J-21, J-14, J-7, suppression à J)', () => {
 
 describe('seuil de sélection', () => {
   it('dernière activité avant le 1er préavis, avec un jour de marge', () => {
-    expect(selectionCutoff(new Date('2026-01-09T09:00:00Z')).toISOString()).toBe('2024-02-08T09:00:00.000Z') // 701 jours (2024 bissextile);
+    expect(selectionCutoff(new Date('2026-01-09T09:00:00Z')).toISOString()).toBe('2024-02-08T09:00:00.000Z'); // 701 jours (2024 bissextile)
   });
 });

@@ -145,6 +145,9 @@ export class InactivityPurgeService {
       } else if (action.kind === 'delete') {
         if (enabled && report.deletions + report.failures >= INACTIVITY_MAX_DELETIONS) { report.deferred++; continue; }
         if (!enabled) { report.deletions++; continue; }
+        // Relu juste avant : une connexion pendant le passage (lu une seule fois au début) annule la purge.
+        const stillInactive = await this.prisma.user.count({ where: { AND: [inactiveWhere(now, cutoff), { id: u.id }] } });
+        if (!stillInactive) continue;
         try {
           await this.users.deleteForInactivity(u.id);
           report.deletions++;

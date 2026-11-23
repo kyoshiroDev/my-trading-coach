@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { inactivityNoticeTemplate } from './index';
+import { freezeClock } from '../../../test/freeze-clock';
+
+// Dates fixes : horloge figée (règle du dépôt).
+freezeClock('2025-12-12T09:00:00Z');
 
 /** Préavis de purge pour inactivité (#824) : texte arrêté par le relecteur, transactionnel. */
 describe('inactivityNoticeTemplate', () => {

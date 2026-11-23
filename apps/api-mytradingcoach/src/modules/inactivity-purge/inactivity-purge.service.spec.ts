@@ -2,8 +2,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { Logger, ServiceUnavailableException } from '@nestjs/common';
 import { INACTIVITY_MAX_DELETIONS, INACTIVITY_MAX_NOTICES, InactivityPurgeService } from './inactivity-purge.service';
 import { INACTIVITY_NOTICE_CAMPAIGN } from './inactivity-purge.util';
+import { freezeClock } from '../../test/freeze-clock';
 
-// Horloge passée en argument (règle du dépôt : dates fixes). 10 h Paris le 09/01/2026.
+// Dates fixes : horloge figée au 09/01/2026, 10 h Paris (règle du dépôt), et passée en argument à `run`.
 const NOW = new Date('2026-01-09T09:00:00Z');
 const at = (day: string) => new Date(`${day}T09:00:00Z`);
 // Dernière connexion le 10/01/2024 → J = 09/01/2026 : préavis le 12/12, 19/12, 26/12 et 02/01.
@@ -26,6 +27,7 @@ function setup(rows: ReturnType<typeof user>[], enabled: boolean) {
 }
 
 describe('InactivityPurgeService (#824)', () => {
+  freezeClock(NOW);
   afterEach(() => vi.restoreAllMocks());
 
   it('journal seul (variable absente ou false) : rien écrit, envoyé ni supprimé, seulement des comptes', async () => {
@@ -76,6 +78,14 @@ describe('InactivityPurgeService (#824)', () => {
     const { svc, users } = setup([user('a', ALL_NOTICES)], true);
     expect((await svc.run(NOW)).deletions).toBe(1);
     expect(users.deleteForInactivity).toHaveBeenCalledWith('a');
+  });
+
+  it('connexion pendant le passage : relue juste avant la suppression, compte gardé', async () => {
+    const { svc, prisma, users } = setup([user('a', ALL_NOTICES)], true);
+    prisma.user.count.mockResolvedValue(0);
+    expect((await svc.run(NOW)).deletions).toBe(0);
+    expect(users.deleteForInactivity).not.toHaveBeenCalled();
+    expect(prisma.user.count.mock.calls[0][0].where.AND[1]).toEqual({ id: 'a' });
   });
 
   it('échec Stripe sur un compte : compté, le passage continue, aucune adresse dans le journal', async () => {
