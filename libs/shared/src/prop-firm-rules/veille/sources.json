@@ -9,6 +9,10 @@
       {
         "date": "2026-11-02",
         "modification": "Legacy : prix mensuels et frais de PA par plateforme."
+      },
+      {
+        "date": "2026-11-22",
+        "modification": "Relecture (lot 3, #1218) : Legacy 250K/300K 397 $ (W/R), frais de PA 99 $ partout → prix et activation_fee mis à jour."
       }
     ]
   },
@@ -2056,10 +2060,16 @@
   "https://support.lucidtrading.com/en/articles/11404728-other-trading-activities": {
     "kind": "date",
     "values": [
-      "2026-08-26T21:05:24Z"
+      "2026-11-16T05:35:24Z"
     ],
     "firms": [
       "lucid"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-22",
+        "modification": "Relecture (lot 3) : violation news → pas de payout à la demande pendant 30 jours → note LucidDaily."
+      }
     ]
   },
   "https://support.lucidtrading.com/en/articles/11404729-allowed-trading-times": {
@@ -2236,19 +2246,31 @@
   "https://support.lucidtrading.com/en/articles/15997244-luciddaily-funded-account": {
     "kind": "date",
     "values": [
-      "2026-08-07T21:18:35Z"
+      "2026-11-16T04:42:57Z"
     ],
     "firms": [
       "lucid"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-22",
+        "modification": "Relecture (lot 3) : funded intraday par défaut, EOD en option → notes corrigées ; tailles et règles inchangées."
+      }
     ]
   },
   "https://support.lucidtrading.com/en/articles/15997266-luciddaily-payouts": {
     "kind": "date",
     "values": [
-      "2026-07-27T02:38:25Z"
+      "2026-11-16T04:44:05Z"
     ],
     "firms": [
       "lucid"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-22",
+        "modification": "Relecture (lot 3, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://support.lucidtrading.com/en/articles/15998336-luciddaily-consistency": {
@@ -2263,19 +2285,31 @@
   "https://support.lucidtrading.com/en/articles/15998425-luciddaily-drawdown": {
     "kind": "date",
     "values": [
-      "2026-07-27T02:38:39Z"
+      "2026-11-16T04:38:34Z"
     ],
     "firms": [
       "lucid"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-22",
+        "modification": "Relecture (lot 3) : funded intraday par défaut, EOD en option → notes corrigées."
+      }
     ]
   },
   "https://support.lucidtrading.com/en/articles/16033858-luciddaily-customization": {
     "kind": "date",
     "values": [
-      "2026-10-20T16:28:29Z"
+      "2026-11-18T16:07:19Z"
     ],
     "firms": [
       "lucid"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-22",
+        "modification": "Relecture (lot 3) : « Option 4 » DLL off + EOD en évaluation et en funded, consistency 30/40 % → 8 plans lucid-daily-*eod-funded-eod-* ajoutés (needs_review : blocage du MLL en funded EOD non publié)."
+      }
     ]
   },
   "https://support.lucidtrading.com/en/articles/16085900-luciddaily-daily-loss-limit": {
@@ -2299,10 +2333,16 @@
   "https://support.lucidtrading.com/en/articles/16226068-lucidpro-customization": {
     "kind": "date",
     "values": [
-      "2026-10-19T16:26:21Z"
+      "2026-11-17T03:26:27Z"
     ],
     "firms": [
       "lucid"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-22",
+        "modification": "Relecture (lot 3) : payouts à la demande avec DLL, trading suspendu après une demande en séance → note de payout LucidPro DLL."
+      }
     ]
   },
   "https://support.lucidtrading.com/en/articles/16558826-new-live-structure": {
