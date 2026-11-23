@@ -260,11 +260,11 @@ describe('BluSky', () => {
 describe('Apex et Lucid', () => {
   it.each([
     ['100k', 397],
-    ['250k', 697],
-    ['300k', 797],
-  ])('Apex Legacy %s', (size, price) => {
+    ['250k', 397],
+    ['300k', 397],
+  ])('Apex Legacy %s (tarifs relus le 2026-11-22, lot 3 #1218)', (size, price) => {
     expect(get(`apex-legacy-${size}`).price.amount).toBe(price);
-    expect(get(`apex-legacy-${size}`).price.notes).toContain('Tradovate 227 / 247 / 447 / 647 / 747 / 847 $');
+    expect(get(`apex-legacy-${size}`).price.notes).toContain('Tradovate 227 / 247 / 447 / 647 / 447 / 447 $');
   });
 
   it('Lucid : 365 $ sur le seul 150K Pro avec DLL', () => {
