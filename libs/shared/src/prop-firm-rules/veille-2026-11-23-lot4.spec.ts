@@ -65,6 +65,14 @@ describe('veille du 2026-11-23, lot 4', () => {
     expect(get(`tradeify-select-flex-c50-${size}`).phases[1].payout?.max_amount).toBe(cap);
   });
 
+  it('Tradeify : pas d’option consistency 30 % sur le 300K', () => {
+    expect((tradeify as Firm).plans.filter((p) => /^tradeify-select-.*-c30-300k$/.test(p.id))).toHaveLength(0);
+  });
+
+  it('MFF : promotion datée dans les notes de prix', () => {
+    for (const plan of (mff as Firm).plans) expect(plan.price.notes).not.toContain('promotion en cours sur la page');
+  });
+
   it('Tradeify Select 300K : 570 $, plan permanent, nouvelle source', () => {
     for (const path of ['flex', 'daily']) {
       const plan = get(`tradeify-select-${path}-300k`);
