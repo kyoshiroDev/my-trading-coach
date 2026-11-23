@@ -142,10 +142,17 @@ describe('StripeBillingService.changeInterval — −10 % filleul pour les mois 
   });
 
   it('remise terminée (plus de 12 mois) → plus aucun coupon', async () => {
-    const { svc, update, coupons } = make(new Date('2025-01-01T00:00:00Z'));
-    await svc.changeInterval('u1', 'year');
-    expect(coupons.ensureReferralSwitchCoupon).not.toHaveBeenCalled();
-    expect(update.mock.calls[0][1]).toMatchObject({ discounts: [] });
+    // Horloge figée (#1252) : sans elle, « plus de 12 mois » dépendait du jour du lancement
+    // (échec sous TEST_NOW=2025-01-10, tools/scripts/shifted-clock.mjs).
+    vi.useFakeTimers({ now: new Date('2026-11-15T00:00:00Z'), toFake: ['Date'] });
+    try {
+      const { svc, update, coupons } = make(new Date('2025-01-01T00:00:00Z'));
+      await svc.changeInterval('u1', 'year');
+      expect(coupons.ensureReferralSwitchCoupon).not.toHaveBeenCalled();
+      expect(update.mock.calls[0][1]).toMatchObject({ discounts: [] });
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('pas filleul → remises de l’abonnement non touchées (comme avant)', async () => {
