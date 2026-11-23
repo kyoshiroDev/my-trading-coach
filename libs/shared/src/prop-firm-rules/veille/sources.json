@@ -19,6 +19,7 @@
   "https://blusky.pro/": {
     "kind": "hash",
     "values": [
+      "22e4f370f773f92c",
       "1c5cead52e904612",
       "8ce050a137659c5d",
       "2aca5f5208923792"
@@ -30,6 +31,10 @@
       {
         "date": "2026-11-02",
         "modification": "Sélecteur : consistency Launch 55 %, Propel 25K 4 minis, à confirmer."
+      },
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5b, #1218) : prix du sélecteur identiques (Launch, Propel, Orbit, Instant, Direct)."
       }
     ]
   },
@@ -303,16 +308,22 @@
   "https://help.blusky.pro/en/articles/12292284-sim-funded-payouts": {
     "kind": "date",
     "values": [
-      "2026-10-08T14:57:46Z"
+      "2026-11-20T00:41:09Z"
     ],
     "firms": [
       "blusky"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5b, #1218) : prix du sélecteur identiques (Launch, Propel, Orbit, Instant, Direct)."
+      }
     ]
   },
   "https://help.blusky.pro/en/articles/12434059-evaluation-rules": {
     "kind": "date",
     "values": [
-      "2026-10-19T16:58:03Z"
+      "2026-11-19T20:55:06Z"
     ],
     "firms": [
       "blusky"
@@ -321,13 +332,17 @@
       {
         "date": "2026-11-02",
         "modification": "Launch : consistency 50 %, à confirmer face au sélecteur."
+      },
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5b, #1218) : consistency d’évaluation 55 % sur Launch et Propel (34 % / 21 % en Buffer) → 9 plans à 0,55."
       }
     ]
   },
   "https://help.blusky.pro/en/articles/12434092-resets": {
     "kind": "date",
     "values": [
-      "2026-10-23T15:23:10Z"
+      "2026-11-19T20:55:06Z"
     ],
     "firms": [
       "blusky"
@@ -336,40 +351,62 @@
       {
         "date": "2026-11-02",
         "modification": "Propel : reset 79 à 199 $ selon la taille."
+      },
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5b, #1218) : prix du sélecteur identiques (Launch, Propel, Orbit, Instant, Direct)."
       }
     ]
   },
   "https://help.blusky.pro/en/articles/12434458-blulive-buffer-stage": {
     "kind": "date",
     "values": [
-      "2026-08-12T18:36:32Z"
+      "2026-11-19T20:55:09Z"
     ],
     "firms": [
       "blusky"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5b, #1218) : prix du sélecteur identiques (Launch, Propel, Orbit, Instant, Direct)."
+      }
     ]
   },
   "https://help.blusky.pro/en/articles/14462222-understanding-the-consistency-rule": {
     "kind": "date",
     "values": [
-      "2026-04-06T14:29:57Z"
+      "2026-11-19T20:38:03Z"
     ],
     "firms": [
       "blusky"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5b, #1218) : 55 % en évaluation, 34 % / 21 % en Buffer."
+      }
     ]
   },
   "https://help.blusky.pro/en/articles/16300846-launch-plans-phases-rules-and-costs": {
     "kind": "date",
     "values": [
-      "2026-10-01T16:50:36Z"
+      "2026-11-19T20:55:24Z"
     ],
     "firms": [
       "blusky"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5b, #1218) : Launch 55 % en évaluation → 3 plans sortent de needs_review."
+      }
     ]
   },
   "https://help.blusky.pro/en/articles/16300862-propel-plans-phases-rules-and-costs": {
     "kind": "date",
     "values": [
-      "2026-10-19T20:41:11Z"
+      "2026-11-20T00:35:57Z"
     ],
     "firms": [
       "blusky"
@@ -378,34 +415,56 @@
       {
         "date": "2026-11-02",
         "modification": "Propel 25K : 2 minis, à confirmer face au sélecteur."
+      },
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5b, #1218) : Propel 55 % en évaluation, 25K 4 minis / 40 micros → contrats et needs_review."
       }
     ]
   },
   "https://help.blusky.pro/en/articles/16300866-orbit-plans-two-phases-faster-payouts": {
     "kind": "date",
     "values": [
-      "2026-10-15T15:03:24Z"
+      "2026-11-19T20:38:01Z"
     ],
     "firms": [
       "blusky"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5b, #1218) : prix du sélecteur identiques (Launch, Propel, Orbit, Instant, Direct)."
+      }
     ]
   },
   "https://help.blusky.pro/en/articles/16300869-instant-funding-direct-to-funded-and-instant-sim-funded": {
     "kind": "date",
     "values": [
-      "2026-08-12T18:48:36Z"
+      "2026-11-20T00:41:08Z"
     ],
     "firms": [
       "blusky"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5b, #1218) : prix du sélecteur identiques (Launch, Propel, Orbit, Instant, Direct)."
+      }
     ]
   },
   "https://help.blusky.pro/en/articles/17297032-sim-funded-accounts-rules": {
     "kind": "date",
     "values": [
-      "2026-10-08T14:56:06Z"
+      "2026-11-11T17:35:38Z"
     ],
     "firms": [
       "blusky"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5b, #1218) : prix du sélecteur identiques (Launch, Propel, Orbit, Instant, Direct)."
+      }
     ]
   },
   "https://help.earn2trade.com/en/articles/11183609-reset-pricing-for-earn2trade-accounts": {

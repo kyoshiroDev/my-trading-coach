@@ -232,17 +232,14 @@ describe('comptes déjà liés : restent calculables', () => {
 });
 
 describe('BluSky', () => {
-  it('consistency Launch inchangée, à confirmer', () => {
-    for (const size of ['50k', '100k', '200k']) {
-      const id = `blusky-launch-${size}`;
-      expect(phaseOf(id, 'evaluation').consistency?.max_single_day_pct).toBe(0.5);
-      expect(get(id).notes).toContain('à confirmer');
+  it('consistency d’évaluation 55 % sur Launch et Propel, contrats Propel 25K 4/40 (confirmés le 2026-11-23, lot 5b #1218)', () => {
+    const ids = [...['50k', '100k', '200k'].map((s) => `blusky-launch-${s}`), ...['25k', '50k', '100k', '150k', '200k', '300k'].map((s) => `blusky-propel-${s}`)];
+    for (const id of ids) {
+      expect(phaseOf(id, 'evaluation').consistency?.max_single_day_pct).toBe(0.55);
+      expect(get(id).notes).not.toContain('à confirmer');
     }
-  });
-
-  it('contrats Propel 25K inchangés, à confirmer', () => {
-    expect(phaseOf('blusky-propel-25k', 'evaluation').max_contracts.minis).toBe(2);
-    expect(get('blusky-propel-25k').notes).toContain('à confirmer');
+    for (const id of ['blusky-launch-50k', 'blusky-launch-100k', 'blusky-launch-200k', 'blusky-propel-25k']) expect(get(id).needs_review).toBe(false);
+    expect(phaseOf('blusky-propel-25k', 'evaluation').max_contracts).toMatchObject({ minis: 4, micros: 40 });
   });
 
   it.each([
