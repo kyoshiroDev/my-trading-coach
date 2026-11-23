@@ -571,3 +571,34 @@ describe('StripeReferralService — journaux sans identifiant d’utilisateur (#
     expect(lines.some((t) => t.startsWith('Mois offert non chiffrable (sub filleul sub_filleul_790)'))).toBe(true);
   });
 });
+
+/** #1251 : échec du parrainage : nom de l'erreur seulement, jamais l'objet complet ni son message. */
+describe('StripeReferralService — échec journalisé sans le message de l’erreur (#1251)', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  it('erreur Prisma qui recopie un e-mail → journal avec le nom seul, erreur relancée', async () => {
+    const error = vi.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
+    vi.spyOn(Logger.prototype, 'log').mockImplementation(() => undefined);
+    const err = Object.assign(new Error('Unique constraint failed: filleul@exemple.test'), { name: 'PrismaClientKnownRequestError' });
+    const prisma = {
+      user: { findFirst: vi.fn(), findUnique: vi.fn(), update: vi.fn() },
+      referralCommission: { upsert: vi.fn().mockRejectedValue(err) },
+      referralReward: { create: vi.fn(), update: vi.fn() },
+    };
+    prisma.user.findFirst
+      .mockResolvedValueOnce({ id: 'filleul', referredBy: 'AMBCODE', plan: 'PREMIUM' })
+      .mockResolvedValueOnce({ id: 'amb', role: 'AMBASSADOR' });
+    const stripe = { subscriptions: { retrieve: vi.fn() }, prices: { retrieve: vi.fn() }, customers: { createBalanceTransaction: vi.fn() } };
+    const inv = {
+      id: 'in_1251', customer: 'cus_filleul', amount_paid: 4900, period_start: Math.floor(Date.UTC(2026, 0, 15) / 1000),
+      parent: { subscription_details: { subscription: 'sub_1251' } },
+    } as never;
+
+    await expect(makeService(prisma, stripe).processReferral(inv)).rejects.toBe(err);
+    const calls = error.mock.calls;
+    expect(calls.map((c) => String(c[0]))).toContain('Erreur traitement parrainage (retry BullMQ déclenché) : PrismaClientKnownRequestError');
+    // Contre-épreuve : ni le message ni l'objet erreur ne partent au journal (arguments compris).
+    expect(calls.flat().some((a) => a === err)).toBe(false);
+    expect(calls.flat().map(String).join('\n')).not.toContain('filleul@exemple.test');
+  });
+});

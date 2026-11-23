@@ -83,7 +83,9 @@ export class StripeReferralService {
       // Rejouable sans double crédit : la commission passe par un `upsert` sur la
       // facture (`invoiceId`), le mois offert par `@unique(filleulId)`, et le
       // crédit Stripe par une `idempotencyKey` dérivée du filleul.
-      this.logger.error('Erreur traitement parrainage (retry BullMQ déclenché)', err);
+      // Nom de l'erreur seulement (#1251) : l'objet complet (message Prisma ou Stripe) peut recopier
+      // un identifiant ou un e-mail.
+      this.logger.error(`Erreur traitement parrainage (retry BullMQ déclenché) : ${err instanceof Error ? err.name : 'Error'}`);
       throw err;
     }
   }
