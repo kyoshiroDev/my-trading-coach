@@ -66,3 +66,20 @@ paragraphe à part, section 4 ; exception écrite dans la ligne Anthropic (nom a
 Instagram pour la légende) ; conservation : annonce publiée retirée sur demande, visuel effacé sous 24 h ; seules
 les données affichables du gagnant (nom selon l'accord, lot, mois, pseudo Instagram) partent, et
 seulement avec son accord Instagram.
+
+## Export des données d'un compte sur demande (#825, 2026-11-23)
+
+Droit d'accès et de portabilité (politique de confidentialité, CSV sous 30 jours) : procédure
+`docs/ops/export-donnees-sur-demande.md`, lancée par Greg (lecture seule `mtc_readonly`, CSV écrits
+dans le conteneur puis effacés, archive 7z AES-256 à noms chiffrés, mot de passe dans un second
+e-mail, copies locales effacées dès l'envoi, trace dans le dossier Zoho « RGPD », jamais dans le
+dépôt). Demande d'une autre adresse que celle du compte : réponse neutre à l'adresse qui a écrit,
+sans dire si un compte existe.
+Script `tools/scripts/ops/export-user-data.mjs` : périmètre en **liste blanche** de colonnes
+(`TABLES`), tables écartées avec leur raison (`EXCLUDED_TABLES`). Jamais exportés : hash du mot de
+passe, jetons de réinitialisation / session / désinscription, jetons courtier chiffrés, `apiHosts`,
+adresse et clés de notification, identifiants et abonnements des autres comptes (parrainage :
+rôle à la place de l'autre partie). **Règle : nouvelle table reliée à un compte (`userId`,
+`accountId`, `connectionId`, `parrainId`, `filleulId`, `ambassadorId`, `referredUserId`, `winnerId`,
+`validatedById`) ou nouvelle colonne d'une table exportée = la classer dans le script**, sinon
+`--check` échoue (code 1) et l'export est bloqué.
