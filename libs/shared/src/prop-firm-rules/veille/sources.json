@@ -1616,241 +1616,397 @@
   "https://intercom.help/funded-futures-family/en/articles/15650785-account-fees": {
     "kind": "date",
     "values": [
-      "2026-09-08T16:09:13Z"
+      "2026-11-10T00:25:28Z"
     ],
     "firms": [
       "fundedfuturesfamily"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5c, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://intercom.help/funded-futures-family/en/articles/15657092-prime-evaluation-account": {
     "kind": "date",
     "values": [
-      "2026-09-08T17:30:34Z"
+      "2026-11-10T00:25:31Z"
     ],
     "firms": [
       "fundedfuturesfamily"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5c, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://intercom.help/funded-futures-family/en/articles/15705476-prime-funded-account": {
     "kind": "date",
     "values": [
-      "2026-08-11T16:17:11Z"
+      "2026-11-10T00:25:35Z"
     ],
     "firms": [
       "fundedfuturesfamily"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5c, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://intercom.help/funded-futures-family/en/articles/15715050-prime-payout-requirements": {
     "kind": "date",
     "values": [
-      "2026-09-08T16:10:26Z"
+      "2026-11-10T00:25:37Z"
     ],
     "firms": [
       "fundedfuturesfamily"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5c, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://intercom.help/funded-futures-family/en/articles/15808673-prime-consistency": {
     "kind": "date",
     "values": [
-      "2026-08-11T16:17:23Z"
+      "2026-11-10T00:25:39Z"
     ],
     "firms": [
       "fundedfuturesfamily"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5c, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://intercom.help/funded-futures-family/en/articles/15808767-prime-drawdown": {
     "kind": "date",
     "values": [
-      "2026-09-08T17:18:58Z"
+      "2026-11-10T00:25:40Z"
     ],
     "firms": [
       "fundedfuturesfamily"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5c, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://intercom.help/funded-futures-family/en/articles/15809232-premier-evaluation": {
     "kind": "date",
     "values": [
-      "2026-10-15T21:30:14Z"
+      "2026-11-10T00:25:42Z"
     ],
     "firms": [
       "fundedfuturesfamily"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5c, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://intercom.help/funded-futures-family/en/articles/15811095-premier-funded-account": {
     "kind": "date",
     "values": [
-      "2026-09-10T22:12:57Z"
+      "2026-11-10T00:25:44Z"
     ],
     "firms": [
       "fundedfuturesfamily"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5c, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://intercom.help/funded-futures-family/en/articles/15811464-premier-payout-requirements": {
     "kind": "date",
     "values": [
-      "2026-09-10T22:20:02Z"
+      "2026-11-10T00:25:45Z"
     ],
     "firms": [
       "fundedfuturesfamily"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5c, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://intercom.help/funded-futures-family/en/articles/15850031-premier-drawdown": {
     "kind": "date",
     "values": [
-      "2026-09-08T16:48:32Z"
+      "2026-11-10T00:25:46Z"
     ],
     "firms": [
       "fundedfuturesfamily"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5c, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://intercom.help/funded-futures-family/en/articles/15850710-velocity-evaluation": {
     "kind": "date",
     "values": [
-      "2026-09-08T17:31:15Z"
+      "2026-11-10T00:25:48Z"
     ],
     "firms": [
       "fundedfuturesfamily"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5c, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://intercom.help/funded-futures-family/en/articles/15851015-velocity-funded-account": {
     "kind": "date",
     "values": [
-      "2026-08-11T16:18:24Z"
+      "2026-11-10T00:25:50Z"
     ],
     "firms": [
       "fundedfuturesfamily"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5c, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://intercom.help/funded-futures-family/en/articles/15878902-velocity-payout-requirements": {
     "kind": "date",
     "values": [
-      "2026-09-08T16:51:01Z"
+      "2026-11-10T00:25:51Z"
     ],
     "firms": [
       "fundedfuturesfamily"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5c, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://intercom.help/funded-futures-family/en/articles/15879043-velocity-consistency": {
     "kind": "date",
     "values": [
-      "2026-08-11T16:18:34Z"
+      "2026-11-10T00:25:52Z"
     ],
     "firms": [
       "fundedfuturesfamily"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5c, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://intercom.help/funded-futures-family/en/articles/15879485-velocity-drawdown": {
     "kind": "date",
     "values": [
-      "2026-08-11T19:21:49Z"
+      "2026-11-10T00:25:53Z"
     ],
     "firms": [
       "fundedfuturesfamily"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5c, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://intercom.help/funded-futures-family/en/articles/15879855-straight-to-funded-s2f-funded-account": {
     "kind": "date",
     "values": [
-      "2026-09-08T16:07:10Z"
+      "2026-11-20T16:12:50Z"
     ],
     "firms": [
       "fundedfuturesfamily"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5c, #1218, article du 20/11) : Straight to Funded nouvelle version (prix 329 / 489 / 629 / 749 $, 25K à 1 mini) → plans s2f-nov20-* ajoutés, anciens à revoir."
+      }
     ]
   },
   "https://intercom.help/funded-futures-family/en/articles/15879981-straight-to-funded-s2f-payout-requirements": {
     "kind": "date",
     "values": [
-      "2026-09-08T16:51:20Z"
+      "2026-11-20T16:13:02Z"
     ],
     "firms": [
       "fundedfuturesfamily"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5c, #1218) : objectifs et plafonds de payout de la nouvelle version Straight to Funded."
+      }
     ]
   },
   "https://intercom.help/funded-futures-family/en/articles/15880555-straight-to-funded-s2f-consistency-percentage": {
     "kind": "date",
     "values": [
-      "2026-08-11T16:19:06Z"
+      "2026-11-20T16:13:17Z"
     ],
     "firms": [
       "fundedfuturesfamily"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5c, #1218) : consistency 25 % inchangée."
+      }
     ]
   },
   "https://intercom.help/funded-futures-family/en/articles/15880602-straight-to-funded-s2f-drawdown": {
     "kind": "date",
     "values": [
-      "2026-08-11T16:19:11Z"
+      "2026-11-20T16:13:32Z"
     ],
     "firms": [
       "fundedfuturesfamily"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5c, #1218) : DLL 1 250 / 2 500 / 3 000 $ (50K-150K), drawdown 100K 4 000 $, 150K 5 500 $, blocage plus mentionné (version archivée du 18/11 encore ancienne)."
+      }
     ]
   },
   "https://intercom.help/funded-futures-family/en/articles/15892350-permitted-times-to-trade": {
     "kind": "date",
     "values": [
-      "2026-09-24T20:57:48Z"
+      "2026-11-10T00:26:06Z"
     ],
     "firms": [
       "fundedfuturesfamily"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5c, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://intercom.help/funded-futures-family/en/articles/15892353-news-trading-policy": {
     "kind": "date",
     "values": [
-      "2026-10-05T19:16:53Z"
+      "2026-11-10T00:26:06Z"
     ],
     "firms": [
       "fundedfuturesfamily"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5c, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://intercom.help/funded-futures-family/en/articles/15892427-maximum-account-idle-time": {
     "kind": "date",
     "values": [
-      "2026-08-24T15:19:53Z"
+      "2026-11-10T00:26:09Z"
     ],
     "firms": [
       "fundedfuturesfamily"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5c, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://intercom.help/funded-futures-family/en/articles/16302640-prime-scaling-plan": {
     "kind": "date",
     "values": [
-      "2026-08-13T17:05:56Z"
+      "2026-11-10T00:26:11Z"
     ],
     "firms": [
       "fundedfuturesfamily"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5c, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://intercom.help/funded-futures-family/en/articles/16302826-premier-scaling-plan": {
     "kind": "date",
     "values": [
-      "2026-08-11T16:18:11Z"
+      "2026-11-10T00:26:12Z"
     ],
     "firms": [
       "fundedfuturesfamily"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5c, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://intercom.help/funded-futures-family/en/articles/16310772-velocity-scaling-plan": {
     "kind": "date",
     "values": [
-      "2026-08-11T16:18:45Z"
+      "2026-11-10T00:26:13Z"
     ],
     "firms": [
       "fundedfuturesfamily"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5c, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://intercom.help/funded-futures-family/en/articles/16310780-straight-to-funded-s2f-scaling-plan": {
     "kind": "date",
     "values": [
-      "2026-08-11T16:19:17Z"
+      "2026-11-20T16:13:49Z"
     ],
     "firms": [
       "fundedfuturesfamily"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5c, #1218) : scaling de la nouvelle version Straight to Funded (25K plafonné à 1 mini)."
+      }
     ]
   },
   "https://intercom.help/funded-futures-family/en/articles/16949878-accelerate-plan-funded-account": {
     "kind": "date",
     "values": [
-      "2026-10-30T22:51:27Z"
+      "2026-11-10T00:26:18Z"
     ],
     "firms": [
       "fundedfuturesfamily"
@@ -1859,13 +2015,17 @@
       {
         "date": "2026-11-02",
         "modification": "Accelerate 50K : règles par date d'achat."
+      },
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5c, #1218) : aucune règle modifiée."
       }
     ]
   },
   "https://intercom.help/funded-futures-family/en/articles/16950249-accelerate-plan-payout-requirements": {
     "kind": "date",
     "values": [
-      "2026-10-30T22:50:58Z"
+      "2026-11-10T00:26:19Z"
     ],
     "firms": [
       "fundedfuturesfamily"
@@ -1874,22 +2034,32 @@
       {
         "date": "2026-11-02",
         "modification": "Accelerate 50K : objectifs et plafonds par date d'achat."
+      },
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5c, #1218) : aucune règle modifiée."
       }
     ]
   },
   "https://intercom.help/funded-futures-family/en/articles/16964667-premier-consistency": {
     "kind": "date",
     "values": [
-      "2026-09-15T19:01:43Z"
+      "2026-11-10T00:26:20Z"
     ],
     "firms": [
       "fundedfuturesfamily"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5c, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://intercom.help/funded-futures-family/en/articles/16964735-s2f-accelerate-plan-consistency-percentage": {
     "kind": "date",
     "values": [
-      "2026-10-22T16:42:35Z"
+      "2026-11-10T00:26:21Z"
     ],
     "firms": [
       "fundedfuturesfamily"
@@ -1898,22 +2068,32 @@
       {
         "date": "2026-11-02",
         "modification": "Accelerate : consistency 20 / 25 / 30 % depuis le 2026-10-22."
+      },
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5c, #1218) : aucune règle modifiée."
       }
     ]
   },
   "https://intercom.help/funded-futures-family/en/articles/16964753-s2f-accelerate-plan-drawdown": {
     "kind": "date",
     "values": [
-      "2026-09-17T15:30:31Z"
+      "2026-11-10T00:26:22Z"
     ],
     "firms": [
       "fundedfuturesfamily"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5c, #1218) : aucune règle modifiée."
+      }
     ]
   },
   "https://intercom.help/funded-futures-family/en/articles/17332937-payday-50k": {
     "kind": "date",
     "values": [
-      "2026-10-05T03:02:03Z"
+      "2026-11-11T02:14:14Z"
     ],
     "firms": [
       "fundedfuturesfamily"
@@ -1922,13 +2102,17 @@
       {
         "date": "2026-11-02",
         "modification": "Payday 50K ajouté."
+      },
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5c, #1218) : aucune règle modifiée."
       }
     ]
   },
   "https://intercom.help/funded-futures-family/en/articles/17333029-25k-accelerate-plan": {
     "kind": "date",
     "values": [
-      "2026-10-22T16:35:59Z"
+      "2026-11-11T02:14:15Z"
     ],
     "firms": [
       "fundedfuturesfamily"
@@ -1937,6 +2121,10 @@
       {
         "date": "2026-11-02",
         "modification": "Accelerate 25K ajouté."
+      },
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5c, #1218) : aucune règle modifiée."
       }
     ]
   },
@@ -3133,18 +3321,24 @@
     ]
   },
   "https://www.fundedfuturesfamily.com/": {
-    "kind": "date",
+    "kind": "hash",
     "values": [
-      "2026-08-31T21:26:47+00:00"
+      "e1579bc5b5c0fc46"
     ],
     "firms": [
       "fundedfuturesfamily"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5c, #1218) : Straight to Funded vendu sur TruTik seulement, 25K conforme à la nouvelle version."
+      }
     ]
   },
   "https://www.fundedfuturesfamily.com/fff-plan-update-october-2026/": {
-    "kind": "date",
+    "kind": "hash",
     "values": [
-      "2026-10-27T17:48:03+00:00"
+      "8fda438a5a8d84c7"
     ],
     "firms": [
       "fundedfuturesfamily"
@@ -3153,6 +3347,10 @@
       {
         "date": "2026-11-02",
         "modification": "Accelerate sur invitation ; Accelerate 25K et Payday 50K ajoutés."
+      },
+      {
+        "date": "2026-11-23",
+        "modification": "Relecture (lot 5c, #1218) : Straight to Funded vendu sur TruTik seulement, 25K conforme à la nouvelle version."
       }
     ]
   },

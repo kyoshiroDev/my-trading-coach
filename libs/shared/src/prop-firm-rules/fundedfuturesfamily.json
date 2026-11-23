@@ -11,7 +11,7 @@
       "rithmic"
     ]
   },
-  "verified_at": "2026-11-02",
+  "verified_at": "2026-11-23",
   "plans": [
     {
       "id": "fundedfuturesfamily-prime-25k",
@@ -2829,7 +2829,7 @@
     },
     {
       "id": "fundedfuturesfamily-s2f-25k",
-      "plan_name": "Straight to Funded",
+      "plan_name": "Straight to Funded (règles relevées le 02/11/2026)",
       "account_size": 25000,
       "currency": "USD",
       "availability": "public",
@@ -2931,12 +2931,12 @@
         "https://intercom.help/funded-futures-family/en/articles/15892427-maximum-account-idle-time",
         "https://www.fundedfuturesfamily.com/"
       ],
-      "needs_review": false,
-      "notes": "Sans évaluation, pas de reset."
+      "needs_review": true,
+      "notes": "Sans évaluation, pas de reset. FFF ne publie pas de date d’achat pour le changement de règles ; articles Straight to Funded modifiés le 20/11/2026 (version archivée du 18/11/2026 encore conforme à ce plan). Nouvelles règles : plans fundedfuturesfamily-s2f-nov20-*."
     },
     {
       "id": "fundedfuturesfamily-s2f-50k",
-      "plan_name": "Straight to Funded",
+      "plan_name": "Straight to Funded (règles relevées le 02/11/2026)",
       "account_size": 50000,
       "currency": "USD",
       "availability": "public",
@@ -3038,12 +3038,12 @@
         "https://intercom.help/funded-futures-family/en/articles/15892427-maximum-account-idle-time",
         "https://www.fundedfuturesfamily.com/"
       ],
-      "needs_review": false,
-      "notes": "Sans évaluation, pas de reset. La taille max publiée (1 mini sur 25K) ne correspond pas à la grille de scaling (jusqu'à 3)."
+      "needs_review": true,
+      "notes": "Sans évaluation, pas de reset. La taille max publiée (1 mini sur 25K) ne correspond pas à la grille de scaling (jusqu'à 3). FFF ne publie pas de date d’achat pour le changement de règles ; articles Straight to Funded modifiés le 20/11/2026 (version archivée du 18/11/2026 encore conforme à ce plan). Nouvelles règles : plans fundedfuturesfamily-s2f-nov20-*."
     },
     {
       "id": "fundedfuturesfamily-s2f-100k",
-      "plan_name": "Straight to Funded",
+      "plan_name": "Straight to Funded (règles relevées le 02/11/2026)",
       "account_size": 100000,
       "currency": "USD",
       "availability": "public",
@@ -3151,12 +3151,12 @@
         "https://intercom.help/funded-futures-family/en/articles/15892427-maximum-account-idle-time",
         "https://www.fundedfuturesfamily.com/"
       ],
-      "needs_review": false,
-      "notes": "Sans évaluation, pas de reset. La taille max publiée (1 mini sur 25K) ne correspond pas à la grille de scaling (jusqu'à 3)."
+      "needs_review": true,
+      "notes": "Sans évaluation, pas de reset. La taille max publiée (1 mini sur 25K) ne correspond pas à la grille de scaling (jusqu'à 3). FFF ne publie pas de date d’achat pour le changement de règles ; articles Straight to Funded modifiés le 20/11/2026 (version archivée du 18/11/2026 encore conforme à ce plan). Nouvelles règles : plans fundedfuturesfamily-s2f-nov20-*."
     },
     {
       "id": "fundedfuturesfamily-s2f-150k",
-      "plan_name": "Straight to Funded",
+      "plan_name": "Straight to Funded (règles relevées le 02/11/2026)",
       "account_size": 150000,
       "currency": "USD",
       "availability": "public",
@@ -3270,12 +3270,467 @@
         "https://intercom.help/funded-futures-family/en/articles/15892427-maximum-account-idle-time",
         "https://www.fundedfuturesfamily.com/"
       ],
-      "needs_review": false,
-      "notes": "Sans évaluation, pas de reset. La taille max publiée (1 mini sur 25K) ne correspond pas à la grille de scaling (jusqu'à 3)."
+      "needs_review": true,
+      "notes": "Sans évaluation, pas de reset. La taille max publiée (1 mini sur 25K) ne correspond pas à la grille de scaling (jusqu'à 3). FFF ne publie pas de date d’achat pour le changement de règles ; articles Straight to Funded modifiés le 20/11/2026 (version archivée du 18/11/2026 encore conforme à ce plan). Nouvelles règles : plans fundedfuturesfamily-s2f-nov20-*."
+    },
+    {
+      "id": "fundedfuturesfamily-s2f-nov20-25k",
+      "plan_name": "Straight to Funded",
+      "account_size": 25000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": 329,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Paiement unique 329 $ (article Straight to Funded Funded Account du 2026-11-20 ; page d’accueil : vendu sur TruTik seulement, -55 % sur les 5 premiers comptes avec le code du moment). Pas de frais d’activation."
+      },
+      "phases": [
+        {
+          "phase": "direct",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 1000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "EOD : 1000 $ sous le plus haut solde de clôture (« Highest end-of-day balance − maximum drawdown = trailing threshold »). Blocage au solde de départ non mentionné dans l’article du 20/11/2026 (l’ancienne version le décrivait) : à confirmer. Contrôlé en temps réel."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.25,
+            "applies_to": "payout",
+            "notes": "Aucun jour au-delà de 25 % du profit au moment du payout ; repart à zéro après chaque payout."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 1,
+            "micros": 10,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Plafonné à 1 mini / 10 micros quel que soit le profit (article Scaling Plan du 2026-11-20)."
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Trading de 18:00 à 16:45 heure de New York (la session de nuit est autorisée). Positions fermées automatiquement à 16:45 sans échec du compte. News autorisées, y compris Tier 1. Au moins un trade de 10 secondes par semaine, sinon le compte est fermé."
+          },
+          "payout": {
+            "min_days": 7,
+            "min_daily_profit": 200,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": [
+              1500,
+              1500,
+              1000
+            ],
+            "split_pct": 0.9,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": 1000,
+            "max_amount": null,
+            "max_amount_schedule": [
+              1000,
+              1000,
+              1000,
+              1000
+            ],
+            "max_payouts": null,
+            "safety_net_balance": null,
+            "notes": "7 jours de trading avant le payout, consistency 25 %, minimum 1 000 $. Profit requis entre deux demandes : 1500 / 1500 $ puis 1000 $ à partir du 3e. Plafond 1000 $ (payouts 1 à 3) puis 1000 $. 90/10. 5 comptes funded maximum."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://intercom.help/funded-futures-family/en/articles/15879855-straight-to-funded-s2f-funded-account",
+        "https://intercom.help/funded-futures-family/en/articles/15879981-straight-to-funded-s2f-payout-requirements",
+        "https://intercom.help/funded-futures-family/en/articles/15880555-straight-to-funded-s2f-consistency-percentage",
+        "https://intercom.help/funded-futures-family/en/articles/15880602-straight-to-funded-s2f-drawdown",
+        "https://intercom.help/funded-futures-family/en/articles/16310780-straight-to-funded-s2f-scaling-plan",
+        "https://intercom.help/funded-futures-family/en/articles/15650785-account-fees",
+        "https://intercom.help/funded-futures-family/en/articles/15892350-permitted-times-to-trade",
+        "https://intercom.help/funded-futures-family/en/articles/15892353-news-trading-policy",
+        "https://intercom.help/funded-futures-family/en/articles/15892427-maximum-account-idle-time",
+        "https://www.fundedfuturesfamily.com/"
+      ],
+      "needs_review": true,
+      "notes": "Version des articles Straight to Funded modifiés le 20/11/2026 (aucune date d’achat publiée). Blocage du drawdown non publié : à confirmer."
+    },
+    {
+      "id": "fundedfuturesfamily-s2f-nov20-50k",
+      "plan_name": "Straight to Funded",
+      "account_size": 50000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": 489,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Paiement unique 489 $ (article Straight to Funded Funded Account du 2026-11-20 ; page d’accueil : vendu sur TruTik seulement, -55 % sur les 5 premiers comptes avec le code du moment). Pas de frais d’activation."
+      },
+      "phases": [
+        {
+          "phase": "direct",
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 1250,
+            "basis": null,
+            "resets_at": null,
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Soft breach (article Straight to Funded Drawdown du 2026-11-20). Base de calcul et heure de remise à zéro non publiées."
+          },
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "EOD : 2000 $ sous le plus haut solde de clôture (« Highest end-of-day balance − maximum drawdown = trailing threshold »). Blocage au solde de départ non mentionné dans l’article du 20/11/2026 (l’ancienne version le décrivait) : à confirmer. Contrôlé en temps réel."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.25,
+            "applies_to": "payout",
+            "notes": "Aucun jour au-delà de 25 % du profit au moment du payout ; repart à zéro après chaque payout."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 5,
+            "micros": 50,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1499,
+                "minis": 3,
+                "micros": 30
+              },
+              {
+                "min_profit": 1500,
+                "max_profit": 1999,
+                "minis": 4,
+                "micros": 40
+              },
+              {
+                "min_profit": 2000,
+                "max_profit": null,
+                "minis": 5,
+                "micros": 50
+              }
+            ],
+            "notes": "Scaling funded selon le profit simulé, mis à jour à la clôture de chaque session (article Scaling Plan du 2026-11-20)."
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Trading de 18:00 à 16:45 heure de New York (la session de nuit est autorisée). Positions fermées automatiquement à 16:45 sans échec du compte. News autorisées, y compris Tier 1. Au moins un trade de 10 secondes par semaine, sinon le compte est fermé."
+          },
+          "payout": {
+            "min_days": 7,
+            "min_daily_profit": 200,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": [
+              3000,
+              3000,
+              2000
+            ],
+            "split_pct": 0.9,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": 1000,
+            "max_amount": null,
+            "max_amount_schedule": [
+              2000,
+              2000,
+              2000,
+              2500
+            ],
+            "max_payouts": null,
+            "safety_net_balance": null,
+            "notes": "7 jours de trading avant le payout, consistency 25 %, minimum 1 000 $. Profit requis entre deux demandes : 3000 / 3000 $ puis 2000 $ à partir du 3e. Plafond 2000 $ (payouts 1 à 3) puis 2500 $. 90/10. 5 comptes funded maximum."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://intercom.help/funded-futures-family/en/articles/15879855-straight-to-funded-s2f-funded-account",
+        "https://intercom.help/funded-futures-family/en/articles/15879981-straight-to-funded-s2f-payout-requirements",
+        "https://intercom.help/funded-futures-family/en/articles/15880555-straight-to-funded-s2f-consistency-percentage",
+        "https://intercom.help/funded-futures-family/en/articles/15880602-straight-to-funded-s2f-drawdown",
+        "https://intercom.help/funded-futures-family/en/articles/16310780-straight-to-funded-s2f-scaling-plan",
+        "https://intercom.help/funded-futures-family/en/articles/15650785-account-fees",
+        "https://intercom.help/funded-futures-family/en/articles/15892350-permitted-times-to-trade",
+        "https://intercom.help/funded-futures-family/en/articles/15892353-news-trading-policy",
+        "https://intercom.help/funded-futures-family/en/articles/15892427-maximum-account-idle-time",
+        "https://www.fundedfuturesfamily.com/"
+      ],
+      "needs_review": true,
+      "notes": "Version des articles Straight to Funded modifiés le 20/11/2026 (aucune date d’achat publiée). Blocage du drawdown non publié : à confirmer."
+    },
+    {
+      "id": "fundedfuturesfamily-s2f-nov20-100k",
+      "plan_name": "Straight to Funded",
+      "account_size": 100000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": 629,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Paiement unique 629 $ (article Straight to Funded Funded Account du 2026-11-20 ; page d’accueil : vendu sur TruTik seulement, -55 % sur les 5 premiers comptes avec le code du moment). Pas de frais d’activation."
+      },
+      "phases": [
+        {
+          "phase": "direct",
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 2500,
+            "basis": null,
+            "resets_at": null,
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Soft breach (article Straight to Funded Drawdown du 2026-11-20). Base de calcul et heure de remise à zéro non publiées."
+          },
+          "max_drawdown": {
+            "amount": 4000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "EOD : 4000 $ sous le plus haut solde de clôture (« Highest end-of-day balance − maximum drawdown = trailing threshold »). Blocage au solde de départ non mentionné dans l’article du 20/11/2026 (l’ancienne version le décrivait) : à confirmer. Contrôlé en temps réel."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.25,
+            "applies_to": "payout",
+            "notes": "Aucun jour au-delà de 25 % du profit au moment du payout ; repart à zéro après chaque payout."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 10,
+            "micros": 100,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1499,
+                "minis": 4,
+                "micros": 40
+              },
+              {
+                "min_profit": 1500,
+                "max_profit": 1999,
+                "minis": 6,
+                "micros": 60
+              },
+              {
+                "min_profit": 2000,
+                "max_profit": 2999,
+                "minis": 7,
+                "micros": 70
+              },
+              {
+                "min_profit": 3000,
+                "max_profit": null,
+                "minis": 10,
+                "micros": 100
+              }
+            ],
+            "notes": "Scaling funded selon le profit simulé, mis à jour à la clôture de chaque session (article Scaling Plan du 2026-11-20)."
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Trading de 18:00 à 16:45 heure de New York (la session de nuit est autorisée). Positions fermées automatiquement à 16:45 sans échec du compte. News autorisées, y compris Tier 1. Au moins un trade de 10 secondes par semaine, sinon le compte est fermé."
+          },
+          "payout": {
+            "min_days": 7,
+            "min_daily_profit": 200,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": [
+              6000,
+              4000,
+              2500
+            ],
+            "split_pct": 0.9,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": 1000,
+            "max_amount": null,
+            "max_amount_schedule": [
+              2500,
+              2500,
+              2500,
+              3000
+            ],
+            "max_payouts": null,
+            "safety_net_balance": null,
+            "notes": "7 jours de trading avant le payout, consistency 25 %, minimum 1 000 $. Profit requis entre deux demandes : 6000 / 4000 $ puis 2500 $ à partir du 3e. Plafond 2500 $ (payouts 1 à 3) puis 3000 $. 90/10. 5 comptes funded maximum."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://intercom.help/funded-futures-family/en/articles/15879855-straight-to-funded-s2f-funded-account",
+        "https://intercom.help/funded-futures-family/en/articles/15879981-straight-to-funded-s2f-payout-requirements",
+        "https://intercom.help/funded-futures-family/en/articles/15880555-straight-to-funded-s2f-consistency-percentage",
+        "https://intercom.help/funded-futures-family/en/articles/15880602-straight-to-funded-s2f-drawdown",
+        "https://intercom.help/funded-futures-family/en/articles/16310780-straight-to-funded-s2f-scaling-plan",
+        "https://intercom.help/funded-futures-family/en/articles/15650785-account-fees",
+        "https://intercom.help/funded-futures-family/en/articles/15892350-permitted-times-to-trade",
+        "https://intercom.help/funded-futures-family/en/articles/15892353-news-trading-policy",
+        "https://intercom.help/funded-futures-family/en/articles/15892427-maximum-account-idle-time",
+        "https://www.fundedfuturesfamily.com/"
+      ],
+      "needs_review": true,
+      "notes": "Version des articles Straight to Funded modifiés le 20/11/2026 (aucune date d’achat publiée). Blocage du drawdown non publié : à confirmer."
+    },
+    {
+      "id": "fundedfuturesfamily-s2f-nov20-150k",
+      "plan_name": "Straight to Funded",
+      "account_size": 150000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": 749,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Paiement unique 749 $ (article Straight to Funded Funded Account du 2026-11-20 ; page d’accueil : vendu sur TruTik seulement, -55 % sur les 5 premiers comptes avec le code du moment). Pas de frais d’activation."
+      },
+      "phases": [
+        {
+          "phase": "direct",
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 3000,
+            "basis": null,
+            "resets_at": null,
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Soft breach (article Straight to Funded Drawdown du 2026-11-20). Base de calcul et heure de remise à zéro non publiées."
+          },
+          "max_drawdown": {
+            "amount": 5500,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "EOD : 5500 $ sous le plus haut solde de clôture (« Highest end-of-day balance − maximum drawdown = trailing threshold »). Blocage au solde de départ non mentionné dans l’article du 20/11/2026 (l’ancienne version le décrivait) : à confirmer. Contrôlé en temps réel."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.25,
+            "applies_to": "payout",
+            "notes": "Aucun jour au-delà de 25 % du profit au moment du payout ; repart à zéro après chaque payout."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 15,
+            "micros": 150,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1499,
+                "minis": 5,
+                "micros": 50
+              },
+              {
+                "min_profit": 1500,
+                "max_profit": 1999,
+                "minis": 7,
+                "micros": 70
+              },
+              {
+                "min_profit": 2000,
+                "max_profit": 2999,
+                "minis": 10,
+                "micros": 100
+              },
+              {
+                "min_profit": 3000,
+                "max_profit": 4499,
+                "minis": 12,
+                "micros": 120
+              },
+              {
+                "min_profit": 4500,
+                "max_profit": null,
+                "minis": 15,
+                "micros": 150
+              }
+            ],
+            "notes": "Scaling funded selon le profit simulé, mis à jour à la clôture de chaque session (article Scaling Plan du 2026-11-20)."
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Trading de 18:00 à 16:45 heure de New York (la session de nuit est autorisée). Positions fermées automatiquement à 16:45 sans échec du compte. News autorisées, y compris Tier 1. Au moins un trade de 10 secondes par semaine, sinon le compte est fermé."
+          },
+          "payout": {
+            "min_days": 7,
+            "min_daily_profit": 200,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": [
+              9000,
+              5000,
+              3000
+            ],
+            "split_pct": 0.9,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": 1000,
+            "max_amount": null,
+            "max_amount_schedule": [
+              3000,
+              3000,
+              3000,
+              3500
+            ],
+            "max_payouts": null,
+            "safety_net_balance": null,
+            "notes": "7 jours de trading avant le payout, consistency 25 %, minimum 1 000 $. Profit requis entre deux demandes : 9000 / 5000 $ puis 3000 $ à partir du 3e. Plafond 3000 $ (payouts 1 à 3) puis 3500 $. 90/10. 5 comptes funded maximum."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://intercom.help/funded-futures-family/en/articles/15879855-straight-to-funded-s2f-funded-account",
+        "https://intercom.help/funded-futures-family/en/articles/15879981-straight-to-funded-s2f-payout-requirements",
+        "https://intercom.help/funded-futures-family/en/articles/15880555-straight-to-funded-s2f-consistency-percentage",
+        "https://intercom.help/funded-futures-family/en/articles/15880602-straight-to-funded-s2f-drawdown",
+        "https://intercom.help/funded-futures-family/en/articles/16310780-straight-to-funded-s2f-scaling-plan",
+        "https://intercom.help/funded-futures-family/en/articles/15650785-account-fees",
+        "https://intercom.help/funded-futures-family/en/articles/15892350-permitted-times-to-trade",
+        "https://intercom.help/funded-futures-family/en/articles/15892353-news-trading-policy",
+        "https://intercom.help/funded-futures-family/en/articles/15892427-maximum-account-idle-time",
+        "https://www.fundedfuturesfamily.com/"
+      ],
+      "needs_review": true,
+      "notes": "Version des articles Straight to Funded modifiés le 20/11/2026 (aucune date d’achat publiée). Blocage du drawdown non publié : à confirmer."
     },
     {
       "id": "fundedfuturesfamily-accelerate-50k",
-      "plan_name": "Accelerate S2F (achat avant le 2026-10-22)",
+      "plan_name": "Accelerate S2F (achat avant le 22/10/2026)",
       "account_size": 50000,
       "currency": "USD",
       "availability": "public",
@@ -3358,7 +3813,7 @@
     },
     {
       "id": "fundedfuturesfamily-accelerate-oct22-50k",
-      "plan_name": "Accelerate S2F (achat du 2026-10-22 au 2026-10-29)",
+      "plan_name": "Accelerate S2F (achat du 22/10/2026 au 29/10/2026)",
       "account_size": 50000,
       "currency": "USD",
       "availability": "invite_only",
@@ -3447,7 +3902,7 @@
     },
     {
       "id": "fundedfuturesfamily-accelerate-oct30-50k",
-      "plan_name": "Accelerate S2F (achat depuis le 2026-10-30)",
+      "plan_name": "Accelerate S2F",
       "account_size": 50000,
       "currency": "USD",
       "availability": "invite_only",
@@ -3532,7 +3987,7 @@
     },
     {
       "id": "fundedfuturesfamily-accelerate-25k",
-      "plan_name": "Accelerate S2F 25K (achat depuis le 2026-10-22)",
+      "plan_name": "Accelerate S2F",
       "account_size": 25000,
       "currency": "USD",
       "availability": "invite_only",
