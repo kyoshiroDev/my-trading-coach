@@ -15,6 +15,8 @@ import { assetsSignature } from '../eco-calendar/eco-release-analysis';
 import { releaseGap } from '../eco-calendar/eco-calendar.gap';
 import { seedDemoPush } from './demo-data/push';
 import { DEMO_INCIDENT_ANALYSIS, LOST_DEMO_ACCOUNTS, buildLostDemoIncident, buildLostDemoTrades } from './demo-data/lost-accounts';
+import { newsShieldExample } from './demo-data/news-shield-example';
+import { newsWindowStats } from '../debrief/debrief-news-window';
 
 /**
  * Client du seed : PrismaClient, PrismaService ou le client d'une transaction (re-seed de la démo en
@@ -196,6 +198,28 @@ export async function seedTradingData(
     }
   }
 
+  // Bouclier annonces (#670) : trade NQ ouvert 3 min avant le NFP du vendredi précédent, et l'alerte
+  // du bouclier. Hors des journées générées (aucun objectif de la démo ne bouge, hors ce trade).
+  const newsExample = newsShieldExample(now);
+  {
+    const apex = accountIdByKey.get('apex')!;
+    const t = newsExample.trade;
+    await prisma.trade.create({
+      data: {
+        userId: user.id, accountId: apex, asset: t.asset, side: t.side, entry: t.entry, exit: t.exit,
+        quantity: t.quantity, pnl: t.pnl, commission: t.commission, setupId: setupIdFor('News'),
+        session: 'NEW_YORK', timeframe: '1m', tags: ['DEMO'], tradedAt: t.tradedAt,
+      },
+    });
+    const a = newsExample.alert;
+    await prisma.behaviorAlert.create({
+      data: {
+        userId: user.id, accountId: apex, tradeDay: new Date(`${tradingDay(a.createdAt)}T00:00:00.000Z`),
+        type: a.type, severity: a.severity, message: a.message, context: a.context, createdAt: a.createdAt,
+      },
+    });
+  }
+
   // Compte perdu : un compte ÉCHOUÉ (dont l'Apex actif est la nouvelle tentative) et un ARCHIVÉ, avec
   // leurs trades d'avant la fenêtre. La démo montre ainsi la ligne « n comptes exclus
   // des chiffres » et l'interrupteur des statistiques, sans toucher au capital des comptes actifs.
@@ -367,7 +391,13 @@ export async function seedTradingData(
         aiSummary: summary,
         insights: { overview: { summary }, accounts, summary, strengths, weaknesses, emotionInsight, objectives },
         objectives,
-        stats: { winRate: s.winRate, totalPnl: s.totalPnl, totalTrades: trades.length },
+        stats: {
+          winRate: s.winRate, totalPnl: s.totalPnl, totalTrades: trades.length,
+          // Bouclier annonces (#670) : la semaine du vendredi de l'exemple montre la stat.
+          ...(newsExample.openedAt >= monday && newsExample.openedAt <= sunday
+            ? { newsWindow: newsWindowStats([...trades, newsExample.trade], newsExample.events, 5) }
+            : {}),
+        } as Prisma.InputJsonValue,
       },
     });
     debriefs++;
