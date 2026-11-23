@@ -55,14 +55,6 @@
       </div>
     </div>
 
-    <!-- Disclaimer UNIQUE (au lieu d'être répété sur chaque carte prop firm) -->
-    @if (hasPropAccount()) {
-      <div class="global-note">
-        <svg [lucideIcon]="InfoIcon" [size]="15"></svg>
-        <span><b>Règles prop firm estimées.</b> Compte connecté au broker (pastille verte)&nbsp;: solde et positions ouvertes lus chez lui. Sinon, d'après tes trades loggés, positions ouvertes non incluses. Pour un compte relié à un plan du catalogue, la marge suit les règles officielles de la firm. Le statut de chaque compte reste piloté par toi.</span>
-      </div>
-    }
-
     @if (store.isLoading() && store.accounts().length === 0) {
       <div class="acct-empty">Chargement des comptes…</div>
     } @else if (store.loadError() && store.accounts().length === 0) {
@@ -138,7 +130,7 @@
         @let fb = tv.feedback()[a.id];
 
         <!-- `has-detail` : la ligne cache une info que les colonnes n'affichent pas (activité
-             d'un compte perso, règles du plan prop firm relié). Sans elle, le chevron n'a rien à déplier sur desktop, où les
+             d'un compte perso, règles du plan relié ou calcul de la marge d'un compte prop firm, #1225). Sans elle, le chevron n'a rien à déplier sur desktop, où les
              8 colonnes sont déjà à l'écran — il n'y sert qu'au repli mobile. -->
         <!-- --ac sur le BLOC (et non la seule ligne) : les sous-lignes du dépli (règles du plan,
              activité, synchro) héritent du même liseré que la ligne. -->
@@ -147,7 +139,7 @@
              [class.is-failed]="a.status === 'FAILED'"
              [class.is-most-exposed]="mostExposedId() === a.id"
              [style.--tone]="mostExposedId() === a.id ? 'var(--' + exposureTone(a) + ')' : null"
-             [class.has-detail]="(!a.metrics.objective && !a.metrics.drawdown) || !!a.propFirmPlanId || !!a.metrics.broker || a.type === 'FUNDED'"
+             [class.has-detail]="(!a.metrics.objective && !a.metrics.drawdown) || isPropFirm(a.type) || !!a.metrics.broker || a.type === 'FUNDED'"
              [class.is-open]="expandedId() === a.id"
              [attr.data-testid]="'tradovate-row-' + a.id">
 
@@ -588,6 +580,14 @@
               } @else {
                 <span class="tv-text">Chargement des règles du plan…</span>
               }
+            </div>
+          }
+
+          <!-- Compte prop firm sans plan du catalogue : comment sa marge est calculée (texte de l'API,
+               broker ou trades loggés). Les comptes reliés au catalogue l'affichent avec leurs règles. -->
+          @if (isPropFirm(a.type) && !a.propFirmPlanId && expandedId() === a.id) {
+            <div class="acct-sub acct-rules" [attr.data-testid]="'account-disclaimer-' + a.id">
+              <p class="dd-basis"><span class="dd-disclaimer">{{ a.metrics.disclaimer }}</span></p>
             </div>
           }
 

@@ -151,7 +151,7 @@ export type PlanContext = { plan: Plan; role: Role; trialEndsAt?: Date | null };
 const FREE_ACCOUNT_LIMIT = ACCOUNT_LIMITS.free;
 
 const BROKER_DISCLAIMER =
-  "Solde et positions ouvertes lus chez le broker ; seuil de drawdown calculé par MyTradingCoach, " +
+  "Solde et positions ouvertes lus chez le broker\u00a0; seuil de drawdown calculé par MyTradingCoach, " +
   "pas celui de la prop firm. Le statut du compte reste piloté par toi.";
 
 const RULE_DISCLAIMER =
