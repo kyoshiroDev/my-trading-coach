@@ -14,7 +14,7 @@
       "quantower"
     ]
   },
-  "verified_at": "2026-10-22",
+  "verified_at": "2026-11-23",
   "plans": [
     {
       "id": "myfundedfutures-rapid-25k",
@@ -452,7 +452,7 @@
       "availability": "public",
       "configuration": null,
       "price": {
-        "amount": 145,
+        "amount": 162,
         "billing": "one_time",
         "activation_fee": 0,
         "notes": "Paiement unique ; promotion en cours sur la page d'accueil."
@@ -559,7 +559,7 @@
       "availability": "public",
       "configuration": null,
       "price": {
-        "amount": 225,
+        "amount": 275,
         "billing": "one_time",
         "activation_fee": 0,
         "notes": "Paiement unique ; promotion en cours sur la page d'accueil."

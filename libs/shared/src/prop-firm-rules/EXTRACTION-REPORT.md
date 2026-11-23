@@ -597,3 +597,16 @@ Relecture complète des trois firms par les sources du README : help center Inte
 | Take Profit Trader | API Zendesk (10 articles suivis, aucun modifié depuis le 2026-10-18), page d'accueil | Grille, drawdowns, consistency 50 %, 3 jours, buffers, split 80 %, prix 150 / 170 / 245 / 330 / 360 $, activation 130 $ : identiques. Parcours « Legacy / Classic / EOD / Intraday », « 5PM Rule », « Daily Profit Limit in PRO » et DLL soft / hard présents dans le code de la page d'accueil, non publiés (achat derrière connexion), à revérifier. | `verified_at` seul |
 
 Catalogue à 318 plans.
+
+## Veille du 2026-11-23 : MyFundedFutures, Tradeify (lot 4, #1218)
+
+Relecture complète des deux firms dans Chrome (pages des plans MyFundedFutures, help center Intercom Tradeify, dateModified) : `verified_at` au 2026-11-23. Aucun drawdown, objectif ni perte max du jour ne change.
+
+| Firm | Source | Constat | Effet |
+|---|---|---|---|
+| MyFundedFutures | Pages /plans/rapid, /rapid-eod, /pro, /builder ; articles d'aide (le Pro remanié modifié le 2026-11-19) | Rapid, Pro, Builder : contrats, objectifs, drawdowns, prix identiques. Rapid EOD : règles identiques, prix 25K 162 $ et 50K 275 $ (hors promotion). Variante « Pro 50k - One Day » toujours non couverte. | `price.amount` Rapid EOD 25K 145 → 162 $, 50K 225 → 275 $ |
+| Tradeify | Tradeify Pricing Reference (2026-11-22), Select Evaluation Accounts (2026-11-22) | Nouvelle option Select consistency 30 % (« Choose your consistency option (40% or 30%) ») : évaluation moins chère (99 / 145 / 229 / 319 $, resets 69 / 105 / 164 / 225 $), au moins 4 jours, mêmes règles funded ; pas pour le 300K. Select 50K 165 → 174 $, option 50 % 50K 205 → 216 $. | 8 plans `tradeify-select-{flex,daily}-c30-{25,50,100,150}k` ajoutés (copie des plans standard, consistency 0,3, 4 jours) ; prix 50K |
+| Tradeify | Select Flex and Select Daily Payout Policies (2026-11-04) | « Select accounts with the 50% Consistency add-on have lower Select Flex payout caps » : 50K 2 000, 100K 3 000, 150K 4 000 $ (Daily inchangé, 25K non cité), sans condition de date d'achat. | `max_amount` flex-c50 50/100/150K 2 500 / 3 500 / 4 500 → 2 000 / 3 000 / 4 000 $ ; option 30 % : plafonds standard (aucun plafond propre publié) |
+| Tradeify | 300k Select Account - Permanent Plan (17845238 ; l'ancien article 16497699 n'existe plus) | Plus une édition limitée : plan permanent, 570 $, 5 achats 300K max par 30 jours glissants, 3 funded 300K max comptés dans les 5 funded. Règles identiques. | 300K : prix 349 → 570 $, notes, source remplacée |
+
+Seed démo `tradeify-select-flex-50k` : seul son prix change (174 $), le seed ne recopie pas le prix. Catalogue à 326 plans sur la base de dev actuelle (334 une fois le lot 3 mergé).
