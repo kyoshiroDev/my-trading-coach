@@ -304,13 +304,13 @@ describe('Top One', () => {
     ]);
   });
 
-  it('X-Daily Spark 50K', () => {
+  it('X-Daily Spark 50K (épuisé, discontinued le 2026-11-23, lot 5b-bis #1218)', () => {
     const plan = get('toponefutures-x-daily-spark-50k');
     expect([
       plan.price.amount,
       plan.price.activation_fee,
       plan.availability,
-    ]).toEqual([39, 189, 'public']);
+    ]).toEqual([39, 189, 'discontinued']);
     const ev = phaseOf(plan.id, 'evaluation');
     expect([
       ev.max_drawdown.amount,
