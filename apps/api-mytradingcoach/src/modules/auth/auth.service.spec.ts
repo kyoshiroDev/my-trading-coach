@@ -208,11 +208,13 @@ describe('AuthService', () => {
         expect(data).not.toHaveProperty('trialEndsAt');
         expect(data).not.toHaveProperty('trialSource');
         expect(data).not.toHaveProperty('signupTrialEndsAt');
-        // Casse ignorée, traces anonymisées exclues, fenêtre de 90 jours.
+        // Casse ignorée, traces anonymisées exclues, fenêtre de 90 jours ; une purge pour inactivité
+        // (#824, non demandée par la personne) ne compte pas.
         expect(mockPrisma.deletedAccount.findFirst.mock.calls[0][0].where).toEqual({
           email: { equals: 'revenu@test.com', mode: 'insensitive' },
           anonymizedAt: null,
           deletedAt: { gte: new Date(NOW.getTime() - 90 * DAY) },
+          deletedBy: { not: 'inactivity' },
         });
       });
 

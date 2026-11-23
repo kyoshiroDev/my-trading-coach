@@ -627,6 +627,58 @@ export function subscriptionCanceledTemplate(params: {
   };
 }
 
+// ── Préavis de purge pour inactivité (#824) ──────────────────────────────────────
+
+/**
+ * Préavis avant suppression d'un compte sans connexion depuis 2 ans (#824). Information obligatoire :
+ * transactionnel, sans lien de désinscription. `deletionDay` = date plancher du cron (`AAAA-MM-JJ`).
+ */
+export function inactivityNoticeTemplate(params: {
+  userName: string | null;
+  deletionDay: string;
+  appUrl: string;
+  last: boolean;
+}): { subject: string; html: string } {
+  const { userName, deletionDay, appUrl, last } = params;
+  const dateStr = new Date(`${deletionDay}T12:00:00Z`).toLocaleDateString('fr-FR', {
+    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Paris',
+  });
+  const first = userName ? firstNameOf(userName) : '';
+  const content = card(`
+    <p style="${FONT}font-size:13px;color:#8fa3bf;margin:0 0 4px 0;text-transform:uppercase;letter-spacing:.8px;">Ton compte</p>
+    <h1 style="${FONT}font-size:22px;font-weight:700;color:#e2eaf5;margin:0 0 16px 0;letter-spacing:-.5px;">
+      ${first ? `Salut ${escapeHtml(first)}` : 'Salut,'}
+    </h1>
+    <p style="${FONT}font-size:14px;color:#9db4ce;margin:0 0 12px 0;line-height:1.7;">
+      Ta dernière connexion à MyTradingCoach date de plus de 2 ans.
+    </p>
+    <p style="${FONT}font-size:14px;color:#9db4ce;margin:0 0 12px 0;line-height:1.7;">
+      Sans connexion de ta part, ton compte sera supprimé le <strong style="color:#e2eaf5;">${dateStr}</strong>,
+      avec tes trades, tes séances et tes débriefs.
+    </p>
+    <p style="${FONT}font-size:14px;color:#9db4ce;margin:0 0 4px 0;line-height:1.7;">
+      Pour le garder, connecte-toi avant cette date. C'est tout.
+    </p>
+    ${cta('Me connecter', `${appUrl}/login`)}
+    <p style="${FONT}font-size:13px;color:#6b8299;margin:0 0 12px 0;line-height:1.7;">
+      Tu veux récupérer tes données avant\u00a0? Écris à ${textLink('support@mytradingcoach.app', 'mailto:support@mytradingcoach.app')}.
+    </p>
+    <p style="${FONT}font-size:13px;color:#6b8299;margin:0 0 12px 0;line-height:1.7;">
+      ${last ? "C'est le dernier rappel." : "Sans connexion, tu recevras un rappel chaque semaine jusqu'à cette date."}
+    </p>
+    <p style="${FONT}font-size:12px;color:#6b8299;margin:0;line-height:1.7;">
+      Pourquoi cet e-mail\u00a0: on ne garde pas un compte inutilisé plus de 2 ans, pour protéger tes données.
+    </p>
+  `, 'rgba(245,158,11,.3)');
+
+  return {
+    subject: last
+      ? `Dernier rappel : ton compte sera supprimé le ${dateStr}`
+      : `Ton compte MyTradingCoach sera supprimé le ${dateStr}`,
+    html: emailWrapper(content, `Connecte-toi avant le ${dateStr} pour garder ton compte.`),
+  };
+}
+
 // ── Rappel renouvellement ─────────────────────────────────────────────────────
 
 export function renewalReminderTemplate(params: {
