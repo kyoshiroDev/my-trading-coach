@@ -306,6 +306,7 @@ docker logs mtc_pgbouncer --tail=5
 - **Variables d'environnement** : liste complète dans `reference/deploy/variables-env.md` ; une nouvelle variable y est ajoutée.
 - **Redis** : isolé par `REDIS_DB` / `REDIS_PREFIX`, jamais `REDIS_URL` (`reference/deploy/redis-isolation.md`).
 - **PgBouncer** : port 6432, SCRAM obligatoire (`reference/commun/pgbouncer.md`).
+- **Export RGPD d'un compte** : procédure pour Greg (lecture seule `mtc_readonly`, rien copié sur l'hôte, archive 7z chiffrée) dans `docs/ops/export-donnees-sur-demande.md`, script `tools/scripts/ops/export-user-data.mjs` (`--check` avant chaque export).
 
 ---
 
