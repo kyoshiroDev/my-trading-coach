@@ -69,6 +69,9 @@ const TABLES = [
       'createdAt', 'updatedAt'],
     excluded: { accessTokenEnc: 'jeton courtier chiffré', refreshTokenEnc: 'jeton courtier chiffré', apiHosts: "adresses internes de l'infrastructure" },
   },
+  { table: 'TradovateAccountObservation', file: 'observations-tradovate.csv', label: 'état quotidien de ton compte Tradovate vu par la synchronisation (90 derniers jours)',
+    where: (id) => `"connectionId" IN (SELECT id FROM "BrokerConnection" WHERE "userId" = '${id}')`,
+    columns: ['id', 'connectionId', 'day', 'outcome', 'httpStatus', 'listed', 'active', 'closed', 'restricted', 'accountStatus', 'syncPaused', 'lastSyncAt', 'createdAt'] },
   { table: 'WeeklyDebrief', file: 'debriefs-hebdo.csv', label: 'tes débriefs de la semaine', where: BY_USER,
     columns: ['id', 'userId', 'weekNumber', 'year', 'startDate', 'endDate', 'aiSummary', 'insights', 'objectives', 'stats', 'generatedAt'] },
   { table: 'DailyRecap', file: 'recaps-du-jour.csv', label: 'tes récaps du jour', where: BY_USER,
@@ -117,7 +120,6 @@ const TABLES = [
 const EXCLUDED_TABLES = {
   AdminPushSubscription: "notifications du back-office (administrateurs seulement)",
   CheckoutReservation: 'réservation technique de paiement, effacée après 30 minutes',
-  TradovateAccountObservation: 'télémétrie technique de la connexion Tradovate',
   BrokerCsvMapping: "modèles d'import partagés entre tous les comptes",
   GiveawayDraw: "tirage commun à tous les participants (GiveawayWin suffit)",
   DeletedAccount: 'compte supprimé : plus rien à exporter',

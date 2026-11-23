@@ -62,7 +62,7 @@ prod ne serait pas vue par `--check`. Dans un nouveau terminal, redéfinir `ID` 
    node tools/scripts/ops/export-user-data.mjs --check
    ```
 
-   Attendu : `Périmètre à jour : 27 tables exportées, 6 exclues exprès.` Toute autre sortie (code 1) :
+   Attendu : `Périmètre à jour : 28 tables exportées, 5 exclues exprès.` Toute autre sortie (code 1) :
    une table ou une colonne du schéma n'est pas classée. **Ne pas exporter** : la classer dans le script
    (`TABLES` ou `EXCLUDED_TABLES`) par une PR, puis recommencer.
 
@@ -140,7 +140,8 @@ classée.
 
 - **Exporté** : compte (profil, préférences, plan, consentements, provenance), trades, séances, setups,
   comptes de trading, clôtures courtier, risque par jour, payouts, alertes de risque et de comportement,
-  incidents de compte, référence de comportement, connexions au courtier (sans jetons), débriefs, récaps
+  incidents de compte, référence de comportement, connexions au courtier (sans jetons), état quotidien
+  de la connexion Tradovate, débriefs, récaps
   du jour, e-mails envoyés, usage produit et IA, jours actifs, place fondateur, code partenaire,
   appareils de notification (sans clés), préférences de notification, lots gagnés, anciens codes de
   parrainage, récompenses de parrainage et commissions ambassadeur.
@@ -149,6 +150,6 @@ classée.
   notification, et toute donnée d'un autre compte (identifiant du filleul ou du parrain, abonnement ou
   facture d'un compte parrainé).
 - **Tables exclues exprès** : notifications du back-office, réservations de paiement (30 minutes),
-  télémétrie Tradovate, modèles d'import partagés, tirage commun (le lot gagné est exporté), comptes
+  modèles d'import partagés, tirage commun (le lot gagné est exporté), comptes
   supprimés.
 - **Factures** : chez Stripe (portail client), pas dans l'export.
