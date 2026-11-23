@@ -663,6 +663,18 @@ Top One relu en entier (11 articles modifiés du 2026-10-26 au 2026-11-18, page 
 
 Catalogue à 334 plans.
 
+## Veille du 2026-11-23 (suite) : Funded Futures Family (lot 5c, #1218)
+
+FFF relu en entier (33 articles Intercom, la plupart modifiés le 2026-11-10, Straight to Funded le 2026-11-20 ; accueil et page « plan update ») : `verified_at` au 2026-11-23.
+
+| Firm | Source | Constat | Effet |
+|---|---|---|---|
+| FFF | Articles Straight to Funded (Funded Account, Payout Requirements, Consistency, Drawdown, Scaling) du 2026-11-20 ; versions archivées (Wayback Machine) jusqu'au 2026-11-18 ; accueil | Nouvelle version : DLL soft 1 250 / 2 500 / 3 000 $ (50K-150K, aucune en 25K), drawdown EOD 1 000 / 2 000 / **4 000 / 5 500** $, 25K plafonné à 1 mini, paiement unique 329 / 489 / 629 / 749 $, 7 jours, 25 %, minimum 1 000 $, objectifs et plafonds par payout ; blocage du drawdown plus mentionné. La version archivée du 2026-11-18 donne encore les anciennes règles (3 000 / 4 500 $, pas de DLL, blocage au solde de départ). Aucune date d'achat publiée ; vendu sur TruTik seulement. | 4 plans d'origine gardés (ids), renommés « Straight to Funded (règles relevées le 02/11/2026) », `needs_review` ; 4 plans `fundedfuturesfamily-s2f-nov20-*` ajoutés sous le nom simple, `needs_review` (blocage non publié) |
+| FFF | Checklist #1218 (convention Earn2Trade) | Noms Accelerate harmonisés : plan en vente sous le nom simple, anciennes versions « (achat avant le 22/10/2026) » / « (achat du 22/10/2026 au 29/10/2026) ». | `plan_name` de 4 plans Accelerate, ids inchangés |
+| FFF | Prime, Premier+, Velocity (évaluation, funded, payouts, consistency, drawdown, scaling), Payday 50K, Accelerate 25K / 50K, fees, horaires, news | Identiques au catalogue. | Aucun |
+
+Catalogue à 338 plans sur la base de dev actuelle.
+
 ## Gel du plancher au premier payout (#696, 2026-11-23)
 
 Champ `max_drawdown.locks_on_first_payout` ajouté et renseigné sur 92 phases, à partir des règles déjà lues (`basis_notes` et lectures datées de `veille/sources.json`), sans nouvelle lecture :

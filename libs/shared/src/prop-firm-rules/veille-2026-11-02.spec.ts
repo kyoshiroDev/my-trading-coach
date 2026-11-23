@@ -210,7 +210,7 @@ describe('FFF', () => {
 
   it("Accelerate 50K, id d'origine : règles d'avant le 22/10", () => {
     const plan = get('fundedfuturesfamily-accelerate-50k');
-    expect(plan.plan_name).toContain('avant le 2026-10-22');
+    expect(plan.plan_name).toBe('Accelerate S2F (achat avant le 22/10/2026)'); // convention de nommage, lot 5c #1218
     const q = direct(plan.id);
     expect(q.consistency?.max_single_day_pct).toBe(0.25);
     expect(q.consistency?.max_single_day_pct_schedule ?? null).toBeNull();
@@ -220,7 +220,9 @@ describe('FFF', () => {
 
   it('achats du 22 au 29/10', () => {
     const plan = get('fundedfuturesfamily-accelerate-oct22-50k');
-    expect(plan.plan_name).toContain('du 2026-10-22 au 2026-10-29');
+    expect(plan.plan_name).toBe(
+      'Accelerate S2F (achat du 22/10/2026 au 29/10/2026)',
+    );
     const q = direct(plan.id);
     expect(q.consistency?.max_single_day_pct_schedule).toEqual([
       0.2, 0.25, 0.3,
@@ -232,7 +234,7 @@ describe('FFF', () => {
 
   it('achats depuis le 30/10', () => {
     const plan = get('fundedfuturesfamily-accelerate-oct30-50k');
-    expect(plan.plan_name).toContain('depuis le 2026-10-30');
+    expect(plan.plan_name).toBe('Accelerate S2F'); // plan en vente : nom simple
     const q = direct(plan.id);
     expect(q.consistency?.max_single_day_pct_schedule).toEqual([
       0.2, 0.25, 0.3,
