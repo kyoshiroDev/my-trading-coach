@@ -87,7 +87,7 @@ export class StripeSubscriptionService {
       ACTIVE_STATUSES.has((user.stripeSubscriptionStatus ?? '') as Stripe.Subscription['status'])
     ) {
       this.logger.log(
-        `Sync ignorée | user: ${user.id}, sub inactive ${subscription.id} (${status}) ≠ sub active ${user.stripeSubscriptionId}`,
+        `Sync ignorée | customer: ${customerId}, sub inactive ${subscription.id} (${status}) ≠ sub active ${user.stripeSubscriptionId}`,
       );
       return null;
     }
@@ -107,7 +107,7 @@ export class StripeSubscriptionService {
       });
       if (seat?.status === 'ACTIVE' && seat.stripeSubscriptionId === user.stripeSubscriptionId) {
         this.logger.error(
-          `Sync ignorée | user: ${user.id}, sub ${subscription.id} (${status}) active à côté de la place fondateur ${user.stripeSubscriptionId}`,
+          `Sync ignorée | customer: ${customerId}, sub ${subscription.id} (${status}) active à côté de la place fondateur ${user.stripeSubscriptionId}`,
         );
         return null;
       }
@@ -165,7 +165,7 @@ export class StripeSubscriptionService {
     await this.invalidateBillingCache(user.id);
 
     this.logger.log(
-      `Sync | user: ${user.id}, plan: ${newPlan}, status: ${status}`,
+      `Sync | customer: ${customerId}, sub: ${subscription.id}, plan: ${newPlan}, status: ${status}`,
     );
 
     return {
