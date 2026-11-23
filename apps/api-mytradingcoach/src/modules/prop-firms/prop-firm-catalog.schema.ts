@@ -38,6 +38,7 @@ const maxDrawdownSchema = z.strictObject({
   trails_on: z.enum(['balance', 'equity']).nullable(),
   locks_at: nullableMoney,
   locked_floor: nullableMoney.optional(),
+  locks_on_first_payout: z.enum(['request', 'approval', 'payout']).nullable().optional(),
   enforced_on: z.enum(['equity_realtime', 'balance_realtime', 'eod_balance']).nullable().optional(),
   platform_overrides: z
     .record(slug, z.strictObject({ locks_at: nullableMoney, locked_floor: nullableMoney, notes: nullableText.optional() }))

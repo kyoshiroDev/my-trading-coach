@@ -1,4 +1,4 @@
-import type { PropFirmDrawdownKind, PropFirmMaxDrawdown } from '../contracts/prop-firm';
+import type { PropFirmDrawdownKind, PropFirmMaxDrawdown, PropFirmPayoutLockTrigger } from '../contracts/prop-firm';
 
 /**
  * Plancher de drawdown d'un plan prop firm : SOURCE UNIQUE du suivi du compte (API, Mes comptes,
@@ -14,19 +14,35 @@ export interface DrawdownFloorRule {
   locksAt: number | null;
   /** Plancher une fois figé ; null → `locksAt − amount`. */
   lockedFloor: number | null;
+  /** Gel dès le premier payout (#696) ; absent = gel au seuil `locksAt` seulement. */
+  locksOnFirstPayout?: PropFirmPayoutLockTrigger | null;
 }
 
 /**
  * `peakProfit` : plus haut gain retenu par la règle (clôtures pour EOD, en direct pour intraday),
  * ≥ 0. Statique : ignoré, le plancher reste au solde de départ − drawdown.
+ *
+ * `payoutFreezePeak` (#696) : plus haut gain retenu au moment du premier payout connu (payout
+ * reçu, daté au plus tard au moment du calcul) ; null = aucun payout connu. Si la règle gèle au
+ * premier payout, le plancher se fige à `lockedFloor ?? locksAt − amount`, sans jamais redescendre
+ * sous le plancher suiveur du moment du gel. Le seuil `locksAt`, s'il est atteint, l'emporte.
  */
-export function drawdownFloor(rule: DrawdownFloorRule, peakProfit: number): { floor: number; locked: boolean } {
-  const peak = rule.kind === 'static' ? 0 : Math.max(0, peakProfit);
-  const locked = rule.kind !== 'static' && rule.locksAt != null && rule.startingBalance + peak >= rule.locksAt;
-  const floor = locked
-    ? rule.lockedFloor ?? rule.locksAt! - rule.amount
-    : rule.startingBalance + peak - rule.amount;
-  return { floor, locked };
+export function drawdownFloor(
+  rule: DrawdownFloorRule,
+  peakProfit: number,
+  payoutFreezePeak: number | null = null,
+): { floor: number; locked: boolean } {
+  const trailing = rule.kind !== 'static';
+  const peak = trailing ? Math.max(0, peakProfit) : 0;
+  const fixed = rule.lockedFloor ?? (rule.locksAt != null ? rule.locksAt - rule.amount : null);
+  if (trailing && rule.locksAt != null && rule.startingBalance + peak >= rule.locksAt) {
+    return { floor: fixed!, locked: true };
+  }
+  if (trailing && rule.locksOnFirstPayout && payoutFreezePeak != null && fixed != null) {
+    const trailingAtFreeze = rule.startingBalance + Math.max(0, Math.min(payoutFreezePeak, peak)) - rule.amount;
+    return { floor: Math.max(fixed, trailingAtFreeze), locked: true };
+  }
+  return { floor: rule.startingBalance + peak - rule.amount, locked: false };
 }
 
 /** Phase du catalogue, réduite à ce qui fixe le drawdown (évite d'importer tout le contrat). */
@@ -58,6 +74,7 @@ export function planDrawdownRule(
       startingBalance: account.startingBalance,
       locksAt: md.locks_at != null ? md.locks_at + shift : null,
       lockedFloor: md.locked_floor != null ? md.locked_floor + shift : null,
+      ...(md.locks_on_first_payout ? { locksOnFirstPayout: md.locks_on_first_payout } : {}),
     },
     md,
     overridden: !!override,
