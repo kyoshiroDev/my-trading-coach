@@ -205,13 +205,15 @@ export class AuthService {
       if (ambassador?.referralCode && !ambassador.isDemo) referredBy = ambassador.referralCode;
     }
 
-    // Essai Premium d'inscription (#769), refusé si l'e-mail vient de supprimer un compte.
+    // Essai Premium d'inscription (#769), refusé si l'e-mail vient de supprimer un compte. Une purge
+    // pour inactivité (#824) n'a pas été demandée par la personne : elle ne bloque pas l'essai.
     const now = new Date();
     const recentlyDeleted = await this.prisma.deletedAccount.findFirst({
       where: {
         email: emailEquals(data.email),
         anonymizedAt: null,
         deletedAt: { gte: redeleteCutoff(now) },
+        deletedBy: { not: 'inactivity' },
       },
       select: { id: true },
     });

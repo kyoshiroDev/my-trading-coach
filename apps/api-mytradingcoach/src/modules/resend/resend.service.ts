@@ -20,6 +20,7 @@ import {
   renewalReminderTemplate,
   resetPasswordTemplate,
   subscriptionCanceledTemplate,
+  inactivityNoticeTemplate,
   welcomeFreeTemplate,
   welcomePremiumTemplate,
 } from './templates';
@@ -162,6 +163,16 @@ export class ResendService {
       offered: params.offered,
     });
 
+    await this.send({ to: params.to, subject, html });
+  }
+
+  // ── Préavis de purge pour inactivité (#824) ─────────────────────────────────
+
+  /** Préavis obligatoire avant suppression d'un compte inactif depuis 2 ans : transactionnel, sans désinscription. */
+  async sendInactivityNotice(params: { to: string; userName: string | null; deletionDay: string; last: boolean }): Promise<void> {
+    const { subject, html } = inactivityNoticeTemplate({
+      userName: params.userName, deletionDay: params.deletionDay, appUrl: this.frontendUrl, last: params.last,
+    });
     await this.send({ to: params.to, subject, html });
   }
 
