@@ -26,7 +26,6 @@ import {
   LucideEye as Eye,
   LucideLayers as Layers,
   LucideMoreHorizontal as MoreHorizontal,
-  LucideInfo as Info,
   LucideLock as Lock,
   LucideChevronDown as ChevronDown,
   LucideUnlink as Unlink,
@@ -382,10 +381,6 @@ export class AccountsComponent implements OnInit {
   }
   // À surveiller : marge la plus serrée (plancher ou perte max du jour) ≤ 25 %, ou dépassée (#668).
   protected readonly atRiskCount = computed(() => this.visibleAccounts().filter(isAtRisk).length);
-  // Au moins un compte prop firm (éval / funded) → affiche la note disclaimer globale unique.
-  protected readonly hasPropAccount = computed(() =>
-    this.store.accounts().some((a) => a.type === 'EVALUATION' || a.type === 'FUNDED'),
-  );
 
   // ── Quota par plan (FREE 1 · Premium illimité). null = illimité. ──────────
   // Seuls les comptes ACTIVE consomment le quota (aligné backend).
@@ -604,7 +599,6 @@ export class AccountsComponent implements OnInit {
   protected readonly EyeIcon = Eye;
   protected readonly LayersIcon = Layers;
   protected readonly MoreHorizontalIcon = MoreHorizontal;
-  protected readonly InfoIcon = Info;
   protected readonly LockIcon = Lock;
   protected readonly ChevronDownIcon = ChevronDown;
   protected readonly UnlinkIcon = Unlink;
