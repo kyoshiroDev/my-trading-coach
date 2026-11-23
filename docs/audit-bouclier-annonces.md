@@ -53,12 +53,12 @@
 
 | # | Choix | Recommandation |
 |---|---|---|
-| C1 | **Où le trader voit l'alerte** (**Greg**) : les alertes de comportement ne sont affichées nulle part tant que #671 n'est pas fait. | Émettre le bouclier par le canal déjà visible (toast en séance, comme `tilt:alert`), indépendamment de `BEHAVIOR_ALERTS_UI`, et l'enregistrer aussi dans `BehaviorAlert` pour que #671 le reprenne. Sinon la feature ne se voit pas. |
+| C1 | **Où le trader voit l'alerte** | **Greg : tout de suite.** Toast en séance (comme l'anti-tilt), push app fermée là où il est allumé, alerte enregistrée aussi dans `BehaviorAlert` pour #671 ; les autres détecteurs restent silencieux (`BEHAVIOR_ALERTS_UI` inchangé). |
 | C2 | **Seuil X par défaut** | **5 minutes**, réglable de 1 à 30 (0 = coupé). Fenêtre courte et lisible. |
 | C3 | **Fenêtre de la stat au débrief** | De X min avant à X min après l'heure de l'annonce (le mouvement continue après la publication). **Tranché par le relecteur.** |
-| C4 | **Gratuit ou Premium** (**Greg**) | Alerte en séance **gratuite** pour tous : c'est une protection, au cœur de la promesse « tenir ses règles sous pression ». App fermée, l'alerte n'existe que via la veille serveur, déjà Premium. Stat au débrief : suit le Weekly Debrief, déjà Premium. Précédent : l'anti-tilt en direct est Premium. Si Greg préfère Premium, la règle des 4 points de `plans.md` s'applique. |
-| C5 | **Push app fermée** (**Greg**, avec C1) | Oui, par le push trader existant (`TraderNotifier`, catégorie comportement), seulement là où il est allumé. Écart assumé à la décision #602 (« push jamais en phase silencieuse ») pour ce seul détecteur. |
-| C6 | **Mise en route** (**Greg** pour la prod) | Interrupteur `NEWS_SHIELD_ENABLED` : allumé d'abord sur dev, puis en prod sur le feu vert de Greg. |
+| C4 | **Gratuit ou Premium** | **Tranché par le relecteur (délégation de Greg)** : alerte en séance **gratuite** pour tous (protection du compte, précédent #668) ; app fermée = veille serveur, déjà Premium ; stat « Tes trades autour des annonces » **Premium** avec le débrief (même teaser flouté avec cadenas). |
+| C5 | **Push app fermée** | **Greg (avec C1)** : oui, par le push trader existant (`TraderNotifier`, catégorie comportement), seulement là où il est allumé. Écart assumé à la décision #602 pour ce seul détecteur. |
+| C6 | **Mise en route** | **Tranché par le relecteur (délégation de Greg)** : `NEWS_SHIELD_ENABLED` éteint par défaut (absente = coupé), allumé sur dev au merge, en prod par Greg après vérification sur dev. |
 | C7 | **Lien avec #667** (contrat de session) | Ticket gardé à part, commentaire « lié à #667 » sur #670 ; le contrat pourra reprendre le seuil plus tard. **Tranché par le relecteur.** |
 
 ## Étapes (une PR vers `dev`, un commit par étape)
@@ -69,7 +69,8 @@
 4. App : toast en séance, réglage dans Profil (390 px d'abord), tests.
 5. API + app : stat du débrief + affichage, tests.
 6. Seed démo : trade NQ à 14:27 le vendredi du NFP + alerte.
-7. Références (`behavior`, débrief, démo) et captures 390 / 1440.
+7. Gating : ligne dans `.claude/agents/plans.md` « Bouclier annonces : alerte en séance FREE, stat au débrief PREMIUM », cohérente aux 4 points (landing : rien sauf si elle liste les alertes ; front : teaser ; guard : route du débrief déjà Premium ; cron : débrief du dimanche inchangé).
+8. Références (`behavior`, débrief, démo) et captures 390 / 1440.
 
 ## Vérificateurs prévus
 

@@ -53,3 +53,8 @@ S
 5. Ensuite : worktree séparé depuis `beta`, mobile first (390 px d'abord), un commit par étape, typecheck avant chaque push (`nx run-many -t typecheck`, specs comprises), captures 390 et 1440, mise à jour des agents `.claude/agents/` concernés (`plans.md` si le gating change).
 6. **Rien n'est poussé sans le « OK push » de Greg.**
 
+
+## Réponses de Greg (2026-11-23)
+
+- Affichage avant #671 : « Tout de suite » (choix proposé).
+- Gratuit ou Premium, et mise en route : « envoie les demande au relecteur ». Tranchés par le relecteur : alerte en séance gratuite, stat du débrief Premium ; `NEWS_SHIELD_ENABLED` éteint par défaut, allumé sur dev au merge, en prod par Greg.
