@@ -316,7 +316,8 @@ export class FounderOfferService {
             `Offre fondateur : ${reached.top} places prises sur ${FOUNDER_OFFER.seats}`,
             `Palier atteint : ${reached.taken} / ${FOUNDER_OFFER.seats} places fondateur prises.`,
           )
-          .catch((err: Error) => this.logger.warn(`Notification de palier non envoyée : ${err.message}`));
+          // Nom de l'erreur seulement (#1251) : le message d'une erreur Resend peut recopier une adresse.
+          .catch((err: unknown) => this.logger.warn(`Notification de palier non envoyée : ${err instanceof Error ? err.name : 'Error'}`));
       }
     }
     return result.seat;
