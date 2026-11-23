@@ -1,4 +1,5 @@
 import { afterEach, describe, it, expect, vi } from 'vitest';
+import { freezeClock } from '../../test/freeze-clock';
 import { BehaviorAlertsService, type BehaviorAlertEvent, seenKey } from './behavior-alerts.service';
 import type { BehaviorBaselineData } from './behavior-baseline';
 import { newEntries, snapshot } from './behavior-entries';
@@ -121,6 +122,8 @@ describe('newEntries', () => {
 });
 
 describe('BehaviorAlertsService.check — bouclier annonces à l’entrée (#670)', () => {
+  // Dates fixes : horloge figée (règle du dépôt).
+  freezeClock(NOW);
   afterEach(() => delete process.env['NEWS_SHIELD_ENABLED']);
 
   it('entrée moins de X min avant une annonce forte : D1 par le bouclier, affiché même UI désactivée', async () => {
@@ -142,6 +145,16 @@ describe('BehaviorAlertsService.check — bouclier annonces à l’entrée (#670
     expect(draft.message).toBe('Indice des prix dans 3 min, position ouverte sur MNQ.');
     // D1 ne passe pas par l'enregistrement générique (anti-spam par type) : c'est le bouclier qui l'écrit.
     expect(s.created.map((c) => c['type'])).not.toContain('D1_NEWS_WINDOW');
+  });
+
+  it('panne du bouclier : les autres détecteurs sont quand même évalués et enregistrés', async () => {
+    process.env['NEWS_SHIELD_ENABLED'] = 'true';
+    const s = setup();
+    const newsShield = { enabled: true, upcoming: vi.fn(async () => { throw new Error('base'); }), record: vi.fn() };
+    const svc = new BehaviorAlertsService(s.prisma as never, { client: { get: vi.fn(async (k: string) => s.store.get(k) ?? null), set: vi.fn(async () => 'OK') } } as never,
+      { list: vi.fn(async () => []) } as never, { get: vi.fn(async () => baseline) } as never, s.notifier as never, newsShield as never);
+    expect(await svc.check('u', 'a', s.emit, NOW)).toBeGreaterThan(0);
+    expect(newsShield.record).not.toHaveBeenCalled();
   });
 
   it('bouclier éteint : aucune annonce lue, aucune alerte D1', async () => {

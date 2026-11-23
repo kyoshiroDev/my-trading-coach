@@ -98,7 +98,13 @@ export class BehaviorAlertsService implements OnModuleDestroy {
 
     const day = tradingDay(now);
     const ctxBase = await this.sessionContext(userId, accountId, day, now);
-    const news = this.newsShield?.enabled ? await this.newsShield.upcoming(now) : [];
+    // Bouclier annonces : une panne ne prive jamais les autres détecteurs de leur évaluation.
+    const news = this.newsShield?.enabled
+      ? await this.newsShield.upcoming(now).catch((err: unknown) => {
+          this.logger.warn(`Annonces non lues pour le bouclier : ${err instanceof Error ? err.name : 'Error'}`);
+          return [];
+        })
+      : [];
     let recorded = 0;
     for (const e of entries) {
       const at = e.since ? new Date(e.since) : now;
@@ -115,7 +121,11 @@ export class BehaviorAlertsService implements OnModuleDestroy {
       for (const draft of evaluateEntry(ctx)) {
         if (draft.type === 'D1_NEWS_WINDOW') {
           // Une alerte par annonce (et non par type), partagée avec le passage « avant l'annonce ».
-          if (this.newsShield && (await this.newsShield.record(userId, accountId, draft, ctx.entry, ctxBase.sessionId, emit as NewsAlertEmit, now))) recorded++;
+          try {
+            if (this.newsShield && (await this.newsShield.record(userId, accountId, draft, ctx.entry, ctxBase.sessionId, emit as NewsAlertEmit, now))) recorded++;
+          } catch (err: unknown) {
+            this.logger.warn(`Bouclier annonces non enregistré (compte ${accountId}) : ${err instanceof Error ? err.name : 'Error'}`);
+          }
           continue;
         }
         // Anti-spam partagé entre workers : même type, même compte, 15 min.

@@ -65,6 +65,15 @@ describe('Profil — bouclier annonces (#670)', () => {
     expect(cmp.newsShieldLabel(12)).toBe('12 min avant');
   });
 
+  it('jamais réglé et pas touché : rien envoyé, le serveur garde le défaut', () => {
+    const update = vi.fn(() => of({ data: {} }));
+    const cmp = mount({ fragment: null, strategy: { tradingStyle: 'SCALP' }, update });
+    cmp.openStrategyModal();
+    expect(cmp.draftNews()).toBe(5);
+    cmp.saveStrategy();
+    expect((update.mock.calls[0] as unknown as [Record<string, unknown>])[0]['newsShieldMinutes']).toBeUndefined();
+  });
+
   it('modale : brouillon au réglage enregistré (défaut 5), envoyé avec la stratégie', () => {
     const update = vi.fn(() => of({ data: { newsShieldMinutes: 0 } }));
     const cmp = mount({ fragment: null, strategy: { tradingStyle: 'SCALP', newsShieldMinutes: 12 }, update });

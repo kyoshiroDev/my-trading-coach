@@ -17,6 +17,7 @@ function memoryRedis(positions: Record<string, unknown>) {
     client: {
       get: vi.fn(async (k: string) => (k.startsWith('tradovate:positions:') ? JSON.stringify(positions[k.split(':')[2]] ?? null) : keys.get(k) ?? null)),
       set: vi.fn(async (k: string, v: string, ..._args: unknown[]) => (keys.has(k) ? null : (keys.set(k, v), 'OK'))),
+      del: vi.fn(async (k: string) => Number(keys.delete(k))),
     },
   };
 }
@@ -59,7 +60,7 @@ describe('NewsShieldService (#670)', () => {
     expect(notifier.notify).toHaveBeenCalledWith('u1', 'BEHAVIOR', expect.objectContaining({ title: 'Annonce à venir' }), expect.objectContaining({ accountId: 'a1' }));
   });
 
-  it('heure de Paris convertie en UTC, changement d’heure compris (NFP de mars, 13:30 Paris en heure d’hiver)', async () => {
+  it('heure de Paris convertie en UTC, changement d’heure compris (14:30 Paris = 13:30 UTC en mars, 12:30 UTC en avril)', async () => {
     on();
     const { svc } = setup({ rows: [{ ...NFP_ROW, date: '2026-03-06' }] });
     const [e] = await svc.upcoming(new Date('2026-03-06T13:26:00Z'));
@@ -83,6 +84,15 @@ describe('NewsShieldService (#670)', () => {
     ]);
     expect(x + y).toBe(1);
     expect(b.prisma.behaviorAlert.create).toHaveBeenCalledTimes(1);
+  });
+
+  it('écriture de l’alerte en échec : clé d’anti-spam rendue, l’alerte repart au passage suivant', async () => {
+    on();
+    vi.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
+    const { svc, prisma, emitFor } = setup();
+    prisma.behaviorAlert.create.mockRejectedValueOnce(new Error('base'));
+    expect(await svc.tick(NOW, OWNED, emitFor)).toBe(0);
+    expect(await svc.tick(NOW, OWNED, emitFor)).toBe(1);
   });
 
   it('compte démo exclu, bouclier coupé (0) : rien', async () => {

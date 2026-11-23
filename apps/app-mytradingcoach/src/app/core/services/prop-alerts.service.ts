@@ -52,7 +52,7 @@ export interface NewsAlertEvent {
   context: { slot?: string; minutesBefore?: number };
 }
 
-/** Le toast reste jusqu'à l'annonce : il disparaît seul après la fenêtre la plus longue (30 min). */
+/** Une minute à l'écran : le temps de le lire ; la notification système reste dans le centre de notifications. */
 export const NEWS_TOAST_MS = 60_000;
 
 const MOOD_LABEL: Partial<Record<NonNullable<TiltAlertEvent['moodStart']>, string>> = {

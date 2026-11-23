@@ -1,8 +1,8 @@
 import { inactiveAccountsTradeWhere } from '../accounts/account-status-scope';
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { afterEach, describe, it, expect, beforeEach, vi } from 'vitest';
 import { freezeClock } from '../../test/freeze-clock';
 import { Test, TestingModule } from '@nestjs/testing';
-import { NotFoundException } from '@nestjs/common';
+import { Logger, NotFoundException } from '@nestjs/common';
 import { Role } from '@prisma/client';
 import { DebriefService } from './debrief.service';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -204,6 +204,52 @@ describe('DebriefService', () => {
         accounts: { stats: { totalTrades: number } }[];
       } } }).create.insights;
       expect(stored.accounts[0].stats.totalTrades).toBe(1);
+    });
+
+    describe('stat « Tes trades autour des annonces » (#670)', () => {
+      // Dates fixes : horloge figée (règle du dépôt). Annonce forte le mardi 10/11/2026 à 16:00 Paris
+      // (15:00 UTC, heure d'hiver), pile à l'heure du trade NQ par défaut.
+      freezeClock('2026-11-11T15:00:00Z');
+      const prisma = mockPrisma as unknown as { ecoEvent?: { findMany: ReturnType<typeof vi.fn> } };
+      const REF = { refDate: new Date('2026-11-11T15:00:00') };
+      const prepare = (newsShieldMinutes: number | null) => {
+        mockPrisma.weeklyDebrief.findFirst.mockResolvedValue(null);
+        mockPrisma.weeklyDebrief.upsert.mockResolvedValue(mockDebrief);
+        mockPrisma.user.findUnique.mockImplementation(async (args: { select?: Record<string, unknown> }) =>
+          args.select && 'newsShieldMinutes' in args.select ? { newsShieldMinutes } : null);
+        prisma.ecoEvent = { findMany: vi.fn().mockResolvedValue([{ date: '2026-11-10', time: '16:00', name: 'CPI YoY (Oct)', nameFr: null, currency: 'USD' }]) };
+      };
+      afterEach(() => {
+        delete prisma.ecoEvent;
+        mockPrisma.user.findUnique.mockReset().mockResolvedValue(null);
+      });
+      const saved = () => mockPrisma.weeklyDebrief.upsert.mock.calls[0][0] as { create: { stats: Record<string, unknown> }; update: { stats: Record<string, unknown> } };
+
+      it('annonce forte dans la semaine : stat écrite en création et en mise à jour, jamais envoyée à l’IA', async () => {
+        prepare(null);
+        await service.generate('user-123', Role.USER, true, REF);
+        const expected = { windowMinutes: 5, inside: { count: 1, pnl: 98, winRate: 100 }, outside: { count: 0, pnl: 0, winRate: 0 } };
+        expect(saved().create.stats['newsWindow']).toEqual(expected);
+        expect(saved().update.stats['newsWindow']).toEqual(expected);
+        expect((mockAiService.generateDebrief.mock.calls[0][0] as { stats: object }).stats).not.toHaveProperty('newsWindow');
+        expect(prisma.ecoEvent!.findMany.mock.calls[0][0].where).toMatchObject({ impact: 'high' });
+      });
+
+      it('bouclier coupé (0) : la stat prend quand même la fenêtre par défaut (constat, pas une alerte)', async () => {
+        prepare(0);
+        await service.generate('user-123', Role.USER, true, REF);
+        expect(saved().create.stats['newsWindow']).toMatchObject({ windowMinutes: 5 });
+      });
+
+      it('lecture des annonces en échec : débrief généré sans la stat, nom de l’erreur seulement', async () => {
+        prepare(null);
+        prisma.ecoEvent!.findMany.mockRejectedValueOnce(new TypeError('base user-123'));
+        const warn = vi.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
+        await service.generate('user-123', Role.USER, true, REF);
+        expect(saved().create.stats).not.toHaveProperty('newsWindow');
+        expect(warn.mock.calls.map((c) => String(c[0]))).toContain('Stat « autour des annonces » non calculée : TypeError');
+        warn.mockRestore();
+      });
     });
 
     it("génère un débrief en appelant l'IA et le persiste", async () => {

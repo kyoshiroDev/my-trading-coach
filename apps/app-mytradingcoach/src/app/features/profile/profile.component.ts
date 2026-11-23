@@ -28,7 +28,7 @@ import { PlanModalComponent } from '../../shared/components/plan-modal/plan-moda
 import { PushSettingsComponent } from './notifications/push-settings.component';
 import { InstallSettingsComponent } from '../install/install-settings.component';
 import { UserStore, calendarDaysUntil } from '../../core/stores/user.store';
-import { currencyAffix, formatMoney, subscriptionState } from '@mtc/shared';
+import { currencyAffix, formatMoney, subscriptionState, NEWS_SHIELD_DEFAULT_MINUTES } from '@mtc/shared';
 import { SelectedAccountStore } from '../../core/stores/selected-account.store';
 import { AuthService } from '../../core/auth/auth.service';
 import { BillingApi } from '../../core/api/billing.api';
@@ -59,9 +59,6 @@ import { searchLocalInstruments, sessionLabel, styleEmoji, styleLabel, withAsset
 import { PaywallCtaService } from '@app/core/services/paywall-cta.service';
 
 type ProfileTab = 'trader' | 'params';
-
-/** Bouclier annonces (#670) : seuil par défaut, le même que l'API. */
-const NEWS_SHIELD_DEFAULT_MINUTES = 5;
 
 @Component({
   selector: 'mtc-profile',
@@ -711,7 +708,8 @@ export class ProfileComponent implements OnInit {
         tradesPerDayMin:     this.draftMin(),
         tradesPerDayMax:     this.draftMax(),
         strategyDescription: this.draftDesc().trim() || undefined,
-        newsShieldMinutes:   this.draftNews(),
+        // Pas touché et jamais réglé : on garde « défaut » (null) côté serveur.
+        newsShieldMinutes:   this.newsShield() === null && this.draftNews() === NEWS_SHIELD_DEFAULT_MINUTES ? undefined : this.draftNews(),
       })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({

@@ -207,8 +207,8 @@ export async function seedTradingData(
     await prisma.trade.create({
       data: {
         userId: user.id, accountId: apex, asset: t.asset, side: t.side, entry: t.entry, exit: t.exit,
-        quantity: t.quantity, pnl: t.pnl, commission: t.commission, setupId: setupIdFor('News'),
-        session: 'NEW_YORK', timeframe: '1m', tags: ['DEMO'], tradedAt: t.tradedAt,
+        quantity: t.quantity, pnl: t.pnl, commission: t.commission, setupId: setupIdFor(t.setup),
+        session: t.session, timeframe: t.timeframe, tags: ['DEMO'], tradedAt: t.tradedAt,
       },
     });
     const a = newsExample.alert;
@@ -327,8 +327,11 @@ export async function seedTradingData(
     weeks.get(k)!.days.push(d);
   }
   let debriefs = 0;
+  // Semaine du trade d'exemple du bouclier : il compte dans tous les chiffres du débrief, comme au journal.
+  const exampleWeek = isoWeek(newsExample.openedAt);
   for (const w of weeks.values()) {
-    const trades = w.days.flatMap((d) => d.trades);
+    const inExampleWeek = w.week === exampleWeek.week && w.year === exampleWeek.year;
+    const trades = [...w.days.flatMap((d) => d.trades), ...(inExampleWeek ? [newsExample.trade] : [])];
     if (!trades.length) continue;
     const s = computeTradeStats(trades);
     const fees = trades.reduce((a, t) => a + t.commission, 0);
@@ -394,9 +397,7 @@ export async function seedTradingData(
         stats: {
           winRate: s.winRate, totalPnl: s.totalPnl, totalTrades: trades.length,
           // Bouclier annonces (#670) : la semaine du vendredi de l'exemple montre la stat.
-          ...(newsExample.openedAt >= monday && newsExample.openedAt <= sunday
-            ? { newsWindow: newsWindowStats([...trades, newsExample.trade], newsExample.events, 5) }
-            : {}),
+          ...(inExampleWeek ? { newsWindow: newsWindowStats(trades, newsExample.events, 5) } : {}),
         } as Prisma.InputJsonValue,
       },
     });

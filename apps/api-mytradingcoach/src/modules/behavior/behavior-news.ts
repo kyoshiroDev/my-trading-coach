@@ -1,3 +1,4 @@
+import { NEWS_SHIELD_DEFAULT_MINUTES, NEWS_SHIELD_MAX_MINUTES } from '@mtc/shared';
 import { assetCurrencies } from '../eco-calendar/eco-calendar.briefing';
 import type { BehaviorAlertDraft } from './behavior-detectors';
 
@@ -7,9 +8,8 @@ import type { BehaviorAlertDraft } from './behavior-detectors';
  * Partagé par le détecteur à l'entrée (`D1_NEWS_WINDOW`) et le passage « avant l'annonce ».
  */
 
-/** Seuil par défaut (décision du 2026-11-23) et bornes du réglage du Profil. 0 = bouclier coupé. */
-export const NEWS_SHIELD_DEFAULT_MINUTES = 5;
-export const NEWS_SHIELD_MAX_MINUTES = 30;
+/** Seuil par défaut et plafond : source unique dans `@mtc/shared`. 0 = bouclier coupé. */
+export { NEWS_SHIELD_DEFAULT_MINUTES, NEWS_SHIELD_MAX_MINUTES } from '@mtc/shared';
 
 /** Annonce forte à venir, heure déjà convertie en UTC (`parisWallTimeToUtc`). */
 export interface NewsEvent {

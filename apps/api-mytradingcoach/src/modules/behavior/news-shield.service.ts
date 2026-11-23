@@ -88,6 +88,9 @@ export class NewsShieldService {
         context: { ...draft.context, entry } as Prisma.InputJsonValue,
       },
       select: { id: true },
+    }).catch(async (err: unknown) => {
+      await this.redis.client.del(newsSpamKey(accountId, slotKey)).catch(() => undefined);
+      throw err;
     });
     emit('news:alert', { ...draft, id: row.id, accountId });
     this.notifier?.notify(userId, 'BEHAVIOR', TRADER_PUSH_MESSAGES.news(accountId, draft), {
