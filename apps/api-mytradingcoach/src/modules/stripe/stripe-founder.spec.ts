@@ -1175,3 +1175,51 @@ describe('remboursement du 1er paiement : récompenses de parrainage (A4)', () =
     expect(w.resend.sendAdminAlert).not.toHaveBeenCalled();
   });
 });
+
+/** #790 : journaux des webhooks sans identifiant ni e-mail d'utilisateur, identifiants Stripe à la place. */
+describe('webhooks — journaux sans identifiant d’utilisateur (#790)', () => {
+  const capture = () => {
+    const spies = (['log', 'warn', 'error', 'debug'] as const).map((m) => vi.spyOn(Logger.prototype, m).mockImplementation(() => undefined));
+    return () => {
+      const lines = spies.flatMap((s) => s.mock.calls.map((c) => String(c[0])));
+      spies.forEach((s) => s.mockRestore());
+      expect(lines.join('\n')).not.toMatch(/\bu1\b/); // identifiant (et e-mail u1@test.com) de l'utilisateur de test
+      return lines;
+    };
+  };
+
+  it('paiement fondateur sans place : abonnement Stripe seulement', async () => {
+    const w = makeWebhook({ id: 'sub_f', price: 'price_29' });
+    w.founders.claimSeat.mockResolvedValue(null);
+    const done = capture();
+    await w.svc.processWebhookEvent(event('invoice.payment_succeeded', invoice('sub_f', 'subscription_create')));
+    expect(done()).toContain('[FONDATEUR] Paiement sans place | sub: sub_f : abonnement annulé, remboursement à faire');
+  });
+
+  it('confirmation partenaire non envoyée : abonnement Stripe et nom de l’erreur', async () => {
+    const w = makeWebhook({ id: 'sub_p', price: 'price_49', metadata: { partnerCode: 'val20' } });
+    w.partners.claim.mockResolvedValue({ priceMonthlyEur: 39, priceAnnualEur: 390, durationMonths: 12 });
+    w.resend.sendPartnerWelcome.mockRejectedValue(new Error('refusé pour u1@test.com'));
+    const done = capture();
+    await w.svc.processWebhookEvent(event('invoice.payment_succeeded', invoice('sub_p', 'subscription_create')));
+    expect(done()).toContain('Confirmation partenaire non envoyée (sub sub_p) : Error');
+  });
+
+  it('rappel de reconduction non envoyé : client Stripe et nom de l’erreur', async () => {
+    const w = makeWebhook({ id: 'sub_f', price: 'price_290' });
+    w.prisma.user.findUnique.mockResolvedValue({ id: 'u1', email: 'u1@test.com', name: 'U', stripeInterval: 'year', isDemo: false });
+    w.resend.sendAnnualRenewalReminder.mockRejectedValue(new Error('refusé pour u1@test.com'));
+    const done = capture();
+    await w.svc.processWebhookEvent(event('invoice.upcoming', { customer: 'cus_1', amount_due: 29000, currency: 'eur', next_payment_attempt: 1_800_000_000 }));
+    expect(done()).toContain('Rappel de reconduction non envoyé (customer cus_1) : Error');
+  });
+
+  it('commission annulée (1er paiement remboursé) : commission et abonnement du filleul', async () => {
+    const w = makeWebhook({ id: 'sub_n', price: 'price_49' });
+    w.prisma.referralCommission.findMany.mockResolvedValue([{ id: 'c_pending', status: 'pending', amount: 9.8, subscriptionId: 'sub_n', invoiceId: 'in_first', period: '2026-11' }]);
+    w.invoicesList.mockResolvedValue({ data: [{ id: 'in_first', amount_paid: 4900, created: 1_000, payment_intent: 'pi_1' }] });
+    const done = capture();
+    await w.svc.processWebhookEvent(event('charge.refunded', { refunded: true, customer: 'cus_1', invoice: 'in_first' }));
+    expect(done()).toContain('Commission c_pending annulée : 1er paiement remboursé (sub sub_n)');
+  });
+});
