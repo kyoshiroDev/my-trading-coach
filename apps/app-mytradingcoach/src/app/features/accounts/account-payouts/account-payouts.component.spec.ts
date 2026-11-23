@@ -71,6 +71,23 @@ describe('AccountPayoutsComponent (payouts d\'un compte funded)', () => {
     expect(q('payouts-floor-lock-request')).toBeNull();
   });
 
+  it('gel à la demande, aucun payout encore enregistré : note de retard aussi', () => {
+    const { q } = setup({ list: [], floorLock: 'request' });
+    expect(q('payouts-empty')).not.toBeNull();
+    expect(q('payouts-floor-lock-request')).not.toBeNull();
+  });
+
+  it('texte du formulaire : gel au premier payout seulement si le plan le prévoit', () => {
+    const note = (el: HTMLElement) => [...el.querySelectorAll('.ap-note')].map((n) => n.textContent!.replace(/[ \n]+/g, ' ').trim()).find((t) => t.startsWith('Le montant est retiré'));
+    expect(note(setup({ floorLock: 'payout' }).el)).toBe(
+      'Le montant est retiré du solde, des courbes et de la marge du compte. Ton plan fige le plancher au premier payout\u00a0: MyTradingCoach retient la date du premier payout enregistré. Estimation MyTradingCoach\u00a0: vérifie chez ta firm.',
+    );
+    TestBed.resetTestingModule();
+    const plain = note(setup({ floorLock: null }).el)!;
+    expect(plain).toBe('Le montant est retiré du solde, des courbes et de la marge du compte. Estimation MyTradingCoach\u00a0: vérifie chez ta firm.');
+    expect(plain).not.toContain('ne bouge pas');
+  });
+
   it('aucun payout : pas de note sur le plancher gelé', () => {
     const { q } = setup({ list: [] });
     expect(q('payouts-empty')).not.toBeNull();

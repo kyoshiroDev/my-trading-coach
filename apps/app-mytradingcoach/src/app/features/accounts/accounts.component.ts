@@ -378,12 +378,12 @@ export class AccountsComponent implements OnInit {
     const id = this.editingId();
     return !!id && this.tv.byAccount().has(id);
   });
-  /** Montant dans la devise donnée (celle du compte), sans conversion. */
   /** Gel du plancher dans la ligne des règles appliquées (#696). */
   protected floorLock(rule: DrawdownPlanRule, currency: string | null): string | null {
     return floorLockText(rule, (v) => this.money(v, currency));
   }
 
+  /** Montant dans la devise donnée (celle du compte), sans conversion. */
   protected money(value: number | null | undefined, currency: string | null, sign = false): string {
     return formatMoney(value ?? 0, currency, { decimals: 0, sign });
   }

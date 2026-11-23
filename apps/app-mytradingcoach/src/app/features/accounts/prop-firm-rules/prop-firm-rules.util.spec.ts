@@ -45,6 +45,7 @@ describe('prop-firm-rules.util', () => {
     expect(lockLabel(50_100, 52_100, 'USD', 'request')).toBe('Se fige à $50,100 quand le solde atteint $52,100, ou dès ta première demande de payout');
     expect(lockLabel(50_100, null, 'USD', 'approval')).toBe('Se fige à $50,100 dès ton premier payout approuvé');
     expect(lockLabel(50_100, null, 'USD', 'payout')).toBe('Se fige à $50,100 dès ton premier payout');
+    expect(lockLabel(null, 52_100, 'USD', 'request')).toBe('Cesse de suivre quand le solde atteint $52,100, ou dès ta première demande de payout');
   });
 
   it('enforcementLabel : non documenté = prudence affichée', () => {

@@ -1,5 +1,4 @@
-import { formatMoney, type AccountType, type PropFirmPhaseRules, type PropFirmPlanDetail } from '@mtc/shared';
-import type { PropFirmPayoutLockTrigger } from '@mtc/shared';
+import { formatMoney, type AccountType, type PropFirmPayoutLockTrigger, type PropFirmPhaseRules, type PropFirmPlanDetail } from '@mtc/shared';
 import { payoutLockPhrase } from '../../../core/services/chart-series.util';
 
 /**

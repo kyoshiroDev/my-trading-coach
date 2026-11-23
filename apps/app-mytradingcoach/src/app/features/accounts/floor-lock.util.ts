@@ -11,8 +11,8 @@ export function floorLockText(
   money: (v: number) => string,
 ): string | null {
   if (rule.locked && rule.lockedBy === 'payout' && rule.payoutLockedSince) {
-    const [, m, d] = rule.payoutLockedSince.split('-');
-    return `figé depuis ton payout du ${d}/${m}`;
+    const [y, m, d] = rule.payoutLockedSince.split('-');
+    return `figé depuis ton payout du ${d}/${m}/${y}`;
   }
   if (rule.locked) return 'figé';
   const onPayout = rule.lockedFloor != null ? payoutLockPhrase(rule.locksOnFirstPayout) : null;

@@ -582,6 +582,18 @@ describe('Mes comptes — plus haut de clôture', () => {
     click('account-expand-a');
     expect(q('dd-peak')!.textContent).toContain('reconstitué depuis tes trades');
   });
+
+  it('gel au premier payout (#696) : règle affichée, puis figé depuis le payout', () => {
+    const { q, click } = setup({ accounts: [withPeak({ phase: 'funded', locksAt: 52_100, lockedFloor: 50_100, locksOnFirstPayout: 'request' })] });
+    click('account-expand-a');
+    expect(q('dd-basis')!.textContent!.replace(/\s+/g, ' ')).toContain('se fige à $50,100 quand le solde atteint $52,100, ou dès ta première demande de payout');
+  });
+
+  it('figé par un payout : date du premier payout dans la ligne des règles', () => {
+    const { q, click } = setup({ accounts: [withPeak({ phase: 'funded', locksAt: 52_100, lockedFloor: 50_100, locksOnFirstPayout: 'request', locked: true, lockedBy: 'payout', payoutLockedSince: '2026-10-02' })] });
+    click('account-expand-a');
+    expect(q('dd-basis')!.textContent!.replace(/\s+/g, ' ')).toContain('figé depuis ton payout du 02/10/2026');
+  });
 });
 
 describe('Mes comptes — progression objectif / payout', () => {

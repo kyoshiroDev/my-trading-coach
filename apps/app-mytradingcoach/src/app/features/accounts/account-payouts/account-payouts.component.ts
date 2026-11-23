@@ -1,8 +1,7 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, inject, input, output, signal } from '@angular/core';
-import type { PropFirmPayoutLockTrigger } from '@mtc/shared';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ConfirmService } from '@mtc/front-ui';
-import { formatMoney } from '@mtc/shared';
+import { formatMoney, type PropFirmPayoutLockTrigger } from '@mtc/shared';
 import { AccountPayout, AccountsApi } from '@app/core/api/accounts.api';
 import { ToastService } from '@app/core/services/toast.service';
 import { apiErrorMessage } from '@app/core/utils/api-error';

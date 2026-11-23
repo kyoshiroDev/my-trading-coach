@@ -25,7 +25,7 @@ describe('floorLockText (#696)', () => {
     expect(floorLockText({ ...base, locked: true, lockedBy: 'threshold' }, money)).toBe('figé');
     expect(
       floorLockText({ ...base, locked: true, lockedBy: 'payout', payoutLockedSince: '2026-10-02', locksOnFirstPayout: 'payout' }, money),
-    ).toBe('figé depuis ton payout du 02/10');
+    ).toBe('figé depuis ton payout du 02/10/2026');
   });
 
   it('plan qui ne fige jamais : rien', () => {

@@ -20,11 +20,11 @@
           </li>
         }
       </ul>
-      @if (floorLock() === 'request') {
-        <p class="ap-note" data-testid="payouts-floor-lock-request">Ta firm fige le plancher dès ta demande de payout&nbsp;: tant que le payout n'apparaît pas ici, ton plancher réel peut déjà être plus haut que l'estimation.</p>
-      }
     } @else {
       <p class="ap-note" data-testid="payouts-empty">Aucun payout enregistré.</p>
+    }
+    @if (floorLock() === 'request') {
+      <p class="ap-note" data-testid="payouts-floor-lock-request">Ta firm fige le plancher dès ta demande de payout&nbsp;: tant que le payout n'apparaît pas ici, ton plancher réel peut déjà être plus haut que l'estimation.</p>
     }
   }
 
@@ -45,6 +45,6 @@
         {{ saving() ? 'Enregistrement…' : 'Ajouter le payout' }}
       </button>
     </div>
-    <p class="ap-note">Le montant est retiré du solde, des courbes et de la marge du compte.@if (floorLock()) { Ton plan fige le plancher au premier payout&nbsp;: MyTradingCoach le fige à la date du premier payout enregistré.} Estimation MyTradingCoach&nbsp;: vérifie chez ta firm.</p>
+    <p class="ap-note">Le montant est retiré du solde, des courbes et de la marge du compte.@if (floorLock()) { Ton plan fige le plancher au premier payout&nbsp;: MyTradingCoach retient la date du premier payout enregistré.} Estimation MyTradingCoach&nbsp;: vérifie chez ta firm.</p>
   }
 </section>

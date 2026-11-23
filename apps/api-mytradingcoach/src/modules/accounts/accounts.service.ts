@@ -57,12 +57,6 @@ export interface RulePlan {
 export type { RulePayouts } from './account-payouts';
 
 /**
- * Début du cycle de payout : le plus récent entre le dernier payout enregistré (détecté chez le
- * broker ou saisi à la main) et la date saisie dans le formulaire du compte. Le nombre n'est un
- * rang fiable que si c'est lui qui fixe le cycle. Un payout saisi n'est jamais « à écarter » : il
- * se supprime depuis la liste des payouts.
- */
-/**
  * Premier jour où un payout est certain (#696) : plus ancien payout enregistré (détecté ou saisi,
  * déjà reçu) et date saisie du dernier payout dans le formulaire du compte ; seulement les dates
  * ≤ aujourd'hui. Un payout reçu est postérieur à sa demande et à son approbation : le gel qui en
@@ -75,6 +69,12 @@ export function firstPayoutDay(payouts: RulePayouts | null, userDate: Date | nul
   return days.length ? days.sort()[0] : null;
 }
 
+/**
+ * Début du cycle de payout : le plus récent entre le dernier payout enregistré (détecté chez le
+ * broker ou saisi à la main) et la date saisie dans le formulaire du compte. Le nombre n'est un
+ * rang fiable que si c'est lui qui fixe le cycle. Un payout saisi n'est jamais « à écarter » : il
+ * se supprime depuis la liste des payouts.
+ */
 function lastPayout(
   userDate: Date | null | undefined,
   broker: RulePayouts | null,
