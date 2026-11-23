@@ -15,6 +15,8 @@ import { maxContractsAt, phaseForAccountType } from './behavior-plan';
 import { groupPositions } from './behavior-positions';
 import { TraderNotifier } from '../push/trader-notifier.service';
 import { TRADER_PUSH_MESSAGES } from '../push/trader-push-messages';
+import { NewsShieldService, type NewsAlertEmit } from './news-shield.service';
+import { newsShieldMinutes } from './behavior-news';
 
 /** Une rafale d'événements broker (fills, position) : une évaluation, juste après. */
 export const BEHAVIOR_DEBOUNCE_MS = 1_500;
@@ -33,7 +35,7 @@ export interface BehaviorAlertEvent extends BehaviorAlertDraft {
   id: string;
   accountId: string;
 }
-export type BehaviorAlertEmit = (event: 'behavior:alert', payload: BehaviorAlertEvent) => void;
+export type BehaviorAlertEmit = (event: 'behavior:alert' | 'news:alert', payload: BehaviorAlertEvent) => void;
 
 /**
  * Détecteurs de comportement en direct (#602, phase 1 = SILENCIEUX).
@@ -57,6 +59,8 @@ export class BehaviorAlertsService implements OnModuleDestroy {
     private readonly baselines: BehaviorBaselineService,
     /** Push vers les appareils du trader (#666). */
     @Optional() private readonly notifier?: TraderNotifier,
+    /** Bouclier annonces (#670) : affiché tout de suite, hors `BEHAVIOR_ALERTS_UI`. */
+    @Optional() private readonly newsShield?: NewsShieldService,
   ) {}
 
   schedule(userId: string, accountId: string, emit: BehaviorAlertEmit): void {
@@ -78,7 +82,7 @@ export class BehaviorAlertsService implements OnModuleDestroy {
   async check(userId: string, accountId: string, emit: BehaviorAlertEmit, now = new Date()): Promise<number> {
     const conn = await this.prisma.brokerConnection.findUnique({
       where: { accountId_provider: { accountId, provider: BrokerProvider.TRADOVATE } },
-      select: { id: true, user: { select: { isDemo: true, tradesPerDayMax: true } } },
+      select: { id: true, user: { select: { isDemo: true, tradesPerDayMax: true, newsShieldMinutes: true } } },
     });
     if (!conn || conn.user.isDemo) return 0;
 
@@ -94,6 +98,7 @@ export class BehaviorAlertsService implements OnModuleDestroy {
 
     const day = tradingDay(now);
     const ctxBase = await this.sessionContext(userId, accountId, day, now);
+    const news = this.newsShield?.enabled ? await this.newsShield.upcoming(now) : [];
     let recorded = 0;
     for (const e of entries) {
       const at = e.since ? new Date(e.since) : now;
@@ -104,8 +109,15 @@ export class BehaviorAlertsService implements OnModuleDestroy {
         entry: { asset: e.asset, side: e.side, quantity: e.quantity },
         open: positions,
         tradesPerDayMax: conn.user.tradesPerDayMax,
+        news,
+        newsShieldMinutes: newsShieldMinutes(conn.user.newsShieldMinutes),
       };
       for (const draft of evaluateEntry(ctx)) {
+        if (draft.type === 'D1_NEWS_WINDOW') {
+          // Une alerte par annonce (et non par type), partagée avec le passage « avant l'annonce ».
+          if (this.newsShield && (await this.newsShield.record(userId, accountId, draft, ctx.entry, ctxBase.sessionId, emit as NewsAlertEmit, now))) recorded++;
+          continue;
+        }
         // Anti-spam partagé entre workers : même type, même compte, 15 min.
         const ok = await this.redis.client.set(spamKey(accountId, day, draft.type), '1', 'PX', ANTI_SPAM_MS, 'NX');
         if (ok !== 'OK') continue;

@@ -59,4 +59,11 @@ export class UpdatePreferencesDto {
   @MaxLength(200)
   @IsOptional()
   strategyDescription?: string;
+
+  /** Bouclier annonces (#670) : minutes avant une annonce forte, 0 = coupé. Absent = inchangé. */
+  @IsInt()
+  @Min(0)
+  @Max(30)
+  @IsOptional()
+  newsShieldMinutes?: number;
 }

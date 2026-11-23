@@ -30,14 +30,18 @@
    existant (`classifyEcoEvent`), jamais inventé. Heure de l'annonce : date + heure de Paris converties
    en UTC par le helper existant (`parisWallTimeToUtc`, heure d'été comprise), testé sur la semaine du
    changement d'heure.
-2. **Alerte avant l'annonce** (position déjà ouverte) : un passage chaque minute sur le worker cron.
-   Pour chaque annonce forte à venir dans X minutes, il lit les positions Redis **fraîches** (moins de
-   2 min) des connexions actives sur un actif concerné et produit la même alerte. Exclut `isDemo`, comme
-   `check()`. Anti-spam : une seule alerte par compte et par annonce (clé `annonce + compte`, pas par
-   type), entrée et tick confondus, par le même pipeline que `check()`. Le worker cron ne tient pas le
-   socket du client : l'événement part par l'adaptateur Redis existant (`common/adapters/redis-io.adapter.ts`,
-   room par utilisateur), jamais par le callback `emit` du gateway. Le worker dev démarre sans crons :
-   ce passage se prouve par des tests unitaires et un int-spec, puis en prod.
+2. **Alerte avant l'annonce** (position déjà ouverte) : minuteur de 60 s dans `TradovateLiveGateway`, sur le
+   worker qui tient le WebSocket Tradovate (validé par le relecteur, remplace « worker cron + adaptateur
+   Redis »). Démarré seulement si `NEWS_SHIELD_ENABLED=true`, `unref()`, arrêté à l'arrêt du module, un
+   tick en cours fait sauter le suivant, erreurs journalisées jamais propagées. Comptes vérifiés : ceux
+   dont ce worker détient le lease au moment du tick ; positions Redis fraîches (moins de 2 min).
+   Annonces fortes à venir : une requête mise en cache environ 60 s, sortie immédiate si aucune dans les
+   30 prochaines minutes ; réglages X et `isDemo` en une requête groupée. Même pipeline que `check()` :
+   `BehaviorAlert`, émission `news:alert` par `server.to(userRoom)`, push `TraderNotifier`. Anti-spam
+   atomique Redis (`SET NX`, TTL de quelques heures) sur la clé `annonce + compte`, partagée avec l'alerte
+   à l'entrée (un changement de worker pendant la fenêtre n'alerte pas deux fois). L'alerte avant
+   l'annonce n'existe que si le WebSocket tourne (app ouverte, ou veille serveur Premium) ; elle se
+   vérifie sur dev.
 3. **Réglage X** : `User.newsShieldMinutes` (`Int?`, migration additive). Null = défaut, 0 = bouclier coupé.
    Réglé dans Profil (préférences de trading).
 4. **Stat au débrief** : trades ouverts entre T−X et T+X d'une annonce forte de leurs devises, comparés au

@@ -15,6 +15,7 @@ import {
 import type { BehaviorBaselineData } from './behavior-baseline';
 import { type BehaviorPosition, isLoss } from './behavior-positions';
 import { roundCents } from '@mtc/shared';
+import { type NewsEvent, newsShieldDraft } from './behavior-news';
 
 /**
  * Détecteurs de comportement (#602) — fonctions PURES, aucun appel IA, aucune I/O.
@@ -31,7 +32,8 @@ export type BehaviorAlertType =
   | 'B_REVENGE'
   | 'C1_LOSS_STREAK'
   | 'C2_OVER_DAILY_LIMIT'
-  | 'C3_MARTINGALE';
+  | 'C3_MARTINGALE'
+  | 'D1_NEWS_WINDOW';
 
 export type BehaviorAlertSeverity = 'medium' | 'high';
 
@@ -64,6 +66,10 @@ export interface EntryContext {
   dailyLoss: { limit: number; used: number } | null;
   /** `User.tradesPerDayMax`, `null` si non renseigné. */
   tradesPerDayMax: number | null;
+  /** Annonces fortes à venir (bouclier #670) ; vide si le bouclier est coupé. */
+  news?: NewsEvent[];
+  /** Fenêtre du bouclier en minutes (0 = coupé). */
+  newsShieldMinutes?: number;
 }
 
 /** Référence fiable : sinon B, C1 et C3 restent muets (période d'apprentissage). */
@@ -237,6 +243,11 @@ export function detectMartingale(ctx: EntryContext): BehaviorAlertDraft | null {
   };
 }
 
+/** D1 — position qui s'ouvre moins de X minutes avant une annonce forte des devises de l'actif (#670). */
+export function detectNewsWindow(ctx: EntryContext): BehaviorAlertDraft | null {
+  return newsShieldDraft(ctx.at, ctx.entry.asset, ctx.news ?? [], ctx.newsShieldMinutes ?? 0);
+}
+
 const DETECTORS = [
   detectSizeOverPlan,
   detectDailyLossDistance,
@@ -245,6 +256,7 @@ const DETECTORS = [
   detectLossStreak,
   detectOverDailyLimit,
   detectMartingale,
+  detectNewsWindow,
 ];
 
 /** Tous les détecteurs sur une entrée, AVANT anti-spam. */
