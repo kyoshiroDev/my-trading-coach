@@ -94,6 +94,7 @@ Vue de base = FREE ; profondeur & IA = PREMIUM.
 | États émotionnels | ✅ (socle Free) | – |
 | Contexte marché / news / calendrier éco IA | ✅ (IA mutualisée) | – |
 | AI Coach / IA Insights / Weekly Debrief / Score | – | ✅ teaser flouté + cadenas |
+| Bouclier annonces (#670) | ✅ alerte en séance (toast) | stat « Tes trades autour des annonces » (avec le débrief) ; alerte app fermée = veille serveur, déjà Premium |
 
 Règles :
 - Ne JAMAIS afficher `● LIVE` sur une carte verrouillée (le lock l'emporte).

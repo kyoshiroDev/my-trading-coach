@@ -517,6 +517,8 @@
 
 /* ── Tableau « par compte en un coup d'œil » ── */
 .cmp-card { margin-bottom: 16px; }
+.nw-header { flex-wrap: wrap; gap: 4px 12px; }
+.nw-sub { min-width: 0; font-size: var(--fs-xs); color: var(--text-3); }
 .cmp { display: flex; flex-direction: column; }
 /* Grille fixe : les colonnes Trades / Win rate / P&L s'alignent d'un compte à l'autre (en flex,
    elles suivaient la longueur du nom, #642). Téléphone : nom sur sa ligne, 3 stats dessous. */

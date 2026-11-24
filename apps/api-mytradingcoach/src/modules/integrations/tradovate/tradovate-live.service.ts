@@ -100,6 +100,8 @@ interface UserLive {
   orderFlush: Map<string, ReturnType<typeof setTimeout>>;
   /** Dernier état écrit dans Redis par connexion : rien n'est réécrit ni émis s'il ne change pas. */
   ordersWritten: Map<string, string>;
+  /** Compte MTC de chaque connexion ouverte (bouclier annonces #670). */
+  accounts: Map<string, string>;
 }
 
 // Lua : ne prolonger / libérer QUE son propre bail (un autre worker a pu le reprendre).
@@ -330,7 +332,7 @@ export class TradovateLiveService implements OnModuleInit, OnModuleDestroy {
     if (this.users.has(userId)) return;
     const u: UserLive = {
       owner: false, conns: new Map(), debounce: new Map(), lease: null,
-      books: new Map(), orderFlush: new Map(), ordersWritten: new Map(),
+      books: new Map(), orderFlush: new Map(), ordersWritten: new Map(), accounts: new Map(),
     };
     this.users.set(userId, u);
 
@@ -374,6 +376,7 @@ export class TradovateLiveService implements OnModuleInit, OnModuleDestroy {
         logger: this.logger,
       });
       u.conns.set(c.id, live);
+      u.accounts.set(c.id, c.accountId);
       live.start();
     }
   }
@@ -530,6 +533,20 @@ export class TradovateLiveService implements OnModuleInit, OnModuleDestroy {
     u.ordersWritten.clear();
     for (const c of u.conns.values()) c.stop();
     u.conns.clear();
+    u.accounts.clear();
+  }
+
+  /**
+   * Connexions dont CE worker tient le WebSocket (bail détenu) : leurs positions Redis sont à jour,
+   * le WebSocket pousse chaque changement. Lu par le bouclier annonces (#670) à chaque tick.
+   */
+  ownedConnections(): { userId: string; connectionId: string; accountId: string }[] {
+    const out: { userId: string; connectionId: string; accountId: string }[] = [];
+    for (const [userId, u] of this.users) {
+      if (!u.owner) continue;
+      for (const [connectionId, accountId] of u.accounts) out.push({ userId, connectionId, accountId });
+    }
+    return out;
   }
 
   private async eligible(userId: string): Promise<BrokerConnection[]> {

@@ -58,6 +58,7 @@ const USER_SELECT = {
   tradingSessions: true,
   tradesPerDayMin: true,
   tradesPerDayMax: true,
+  newsShieldMinutes: true,
   strategyDescription: true,
   tradingAssets: true,
   favoriteAsset: true,

@@ -1,4 +1,5 @@
 import { afterEach, describe, it, expect, vi } from 'vitest';
+import { freezeClock } from '../../test/freeze-clock';
 import { BehaviorAlertsService, type BehaviorAlertEvent, seenKey } from './behavior-alerts.service';
 import type { BehaviorBaselineData } from './behavior-baseline';
 import { newEntries, snapshot } from './behavior-entries';
@@ -48,7 +49,7 @@ function setup(opts: { demo?: boolean; seen?: Record<string, number> | null; pos
   const notifier = { notify: vi.fn() };
   const svc = new BehaviorAlertsService(prisma as never, redis as never, accounts as never, baselines as never, notifier as never);
   const events: BehaviorAlertEvent[] = [];
-  const emit = (_e: 'behavior:alert', p: BehaviorAlertEvent) => events.push(p);
+  const emit = (_e: 'behavior:alert' | 'news:alert', p: BehaviorAlertEvent) => events.push(p);
   return { svc, emit, events, created, store, prisma, notifier };
 }
 
@@ -117,5 +118,52 @@ describe('newEntries', () => {
     expect(newEntries([p('MNQ', 'LONG', 1)], { MNQ: 2 })).toHaveLength(0);
     expect(newEntries([p('MNQ', 'LONG', 2)], { MNQ: 2 })).toHaveLength(0);
     expect(snapshot([p('MNQ', 'SHORT', 3), p('MES', 'LONG', 1)])).toEqual({ MNQ: -3, MES: 1 });
+  });
+});
+
+describe('BehaviorAlertsService.check — bouclier annonces à l’entrée (#670)', () => {
+  // Dates fixes : horloge figée (règle du dépôt).
+  freezeClock(NOW);
+  afterEach(() => delete process.env['NEWS_SHIELD_ENABLED']);
+
+  it('entrée moins de X min avant une annonce forte : D1 par le bouclier, affiché même UI désactivée', async () => {
+    process.env['NEWS_SHIELD_ENABLED'] = 'true';
+    const s = setup();
+    const newsShield = {
+      enabled: true,
+      upcoming: vi.fn(async () => [{ at: new Date(NOW.getTime() + 3 * 60_000), label: 'Indice des prix', currency: 'USD' }]),
+      record: vi.fn(async () => true),
+    };
+    const svc = new BehaviorAlertsService(
+      s.prisma as never, { client: { get: vi.fn(async (k: string) => s.store.get(k) ?? null), set: vi.fn(async () => 'OK') } } as never,
+      { list: vi.fn(async () => []) } as never, { get: vi.fn(async () => baseline) } as never, s.notifier as never, newsShield as never,
+    );
+    await svc.check('u', 'a', s.emit, NOW);
+    expect(newsShield.record).toHaveBeenCalledTimes(1);
+    const [userId, accountId, draft] = newsShield.record.mock.calls[0] as unknown as [string, string, { type: string; message: string }];
+    expect([userId, accountId, draft.type]).toEqual(['u', 'a', 'D1_NEWS_WINDOW']);
+    expect(draft.message).toBe('Indice des prix dans 3 min, position ouverte sur MNQ.');
+    // D1 ne passe pas par l'enregistrement générique (anti-spam par type) : c'est le bouclier qui l'écrit.
+    expect(s.created.map((c) => c['type'])).not.toContain('D1_NEWS_WINDOW');
+  });
+
+  it('panne du bouclier : les autres détecteurs sont quand même évalués et enregistrés', async () => {
+    process.env['NEWS_SHIELD_ENABLED'] = 'true';
+    const s = setup();
+    const newsShield = { enabled: true, upcoming: vi.fn(async () => { throw new Error('base'); }), record: vi.fn() };
+    const svc = new BehaviorAlertsService(s.prisma as never, { client: { get: vi.fn(async (k: string) => s.store.get(k) ?? null), set: vi.fn(async () => 'OK') } } as never,
+      { list: vi.fn(async () => []) } as never, { get: vi.fn(async () => baseline) } as never, s.notifier as never, newsShield as never);
+    expect(await svc.check('u', 'a', s.emit, NOW)).toBeGreaterThan(0);
+    expect(newsShield.record).not.toHaveBeenCalled();
+  });
+
+  it('bouclier éteint : aucune annonce lue, aucune alerte D1', async () => {
+    const s = setup();
+    const newsShield = { enabled: false, upcoming: vi.fn(), record: vi.fn() };
+    const svc = new BehaviorAlertsService(s.prisma as never, { client: { get: vi.fn(async (k: string) => s.store.get(k) ?? null), set: vi.fn(async () => 'OK') } } as never,
+      { list: vi.fn(async () => []) } as never, { get: vi.fn(async () => baseline) } as never, s.notifier as never, newsShield as never);
+    await svc.check('u', 'a', s.emit, NOW);
+    expect(newsShield.upcoming).not.toHaveBeenCalled();
+    expect(newsShield.record).not.toHaveBeenCalled();
   });
 });

@@ -1,6 +1,6 @@
 import { hashPassword } from '../auth/password-hashing';
 import { Prisma, SessionStatus, AccountStatus, BrokerProvider, BrokerConnectionStatus } from '@prisma/client';
-import { computeTradeStats, maxDrawdownOfTrades, type EcoResultAnalysis } from '@mtc/shared';
+import { NEWS_SHIELD_DEFAULT_MINUTES, computeTradeStats, maxDrawdownOfTrades, type EcoResultAnalysis } from '@mtc/shared';
 import { seedDefaultSetups } from '../setups/setups.defaults';
 import { type AccountKey, APEX_DAILY_LOSS_LIMIT, DEMO_ACCOUNTS, DEMO_EMAIL, DEMO_NEAR_LIMIT, round2 } from './demo-data/config';
 import { ONELINERS, PLANS, REFLECTIONS_GREEN, REFLECTIONS_RED, REFLECTION_REVENGE } from './demo-data/texts';
@@ -15,6 +15,8 @@ import { assetsSignature } from '../eco-calendar/eco-release-analysis';
 import { releaseGap } from '../eco-calendar/eco-calendar.gap';
 import { seedDemoPush } from './demo-data/push';
 import { DEMO_INCIDENT_ANALYSIS, LOST_DEMO_ACCOUNTS, buildLostDemoIncident, buildLostDemoTrades } from './demo-data/lost-accounts';
+import { newsShieldExample } from './demo-data/news-shield-example';
+import { newsWindowStats } from '../debrief/debrief-news-window';
 
 /**
  * Client du seed : PrismaClient, PrismaService ou le client d'une transaction (re-seed de la démo en
@@ -196,6 +198,20 @@ export async function seedTradingData(
     }
   }
 
+  // Bouclier annonces (#670) : le trade NQ d'exemple est déjà dans la journée Apex du vendredi
+  // précédent (`injectNewsExample`, compté partout). Ici, l'alerte que le bouclier aurait levée.
+  const newsExample = newsShieldExample(now);
+  const exampleSeeded = days.some((d) => d.trades.some((t) => t.setup === 'News' && t.tradedAt.getTime() === newsExample.openedAt.getTime()));
+  if (exampleSeeded) {
+    const a = newsExample.alert;
+    await prisma.behaviorAlert.create({
+      data: {
+        userId: user.id, accountId: accountIdByKey.get('apex')!, tradeDay: new Date(`${tradingDay(a.createdAt)}T00:00:00.000Z`),
+        type: a.type, severity: a.severity, message: a.message, context: a.context, createdAt: a.createdAt,
+      },
+    });
+  }
+
   // Compte perdu : un compte ÉCHOUÉ (dont l'Apex actif est la nouvelle tentative) et un ARCHIVÉ, avec
   // leurs trades d'avant la fenêtre. La démo montre ainsi la ligne « n comptes exclus
   // des chiffres » et l'interrupteur des statistiques, sans toucher au capital des comptes actifs.
@@ -303,7 +319,9 @@ export async function seedTradingData(
     weeks.get(k)!.days.push(d);
   }
   let debriefs = 0;
+  const exampleWeek = isoWeek(newsExample.openedAt);
   for (const w of weeks.values()) {
+    const inExampleWeek = exampleSeeded && w.week === exampleWeek.week && w.year === exampleWeek.year;
     const trades = w.days.flatMap((d) => d.trades);
     if (!trades.length) continue;
     const s = computeTradeStats(trades);
@@ -367,7 +385,13 @@ export async function seedTradingData(
         aiSummary: summary,
         insights: { overview: { summary }, accounts, summary, strengths, weaknesses, emotionInsight, objectives },
         objectives,
-        stats: { winRate: s.winRate, totalPnl: s.totalPnl, totalTrades: trades.length },
+        stats: {
+          winRate: s.winRate, totalPnl: s.totalPnl, totalTrades: trades.length,
+          // Bouclier annonces (#670) : la semaine du vendredi de l'exemple montre la stat.
+          ...(inExampleWeek
+            ? { newsWindow: newsWindowStats(trades.map((t) => ({ ...t, accountId: accountIdByKey.get(t.account) ?? null })), newsExample.events, NEWS_SHIELD_DEFAULT_MINUTES) }
+            : {}),
+        } as Prisma.InputJsonValue,
       },
     });
     debriefs++;

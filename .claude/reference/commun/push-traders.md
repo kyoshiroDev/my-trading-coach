@@ -153,3 +153,10 @@ réglages valables pour tous les appareils, `mutedTypes PushAlertType[]` (défau
 défauts. Table dédiée plutôt que des colonnes sur `User` (lu à chaque requête). Cascade à la
 suppression du User. Enum `PushAlertType` copié dans le contrat (`contracts-sync.spec.ts`).
 Migration `20261023180000_trader_push` (ajouts seuls, compatible N-1).
+
+## Bouclier annonces (#670, 2026-11-23)
+
+Push `TRADER_PUSH_MESSAGES.news` (catégorie `BEHAVIOR`, titre « Annonce à venir », urgence haute, tag
+`news-<compte>-<créneau>`) envoyé par `NewsShieldService` même si `BEHAVIOR_ALERTS_UI` est éteint : seule
+exception à « push jamais en phase silencieuse » (décision de Greg du 2026-11-23). Coupé avec
+`NEWS_SHIELD_ENABLED`. Voir `detecteurs-comportement.md`.

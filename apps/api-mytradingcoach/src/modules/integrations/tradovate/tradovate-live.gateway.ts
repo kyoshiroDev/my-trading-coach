@@ -1,3 +1,4 @@
+import type { OnModuleDestroy } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import {
   OnGatewayConnection,
@@ -15,8 +16,11 @@ import { PropAlertsService } from './prop-alerts.service';
 import { TiltAlertsService } from './tilt-alerts.service';
 import type { LiveTradesEvent } from './tradovate-live.service';
 import { BehaviorAlertsService } from '../../behavior/behavior-alerts.service';
+import { NewsShieldService } from '../../behavior/news-shield.service';
 
 export const userRoom = (userId: string) => `user:${userId}`;
+/** Passage du bouclier annonces (#670). */
+export const NEWS_SHIELD_TICK_MS = 60_000;
 
 /**
  * Canal applicatif du temps réel Tradovate — même pattern que `/eco`,
@@ -32,7 +36,9 @@ export const userRoom = (userId: string) => `user:${userId}`;
   namespace: '/tradovate-live',
   cors: { origin: process.env['FRONTEND_URL'] ?? 'http://localhost:4200' },
 })
-export class TradovateLiveGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
+export class TradovateLiveGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect, OnModuleDestroy {
+  /** Bouclier annonces (#670) : passage « avant l'annonce », chaque minute, sur ce worker. */
+  private newsTimer: ReturnType<typeof setInterval> | null = null;
 
   @WebSocketServer()
   server!: Server;
@@ -44,6 +50,7 @@ export class TradovateLiveGateway implements OnGatewayInit, OnGatewayConnection,
     private readonly alerts: PropAlertsService,
     private readonly tilt: TiltAlertsService,
     private readonly behavior: BehaviorAlertsService,
+    private readonly newsShield: NewsShieldService,
   ) {}
 
   afterInit(): void {
@@ -70,6 +77,27 @@ export class TradovateLiveGateway implements OnGatewayInit, OnGatewayConnection,
         });
       }
     });
+    this.startNewsShield();
+  }
+
+  /**
+   * Bouclier annonces (#670) : positions déjà ouvertes sur les connexions dont CE worker tient le
+   * WebSocket (positions à jour), émises par la même room que les autres alertes. Seulement si
+   * `NEWS_SHIELD_ENABLED=true` ; le tick ne lève jamais.
+   */
+  private startNewsShield(): void {
+    if (!this.newsShield.enabled || this.newsTimer) return;
+    this.newsTimer = setInterval(() => {
+      void this.newsShield.tick(new Date(), this.live.ownedConnections(), (userId) => (e, p) => {
+        this.server.to(userRoom(userId)).emit(e, p);
+      });
+    }, NEWS_SHIELD_TICK_MS);
+    this.newsTimer.unref?.();
+  }
+
+  onModuleDestroy(): void {
+    if (this.newsTimer) clearInterval(this.newsTimer);
+    this.newsTimer = null;
   }
 
   async handleConnection(client: Socket): Promise<void> {

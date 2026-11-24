@@ -96,6 +96,26 @@ export class DebriefComponent {
     () => this.insights()?.overview?.summary ?? this.debrief()?.aiSummary ?? this.insights()?.summary ?? '',
   );
   protected readonly emotionInsight = computed(() => this.insights()?.emotionInsight ?? '');
+  /**
+   * Bouclier annonces (#670) : deux lignes par compte qui a au moins un trade autour d'une annonce
+   * (P&L dans la devise du compte, #947). Absent des anciens débriefs ou sans trade dans une fenêtre :
+   * bloc masqué.
+   */
+  protected readonly newsWindow = computed(() => {
+    const w = this.debrief()?.stats.newsWindow;
+    if (!w?.accounts) return null;
+    const names = new Map(this.accounts().map((a) => [a.accountId, a.name]));
+    const rows = w.accounts
+      .filter((a) => a.inside.count > 0)
+      .flatMap((a) => {
+        const name = (a.accountId && names.get(a.accountId)) || 'Sans compte';
+        return [
+          { key: `${a.accountId}-inside`, label: `${name} · autour des annonces`, b: a.inside, accountId: a.accountId },
+          { key: `${a.accountId}-outside`, label: `${name} · reste de la semaine`, b: a.outside, accountId: a.accountId },
+        ];
+      });
+    return rows.length ? { windowMinutes: w.windowMinutes, rows } : null;
+  });
   protected readonly legacyStrengths = computed<DebriefItem[]>(() => this.insights()?.strengths ?? []);
   protected readonly legacyWeaknesses = computed<DebriefItem[]>(() => this.insights()?.weaknesses ?? []);
 

@@ -28,7 +28,7 @@ import { PlanModalComponent } from '../../shared/components/plan-modal/plan-moda
 import { PushSettingsComponent } from './notifications/push-settings.component';
 import { InstallSettingsComponent } from '../install/install-settings.component';
 import { UserStore, calendarDaysUntil } from '../../core/stores/user.store';
-import { currencyAffix, formatMoney, subscriptionState } from '@mtc/shared';
+import { currencyAffix, formatMoney, subscriptionState, NEWS_SHIELD_DEFAULT_MINUTES, NEWS_SHIELD_MAX_MINUTES } from '@mtc/shared';
 import { SelectedAccountStore } from '../../core/stores/selected-account.store';
 import { AuthService } from '../../core/auth/auth.service';
 import { BillingApi } from '../../core/api/billing.api';
@@ -189,6 +189,10 @@ export class ProfileComponent implements OnInit {
   protected readonly tradesPerDayMin  = signal(1);
   protected readonly tradesPerDayMax  = signal(10);
   protected readonly strategyDesc     = signal('');
+  /** Bouclier annonces (#670) : null = défaut, 0 = coupé. */
+  protected readonly newsShield       = signal<number | null>(null);
+  protected readonly draftNews        = signal(NEWS_SHIELD_DEFAULT_MINUTES);
+  protected readonly NEWS_SHIELD_MAX  = NEWS_SHIELD_MAX_MINUTES;
   protected readonly isSavingStrategy = signal(false);
 
   // Modale stratégie : brouillon (édité dans la modale, annulé sans persistance)
@@ -277,6 +281,7 @@ export class ProfileComponent implements OnInit {
       this.tradesPerDayMin.set(user.tradesPerDayMin ?? 1);
       this.tradesPerDayMax.set(user.tradesPerDayMax ?? 10);
       this.strategyDesc.set(user.strategyDescription ?? '');
+      this.newsShield.set(user.newsShieldMinutes ?? null);
       // Premier passage (profil stratégie vide) → ouvrir directement la modale d'édition, sauf sur
       // un lien profond (#notifications d'un push, ?tab= d'un e-mail) : elle masquerait sa cible.
       const deepLink = this.openNotifications || this.route.snapshot.queryParamMap.has('tab');
@@ -652,6 +657,12 @@ export class ProfileComponent implements OnInit {
       });
   }
 
+  /** Libellé du bouclier annonces (#670) : « 5 min avant » ou « coupé ». */
+  protected newsShieldLabel(minutes: number | null): string {
+    const m = minutes ?? NEWS_SHIELD_DEFAULT_MINUTES;
+    return m > 0 ? `${m} min avant` : 'coupé';
+  }
+
   // ── Stratégie : modale ──────────────────────────────────────────────────────
   protected openStrategyModal(): void {
     const cap = this.userStore.startingCapital();
@@ -661,6 +672,7 @@ export class ProfileComponent implements OnInit {
     this.draftMin.set(this.tradesPerDayMin());
     this.draftMax.set(this.tradesPerDayMax());
     this.draftDesc.set(this.strategyDesc());
+    this.draftNews.set(this.newsShield() ?? NEWS_SHIELD_DEFAULT_MINUTES);
     this.showStrategyModal.set(true);
   }
 
@@ -697,6 +709,8 @@ export class ProfileComponent implements OnInit {
         tradesPerDayMin:     this.draftMin(),
         tradesPerDayMax:     this.draftMax(),
         strategyDescription: this.draftDesc().trim() || undefined,
+        // Pas touché et jamais réglé : on garde « défaut » (null) côté serveur.
+        newsShieldMinutes:   this.newsShield() === null && this.draftNews() === NEWS_SHIELD_DEFAULT_MINUTES ? undefined : this.draftNews(),
       })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
@@ -707,6 +721,7 @@ export class ProfileComponent implements OnInit {
           this.tradesPerDayMin.set(res.data.tradesPerDayMin ?? 1);
           this.tradesPerDayMax.set(res.data.tradesPerDayMax ?? 10);
           this.strategyDesc.set(res.data.strategyDescription ?? '');
+          this.newsShield.set(res.data.newsShieldMinutes ?? null);
           this.auth.setCurrentUser(res.data);
           this.isSavingStrategy.set(false);
           this.showStrategyModal.set(false);

@@ -100,6 +100,8 @@ model User {
   tradingSessions     String[] @default([])
   tradesPerDayMin     Int?
   tradesPerDayMax     Int?
+  /// Bouclier annonces (#670) : minutes avant une annonce forte. null = défaut (5), 0 = coupé, sinon 1 à 30.
+  newsShieldMinutes   Int?
   strategyDescription String?
 
   // ── Actifs tradés ────────────────────────────────────────────────────────

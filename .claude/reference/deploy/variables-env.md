@@ -24,6 +24,9 @@ JWT_SECRET=...           # 64 chars minimum
 JWT_REFRESH_SECRET=...   # 64 chars minimum
 ANTHROPIC_API_KEY=sk-ant-...
 AI_MAX_CONCURRENCY=4     # optionnel : appels modèle simultanés, tous process confondus (SCA-B5-06)
+# NEWS_SHIELD_ENABLED=true  # bouclier annonces (#670), lu par les process web qui tiennent les WebSocket Tradovate
+#                           # (minuteur du gateway) : absente = coupé. Dev : allumé au merge ; prod : posé par Greg
+#                           # après vérification sur dev. Changer la valeur = recréer api_blue/api_green (env_file).
 # INACTIVITY_PURGE_ENABLED=true  # purge des comptes inactifs (#824), lue par le WORKER CRON. Absente/false = journal
 #                                # seul (rien envoyé ni supprimé). Allumée par Greg seulement après la PR politique §3 + CGU
 #                                # déployée et la lecture du journal « Comptes inactifs (journal seul) » en prod.
