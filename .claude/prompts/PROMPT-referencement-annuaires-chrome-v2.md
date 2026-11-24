@@ -156,3 +156,14 @@ Liste les prop firms du catalogue de MTC (16) avec leurs tailles de compte. Puis
 6. Lien de la PR, état de la CI, verdict du relecteur.
 7. Ce que tu n'as pas pu faire et pourquoi.
 Ne propose aucune correction de code : Greg décide ensuite avec Claude.
+
+---
+
+## Compléments de Greg (23-24/11/2026)
+
+- « attaque la #1136 »
+- « tu as des adresse mail envoie leur le mail directement tu as tous ce qui faut pour le faire et même ma signature officiel »
+- « zoho est connecter »
+- « j'ai envoyer »
+- « tu as mon feux vert envoie tous les email »
+- « continue »
