@@ -742,7 +742,7 @@
             <input type="range" class="freq-slider" min="0" [max]="NEWS_SHIELD_MAX" data-testid="profile-news-shield"
               aria-label="Minutes avant une annonce à fort impact (0 = coupé)"
               [value]="draftNews()" (input)="draftNews.set(+$any($event.target).value)" />
-            <span class="freq-slider-val">{{ draftNews() }} min</span>
+            <span class="freq-slider-val nw-delay">{{ draftNews() }}&nbsp;min</span>
           </div>
           <p class="stp-fld-help">Je t'alerte si tu as une position ouverte, ou si tu en ouvres une, dans ce délai avant une annonce à fort impact sur l'instrument. 0 pour couper.</p>
         </div>

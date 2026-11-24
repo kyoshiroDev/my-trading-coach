@@ -343,11 +343,6 @@ function secondaryMeetsTargets(days: DemoDay[]): boolean {
 }
 
 /**
- * Jeu de données démo pour `now` : premier tirage (seeds successifs, déterministes) qui respecte
- * les contraintes de crédibilité. Pur (aucune base) : testé et affiché sans Prisma. Le tirage
- * principal est choisi sur Apex + Tradeify seuls, puis le compte statique a son propre tirage.
- */
-/**
  * Bouclier annonces (#670) : le trade NQ d'exemple (vendredi précédent, 14:27 Paris) rejoint la journée
  * Apex générée ce jour-là, AVANT tous les calculs : solde, clôtures, récap du jour, journées rouges et
  * débrief le comptent comme le journal. Sans journée Apex ce vendredi-là : pas d'exemple. Renvoie
@@ -363,10 +358,17 @@ export function injectNewsExample(days: DemoDay[], now: Date): boolean {
   return true;
 }
 
+/**
+ * Jeu de données démo pour `now` : premier tirage (seeds successifs, déterministes) qui respecte
+ * les contraintes de crédibilité. Pur (aucune base) : testé et affiché sans Prisma. Le tirage
+ * principal est choisi sur Apex + Tradeify seuls, puis le compte statique a son propre tirage.
+ */
 export function buildDemoDataset(now: Date = new Date()): { days: DemoDay[]; stats: DemoStats; seed: number } {
   let main: { days: DemoDay[]; seed: number } | null = null;
   for (let seed = 20260919; seed < 20260919 + 5_000; seed++) {
     const days = generate(now, seed);
+    // Trade d'exemple du bouclier annonces ajouté AVANT le contrôle : la démo reste crédible avec lui.
+    injectNewsExample(days, now);
     main = { days, seed };
     if (meetsTargets(statsOf(days))) break;
   }
@@ -377,7 +379,6 @@ export function buildDemoDataset(now: Date = new Date()): { days: DemoDay[]; sta
     days = merged;
     if (secondaryMeetsTargets(merged)) break;
   }
-  injectNewsExample(days, now);
   gradeAll(days);
   assertDemoCalendar(days);
   return { days, stats: statsOf(days), seed: main!.seed };

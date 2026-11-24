@@ -1,3 +1,4 @@
+import { NEWS_SHIELD_DEFAULT_MINUTES } from '@mtc/shared';
 import { parisWallTimeToUtc } from '../../eco-calendar/eco-calendar.schedule';
 import type { DemoTrade } from './model';
 
@@ -40,7 +41,7 @@ export function newsShieldExample(now: Date) {
     alert: {
       type: 'D1_NEWS_WINDOW', severity: 'high', message: NEWS_EXAMPLE_ALERT_MESSAGE, createdAt: openedAt,
       context: {
-        slot: announcementAt.toISOString(), minutesBefore: 3, windowMinutes: 5,
+        slot: announcementAt.toISOString(), minutesBefore: 3, windowMinutes: NEWS_SHIELD_DEFAULT_MINUTES,
         events: [
           { label: 'Créations d’emplois non agricoles (NFP)', currency: 'USD' },
           { label: 'Taux de chômage', currency: 'USD' },
