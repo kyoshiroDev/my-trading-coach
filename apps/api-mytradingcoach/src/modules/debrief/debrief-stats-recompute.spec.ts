@@ -58,6 +58,15 @@ describe('recomputeDebriefStats (#943)', () => {
     expect(prisma.weeklyDebrief.update).toHaveBeenCalledWith({ where: { id: 'd1' }, data: { stats: WEEK } });
   });
 
+  it('stat du bouclier annonces (#670) gardée telle quelle : ni comptée comme modifiée, ni effacée', async () => {
+    const newsWindow = { windowMinutes: 5, accounts: [{ accountId: 'acc-1', inside: { count: 1, pnl: -10, winRate: 0 }, outside: { count: 0, pnl: 0, winRate: 0 } }] };
+    const same = client([debrief('d1', { ...WEEK, newsWindow })]);
+    expect(await recomputeDebriefStats(same.prisma as never, { apply: false })).toMatchObject({ modifies: 0, inchanges: 1 });
+    const changed = client([debrief('d1', { ...HISTORY, newsWindow })]);
+    await recomputeDebriefStats(changed.prisma as never, { apply: true, backup: vi.fn() });
+    expect(changed.prisma.weeklyDebrief.update).toHaveBeenCalledWith({ where: { id: 'd1' }, data: { stats: { ...WEEK, newsWindow } } });
+  });
+
   it('écriture sans sauvegarde : refusée', async () => {
     const { prisma } = client([debrief('d1', HISTORY)]);
     await expect(recomputeDebriefStats(prisma as never, { apply: true })).rejects.toThrow('sauvegarde');

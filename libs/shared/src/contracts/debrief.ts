@@ -54,6 +54,31 @@ export interface DebriefInsights {
   objectives?: DebriefObjective[];
 }
 
+/** Trades d'une partie de la semaine (bouclier annonces, #670) : nombre, P&L net, taux de réussite (0-100). */
+export interface DebriefNewsBucket {
+  count: number;
+  pnl: number;
+  winRate: number;
+}
+
+/** Stat d'un compte : trades autour des annonces et reste du compte, P&L dans la devise du compte. */
+export interface DebriefNewsAccount {
+  /** null = trades sans compte. */
+  accountId: string | null;
+  inside: DebriefNewsBucket;
+  outside: DebriefNewsBucket;
+}
+
+/**
+ * Stat « Tes trades autour des annonces » (#670), par compte (#947) : trades clôturés entre X min
+ * avant et X min après une annonce à fort impact de leurs devises, comparés au reste. Absente des
+ * anciens débriefs.
+ */
+export interface DebriefNewsWindow {
+  windowMinutes: number;
+  accounts: DebriefNewsAccount[];
+}
+
 export interface WeeklyDebrief {
   id: string;
   weekNumber: number;
@@ -63,6 +88,6 @@ export interface WeeklyDebrief {
   aiSummary: string;
   insights: DebriefInsights;
   objectives: DebriefObjective[];
-  stats: { winRate: number; totalPnl: number; totalTrades: number };
+  stats: { winRate: number; totalPnl: number; totalTrades: number; newsWindow?: DebriefNewsWindow };
   generatedAt: string;
 }

@@ -71,3 +71,34 @@ Module `modules/behavior/`. **Rien n'est affiché** tant que Greg n'a pas valid�
   `mutedByUser` (prévus pour l'UI de phase 2). Index `(userId, createdAt)`, `(accountId, tradeDay)`.
   Volume attendu ≈ 1 alerte par séance de trader actif : conservation à décider avant la phase 2
   (`RETENTION_RULES`).
+
+## Bouclier annonces (#670, 2026-11-23)
+
+Détecteur **`D1_NEWS_WINDOW`** (`behavior-news.ts`, calcul pur partagé) : position ouverte, ou qui s'ouvre,
+moins de X minutes avant une annonce **à fort impact** (`EcoEvent.impact = 'high'`, heure de Paris
+convertie par `parisWallTimeToUtc`) d'une devise de l'actif (`assetCurrencies`, `eco-calendar.briefing.ts`).
+Message factuel : « NFP dans 4 min, position ouverte sur NQ. » (libellé `nameFr`, sinon nom FMP sans
+« (Sep) »). X = `User.newsShieldMinutes` (null = 5, 0 = coupé, 1 à 30), réglé dans Profil, modale stratégie.
+- **Seule exception à la phase silencieuse** (décision de Greg du 2026-11-23) : D1 est **affiché tout de
+  suite**, hors `BEHAVIOR_ALERTS_UI`, par l'événement `news:alert` (toast `PropAlertsService.handleNews`)
+  et le push `TraderNotifier` (titre « Annonce à venir ») ; enregistré aussi dans `BehaviorAlert` pour #671.
+  Les autres détecteurs restent silencieux.
+- Deux déclencheurs, un pipeline (`NewsShieldService.record`) : à l'entrée (`BehaviorAlertsService.check`,
+  D1 sort du chemin générique) et **avant l'annonce** par un minuteur de 60 s dans `TradovateLiveGateway`
+  sur le worker qui tient le WebSocket (`TradovateLiveService.ownedConnections`, bail détenu = positions
+  Redis à jour). Anti-spam atomique `SET NX` (6 h) sur `behavior:news:<compte>:<créneau>`, partagé entre
+  les deux déclencheurs et entre workers. Annonces relues au plus une fois par minute ; aucune annonce dans
+  30 min = sortie sans lire Redis ; réglages et `isDemo` en une requête groupée. App fermée : seulement si la
+  veille serveur (#770, Premium) garde le WebSocket.
+- Coupe-circuit **`NEWS_SHIELD_ENABLED`** (`true` seulement, absente = coupé) : allumé sur dev au merge,
+  en prod par Greg après vérification sur dev.
+- Gating : alerte en séance gratuite ; stat du débrief Premium (avec le Weekly Debrief).
+- Débrief : `WeeklyDebrief.stats.newsWindow` (`debrief-news-window.ts`, pur, sans IA, hors prompt IA),
+  **par compte** (`{ windowMinutes, accounts: [{ accountId, inside, outside }] }`) : trades dont `tradedAt`
+  (clôture pour un trade synchronisé) tombe de X min avant à X min après une annonce forte de leurs
+  devises, contre le reste du compte : nombre, P&L net, taux de réussite. Fenêtre du trader, défaut si
+  coupé. Absente si aucun trade clôturé ou en cas d'échec (le débrief se génère quand même). L'app montre
+  deux lignes par compte ayant au moins un trade autour d'une annonce, P&L par `pnlFormat` avec
+  l'`accountId` (devise du compte, #947), et masque le bloc sinon.
+- Démo : trade NQ à 14:27 le vendredi précédent (3 min avant le NFP du faux vendredi), alerte D1 et stat
+  dans le débrief de la semaine (`demo-data/news-shield-example.ts`).

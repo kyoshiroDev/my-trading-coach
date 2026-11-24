@@ -46,6 +46,8 @@ export interface AuthUser {
   tradingSessions?: string[];
   tradesPerDayMin?: number | null;
   tradesPerDayMax?: number | null;
+  /** Bouclier annonces (#670) : null = défaut (5 min), 0 = coupé. */
+  newsShieldMinutes?: number | null;
   strategyDescription?: string | null;
   tradingAssets?: string[];
   favoriteAsset?: string | null;

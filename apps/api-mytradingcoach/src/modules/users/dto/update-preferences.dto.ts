@@ -1,4 +1,5 @@
 import { IsArray, IsBoolean, IsInt, IsNumber, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
+import { NEWS_SHIELD_MAX_MINUTES } from '@mtc/shared';
 
 export class UpdatePreferencesDto {
   /**
@@ -59,4 +60,11 @@ export class UpdatePreferencesDto {
   @MaxLength(200)
   @IsOptional()
   strategyDescription?: string;
+
+  /** Bouclier annonces (#670) : minutes avant une annonce forte, 0 = coupé. Absent = inchangé. */
+  @IsInt()
+  @Min(0)
+  @Max(NEWS_SHIELD_MAX_MINUTES)
+  @IsOptional()
+  newsShieldMinutes?: number;
 }

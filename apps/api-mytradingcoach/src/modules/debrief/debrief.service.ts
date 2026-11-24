@@ -1,4 +1,7 @@
 import { BadRequestException, ForbiddenException, Injectable, Logger, NotFoundException, Optional } from '@nestjs/common';
+import { newsWindowStats, type NewsWindowStats } from './debrief-news-window';
+import { NEWS_SHIELD_DEFAULT_MINUTES, type NewsEvent, newsLabel, newsShieldMinutes } from '../behavior/behavior-news';
+import { parisDate } from '../eco-calendar/eco-calendar.schedule';
 import { Plan, Prisma, Role, WeeklyDebrief } from '@prisma/client';
 import { effectiveEmotion } from '../../common/utils/effective-emotion.util';
 import { averageKnownRiskReward, computeTradeStats, netPnl } from '@mtc/shared';
@@ -176,6 +179,9 @@ export class DebriefService {
     // partent dans le prompt IA, dans WeeklyDebrief.stats et dans l'e-mail « débrief prêt ».
     // Format (`debriefStats`) partagé avec le script de recalcul des anciens débriefs (#943).
     const stats = debriefStats(await this.analyticsService.getSummary(userId, undefined, startDate, endDate));
+    // Bouclier annonces (#670) : trades autour des annonces fortes, enregistré avec le débrief seulement
+    // (pas dans le prompt IA). Fenêtre du trader, sinon le défaut (constat, pas une alerte).
+    const newsWindow = await this.newsWindow(userId, closedTrades, startDate, endDate);
 
     // C5 (#1046) : le débrief immédiatement AVANT la semaine visée, à cheval sur l'année. Avant,
     // `{ userId, year }` trié par semaine renvoyait le débrief de la semaine elle-même en
@@ -297,17 +303,52 @@ export class DebriefService {
         aiSummary: overviewSummary,
         insights: JSON.parse(JSON.stringify(structuredInsights)),
         objectives: objectivesJson,
-        stats,
+        stats: { ...stats, ...(newsWindow ? { newsWindow } : {}) } as unknown as Prisma.InputJsonValue,
       },
       update: {
         aiSummary: overviewSummary,
         insights: JSON.parse(JSON.stringify(structuredInsights)),
         objectives: objectivesJson,
-        stats,
+        stats: { ...stats, ...(newsWindow ? { newsWindow } : {}) } as unknown as Prisma.InputJsonValue,
         generatedAt: new Date(),
       },
     });
     return { debrief, created: true };
+  }
+
+  /** Stat « Tes trades autour des annonces » (#670) : annonces fortes de la semaine, heure de Paris → UTC. */
+  private async newsWindow(
+    userId: string,
+    trades: { asset: string; tradedAt: Date; pnl: number | null; commission?: number | null; accountId?: string | null }[],
+    startDate: Date,
+    endDate: Date,
+  ): Promise<NewsWindowStats | null> {
+    // Stat secondaire : un échec ne bloque jamais la génération du débrief (bloc masqué).
+    try {
+      return await this.computeNewsWindow(userId, trades, startDate, endDate);
+    } catch (err: unknown) {
+      this.logger.warn(`Stat « autour des annonces » non calculée : ${err instanceof Error ? err.name : 'Error'}`);
+      return null;
+    }
+  }
+
+  private async computeNewsWindow(
+    userId: string,
+    trades: { asset: string; tradedAt: Date; pnl: number | null; commission?: number | null; accountId?: string | null }[],
+    startDate: Date,
+    endDate: Date,
+  ): Promise<NewsWindowStats | null> {
+    const [user, rows] = await Promise.all([
+      this.prisma.user.findUnique({ where: { id: userId }, select: { newsShieldMinutes: true } }),
+      this.prisma.ecoEvent.findMany({
+        where: { impact: 'high', date: { gte: parisDate(startDate), lte: parisDate(endDate) } },
+        select: { date: true, time: true, name: true, nameFr: true, currency: true },
+      }),
+    ]);
+    const events = rows
+      .map((r) => ({ at: parisWallTimeToUtc(r.date, r.time), label: newsLabel(r), currency: r.currency }))
+      .filter((e): e is NewsEvent => e.at !== null);
+    return newsWindowStats(trades, events, newsShieldMinutes(user?.newsShieldMinutes) || NEWS_SHIELD_DEFAULT_MINUTES);
   }
 
   /** Stats déterministes d'un compte sur la semaine (jamais l'IA pour les chiffres). */

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { TestBed } from '@angular/core/testing';
-import { PropAlertsService, TILT_TOAST_MS, propAlertMessage, tiltMessage, type PropAlertEvent, type TiltAlertEvent } from './prop-alerts.service';
+import { PropAlertsService, NEWS_TOAST_MS, TILT_TOAST_MS, propAlertMessage, tiltMessage, type PropAlertEvent, type TiltAlertEvent } from './prop-alerts.service';
 import { ToastService } from './toast.service';
 import { AlertSoundService } from './alert-sound.service';
 import { LostAccountFlowService } from './lost-account-flow.service';
@@ -117,6 +117,14 @@ describe('PropAlertsService.handle', () => {
     svc.handleTilt(tilt());
     expect(toast.warning).toHaveBeenCalledWith(expect.stringContaining('trade repris'), { duration: TILT_TOAST_MS });
     expect(notifications[0]).toEqual({ title: 'MyTradingCoach · pause\u00a0?', opts: expect.objectContaining({ tag: 'a:tilt:revenge' }) });
+  });
+
+  it('bouclier annonces (#670) : avertissement avec le message du serveur, son, notification « annonce à venir »', () => {
+    const { svc, toast, sound } = setup();
+    svc.handleNews({ id: 'n1', accountId: 'a', type: 'D1_NEWS_WINDOW', message: 'NFP dans 4 min, position ouverte sur NQ.', context: { slot: '2026-12-04T13:30:00.000Z' } });
+    expect(toast.warning).toHaveBeenCalledWith('NFP dans 4 min, position ouverte sur NQ.', { duration: NEWS_TOAST_MS });
+    expect(sound.play).toHaveBeenCalledWith('warning');
+    expect(notifications[0]).toEqual({ title: 'MyTradingCoach · annonce à venir', opts: expect.objectContaining({ tag: 'a:news:2026-12-04T13:30:00.000Z' }) });
   });
 
   it('un son par gravité : avertissement, critique ou dépassé, bonne nouvelle, anti-tilt', () => {

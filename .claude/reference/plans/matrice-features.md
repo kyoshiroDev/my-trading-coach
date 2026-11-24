@@ -12,6 +12,9 @@
 - 📊 **Contexte marché** (DXY, taux US, indices)
 - 📅 **Calendrier éco IA** (bull/bear par actifs)
 - 📰 **Flux news filtrées** sur tes actifs (+ traduction Haiku cachée)
+- 🛡️ **Bouclier annonces** (#670) : alerte en séance (toast et notification de la page), app ouverte et
+  compte Tradovate connecté, quand une position est ouverte ou s'ouvre peu avant une annonce à fort
+  impact ; seuil réglable de 0 à 30 min dans le Profil (décision du 2026-11-23)
 
 **PREMIUM** : tout le FREE, plus la **profondeur** et l'**IA personnelle** :
 - 📋 **Weekly Debrief IA** (auto, 1/user/semaine ; au plus 2 si un débrief manuel de milieu de semaine est refait le dimanche, C1 #1048)
@@ -21,6 +24,8 @@
   aucun export de données n'existe, retiré de cette liste, Q3)
 - 📈 **Analytics avancés** (heatmap heure, equity/drawdown détaillé, by-setup)
 - 📄 **PDF du débrief de la semaine** (aucun rapport mensuel n'existe)
+- 🛡️ **Bouclier annonces** (#670) : stat « Tes trades autour des annonces » du Weekly Debrief (sans IA) ;
+  push et alerte app fermée par la veille serveur #770
 - 🌙 **Recap journalier email 17h30**
 - **Comptes illimités**, chacun avec les règles de sa prop firm (le FREE a déjà son compte avec ses règles)
 - 🚨 **Alertes avant la limite** et 🧘 **anti-tilt** en direct (+ sons et notifications) : app ouverte

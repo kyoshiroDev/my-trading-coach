@@ -114,7 +114,12 @@ export async function recomputeDebriefStats(
         else report.ignores.tradesSupprimes++;
         continue;
       }
-      const next = debriefStats(await computeSummary(prisma, { userId: d.userId, from: d.startDate, to: d.endDate }));
+      // Stat du bouclier annonces (#670) : calculée à part, hors résumé, gardée telle quelle.
+      const prev = d.stats && typeof d.stats === 'object' && !Array.isArray(d.stats) ? (d.stats as Record<string, unknown>) : {};
+      const next = {
+        ...debriefStats(await computeSummary(prisma, { userId: d.userId, from: d.startDate, to: d.endDate })),
+        ...('newsWindow' in prev ? { newsWindow: prev['newsWindow'] } : {}),
+      };
       const fields = changedStatsFields(d.stats, next);
       if (fields.length === 0) {
         report.inchanges++;

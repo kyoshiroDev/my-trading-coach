@@ -68,6 +68,8 @@ export const ENV_VARS: EnvVar[] = [
   // affichage dans l'app seulement si BEHAVIOR_ALERTS_UI=true (phase 1 : jamais).
   { name: 'BEHAVIOR_ALERTS_RECORD', level: 'optional', check: isBoolean },
   { name: 'BEHAVIOR_ALERTS_UI', level: 'optional', check: isBoolean },
+  // Bouclier annonces (#670) : alerte avant une annonce forte, affichée hors BEHAVIOR_ALERTS_UI. true seulement.
+  { name: 'NEWS_SHIELD_ENABLED', level: 'optional', check: isBoolean },
   // Notifications push de l'admin (config/push-config.ts). Absentes ou incomplètes → push désactivé,
   // l'API démarre quand même. Clés : node tools/scripts/vapid-generate.mjs (jamais commitées).
   { name: 'PUSH_ENABLED', level: 'optional', check: isBoolean },

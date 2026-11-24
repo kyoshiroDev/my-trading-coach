@@ -106,10 +106,16 @@ function behavior(accountId: string, draft: Pick<BehaviorAlertDraft, 'type' | 'm
   return live('Signal de comportement', body, `behavior-${accountId}-${draft.type}`, 'normal');
 }
 
+/** Bouclier annonces (#670) : le message du détecteur, déjà factuel (annonce, délai, actif). */
+function news(accountId: string, draft: Pick<BehaviorAlertDraft, 'message' | 'context'>): TraderPushMessage {
+  return live('Annonce à venir', draft.message, `news-${accountId}-${String(draft.context['slotKey'] ?? '')}`, 'high');
+}
+
 export const TRADER_PUSH_MESSAGES = {
   propAlert,
   tilt,
   behavior,
+  news,
   recapReady: (): TraderPushMessage => ({
     title: 'Récap du jour',
     body: 'Ton récap du jour est prêt.',

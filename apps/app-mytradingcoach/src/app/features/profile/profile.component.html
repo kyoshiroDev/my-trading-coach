@@ -50,6 +50,10 @@
               <span class="ssum-v">{{ tradesPerDayMin() }}-{{ tradesPerDayMax() }}</span>
             </div>
             <div class="ssum-row">
+              <span class="ssum-k">Annonces</span>
+              <span class="ssum-v" data-testid="profile-news-shield-summary">{{ newsShieldLabel(newsShield()) }}</span>
+            </div>
+            <div class="ssum-row">
               <span class="ssum-k">Description</span>
               <span class="ssum-v desc">{{ strategyDesc().trim() || '-' }}</span>
             </div>
@@ -728,6 +732,19 @@
               [value]="draftMax()" (input)="draftMax.set(+$any($event.target).value)" />
             <span class="freq-slider-val">{{ draftMax() }}</span>
           </div>
+        </div>
+
+        <!-- Bouclier annonces (#670) -->
+        <div class="stp-fld">
+          <div class="stp-fld-label">Bouclier annonces <span class="opt">{{ newsShieldLabel(draftNews()) }}</span></div>
+          <div class="freq-slider-row">
+            <span class="freq-slider-label nw-delay">Délai</span>
+            <input type="range" class="freq-slider" min="0" [max]="NEWS_SHIELD_MAX" data-testid="profile-news-shield"
+              aria-label="Minutes avant une annonce à fort impact (0 = coupé)"
+              [value]="draftNews()" (input)="draftNews.set(+$any($event.target).value)" />
+            <span class="freq-slider-val nw-delay">{{ draftNews() }}&nbsp;min</span>
+          </div>
+          <p class="stp-fld-help">Je t'alerte si tu as une position ouverte, ou si tu en ouvres une, dans ce délai avant une annonce à fort impact sur l'instrument. 0 pour couper.</p>
         </div>
 
         <!-- Description -->
