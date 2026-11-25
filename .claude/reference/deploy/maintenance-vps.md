@@ -78,10 +78,13 @@ et sauvegardes). Il ne partage que Traefik.
   Test local du 2026-11-25 (traefik v3.7.19 jetable) : config acceptée, plus aucun WRN, les 7 caractères
   en 400 dans le chemin (la query passe), `X_Test`, `X.Auth.User`, `Foo_Bar` retirés, `X-Ok` gardé,
   redirection `web` → `websecure` intacte ; un chemin encodé sur `web` répond 400 avant la redirection.
-- **Contrôle à J+1** (lecture seule, lancé par Greg) : un refus pour caractère encodé a lieu avant le
-  routage, le journal d'accès ne donne donc ni hôte ni routeur fiable. Lister les chemins refusés des
-  24 dernières heures et repérer ceux de l'autre projet :
-  `docker logs --since 24h mtc_traefik 2>&1 | grep '" 400 ' | grep -iE '%(2f|5c|00|3b|25|3f|23)' | cut -d'"' -f2 | sort | uniq -c | sort -rn | head -30`.
+  Le journal d'accès donne le routeur pour ces 400 (hôte inconnu : 404) ; les requêtes sur `web` n'y
+  apparaissent pas.
+- **Contrôle à J+1** (lecture seule, lancé par Greg) : le refus a lieu après le routage : le journal
+  d'accès donne le routeur (champ 8 entre guillemets), le backend vaut `-`. Grouper par routeur ; ceux
+  hors MTC (autres que `api-prod-secure`, `app-prod`) sont à l'autre projet. Filtrer sur le chemin seul
+  (une 400 applicative sur une query encodée ne compte pas) :
+  `docker logs --since 24h mtc_traefik 2>&1 | grep -iE '^[^"]*"[A-Z]+ [^ ?]*%(2f|5c|00|3b|25|3f|23)[^ ]* [^"]*" 400 ' | awk -F'"' '{print $8, $2}' | sort | uniq -c | sort -rn | head -30`
 - **Retour arrière ciblé** si l'autre projet est gêné : retirer seulement le bloc `encodedCharacters`
   de `web` et `websecure` (retour aux valeurs par défaut) et recréer Traefik ; garder
   `aliasHeadersStrategy: delete`. **Retour complet** : remettre la sauvegarde datée de `traefik.yml`,
