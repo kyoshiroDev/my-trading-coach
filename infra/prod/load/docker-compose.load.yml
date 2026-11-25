@@ -132,6 +132,8 @@ services:
       - "traefik.http.routers.load-api.rule=Host(`load.api.mytradingcoach.app`)"
       - "traefik.http.routers.load-api.entrypoints=websecure"
       - "traefik.http.routers.load-api.tls.certresolver=letsencrypt"
+      # En-têtes au routeur : l'entrypoint websecure est partagé avec un autre projet hébergé.
+      - "traefik.http.routers.load-api.middlewares=security-headers@file"
       - "traefik.http.services.load-api.loadbalancer.server.port=3000"
 
 volumes:
