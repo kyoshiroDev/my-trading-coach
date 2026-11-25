@@ -10,8 +10,8 @@
 
 - `WEB_CONCURRENCY` : nombre de workers HTTP, défaut `min(cœurs, 3)`. Au démarrage, le primaire
   journalise le nombre retenu et le plafond de tas.
-- Compose prod / dev / beta : `NODE_OPTIONS=--max-old-space-size=384`, `mem_limit: 2g`,
-  `memswap_limit: 2g`, `stop_grace_period: 30s`. **Prod depuis le 2026-11-25** (VPS partagé avec un
+- Compose dev / beta : `NODE_OPTIONS=--max-old-space-size=384`, `mem_limit: 2g`,
+  `memswap_limit: 2g`, `stop_grace_period: 30s` ; prod : voir ci-dessous. **Prod depuis le 2026-11-25** (VPS partagé avec un
   autre projet hébergé) : `WEB_CONCURRENCY=2`, `mem_limit`/`memswap_limit` 1536m par couleur, worker
   768m (voir `maintenance-vps.md`). Routeur Traefik de l'API prod : `api-prod-secure`, avec
   `middlewares=security-headers@file` (service `api-prod`).
