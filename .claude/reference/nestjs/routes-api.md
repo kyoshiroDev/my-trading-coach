@@ -3,6 +3,14 @@
 > Contenu déplacé à l'identique depuis `.claude/agents/nestjs.md` le 2026-11-16 (PROMPT-orchestration-agents).
 > Chaque bloc garde son titre d'origine ; « Origine » donne l'agent, la section et la date d'origine (date du titre, sinon premier commit qui l'a écrite).
 
+## Contraintes imposées par Traefik prod (#1282, 2026-11-25)
+
+- En-tête personnalisé : nom en lettres, chiffres et tirets seulement (Traefik supprime les autres,
+  `aliasHeadersStrategy: delete`).
+- Valeur libre (code, nom de fichier, texte) : en query ou dans le corps, jamais dans le chemin.
+  Traefik renvoie 400 sur `%2F %5C %00 %3B %25 %3F %23` dans le chemin (`encodedCharacters`).
+- Détail et procédure : `reference/deploy/maintenance-vps.md`, section « Durcissement des entrypoints Traefik prod ».
+
 <!-- Origine : nestjs.md · API REST · 2026-04-25 -->
 > **Origine** : `nestjs.md` · « API REST » · 2026-04-25
 

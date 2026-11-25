@@ -70,6 +70,12 @@ et sauvegardes). Il ne partage que Traefik.
   secondaire de l'autre projet ne bouge pas), recréation de Traefik (quelques secondes de coupure),
   puis vérifier : plus de `WRN` sur ces options dans `docker logs mtc_traefik`, `/api/health` en 200,
   `curl -s -o /dev/null -w '%{http_code}' https://api.mytradingcoach.app/api/a%2Fb` en 400, l'app en 200.
+- **Contrôle à J+1** (lecture seule, lancé par Greg) : compter les 400 des 24 dernières heures sur les
+  routeurs qui ne sont pas à MTC dans le journal d'accès de Traefik, par exemple
+  `docker logs --since 24h mtc_traefik 2>&1 | grep '" 400 ' | grep -v -e api-prod-secure -e app-prod -e load-api | wc -l`.
+- **Retour arrière ciblé** si l'autre projet est gêné : retirer seulement le bloc `encodedCharacters`
+  de `web` et `websecure` (retour aux valeurs par défaut) et recréer Traefik ; garder
+  `aliasHeadersStrategy: delete`. Retour complet : remettre la sauvegarde datée de `traefik.yml`.
 
 ### Mettre à jour une image (nginx, Traefik…) — appliqué le 2026-11-22 (faille nginx2root)
 
