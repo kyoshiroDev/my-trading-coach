@@ -66,8 +66,12 @@ et sauvegardes). Il ne partage que Traefik.
   il y faut 1 792 Mio disponibles, sinon le déploiement dev échoue avant la migration (dev inchangé). Garde-fou : pas de build si
   `MemAvailable` < 1536 + 256 Mio (échec avant migration, la version en service continue). Dans
   l'image, `NODE_OPTIONS=--max-old-space-size=1024` (étages builder et migrator). Le pic à froid est
-  mesuré à chaque PR qui touche l'API ou le bot (workflow `build-memory.yml`). Prune : `docker buildx
-  prune --builder mtc-build` (CD et crontab). **Ne jamais construire une image hors de ce builder sur le
+  mesuré à chaque PR qui touche l'API ou le bot (workflow `build-memory.yml`, `infra/ci/build-memory-measure.sh`).
+  Indicateur : pic de `anon` + `kernel` + `shmem` (mémoire non récupérable), `oom_kill` = 0. `memory.peak` compte le
+  cache de pages et touche le plafond sans risque. Prune : `docker buildx
+  prune --builder mtc-build` (CD et crontab), précédé de `docker buildx inspect --bootstrap mtc-build` : le builder
+  est arrêté et `prune` ne le démarre pas (« driver not running », CD dev du 2026-11-25). Builder absent
+  (après `docker buildx rm`) : prune sauté, une ligne au journal. **Ne jamais construire une image hors de ce builder sur le
   VPS prod** (sauf reprise à la main, `docs/ops/reprise-vps.md`) sans vérifier la RAM libre (`free -m`).
 - Recréer `mtc_postgres` (changement de réglages ou de limites) : PgBouncer doit être relancé, sinon il
   garde l'ancienne IP de Postgres et l'API reste en 503 (~75 s le 2026-11-25). Toujours enchaîner

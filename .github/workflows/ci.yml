@@ -215,9 +215,15 @@ jobs:
             git reset --hard origin/dev
             # Blue/green sans coupure (SCA-B8-03) : build taggé SHA, migration, bascule, worker.
             bash infra/deploy-api.sh dev
-            docker buildx prune --builder mtc-build --keep-storage=8GB -f || rc=$?
-            docker buildx stop mtc-build
-            [ "${rc:-0}" = 0 ] || exit "$rc"
+            # Builder arrêté après chaque build : le prune ne le démarre pas (« driver not running »).
+            # Builder absent (après `docker buildx rm`, déploiement sans build) : prune sauté.
+            if docker buildx inspect mtc-build >/dev/null 2>&1; then
+              { docker buildx inspect --bootstrap mtc-build >/dev/null && docker buildx prune --builder mtc-build --keep-storage=8GB -f; } || rc=$?
+              docker buildx stop mtc-build
+              [ "${rc:-0}" = 0 ] || exit "$rc"
+            else
+              echo "mtc-build absent : prune sauté"
+            fi
             echo "Dev API deployment complete at $(date)"
 
   # ── Deploy Angular app dev → VPS static ──────────────────────────────────
