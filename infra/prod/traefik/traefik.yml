@@ -1,5 +1,7 @@
 # Traefik — VPS prod MyTradingCoach (149.202.40.240)
 # Pas de dashboard exposé : en cas de besoin, tunnel SSH vers le port 8080 du conteneur.
+# Le serveur contient en plus un résolveur ACME secondaire et un docker-compose.override.yml (réseaux)
+# propres à un autre projet hébergé. Ne jamais les supprimer ni les recopier ici.
 global:
   checkNewVersion: false
   sendAnonymousUsage: false
@@ -23,17 +25,11 @@ entryPoints:
           permanent: true
   websecure:
     address: ":443"
-    # TEMPORAIRE (bascule) : l ancien VPS relaie api./app. ici en TCP (TLS passthrough) avec le
-    # PROXY protocol, le temps que le DNS se propage → Traefik voit la vraie IP du client et l API
-    # (trust proxy 1) garde une limite de débit par visiteur. À retirer avec le relais.
-    proxyProtocol:
-      trustedIPs:
-        - "51.83.197.230/32"
     http:
       tls:
         certResolver: letsencrypt
-      middlewares:
-        - security-headers@file
+      # Pas de middleware ici : entrypoint partagé avec un autre projet hébergé ; chaque routeur MTC
+      # déclare security-headers@file.
     transport:
       respondingTimeouts:
         readTimeout: 60s

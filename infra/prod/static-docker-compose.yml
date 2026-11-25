@@ -24,6 +24,8 @@ services:
       - "traefik.http.routers.app-prod.rule=Host(`app.mytradingcoach.app`)"
       - "traefik.http.routers.app-prod.entrypoints=websecure"
       - "traefik.http.routers.app-prod.tls.certresolver=letsencrypt"
+      # En-têtes au routeur : l'entrypoint websecure est partagé avec un autre projet hébergé.
+      - "traefik.http.routers.app-prod.middlewares=security-headers@file"
       - "traefik.http.services.app-prod.loadbalancer.server.port=80"
 
 networks:
