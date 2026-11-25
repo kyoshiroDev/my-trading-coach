@@ -48,7 +48,8 @@ et sauvegardes). Il ne partage que Traefik.
   11 671 Mio − hôte hors conteneurs (H) − 4 096 − pire cas MTC ≥ 256 Mio de marge. Pire cas MTC en
   plafonds : ~5 888 Mio, que ce soit en régime normal + build, pendant la bascule ou la nuit (restic).
   Verrou `/tmp/mtc-memoire.lock` (`flock`) partagé par `deploy-api.sh` (tout le déploiement),
-  `build-image.sh` et `offsite.sh` : jamais de build, migration ou bascule pendant restic (sinon
+  `build-image.sh`, `offsite.sh` (sauvegarde et restauration) et les prunes de `mtc-build` (CD,
+  crontab) : jamais de build, migration, bascule ni prune pendant restic (sinon
   4 352 + 1 536 + 512 = 6 400). Toute hausse d'un plafond MTC se recalcule avec cette formule avant d'être appliquée. `gzip` du dump
   de 3 h n'est pas plafonné : quelques Mio.
 - **Builds plafonnés** (#1286) : l'image API (`deploy-api.sh`) et le bot (`cd.yml`) se construisent par
