@@ -236,7 +236,7 @@ Contenu déplacé à l'identique le 2026-11-16. Lire un fichier seulement quand 
 | `nestjs/premium-guard.md` | accès Premium côté API, essai, Premium offert |
 | `nestjs/regles-obligatoires-detail.md` | avant tout travail API : version complète des règles résumées ci-dessus |
 | `nestjs/robustesse-api.md` | délais, single-flight, cache HTTP, APP_ROLE, files BullMQ |
-| `nestjs/routes-api.md` | ajout ou modification d'une route (liste complète des routes) |
+| `nestjs/routes-api.md` | ajout ou modification d'une route (liste complète des routes ; contraintes Traefik sur les en-têtes et les chemins, #1282) |
 | `nestjs/stats-sql.md` | statistiques et métriques calculées en SQL |
 | `commun/acquisition-inscription.md` | UTM, `source` d'inscription, écran Acquisition |
 | `commun/autopsie-669.md` | autopsie d'un compte grillé (API, écran, schéma, tests) |
