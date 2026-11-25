@@ -64,7 +64,7 @@ aucun en-tête `Keep-Alive`) :
 la CI depuis le dépôt cloné sur le VPS. Compose : `api_blue` / `api_green` (`APP_ROLE=web`, mêmes
 labels Traefik → même service) + `worker` (`APP_ROLE=worker`, crons et files, sans route Traefik).
 
-Étapes : image `mtc_api_<env>:<sha>` (build sur le VPS, sautée si elle existe) → migration unique
+Étapes : image `mtc_api_<env>:<sha>` (build sur le VPS dans le builder plafonné `mtc-build` via `infra/build-image.sh`, garde-fou `MemAvailable`, #1286 ; sautée si elle existe) → migration unique
 (`run --rm … migrate`, conteneurs en `RUN_MIGRATIONS=false`) → couleur inactive démarrée → healthy
 + `/health/ready` → **vérification dans le journal d'accès Traefik que des sondes
 `/api/health?deploy-probe=<sha>` arrivent sur son IP** → drain de l'ancienne (`/tmp/drain` → healthcheck

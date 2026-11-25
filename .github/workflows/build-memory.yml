@@ -1,0 +1,55 @@
+name: Build mémoire
+
+# Mesure le pic mémoire du build des images API et bot dans le builder plafonné de MTC (#1286),
+# exactement comme sur le VPS prod (infra/build-image.sh : 1536 Mio, un pas à la fois), à froid
+# (--no-cache). Un build qui grossit au point de dépasser le plafond casse ici, pas au CD de prod.
+on:
+  pull_request:
+    branches: [main, dev]
+    paths:
+      - 'apps/api-mytradingcoach/**'
+      - 'prisma/**'
+      - 'libs/shared/**'
+      - 'scripts/discord-bot/**'
+      - 'vendor/**'
+      - 'package.json'
+      - '.npmrc'
+      - 'nx.json'
+      - 'tsconfig*.json'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+      - 'infra/build-image.sh'
+      - 'infra/buildkitd.toml'
+      - 'infra/buildkitd.ci.toml'
+      - 'infra/ci/build-memory-measure.sh'
+      - '.github/workflows/build-memory.yml'
+
+concurrency:
+  group: build-memory-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-memory:
+    name: Build API et bot sous plafond mémoire
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+      # Alerte si la mémoire non récupérable (anon + kernel) dépasse 1,3 Gio sur un plafond de 1,5 Gio.
+      WARN_MIB: 1331
+      # Docker Hub anonyme refuse les IP des runners (toomanyrequests) : miroir mirror.gcr.io.
+      BUILDKIT_IMAGE: mirror.gcr.io/moby/buildkit:v0.35.1
+      BUILDKITD_CONFIG: infra/buildkitd.ci.toml
+    steps:
+      - uses: actions/checkout@v4
+
+      # Mesure : infra/ci/build-memory-measure.sh (pic anon + kernel échantillonné, oom_kill = 0 exigé).
+      - name: Build API (à froid)
+        env:
+          BUILD_EXTRA_ARGS: --no-cache
+        run: bash infra/ci/build-memory-measure.sh API apps/api-mytradingcoach/Dockerfile . mtc_api_mesure:ci
+
+      - name: Build bot Discord (à froid)
+        env:
+          BUILD_EXTRA_ARGS: --no-cache
+        run: bash infra/ci/build-memory-measure.sh Bot scripts/discord-bot/Dockerfile scripts/discord-bot mtc_discord_bot:ci

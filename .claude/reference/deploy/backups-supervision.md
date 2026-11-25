@@ -146,7 +146,7 @@ sont illisibles. Les clés B2 aussi (l'`applicationKey` n'est affichée qu'une f
 **Test de restauration** : `/opt/backups/restore-test.sh`. Il restaure le dernier instantané, charge
 le dernier dump prod dans un **Postgres jetable** (jamais `mtc_postgres`), compare users et trades
 avec la prod, puis nettoie (`docker rm -f -v` : sans `-v`, chaque test laissait un volume
-Postgres anonyme de ~110 Mo, corrigé le 2026-10-16). Premier test le 2026-09-30 : dump de 3 h → 20 users · 882 trades,
+Postgres anonyme de ~110 Mo, corrigé le 2026-10-16). Depuis #1286 (VPS prod partagé, 4 Gio garantis à l'autre projet hébergé) : Postgres jetable plafonné à 512 Mio, et verrou mémoire `/tmp/mtc-memoire.lock` pris après l'étape `offsite.sh restore` (qui le prend elle-même), jusqu'à la fin du test. Premier test le 2026-09-30 : dump de 3 h → 20 users · 882 trades,
 0 erreur de chargement (prod : 911 trades, écart = activité de la journée). À relancer après tout
 changement de la sauvegarde et au moins une fois par trimestre.
 

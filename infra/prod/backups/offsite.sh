@@ -13,12 +13,13 @@ ENV_FILE=/opt/backups/offsite.env
 BACKUPS=/opt/backups
 CACHE=/opt/backups/.restic-cache
 IMAGE=restic/restic:0.18.1
+# Plafond mémoire de restic (#1286) : VPS partagé avec un autre projet hébergé.
 
 [ -r "$ENV_FILE" ] || { echo "[offsite] $ENV_FILE introuvable"; exit 1; }
 mkdir -p "$CACHE"
 
 run() {
-  docker run --rm --env-file "$ENV_FILE" --hostname mtc-prod \
+  docker run --rm --memory 512m --memory-swap 512m --env-file "$ENV_FILE" --hostname mtc-prod \
     -v "$BACKUPS":/data:ro -v /opt/infra:/infra:ro -v /opt/apps/mytradingcoach:/apps:ro \
     -v "$CACHE":/cache -e RESTIC_CACHE_DIR=/cache "$IMAGE" "$@"
 }
@@ -29,10 +30,16 @@ case "${1:-backup}" in
     snap="${2:?instantané (ou latest)}"; target="${3:?dossier cible}"
     shift 3
     mkdir -p "$target"
-    docker run --rm --env-file "$ENV_FILE" -v "$CACHE":/cache -e RESTIC_CACHE_DIR=/cache \
+    exec 8>/tmp/mtc-memoire.lock # verrou mémoire (#1286) : pas pendant un déploiement
+    flock -w 3600 8 || { echo "[offsite] verrou mémoire tenu depuis plus d'1 h (déploiement ?)"; exit 1; }
+    docker run --rm --memory 512m --memory-swap 512m --env-file "$ENV_FILE" -v "$CACHE":/cache -e RESTIC_CACHE_DIR=/cache \
       -v "$(realpath "$target")":/restore "$IMAGE" restore "$snap" --target /restore "$@"
     ;;
   backup)
+    # Verrou mémoire (#1286) partagé avec deploy-api.sh et build-image.sh : restic attend la fin
+    # d'un déploiement en cours (et inversement).
+    exec 8>/tmp/mtc-memoire.lock
+    flock -w 3600 8 || { echo "[offsite] verrou mémoire tenu depuis plus d'1 h (déploiement ?)"; exit 1; }
     echo "[offsite] début $(date -u +%FT%TZ)"
     run cat config >/dev/null 2>&1 || run init
     crontab -l > "$BACKUPS/crontab.current"
