@@ -46,10 +46,25 @@ répond `503 « Indisponible : database »` sur `/api/health/ready`. Constaté e
 (172.18.0.3 → 172.18.0.8) : **~75 s** sans base (18:03:07 → 18:04:20), jusqu'au redémarrage de
 PgBouncer. Redis, recréé en même temps, n'a rien demandé : l'API s'y est reconnectée seule.
 
+**Depuis #1278** : le service pgbouncer du compose prod déclare `restart: true` sous
+`depends_on.postgres` (Compose ≥ 2.17). C'est un filet de sécurité, pas la consigne. Testé en local
+(Compose 2.35.1, projet jetable, 2026-11-25) :
+- **couvert** : `docker compose up -d` du projet entier (sans nom de service) quand il recrée
+  Postgres. PgBouncer est arrêté avant, puis relancé quand Postgres est healthy ;
+- **non couverts** : `up -d postgres` et `up -d --force-recreate postgres` (Postgres change d'IP
+  sans que PgBouncer soit relancé : l'incident #1273), `docker compose restart postgres`,
+  `docker restart mtc_postgres`, crash, reboot de l'hôte. En local, un `restart` (compose ou docker)
+  garde l'IP de la base : sans effet probable sur PgBouncer, non constaté en prod ;
+- coupure avec ce compose : environ 10 à 20 s (PgBouncer attend le healthcheck de Postgres,
+  `interval: 10s`), estimation non mesurée en prod.
+
+La consigne ci-dessous reste la même avec ou sans ce compose, et sur l'ancien VPS (compose hors dépôt) :
+elle couvre tous les cas, au prix d'un redémarrage de PgBouncer en double.
+
 - Enchaîner dans la même commande, sans attente :
   `docker compose up -d && docker restart mtc_pgbouncer` (dans `/opt/infra/databases`), puis
   vérifier `curl -s https://api.mytradingcoach.app/api/health/ready` (statut `ok`).
-  Coupure à annoncer : quelques secondes (non mesurée de bout en bout ; le 2026-11-25, ready est repassé à ok 3 s après le restart de PgBouncer).
+  Coupure à annoncer : quelques secondes sans le compose #1278, environ 10 à 20 s avec lui (attente du healthcheck) ; non mesurée de bout en bout en prod (le 2026-11-25, ready est repassé à ok 3 s après le restart de PgBouncer).
 - `docker restart` suffit : la config de PgBouncer ne change pas (sinon `up -d --force-recreate pgbouncer`).
 - Ancien VPS (dev, beta) : même nom d'hôte `mtc_postgres`, donc même risque probable (non constaté) : même consigne.
 - Autres redémarrages (`docker restart mtc_postgres`, reboot de l'hôte) : comportement non constaté.
