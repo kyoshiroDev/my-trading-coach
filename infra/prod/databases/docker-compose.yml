@@ -78,6 +78,10 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+        # Relance PgBouncer quand compose recrée ou redémarre Postgres : sinon il garde l'ancienne IP
+        # de mtc_postgres et l'API reste en 503 (~75 s le 2026-11-25, #1273). Compose ≥ 2.17.
+        # Ne couvre pas un redémarrage par Docker lui-même (crash, reboot de l'hôte).
+        restart: true
 
   redis:
     image: redis:7.4.11-alpine

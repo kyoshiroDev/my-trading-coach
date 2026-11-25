@@ -46,6 +46,14 @@ répond `503 « Indisponible : database »` sur `/api/health/ready`. Constaté e
 (172.18.0.3 → 172.18.0.8) : **~75 s** sans base (18:03:07 → 18:04:20), jusqu'au redémarrage de
 PgBouncer. Redis, recréé en même temps, n'a rien demandé : l'API s'y est reconnectée seule.
 
+**Depuis #1278** : le service pgbouncer du compose prod déclare `restart: true` sous
+`depends_on.postgres` (Compose ≥ 2.17). Compose relance PgBouncer lui-même quand une opération
+compose recrée ou redémarre Postgres (`up -d`, `restart postgres`). Cela ne couvre ni un
+`docker restart mtc_postgres` lancé hors compose, ni un redémarrage par Docker lui-même (crash,
+reboot de l'hôte) : la vérification ci-dessous reste obligatoire. Tant que le serveur n'a pas reçu
+ce compose (étape de Greg après le merge), ou sur l'ancien VPS (compose hors dépôt), garder la
+commande enchaînée.
+
 - Enchaîner dans la même commande, sans attente :
   `docker compose up -d && docker restart mtc_pgbouncer` (dans `/opt/infra/databases`), puis
   vérifier `curl -s https://api.mytradingcoach.app/api/health/ready` (statut `ok`).
