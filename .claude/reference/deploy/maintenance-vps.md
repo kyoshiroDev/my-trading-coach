@@ -44,6 +44,9 @@ et sauvegardes). Il ne partage que Traefik.
   socket-proxy 64 Mio. Pendant la bascule blue/green, deux couleurs tournent ~1 min (2 × 1,5 Gio).
 - **Ne jamais construire une image hors limites mémoire sans vérifier la RAM libre** (`free -m`) : le
   build tourne hors conteneur limité et prend sur la mémoire de l'autre projet.
+- Recréer `mtc_postgres` (changement de réglages ou de limites) : `docker restart mtc_pgbouncer` aussitôt
+  après, sinon PgBouncer garde l'ancienne IP de Postgres et l'API reste en 503 (~75 s le 2026-11-25) ;
+  détail dans `reference/commun/pgbouncer.md`.
 - Ordre de mise en place : PR fusionnée sur `main` et CD verte (routeurs avec middleware) **avant** que
   Greg retire le middleware de l'entrypoint sur le serveur (static, databases, puis traefik). Revenir sur
   les routeurs n'est sûr que tant que le middleware est encore sur l'entrypoint.
