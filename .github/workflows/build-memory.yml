@@ -13,6 +13,9 @@ on:
       - 'scripts/discord-bot/**'
       - 'vendor/**'
       - 'package.json'
+      - '.npmrc'
+      - 'nx.json'
+      - 'tsconfig*.json'
       - 'pnpm-lock.yaml'
       - 'pnpm-workspace.yaml'
       - 'infra/build-image.sh'
@@ -30,8 +33,12 @@ jobs:
     timeout-minutes: 30
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-      # Alerte sous la marge voulue : 1,3 Gio sur un plafond de 1,5 Gio.
+      # Alerte sous la marge voulue : 1,3 Gio sur un plafond de 1,5 Gio. memory.peak compte aussi le
+      # cache de pages : le signal fort reste un build tué (job rouge) ; anon = mémoire des process.
       WARN_MIB: 1331
+      # Docker Hub anonyme refuse les IP des runners (toomanyrequests) : miroir mirror.gcr.io.
+      BUILDKIT_IMAGE: mirror.gcr.io/moby/buildkit:buildx-stable-1
+      BUILDKITD_CONFIG: infra/buildkitd.ci.toml
     steps:
       - uses: actions/checkout@v4
 
@@ -45,7 +52,8 @@ jobs:
         run: |
           peak=$(docker exec buildx_buildkit_mtc-build0 cat /sys/fs/cgroup/memory.peak)
           mib=$((peak / 1048576))
-          echo "Pic mémoire du builder (API) : ${mib} Mio" | tee -a "$GITHUB_STEP_SUMMARY"
+          anon=$(docker exec buildx_buildkit_mtc-build0 awk '/^anon /{print int($2/1048576)}' /sys/fs/cgroup/memory.stat)
+          echo "Pic mémoire du builder (API) : ${mib} Mio (anon à la fin : ${anon} Mio)" | tee -a "$GITHUB_STEP_SUMMARY"
           [ "$mib" -le "$WARN_MIB" ] || echo "::warning::Build API à ${mib} Mio, au-dessus de ${WARN_MIB} Mio (plafond 1536)"
 
       # Builder recréé : memory.peak repart de zéro pour mesurer le bot seul.

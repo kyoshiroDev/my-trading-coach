@@ -47,12 +47,17 @@ et sauvegardes). Il ne partage que Traefik.
 - **4 Gio garantis à l'autre projet hébergé** (#1286), garantie stricte sur les plafonds : RAM
   11 671 Mio − hôte hors conteneurs (H) − 4 096 − pire cas MTC ≥ 256 Mio de marge. Pire cas MTC en
   plafonds : ~5 888 Mio, que ce soit en régime normal + build, pendant la bascule ou la nuit (restic).
-  Toute hausse d'un plafond MTC se recalcule avec cette formule avant d'être appliquée. `gzip` du dump
+  Verrou `/tmp/mtc-memoire.lock` (`flock`) partagé par `deploy-api.sh` (tout le déploiement),
+  `build-image.sh` et `offsite.sh` : jamais de build, migration ou bascule pendant restic (sinon
+  4 352 + 1 536 + 512 = 6 400). Toute hausse d'un plafond MTC se recalcule avec cette formule avant d'être appliquée. `gzip` du dump
   de 3 h n'est pas plafonné : quelques Mio.
 - **Builds plafonnés** (#1286) : l'image API (`deploy-api.sh`) et le bot (`cd.yml`) se construisent par
   `infra/build-image.sh`, dans le builder `mtc-build` (pilote `docker-container`, 1536 Mio,
   `max-parallelism = 1`, `infra/buildkitd.toml`), créé au premier build et **arrêté après chaque build et
-  chaque prune** (`docker buildx stop`, cache gardé) : ses 1536 Mio ne s'ajoutent jamais à la bascule. Garde-fou : pas de build si
+  chaque prune** (`docker buildx stop`, cache gardé) : ses 1536 Mio ne s'ajoutent jamais à la bascule.
+  Plafond et `buildkitd.toml` ne sont lus qu'à la création du builder : pour les changer,
+  `docker buildx rm mtc-build` (recréé au build suivant). Image `moby/buildkit:buildx-stable-1`.
+  Nécessite buildx ≥ 0.13 (`--buildkitd-config`). En CI : miroir `mirror.gcr.io` (`buildkitd.ci.toml`). Garde-fou : pas de build si
   `MemAvailable` < 1536 + 256 Mio (échec avant migration, la version en service continue). Dans
   l'image, `NODE_OPTIONS=--max-old-space-size=1024` (étages builder et migrator). Le pic à froid est
   mesuré à chaque PR qui touche l'API ou le bot (workflow `build-memory.yml`). Prune : `docker buildx

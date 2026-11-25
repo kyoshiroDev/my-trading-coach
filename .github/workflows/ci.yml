@@ -215,8 +215,9 @@ jobs:
             git reset --hard origin/dev
             # Blue/green sans coupure (SCA-B8-03) : build taggé SHA, migration, bascule, worker.
             bash infra/deploy-api.sh dev
-            docker buildx prune --builder mtc-build --keep-storage=8GB -f
+            docker buildx prune --builder mtc-build --keep-storage=8GB -f || rc=$?
             docker buildx stop mtc-build
+            [ "${rc:-0}" = 0 ] || exit "$rc"
             echo "Dev API deployment complete at $(date)"
 
   # ── Deploy Angular app dev → VPS static ──────────────────────────────────

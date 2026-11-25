@@ -1,0 +1,7 @@
+# Config du builder plafonné en CI seulement (build-memory.yml) : identique à infra/buildkitd.toml,
+# plus le miroir Docker Hub de Google (les IP des runners se font refuser par Docker Hub anonyme).
+[worker.oci]
+  max-parallelism = 1
+
+[registry."docker.io"]
+  mirrors = ["mirror.gcr.io"]

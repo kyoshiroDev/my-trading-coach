@@ -14,12 +14,22 @@ DOCKERFILE=${1:?dockerfile}
 CONTEXT=${2:?contexte}
 TAG=${3:?tag}
 BUILDER=mtc-build
+# Image et config du builder : surchargées en CI seulement (miroir mirror.gcr.io, build-memory.yml).
+BUILDKIT_IMAGE=${BUILDKIT_IMAGE:-moby/buildkit:buildx-stable-1}
+BUILDKITD_CONFIG=${BUILDKITD_CONFIG:-infra/buildkitd.toml}
 BUILD_MEM=1536m
 BUILD_MEM_MIB=1536
 MARGIN_MIB=256
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 
 log() { echo "[build-image] $(date +%H:%M:%S) $*"; }
+
+# Verrou mémoire partagé avec deploy-api.sh et offsite.sh (#1286) : jamais de build pendant restic,
+# sinon le pire cas dépasse la garantie. deploy-api.sh le tient déjà (MTC_MEMOIRE_LOCK=1).
+if [ "${MTC_MEMOIRE_LOCK:-0}" != 1 ]; then
+  exec 8>/tmp/mtc-memoire.lock
+  flock -w 3600 8 || { log "❌ verrou mémoire tenu depuis plus d'1 h (sauvegarde hors site ?)"; exit 1; }
+fi
 
 # Garde-fou (règle 12 de deploy.md) : pas de build si la mémoire libre ne couvre pas le plafond du
 # builder + une marge. MemAvailable exclut déjà la mémoire prise par l'autre projet hébergé.
@@ -31,12 +41,14 @@ if [ "$avail" -lt "$need" ]; then
 fi
 log "mémoire disponible ${avail} Mio (≥ ${need})"
 
-# Builder créé une fois, réutilisé ensuite (son cache vit dans son conteneur).
+# Builder créé une fois, réutilisé ensuite (son cache vit dans son conteneur). Plafond et config ne
+# sont lus qu'à la création : pour les changer, `docker buildx rm mtc-build` (recréé au build suivant).
 if ! docker buildx inspect "$BUILDER" >/dev/null 2>&1; then
   log "création du builder ${BUILDER} (plafond ${BUILD_MEM})"
   docker buildx create --name "$BUILDER" --driver docker-container \
     --driver-opt "memory=${BUILD_MEM},memory-swap=${BUILD_MEM}" \
-    --buildkitd-config "${ROOT}/infra/buildkitd.toml" >/dev/null
+    --driver-opt "image=${BUILDKIT_IMAGE}" \
+    --buildkitd-config "${ROOT}/${BUILDKITD_CONFIG}" >/dev/null
 fi
 docker buildx inspect --bootstrap "$BUILDER" >/dev/null
 # Builder arrêté à la fin, même en échec : ses 1536 Mio ne s'ajoutent jamais à la bascule blue/green

@@ -34,6 +34,10 @@ case "${1:-backup}" in
       -v "$(realpath "$target")":/restore "$IMAGE" restore "$snap" --target /restore "$@"
     ;;
   backup)
+    # Verrou mémoire (#1286) partagé avec deploy-api.sh et build-image.sh : restic attend la fin
+    # d'un déploiement en cours (et inversement).
+    exec 8>/tmp/mtc-memoire.lock
+    flock -w 3600 8 || { echo "[offsite] verrou mémoire tenu depuis plus d'1 h (déploiement ?)"; exit 1; }
     echo "[offsite] début $(date -u +%FT%TZ)"
     run cat config >/dev/null 2>&1 || run init
     crontab -l > "$BACKUPS/crontab.current"

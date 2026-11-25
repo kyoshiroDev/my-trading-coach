@@ -40,6 +40,11 @@ ip_of() { docker inspect -f '{{with index .NetworkSettings.Networks "mtc_network
 # Un seul déploiement à la fois par environnement.
 exec 9>"/tmp/deploy-api-${ENV_NAME}.lock"
 flock -w 600 9 || die "un autre déploiement ${ENV_NAME} tourne depuis plus de 10 min"
+# Verrou mémoire (#1286), partagé avec offsite.sh et build-image.sh : build, migration et bascule
+# jamais pendant la sauvegarde hors site (sinon le pire cas dépasse les 4 Gio de l'autre projet).
+exec 8>/tmp/mtc-memoire.lock
+flock -w 1200 8 || die "verrou mémoire tenu depuis plus de 20 min (sauvegarde hors site ?)"
+export MTC_MEMOIRE_LOCK=1
 
 # Backends qui ont servi les sondes de ce déploiement : journal d'accès Traefik, ligne
 # « "GET /api/health?<tag> …" … "<router>" "http://<ip>:3000" ». /api/health n'est pas limitée en

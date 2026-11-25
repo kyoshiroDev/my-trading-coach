@@ -90,8 +90,10 @@ jobs:
             # Bot construit dans le même builder plafonné que l'API (#1286), puis lancé sans rebuild.
             bash infra/build-image.sh scripts/discord-bot/Dockerfile scripts/discord-bot mtc_discord_bot:latest
             docker compose -f docker-compose.discord-bot.yml --env-file .env.production up -d --force-recreate --no-build discord-bot
-            docker buildx prune --builder mtc-build --keep-storage=8GB -f
-            docker buildx stop mtc-build # le prune le redémarre : pas de 1,5 Gio en attente (#1286)
+            # Le prune redémarre le builder : arrêt quoi qu'il arrive, sans masquer un échec (#1286).
+            docker buildx prune --builder mtc-build --keep-storage=8GB -f || rc=$?
+            docker buildx stop mtc-build
+            [ "${rc:-0}" = 0 ] || exit "$rc"
             echo "Production deployment complete at $(date)"
 
   # ── Deploy Angular → VPS static ──────────────────────────────────────────
