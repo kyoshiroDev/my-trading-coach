@@ -49,12 +49,12 @@ PgBouncer. Redis, recréé en même temps, n'a rien demandé : l'API s'y est rec
 - Enchaîner dans la même commande, sans attente :
   `docker compose up -d && docker restart mtc_pgbouncer` (dans `/opt/infra/databases`), puis
   vérifier `curl -s https://api.mytradingcoach.app/api/health/ready` (statut `ok`).
-  Coupure à annoncer : ~15 s (démarrage de Postgres + PgBouncer), pas plus.
+  Coupure à annoncer : quelques secondes (non mesurée de bout en bout ; le 2026-11-25, ready est repassé à ok 3 s après le restart de PgBouncer).
 - `docker restart` suffit : la config de PgBouncer ne change pas (sinon `up -d --force-recreate pgbouncer`).
-- Vrai aussi sur l'ancien VPS (dev, beta) : même compose, même nom d'hôte.
-- Un simple `docker restart mtc_postgres` garde en général la même IP, mais rien ne le garantit :
-  vérifier `/api/health/ready` dans tous les cas.
-- Ne concerne pas un reboot de l'hôte : tous les conteneurs redémarrent et PgBouncer résout à son démarrage.
+- Ancien VPS (dev, beta) : même nom d'hôte `mtc_postgres`, donc même risque probable (non constaté) : même consigne.
+- Autres redémarrages (`docker restart mtc_postgres`, reboot de l'hôte) : comportement non constaté.
+  Toujours vérifier `/api/health/ready` après ; si 503 « Indisponible : database » et que
+  `docker logs mtc_pgbouncer --tail=5` montre `connect failed`, faire `docker restart mtc_pgbouncer`.
 
 <!-- Origine : deploy.md · Postgres et PgBouncer (SCA-B7-02, 2026-10-01) · 2026-10-01 -->
 > **Origine** : `deploy.md` · « Postgres et PgBouncer (SCA-B7-02, 2026-10-01) » · 2026-10-01
