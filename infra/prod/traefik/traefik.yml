@@ -15,6 +15,9 @@ ping:
 entryPoints:
   ping:
     address: ":8082"
+    http:
+      # Même réglage que web et websecure (avertissement Traefik sinon) ; sonde interne seulement.
+      aliasHeadersStrategy: delete
   web:
     address: ":80"
     http:
@@ -23,6 +26,19 @@ entryPoints:
           to: websecure
           scheme: https
           permanent: true
+      # En-têtes de requête dont le nom contient autre chose que lettres, chiffres, tirets (X_Auth_User…)
+      # supprimés : pas d'usurpation d'en-tête. Entrypoint partagé : vaut aussi pour l'autre projet hébergé.
+      aliasHeadersStrategy: delete
+      # Chemins avec caractères encodés refusés en 400 (split-view, avertissement Traefik v3.6.7+).
+      # Seul le chemin est contrôlé, pas la query. Entrypoint partagé : vaut aussi pour l'autre projet hébergé.
+      encodedCharacters:
+        allowEncodedSlash: false
+        allowEncodedBackSlash: false
+        allowEncodedNullCharacter: false
+        allowEncodedSemicolon: false
+        allowEncodedPercent: false
+        allowEncodedQuestionMark: false
+        allowEncodedHash: false
   websecure:
     address: ":443"
     http:
@@ -30,6 +46,19 @@ entryPoints:
         certResolver: letsencrypt
       # Pas de middleware ici : entrypoint partagé avec un autre projet hébergé ; chaque routeur MTC
       # déclare security-headers@file.
+      # En-têtes de requête dont le nom contient autre chose que lettres, chiffres, tirets (X_Auth_User…)
+      # supprimés : pas d'usurpation d'en-tête. Entrypoint partagé : vaut aussi pour l'autre projet hébergé.
+      aliasHeadersStrategy: delete
+      # Chemins avec caractères encodés refusés en 400 (split-view, avertissement Traefik v3.6.7+).
+      # Seul le chemin est contrôlé, pas la query. Entrypoint partagé : vaut aussi pour l'autre projet hébergé.
+      encodedCharacters:
+        allowEncodedSlash: false
+        allowEncodedBackSlash: false
+        allowEncodedNullCharacter: false
+        allowEncodedSemicolon: false
+        allowEncodedPercent: false
+        allowEncodedQuestionMark: false
+        allowEncodedHash: false
     transport:
       respondingTimeouts:
         readTimeout: 60s

@@ -53,6 +53,24 @@ et sauvegardes). Il ne partage que Traefik.
   Greg retire le middleware de l'entrypoint sur le serveur (static, databases, puis traefik). Revenir sur
   les routeurs n'est sûr que tant que le middleware est encore sur l'entrypoint.
 
+### Durcissement des entrypoints Traefik prod (#1282)
+
+- `infra/prod/traefik/traefik.yml` pose sur les entrypoints `web` et `websecure` :
+  `aliasHeadersStrategy: delete` (en-têtes de requête dont le nom contient autre chose que lettres,
+  chiffres, tirets : supprimés) et les 7 `encodedCharacters.allowEncoded*: false` (`%2F %5C %00 %3B
+  %25 %3F %23` dans le **chemin** → 400 ; la query n'est pas contrôlée). `ping` : `aliasHeadersStrategy`
+  seulement. Doc : Traefik v3.7, `security/header-aliases.md` et `security/request-path.md`.
+- Ce ne sont pas des middlewares (règle 12 de `deploy.md` inchangée), mais ces options n'existent
+  **que sur l'entrypoint** : elles valent aussi pour l'autre projet hébergé.
+- MTC n'en dépend pas (inventaire #1282) : aucun en-tête avec `_` ou `.`, aucune route avec un
+  caractère encodé dans le chemin (paramètres cuid, slugs, dates ; tokens des e-mails en hex et en query).
+  Un nouvel en-tête personnalisé MTC s'écrit en lettres, chiffres et tirets ; une valeur libre va en
+  query ou dans le corps, jamais dans le chemin.
+- Application sur le serveur : sauvegarde datée de `traefik.yml`, diff limité à ces blocs (le résolveur
+  secondaire de l'autre projet ne bouge pas), recréation de Traefik (quelques secondes de coupure),
+  puis vérifier : plus de `WRN` sur ces options dans `docker logs mtc_traefik`, `/api/health` en 200,
+  `curl -s -o /dev/null -w '%{http_code}' https://api.mytradingcoach.app/api/a%2Fb` en 400, l'app en 200.
+
 ### Mettre à jour une image (nginx, Traefik…) — appliqué le 2026-11-22 (faille nginx2root)
 
 Versions : les fichiers compose font foi, ne pas les recopier ici. **Prod épinglée** (tag précis dans
