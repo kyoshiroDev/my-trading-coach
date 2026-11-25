@@ -21,6 +21,33 @@ Procédure : audit en lecture seule (`uptime`, `/var/run/reboot-required.pkgs`, 
 les URL publiques. Commandes sudo données à Greg : **courtes et sans guillemets imbriqués** (déposer
 les fichiers dans `~` d'abord) ; une longue chaîne collée a été tronquée et le reboot n'est jamais parti.
 
+### VPS prod partagé avec un autre projet hébergé (2026-11-25)
+
+Le VPS prod (6 vCPU) héberge aussi un autre projet, indépendant de MTC (son dépôt, ses bases, réseaux
+et sauvegardes). Il ne partage que Traefik.
+
+- **En-têtes de sécurité au routeur** : l'entrypoint `websecure` ne porte plus de middleware (il est
+  partagé). Chaque routeur MTC déclare `traefik.http.routers.<nom>.middlewares=security-headers@file`
+  (`api-prod-secure` dans `docker-compose.prod.yml`, `app-prod` dans `infra/prod/static-docker-compose.yml`) ;
+  les valeurs restent dans `infra/prod/traefik/conf.d/security.yml`. **Tout nouveau routeur le déclare.**
+  Ne jamais remettre de middleware sur l'entrypoint.
+- Le routeur de l'API s'appelle `api-prod-secure` (service `api-prod` inchangé) : pendant la bascule
+  blue/green qui l'a introduit, l'ancienne couleur gardait `api-prod` sans middleware et la nouvelle
+  `api-prod-secure` avec, deux routeurs distincts, sans conflit de définition.
+- **Ne jamais toucher** au résolveur ACME secondaire de `traefik.yml` ni au `docker-compose.override.yml`
+  (réseaux) de `/opt/infra/traefik/` sur le serveur : ils sont à l'autre projet, et ne sont pas recopiés
+  dans `infra/prod/traefik/`.
+- **Limites mémoire** (pics mesurés le 2026-11-24) : API web 1536 Mio par couleur, `WEB_CONCURRENCY=2`
+  (pic 766 Mio à 3 workers sans charge) ; worker 768 Mio (pic 350 Mio) ; Postgres 1536 Mio,
+  `shared_buffers=384MB`, `effective_cache_size=1GB`, `maintenance_work_mem=128MB` (base 55 Mo, pic
+  251 Mio) ; Redis 320 Mio, `maxmemory 256mb` (3 Mo de données) ; Traefik 384 Mio (pic 208 Mio) ;
+  socket-proxy 64 Mio. Pendant la bascule blue/green, deux couleurs tournent ~1 min (2 × 1,5 Gio).
+- **Ne jamais construire une image hors limites mémoire sans vérifier la RAM libre** (`free -m`) : le
+  build tourne hors conteneur limité et prend sur la mémoire de l'autre projet.
+- Ordre de mise en place : PR fusionnée sur `main` et CD verte (routeurs avec middleware) **avant** que
+  Greg retire le middleware de l'entrypoint sur le serveur (static, databases, puis traefik). Revenir sur
+  les routeurs n'est sûr que tant que le middleware est encore sur l'entrypoint.
+
 ### Mettre à jour une image (nginx, Traefik…) — appliqué le 2026-11-22 (faille nginx2root)
 
 Versions : les fichiers compose font foi, ne pas les recopier ici. **Prod épinglée** (tag précis dans

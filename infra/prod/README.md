@@ -60,9 +60,19 @@ ouvrir de shell.
 ## Traefik
 
 v3, sans accès direct au socket Docker : il passe par `docker-socket-proxy` (lecture seule, réseau
-interne `mtc_socket`). Pas de dashboard. TLS ≥ 1.2, en-têtes de sécurité (`security-headers@file`)
-sur tout `websecure`. Certificats Let's Encrypt par **challenge DNS OVH** : un certificat s'obtient
-avant que le DNS pointe ici (utile pour préparer une bascule).
+interne `mtc_socket`). Pas de dashboard. TLS ≥ 1.2. Certificats Let's Encrypt par **challenge DNS OVH** :
+un certificat s'obtient avant que le DNS pointe ici (utile pour préparer une bascule).
+
+**Entrypoint partagé (2026-11-25)** : le VPS (6 cœurs) héberge aussi un autre projet, indépendant, qui
+ne partage que Traefik. L'entrypoint `websecure` ne porte donc plus de middleware : les en-têtes de
+sécurité (`security-headers@file`, valeurs dans `traefik/conf.d/security.yml`) sont déclarés **routeur
+par routeur** (`api-prod-secure`, `app-prod`) ; tout nouveau routeur MTC les déclare. Le serveur contient
+en plus un résolveur ACME secondaire et un `docker-compose.override.yml` (réseaux) propres à cet autre
+projet : ne jamais les supprimer ni les recopier ici.
+
+Limites mémoire (pics mesurés le 2026-11-24) : API 1,5 Gio par couleur (2 workers), worker 768 Mio,
+Postgres 1,5 Gio, Redis 320 Mio, Traefik 384 Mio, socket-proxy 64 Mio. Vérifier la RAM libre
+(`free -m`) avant de construire une image sur le serveur.
 
 ## Bases
 

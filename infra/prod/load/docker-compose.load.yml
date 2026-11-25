@@ -17,10 +17,10 @@ services:
     # Mêmes réglages que /opt/infra/databases/docker-compose.yml (prod).
     command: >
       postgres
-      -c shared_buffers=1GB
-      -c effective_cache_size=3GB
+      -c shared_buffers=384MB
+      -c effective_cache_size=1GB
       -c work_mem=16MB
-      -c maintenance_work_mem=256MB
+      -c maintenance_work_mem=128MB
       -c max_connections=50
       -c checkpoint_completion_target=0.9
       -c wal_buffers=16MB
@@ -40,8 +40,8 @@ services:
       - load_postgres_data:/var/lib/postgresql/data
     networks: [load_internal]
     shm_size: 256m
-    mem_limit: 3g
-    memswap_limit: 3g
+    mem_limit: 1536m
+    memswap_limit: 1536m
     security_opt: [no-new-privileges:true]
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U mtc_user -d mytradingcoach_load"]
@@ -81,7 +81,7 @@ services:
     command: >
       redis-server
       --requirepass ${LOAD_REDIS_PASSWORD}
-      --maxmemory 512mb
+      --maxmemory 256mb
       --maxmemory-policy noeviction
       --appendonly yes
       --appendfsync everysec
@@ -90,8 +90,8 @@ services:
     volumes:
       - load_redis_data:/data
     networks: [load_internal]
-    mem_limit: 640m
-    memswap_limit: 640m
+    mem_limit: 320m
+    memswap_limit: 320m
     security_opt: [no-new-privileges:true]
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
@@ -110,10 +110,11 @@ services:
       NODE_OPTIONS: --max-old-space-size=384
       RUN_MIGRATIONS: "false"
       APP_ROLE: web
+      WEB_CONCURRENCY: "2"
     stop_grace_period: 30s
     networks: [mtc_network, load_internal]
-    mem_limit: 2g
-    memswap_limit: 2g
+    mem_limit: 1536m
+    memswap_limit: 1536m
     security_opt: [no-new-privileges:true]
     depends_on:
       pgbouncer:
@@ -132,6 +133,8 @@ services:
       - "traefik.http.routers.load-api.rule=Host(`load.api.mytradingcoach.app`)"
       - "traefik.http.routers.load-api.entrypoints=websecure"
       - "traefik.http.routers.load-api.tls.certresolver=letsencrypt"
+      # En-têtes au routeur : l'entrypoint websecure est partagé avec un autre projet hébergé.
+      - "traefik.http.routers.load-api.middlewares=security-headers@file"
       - "traefik.http.services.load-api.loadbalancer.server.port=3000"
 
 volumes:
