@@ -67,7 +67,7 @@ et sauvegardes). Il ne partage que Traefik.
   `MemAvailable` < 1536 + 256 Mio (échec avant migration, la version en service continue). Dans
   l'image, `NODE_OPTIONS=--max-old-space-size=1024` (étages builder et migrator). Le pic à froid est
   mesuré à chaque PR qui touche l'API ou le bot (workflow `build-memory.yml`, `infra/ci/build-memory-measure.sh`).
-  Indicateur : pic de `anon` + `kernel` (mémoire non récupérable), `oom_kill` = 0. `memory.peak` compte le
+  Indicateur : pic de `anon` + `kernel` + `shmem` (mémoire non récupérable), `oom_kill` = 0. `memory.peak` compte le
   cache de pages et touche le plafond sans risque. Prune : `docker buildx
   prune --builder mtc-build` (CD et crontab). **Ne jamais construire une image hors de ce builder sur le
   VPS prod** (sauf reprise à la main, `docs/ops/reprise-vps.md`) sans vérifier la RAM libre (`free -m`).
