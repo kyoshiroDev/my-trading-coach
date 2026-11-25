@@ -20,6 +20,7 @@ on:
       - 'pnpm-workspace.yaml'
       - 'infra/build-image.sh'
       - 'infra/buildkitd.toml'
+      - 'infra/buildkitd.ci.toml'
       - '.github/workflows/build-memory.yml'
 
 concurrency:
@@ -37,7 +38,7 @@ jobs:
       # cache de pages : le signal fort reste un build tué (job rouge) ; anon = mémoire des process.
       WARN_MIB: 1331
       # Docker Hub anonyme refuse les IP des runners (toomanyrequests) : miroir mirror.gcr.io.
-      BUILDKIT_IMAGE: mirror.gcr.io/moby/buildkit:buildx-stable-1
+      BUILDKIT_IMAGE: mirror.gcr.io/moby/buildkit:v0.35.1
       BUILDKITD_CONFIG: infra/buildkitd.ci.toml
     steps:
       - uses: actions/checkout@v4

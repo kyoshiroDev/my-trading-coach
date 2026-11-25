@@ -14,8 +14,9 @@ DOCKERFILE=${1:?dockerfile}
 CONTEXT=${2:?contexte}
 TAG=${3:?tag}
 BUILDER=mtc-build
-# Image et config du builder : surchargées en CI seulement (miroir mirror.gcr.io, build-memory.yml).
-BUILDKIT_IMAGE=${BUILDKIT_IMAGE:-moby/buildkit:buildx-stable-1}
+# Image (version épinglée) et config du builder : surchargées en CI seulement (miroir mirror.gcr.io,
+# build-memory.yml). Changer de version = `docker buildx rm mtc-build` (lue à la création seulement).
+BUILDKIT_IMAGE=${BUILDKIT_IMAGE:-moby/buildkit:v0.35.1}
 BUILDKITD_CONFIG=${BUILDKITD_CONFIG:-infra/buildkitd.toml}
 BUILD_MEM=1536m
 BUILD_MEM_MIB=1536
