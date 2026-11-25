@@ -78,9 +78,10 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-        # Relance PgBouncer quand compose recrée ou redémarre Postgres : sinon il garde l'ancienne IP
-        # de mtc_postgres et l'API reste en 503 (~75 s le 2026-11-25, #1273). Compose ≥ 2.17.
-        # Ne couvre pas un redémarrage par Docker lui-même (crash, reboot de l'hôte).
+        # Filet de sécurité (#1278) : relance PgBouncer quand `docker compose up -d` (projet entier)
+        # recrée Postgres, sinon il garde son ancienne IP et l'API reste en 503 (~75 s le 2026-11-25,
+        # #1273). Pas avec `up -d postgres` seul, ni `compose restart postgres`, ni crash ou reboot.
+        # Compose ≥ 2.17. Consigne : reference/commun/pgbouncer.md (restart de PgBouncer enchaîné).
         restart: true
 
   redis:

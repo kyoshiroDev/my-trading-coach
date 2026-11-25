@@ -45,9 +45,9 @@ et sauvegardes). Il ne partage que Traefik.
 - **Ne jamais construire une image hors limites mémoire sans vérifier la RAM libre** (`free -m`) : le
   build tourne hors conteneur limité et prend sur la mémoire de l'autre projet.
 - Recréer `mtc_postgres` (changement de réglages ou de limites) : PgBouncer doit être relancé, sinon il
-  garde l'ancienne IP de Postgres et l'API reste en 503 (~75 s le 2026-11-25). Depuis #1278, compose le
-  relance lui-même (`depends_on` `restart: true`) ; sans ce compose sur le serveur,
-  `docker restart mtc_pgbouncer` aussitôt après. Vérifier `/api/health/ready` dans tous les cas ;
+  garde l'ancienne IP de Postgres et l'API reste en 503 (~75 s le 2026-11-25). Toujours enchaîner
+  `docker compose up -d && docker restart mtc_pgbouncer`, puis vérifier `/api/health/ready`. Le
+  `depends_on` `restart: true` de #1278 n'est qu'un filet (projet entier sans nom de service seulement) ;
   détail dans `reference/commun/pgbouncer.md`.
 - Ordre de mise en place : PR fusionnée sur `main` et CD verte (routeurs avec middleware) **avant** que
   Greg retire le middleware de l'entrypoint sur le serveur (static, databases, puis traefik). Revenir sur
