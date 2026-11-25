@@ -36,6 +36,26 @@ environment:
 Retour arrière : restaurer `DEFAULT_POOL_SIZE=25` et retirer ces trois lignes, puis
 `docker compose up -d pgbouncer`.
 
+## Recréer `mtc_postgres` : relancer PgBouncer aussitôt (2026-11-25, #1273)
+
+Quand `mtc_postgres` est **recréé** (`docker compose up -d` après un changement de son compose :
+réglages, limites mémoire, image), il prend une nouvelle IP sur `mtc_network`. PgBouncer, que
+compose ne recrée pas, garde l'ancienne adresse de `host=mtc_postgres` : chaque connexion échoue
+en `server login has been failing, cached error: connect failed (server_login_retry)` et l'API
+répond `503 « Indisponible : database »` sur `/api/health/ready`. Constaté en prod le 2026-11-25
+(172.18.0.3 → 172.18.0.8) : **~75 s** sans base (18:03:07 → 18:04:20), jusqu'au redémarrage de
+PgBouncer. Redis, recréé en même temps, n'a rien demandé : l'API s'y est reconnectée seule.
+
+- Enchaîner dans la même commande, sans attente :
+  `docker compose up -d && docker restart mtc_pgbouncer` (dans `/opt/infra/databases`), puis
+  vérifier `curl -s https://api.mytradingcoach.app/api/health/ready` (statut `ok`).
+  Coupure à annoncer : quelques secondes (non mesurée de bout en bout ; le 2026-11-25, ready est repassé à ok 3 s après le restart de PgBouncer).
+- `docker restart` suffit : la config de PgBouncer ne change pas (sinon `up -d --force-recreate pgbouncer`).
+- Ancien VPS (dev, beta) : même nom d'hôte `mtc_postgres`, donc même risque probable (non constaté) : même consigne.
+- Autres redémarrages (`docker restart mtc_postgres`, reboot de l'hôte) : comportement non constaté.
+  Toujours vérifier `/api/health/ready` après ; si 503 « Indisponible : database » et que
+  `docker logs mtc_pgbouncer --tail=5` montre `connect failed`, faire `docker restart mtc_pgbouncer`.
+
 <!-- Origine : deploy.md · Postgres et PgBouncer (SCA-B7-02, 2026-10-01) · 2026-10-01 -->
 > **Origine** : `deploy.md` · « Postgres et PgBouncer (SCA-B7-02, 2026-10-01) » · 2026-10-01
 
