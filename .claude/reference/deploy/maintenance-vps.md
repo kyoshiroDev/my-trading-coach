@@ -38,12 +38,26 @@ et sauvegardes). Il ne partage que Traefik.
   (réseaux) de `/opt/infra/traefik/` sur le serveur : ils sont à l'autre projet, et ne sont pas recopiés
   dans `infra/prod/traefik/`.
 - **Limites mémoire** (pics mesurés le 2026-11-24) : API web 1536 Mio par couleur, `WEB_CONCURRENCY=2`
-  (pic 766 Mio à 3 workers sans charge) ; worker 768 Mio (pic 350 Mio) ; Postgres 1536 Mio,
+  (pic 766 Mio à 3 workers sans charge) ; worker 768 Mio (pic 350 Mio) ; Postgres 1024 Mio (#1286),
   `shared_buffers=384MB`, `effective_cache_size=1GB`, `maintenance_work_mem=128MB` (base 55 Mo, pic
   251 Mio) ; Redis 320 Mio, `maxmemory 256mb` (3 Mo de données) ; Traefik 384 Mio (pic 208 Mio) ;
-  socket-proxy 64 Mio. Pendant la bascule blue/green, deux couleurs tournent ~1 min (2 × 1,5 Gio).
-- **Ne jamais construire une image hors limites mémoire sans vérifier la RAM libre** (`free -m`) : le
-  build tourne hors conteneur limité et prend sur la mémoire de l'autre projet.
+  socket-proxy 64 Mio ; bot Discord 128 Mio ; nginx de l'app 64 Mio ; builder BuildKit `mtc-build`
+  1536 Mio ; restic 512 Mio (`offsite.sh`). Pendant la bascule blue/green, deux couleurs tournent
+  ~1 min (2 × 1,5 Gio).
+- **4 Gio garantis à l'autre projet hébergé** (#1286), garantie stricte sur les plafonds : RAM
+  11 671 Mio − hôte hors conteneurs (H) − 4 096 − pire cas MTC ≥ 256 Mio de marge. Pire cas MTC en
+  plafonds : ~5 888 Mio, que ce soit en régime normal + build, pendant la bascule ou la nuit (restic).
+  Toute hausse d'un plafond MTC se recalcule avec cette formule avant d'être appliquée. `gzip` du dump
+  de 3 h n'est pas plafonné : quelques Mio.
+- **Builds plafonnés** (#1286) : l'image API (`deploy-api.sh`) et le bot (`cd.yml`) se construisent par
+  `infra/build-image.sh`, dans le builder `mtc-build` (pilote `docker-container`, 1536 Mio,
+  `max-parallelism = 1`, `infra/buildkitd.toml`), créé au premier build et **arrêté après chaque build et
+  chaque prune** (`docker buildx stop`, cache gardé) : ses 1536 Mio ne s'ajoutent jamais à la bascule. Garde-fou : pas de build si
+  `MemAvailable` < 1536 + 256 Mio (échec avant migration, la version en service continue). Dans
+  l'image, `NODE_OPTIONS=--max-old-space-size=1024` (étages builder et migrator). Le pic à froid est
+  mesuré à chaque PR qui touche l'API ou le bot (workflow `build-memory.yml`). Prune : `docker buildx
+  prune --builder mtc-build` (CD et crontab). **Ne jamais construire une image hors de ce builder sur le
+  VPS prod** (sauf reprise à la main, `docs/ops/reprise-vps.md`) sans vérifier la RAM libre (`free -m`).
 - Recréer `mtc_postgres` (changement de réglages ou de limites) : PgBouncer doit être relancé, sinon il
   garde l'ancienne IP de Postgres et l'API reste en 503 (~75 s le 2026-11-25). Toujours enchaîner
   `docker compose up -d && docker restart mtc_pgbouncer`, puis vérifier `/api/health/ready`. Le

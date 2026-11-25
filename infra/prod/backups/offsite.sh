@@ -13,12 +13,13 @@ ENV_FILE=/opt/backups/offsite.env
 BACKUPS=/opt/backups
 CACHE=/opt/backups/.restic-cache
 IMAGE=restic/restic:0.18.1
+# Plafond mémoire de restic (#1286) : VPS partagé avec un autre projet hébergé.
 
 [ -r "$ENV_FILE" ] || { echo "[offsite] $ENV_FILE introuvable"; exit 1; }
 mkdir -p "$CACHE"
 
 run() {
-  docker run --rm --env-file "$ENV_FILE" --hostname mtc-prod \
+  docker run --rm --memory 512m --memory-swap 512m --env-file "$ENV_FILE" --hostname mtc-prod \
     -v "$BACKUPS":/data:ro -v /opt/infra:/infra:ro -v /opt/apps/mytradingcoach:/apps:ro \
     -v "$CACHE":/cache -e RESTIC_CACHE_DIR=/cache "$IMAGE" "$@"
 }
@@ -29,7 +30,7 @@ case "${1:-backup}" in
     snap="${2:?instantané (ou latest)}"; target="${3:?dossier cible}"
     shift 3
     mkdir -p "$target"
-    docker run --rm --env-file "$ENV_FILE" -v "$CACHE":/cache -e RESTIC_CACHE_DIR=/cache \
+    docker run --rm --memory 512m --memory-swap 512m --env-file "$ENV_FILE" -v "$CACHE":/cache -e RESTIC_CACHE_DIR=/cache \
       -v "$(realpath "$target")":/restore "$IMAGE" restore "$snap" --target /restore "$@"
     ;;
   backup)

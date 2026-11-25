@@ -87,9 +87,11 @@ jobs:
             # l'ancienne, worker recréé. Échec avant le drain → l'ancienne n'a jamais cessé de servir,
             # le job échoue et le tag deployed/prod ne bouge pas.
             bash infra/deploy-api.sh prod
-            docker compose -f docker-compose.discord-bot.yml --env-file .env.production build discord-bot
-            docker compose -f docker-compose.discord-bot.yml --env-file .env.production up -d --force-recreate discord-bot
-            docker buildx prune --keep-storage=8GB -f
+            # Bot construit dans le même builder plafonné que l'API (#1286), puis lancé sans rebuild.
+            bash infra/build-image.sh scripts/discord-bot/Dockerfile scripts/discord-bot mtc_discord_bot:latest
+            docker compose -f docker-compose.discord-bot.yml --env-file .env.production up -d --force-recreate --no-build discord-bot
+            docker buildx prune --builder mtc-build --keep-storage=8GB -f
+            docker buildx stop mtc-build # le prune le redémarre : pas de 1,5 Gio en attente (#1286)
             echo "Production deployment complete at $(date)"
 
   # ── Deploy Angular → VPS static ──────────────────────────────────────────

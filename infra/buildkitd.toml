@@ -1,0 +1,5 @@
+# Builder BuildKit plafonné de MTC (`mtc-build`, créé par infra/build-image.sh).
+# Un seul pas de build à la fois : les deux `pnpm install` de l'image API (étages builder et
+# migrator) ne tournent plus en parallèle, ce qui borne le pic mémoire sous le plafond du builder.
+[worker.oci]
+  max-parallelism = 1

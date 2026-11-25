@@ -1,5 +1,8 @@
 services:
   discord-bot:
+    # Image construite par infra/build-image.sh (builder plafonné, #1286) ; `build` reste pour une
+    # reprise à la main (`up -d --build`, docs/ops/reprise-vps.md).
+    image: mtc_discord_bot:latest
     build:
       context: scripts/discord-bot
       dockerfile: Dockerfile

@@ -115,7 +115,8 @@ if docker image inspect "${IMAGE}:${SHA}" >/dev/null 2>&1; then
 else
   [ "$(git rev-parse --short=12 HEAD)" = "$SHA" ] || die "image ${SHA} absente et le dépôt n'est pas sur ce commit"
   log "build ${IMAGE}:${SHA}"
-  docker build -f apps/api-mytradingcoach/Dockerfile -t "${IMAGE}:${SHA}" .
+  # Builder plafonné + garde-fou mémoire (#1286) : échec ici = rien n'a changé, l'ancienne couleur sert.
+  bash infra/build-image.sh apps/api-mytradingcoach/Dockerfile . "${IMAGE}:${SHA}"
 fi
 
 # ── 3. Migration, une fois, avec le code de la nouvelle version ─────────────

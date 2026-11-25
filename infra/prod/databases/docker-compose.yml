@@ -37,9 +37,10 @@ services:
     networks:
       - mtc_network
     shm_size: 256m
-    # VPS partagé avec un autre projet : base 55 Mo, pic mesuré 251 Mio (2026-11-24).
-    mem_limit: 1536m
-    memswap_limit: 1536m
+    # VPS partagé avec un autre projet (4 Gio garantis, #1286) : base 55 Mo, pic mesuré 251 Mio
+    # (2026-11-24). Sur le serveur : `docker update --memory 1024m --memory-swap 1024m mtc_postgres`.
+    mem_limit: 1024m
+    memswap_limit: 1024m
     security_opt:
       - no-new-privileges:true
     healthcheck:
