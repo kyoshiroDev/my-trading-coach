@@ -66,16 +66,26 @@ et sauvegardes). Il ne partage que Traefik.
   caractère encodé dans le chemin (paramètres cuid, slugs, dates ; tokens des e-mails en hex et en query).
   Un nouvel en-tête personnalisé MTC s'écrit en lettres, chiffres et tirets ; une valeur libre va en
   query ou dans le corps, jamais dans le chemin.
-- Application sur le serveur : sauvegarde datée de `traefik.yml`, diff limité à ces blocs (le résolveur
-  secondaire de l'autre projet ne bouge pas), recréation de Traefik (quelques secondes de coupure),
-  puis vérifier : plus de `WRN` sur ces options dans `docker logs mtc_traefik`, `/api/health` en 200,
+- Application sur le serveur, avec l'accord explicite de Greg : commandes données une par une, Greg
+  les tape (sauf autorisation écrite pour la tâche), jamais de `sudo` par Claude. Sauvegarde datée à la
+  minute (`traefik.yml.bak-AAAAMMJJ-HHMM`, `cp -p --update=none` puis `cmp`), diff limité à ces blocs (le
+  résolveur secondaire de l'autre projet ne bouge pas), puis **recréation** de Traefik depuis
+  `/opt/infra/traefik/` (`docker compose up -d --force-recreate traefik`, avec le
+  `docker-compose.override.yml` du serveur s'il existe ; pas de `docker restart` : `traefik.yml` est
+  monté comme un fichier seul, un fichier réécrit peut ne pas être vu). Quelques secondes de coupure.
+  Vérifier : plus de `WRN` sur ces options dans `docker logs mtc_traefik`, `/api/health` en 200,
   `curl -s -o /dev/null -w '%{http_code}' https://api.mytradingcoach.app/api/a%2Fb` en 400, l'app en 200.
-- **Contrôle à J+1** (lecture seule, lancé par Greg) : compter les 400 des 24 dernières heures sur les
-  routeurs qui ne sont pas à MTC dans le journal d'accès de Traefik, par exemple
-  `docker logs --since 24h mtc_traefik 2>&1 | grep '" 400 ' | grep -v -e api-prod-secure -e app-prod -e load-api | wc -l`.
+  Test local du 2026-11-25 (traefik v3.7.19 jetable) : config acceptée, plus aucun WRN, les 7 caractères
+  en 400 dans le chemin (la query passe), `X_Test`, `X.Auth.User`, `Foo_Bar` retirés, `X-Ok` gardé,
+  redirection `web` → `websecure` intacte ; un chemin encodé sur `web` répond 400 avant la redirection.
+- **Contrôle à J+1** (lecture seule, lancé par Greg) : un refus pour caractère encodé a lieu avant le
+  routage, le journal d'accès ne donne donc ni hôte ni routeur fiable. Lister les chemins refusés des
+  24 dernières heures et repérer ceux de l'autre projet :
+  `docker logs --since 24h mtc_traefik 2>&1 | grep '" 400 ' | grep -iE '%(2f|5c|00|3b|25|3f|23)' | cut -d'"' -f2 | sort | uniq -c | sort -rn | head -30`.
 - **Retour arrière ciblé** si l'autre projet est gêné : retirer seulement le bloc `encodedCharacters`
   de `web` et `websecure` (retour aux valeurs par défaut) et recréer Traefik ; garder
-  `aliasHeadersStrategy: delete`. Retour complet : remettre la sauvegarde datée de `traefik.yml`.
+  `aliasHeadersStrategy: delete`. **Retour complet** : remettre la sauvegarde datée de `traefik.yml`,
+  puis recréer `mtc_traefik` de la même façon (jamais `docker restart`).
 
 ### Mettre à jour une image (nginx, Traefik…) — appliqué le 2026-11-22 (faille nginx2root)
 
