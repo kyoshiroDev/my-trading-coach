@@ -92,7 +92,7 @@ jobs:
             docker compose -f docker-compose.discord-bot.yml --env-file .env.production up -d --force-recreate --no-build discord-bot
             # Builder démarré pour le prune (1536 Mio) : sous le verrou mémoire (jamais pendant restic),
             # arrêt quoi qu'il arrive, sans masquer un échec (#1286).
-            flock -w 1200 /tmp/mtc-memoire.lock sh -c 'docker buildx inspect --bootstrap mtc-build >/dev/null && docker buildx prune --builder mtc-build --keep-storage=8GB -f; rc=$?; docker buildx stop mtc-build; exit $rc'
+            flock -w 1200 /tmp/mtc-memoire.lock sh -c 'docker buildx inspect mtc-build >/dev/null 2>&1 || { echo "mtc-build absent : prune sauté"; exit 0; }; docker buildx inspect --bootstrap mtc-build >/dev/null && docker buildx prune --builder mtc-build --keep-storage=8GB -f; rc=$?; docker buildx stop mtc-build; exit $rc'
             echo "Production deployment complete at $(date)"
 
   # ── Deploy Angular → VPS static ──────────────────────────────────────────
