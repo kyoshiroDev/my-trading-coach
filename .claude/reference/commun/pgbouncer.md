@@ -64,7 +64,7 @@ elle couvre tous les cas, au prix d'un redémarrage de PgBouncer en double.
 - Enchaîner dans la même commande, sans attente :
   `docker compose up -d && docker restart mtc_pgbouncer` (dans `/opt/infra/databases`), puis
   vérifier `curl -s https://api.mytradingcoach.app/api/health/ready` (statut `ok`).
-  Coupure à annoncer : quelques secondes (non mesurée de bout en bout ; le 2026-11-25, ready est repassé à ok 3 s après le restart de PgBouncer).
+  Coupure à annoncer : quelques secondes sans le compose #1278, environ 10 à 20 s avec lui (attente du healthcheck) ; non mesurée de bout en bout en prod (le 2026-11-25, ready est repassé à ok 3 s après le restart de PgBouncer).
 - `docker restart` suffit : la config de PgBouncer ne change pas (sinon `up -d --force-recreate pgbouncer`).
 - Ancien VPS (dev, beta) : même nom d'hôte `mtc_postgres`, donc même risque probable (non constaté) : même consigne.
 - Autres redémarrages (`docker restart mtc_postgres`, reboot de l'hôte) : comportement non constaté.
