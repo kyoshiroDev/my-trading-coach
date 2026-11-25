@@ -6,7 +6,7 @@
 # Hors-site restic → B2 (dépôt prod) — 3 h 45
 45 3 * * * /opt/backups/offsite.sh >> /opt/backups/offsite.log 2>&1
 # GC du cache buildx — dimanche 4 h 00
-0 4 * * 0 docker buildx prune --reserved-space=8GB -f >> /opt/backups/docker-gc.log 2>&1 ; flock -w 3600 /tmp/mtc-memoire.lock sh -c 'docker buildx prune --builder mtc-build --reserved-space=8GB -f; docker buildx stop mtc-build' >> /opt/backups/docker-gc.log 2>&1
+0 4 * * 0 docker buildx prune --reserved-space=8GB -f >> /opt/backups/docker-gc.log 2>&1 ; flock -w 3600 /tmp/mtc-memoire.lock sh -c 'docker buildx inspect --bootstrap mtc-build >/dev/null && docker buildx prune --builder mtc-build --reserved-space=8GB -f; docker buildx stop mtc-build' >> /opt/backups/docker-gc.log 2>&1
 # Pas de mise à jour APT ici : unattended-upgrades gère la sécurité ; Docker et noyau à la main en maintenance.
 # ── Supervision (PRÉPARÉE, À ACTIVER : décommenter dans `crontab -e`) ──
 # */5 * * * * /opt/backups/watch-containers.sh >> /opt/backups/watch-containers.log 2>&1
