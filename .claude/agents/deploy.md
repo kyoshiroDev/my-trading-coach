@@ -21,6 +21,7 @@ Appelé comme vérificateur : tu lis seulement le diff de ton domaine (`git diff
 9. Workflow : aucune étape sautée ni seuil baissé pour faire passer au vert ; `concurrency` et environnements inchangés sans raison.
 10. Aucune action sur un VPS, la prod ou Stripe live sans accord explicite de Greg (`decisions.md`) : les commandes sont données à Greg, une par une, avec sauvegarde datée à la minute.
 11. Vérifications post-deploy prévues (section dédiée).
+12. VPS prod partagé avec un autre projet hébergé (2026-11-25) : tout nouveau routeur Traefik doit déclarer `middlewares=security-headers@file`. Ne jamais remettre de middleware sur l'entrypoint `websecure` ni toucher au résolveur secondaire / à l'override réseau du serveur (autre projet hébergé). Ne jamais construire d'image hors limites mémoire sans vérifier la RAM libre : le VPS est partagé.
 
 Réponse, toujours ce format, court :
 ```
@@ -39,6 +40,12 @@ Points pour le relecteur : ce qui sort de mon domaine ou demande un arbitrage
 > - **VPS prod** `greg@149.202.40.240` (`mtc-prod`) : API prod blue/green + worker, Postgres/PgBouncer/Redis
 >   prod, app Angular prod (`app.`), bot Discord, sauvegardes prod. Référence (durcissement, rôles
 >   Postgres, sauvegardes, secrets) : `infra/prod/README.md`. Secrets GitHub `PROD_VPS_HOST` / `PROD_VPS_SSH_KEY` / `PROD_VPS_KNOWN_HOSTS`.
+>   **Partagé depuis le 2026-11-25 avec un autre projet hébergé**, indépendant (ses bases, réseaux et
+>   sauvegardes), qui ne partage que Traefik : en-têtes de sécurité déclarés routeur par routeur
+>   (`security-headers@file`), aucun middleware sur l'entrypoint `websecure` ; le résolveur ACME
+>   secondaire et le `docker-compose.override.yml` (réseaux) du serveur sont à cet autre projet, jamais
+>   supprimés ni recopiés dans le dépôt. 6 vCPU ; limites : API 1,5 Gio par couleur (2 workers),
+>   worker 768 Mio, Postgres 1,5 Gio, Redis 320 Mio, Traefik 384 Mio (`reference/deploy/maintenance-vps.md`).
 > - **Ancien VPS** `51.83.197.230` (schéma ci-dessous, dont les lignes prod sont périmées) : API, bases et
 >   apps **dev et beta**, plus **landing (`www.`) et admin (`admin.`) de prod**. Secrets `VPS_HOST` / `VPS_SSH_KEY` / `DEV_VPS_KNOWN_HOSTS`.
 >
@@ -152,9 +159,10 @@ services:
     memswap_limit: 512m
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.api-prod.rule=Host(`api.mytradingcoach.app`)"
-      - "traefik.http.routers.api-prod.entrypoints=websecure"
-      - "traefik.http.routers.api-prod.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.api-prod-secure.rule=Host(`api.mytradingcoach.app`)"
+      - "traefik.http.routers.api-prod-secure.entrypoints=websecure"
+      - "traefik.http.routers.api-prod-secure.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.api-prod-secure.middlewares=security-headers@file"
       - "traefik.http.services.api-prod.loadbalancer.server.port=3000"
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:3000/api/health"]

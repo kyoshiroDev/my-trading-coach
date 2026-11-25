@@ -22,6 +22,7 @@ services:
       - /run
       - /tmp
     mem_limit: 64m
+    memswap_limit: 64m
     security_opt:
       - no-new-privileges:true
 
@@ -44,8 +45,9 @@ services:
       - mtc_network
       - mtc_socket
     read_only: true
-    mem_limit: 256m
-    memswap_limit: 256m
+    # Pic mesuré 208 Mio (2026-11-24).
+    mem_limit: 384m
+    memswap_limit: 384m
     security_opt:
       - no-new-privileges:true
     healthcheck:

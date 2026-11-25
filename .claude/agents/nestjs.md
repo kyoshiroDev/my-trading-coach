@@ -134,7 +134,7 @@ private clean(text: string): string {
 
 ## Clustering — règles
 
-- Clustering activé uniquement en `NODE_ENV=production`. Nombre de workers = `WEB_CONCURRENCY`, défaut `min(cœurs, 3)` (`config/web-concurrency.ts`, SCA-B0-02). Le VPS a **4** cœurs. Chaque process a un plafond de tas (`NODE_OPTIONS=--max-old-space-size=384` dans les compose), conteneur à 2 Gio
+- Clustering activé uniquement en `NODE_ENV=production`. Nombre de workers = `WEB_CONCURRENCY`, défaut `min(cœurs, 3)` (`config/web-concurrency.ts`, SCA-B0-02). Le VPS prod a **6** cœurs. Chaque process a un plafond de tas (`NODE_OPTIONS=--max-old-space-size=384` dans les compose), conteneur à 2 Gio en dev/beta, 1536 Mio en prod avec `WEB_CONCURRENCY=2` (VPS partagé, 2026-11-25)
 - `IS_CRON_WORKER=true` sur 1 seul worker → seul lui exécute `@Cron`
 - `ScheduleModule.forRoot()` conditionnel dans `app.module.ts`, en **opt-in** :
   ```typescript

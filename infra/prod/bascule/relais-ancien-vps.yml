@@ -9,6 +9,10 @@
 #
 # À supprimer quand plus aucune requête n'arrive par l'ancien VPS (DNS propagé, 48 h minimum),
 # puis retirer proxyProtocol.trustedIPs du traefik.yml du VPS prod.
+#
+# HISTORIQUE : proxyProtocol a été retiré du traefik.yml du VPS prod (absent du serveur, retiré de la
+# copie de référence le 2026-11-25). Ne PAS réactiver ce relais tel quel : le Traefik prod rejetterait
+# l'en-tête PROXY. Le réactiver demanderait d'abord de remettre proxyProtocol.trustedIPs côté prod.
 tcp:
   routers:
     relais-vps-prod:
