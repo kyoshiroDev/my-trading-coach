@@ -64,7 +64,7 @@ aucun en-tête `Keep-Alive`) :
 la CI depuis le dépôt cloné sur le VPS. Compose : `api_blue` / `api_green` (`APP_ROLE=web`, mêmes
 labels Traefik → même service) + `worker` (`APP_ROLE=worker`, crons et files, sans route Traefik).
 
-Étapes : image `mtc_api_<env>:<sha>` (build sur le VPS dans le builder plafonné `mtc-build` via `infra/build-image.sh`, garde-fou `MemAvailable`, #1286 ; sautée si elle existe) → migration unique
+Étapes : image `mtc_api_<env>:<sha>` (CD et CI depuis #1290 : **construite sur le runner GitHub**, envoyée par `infra/ci/ship-image.sh` (`docker save` → zstd → une connexion SSH → `docker load` sous le verrou mémoire), puis `DEPLOY_REQUIRE_IMAGE=1 deploy-api.sh <env> <sha12>` : image absente → échec, jamais de build sur le VPS ; déploiement manuel sans la variable : build de secours dans le builder plafonné `mtc-build` via `infra/build-image.sh`, garde-fou `MemAvailable`, #1286 ; sautée si elle existe) → migration unique
 (`run --rm … migrate`, conteneurs en `RUN_MIGRATIONS=false`) → couleur inactive démarrée → healthy
 + `/health/ready` → **vérification dans le journal d'accès Traefik que des sondes
 `/api/health?deploy-probe=<sha>` arrivent sur son IP** → drain de l'ancienne (`/tmp/drain` → healthcheck
@@ -72,6 +72,7 @@ en échec → unhealthy → Traefik la retire → sondes vérifiées → 10 s �
 recréé (quelques secondes sans cron) → `:latest` = version en service, 5 images SHA gardées.
 
 - **Retour arrière** : `bash infra/deploy-api.sh <env> <sha>` (image gardée → pas de build, ~2 min).
+- **Bot Discord (prod)** : image construite sur le runner (`cd.yml`, #1290), chargée en `mtc_discord_bot:<sha12>` puis retaguée `:latest` ; la version d'avant est gardée en `:previous`. Retour arrière : `docker tag mtc_discord_bot:previous mtc_discord_bot:latest && docker compose -f docker-compose.discord-bot.yml --env-file .env.production up -d --force-recreate --no-build discord-bot`.
 - **Échec avant le drain** : la nouvelle couleur est drainée puis arrêtée, l'ancienne n'a jamais cessé
   de servir. Un seul déploiement à la fois (`flock /tmp/deploy-api-<env>.lock`).
 - **Ne jamais faire diverger les labels Traefik entre couleurs** : un routeur défini différemment par

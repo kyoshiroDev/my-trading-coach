@@ -53,7 +53,13 @@ et sauvegardes). Il ne partage que Traefik.
   crontab) : jamais de build, migration, bascule ni prune pendant restic (sinon
   4 352 + 1 536 + 512 = 6 400). Toute hausse d'un plafond MTC se recalcule avec cette formule avant d'être appliquée. `gzip` du dump
   de 3 h n'est pas plafonné : quelques Mio.
-- **Builds plafonnés** (#1286) : l'image API (`deploy-api.sh`) et le bot (`cd.yml`) se construisent par
+- **Plus de build sur les VPS en CD/CI** (#1290, 2026-11-26) : images API (prod et dev) et bot construites
+  sur le runner GitHub (`cd.yml`, `ci.yml`), envoyées par `infra/ci/ship-image.sh` (`docker save` → zstd →
+  SSH, clé d'hôte épinglée → `docker load` sous le verrou mémoire), `DEPLOY_REQUIRE_IMAGE=1` : image absente
+  → déploiement en échec avant la migration, jamais de repli sur un build. Le builder `mtc-build` ne sert plus
+  qu'au déploiement manuel (`deploy-api-manual.yml`, SHA sans image gardée) et à la reprise à la main ; son
+  cache n'est plus prune en CD, seulement le dimanche (crontab).
+- **Builds plafonnés** (#1286, secours depuis #1290) : l'image API (`deploy-api.sh`) et le bot se construisent par
   `infra/build-image.sh`, dans le builder `mtc-build` (pilote `docker-container`, 1536 Mio,
   `max-parallelism = 1`, `infra/buildkitd.toml`), créé au premier build et **arrêté après chaque build et
   chaque prune** (`docker buildx stop`, cache gardé) : ses 1536 Mio ne s'ajoutent jamais à la bascule.

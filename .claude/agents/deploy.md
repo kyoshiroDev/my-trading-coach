@@ -45,8 +45,8 @@ Points pour le relecteur : ce qui sort de mon domaine ou demande un arbitrage
 >   (`security-headers@file`), aucun middleware sur l'entrypoint `websecure` ; le résolveur ACME
 >   secondaire et le `docker-compose.override.yml` (réseaux) du serveur sont à cet autre projet, jamais
 >   supprimés ni recopiés dans le dépôt. 6 vCPU ; limites : API 1,5 Gio par couleur (2 workers),
->   worker 768 Mio, Postgres 1 Gio, Redis 320 Mio, Traefik 384 Mio, builds dans le builder plafonné
->   `mtc-build` (1,5 Gio, `infra/build-image.sh`) : 4 Gio garantis à l'autre projet (#1286,
+>   worker 768 Mio, Postgres 1 Gio, Redis 320 Mio, Traefik 384 Mio, images construites sur le runner GitHub
+>   (#1290, `infra/ci/ship-image.sh`), builder plafonné `mtc-build` (1,5 Gio, `infra/build-image.sh`) en secours : 4 Gio garantis à l'autre projet (#1286,
 >   `reference/deploy/maintenance-vps.md`).
 > - **Ancien VPS** `51.83.197.230` (schéma ci-dessous, dont les lignes prod sont périmées) : API, bases et
 >   apps **dev et beta**, plus **landing (`www.`) et admin (`admin.`) de prod**. Secrets `VPS_HOST` / `VPS_SSH_KEY` / `DEV_VPS_KNOWN_HOSTS`.
