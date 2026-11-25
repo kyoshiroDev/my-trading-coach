@@ -71,8 +71,9 @@ en plus un résolveur ACME secondaire et un `docker-compose.override.yml` (rése
 projet : ne jamais les supprimer ni les recopier ici.
 
 Limites mémoire (pics mesurés le 2026-11-24) : API 1,5 Gio par couleur (2 workers), worker 768 Mio,
-Postgres 1,5 Gio, Redis 320 Mio, Traefik 384 Mio, socket-proxy 64 Mio. Vérifier la RAM libre
-(`free -m`) avant de construire une image sur le serveur.
+Postgres 1 Gio (#1286), Redis 320 Mio, Traefik 384 Mio, socket-proxy 64 Mio, builder `mtc-build`
+1,5 Gio, restic 512 Mio. 4 Gio garantis à l'autre projet hébergé : calcul et builds plafonnés dans
+`.claude/reference/deploy/maintenance-vps.md`. Les images se construisent par `infra/build-image.sh`.
 
 ## Bases
 

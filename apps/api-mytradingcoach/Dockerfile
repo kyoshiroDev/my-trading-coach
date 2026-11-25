@@ -1,4 +1,7 @@
 FROM node:22-slim AS builder
+# Tas V8 borné sous le plafond du builder BuildKit (1536 Mio, infra/build-image.sh, #1286) : un
+# dépassement donne une erreur Node lisible plutôt qu'un OOM-kill du conteneur de build.
+ENV NODE_OPTIONS=--max-old-space-size=1024
 RUN npm install -g pnpm@11.6.0 --no-fund --no-audit
 WORKDIR /app
 COPY package.json pnpm-workspace.yaml pnpm-lock.yaml .npmrc ./
@@ -18,6 +21,7 @@ RUN NX_DAEMON=false NX_NO_CLOUD=true pnpm nx sync --yes 2>/dev/null || true
 RUN NX_DAEMON=false NX_NO_CLOUD=true pnpm nx build api-mytradingcoach --configuration=production --skip-nx-cache
 
 FROM node:22-alpine AS migrator
+ENV NODE_OPTIONS=--max-old-space-size=1024
 RUN apk add --no-cache python3 make g++
 RUN npm install -g pnpm@11.6.0 --no-fund --no-audit
 WORKDIR /app
