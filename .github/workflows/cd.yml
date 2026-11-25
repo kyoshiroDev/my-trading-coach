@@ -90,7 +90,7 @@ jobs:
             # Bot construit dans le même builder plafonné que l'API (#1286), puis lancé sans rebuild.
             bash infra/build-image.sh scripts/discord-bot/Dockerfile scripts/discord-bot mtc_discord_bot:latest
             docker compose -f docker-compose.discord-bot.yml --env-file .env.production up -d --force-recreate --no-build discord-bot
-            # Le prune redémarre le builder (1536 Mio) : sous le verrou mémoire (jamais pendant restic),
+            # Builder démarré pour le prune (1536 Mio) : sous le verrou mémoire (jamais pendant restic),
             # arrêt quoi qu'il arrive, sans masquer un échec (#1286).
             flock -w 1200 /tmp/mtc-memoire.lock sh -c 'docker buildx inspect --bootstrap mtc-build >/dev/null && docker buildx prune --builder mtc-build --keep-storage=8GB -f; rc=$?; docker buildx stop mtc-build; exit $rc'
             echo "Production deployment complete at $(date)"
