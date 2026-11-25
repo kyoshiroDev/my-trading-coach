@@ -21,6 +21,7 @@ on:
       - 'infra/build-image.sh'
       - 'infra/buildkitd.toml'
       - 'infra/buildkitd.ci.toml'
+      - 'infra/ci/build-memory-measure.sh'
       - '.github/workflows/build-memory.yml'
 
 concurrency:
@@ -34,8 +35,7 @@ jobs:
     timeout-minutes: 30
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-      # Alerte sous la marge voulue : 1,3 Gio sur un plafond de 1,5 Gio. memory.peak compte aussi le
-      # cache de pages : le signal fort reste un build tué (job rouge) ; anon = mémoire des process.
+      # Alerte si la mémoire non récupérable (anon + kernel) dépasse 1,3 Gio sur un plafond de 1,5 Gio.
       WARN_MIB: 1331
       # Docker Hub anonyme refuse les IP des runners (toomanyrequests) : miroir mirror.gcr.io.
       BUILDKIT_IMAGE: mirror.gcr.io/moby/buildkit:v0.35.1
@@ -43,27 +43,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Mesure : infra/ci/build-memory-measure.sh (pic anon + kernel échantillonné, oom_kill = 0 exigé).
       - name: Build API (à froid)
         env:
           BUILD_EXTRA_ARGS: --no-cache
-          BUILD_KEEP_RUNNING: '1'
-        run: bash infra/build-image.sh apps/api-mytradingcoach/Dockerfile . mtc_api_mesure:ci
+        run: bash infra/ci/build-memory-measure.sh API apps/api-mytradingcoach/Dockerfile . mtc_api_mesure:ci
 
-      - name: Pic mémoire du build API
-        run: |
-          peak=$(docker exec buildx_buildkit_mtc-build0 cat /sys/fs/cgroup/memory.peak)
-          mib=$((peak / 1048576))
-          anon=$(docker exec buildx_buildkit_mtc-build0 awk '/^anon /{print int($2/1048576)}' /sys/fs/cgroup/memory.stat)
-          echo "Pic mémoire du builder (API) : ${mib} Mio (anon à la fin : ${anon} Mio)" | tee -a "$GITHUB_STEP_SUMMARY"
-          [ "$mib" -le "$WARN_MIB" ] || echo "::warning::Build API à ${mib} Mio, au-dessus de ${WARN_MIB} Mio (plafond 1536)"
-
-      # Builder recréé : memory.peak repart de zéro pour mesurer le bot seul.
       - name: Build bot Discord (à froid)
         env:
           BUILD_EXTRA_ARGS: --no-cache
-          BUILD_KEEP_RUNNING: '1'
-        run: |
-          docker buildx rm mtc-build
-          bash infra/build-image.sh scripts/discord-bot/Dockerfile scripts/discord-bot mtc_discord_bot:ci
-          peak=$(docker exec buildx_buildkit_mtc-build0 cat /sys/fs/cgroup/memory.peak)
-          echo "Pic mémoire du builder (bot) : $((peak / 1048576)) Mio" | tee -a "$GITHUB_STEP_SUMMARY"
+        run: bash infra/ci/build-memory-measure.sh Bot scripts/discord-bot/Dockerfile scripts/discord-bot mtc_discord_bot:ci
