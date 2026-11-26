@@ -260,6 +260,8 @@ exec node main.js
 
 ### Secrets GitHub requis
 
+Clé SSH écrite par un job (tous les environnements) : toujours `env: SSH_KEY: ${{ secrets.… }}`, contrôle `[ -n "$SSH_KEY" ]`, puis `( umask 077; printf '%s\n' "$SSH_KEY" > ~/.ssh/id_rsa )`. Jamais `${{ secrets.* }}` interpolé dans un `run:` : la valeur deviendrait du code shell (#1292).
+
 **Environment `production` :**
 - `VPS_HOST`, `VPS_USER`, `VPS_SSH_KEY` : ancien VPS (landing et admin de prod ; dev et beta passent par `staging`), fronts publiés en releases par `infra/deploy-static.sh`
 - `PROD_VPS_HOST`, `PROD_VPS_SSH_KEY` : VPS prod (API prod et app prod, `cd.yml` et `deploy-api-manual.yml`) ; même `VPS_USER`
