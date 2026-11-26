@@ -40,7 +40,7 @@ jobs:
             git reset --hard origin/beta
             docker compose -f docker-compose.beta.yml --env-file .env.beta build api
             docker compose -f docker-compose.beta.yml --env-file .env.beta up -d --force-recreate api
-            docker buildx prune --keep-storage=8GB -f
+            docker buildx prune --reserved-space=8GB -f
             echo "Beta API deployment complete at $(date)"
 
   # ── Deploy Angular app beta → VPS static (beta.app.mytradingcoach.app) ──────
