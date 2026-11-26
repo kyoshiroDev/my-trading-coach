@@ -16,7 +16,9 @@ jobs:
     name: Detect changed apps
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    # Seulement une CI de push sur main de CE dépôt : une PR de fork dont la branche s'appelle `main`
+    # déclencherait sinon la CD avec son propre commit et les secrets de prod (dépôt public, #1290).
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' && github.event.workflow_run.head_repository.full_name == github.repository }}
     env:
       NX_NO_CLOUD: true
       NX_DAEMON: false
@@ -269,7 +271,9 @@ jobs:
     name: Deploy Landing prod to VPS
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    # Seulement une CI de push sur main de CE dépôt : une PR de fork dont la branche s'appelle `main`
+    # déclencherait sinon la CD avec son propre commit et les secrets de prod (dépôt public, #1290).
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' && github.event.workflow_run.head_repository.full_name == github.repository }}
     environment: production
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true

@@ -73,6 +73,12 @@ recréé (quelques secondes sans cron) → `:latest` = version en service, 5 ima
 
 - **Retour arrière** : `bash infra/deploy-api.sh <env> <sha>` (image gardée → pas de build, ~2 min).
 - **Bot Discord (prod)** : image construite sur le runner (`cd.yml`, #1290), chargée en `mtc_discord_bot:<sha12>` puis retaguée `:latest` ; la version d'avant est gardée en `:previous`. Retour arrière : `docker tag mtc_discord_bot:previous mtc_discord_bot:latest && docker compose -f docker-compose.discord-bot.yml --env-file .env.production up -d --force-recreate --no-build discord-bot`.
+- **Vérifications du premier passage par le runner** (#1290, sur dev puis en prod) : le journal du job
+  montre « [ship-image] … image chargée » puis « image … déjà présente : pas de build », sans ligne
+  « build » de `deploy-api.sh` ; `docker images mtc_api_<env>` liste le SHA à 12 caractères (5 images
+  gardées) ; en prod, `docker images mtc_discord_bot` montre `:latest` et `:previous` et `docker ps` le bot
+  Up ; `curl https://<api>/api/health` et `/api/health/ready` répondent ; `grep oom_kill
+  /sys/fs/cgroup/system.slice/docker.service/memory.events` reste à 0.
 - **Échec avant le drain** : la nouvelle couleur est drainée puis arrêtée, l'ancienne n'a jamais cessé
   de servir. Un seul déploiement à la fois (`flock /tmp/deploy-api-<env>.lock`).
 - **Ne jamais faire diverger les labels Traefik entre couleurs** : un routeur défini différemment par

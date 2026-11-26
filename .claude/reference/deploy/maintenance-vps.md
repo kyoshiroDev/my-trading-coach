@@ -59,6 +59,11 @@ et sauvegardes). Il ne partage que Traefik.
   → déploiement en échec avant la migration, jamais de repli sur un build. Le builder `mtc-build` ne sert plus
   qu'au déploiement manuel (`deploy-api-manual.yml`, SHA sans image gardée) et à la reprise à la main ; son
   cache n'est plus prune en CD, seulement le dimanche (crontab).
+  Prérequis : `zstd` sur les deux VPS (`/usr/bin/zstd`, constaté le 2026-11-26) ; absent → l'étape
+  « Envoyer l'image » échoue, rien n'est basculé. Mémoire du `docker load` (dockerd, non plafonné, sous le
+  verrou) : rechargement de l'image API prod (712 Mo en zstd) le 2026-11-26, 9 s, `MemAvailable` −100 Mio
+  au plus, dockerd stable à 742 Mio, `oom_kill` 0 (couches déjà présentes : à recontrôler à la première CD
+  avec `oom_kill` du service docker).
 - **Builds plafonnés** (#1286, secours depuis #1290) : l'image API (`deploy-api.sh`) et le bot se construisent par
   `infra/build-image.sh`, dans le builder `mtc-build` (pilote `docker-container`, 1536 Mio,
   `max-parallelism = 1`, `infra/buildkitd.toml`), créé au premier build et **arrêté après chaque build et
