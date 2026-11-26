@@ -73,7 +73,8 @@ projet : ne jamais les supprimer ni les recopier ici.
 Limites mémoire (pics mesurés le 2026-11-24) : API 1,5 Gio par couleur (2 workers), worker 768 Mio,
 Postgres 1 Gio (#1286), Redis 320 Mio, Traefik 384 Mio, socket-proxy 64 Mio, builder `mtc-build`
 1,5 Gio, restic 512 Mio. 4 Gio garantis à l'autre projet hébergé : calcul et builds plafonnés dans
-`.claude/reference/deploy/maintenance-vps.md`. Les images se construisent par `infra/build-image.sh`.
+`.claude/reference/deploy/maintenance-vps.md`. Les images se construisent sur le runner GitHub et arrivent par `infra/ci/ship-image.sh` (#1290) ;
+`infra/build-image.sh` reste le secours (déploiement manuel, reprise à la main).
 
 ## Bases
 
