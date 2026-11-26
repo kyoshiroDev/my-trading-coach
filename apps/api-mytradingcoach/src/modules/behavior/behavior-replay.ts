@@ -8,6 +8,7 @@ import {
   evaluateEntry,
 } from './behavior-detectors';
 import { dailyLossLimitAt, maxContractsAt } from './behavior-plan';
+import { type PressureReading, pressureAt } from './behavior-pressure';
 import { type BehaviorPosition, type BehaviorSession, type BehaviorTrade, groupPositions, groupSessions } from './behavior-positions';
 
 /**
@@ -51,6 +52,8 @@ export interface ReplaySession extends BehaviorSession {
   /** Plus bas du P&L réalisé cumulé dans la séance (≤ 0), et position où il est atteint. */
   low: number;
   lowIndex: number;
+  /** Jauge de pression à l'entrée de chaque position (même index que `positions`, #1270). */
+  pressure: PressureReading[];
 }
 
 export function replay(input: ReplayInput): ReplaySession[] {
@@ -72,6 +75,7 @@ export function replay(input: ReplayInput): ReplaySession[] {
     const dailyLossLimit = account ? dailyLossLimitAt(account.phase, prevProfit) : null;
 
     const alerts: ReplayAlert[] = [];
+    const pressure: PressureReading[] = [];
     const lastSent = new Map<BehaviorAlertType, number>();
     let dayPnl = 0;
     let low = 0;
@@ -89,6 +93,7 @@ export function replay(input: ReplayInput): ReplaySession[] {
         dailyLoss: dailyLossLimit != null ? { limit: dailyLossLimit, used: Math.max(0, -dayPnl) } : null,
         tradesPerDayMax: input.tradesPerDayMax,
       };
+      pressure.push(pressureAt(ctx));
       for (const a of applyAntiSpam(evaluateEntry(ctx), lastSent, at)) {
         alerts.push({ ...a, sessionKey: s.key, positionIndex: i, at });
       }
@@ -99,7 +104,7 @@ export function replay(input: ReplayInput): ReplaySession[] {
       }
     });
     realized.set(s.accountId ?? '', prevProfit + dayPnl);
-    out.push({ ...s, alerts, baseline, dailyLossLimit, low, lowIndex });
+    out.push({ ...s, alerts, baseline, dailyLossLimit, low, lowIndex, pressure });
   }
   return out;
 }
