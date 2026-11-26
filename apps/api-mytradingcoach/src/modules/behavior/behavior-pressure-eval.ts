@@ -62,7 +62,7 @@ export function evaluatePressure(sessions: readonly ReplaySession[]): PressureEv
         meanPnl: roundCents(mean(xs)),
         medianPnl: xs.length ? roundCents(quantile(xs, 0.5)) : 0,
         lossRate: xs.length ? Math.round((xs.filter((x) => x < 0).length / xs.length) * 1000) / 1000 : 0,
-        worstPnl: xs.length ? roundCents(Math.min(...xs)) : 0,
+        worstPnl: xs.length ? roundCents(xs.reduce((m, x) => (x < m ? x : m), xs[0])) : 0,
         meanRestOfSession: roundCents(mean(rest.get(l)!)),
       } satisfies LevelStats];
     }),

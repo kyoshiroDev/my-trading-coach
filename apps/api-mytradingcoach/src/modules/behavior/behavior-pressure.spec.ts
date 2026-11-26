@@ -94,8 +94,22 @@ describe('pressureAt', () => {
       entry: { asset: 'MNQ', side: 'LONG', quantity: 2 },
       open: [{ asset: 'MNQ', side: 'LONG', quantity: 4 }],
     }));
-    expect(r.contributions.map((c) => c.signal)).toEqual(['over_plan', 'over_limit']);
-    expect(r.level).toBe('watch');
+    expect(r.contributions.map((c) => [c.signal, c.points])).toEqual([['over_plan', 30], ['over_limit', 15]]);
+    expect(r).toMatchObject({ level: 'watch', score: 45 });
+  });
+
+  it('bornes strictes : rang = p90, perte du jour à 50 % pile, 2 pertes seules', () => {
+    const wins = Array.from({ length: 5 }, (_, i) => pos(i * 3, 10));
+    expect(pressureAt(ctx({ closed: wins, at: min(40) })).contributions).toEqual([]);
+    expect(pressureAt(ctx({ dailyLoss: { limit: 1000, used: 500 } })).contributions).toEqual([]);
+    expect(pressureAt(ctx({ dailyLoss: { limit: 1000, used: 800 } })).contributions).toEqual([expect.objectContaining({ signal: 'daily_loss_used', points: 15 })]);
+    const two = pressureAt(ctx({ closed: [pos(0, -40), pos(5, -40)], at: min(40) }));
+    expect(two.contributions).toEqual([expect.objectContaining({ signal: 'loss_streak', points: 10 })]);
+  });
+
+  it('ré-entrée datée avant la sortie précédente (positions qui se chevauchent) : pas de signal', () => {
+    const r = pressureAt(ctx({ closed: [pos(31, -40)], at: min(30) }));
+    expect(r.contributions.find((c) => c.signal === 'fast_reentry')).toBeUndefined();
   });
 
   it('score plafonné à 100', () => {
@@ -123,7 +137,8 @@ describe('pressureAt', () => {
 
 // ── Rejeu et évaluation ─────────────────────────────────────────────────────
 
-const at = (day: number, m: number) => new Date(Date.UTC(2026, 8, day, 15, m));
+// Minutes décimales permises (0.1 = 6 s) : Date.UTC les tronquerait.
+const at = (day: number, m: number) => new Date(Date.UTC(2026, 8, day, 15) + m * 60_000);
 let n = 0;
 const t = (day: number, m: number, pnl: number, quantity = 1, side: 'LONG' | 'SHORT' = 'LONG'): BehaviorTrade => ({
   id: String(++n), accountId: 'acc', asset: 'MNQ', side, entry: 20_000 + n, quantity, pnl, commission: 0, tradedAt: at(day, m),

@@ -46,6 +46,9 @@
 - **Heure d'entrée absente de l'historique** : l'entrée est datée de la première sortie (comme le
   rejeu #602). Le délai de ré-entrée est donc majoré et le signal sous-estimé au rejeu ; en direct,
   l'heure d'ouverture est connue, avec un biais vers plus de vigilance qu'au rejeu.
+  Au rejeu, « Entrée 2 min après une perte » se lit donc « sortie 2 min après la sortie perdante ».
+  Avant l'étape 2, mesurer la référence avec la vraie heure d'entrée (`Trade.openedAt`, cf. audit #602),
+  sinon le signal sera biaisé vers « rapide » en direct.
 - **Sans plan relié, A1 et la perte max du jour sont muets** (1 compte sur 16 relié en prod au
   rapport #602).
 - **Une alerte de risque n'est pas une prédiction de perte** : chez le seul trader à volume du

@@ -106,7 +106,7 @@ export function pressureAt(ctx: EntryContext): PressureReading {
   for (let i = ctx.closed.length - 1; i >= 0 && isLoss(ctx.closed[i]); i--) streak++;
   const streakRow = PRESSURE_STREAK.find((r) => streak >= r.from);
   if (streakRow) {
-    out.push({ signal: 'loss_streak', points: streakRow.points, detail: `après ${streak} pertes d’affilée` });
+    out.push({ signal: 'loss_streak', points: streakRow.points, detail: `après ${streak} pertes d'affilée` });
   }
 
   if (ctx.dailyLoss && ctx.dailyLoss.limit > 0) {
