@@ -37,7 +37,10 @@
 ## Ce que montre la démo (mécanique seulement)
 
 - La seule journée « revenge » du jeu passe en zone rouge, sur l'entrée qui la fait plonger ; aucune
-  journée normale n'y passe. La vigilance précède des positions perdantes.
+  journée normale n'y passe. Sur les 3 pires journées, une seule est vue en zone rouge : les deux
+  autres restent en calme ou en vigilance.
+- 3 entrées seulement hors du calme (2 en vigilance, 1 en zone rouge) : aucune conclusion possible
+  sur ce que la vigilance annonce.
 - 102 positions en tout : c'est très peu, et le générateur fabrique exprès ces journées. Aucun
   chiffre ci-dessous ne se transpose à un vrai trader.
 
