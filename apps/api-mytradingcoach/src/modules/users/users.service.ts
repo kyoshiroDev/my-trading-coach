@@ -16,6 +16,7 @@ import { realMonthlyEur } from '../partner-codes/partner-code.util';
 import { CompleteOnboardingDto } from './dto/onboarding.dto';
 import { UpdateMeDto } from './dto/update-me.dto';
 import { UpdatePreferencesDto } from './dto/update-preferences.dto';
+import { PREFERENCE_FIELDS, type PreferenceField } from './preference-fields';
 import { AuthUserCacheService } from '../infra/auth-user-cache.service';
 import { OFFER_PREMIUM_DEFAULT_DAYS, PREMIUM_OFFERABLE_WHERE, hasActiveStripeSubscription, premiumOfferRefusal } from './premium-offer.util';
 import { StripeAccountClosureService } from '../stripe/stripe-account-closure.service';
@@ -765,9 +766,12 @@ export class UsersService {
   }
 
   async updatePreferences(userId: string, dto: UpdatePreferencesDto) {
-    // Plus de devise globale ni de taux : `currency` est ignoré s'il arrive encore.
-    const prefs = { ...dto };
-    delete prefs.currency;
+    // Liste blanche (#1267) : seuls les champs de PREFERENCE_FIELDS partent en base, un par un.
+    // Plus de devise globale ni de taux : `currency` n'y est pas, il est ignoré s'il arrive encore.
+    const prefs: Partial<Pick<UpdatePreferencesDto, PreferenceField>> = {};
+    for (const key of PREFERENCE_FIELDS) {
+      if (dto[key] !== undefined) (prefs as Record<PreferenceField, unknown>)[key] = dto[key];
+    }
     // Consentement marketing : horodaté quand il CHANGE seulement (preuve RGPD ; le profil le renvoie
     // à chaque enregistrement). Au retrait, la date du consentement reste, celle du retrait s'ajoute (#747). Le réglage (« Conseils, nouveautés et offres ») couvre aussi les
     // conseils de prise en main : l'activer les rétablit, le couper les arrête.
