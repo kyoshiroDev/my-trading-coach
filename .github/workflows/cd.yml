@@ -16,7 +16,9 @@ jobs:
     name: Detect changed apps
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    # Seulement une CI de push sur main de CE dépôt : une PR de fork dont la branche s'appelle `main`
+    # déclencherait sinon la CD avec son propre commit et les secrets de prod (dépôt public, #1290).
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' && github.event.workflow_run.head_repository.full_name == github.repository }}
     env:
       NX_NO_CLOUD: true
       NX_DAEMON: false
@@ -62,7 +64,7 @@ jobs:
   deploy-api:
     name: Deploy API to VPS
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 40
     needs: changes
     if: ${{ needs.changes.outputs.api == 'true' && vars.FREEZE_API_DEPLOY != 'true' }}
     environment: production
@@ -70,29 +72,86 @@ jobs:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
       NX_NO_CLOUD: true
     steps:
+      # Images API et bot construites ICI, sur le runner (#1290) : plus aucun build sur le VPS prod,
+      # partagé avec un autre projet hébergé (4 Gio garantis, #1286). Envoi par infra/ci/ship-image.sh.
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0 # SHA court à 12 caractères calculé sur l'historique complet, comme sur le VPS
+
+      - name: SHA de l'image
+        id: sha
+        run: echo "short=$(git rev-parse --short=12 HEAD)" >> "$GITHUB_OUTPUT"
+
+      # BuildKit tiré du miroir mirror.gcr.io : Docker Hub anonyme refuse les IP des runners.
+      # Pas de cache type=gha : l'image API (~3 Gio) évincerait les caches pnpm/Playwright (10 Gio max).
+      - uses: docker/setup-buildx-action@v3
+        with:
+          driver-opts: image=mirror.gcr.io/moby/buildkit:v0.35.1
+          buildkitd-config-inline: |
+            [registry."docker.io"]
+              mirrors = ["mirror.gcr.io"]
+
+      - name: Build image API
+        run: >-
+          docker buildx build -f apps/api-mytradingcoach/Dockerfile
+          -t mtc_api_prod:${{ steps.sha.outputs.short }}
+          --output type=docker,dest=${{ runner.temp }}/api.tar .
+
+      - name: Build image bot Discord
+        run: >-
+          docker buildx build -f scripts/discord-bot/Dockerfile
+          -t mtc_discord_bot:${{ steps.sha.outputs.short }}
+          --output type=docker,dest=${{ runner.temp }}/bot.tar scripts/discord-bot
+
+      # Clé d'hôte épinglée (PROD_VPS_KNOWN_HOSTS), jamais de ssh-keyscan (fail2ban, 2026-10-16).
+      - name: Setup SSH
+        env:
+          KNOWN_HOSTS: ${{ secrets.PROD_VPS_KNOWN_HOSTS }}
+        run: |
+          [ -n "$KNOWN_HOSTS" ] || { echo "❌ secret PROD_VPS_KNOWN_HOSTS absent" >&2; exit 1; }
+          mkdir -p ~/.ssh
+          echo "${{ secrets.PROD_VPS_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          printf '%s\n' "$KNOWN_HOSTS" >> ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+
+      - name: Envoyer les images au VPS prod
+        env:
+          VPS_TARGET: ${{ secrets.VPS_USER }}@${{ secrets.PROD_VPS_HOST }}
+        run: |
+          bash infra/ci/ship-image.sh "${{ runner.temp }}/api.tar" "$VPS_TARGET"
+          bash infra/ci/ship-image.sh "${{ runner.temp }}/bot.tar" "$VPS_TARGET"
+
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.2.0
+        env:
+          SHA: ${{ steps.sha.outputs.short }}
         with:
-          command_timeout: 30m # build + bascule blue/green (~5-10 min)
+          command_timeout: 30m # migration + bascule blue/green (~3-5 min, plus de build)
           host: ${{ secrets.PROD_VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.PROD_VPS_SSH_KEY }}
+          envs: SHA
           script: |
             set -e
             cd /opt/apps/mytradingcoach/prod
             git fetch origin
             git reset --hard ${{ github.event.workflow_run.head_sha }}
-            # Blue/green sans coupure (SCA-B8, docs : .claude/agents/deploy.md) : image taguée SHA,
-            # migration unique, couleur inactive démarrée et vérifiée dans Traefik, drain de
-            # l'ancienne, worker recréé. Échec avant le drain → l'ancienne n'a jamais cessé de servir,
-            # le job échoue et le tag deployed/prod ne bouge pas.
-            bash infra/deploy-api.sh prod
-            # Bot construit dans le même builder plafonné que l'API (#1286), puis lancé sans rebuild.
-            bash infra/build-image.sh scripts/discord-bot/Dockerfile scripts/discord-bot mtc_discord_bot:latest
+            # Blue/green sans coupure (SCA-B8, docs : .claude/agents/deploy.md) : image chargée à l'étape
+            # précédente (DEPLOY_REQUIRE_IMAGE=1 : absente → échec, jamais de build sur le VPS), migration
+            # unique, couleur inactive démarrée et vérifiée dans Traefik, drain de l'ancienne, worker
+            # recréé. Échec avant le drain → l'ancienne n'a jamais cessé de servir, le job échoue et le
+            # tag deployed/prod ne bouge pas.
+            DEPLOY_REQUIRE_IMAGE=1 bash infra/deploy-api.sh prod "$SHA"
+            # Bot : version en service gardée en :previous (retour arrière, api-deploiement.md), puis
+            # la nouvelle en :latest, lancée sans rebuild.
+            docker image inspect mtc_discord_bot:latest >/dev/null 2>&1 && docker tag mtc_discord_bot:latest mtc_discord_bot:previous
+            docker tag "mtc_discord_bot:${SHA}" mtc_discord_bot:latest
+            docker rmi "mtc_discord_bot:${SHA}" >/dev/null
             docker compose -f docker-compose.discord-bot.yml --env-file .env.production up -d --force-recreate --no-build discord-bot
-            # Builder démarré pour le prune (1536 Mio) : sous le verrou mémoire (jamais pendant restic),
-            # arrêt quoi qu'il arrive, sans masquer un échec (#1286).
-            flock -w 1200 /tmp/mtc-memoire.lock sh -c 'docker buildx inspect mtc-build >/dev/null 2>&1 || { echo "mtc-build absent : prune sauté"; exit 0; }; docker buildx inspect --bootstrap mtc-build >/dev/null && docker buildx prune --builder mtc-build --keep-storage=8GB -f; rc=$?; docker buildx stop mtc-build; exit $rc'
+            # Plus de prune de mtc-build ici : il ne construit plus en CD (cache figé), le prune du dimanche
+            # (crontab) suffit, sans démarrer ses 1536 Mio à chaque déploiement (#1290).
             echo "Production deployment complete at $(date)"
 
   # ── Deploy Angular → VPS static ──────────────────────────────────────────
@@ -212,7 +271,9 @@ jobs:
     name: Deploy Landing prod to VPS
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    # Seulement une CI de push sur main de CE dépôt : une PR de fork dont la branche s'appelle `main`
+    # déclencherait sinon la CD avec son propre commit et les secrets de prod (dépôt public, #1290).
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' && github.event.workflow_run.head_repository.full_name == github.repository }}
     environment: production
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true

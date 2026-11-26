@@ -6,7 +6,8 @@
 # Lancé depuis la racine du dépôt cloné sur le VPS (/opt/apps/mytradingcoach/<env>), par la CD ou
 # à la main. Sans <sha> : construit le commit courant. Avec <sha> : redéploie cette version ; image
 # reprise si elle existe encore (retour arrière), sinon reconstruite depuis le dépôt (qui doit être
-# sur ce commit).
+# sur ce commit). CD et CI (#1290) : image construite sur le runner GitHub, chargée par
+# infra/ci/ship-image.sh, puis ce script avec <sha> et DEPLOY_REQUIRE_IMAGE=1 (jamais de build ici).
 #
 # Étapes : image taguée par SHA → migration (une fois) → couleur inactive démarrée → attente
 # « healthy » + vérification que Traefik lui envoie du trafic → drain de l'ancienne (unhealthy →
@@ -118,6 +119,10 @@ fi
 if docker image inspect "${IMAGE}:${SHA}" >/dev/null 2>&1; then
   log "image ${IMAGE}:${SHA} déjà présente (retour arrière ou relance) : pas de build"
 else
+  # CD et CI (#1290) : image construite sur le runner et chargée avant ce script. Absente = transfert
+  # raté ou tag différent : échec, jamais de build silencieux sur le VPS. Le déploiement manuel ne
+  # pose pas la variable et garde le build plafonné en secours.
+  [ "${DEPLOY_REQUIRE_IMAGE:-0}" = 1 ] && die "image ${IMAGE}:${SHA} absente (DEPLOY_REQUIRE_IMAGE=1) : pas de build sur le VPS, rien n'a changé"
   [ "$(git rev-parse --short=12 HEAD)" = "$SHA" ] || die "image ${SHA} absente et le dépôt n'est pas sur ce commit"
   log "build ${IMAGE}:${SHA}"
   # Builder plafonné + garde-fou mémoire (#1286) : échec ici = rien n'a changé, l'ancienne couleur sert.

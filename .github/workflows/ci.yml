@@ -192,7 +192,7 @@ jobs:
   deploy-api-dev:
     name: Deploy API dev to VPS
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 35
     needs: checks
     if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
     environment: staging
@@ -201,29 +201,67 @@ jobs:
       NX_NO_CLOUD: true
 
     steps:
+      # Image API construite sur le runner (#1290), même chemin que la prod (cd.yml) : il est éprouvé à
+      # chaque merge dans dev avant de servir en prod. Plus aucun build sur l'ancien VPS.
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # SHA court à 12 caractères calculé sur l'historique complet, comme sur le VPS
+
+      - name: SHA de l'image
+        id: sha
+        run: echo "short=$(git rev-parse --short=12 HEAD)" >> "$GITHUB_OUTPUT"
+
+      # BuildKit tiré du miroir mirror.gcr.io : Docker Hub anonyme refuse les IP des runners.
+      # Pas de cache type=gha : l'image API (~3 Gio) évincerait les caches pnpm/Playwright (10 Gio max).
+      - uses: docker/setup-buildx-action@v3
+        with:
+          driver-opts: image=mirror.gcr.io/moby/buildkit:v0.35.1
+          buildkitd-config-inline: |
+            [registry."docker.io"]
+              mirrors = ["mirror.gcr.io"]
+
+      - name: Build image API
+        run: >-
+          docker buildx build -f apps/api-mytradingcoach/Dockerfile
+          -t mtc_api_dev:${{ steps.sha.outputs.short }}
+          --output type=docker,dest=${{ runner.temp }}/api.tar .
+
+      # Clé d'hôte épinglée (DEV_VPS_KNOWN_HOSTS), jamais de ssh-keyscan (fail2ban).
+      - name: Setup SSH
+        env:
+          KNOWN_HOSTS: ${{ secrets.DEV_VPS_KNOWN_HOSTS }}
+        run: |
+          [ -n "$KNOWN_HOSTS" ] || { echo "❌ secret DEV_VPS_KNOWN_HOSTS absent" >&2; exit 1; }
+          mkdir -p ~/.ssh
+          echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          printf '%s\n' "$KNOWN_HOSTS" >> ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+
+      - name: Envoyer l'image au VPS
+        env:
+          VPS_TARGET: ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}
+        run: bash infra/ci/ship-image.sh "${{ runner.temp }}/api.tar" "$VPS_TARGET"
+
       - name: Deploy via SSH (dev)
         uses: appleboy/ssh-action@v1.2.0
+        env:
+          SHA: ${{ steps.sha.outputs.short }}
         with:
-          command_timeout: 30m # build + bascule blue/green (~5-10 min)
+          command_timeout: 30m # migration + bascule blue/green (~3-5 min, plus de build)
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
+          envs: SHA
           script: |
             set -e
             cd /opt/apps/mytradingcoach/dev
             git fetch origin
-            git reset --hard origin/dev
-            # Blue/green sans coupure (SCA-B8-03) : build taggé SHA, migration, bascule, worker.
-            bash infra/deploy-api.sh dev
-            # Builder arrêté après chaque build : le prune ne le démarre pas (« driver not running »).
-            # Builder absent (après `docker buildx rm`, déploiement sans build) : prune sauté.
-            if docker buildx inspect mtc-build >/dev/null 2>&1; then
-              { docker buildx inspect --bootstrap mtc-build >/dev/null && docker buildx prune --builder mtc-build --keep-storage=8GB -f; } || rc=$?
-              docker buildx stop mtc-build
-              [ "${rc:-0}" = 0 ] || exit "$rc"
-            else
-              echo "mtc-build absent : prune sauté"
-            fi
+            git reset --hard ${{ github.sha }}
+            # Blue/green sans coupure (SCA-B8-03) : image chargée à l'étape précédente
+            # (DEPLOY_REQUIRE_IMAGE=1 : absente → échec, jamais de build sur le VPS), migration, bascule,
+            # worker. Plus de prune de mtc-build : il ne construit plus en CI (#1290).
+            DEPLOY_REQUIRE_IMAGE=1 bash infra/deploy-api.sh dev "$SHA"
             echo "Dev API deployment complete at $(date)"
 
   # ── Deploy Angular app dev → VPS static ──────────────────────────────────

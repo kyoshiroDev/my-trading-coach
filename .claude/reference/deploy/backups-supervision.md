@@ -12,7 +12,7 @@
 # Backups automatiques (crons VPS, user greg)
 # 03h00 chaque nuit  → pg_dump prod + dev + beta → /opt/backups/mtc/   (rétention 14 j)
 # 03h30 chaque nuit  → docker system prune + builder prune
-# 04h00 dimanche     → docker buildx prune --keep-storage=8GB
+# 04h00 dimanche     → docker buildx prune --reserved-space=8GB (+ cache de mtc-build, VPS prod)
 # 22h45 dimanche     → images Docker + configs   → /opt/backups/apps/  (rétention 30 j)
 # Pas de notification Discord (webhooks morts, retirés) — le contrôle de
 # fraîcheur se fait dans l'app admin, qui lit /opt/backups/mtc.
