@@ -2,7 +2,7 @@ import { createServer, type Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import * as Sentry from '@sentry/nestjs';
 import type { Breadcrumb, ErrorEvent, NodeOptions } from '@sentry/nestjs';
-import { buildSentryOptions, scrubBreadcrumb, scrubEvent } from './sentry-options';
+import { buildSentryOptions, maskText, scrubBreadcrumb, scrubEvent } from './sentry-options';
 
 type Transport = ReturnType<NonNullable<NodeOptions['transport']>>;
 type Envelope = Parameters<Transport['send']>[0];
@@ -71,6 +71,83 @@ describe('scrubEvent (#746)', () => {
     });
     expect(JSON.stringify(scrubbed)).not.toContain('cus_Fictif123');
     expect(scrubbed.exception?.values?.[0].value).toBe("No such customer: 'cus_[masqué]'");
+  });
+});
+
+describe('masquage des adresses e-mail (#1263)', () => {
+  // Adresses fictives (domaines réservés .invalid / example) : aucune ne correspond à une vraie boîte.
+  const EMAILS = ['trader.test+essai@exemple.invalid', 'Prenom.Nom@sous.domaine.example', 'x_y-1@a-b.example'];
+
+  it('message, message formaté et exceptions : adresses masquées, le reste intact', () => {
+    const scrubbed = scrubEvent({
+      type: undefined,
+      message: `Envoi Resend refusé pour ${EMAILS[0]}`,
+      logentry: { message: `Relance échouée (${EMAILS[1]})` },
+      exception: {
+        values: [
+          { type: 'PrismaClientKnownRequestError', value: `Unique constraint failed on email = ${EMAILS[2]}` },
+          { type: 'StripeInvalidRequestError', value: `No such customer: 'cus_Fictif123' (${EMAILS[0]})` },
+        ],
+      },
+    });
+    const sent = JSON.stringify(scrubbed);
+    for (const email of EMAILS) expect(sent).not.toContain(email);
+    expect(sent).not.toContain('cus_Fictif123');
+    expect(scrubbed.message).toBe('Envoi Resend refusé pour [e-mail masqué]');
+    expect(scrubbed.logentry?.message).toBe('Relance échouée ([e-mail masqué])');
+    expect(scrubbed.exception?.values?.[0].value).toBe('Unique constraint failed on email = [e-mail masqué]');
+    expect(scrubbed.exception?.values?.[1].value).toBe("No such customer: 'cus_[masqué]' ([e-mail masqué])");
+  });
+
+  it('frames de la pile : lignes de code et variables locales masquées', () => {
+    const scrubbed = scrubEvent({
+      type: undefined,
+      exception: {
+        values: [{
+          type: 'Error',
+          value: 'x',
+          stacktrace: {
+            frames: [{
+              filename: 'mail.service.js',
+              context_line: `  await send('${EMAILS[0]}');`,
+              pre_context: [`const to = '${EMAILS[1]}';`],
+              post_context: ['return;'],
+              vars: { to: EMAILS[2], n: 3 as unknown as string },
+            }],
+          },
+        }],
+      },
+    });
+    const frame = scrubbed.exception!.values![0].stacktrace!.frames![0];
+    for (const email of EMAILS) expect(JSON.stringify(scrubbed)).not.toContain(email);
+    expect(frame.context_line).toBe("  await send('[e-mail masqué]');");
+    expect(frame.post_context).toEqual(['return;']);
+    expect(frame.vars).toEqual({ to: '[e-mail masqué]', n: 3 });
+  });
+
+  it('contre-épreuve : un texte sans adresse ne change pas (arobase seule, chemin, version)', () => {
+    for (const text of ['Timeout après 30 s sur /api/trades', 'paquet @nestjs/core@11.1.0', 'compte @ 2 %', 'user@localhost']) {
+      expect(maskText(text)).toBe(text);
+    }
+  });
+
+  it('texte long et piégé : traité en temps borné (pas de retour arrière catastrophique)', () => {
+    const traps = ['a'.repeat(25_000) + '@' + 'a-'.repeat(12_500) + '!', 'a@' + 'a.'.repeat(25_000) + '1'];
+    for (const text of traps) {
+      const start = performance.now();
+      maskText(text);
+      expect(performance.now() - start).toBeLessThan(1_000);
+    }
+  });
+
+  it('majuscules, sous-domaines et punycode masqués', () => {
+    for (const email of ['JEAN.DUPONT@EXEMPLE.EXAMPLE', 'a+b@sub.dom.example', 'x@xn--bcher-kva.example']) {
+      expect(maskText(`pour ${email}.`)).toBe('pour [e-mail masqué].');
+    }
+  });
+
+  it('breadcrumb : adresse masquée dans le message', () => {
+    expect(scrubBreadcrumb({ category: 'console', message: `Mail envoyé à ${EMAILS[0]}` }).message).toBe('Mail envoyé à [e-mail masqué]');
   });
 });
 
@@ -167,7 +244,7 @@ describe('SDK Sentry réel : ce qui part pour une 500 (#746)', () => {
       req.on('data', (c: Buffer) => chunks.push(c));
       req.on('end', async () => {
         await fetch(`http://127.0.0.1:${upstreamPort}/quote?symbol=ES&apikey=${FAKE.apiKey}`);
-        Sentry.captureException(new Error('500 de test'), {
+        Sentry.captureException(new Error('Envoi refusé pour a@exemple.invalid'), {
           tags: { method: req.method ?? '', path: (req.url ?? '').split('?')[0] },
           user: { id: FAKE.userId },
         });
@@ -203,6 +280,9 @@ describe('SDK Sentry réel : ce qui part pour une 500 (#746)', () => {
     for (const secret of [FAKE.password, FAKE.refreshToken, FAKE.bearer, FAKE.unsubscribeToken, FAKE.apiKey]) {
       expect(sent).not.toContain(secret);
     }
+    // Adresse dans le message de l'erreur ET dans le corps (jamais envoyé) : masquée de bout en bout (#1263).
+    expect(sent).not.toContain('a@exemple.invalid');
+    expect(sent).toContain('Envoi refusé pour [e-mail masqué]');
     expect(event.request?.data).toBeUndefined();
     expect(event.request?.cookies).toBeUndefined();
     expect(event.request?.query_string).toBeUndefined();

@@ -29,19 +29,44 @@ export function buildSentryOptions(dsn: string, env: NodeJS.ProcessEnv = process
 
 /** Identifiant client Stripe (`cus_…`) : jamais envoyé à Sentry (#827). */
 const STRIPE_CUSTOMER_ID = /\bcus_[A-Za-z0-9]+/g;
-const maskCustomerId = (text: string) => text.replace(STRIPE_CUSTOMER_ID, 'cus_[masqué]');
+/**
+ * Adresse e-mail recopiée dans un message d'erreur (Resend, Prisma, Stripe…) : jamais envoyée à
+ * Sentry (#1263). Volontairement large : mieux vaut masquer un faux positif qu'envoyer une adresse.
+ * Quantificateurs BORNÉS (longueurs max de la RFC 5321) : sans borne, un texte long et piégé fait
+ * reculer le moteur en temps polynomial (31 s sur 50 000 caractères) et bloque la boucle
+ * d'événements, puisque ce filtre tourne sur chaque erreur envoyée.
+ */
+const EMAIL = /[A-Za-z0-9._%+-]{1,64}@[A-Za-z0-9-]{1,63}(?:\.[A-Za-z0-9-]{1,63}){0,8}\.[A-Za-z]{2,24}/g;
+/** Texte libre d'un événement : identifiant client Stripe et adresses e-mail masqués. */
+export const maskText = (text: string) =>
+  text.replace(STRIPE_CUSTOMER_ID, 'cus_[masqué]').replace(EMAIL, '[e-mail masqué]');
 
 /** En-têtes jamais transmis : jetons de session et d'accès. */
 const SECRET_HEADERS = new Set(['authorization', 'cookie']);
 
 /**
  * Retire de l'erreur les données de la requête ; garde `user.id` et les tags (dont `path`).
- * Masque l'identifiant client Stripe du message et des exceptions (« No such customer: 'cus_…' »).
+ * Masque l'identifiant client Stripe (« No such customer: 'cus_…' ») et les adresses e-mail du
+ * message, du message formaté (`logentry`), des exceptions et de leurs frames (lignes de code,
+ * variables locales).
  */
 export function scrubEvent(event: ErrorEvent): ErrorEvent {
-  if (typeof event.message === 'string') event.message = maskCustomerId(event.message);
+  if (typeof event.message === 'string') event.message = maskText(event.message);
+  if (typeof event.logentry?.message === 'string') event.logentry.message = maskText(event.logentry.message);
   for (const ex of event.exception?.values ?? []) {
-    if (typeof ex.value === 'string') ex.value = maskCustomerId(ex.value);
+    if (typeof ex.value === 'string') ex.value = maskText(ex.value);
+    // Lignes de code jointes à chaque frame (intégration ContextLines) et variables locales si le SDK
+    // les joint : une adresse écrite dans le code ou portée par une variable partirait sinon (#1263).
+    for (const frame of ex.stacktrace?.frames ?? []) {
+      if (typeof frame.context_line === 'string') frame.context_line = maskText(frame.context_line);
+      if (frame.pre_context) frame.pre_context = frame.pre_context.map(maskText);
+      if (frame.post_context) frame.post_context = frame.post_context.map(maskText);
+      if (frame.vars) {
+        for (const [name, value] of Object.entries(frame.vars)) {
+          if (typeof value === 'string') frame.vars[name] = maskText(value);
+        }
+      }
+    }
   }
   const request = event.request;
   if (!request) return event;
@@ -59,14 +84,15 @@ export function scrubEvent(event: ErrorEvent): ErrorEvent {
 
 /**
  * Appels sortants : la query string porte des clés d'API (`apikey=`), on ne garde que l'URL nue.
- * L'URL d'un appel Stripe peut porter l'identifiant client (`/v1/customers/cus_…`) : masqué.
+ * L'URL d'un appel Stripe peut porter l'identifiant client (`/v1/customers/cus_…`) : masqué, comme
+ * les adresses e-mail du message (une ligne de log recopiée en breadcrumb peut en contenir une).
  */
 export function scrubBreadcrumb(breadcrumb: Breadcrumb): Breadcrumb {
   if (breadcrumb.data && 'http.query' in breadcrumb.data) {
     const { 'http.query': _query, ...data } = breadcrumb.data;
     breadcrumb.data = data;
   }
-  if (typeof breadcrumb.data?.['url'] === 'string') breadcrumb.data['url'] = maskCustomerId(breadcrumb.data['url']);
-  if (typeof breadcrumb.message === 'string') breadcrumb.message = maskCustomerId(breadcrumb.message);
+  if (typeof breadcrumb.data?.['url'] === 'string') breadcrumb.data['url'] = maskText(breadcrumb.data['url']);
+  if (typeof breadcrumb.message === 'string') breadcrumb.message = maskText(breadcrumb.message);
   return breadcrumb;
 }
