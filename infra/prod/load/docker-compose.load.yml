@@ -12,7 +12,7 @@
 
 services:
   postgres:
-    image: postgres:17.11-alpine
+    image: postgres:17.12-alpine
     container_name: load_postgres
     # Mêmes réglages que /opt/infra/databases/docker-compose.yml (prod).
     command: >
@@ -76,7 +76,7 @@ services:
         condition: service_healthy
 
   redis:
-    image: redis:7.4.11-alpine
+    image: redis:7.4.12-alpine
     container_name: load_redis
     command: >
       redis-server

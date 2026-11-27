@@ -24,7 +24,7 @@ DUMP=$(ls -1t "$WORK"/data/mtc/mtc_prod_*_auto.sql.gz 2>/dev/null | head -1)
 [ -n "$DUMP" ] || { echo "❌ aucun dump prod dans l'instantané"; exit 1; }
 echo "Dump restauré depuis B2 : $(basename "$DUMP") ($(du -h "$DUMP" | cut -f1))"
 
-docker run -d --name "$PG" --memory 512m --memory-swap 512m -e POSTGRES_PASSWORD=restore -e POSTGRES_USER=mtc_user -e POSTGRES_DB=mtc_restore_test postgres:17.11-alpine >/dev/null
+docker run -d --name "$PG" --memory 512m --memory-swap 512m -e POSTGRES_PASSWORD=restore -e POSTGRES_USER=mtc_user -e POSTGRES_DB=mtc_restore_test postgres:17.12-alpine >/dev/null
 for _ in $(seq 1 30); do docker exec "$PG" pg_isready -U mtc_user >/dev/null 2>&1 && break; sleep 1; done
 gunzip -c "$DUMP" | docker exec -i "$PG" psql -q -U mtc_user -d mtc_restore_test >/dev/null 2>"$WORK/psql.err" || true
 ERRORS=$(grep -c ERROR "$WORK/psql.err" || true)
