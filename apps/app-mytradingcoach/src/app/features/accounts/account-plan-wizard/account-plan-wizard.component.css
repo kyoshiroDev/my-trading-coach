@@ -49,7 +49,7 @@
   justify-content: center;
   border-color: var(--primary);
   background: var(--primary); /* texte clair sur --blue = 3:1, sur --primary 5,2:1 (#1085) */
-  color: #fff;
+  color: var(--text-on-primary);
   font-weight: 600;
 }
 .apw-card.primary:hover:not(:disabled) { background: var(--primary-hover); border-color: var(--primary-hover); }

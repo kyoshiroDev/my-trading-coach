@@ -37,11 +37,11 @@ describe('Feuille d’installation : paliers', () => {
 });
 
 describe('Installation : couleurs de theme.css uniquement', () => {
-  it.each([['feuille', sheet], ['ligne du Profil', row]])('%s : aucune couleur en dur (sauf le blanc du bouton principal)', (_n, css) => {
+  it.each([['feuille', sheet], ['ligne du Profil', row]])('%s : aucune couleur en dur', (_n, css) => {
     const hard = [...css.matchAll(/#[0-9a-fA-F]{3,8}\b|rgba?\(|hsla?\(/g)].map((m) => m[0]);
-    expect(hard.filter((c) => c !== '#fff')).toEqual([]);
-    // Le seul blanc : texte du bouton principal sur --primary (design.md).
-    for (const m of css.matchAll(/#fff/g)) {
+    expect(hard).toEqual([]);
+    // Texte du bouton principal : --text-on-primary, seulement sur --primary (#1195, design.md).
+    for (const m of css.matchAll(/var\(--text-on-primary\)/g)) {
       const rule = css.slice(css.lastIndexOf('}', m.index) + 1, css.indexOf('}', m.index));
       expect(rule).toContain('var(--primary)');
     }

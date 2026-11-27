@@ -41,7 +41,7 @@
 
 .session-start-btn {
   background: var(--primary);
-  color: #fff;
+  color: var(--text-on-primary);
   border: none;
   border-radius: 9px;
   padding: 11px 22px;

@@ -240,7 +240,7 @@
 .obj-note-save {
   background: var(--primary);
   border: none;
-  color: white;
+  color: var(--text-on-primary);
   border-radius: 6px;
   padding: 5px 12px;
   font-size: 11px;

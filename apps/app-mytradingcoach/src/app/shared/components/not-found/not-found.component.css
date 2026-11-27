@@ -43,7 +43,7 @@
   display: inline-block;
   padding: 0.75rem 2rem;
   background: var(--primary);
-  color: #fff;
+  color: var(--text-on-primary);
   border-radius: 8px;
   font-weight: 500;
   text-decoration: none;

@@ -193,7 +193,7 @@
 
 .recap-btn-primary {
   background: var(--primary);
-  color: white;
+  color: var(--text-on-primary);
   border: none;
   border-radius: 8px;
   padding: 9px 18px;

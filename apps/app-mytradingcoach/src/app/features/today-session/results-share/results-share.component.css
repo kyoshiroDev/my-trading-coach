@@ -125,7 +125,7 @@
   border: none;
   border-radius: 10px;
   background: var(--primary); /* blanc sur le dégradé bleu-violet = 3,7:1, sur --primary 5,2:1 (#1085) */
-  color: #fff;
+  color: var(--text-on-primary);
   font-family: var(--font-body);
   font-size: 14px;
   font-weight: 700;

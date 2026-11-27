@@ -52,7 +52,7 @@
   padding: 0 16px;
   border-radius: 8px;
   background: var(--primary);
-  color: #fff;
+  color: var(--text-on-primary);
   font-size: 13px;
   font-weight: 600;
   text-decoration: none;
@@ -157,7 +157,7 @@
   padding: 12px;
   border-radius: 10px;
   background: var(--primary);
-  color: #fff;
+  color: var(--text-on-primary);
   font-size: 14px;
   font-weight: 700;
   text-decoration: none;

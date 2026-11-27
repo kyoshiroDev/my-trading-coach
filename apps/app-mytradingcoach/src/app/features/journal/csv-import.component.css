@@ -78,7 +78,7 @@
 
 .btn-upgrade {
   background: var(--primary);
-  color: #fff;
+  color: var(--text-on-primary);
   border: none;
   border-radius: 8px;
   padding: 9px 18px;
@@ -486,7 +486,7 @@
 
 .btn-primary {
   background: var(--primary);
-  color: #fff;
+  color: var(--text-on-primary);
   border: none;
   border-radius: 8px;
   padding: 9px 20px;

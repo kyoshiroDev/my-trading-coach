@@ -100,7 +100,7 @@
 .te-btn.pri {
   border: none;
   background: var(--primary);
-  color: #fff;
+  color: var(--text-on-primary);
 }
 
 .te-btn.ghost {

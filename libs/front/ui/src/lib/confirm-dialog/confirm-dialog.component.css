@@ -59,7 +59,7 @@
 .cd-confirm {
   border: none;
   background: var(--primary, #2563eb);
-  color: #fff;
+  color: var(--text-on-primary, #fff);
 }
 
 /* Rouge assombri pour garder un contraste AA avec du texte blanc. */
