@@ -230,6 +230,7 @@ describe('catalogue réel : un programme par taille (#1229)', () => {
         const c = p.configuration;
         const key = `${p.account_size}|${programKey({
           planName: p.plan_name,
+          // Même passage snake_case → contrat que `planConfiguration` (API) : une option ajoutée au contrat va aux deux.
           configuration: c && { dailyLossLimit: c.daily_loss_limit, evalDrawdown: c.eval_drawdown, payoutPath: c.payout_path ?? null, addon: c.addon ?? null },
         })}`;
         const other = seen.get(key);
