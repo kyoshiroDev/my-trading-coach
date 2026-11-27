@@ -283,6 +283,7 @@
         },
         "max_payouts": { "type": ["integer", "null"], "minimum": 1, "description": "Ajout : nombre max de payouts avant fermeture ou passage en live." },
         "safety_net_balance": { "$ref": "#/$defs/nullableMoney", "description": "Ajout : solde sous lequel aucun payout n'est possible (buffer / safety net)." },
+        "safety_net_basis": { "enum": ["after_payout", "to_request", null], "description": "Ajout (#1228) : sens du safety net. after_payout = solde à garder APRÈS le retrait (seuil = net + min_amount) ; to_request = solde minimum pour DEMANDER (seuil = net). Absent = non classé, traité comme to_request." },
         "notes": { "$ref": "#/$defs/nullableText" }
       }
     }

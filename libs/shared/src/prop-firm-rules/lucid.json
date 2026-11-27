@@ -2446,6 +2446,7 @@
             ],
             "max_payouts": 5,
             "safety_net_balance": 26100,
+            "safety_net_basis": "after_payout",
             "notes": "Profit minimum par cycle, consistency 40 % et solde au-dessus du buffer (MLL initial + 100 $). Plafond : 1er payout puis payouts 2+. max_payouts = 5 d'après l'article New Live Structure (payout 5 = dernier palier avant revue live). Comptes antérieurs au 2025-11-28 : 100 % sur les premiers 10 000 $. min_days = 3 vient du site (« Days to Payout 3 », fiche « Funded Rules ») ; l'article LucidPro Payouts ne mentionne pas de minimum de jours. 3 jours de trading minimum par cycle, liés à la consistency de 40 % (support Lucid, Discord, 2026-10-04)."
           }
         }
@@ -2564,6 +2565,7 @@
             ],
             "max_payouts": 5,
             "safety_net_balance": 52100,
+            "safety_net_basis": "after_payout",
             "notes": "Profit minimum par cycle, consistency 40 % et solde au-dessus du buffer (MLL initial + 100 $). Plafond : 1er payout puis payouts 2+. max_payouts = 5 d'après l'article New Live Structure (payout 5 = dernier palier avant revue live). Comptes antérieurs au 2025-11-28 : 100 % sur les premiers 10 000 $. min_days = 3 vient du site (« Days to Payout 3 », fiche « Funded Rules ») ; l'article LucidPro Payouts ne mentionne pas de minimum de jours. 3 jours de trading minimum par cycle, liés à la consistency de 40 % (support Lucid, Discord, 2026-10-04)."
           }
         }
@@ -2682,6 +2684,7 @@
             ],
             "max_payouts": 5,
             "safety_net_balance": 103100,
+            "safety_net_basis": "after_payout",
             "notes": "Profit minimum par cycle, consistency 40 % et solde au-dessus du buffer (MLL initial + 100 $). Plafond : 1er payout puis payouts 2+. max_payouts = 5 d'après l'article New Live Structure (payout 5 = dernier palier avant revue live). Comptes antérieurs au 2025-11-28 : 100 % sur les premiers 10 000 $. min_days = 3 vient du site (« Days to Payout 3 », fiche « Funded Rules ») ; l'article LucidPro Payouts ne mentionne pas de minimum de jours. 3 jours de trading minimum par cycle, liés à la consistency de 40 % (support Lucid, Discord, 2026-10-04)."
           }
         }
@@ -2800,6 +2803,7 @@
             ],
             "max_payouts": 5,
             "safety_net_balance": 154600,
+            "safety_net_basis": "after_payout",
             "notes": "Profit minimum par cycle, consistency 40 % et solde au-dessus du buffer (MLL initial + 100 $). Plafond : 1er payout puis payouts 2+. max_payouts = 5 d'après l'article New Live Structure (payout 5 = dernier palier avant revue live). Comptes antérieurs au 2025-11-28 : 100 % sur les premiers 10 000 $. min_days = 3 vient du site (« Days to Payout 3 », fiche « Funded Rules ») ; l'article LucidPro Payouts ne mentionne pas de minimum de jours. 3 jours de trading minimum par cycle, liés à la consistency de 40 % (support Lucid, Discord, 2026-10-04)."
           }
         }
@@ -2934,6 +2938,7 @@
             ],
             "max_payouts": 5,
             "safety_net_balance": 26100,
+            "safety_net_basis": "after_payout",
             "notes": "Profit minimum par cycle, consistency 40 % et solde au-dessus du buffer (MLL initial + 100 $). Plafond : 1er payout puis payouts 2+. max_payouts = 5 d'après l'article New Live Structure (payout 5 = dernier palier avant revue live). Comptes antérieurs au 2025-11-28 : 100 % sur les premiers 10 000 $. min_days = 3 vient du site (« Days to Payout 3 », fiche « Funded Rules ») ; l'article LucidPro Payouts ne mentionne pas de minimum de jours. 3 jours de trading minimum par cycle, liés à la consistency de 40 % (support Lucid, Discord, 2026-10-04). Avec DLL : payouts à la demande ; une demande en séance suspend le trading jusqu’à la fin de la séance (LucidPro Customization, 17/11)."
           }
         }
@@ -3068,6 +3073,7 @@
             ],
             "max_payouts": 5,
             "safety_net_balance": 52100,
+            "safety_net_basis": "after_payout",
             "notes": "Profit minimum par cycle, consistency 40 % et solde au-dessus du buffer (MLL initial + 100 $). Plafond : 1er payout puis payouts 2+. max_payouts = 5 d'après l'article New Live Structure (payout 5 = dernier palier avant revue live). Comptes antérieurs au 2025-11-28 : 100 % sur les premiers 10 000 $. min_days = 3 vient du site (« Days to Payout 3 », fiche « Funded Rules ») ; l'article LucidPro Payouts ne mentionne pas de minimum de jours. 3 jours de trading minimum par cycle, liés à la consistency de 40 % (support Lucid, Discord, 2026-10-04). Avec DLL : payouts à la demande ; une demande en séance suspend le trading jusqu’à la fin de la séance (LucidPro Customization, 17/11)."
           }
         }
@@ -3202,6 +3208,7 @@
             ],
             "max_payouts": 5,
             "safety_net_balance": 103100,
+            "safety_net_basis": "after_payout",
             "notes": "Profit minimum par cycle, consistency 40 % et solde au-dessus du buffer (MLL initial + 100 $). Plafond : 1er payout puis payouts 2+. max_payouts = 5 d'après l'article New Live Structure (payout 5 = dernier palier avant revue live). Comptes antérieurs au 2025-11-28 : 100 % sur les premiers 10 000 $. min_days = 3 vient du site (« Days to Payout 3 », fiche « Funded Rules ») ; l'article LucidPro Payouts ne mentionne pas de minimum de jours. 3 jours de trading minimum par cycle, liés à la consistency de 40 % (support Lucid, Discord, 2026-10-04). Avec DLL : payouts à la demande ; une demande en séance suspend le trading jusqu’à la fin de la séance (LucidPro Customization, 17/11)."
           }
         }
@@ -3336,6 +3343,7 @@
             ],
             "max_payouts": 5,
             "safety_net_balance": 154600,
+            "safety_net_basis": "after_payout",
             "notes": "Profit minimum par cycle, consistency 40 % et solde au-dessus du buffer (MLL initial + 100 $). Plafond : 1er payout puis payouts 2+. max_payouts = 5 d'après l'article New Live Structure (payout 5 = dernier palier avant revue live). Comptes antérieurs au 2025-11-28 : 100 % sur les premiers 10 000 $. min_days = 3 vient du site (« Days to Payout 3 », fiche « Funded Rules ») ; l'article LucidPro Payouts ne mentionne pas de minimum de jours. 3 jours de trading minimum par cycle, liés à la consistency de 40 % (support Lucid, Discord, 2026-10-04). Avec DLL : payouts à la demande ; une demande en séance suspend le trading jusqu’à la fin de la séance (LucidPro Customization, 17/11)."
           }
         }
@@ -3451,6 +3459,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 26100,
+            "safety_net_basis": "after_payout",
             "notes": "Payouts quotidiens possibles : profit au-dessus du buffer et net positif depuis le dernier payout. Maximum = profit simulé au-dessus du buffer. Profit journalier maximum 6000 $ : l'atteindre déclenche le passage en live."
           }
         }
@@ -3565,6 +3574,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 52100,
+            "safety_net_basis": "after_payout",
             "notes": "Payouts quotidiens possibles : profit au-dessus du buffer et net positif depuis le dernier payout. Maximum = profit simulé au-dessus du buffer. Profit journalier maximum 8000 $ : l'atteindre déclenche le passage en live."
           }
         }
@@ -3679,6 +3689,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 103100,
+            "safety_net_basis": "after_payout",
             "notes": "Payouts quotidiens possibles : profit au-dessus du buffer et net positif depuis le dernier payout. Maximum = profit simulé au-dessus du buffer. Profit journalier maximum 10000 $ : l'atteindre déclenche le passage en live."
           }
         }
@@ -3793,6 +3804,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 154600,
+            "safety_net_basis": "after_payout",
             "notes": "Payouts quotidiens possibles : profit au-dessus du buffer et net positif depuis le dernier payout. Maximum = profit simulé au-dessus du buffer. Profit journalier maximum 12000 $ : l'atteindre déclenche le passage en live."
           }
         }
@@ -3907,6 +3919,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 26100,
+            "safety_net_basis": "after_payout",
             "notes": "Payouts quotidiens possibles : profit au-dessus du buffer et net positif depuis le dernier payout. Maximum = profit simulé au-dessus du buffer. Profit journalier maximum 6000 $ : l'atteindre déclenche le passage en live."
           }
         }
@@ -4021,6 +4034,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 52100,
+            "safety_net_basis": "after_payout",
             "notes": "Payouts quotidiens possibles : profit au-dessus du buffer et net positif depuis le dernier payout. Maximum = profit simulé au-dessus du buffer. Profit journalier maximum 8000 $ : l'atteindre déclenche le passage en live."
           }
         }
@@ -4135,6 +4149,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 103100,
+            "safety_net_basis": "after_payout",
             "notes": "Payouts quotidiens possibles : profit au-dessus du buffer et net positif depuis le dernier payout. Maximum = profit simulé au-dessus du buffer. Profit journalier maximum 10000 $ : l'atteindre déclenche le passage en live."
           }
         }
@@ -4249,6 +4264,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 154600,
+            "safety_net_basis": "after_payout",
             "notes": "Payouts quotidiens possibles : profit au-dessus du buffer et net positif depuis le dernier payout. Maximum = profit simulé au-dessus du buffer. Profit journalier maximum 12000 $ : l'atteindre déclenche le passage en live."
           }
         }
@@ -4379,6 +4395,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 26100,
+            "safety_net_basis": "after_payout",
             "notes": "Payouts quotidiens possibles : profit au-dessus du buffer et net positif depuis le dernier payout. Maximum = profit simulé au-dessus du buffer. Profit journalier maximum 6000 $ : l'atteindre déclenche le passage en live."
           }
         }
@@ -4509,6 +4526,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 52100,
+            "safety_net_basis": "after_payout",
             "notes": "Payouts quotidiens possibles : profit au-dessus du buffer et net positif depuis le dernier payout. Maximum = profit simulé au-dessus du buffer. Profit journalier maximum 8000 $ : l'atteindre déclenche le passage en live."
           }
         }
@@ -4639,6 +4657,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 103100,
+            "safety_net_basis": "after_payout",
             "notes": "Payouts quotidiens possibles : profit au-dessus du buffer et net positif depuis le dernier payout. Maximum = profit simulé au-dessus du buffer. Profit journalier maximum 10000 $ : l'atteindre déclenche le passage en live."
           }
         }
@@ -4769,6 +4788,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 154600,
+            "safety_net_basis": "after_payout",
             "notes": "Payouts quotidiens possibles : profit au-dessus du buffer et net positif depuis le dernier payout. Maximum = profit simulé au-dessus du buffer. Profit journalier maximum 12000 $ : l'atteindre déclenche le passage en live."
           }
         }
@@ -4899,6 +4919,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 26100,
+            "safety_net_basis": "after_payout",
             "notes": "Payouts quotidiens possibles : profit au-dessus du buffer et net positif depuis le dernier payout. Maximum = profit simulé au-dessus du buffer. Profit journalier maximum 6000 $ : l'atteindre déclenche le passage en live."
           }
         }
@@ -5029,6 +5050,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 52100,
+            "safety_net_basis": "after_payout",
             "notes": "Payouts quotidiens possibles : profit au-dessus du buffer et net positif depuis le dernier payout. Maximum = profit simulé au-dessus du buffer. Profit journalier maximum 8000 $ : l'atteindre déclenche le passage en live."
           }
         }
@@ -5159,6 +5181,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 103100,
+            "safety_net_basis": "after_payout",
             "notes": "Payouts quotidiens possibles : profit au-dessus du buffer et net positif depuis le dernier payout. Maximum = profit simulé au-dessus du buffer. Profit journalier maximum 10000 $ : l'atteindre déclenche le passage en live."
           }
         }
@@ -5289,6 +5312,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 154600,
+            "safety_net_basis": "after_payout",
             "notes": "Payouts quotidiens possibles : profit au-dessus du buffer et net positif depuis le dernier payout. Maximum = profit simulé au-dessus du buffer. Profit journalier maximum 12000 $ : l'atteindre déclenche le passage en live."
           }
         }
@@ -5404,6 +5428,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 26100,
+            "safety_net_basis": "after_payout",
             "notes": "Payouts quotidiens possibles : profit au-dessus du buffer et net positif depuis le dernier payout. Maximum = profit simulé au-dessus du buffer. Profit journalier maximum 6000 $ : l'atteindre déclenche le passage en live."
           }
         }
@@ -5519,6 +5544,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 52100,
+            "safety_net_basis": "after_payout",
             "notes": "Payouts quotidiens possibles : profit au-dessus du buffer et net positif depuis le dernier payout. Maximum = profit simulé au-dessus du buffer. Profit journalier maximum 8000 $ : l'atteindre déclenche le passage en live."
           }
         }
@@ -5634,6 +5660,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 103100,
+            "safety_net_basis": "after_payout",
             "notes": "Payouts quotidiens possibles : profit au-dessus du buffer et net positif depuis le dernier payout. Maximum = profit simulé au-dessus du buffer. Profit journalier maximum 10000 $ : l'atteindre déclenche le passage en live."
           }
         }
@@ -5749,6 +5776,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 154600,
+            "safety_net_basis": "after_payout",
             "notes": "Payouts quotidiens possibles : profit au-dessus du buffer et net positif depuis le dernier payout. Maximum = profit simulé au-dessus du buffer. Profit journalier maximum 12000 $ : l'atteindre déclenche le passage en live."
           }
         }
@@ -5864,6 +5892,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 26100,
+            "safety_net_basis": "after_payout",
             "notes": "Payouts quotidiens possibles : profit au-dessus du buffer et net positif depuis le dernier payout. Maximum = profit simulé au-dessus du buffer. Profit journalier maximum 6000 $ : l'atteindre déclenche le passage en live."
           }
         }
@@ -5979,6 +6008,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 52100,
+            "safety_net_basis": "after_payout",
             "notes": "Payouts quotidiens possibles : profit au-dessus du buffer et net positif depuis le dernier payout. Maximum = profit simulé au-dessus du buffer. Profit journalier maximum 8000 $ : l'atteindre déclenche le passage en live."
           }
         }
@@ -6094,6 +6124,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 103100,
+            "safety_net_basis": "after_payout",
             "notes": "Payouts quotidiens possibles : profit au-dessus du buffer et net positif depuis le dernier payout. Maximum = profit simulé au-dessus du buffer. Profit journalier maximum 10000 $ : l'atteindre déclenche le passage en live."
           }
         }
@@ -6209,6 +6240,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 154600,
+            "safety_net_basis": "after_payout",
             "notes": "Payouts quotidiens possibles : profit au-dessus du buffer et net positif depuis le dernier payout. Maximum = profit simulé au-dessus du buffer. Profit journalier maximum 12000 $ : l'atteindre déclenche le passage en live."
           }
         }
@@ -6340,6 +6372,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 26100,
+            "safety_net_basis": "after_payout",
             "notes": "Payouts quotidiens possibles : profit au-dessus du buffer et net positif depuis le dernier payout. Maximum = profit simulé au-dessus du buffer. Profit journalier maximum 6000 $ : l'atteindre déclenche le passage en live."
           }
         }
@@ -6471,6 +6504,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 52100,
+            "safety_net_basis": "after_payout",
             "notes": "Payouts quotidiens possibles : profit au-dessus du buffer et net positif depuis le dernier payout. Maximum = profit simulé au-dessus du buffer. Profit journalier maximum 8000 $ : l'atteindre déclenche le passage en live."
           }
         }
@@ -6602,6 +6636,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 103100,
+            "safety_net_basis": "after_payout",
             "notes": "Payouts quotidiens possibles : profit au-dessus du buffer et net positif depuis le dernier payout. Maximum = profit simulé au-dessus du buffer. Profit journalier maximum 10000 $ : l'atteindre déclenche le passage en live."
           }
         }
@@ -6733,6 +6768,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 154600,
+            "safety_net_basis": "after_payout",
             "notes": "Payouts quotidiens possibles : profit au-dessus du buffer et net positif depuis le dernier payout. Maximum = profit simulé au-dessus du buffer. Profit journalier maximum 12000 $ : l'atteindre déclenche le passage en live."
           }
         }
@@ -6864,6 +6900,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 26100,
+            "safety_net_basis": "after_payout",
             "notes": "Payouts quotidiens possibles : profit au-dessus du buffer et net positif depuis le dernier payout. Maximum = profit simulé au-dessus du buffer. Profit journalier maximum 6000 $ : l'atteindre déclenche le passage en live."
           }
         }
@@ -6995,6 +7032,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 52100,
+            "safety_net_basis": "after_payout",
             "notes": "Payouts quotidiens possibles : profit au-dessus du buffer et net positif depuis le dernier payout. Maximum = profit simulé au-dessus du buffer. Profit journalier maximum 8000 $ : l'atteindre déclenche le passage en live."
           }
         }
@@ -7126,6 +7164,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 103100,
+            "safety_net_basis": "after_payout",
             "notes": "Payouts quotidiens possibles : profit au-dessus du buffer et net positif depuis le dernier payout. Maximum = profit simulé au-dessus du buffer. Profit journalier maximum 10000 $ : l'atteindre déclenche le passage en live."
           }
         }
@@ -7257,6 +7296,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 154600,
+            "safety_net_basis": "after_payout",
             "notes": "Payouts quotidiens possibles : profit au-dessus du buffer et net positif depuis le dernier payout. Maximum = profit simulé au-dessus du buffer. Profit journalier maximum 12000 $ : l'atteindre déclenche le passage en live."
           }
         }
@@ -7372,6 +7412,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 26100,
+            "safety_net_basis": "after_payout",
             "notes": "Payouts quotidiens possibles : profit au-dessus du buffer et net positif depuis le dernier payout. Maximum = profit simulé au-dessus du buffer. Profit journalier maximum 6000 $ : l'atteindre déclenche le passage en live."
           }
         }
@@ -7487,6 +7528,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 26100,
+            "safety_net_basis": "after_payout",
             "notes": "Payouts quotidiens possibles : profit au-dessus du buffer et net positif depuis le dernier payout. Maximum = profit simulé au-dessus du buffer. Profit journalier maximum 6000 $ : l'atteindre déclenche le passage en live."
           }
         }
@@ -7602,6 +7644,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 52100,
+            "safety_net_basis": "after_payout",
             "notes": "Payouts quotidiens possibles : profit au-dessus du buffer et net positif depuis le dernier payout. Maximum = profit simulé au-dessus du buffer. Profit journalier maximum 8000 $ : l'atteindre déclenche le passage en live."
           }
         }
@@ -7717,6 +7760,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 52100,
+            "safety_net_basis": "after_payout",
             "notes": "Payouts quotidiens possibles : profit au-dessus du buffer et net positif depuis le dernier payout. Maximum = profit simulé au-dessus du buffer. Profit journalier maximum 8000 $ : l'atteindre déclenche le passage en live."
           }
         }
@@ -7832,6 +7876,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 103100,
+            "safety_net_basis": "after_payout",
             "notes": "Payouts quotidiens possibles : profit au-dessus du buffer et net positif depuis le dernier payout. Maximum = profit simulé au-dessus du buffer. Profit journalier maximum 10000 $ : l'atteindre déclenche le passage en live."
           }
         }
@@ -7947,6 +7992,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 103100,
+            "safety_net_basis": "after_payout",
             "notes": "Payouts quotidiens possibles : profit au-dessus du buffer et net positif depuis le dernier payout. Maximum = profit simulé au-dessus du buffer. Profit journalier maximum 10000 $ : l'atteindre déclenche le passage en live."
           }
         }
@@ -8062,6 +8108,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 154600,
+            "safety_net_basis": "after_payout",
             "notes": "Payouts quotidiens possibles : profit au-dessus du buffer et net positif depuis le dernier payout. Maximum = profit simulé au-dessus du buffer. Profit journalier maximum 12000 $ : l'atteindre déclenche le passage en live."
           }
         }
@@ -8177,6 +8224,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 154600,
+            "safety_net_basis": "after_payout",
             "notes": "Payouts quotidiens possibles : profit au-dessus du buffer et net positif depuis le dernier payout. Maximum = profit simulé au-dessus du buffer. Profit journalier maximum 12000 $ : l'atteindre déclenche le passage en live."
           }
         }

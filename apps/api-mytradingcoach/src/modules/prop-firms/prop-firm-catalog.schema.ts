@@ -86,6 +86,7 @@ const payoutSchema = z.strictObject({
   max_amount_schedule: z.array(nullableMoney).min(1).nullable().optional(),
   max_payouts: positiveInt.nullable().optional(),
   safety_net_balance: nullableMoney.optional(),
+  safety_net_basis: z.enum(['after_payout', 'to_request']).nullable().optional(),
   notes: nullableText,
 });
 

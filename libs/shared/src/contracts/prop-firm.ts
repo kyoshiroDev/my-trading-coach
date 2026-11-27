@@ -154,6 +154,8 @@ export interface PropFirmPayout {
   max_amount_schedule?: (number | null)[] | null;
   max_payouts?: number | null;
   safety_net_balance?: number | null;
+  /** Sens du safety net (#1228) : à garder après le retrait (net + min_amount) ou minimum pour demander (net). Absent = to_request. */
+  safety_net_basis?: 'after_payout' | 'to_request' | null;
   notes: string | null;
 }
 

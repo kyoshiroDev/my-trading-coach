@@ -108,6 +108,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 1100,
+            "safety_net_basis": "after_payout",
             "notes": "Buffer : 1100 $ de profits réalisés avant le premier payout. Puis payout possible toutes les 24 h, sans consistency. Premier payout 24 h après le premier trade."
           }
         }
@@ -215,6 +216,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 2100,
+            "safety_net_basis": "after_payout",
             "notes": "Buffer : 2100 $ de profits réalisés avant le premier payout. Puis payout possible toutes les 24 h, sans consistency. Premier payout 24 h après le premier trade."
           }
         }
@@ -322,6 +324,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 3100,
+            "safety_net_basis": "after_payout",
             "notes": "Buffer : 3100 $ de profits réalisés avant le premier payout. Puis payout possible toutes les 24 h, sans consistency. Premier payout 24 h après le premier trade."
           }
         }
@@ -429,6 +432,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 4600,
+            "safety_net_basis": "after_payout",
             "notes": "Buffer : 4600 $ de profits réalisés avant le premier payout. Puis payout possible toutes les 24 h, sans consistency. Premier payout 24 h après le premier trade."
           }
         }
@@ -536,6 +540,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 1100,
+            "safety_net_basis": "after_payout",
             "notes": "Buffer : 1100 $ de profits réalisés avant le premier payout, puis 250 $ de profit net depuis le dernier payout pour chaque demande suivante. Payout quotidien, pas de plafond."
           }
         }
@@ -643,6 +648,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 2100,
+            "safety_net_basis": "after_payout",
             "notes": "Buffer : 2100 $ de profits réalisés avant le premier payout, puis 500 $ de profit net depuis le dernier payout pour chaque demande suivante. Payout quotidien, pas de plafond."
           }
         }
@@ -750,6 +756,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 52100,
+            "safety_net_basis": "after_payout",
             "notes": "Payout possible 14 jours calendaires après le premier trade ET buffer franchi (52100 $). Retrait unique possible avant le buffer complet : jusqu'à 60 % des profits (minimum 1 000 $). Plafond 100 000 $ par utilisateur. Passage en live étudié après 3 payouts consécutifs."
           }
         }
@@ -857,6 +864,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 103100,
+            "safety_net_basis": "after_payout",
             "notes": "Payout possible 14 jours calendaires après le premier trade ET buffer franchi (103100 $). Retrait unique possible avant le buffer complet : jusqu'à 60 % des profits (minimum 1 000 $). Plafond 100 000 $ par utilisateur. Passage en live étudié après 3 payouts consécutifs."
           }
         }
@@ -964,6 +972,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 154600,
+            "safety_net_basis": "after_payout",
             "notes": "Payout possible 14 jours calendaires après le premier trade ET buffer franchi (154600 $). Retrait unique possible avant le buffer complet : jusqu'à 60 % des profits (minimum 1 000 $). Plafond 100 000 $ par utilisateur. Passage en live étudié après 3 payouts consécutifs."
           }
         }
@@ -1087,6 +1096,7 @@
             "max_amount_schedule": null,
             "max_payouts": 5,
             "safety_net_balance": 1100,
+            "safety_net_basis": "after_payout",
             "notes": "2 jours qualifiants minimum par cycle. Premier payout : 250 $ au-dessus du buffer (1100 $) ; ensuite 250 $ de profit net depuis le dernier payout. Payout toutes les 48 h. 5 payouts sim maximum, puis passage en live. La FAQ dit « jusqu'à 2 000 $ » par payout (= 50K)."
           }
         }
@@ -1209,6 +1219,7 @@
             "max_amount_schedule": null,
             "max_payouts": 5,
             "safety_net_balance": 2100,
+            "safety_net_basis": "after_payout",
             "notes": "2 jours qualifiants minimum par cycle. Premier payout : 500 $ au-dessus du buffer (2100 $) ; ensuite 500 $ de profit net depuis le dernier payout. Payout toutes les 48 h. 5 payouts sim maximum, puis passage en live."
           }
         }
@@ -1336,6 +1347,7 @@
             "max_amount_schedule": null,
             "max_payouts": 5,
             "safety_net_balance": 1600,
+            "safety_net_basis": "after_payout",
             "notes": "2 jours qualifiants minimum par cycle. Premier payout : 500 $ au-dessus du buffer (1600 $) ; ensuite 500 $ de profit net depuis le dernier payout. Payout toutes les 48 h. 5 payouts sim maximum, puis passage en live."
           }
         }
@@ -1458,6 +1470,7 @@
             "max_amount_schedule": null,
             "max_payouts": 5,
             "safety_net_balance": 3100,
+            "safety_net_basis": "after_payout",
             "notes": "2 jours qualifiants minimum par cycle. Premier payout : 1000 $ au-dessus du buffer (3100 $) ; ensuite 1000 $ de profit net depuis le dernier payout. Payout toutes les 48 h. 5 payouts sim maximum, puis passage en live. La FAQ dit « jusqu'à 2 000 $ » par payout (= 50K)."
           }
         }
@@ -1580,6 +1593,7 @@
             "max_amount_schedule": null,
             "max_payouts": 5,
             "safety_net_balance": 4600,
+            "safety_net_basis": "after_payout",
             "notes": "2 jours qualifiants minimum par cycle. Premier payout : 1500 $ au-dessus du buffer (4600 $) ; ensuite 1500 $ de profit net depuis le dernier payout. Payout toutes les 48 h. 5 payouts sim maximum, puis passage en live. Plafond 4 500 $ par cycle (article « Builder Plan 150k - Comprehensive Guide » relu le 2026-10-22, et support MyFundedFutures, Ellis, 2026-10-06) ; la page du plan affiche 3 500 $ (contradiction notée, deux sources contre une)."
           }
         }
