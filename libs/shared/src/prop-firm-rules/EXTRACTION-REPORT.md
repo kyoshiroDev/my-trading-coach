@@ -247,6 +247,8 @@ Aucun plan en `needs_review`. Deux déductions à connaître :
 | DLL funded LucidFlex (option DLL ON) | Site : « DLL (Below Initial Trail) » 600 / 1 200 / 1 800 / 2 700 $ | Help center : DLL funded « Optional », non chiffrée | Montants du site, `needs_review` (comportement au-dessus du trail non documenté). |
 | Scaling du PA Apex Legacy | Carte de vente legacy-products : « Scaling: None » | Article Legacy PA Trading Rules (2026-07-31) : moitié des contrats jusqu'au safety net | Règle du help center : la carte décrit l'évaluation, le scaling ne vaut qu'en PA (support, 2026-10-05). Moitié arrondie à l'inférieur. |
 | Prix Apex « No Activation Fee » | 25K intraday affiché 690 $, plus cher que le 50K (490 $) | | Relevé tel quel dans `price.notes`. Probable anomalie d'affichage du prix barré. |
+| Objectif d'évaluation Top One Elite Access Static (#1241) | Article « Elite Access Static Evaluation Profit Target » (17889372) : 6 %, soit 1 500 / 3 000 / 6 000 / 9 000 $ | Carte Elite Access de l'accueil : 1 000 / 2 000 / 4 000 / 6 000 $ | Article dédié (comme pour la DLL Elite Daily), `needs_review`. Le catalogue Elite Access (trailing) est déjà à 6 %, comme ses propres articles : seule la carte de l'accueil diffère. |
+| Base de la DLL Top One Elite Access Static (#1241) | « Daily drawdown – what you need to know » (10907081) : solde de clôture de la veille | « Elite Access Static Daily Loss Limit » (17889371) : solde de début de journée | Objet DLL d'Elite Access gardé (`basis: equity`, cas prudent), `needs_review`. |
 | Limite d'achat des Static Trading Combines Topstep (#1238) | Page Labs, tableau 50K : « 5 per Trader » ; tableaux 100K / 150K : « 5 per month » | Page Labs, note générale : « 5 of each account per month » | Noté dans `notes`, sans effet sur les règles. |
 
 ## Règles qui n'entrent pas proprement dans le schéma
@@ -703,6 +705,17 @@ Sources officielles relues le 2026-11-27 (lectures datées dans `veille/sources.
 
 Niveau figé : celui déjà au catalogue (`locked_floor` = 0 $ pour les XFA, solde de départ pour Premier+), cohérent avec `locks_at − amount` (spec `payout-floor-lock.spec.ts`, 112 phases). Premier+ est passé « Labs » sur invitation le 2026-10-30 (mise à jour FFF du 11/11) : règle inchangée pour les comptes existants.
 
+## Top One Elite Access Static (#1241, 2026-11-27)
+
+Articles lus le 2026-11-27 : 17889367 (overview), 17889369 (MLL évaluation, statique), 17889370 (MLL funded, EOD trailing), 17889371 (DLL), 17889372 (objectif), 17889378 (payout), 10907081, 17635087 et l'accueil. Produit vendu (aucune mention d'invitation ni d'arrêt, mis en avant pendant le « Black November »). Seule différence annoncée avec Elite Access : le drawdown d'évaluation statique.
+
+- Ajout de 8 plans en `needs_review` : `toponefutures-elite-access-static-{25k,50k,100k,150k}` et `-static-nodll-*` (`plan_name: "Elite Access Static"`).
+- Évaluation : objectif 6 % (1 500 / 3 000 / 6 000 / 9 000 $), drawdown statique 1 000 / 2 000 / 3 000 / 4 000 $ (niveau fixe 24 000 / 48 000 / 97 000 / 146 000 $), contrôlé en temps réel sur l'equity (« checked in real time »), hard breach ; pas de DLL ; 1 jour minimum, 30 jours maximum, pas de consistance ; 1 / 3 / 5 / 7 minis, micros non publiés (`null`).
+- Funded, prix d'évaluation, resets et payout : copiés du plan Elite Access de même taille, conformes taille par taille aux articles Static (drawdown 1 000 / 2 000 / 3 000 / 3 500 $ figé à départ + 100 $, DLL 500 / 1 000 / 1 250 / 1 750 $, 5 jours d'au moins 200 / 250 / 300 / 350 $, coussin = `safety_net_balance`, plafond 1 000 / 1 500 / 2 000 / 2 500 $). Gel au premier payout aligné sur Elite Access (`locks_on_first_payout: "payout"`) : les articles Static n'en parlent pas, Top One n'annonce que l'évaluation comme différence, et sur un drawdown on retient le cas prudent (à confirmer, `needs_review`).
+- Prix : évaluation 39 $ ; activation 139 / 189 / 259 / 359 $ reprise de l'accueil Elite Access (l'article Static donne seulement la fourchette 139 à 359 $), à confirmer ; sans DLL : activation « environ 60 % plus chère », montant exact non publié (`null`).
+
+Catalogue à 346 plans (`prop-firms:validate`), 120 phases avec gel au premier payout (`payout-floor-lock.spec.ts`).
+
 ## Topstep Static Trading Combines (Labs, #1238, 2026-11-27)
 
 Sources lues le 2026-11-27 : https://help.topstep.com/en/articles/15520357-topstep-labs (relue en entier par le vérificateur instruments, tableau par tableau) et l'article « What is the Maximum Loss Limit » (8284204). « Topstep Limited Products » (18515544) : 404. Produits Labs vendus à tous depuis la page Labs du Dashboard (« all now available for purchase any time »), mais drop limité : à passer en `discontinued` à la fin de la vente.
@@ -713,4 +726,4 @@ Sources lues le 2026-11-27 : https://help.topstep.com/en/articles/15520357-topst
 - Gel du MLL à 0 $ au premier payout : non modélisé (drawdown statique, hors de `payout-floor-lock.spec.ts` et de `drawdownFloor`), suivi dans #1310.
 - Prix : paiement unique 75 / 149 / 199 / 279 $ (149 $ pour Daily Payouts+), activation gratuite.
 
-Catalogue à 347 plans (`prop-firms:validate`).
+Catalogue à 355 plans (`prop-firms:validate`, après #1241 et #1238).

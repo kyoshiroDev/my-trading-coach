@@ -3822,5 +3822,95 @@
         "modification": "Relecture (lot 5b-bis, #1218) : prix identiques ; plus de bascule sans DLL sur Elite Daily et Ignite ; activations Elite ACCESS lues sur les bascules."
       }
     ]
+  },
+  "https://help.toponefutures.com/en/articles/17889367-elite-access-static-accounts-overview": {
+    "kind": "date",
+    "values": [
+      "2026-11-08T20:39:29Z"
+    ],
+    "firms": [
+      "toponefutures"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-27",
+        "modification": "Lecture (#1241) : Elite Access Static ajouté au catalogue (8 plans, needs_review)."
+      }
+    ]
+  },
+  "https://help.toponefutures.com/en/articles/17889369-elite-access-static-maximum-loss-limit-evaluation-phase-static": {
+    "kind": "date",
+    "values": [
+      "2026-11-02T15:53:39Z"
+    ],
+    "firms": [
+      "toponefutures"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-27",
+        "modification": "Lecture (#1241) : Elite Access Static ajouté au catalogue (8 plans, needs_review)."
+      }
+    ]
+  },
+  "https://help.toponefutures.com/en/articles/17889370-elite-access-static-maximum-loss-limit-funded-phase-eod-trailing": {
+    "kind": "date",
+    "values": [
+      "2026-11-02T15:53:43Z"
+    ],
+    "firms": [
+      "toponefutures"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-27",
+        "modification": "Lecture (#1241) : Elite Access Static ajouté au catalogue (8 plans, needs_review)."
+      }
+    ]
+  },
+  "https://help.toponefutures.com/en/articles/17889371-elite-access-static-daily-loss-limit-dll": {
+    "kind": "date",
+    "values": [
+      "2026-11-17T22:47:22Z"
+    ],
+    "firms": [
+      "toponefutures"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-27",
+        "modification": "Lecture (#1241) : Elite Access Static ajouté au catalogue (8 plans, needs_review)."
+      }
+    ]
+  },
+  "https://help.toponefutures.com/en/articles/17889372-elite-access-static-evaluation-profit-target": {
+    "kind": "date",
+    "values": [
+      "2026-11-02T15:53:59Z"
+    ],
+    "firms": [
+      "toponefutures"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-27",
+        "modification": "Lecture (#1241) : Elite Access Static ajouté au catalogue (8 plans, needs_review)."
+      }
+    ]
+  },
+  "https://help.toponefutures.com/en/articles/17889378-elite-access-static-payout-requirements": {
+    "kind": "date",
+    "values": [
+      "2026-11-08T20:40:24Z"
+    ],
+    "firms": [
+      "toponefutures"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-27",
+        "modification": "Lecture (#1241) : Elite Access Static ajouté au catalogue (8 plans, needs_review)."
+      }
+    ]
   }
 }
