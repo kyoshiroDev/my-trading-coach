@@ -247,6 +247,8 @@ Aucun plan en `needs_review`. Deux déductions à connaître :
 | DLL funded LucidFlex (option DLL ON) | Site : « DLL (Below Initial Trail) » 600 / 1 200 / 1 800 / 2 700 $ | Help center : DLL funded « Optional », non chiffrée | Montants du site, `needs_review` (comportement au-dessus du trail non documenté). |
 | Scaling du PA Apex Legacy | Carte de vente legacy-products : « Scaling: None » | Article Legacy PA Trading Rules (2026-07-31) : moitié des contrats jusqu'au safety net | Règle du help center : la carte décrit l'évaluation, le scaling ne vaut qu'en PA (support, 2026-10-05). Moitié arrondie à l'inférieur. |
 | Prix Apex « No Activation Fee » | 25K intraday affiché 690 $, plus cher que le 50K (490 $) | | Relevé tel quel dans `price.notes`. Probable anomalie d'affichage du prix barré. |
+| Limite d'achat des Static Trading Combines Topstep (#1238) | Page Labs, tableau 50K : « 5 per Trader » ; tableaux 100K / 150K : « 5 per month » | Page Labs, note générale : « 5 of each account per month » | Noté dans `notes`, sans effet sur les règles. |
+| Scaling du XFA 50K Daily Payouts+ Static Topstep (#1238) | Page Labs, drop #011 : « matches the standard $50K XFA scaling plan » (5 minis) | Page Labs, tableau 50K Static : 2 / 3 / 4 minis | Seuils non publiés : `tiers` à `null`, `needs_review`. |
 
 ## Règles qui n'entrent pas proprement dans le schéma
 
@@ -701,3 +703,15 @@ Sources officielles relues le 2026-11-27 (lectures datées dans `veille/sources.
 | Funded Futures Family | Premier+ funded, EOD et intraday (25K à 150K, 8 phases) | « Premier+ Payout Requirements » : à la première demande de payout, le drawdown remonte au solde de départ ; « Premier+ Drawdown » : jamais remis à zéro ensuite. | `request` |
 
 Niveau figé : celui déjà au catalogue (`locked_floor` = 0 $ pour les XFA, solde de départ pour Premier+), cohérent avec `locks_at − amount` (spec `payout-floor-lock.spec.ts`, 112 phases). Premier+ est passé « Labs » sur invitation le 2026-10-30 (mise à jour FFF du 11/11) : règle inchangée pour les comptes existants.
+
+## Topstep Static Trading Combines (Labs, #1238, 2026-11-27)
+
+Sources lues le 2026-11-27 : https://help.topstep.com/en/articles/15520357-topstep-labs (page lue tronquée, environ 40 000 caractères sur 70 000 ; tableaux Static dans la partie lue mot à mot) et l'article « What is the Maximum Loss Limit » (8284204). « Topstep Limited Products » (18515544) : 404. Produits Labs vendus à tous depuis la page Labs du Dashboard (« all now available for purchase any time »), mais drop limité : à passer en `discontinued` à la fin de la vente.
+
+- Ajout de 9 plans en `needs_review` : `topstep-static-{standard,consistency}-{25k,50k,100k,150k}` (« Static Trading Combine », parcours de payout au choix) et `topstep-static-daily-50k` (« Static Trading Combine Daily Payouts+ », drop #011). La DLL est obligatoire, pas une option : pas de variante `-dll`.
+- Combine : objectif 2 000 / 4 000 / 8 000 / 12 000 $, MLL statique 1 000 / 2 000 / 4 000 / 6 000 $ (niveau fixe), DLL 500 / 1 000 / 2 000 / 3 000 $, 2 / 4 / 10 / 15 minis (5 pour Daily Payouts+), consistance 55 %, 90 jours, inactivité 30 jours, pas de reset. Jours minimum non publiés (`null`).
+- XFA Static : départ 0 $, MLL statique sous 0 $ (même montant), DLL identique, parcours Standard ou Consistency (40 %), scaling 25K aucun, 50K 2 / 3 / 4, 100K 3 / 4 / 5 / 10, 150K 3 / 4 / 5 / 10 / 15 minis (seuils non publiés, `tiers` à `null`). Règles de payout non publiées hors Daily Payouts+ (`null`, la politique XFA classique n'est pas confirmée pour Static) ; « Payout Cap » 4 000 / 8 000 / 10 000 / 12 000 $ dans `notes` (par payout ou à vie : non précisé). Daily Payouts+ : split 90/10, deux voies décrites dans `notes`.
+- Gel du MLL à 0 $ au premier payout : non modélisé (drawdown statique, hors de `payout-floor-lock.spec.ts` et de `drawdownFloor`), suivi dans #1310.
+- Prix : paiement unique 75 / 149 / 199 / 279 $ (149 $ pour Daily Payouts+), activation gratuite.
+
+Catalogue à 347 plans (`prop-firms:validate`).

@@ -185,7 +185,10 @@ function report(firms: FirmFile[], results: Result[], previous: Snapshot): { mar
     md.push(byFirm(changed, (r) => {
       const before = previous[r.url];
       const fp = (r as Extract<Result, { status: 'ok' }>).fp;
-      return `- ${r.url} (${fp.kind === 'date' ? `modifié le ${fp.values[0].slice(0, 10)}, relevé du ${before.values[0].slice(0, 10)}` : 'contenu modifié'})`;
+      // Relevé précédent d'une autre nature (empreinte de contenu, date absente) : pas de date à comparer.
+      const was = before?.kind === 'date' ? before.values[0]?.slice(0, 10) : undefined;
+      const now = fp.kind === 'date' ? fp.values[0]?.slice(0, 10) : undefined;
+      return `- ${r.url} (${now && was ? `modifié le ${now}, relevé du ${was}` : now ? `modifié le ${now}` : 'contenu modifié'})`;
     }));
   }
   if (stale.length) {
