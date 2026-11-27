@@ -11,7 +11,7 @@
 /* Violet = plan. Toujours sur sa propre ligne sous le titre, texte replié plutôt que coupé : la colonne
    reste étroite à toutes les largeurs et l'infobulle n'existe pas au toucher (#1231, #1236). */
 .pf-head { flex-wrap: wrap; }
-.pf-head:has(.pf-plan)::after { content: ''; order: 2; flex-basis: 100%; }
+.pf-head:has(.pf-plan)::after { content: ''; order: 2; flex-basis: 100%; margin-top: -8px; } /* annule le gap doublé par cette ligne vide */
 .pf-plan {
   order: 3; max-width: 100%;
   font-family: var(--font-mono); font-size: 11px; color: var(--purple-bright); background: var(--purple-dim);
