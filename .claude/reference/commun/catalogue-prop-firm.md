@@ -111,6 +111,8 @@ de l'API (`PropFirmCatalogSyncService`, cf. `nestjs.md`) écraserait la modifica
   (restent dans `basis_notes`) : TradeDay, et le **suivi sur le profit
   brut payouts compris** (TradeDay Quick Pay). Les suiveurs intraday sont approchés (trades clôturés,
   pas le plus haut latent).
+  Topstep Static XFA (#1238) : MLL statique fixé à 0 $ au premier payout, gel non appliqué (drawdown
+  statique, ni dans `payout-floor-lock.spec.ts` ni dans `drawdownFloor`), suivi dans #1310.
 - `TradingAccount.planLinkChoice` (enum `PlanLinkChoice` : `LATER` · `PERSONAL` · `UNLISTED`) +
   `unlistedFirm` (migration `20261018140000_account_plan_link_choice`, additive, #612) : réponse à
   « Quel est ce compte ? » quand **aucun** plan n'est relié. Null = jamais demandé. Pas de valeur

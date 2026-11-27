@@ -1678,6 +1678,10 @@
       {
         "date": "2026-11-27",
         "modification": "Relecture (#1247) : après le premier payout (et chaque suivant), MLL fixé à 0 $ (solde de départ XFA) ; déclencheur (demande, approbation, versement) non précisé → `locks_on_first_payout: payout` sur les 12 phases funded XFA."
+      },
+      {
+        "date": "2026-11-27",
+        "modification": "Relecture (#1238) : MLL statique des Static Trading Combines (1 000 / 2 000 / 4 000 / 6 000 $) et des XFA Static (sous 0 $, fixé à 0 $ au premier payout)."
       }
     ]
   },
@@ -1757,6 +1761,21 @@
       {
         "date": "2026-11-27",
         "modification": "Relecture (#1247) : « After each Payout » MLL remis à 0 $ (Standard et Consistency) ; même lecture que l'article MLL."
+      }
+    ]
+  },
+  "https://help.topstep.com/en/articles/15520357-topstep-labs": {
+    "kind": "date",
+    "values": [
+      "2026-11-25T21:07:26Z"
+    ],
+    "firms": [
+      "topstep"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-27",
+        "modification": "Lecture (#1238) : Static Trading Combines Labs ajoutés au catalogue (9 plans, needs_review)."
       }
     ]
   },
