@@ -1674,6 +1674,10 @@
       {
         "date": "2026-11-23",
         "modification": "Relecture (lot 5a, #1218) : MLL identique ; « Static Trading Combine » (Labs / produits limités) non couvert, suivi à part."
+      },
+      {
+        "date": "2026-11-27",
+        "modification": "Relecture (#1247) : après le premier payout (et chaque suivant), MLL fixé à 0 $ (solde de départ XFA) ; déclencheur (demande, approbation, versement) non précisé → `locks_on_first_payout: payout` sur les 12 phases funded XFA."
       }
     ]
   },
@@ -1749,6 +1753,10 @@
       {
         "date": "2026-11-23",
         "modification": "Relecture complète (lot 5a, #1218) : aucune règle modifiée."
+      },
+      {
+        "date": "2026-11-27",
+        "modification": "Relecture (#1247) : « After each Payout » MLL remis à 0 $ (Standard et Consistency) ; même lecture que l'article MLL."
       }
     ]
   },
@@ -2049,6 +2057,10 @@
       {
         "date": "2026-11-23",
         "modification": "Relecture (lot 5c, #1218) : aucune règle modifiée."
+      },
+      {
+        "date": "2026-11-27",
+        "modification": "Relecture (#1247) : à la première DEMANDE de payout, le drawdown remonte au solde de départ → `locks_on_first_payout: request` sur les 8 phases funded Premier+ (EOD et intraday)."
       }
     ]
   },
@@ -2064,6 +2076,10 @@
       {
         "date": "2026-11-23",
         "modification": "Relecture (lot 5c, #1218) : aucune règle modifiée."
+      },
+      {
+        "date": "2026-11-27",
+        "modification": "Relecture (#1247) : drawdown jamais remis à zéro après un payout, reste figé une fois relevé ; tableaux EOD et intraday inchangés."
       }
     ]
   },

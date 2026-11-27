@@ -1194,6 +1194,7 @@
             "trails_on": "balance",
             "locks_at": 25750,
             "locked_floor": 25000,
+            "locks_on_first_payout": "request",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "EOD : 750 $ sous le plus haut solde de clôture, recalculé seulement après la clôture (les gains intraday ne le font pas monter). Se fige au solde de départ (25000 $) quand le solde de clôture atteint 25750 $. Échec si le solde passe sous le seuil. Le seuil ne redescend pas après un payout. Au premier payout, le seuil remonte au solde de départ. Si les pertes ouvertes font passer l'equity sous le seuil en séance, le compte échoue immédiatement (support FFF, e-mail du 2026-10-04)."
@@ -1331,6 +1332,7 @@
             "trails_on": "balance",
             "locks_at": 51500,
             "locked_floor": 50000,
+            "locks_on_first_payout": "request",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "EOD : 1500 $ sous le plus haut solde de clôture, recalculé seulement après la clôture (les gains intraday ne le font pas monter). Se fige au solde de départ (50000 $) quand le solde de clôture atteint 51500 $. Échec si le solde passe sous le seuil. Le seuil ne redescend pas après un payout. Au premier payout, le seuil remonte au solde de départ. Si les pertes ouvertes font passer l'equity sous le seuil en séance, le compte échoue immédiatement (support FFF, e-mail du 2026-10-04)."
@@ -1468,6 +1470,7 @@
             "trails_on": "balance",
             "locks_at": 102500,
             "locked_floor": 100000,
+            "locks_on_first_payout": "request",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "EOD : 2500 $ sous le plus haut solde de clôture, recalculé seulement après la clôture (les gains intraday ne le font pas monter). Se fige au solde de départ (100000 $) quand le solde de clôture atteint 102500 $. Échec si le solde passe sous le seuil. Le seuil ne redescend pas après un payout. Au premier payout, le seuil remonte au solde de départ. Si les pertes ouvertes font passer l'equity sous le seuil en séance, le compte échoue immédiatement (support FFF, e-mail du 2026-10-04)."
@@ -1611,6 +1614,7 @@
             "trails_on": "balance",
             "locks_at": 154000,
             "locked_floor": 150000,
+            "locks_on_first_payout": "request",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "EOD : 4000 $ sous le plus haut solde de clôture, recalculé seulement après la clôture (les gains intraday ne le font pas monter). Se fige au solde de départ (150000 $) quand le solde de clôture atteint 154000 $. Échec si le solde passe sous le seuil. Le seuil ne redescend pas après un payout. Au premier payout, le seuil remonte au solde de départ. Si les pertes ouvertes font passer l'equity sous le seuil en séance, le compte échoue immédiatement (support FFF, e-mail du 2026-10-04)."
@@ -1760,6 +1764,7 @@
             "trails_on": "equity",
             "locks_at": null,
             "locked_floor": 25000,
+            "locks_on_first_payout": "request",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "Intraday : 1000 $ sous la plus haute valeur atteinte, latent compris. Au premier payout, le seuil remonte au solde de départ (25000 $)."
@@ -1897,6 +1902,7 @@
             "trails_on": "equity",
             "locks_at": null,
             "locked_floor": 50000,
+            "locks_on_first_payout": "request",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "Intraday : 2000 $ sous la plus haute valeur atteinte, latent compris. Au premier payout, le seuil remonte au solde de départ (50000 $)."
@@ -2034,6 +2040,7 @@
             "trails_on": "equity",
             "locks_at": null,
             "locked_floor": 100000,
+            "locks_on_first_payout": "request",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "Intraday : 3000 $ sous la plus haute valeur atteinte, latent compris. Au premier payout, le seuil remonte au solde de départ (100000 $)."
@@ -2177,6 +2184,7 @@
             "trails_on": "equity",
             "locks_at": null,
             "locked_floor": 150000,
+            "locks_on_first_payout": "request",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "Intraday : 4500 $ sous la plus haute valeur atteinte, latent compris. Au premier payout, le seuil remonte au solde de départ (150000 $)."
