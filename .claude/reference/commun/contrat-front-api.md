@@ -18,8 +18,9 @@
   renvoyé porte `satisfies WithDates<Contrat>` quand il contient les `Date` de Prisma (`WithDates`,
   `contracts/serialized.ts` : une `Date` acceptée là où le contrat attend un `string` libre, jamais à la
   place d'une union littérale). Champ `String` en base mais littéral dans le contrat (`stripeInterval`,
-  `FounderSeat.interval`) : rétréci à l'exécution (`billingInterval`, `users/billing-interval.util.ts`),
-  jamais un `as`. En place : `GET /admin/users` (`AdminUsersList`), `PATCH /admin/users/:id`,
+  `FounderSeat.interval`) : rétréci à l'exécution, jamais un cast : `billingInterval`
+  (`users/billing-interval.util.ts`, inconnu → `null`) pour un champ nullable, `=== 'year' ? 'year' : 'month'`
+  (comme `user-detail.service.ts`) pour un champ non nul. En place : `GET /admin/users` (`AdminUsersList`), `PATCH /admin/users/:id`,
   `/admin/users/subscriptions`, `/admin/founders`. Restent sans contrat partagé : `/admin/users/stats`,
   `/admin/users/online` (types locaux de `admin.api.ts`).
 - Enums : `EmotionState.FOCUSED` (valeur) / `EmotionState` (type). Le test API
