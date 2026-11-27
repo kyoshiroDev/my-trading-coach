@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '@admin/environments/environment';
-import type { AdminGiveawayData, AdminGiveawayDrawResponse, AdminGiveawaySettingsResponse, AdminGiveawayWin, DrawGiveawayRequest, GiveawayPool, ModerateGiveawayWinRequest, UpdateGiveawaySettingsRequest, AcquisitionUtm, AdminAcquisitionData, AdminAmbassadorStats, AdminFoundersData, AdminSubscriptionsData, AdminUser, AdminBetaRoleResponse, AdminOfferPremiumResponse, AdminRemoveOfferedPremiumResponse, AdminLandingEngagementData, AdminFunnelData, AdminPlanLinkStats, AdminSignupFunnelData, AdminSignupMethodsData, AdminUserDetail as UserDetailData, FounderSeatStatus, Plan, Role, AdminGiveawayInstagramPreview, AdminGiveawayInstagramPublishResponse, PublishGiveawayInstagramRequest } from '@mtc/shared';
+import type { AdminGiveawayData, AdminGiveawayDrawResponse, AdminGiveawaySettingsResponse, AdminGiveawayWin, DrawGiveawayRequest, GiveawayPool, ModerateGiveawayWinRequest, UpdateGiveawaySettingsRequest, AcquisitionUtm, AdminAcquisitionData, AdminAmbassadorStats, AdminFoundersData, AdminSubscriptionsData, AdminUser, AdminUsersList, AdminBetaRoleResponse, AdminOfferPremiumResponse, AdminRemoveOfferedPremiumResponse, AdminLandingEngagementData, AdminFunnelData, AdminPlanLinkStats, AdminSignupFunnelData, AdminSignupMethodsData, AdminUserDetail as UserDetailData, FounderSeatStatus, Plan, Role, AdminGiveawayInstagramPreview, AdminGiveawayInstagramPublishResponse, PublishGiveawayInstagramRequest } from '@mtc/shared';
 export type { AdminPlanLinkStats };
 export type { UserDetailData };
 
@@ -230,7 +230,7 @@ export class AdminApi {
       const v = utm[key];
       if (v) params = params.set(key, v);
     }
-    return this.http.get<{ data: { users: AdminUser[]; total: number } }>(this.usersBase, { params });
+    return this.http.get<{ data: AdminUsersList }>(this.usersBase, { params });
   }
   /** Modale « Modifier » et interrupteur « Compte interne » : ni rôle ni plan (A1/B2 #1064). */
   update(id: string, dto: { name?: string; isInternal?: boolean }) {

@@ -35,6 +35,12 @@ export interface AdminUser {
   } | null;
 }
 
+/** Liste paginée des utilisateurs (`GET /admin/users`, #1156). */
+export interface AdminUsersList {
+  users: AdminUser[];
+  total: number; page: number; limit: number;
+}
+
 /** Page Abonnements (`GET /admin/users/subscriptions`, alias déprécié : `/admin/subscriptions` ; #1065, #1102). */
 export interface AdminSubscriptionsData {
   /** Une page des abonnés payants ; `stripeTotal` = leur nombre total (A8 #1065). */

@@ -8,15 +8,22 @@ import { ApplicationRef } from '@angular/core';
 import { provideHttpClient } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { PREMIUM_PRICE_EUR } from '@mtc/shared';
+import { PREMIUM_PRICE_EUR, type AdminSubscriptionsData, type AdminUser } from '@mtc/shared';
 import { SubscriptionsComponent } from './subscriptions.component';
 import { environment } from '@admin/environments/environment';
 
-const user = (id: string, stripeInterval: 'month' | 'year' | null) => ({
+const user = (id: string, stripeInterval: 'month' | 'year' | null): AdminUser => ({
   id, email: `${id}@example.com`, name: null, plan: 'PREMIUM', role: 'USER', trialEndsAt: null,
   stripeInterval, stripeCurrentPeriodEnd: '2026-10-27T00:00:00.000Z', lastSeenAt: null, lastLoginAt: null,
   createdAt: '2026-06-01T00:00:00.000Z',
 });
+
+/**
+ * Réponse de `GET /admin/users/subscriptions` typée sur le contrat (#1156) : listes et total facultatifs
+ * ici, comme une API plus ancienne qui ne les renverrait pas encore (la page doit tenir).
+ */
+type SubsResponse = Omit<AdminSubscriptionsData, 'stripeTotal' | 'trialUsers' | 'pausedUsers'>
+  & Partial<Pick<AdminSubscriptionsData, 'stripeTotal' | 'trialUsers' | 'pausedUsers'>>;
 
 const FOUNDERS = {
   offer: { open: true, endsAt: null, seatsTotal: 200 },
@@ -33,7 +40,7 @@ describe('SubscriptionsComponent', () => {
   });
   afterEach(() => http.verify());
 
-  async function render(subs: 'error' | object) {
+  async function render(subs: 'error' | SubsResponse) {
     const fixture = TestBed.createComponent(SubscriptionsComponent);
     fixture.detectChanges();
     const req = http.expectOne(`${environment.apiUrl}/admin/users/subscriptions`);
@@ -62,7 +69,7 @@ describe('SubscriptionsComponent', () => {
 
   it('Essais et offerts (#828) : type et prélèvement lus par subscriptionState', async () => {
     const soon = '2099-11-12T08:00:00.000Z';
-    const trialUsers = [
+    const trialUsers: AdminUser[] = [
       { ...user('inscription', null), plan: 'FREE', trialEndsAt: soon, trialSource: 'SIGNUP', stripeCurrentPeriodEnd: null },
       { ...user('reservation', 'month'), trialEndsAt: soon, trialSource: 'SIGNUP', stripeSubscriptionStatus: 'trialing', stripeCurrentPeriodEnd: soon },
       { ...user('annule', 'month'), stripeSubscriptionStatus: 'trialing', stripeCurrentPeriodEnd: soon, stripeCancelAt: soon },
