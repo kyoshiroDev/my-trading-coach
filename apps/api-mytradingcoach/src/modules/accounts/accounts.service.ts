@@ -1179,7 +1179,7 @@ function planDisclaimer(rule: DrawdownPlanRule, broker: AccountRuleMetrics['brok
       ? ` ${rule.firmName} contrôle ce seuil en temps réel, positions ouvertes comprises : elles ne sont pas incluses ici.`
       : '') +
     (rule.kind === 'trailing_intraday' ? ' Les pics atteints pendant un trade ouvert ne sont pas tous connus : le seuil réel peut être plus haut.' : '') +
-    (rule.floorUnconfirmed ? ' Plancher à confirmer : ce plan est à revoir chez nous, vérifie chez ta firm quand il se fige.' : '') +
+    (rule.floorUnconfirmed ? ' Plancher à confirmer\u00a0: ce plan est à revoir chez nous, vérifie chez ta firm quand il se fige.' : '') +
     ' Les payouts ne sont pas suivis. Le statut du compte reste piloté par toi.'
   );
 }
