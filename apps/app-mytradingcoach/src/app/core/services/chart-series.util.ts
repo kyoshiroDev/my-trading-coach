@@ -264,7 +264,7 @@ export interface PlanFloor {
   locked: boolean;
   /** Premier payout qui fige le plancher (`AAAA-MM-JJ`, #696) : gel de la courbe à partir de ce jour. */
   payoutLockedSince: string | null;
-  /** Plan « à revoir » avec un gel du plancher : moment du gel non publié clairement (#1233). */
+  /** Plan à revoir au catalogue avec un gel du plancher (#1233) : gel annoncé non sûr. */
   floorUnconfirmed?: boolean;
 }
 
@@ -333,7 +333,7 @@ export function drawdownHelp(plan: PlanFloor | null, currency: string | null): s
     parts.push('MyTradingCoach le fige à la date du premier payout enregistré, sans jamais le faire baisser.');
   }
   if (plan.floorUnconfirmed && (onPayout || (rule.kind !== 'static' && rule.locksAt != null))) {
-    parts.push('Plancher à confirmer\u00a0: la firm ne publie pas clairement quand il se fige.');
+    parts.push('Plancher à confirmer\u00a0: ce plan est à revoir chez nous, vérifie chez ta firm quand il se fige.');
   }
   if (rule.kind === 'trailing_intraday') {
     parts.push('Calcul sur les trades clôturés\u00a0; ta prop firm peut tenir compte des gains latents.');

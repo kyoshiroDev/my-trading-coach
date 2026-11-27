@@ -176,8 +176,8 @@ export interface DrawdownPlanRule {
   /** Premier payout connu qui fige le plancher (`AAAA-MM-JJ`), sinon null. */
   payoutLockedSince: string | null;
   /**
-   * Plan « à revoir » au catalogue alors que la règle fige le plancher (#1233) : le moment du gel
-   * n'est pas publié clairement, la marge après le gel peut être surestimée. Absent = non.
+   * Plan à revoir au catalogue avec un gel du plancher (#1233) : le gel annoncé n'est pas sûr, la marge
+   * après le gel peut être surestimée. Absent = non.
    */
   floorUnconfirmed?: boolean;
   /** La firm contrôle le seuil en temps réel, positions ouvertes comprises. */
@@ -1179,7 +1179,7 @@ function planDisclaimer(rule: DrawdownPlanRule, broker: AccountRuleMetrics['brok
       ? ` ${rule.firmName} contrôle ce seuil en temps réel, positions ouvertes comprises : elles ne sont pas incluses ici.`
       : '') +
     (rule.kind === 'trailing_intraday' ? ' Les pics atteints pendant un trade ouvert ne sont pas tous connus : le seuil réel peut être plus haut.' : '') +
-    (rule.floorUnconfirmed ? ' Plancher à confirmer : la firm ne publie pas clairement quand il se fige.' : '') +
+    (rule.floorUnconfirmed ? ' Plancher à confirmer : ce plan est à revoir chez nous, vérifie chez ta firm quand il se fige.' : '') +
     ' Les payouts ne sont pas suivis. Le statut du compte reste piloté par toi.'
   );
 }

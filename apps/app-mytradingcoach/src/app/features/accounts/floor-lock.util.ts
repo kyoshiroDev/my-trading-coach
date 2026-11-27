@@ -12,7 +12,7 @@ export function floorLockText(
 ): string | null {
   const text = lockText(rule, money);
   // Plan « à revoir » (#1233) : le gel annoncé n'est pas sûr, on le dit à côté.
-  return text && rule.floorUnconfirmed ? `${text} (à confirmer\u00a0: la firm ne publie pas clairement quand il se fige)` : text;
+  return text && rule.floorUnconfirmed ? `${text} (à confirmer\u00a0: vérifie chez ta firm quand il se fige)` : text;
 }
 
 function lockText(

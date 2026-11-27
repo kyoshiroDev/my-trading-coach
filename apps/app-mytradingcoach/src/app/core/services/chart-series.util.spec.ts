@@ -392,7 +392,7 @@ describe('« ? » de la carte drawdown selon la règle du plan relié', () => {
   });
   it('plan « à revoir » avec gel (#1233) : plancher signalé à confirmer ; sans gel : rien', () => {
     const unsure = { ...plan({ locksAt: 26_100, lockedFloor: 25_100 }), floorUnconfirmed: true } as Parameters<typeof drawdownHelp>[0];
-    expect(drawdownHelp(unsure, 'USD')).toContain('Plancher à confirmer\u00a0: la firm ne publie pas clairement quand il se fige.');
+    expect(drawdownHelp(unsure, 'USD')).toContain('Plancher à confirmer\u00a0: ce plan est à revoir chez nous, vérifie chez ta firm quand il se fige.');
     const noLock = { ...plan({}), floorUnconfirmed: true } as Parameters<typeof drawdownHelp>[0];
     expect(drawdownHelp(noLock, 'USD')).not.toContain('Plancher à confirmer');
     expect(drawdownHelp(plan({ locksAt: 26_100, lockedFloor: 25_100 }), 'USD')).not.toContain('Plancher à confirmer');

@@ -552,7 +552,7 @@ describe('AccountsService', () => {
       it('gel au seuil sur un plan à revoir : plancher signalé à confirmer, dans la règle et l’avertissement', () => {
         const m = run({ ...topstep, needsReview: true });
         expect(m.drawdown?.rule?.floorUnconfirmed).toBe(true);
-        expect(m.disclaimer).toContain('Plancher à confirmer : la firm ne publie pas clairement quand il se fige.');
+        expect(m.disclaimer).toContain('Plancher à confirmer : ce plan est à revoir chez nous, vérifie chez ta firm quand il se fige.');
       });
 
       it('gel seulement au premier payout (sans seuil) sur un plan à revoir : signalé aussi', () => {
