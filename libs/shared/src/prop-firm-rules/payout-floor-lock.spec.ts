@@ -46,6 +46,9 @@ const expected = new Map<string, string>([
     'elite-daily-nodll',
     'elite-access',
     'elite-access-nodll',
+    // #1241 : Elite Access Static, gel aligné sur Elite Access (sources Static muettes).
+    'elite-access-static',
+    'elite-access-static-nodll',
   ].flatMap((f) =>
     sizes.map(
       (s) => [`toponefutures-${f}-${s}:funded`, 'payout'] as [string, string],
@@ -110,8 +113,8 @@ for (const plan of plans) {
 }
 
 describe('gel du plancher au premier payout (#696)', () => {
-  it('112 phases, exactement celles relevées, avec leur déclencheur', () => {
-    expect(expected.size).toBe(112);
+  it('120 phases, exactement celles relevées, avec leur déclencheur', () => {
+    expect(expected.size).toBe(120);
     expect(
       Object.fromEntries([...actual].map(([k, v]) => [k, v.trigger])),
     ).toEqual(Object.fromEntries(expected));

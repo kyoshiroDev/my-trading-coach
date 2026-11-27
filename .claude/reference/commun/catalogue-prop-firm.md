@@ -100,14 +100,15 @@ de l'API (`PropFirmCatalogSyncService`, cf. `nestjs.md`) écraserait la modifica
   séance, Mes comptes et cartes Courbe d'équité / Drawdown (`design.md`). Le seed démo relie ses
   3 comptes : `apex-eod-50k` (suiveur EOD), `tradeify-select-flex-50k` (funded, payout en jours),
   `elitetraderfunding-static-25k` (statique, 25K).
-- **Gel du plancher au premier payout** (#696) : champ `max_drawdown.locks_on_first_payout`
+- **Gel du plancher au premier payout** (#696, #1247, #1241) : champ `max_drawdown.locks_on_first_payout`
   (`request` = dès la demande · `approval` = dès l'approbation · `payout` = non précisé par la firm),
-  sur 92 phases funded / direct : Lucid Flex, Top One (Elite, Access, X-Ultra, Instant, Ignite),
-  Tradeify (Growth, Select, Lightning, Select Flex 300K), MyFundedFutures Pro. Présent ⇒ drawdown
+  sur 120 phases funded / direct : Lucid Flex, Top One (Elite, Access, Access Static (aligné sur
+  Access, sources muettes), X-Ultra, Instant, Ignite), Tradeify (Growth, Select, Lightning, Select
+  Flex 300K), MyFundedFutures Pro, Topstep XFA, Funded Futures Family Premier+. Présent ⇒ drawdown
   suiveur et niveau figé connu (`locked_floor`, ou `locks_at − amount`) : vérifié par
   `payout-floor-lock.spec.ts`. Appliqué par `drawdownFloor(rule, peak, payoutFreezePeak)` : plancher
   = max(niveau figé, suiveur au moment du gel), jamais plus bas que le niveau figé. **Hors périmètre**
-  (restent dans `basis_notes`) : Topstep, Funded Futures Family, TradeDay, et le **suivi sur le profit
+  (restent dans `basis_notes`) : TradeDay, et le **suivi sur le profit
   brut payouts compris** (TradeDay Quick Pay). Les suiveurs intraday sont approchés (trades clôturés,
   pas le plus haut latent).
 - `TradingAccount.planLinkChoice` (enum `PlanLinkChoice` : `LATER` · `PERSONAL` · `UNLISTED`) +
