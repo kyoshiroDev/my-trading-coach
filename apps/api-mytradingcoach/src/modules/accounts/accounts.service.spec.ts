@@ -258,7 +258,7 @@ describe('AccountsService', () => {
       prisma.propFirmPlan.count.mockResolvedValue(1);
       prisma.tradingAccount.create.mockResolvedValue({ id: 'a1' });
       await svc.create('u1', { label: 'Apex 50k', propFirmPlanId: 'apex-eod-50k' } as never);
-      expect(prisma.propFirmPlan.count).toHaveBeenCalledWith({ where: { id: 'apex-eod-50k', active: true } });
+      expect(prisma.propFirmPlan.count).toHaveBeenCalledWith({ where: { id: 'apex-eod-50k', active: true, availability: { not: 'discontinued' } } });
       expect(prisma.tradingAccount.create).toHaveBeenCalledWith({
         data: { userId: 'u1', label: 'Apex 50k', propFirmPlanId: 'apex-eod-50k' },
       });
@@ -270,6 +270,16 @@ describe('AccountsService', () => {
         svc.create('u1', { label: 'X', propFirmPlanId: 'apex-retire-50k' } as never),
       ).rejects.toBeInstanceOf(BadRequestException);
       expect(prisma.tradingAccount.create).not.toHaveBeenCalled();
+    });
+
+    it('update — passer à un autre plan le revérifie, plan plus vendu compris (#1242)', async () => {
+      prisma.tradingAccount.findUnique.mockResolvedValue({ id: 'a1', userId: 'u1', status: 'ACTIVE', propFirmPlanId: 'apex-eod-50k' });
+      prisma.propFirmPlan.count.mockResolvedValue(0);
+      await expect(svc.update('u1', 'a1', { propFirmPlanId: 'toponefutures-elite-daily-nodll-50k' } as never)).rejects.toBeInstanceOf(BadRequestException);
+      expect(prisma.propFirmPlan.count).toHaveBeenCalledWith({
+        where: { id: 'toponefutures-elite-daily-nodll-50k', active: true, availability: { not: 'discontinued' } },
+      });
+      expect(prisma.tradingAccount.update).not.toHaveBeenCalled();
     });
 
     it('update — même plan qu’avant → aucun contrôle (un plan retiré reste sur le compte)', async () => {
