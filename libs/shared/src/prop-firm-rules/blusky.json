@@ -1118,7 +1118,6 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 52000,
-            "safety_net_basis": "after_payout",
             "notes": "Payout tous les 3 jours de trading au-dessus de 52000 $, minimum 500 $, plafond 2000 $ par période de 7 jours. 90/10. Au moins 500 $ de nouveau profit entre deux demandes (article « Sim Funded Payouts », 2026-10-08). Passage en Live Brokerage depuis le 2026-10-01 : compte live à 0 $ (profits Sim Funded versés dans un « Bonus Vault »), ou rachat unique égal à 50 % du drawdown (article « Sim Funded Accounts Rules », 2026-10-08)."
           }
         }
@@ -1229,7 +1228,6 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 103000,
-            "safety_net_basis": "after_payout",
             "notes": "Payout tous les 3 jours de trading au-dessus de 103000 $, minimum 500 $, plafond 2500 $ par période de 7 jours. 90/10. Au moins 500 $ de nouveau profit entre deux demandes (article « Sim Funded Payouts », 2026-10-08). Passage en Live Brokerage depuis le 2026-10-01 : compte live à 0 $ (profits Sim Funded versés dans un « Bonus Vault »), ou rachat unique égal à 50 % du drawdown (article « Sim Funded Accounts Rules », 2026-10-08)."
           }
         }
@@ -1340,7 +1338,6 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 154500,
-            "safety_net_basis": "after_payout",
             "notes": "Payout tous les 3 jours de trading au-dessus de 154500 $, minimum 500 $, plafond 3000 $ par période de 7 jours. 90/10. Au moins 500 $ de nouveau profit entre deux demandes (article « Sim Funded Payouts », 2026-10-08). Passage en Live Brokerage depuis le 2026-10-01 : compte live à 0 $ (profits Sim Funded versés dans un « Bonus Vault »), ou rachat unique égal à 50 % du drawdown (article « Sim Funded Accounts Rules », 2026-10-08)."
           }
         }
@@ -1451,7 +1448,6 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 203000,
-            "safety_net_basis": "after_payout",
             "notes": "Payout tous les 3 jours de trading au-dessus de 203000 $, minimum 500 $, plafond 2500 $ par période de 7 jours. 90/10. Au moins 500 $ de nouveau profit entre deux demandes (article « Sim Funded Payouts », 2026-10-08). Passage en Live Brokerage depuis le 2026-10-01 : compte live à 0 $ (profits Sim Funded versés dans un « Bonus Vault »), ou rachat unique égal à 50 % du drawdown (article « Sim Funded Accounts Rules », 2026-10-08)."
           }
         }
@@ -1538,7 +1534,6 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 53000,
-            "safety_net_basis": "after_payout",
             "notes": "Payout chaque jour ouvré au-dessus de 53 000 $, plafond 2 500 $ par période de 7 jours, 80/20. 3 comptes maximum. Retrait minimum 500 $, montants en dollars entiers (article général « Sim Funded Payouts », 2026-10-07). Au moins 500 $ de nouveau profit entre deux demandes (article « Sim Funded Payouts », 2026-10-08)."
           }
         }
@@ -1625,7 +1620,6 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 3500,
-            "safety_net_basis": "after_payout",
             "notes": "Payouts au-dessus de 3 500 $, plafond 3 000 $ par semaine. Partage 50 % pendant les 30 premiers jours de trading, puis 80 %. Règle des jours perdants : au plus 3 jours négatifs sur 10 jours tradés glissants, un 4e ferme le compte."
           }
         }

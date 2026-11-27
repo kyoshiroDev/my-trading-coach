@@ -169,7 +169,7 @@ describe('Gain max du jour pour respecter la consistency (Premium, #370)', () =>
   });
 });
 
-const EXPECTED_AFTER_PAYOUT_PHASES = 117;
+const EXPECTED_AFTER_PAYOUT_PHASES = 112;
 
 describe('montant minimum d’un retrait selon le sens du safety net (#1228)', () => {
   type CatalogPlan = { id: string; account_size: number; phases: (PropFirmPhaseRules & { starting_balance?: number | null })[] };
