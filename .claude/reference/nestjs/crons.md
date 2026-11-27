@@ -88,7 +88,8 @@ journalisé par id et nom d'erreur, le passage continue. `INACTIVITY_PURGE_ENABL
 seul : aucune écriture, aucun appel, une ligne « Comptes inactifs (journal seul) » avec les comptes
 par rang de préavis, les suppressions dues et les exclus par motif. Le worker dev tourne sans crons :
 la preuve passe par les tests puis par ce journal en prod.
-Examen limité à 5 000 comptes par passage (`INACTIVITY_SCAN_LIMIT`), triés par inscription : voir
-l'issue #1257 avant de dépasser ce volume. Si Resend envoie mais que l'écriture `EmailSend` échoue, le
+Tous les comptes éligibles sont examinés à chaque passage, par pages de 1 000
+(`INACTIVITY_PAGE_SIZE`, #1257) : curseur « après (createdAt, id) » dans le `where`, pas le curseur
+Prisma (un compte supprimé pendant le passage ne casse pas la page suivante). Si Resend envoie mais que l'écriture `EmailSend` échoue, le
 même préavis repart au passage suivant : le compte reçoit un doublon mais la date plancher reste la
 même, donc jamais de suppression anticipée.
