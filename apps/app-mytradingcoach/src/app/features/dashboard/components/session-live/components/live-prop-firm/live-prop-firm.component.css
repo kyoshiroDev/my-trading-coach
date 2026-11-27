@@ -92,7 +92,7 @@
 .pf-plan-cta-text { margin: 0; font: 14px/1.5 var(--font-body); color: var(--text); }
 .pf-plan-cta-btn {
   min-height: 44px; padding: 0 16px; border: 1px solid var(--primary); border-radius: var(--radius-btn);
-  background: var(--primary); color: #fff; /* contraste 5,2:1 (#1085) */ font: 600 14px var(--font-body); cursor: pointer;
+  background: var(--primary); color: var(--text-on-primary); /* contraste 5,2:1 (#1085) */ font: 600 14px var(--font-body); cursor: pointer;
 }
 .pf-plan-cta-btn:hover { background: var(--primary-hover); border-color: var(--primary-hover); }
 .pf-plan-cta-btn:focus-visible { outline: 2px solid var(--blue-bright); outline-offset: 2px; }

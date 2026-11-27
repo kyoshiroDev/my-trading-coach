@@ -154,7 +154,7 @@
 .qt-tp-input:focus { border-color: var(--green) !important; }
 .qt-log {
   background: var(--primary);
-  color: #fff;
+  color: var(--text-on-primary);
   border: none;
   border-radius: 9px;
   padding: 10px;

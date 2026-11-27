@@ -38,13 +38,30 @@ function contraste(a: string, b: string): number {
 
 // Fond bleu plein (pas un dégradé ni une teinte transparente) et texte clair déclaré dans la même règle.
 const FOND_BLEU = /(?:^|;)\s*background(?:-color)?\s*:\s*(?:var\(--(?:blue|blue-bright)\)|#3b82f6|#60a5fa)\s*(?:!important\s*)?(?:;|$)/i;
-const TEXTE_CLAIR = /(?:^|;)\s*color\s*:\s*(?:var\(--text(?:-2|-3)?\)|#fff(?:fff)?|white)\s*(?:!important\s*)?(?:;|$)/i;
+const TEXTE_CLAIR = /(?:^|;)\s*color\s*:\s*(?:var\(--text(?:-2|-3|-on-primary)?\)|#fff(?:fff)?|white)\s*(?:!important\s*)?(?:;|$)/i;
 
 describe('Contraste du texte sur les fonds bleus (#1085)', () => {
-  it('blanc sur --primary et --primary-hover au-dessus de 4,5:1', () => {
+  it('--text-on-primary sur --primary et --primary-hover au-dessus de 4,5:1', () => {
     expect(tokens['--primary'], '--primary absent de theme.css').toMatch(/^#[0-9a-f]{6}$/i);
-    expect(contraste('#ffffff', tokens['--primary'])).toBeGreaterThanOrEqual(4.5);
-    expect(contraste('#ffffff', tokens['--primary-hover'])).toBeGreaterThanOrEqual(4.5);
+    const texte = tokens['--text-on-primary'];
+    expect(texte, '--text-on-primary absent de theme.css').toMatch(/^#[0-9a-f]{3}([0-9a-f]{3})?$/i);
+    const hex6 = texte.length === 4 ? '#' + [...texte.slice(1)].map((c) => c + c).join('') : texte;
+    expect(contraste(hex6, tokens['--primary'])).toBeGreaterThanOrEqual(4.5);
+    expect(contraste(hex6, tokens['--primary-hover'])).toBeGreaterThanOrEqual(4.5);
+  });
+
+  // #1195 : le texte sur --primary passe par le token, plus de blanc en dur dans ces règles.
+  it('aucun blanc en dur dans une règle sur --primary : var(--text-on-primary)', () => {
+    const fautifs: string[] = [];
+    for (const fichier of fichiersCss(__dirname)) {
+      const css = sansCommentaires(readFileSync(fichier, 'utf-8'));
+      for (const [, selecteur, corps] of css.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+        if (/--primary/.test(corps) && /(?:^|[;\s])color\s*:\s*(?:#fff(?:fff)?|white)\b/i.test(corps)) {
+          fautifs.push(`${relative(__dirname, fichier)} : ${selecteur.trim()}`);
+        }
+      }
+    }
+    expect(fautifs).toEqual([]);
   });
 
   it('aucune règle ne pose un texte clair sur --blue ou --blue-bright', () => {

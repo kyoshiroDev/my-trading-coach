@@ -49,7 +49,7 @@
 
 .pl-btn {
   background: var(--primary); /* blanc sur le dégradé bleu-indigo = 3,7:1, sur --primary 5,2:1 (#1085) */
-  color: #fff;
+  color: var(--text-on-primary);
   border-radius: 7px;
   padding: 7px 14px;
   font-size: 12px;

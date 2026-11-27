@@ -127,7 +127,7 @@
 
 .premium-banner-btn {
   background: var(--primary);
-  color: #fff;
+  color: var(--text-on-primary);
   border: none;
   border-radius: 8px;
   padding: 8px 16px;
@@ -219,7 +219,7 @@
   transition: all 0.15s; text-decoration: none; display: inline-flex; align-items: center;
 }
 .firstrun-btn.primary {
-  background: var(--primary); border: 1px solid var(--blue); color: #fff;
+  background: var(--primary); border: 1px solid var(--blue); color: var(--text-on-primary);
   box-shadow: 0 0 18px rgba(59, 130, 246, 0.3);
 }
 .firstrun-btn.primary:hover { background: var(--primary-hover); }

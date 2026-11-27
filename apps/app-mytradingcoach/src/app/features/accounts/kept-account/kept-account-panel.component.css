@@ -88,7 +88,7 @@
   border: none;
   border-radius: 10px;
   background: var(--primary);
-  color: #fff;
+  color: var(--text-on-primary);
   font: 600 14px var(--font-body);
   cursor: pointer;
 }

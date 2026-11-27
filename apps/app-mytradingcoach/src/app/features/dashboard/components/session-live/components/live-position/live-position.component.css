@@ -84,7 +84,7 @@
   background: var(--bg); color: var(--text); font-family: var(--font-mono); font-size: 16px;
 }
 .lp-close-ok {
-  min-height: 44px; padding: 0 16px; border-radius: 10px; border: none; background: var(--primary); color: #fff;
+  min-height: 44px; padding: 0 16px; border-radius: 10px; border: none; background: var(--primary); color: var(--text-on-primary);
   font: 600 14px var(--font-body); cursor: pointer;
 }
 

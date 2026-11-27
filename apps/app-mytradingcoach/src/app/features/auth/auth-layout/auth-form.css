@@ -128,7 +128,7 @@ input::placeholder {
   min-height: 48px;
   background: var(--primary);
   /* Blanc sur --primary : 5,2:1 (--text n'y fait que 4,3:1, sous le AA). */
-  color: #fff;
+  color: var(--text-on-primary);
   border: none;
   border-radius: 10px;
   padding: 12px;
