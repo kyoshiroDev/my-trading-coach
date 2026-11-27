@@ -7,7 +7,8 @@ import {
   NotFoundException,
   Optional,
 } from '@nestjs/common';
-import type { AccountPlanHint, PropFirmDrawdownKind, PropFirmPayoutLockTrigger, PropFirmPhaseRules } from '@mtc/shared';
+import type { AccountPlanHint, PropFirmDrawdownKind, PropFirmPayoutLockTrigger, PropFirmPhaseRules, PropFirmPlanSummary } from '@mtc/shared';
+import { planConfigurationOrNull } from '../prop-firms/prop-firm-plan-configuration';
 import { ACCOUNT_LIMITS, drawdownFloor, drawdownPeakProfit, planDrawdownRule, roundCents } from '@mtc/shared';
 import {
   AccountStatus,
@@ -48,6 +49,8 @@ type RuleAccount = Pick<
 export interface RulePlan {
   firmName: string;
   planName: string;
+  /** Options du plan (DLL, drawdown d'évaluation, parcours de payout, option payante), null sans option. */
+  configuration?: PropFirmPlanSummary['configuration'];
   accountSize: number;
   phases: PropFirmPhaseRules[];
   /** Plan marqué « à revoir » au catalogue. */
@@ -136,6 +139,7 @@ export function brokerReferenceMismatch(gap: number, reference: number): boolean
 
 const PLAN_SELECT = {
   planName: true,
+  configuration: true,
   accountSize: true,
   phases: true,
   needsReview: true,
@@ -163,6 +167,8 @@ const RULE_DISCLAIMER =
 export interface DrawdownPlanRule {
   firmName: string;
   planName: string;
+  /** Options du plan, pour distinguer une variante (option consistency, funded EOD…) d'un plan standard (#1236). */
+  configuration: PropFirmPlanSummary['configuration'];
   phase: PropFirmPhaseRules['phase'];
   kind: PropFirmDrawdownKind;
   /** Solde (référentiel du compte) qui fige le seuil ; null = pas de verrouillage chiffré. */
@@ -570,6 +576,7 @@ export class AccountsService {
           rule: {
             firmName: plan.firmName,
             planName: plan.planName,
+            configuration: plan.configuration ?? null,
             phase: phase.phase,
             kind: md.type,
             locksAt,
@@ -1155,11 +1162,11 @@ function phaseFor(plan: RulePlan, type: AccountType | undefined): PropFirmPhaseR
 }
 
 function toRulePlan(
-  row: { planName: string; accountSize: number; phases: unknown; needsReview?: boolean; firm: { name: string } } | null,
+  row: { planName: string; configuration?: unknown; accountSize: number; phases: unknown; needsReview?: boolean; firm: { name: string } } | null,
 ): RulePlan | null {
   if (!row || !Array.isArray(row.phases)) return null;
   return {
-    firmName: row.firm.name, planName: row.planName, accountSize: row.accountSize,
+    firmName: row.firm.name, planName: row.planName, configuration: planConfigurationOrNull(row.configuration), accountSize: row.accountSize,
     phases: row.phases as PropFirmPhaseRules[], needsReview: row.needsReview ?? false,
   };
 }

@@ -23,7 +23,7 @@ const metrics = (p: Partial<AccountRuleMetrics> = {}): AccountRuleMetrics => ({
     type: 'TRAILING', floor: 48820, margin: 1350, maxDrawdown: 2000, pct: 0.675, breached: false,
     source: 'plan',
     rule: {
-      firmName: 'Apex', planName: 'EOD 50K', phase: 'evaluation', kind: 'trailing_eod',
+      firmName: 'Apex', planName: 'EOD 50K', configuration: null, phase: 'evaluation', kind: 'trailing_eod',
       locksAt: 52100, lockedFloor: 50100, locked: false, locksOnFirstPayout: null, lockedBy: null, payoutLockedSince: null, realtimeEquity: false,
       peakSource: 'broker', peakBalance: 50820, officialThrough: null, platform: null, platformChoices: [],
     },
@@ -108,6 +108,28 @@ describe('Session live — suivi prop firm', () => {
     expect(obj).toContain('$3,000');
     expect(obj).toContain('il te reste');
     expect(text('live-prop-firm-live')).toBe('LIVE');
+  });
+
+  it('badge du plan : firm, plan et ses options, nom complet en infobulle (#1236, #1231)', () => {
+    const m = metrics();
+    const withOption = {
+      ...m,
+      drawdown: {
+        ...m.drawdown!,
+        rule: { ...m.drawdown!.rule!, firmName: 'Lucid Trading', planName: 'LucidDaily',
+          configuration: { dailyLossLimit: false, evalDrawdown: 'eod' as const, payoutPath: null, addon: 'consistency 50 %' } },
+      },
+    };
+    const { q } = setup(withOption);
+    const badge = q('live-prop-firm-plan')!;
+    const label = 'Lucid Trading · LucidDaily · drawdown EOD · sans DLL · option consistency 50 %';
+    expect(badge.textContent?.trim()).toBe(label);
+    expect(badge.getAttribute('title')).toBe(label);
+  });
+
+  it('badge du plan sans option : firm et plan seulement', () => {
+    const { text } = setup(metrics());
+    expect(text('live-prop-firm-plan')).toBe('Apex · EOD 50K');
   });
 
   describe('plancher figé (#1233)', () => {

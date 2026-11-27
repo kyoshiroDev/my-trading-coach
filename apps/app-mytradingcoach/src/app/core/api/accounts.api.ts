@@ -12,6 +12,7 @@ import type {
   DrawdownType,
   IncidentAiState,
   PlanLinkChoice,
+  PropFirmPlanSummary,
 } from '@mtc/shared';
 
 export type { AccountStatus, AccountType, DrawdownType };
@@ -20,6 +21,8 @@ export type { AccountStatus, AccountType, DrawdownType };
 export interface DrawdownPlanRule {
   firmName: string;
   planName: string;
+  /** Options du plan (variante), null sans option (#1236). */
+  configuration: PropFirmPlanSummary['configuration'];
   phase: 'evaluation' | 'funded' | 'direct';
   kind: 'static' | 'trailing_eod' | 'trailing_intraday';
   locksAt: number | null;
