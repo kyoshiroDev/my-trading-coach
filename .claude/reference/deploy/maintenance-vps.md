@@ -146,6 +146,29 @@ Versions : les fichiers compose font foi, ne pas les recopier ici. **Prod éping
   date de fin du certificat (`openssl s_client … | openssl x509 -noout -enddate`).
 - Aucun nginx ne publie de port : seul Traefik reçoit le trafic public (HTTP/2 terminé par Traefik).
 
+### Mineures Postgres et Redis (#1202, 2026-11-27)
+
+Postgres sort ses mineures en février, mai, août et novembre ; Redis à chaque correctif. Docker-socket-proxy :
+`v0.5.0` reste la dernière (relevé du 2026-11-27). Le tag se change dans `infra/prod/databases/docker-compose.yml`,
+`infra/prod/load/docker-compose.load.yml` et `infra/prod/backups/restore-test.sh` (Postgres jetable du test de
+restauration), puis sur le serveur.
+
+- **Notes de version d'abord** : une mineure Postgres ne demande ni dump ni `pg_upgrade`, mais peut demander un
+  `REINDEX` ciblé. 17.12 (2026-11-12) : index btree sur `bpchar`, GIN, `gist_trgm_ops`, index TOAST après un
+  `REINDEX CONCURRENTLY`. MTC n'en a aucun (schéma Prisma : ni `@db.Char`, ni GIN, ni `pg_trgm` ; seule extension
+  `pg_stat_statements`) : rien à réindexer. À revérifier à chaque mineure.
+- **Ancien VPS d'abord (dev et beta, un seul Postgres ; tags flottants `17-alpine`, `7.4-alpine`)** :
+  `docker pull postgres:17-alpine` et `redis:7.4-alpine`, puis dans `/opt/infra/databases`
+  `docker compose up -d && docker restart mtc_pgbouncer` ; vérifier `select version()`, `redis-server --version`,
+  `dev.api.mytradingcoach.app/api/health/ready` et la beta. Les conteneurs d'un autre projet sur ce VPS ne bougent pas.
+- **Prod (créneau calme, accord explicite de Greg, commandes une par une)** : dump manuel juste avant (comme
+  « Avant un reboot de la prod »), `docker pull` des deux tags, copie datée du compose de `/opt/infra/databases/`,
+  tags changés, `docker compose up -d && docker restart mtc_pgbouncer` (Postgres recréé : PgBouncer garde sinon
+  l'ancienne IP, voir plus haut). Coupure de quelques secondes (Postgres) ; Redis recréé recharge son AOF (jobs
+  BullMQ gardés). Vérifier : `docker exec mtc_postgres psql -U mtc_user -d mytradingcoach_prod -tc 'select version()'`,
+  `docker exec mtc_redis redis-server --version`, `/api/health/ready`, `docker logs mtc_pgbouncer --tail=5`.
+  Recopier `restore-test.sh` dans `/opt/backups/` du serveur.
+
 ### Avant un reboot de la prod
 
 - **Dump manuel juste avant** (la sauvegarde auto date de 03:00) : même commande que `backup.sh`, fichier

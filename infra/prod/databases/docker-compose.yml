@@ -2,7 +2,7 @@
 # Secrets : .env (600) à côté de ce fichier. Copie de référence : infra/prod/databases/ du dépôt.
 services:
   postgres:
-    image: postgres:17.11-alpine
+    image: postgres:17.12-alpine
     container_name: mtc_postgres
     restart: unless-stopped
     ports:
@@ -86,7 +86,7 @@ services:
         restart: true
 
   redis:
-    image: redis:7.4.11-alpine
+    image: redis:7.4.12-alpine
     container_name: mtc_redis
     restart: unless-stopped
     # AOF activé : les jobs BullMQ survivent à un redémarrage. noeviction : BullMQ l exige.
