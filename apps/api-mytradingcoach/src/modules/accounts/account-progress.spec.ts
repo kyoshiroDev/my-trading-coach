@@ -198,6 +198,11 @@ describe('montant minimum d’un retrait selon le sens du safety net (#1228)', (
     expect(safety('tradeify-growth-25k', 26_500)).toMatchObject({ required: 26_500, met: true });
   });
 
+  it('« après payout » sans montant minimum : le net seul', () => {
+    const noMin = phase({ phase: 'funded', payout: payout({ safety_net_balance: 52_500, safety_net_basis: 'after_payout', min_amount: null }) as never });
+    expect(req(computeProgress(input({ phase: noMin, currentBalance: 52_500 })), 'safety_net')).toMatchObject({ required: 52_500, met: true });
+  });
+
   it('équivalence sur tout le catalogue : seuls les plans « après payout » avec un minimum changent', () => {
     const changed: string[] = [];
     for (const p of plans) {
