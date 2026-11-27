@@ -163,16 +163,20 @@ Commandes données à Greg, une par une, sur les deux VPS (jamais lancées par C
 - **Ancien VPS d'abord (dev et beta, un seul Postgres ; tags flottants `17-alpine`, `7.4-alpine`)** :
   1. dump manuel de dev et de beta juste avant (même commande que `backup.sh`),
      `mtc_<env>_AAAAMMJJTHHMM_avant-mineure.sql.gz` dans `/opt/backups/mtc/`, vérifié par `gzip -t` et sa taille ;
-  2. `docker pull postgres:17-alpine` et `docker pull redis:7.4-alpine` ;
-  3. dans `/opt/infra/databases`, **les 2 fichiers** : `docker compose up -d && docker restart mtc_pgbouncer`, puis
+  2. relever les versions en place (Greg note la sortie, elle sert au retour arrière) :
+     `docker exec mtc_postgres postgres --version`, `docker exec mtc_redis redis-server --version`,
+     `docker exec mtc_redis_beta redis-server --version` ;
+  3. `docker pull postgres:17-alpine` et `docker pull redis:7.4-alpine` ;
+  4. dans `/opt/infra/databases`, **les 2 fichiers** : `docker compose up -d && docker restart mtc_pgbouncer`, puis
      `docker compose -f docker-compose.beta.yml up -d` (`mtc_redis_beta`) ;
-  4. vérifier `docker exec mtc_postgres postgres --version`, `docker exec mtc_redis redis-server --version`,
+  5. vérifier `docker exec mtc_postgres postgres --version`, `docker exec mtc_redis redis-server --version`,
      `docker exec mtc_redis_beta redis-server --version`, `dev.api.mytradingcoach.app/api/health/ready` et la beta.
   Les conteneurs d'un autre projet sur ce VPS ne bougent pas.
 - **Prod (créneau calme)** :
   1. dump manuel juste avant (commande de « Avant un reboot de la prod »), `mtc_prod_AAAAMMJJTHHMM_avant-mineure.sql.gz` ;
   2. `docker pull` des deux tags ;
-  3. dans `/opt/infra/databases/` : `cp -p docker-compose.yml docker-compose.yml.bak-AAAAMMJJ-HHMM`, tags changés,
+  3. dans `/opt/infra/databases/` : `B=docker-compose.yml.bak-$(date +%Y%m%d-%H%M); cp -pn docker-compose.yml "$B" && cmp docker-compose.yml "$B"`,
+     tags changés,
      `docker compose up -d && docker restart mtc_pgbouncer` (Postgres recréé : PgBouncer garde sinon l'ancienne IP,
      voir plus haut). Coupure de quelques secondes ; Redis recréé recharge son AOF (jobs BullMQ gardés) ;
   4. vérifier `docker exec mtc_postgres postgres --version`, `docker exec mtc_redis redis-server --version`,
@@ -180,7 +184,7 @@ Commandes données à Greg, une par une, sur les deux VPS (jamais lancées par C
   5. recopier `restore-test.sh` dans `/opt/backups/` du serveur.
 - **Retour arrière** : une mineure se rétrograde sans dump (même format de données). Prod : remettre la copie
   `.bak` du compose, puis `docker compose up -d && docker restart mtc_pgbouncer`. Ancien VPS (tags flottants) :
-  la `.bak` ne suffit pas, écrire à la main le tag précis d'avant (ex. `postgres:17.11-alpine`) puis les mêmes commandes.
+  la `.bak` ne suffit pas, écrire à la main le tag précis relevé à l'étape 2 puis les mêmes commandes.
 
 ### Avant un reboot de la prod
 
