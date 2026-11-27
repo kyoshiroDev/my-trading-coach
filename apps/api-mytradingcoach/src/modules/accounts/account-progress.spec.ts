@@ -169,7 +169,7 @@ describe('Gain max du jour pour respecter la consistency (Premium, #370)', () =>
   });
 });
 
-const EXPECTED_AFTER_PAYOUT_PHASES = 149;
+const EXPECTED_AFTER_PAYOUT_PHASES = 117;
 
 describe('montant minimum d’un retrait selon le sens du safety net (#1228)', () => {
   type CatalogPlan = { id: string; account_size: number; phases: (PropFirmPhaseRules & { starting_balance?: number | null })[] };
@@ -189,8 +189,19 @@ describe('montant minimum d’un retrait selon le sens du safety net (#1228)', (
     expect(safety('toponefutures-elite-daily-50k', 53_000)).toMatchObject({ required: 53_000, met: true });
   });
 
-  it('MyFundedFutures Rapid 50K (après payout, départ 0 $) : 2 100 + 500 = 2 600', () => {
-    expect(safety('myfundedfutures-rapid-50k', 2_599)).toMatchObject({ required: 2_600, met: false });
+  it('MyFundedFutures Builder 50K (après payout, départ 0 $) : 2 100 + 500 = 2 600', () => {
+    expect(safety('myfundedfutures-builder-50k', 2_599)).toMatchObject({ required: 2_600, met: false });
+  });
+
+  it('compte saisi avec un autre solde de départ : net décalé puis minimum ajouté', () => {
+    const { ph } = funded('toponefutures-elite-daily-50k');
+    // Compte à 49 000 $ de départ pour une phase à 50 000 $ : 52 500 − 1 000 + 500 = 52 000.
+    const r = computeProgress(input({ phase: ph, startingBalance: 49_000, phaseStartingBalance: 50_000, currentBalance: 52_000 }));
+    expect(req(r, 'safety_net')).toMatchObject({ required: 52_000, met: true });
+  });
+
+  it('MyFundedFutures Rapid 50K (non classé, note ambiguë) : le net seul', () => {
+    expect(safety('myfundedfutures-rapid-50k', 2_100)).toMatchObject({ required: 2_100, met: true });
   });
 
   it('Phidias 50K et Tradeify Growth 25K (pour demander) : le net seul, inchangé', () => {

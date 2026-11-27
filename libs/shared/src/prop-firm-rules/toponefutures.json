@@ -6501,7 +6501,6 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 53000,
-            "safety_net_basis": "after_payout",
             "notes": "Payout chaque jour, sans minimum de jours. Minimum 500 $, plafond 1 000 $ par demande, buffer de 3 000 $, 80/20."
           }
         }

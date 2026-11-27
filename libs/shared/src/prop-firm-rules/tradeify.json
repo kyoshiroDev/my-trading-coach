@@ -1369,7 +1369,6 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 26100,
-            "safety_net_basis": "after_payout",
             "notes": "Éligible chaque jour au-dessus du buffer. Jusqu'à 2× le profit gagné depuis le dernier payout, plafonné (comptes achetés à partir du 2026-09-01 ; avant : 600 $). Profit net positif exigé sur chaque cycle. Une seule demande ouverte à la fois. Microscalping (funded) : plus de 50 % des trades tenus plus de 10 secondes et plus de 50 % du profit venant de trades tenus plus de 10 secondes, sinon pas de payout."
           }
         }
@@ -1505,7 +1504,6 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 26100,
-            "safety_net_basis": "after_payout",
             "notes": "Éligible chaque jour au-dessus du buffer. Jusqu'à 2× le profit gagné depuis le dernier payout, plafonné (comptes achetés à partir du 2026-09-01 ; avant : 600 $). Profit net positif exigé sur chaque cycle. Une seule demande ouverte à la fois. Microscalping (funded) : plus de 50 % des trades tenus plus de 10 secondes et plus de 50 % du profit venant de trades tenus plus de 10 secondes, sinon pas de payout."
           }
         }
@@ -1913,7 +1911,6 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 52100,
-            "safety_net_basis": "after_payout",
             "notes": "Éligible chaque jour au-dessus du buffer. Jusqu'à 2× le profit gagné depuis le dernier payout, plafonné (comptes achetés à partir du 2026-09-01 ; avant : 1000 $). Profit net positif exigé sur chaque cycle. Une seule demande ouverte à la fois. Microscalping (funded) : plus de 50 % des trades tenus plus de 10 secondes et plus de 50 % du profit venant de trades tenus plus de 10 secondes, sinon pas de payout."
           }
         }
@@ -2055,7 +2052,6 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 52100,
-            "safety_net_basis": "after_payout",
             "notes": "Éligible chaque jour au-dessus du buffer. Jusqu'à 2× le profit gagné depuis le dernier payout, plafonné (comptes achetés à partir du 2026-09-01 ; avant : 1000 $). Profit net positif exigé sur chaque cycle. Une seule demande ouverte à la fois. Microscalping (funded) : plus de 50 % des trades tenus plus de 10 secondes et plus de 50 % du profit venant de trades tenus plus de 10 secondes, sinon pas de payout."
           }
         }
@@ -2481,7 +2477,6 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 102600,
-            "safety_net_basis": "after_payout",
             "notes": "Éligible chaque jour au-dessus du buffer. Jusqu'à 2× le profit gagné depuis le dernier payout, plafonné (comptes achetés à partir du 2026-09-01 ; avant : 1500 $). Profit net positif exigé sur chaque cycle. Une seule demande ouverte à la fois. Microscalping (funded) : plus de 50 % des trades tenus plus de 10 secondes et plus de 50 % du profit venant de trades tenus plus de 10 secondes, sinon pas de payout."
           }
         }
@@ -2629,7 +2624,6 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 102600,
-            "safety_net_basis": "after_payout",
             "notes": "Éligible chaque jour au-dessus du buffer. Jusqu'à 2× le profit gagné depuis le dernier payout, plafonné (comptes achetés à partir du 2026-09-01 ; avant : 1500 $). Profit net positif exigé sur chaque cycle. Une seule demande ouverte à la fois. Microscalping (funded) : plus de 50 % des trades tenus plus de 10 secondes et plus de 50 % du profit venant de trades tenus plus de 10 secondes, sinon pas de payout."
           }
         }
@@ -3073,7 +3067,6 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 153600,
-            "safety_net_basis": "after_payout",
             "notes": "Éligible chaque jour au-dessus du buffer. Jusqu'à 2× le profit gagné depuis le dernier payout, plafonné (comptes achetés à partir du 2026-09-01 ; avant : 2500 $). Profit net positif exigé sur chaque cycle. Une seule demande ouverte à la fois. Microscalping (funded) : plus de 50 % des trades tenus plus de 10 secondes et plus de 50 % du profit venant de trades tenus plus de 10 secondes, sinon pas de payout."
           }
         }
@@ -3227,7 +3220,6 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 153600,
-            "safety_net_basis": "after_payout",
             "notes": "Éligible chaque jour au-dessus du buffer. Jusqu'à 2× le profit gagné depuis le dernier payout, plafonné (comptes achetés à partir du 2026-09-01 ; avant : 2500 $). Profit net positif exigé sur chaque cycle. Une seule demande ouverte à la fois. Microscalping (funded) : plus de 50 % des trades tenus plus de 10 secondes et plus de 50 % du profit venant de trades tenus plus de 10 secondes, sinon pas de payout."
           }
         }
@@ -3907,7 +3899,6 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 26100,
-            "safety_net_basis": "after_payout",
             "notes": "Éligible chaque jour au-dessus du buffer. Jusqu'à 2× le profit gagné depuis le dernier payout, plafonné (comptes achetés à partir du 2026-09-01 ; avant : 600 $). Profit net positif exigé sur chaque cycle. Une seule demande ouverte à la fois. Microscalping (funded) : plus de 50 % des trades tenus plus de 10 secondes et plus de 50 % du profit venant de trades tenus plus de 10 secondes, sinon pas de payout. Option 30 % : plafonds standard (l’article ne réduit les plafonds que pour l’option 50 % ; aucun plafond propre au 30 % publié)."
           }
         }
@@ -4049,7 +4040,6 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 52100,
-            "safety_net_basis": "after_payout",
             "notes": "Éligible chaque jour au-dessus du buffer. Jusqu'à 2× le profit gagné depuis le dernier payout, plafonné (comptes achetés à partir du 2026-09-01 ; avant : 1000 $). Profit net positif exigé sur chaque cycle. Une seule demande ouverte à la fois. Microscalping (funded) : plus de 50 % des trades tenus plus de 10 secondes et plus de 50 % du profit venant de trades tenus plus de 10 secondes, sinon pas de payout. Option 30 % : plafonds standard (l’article ne réduit les plafonds que pour l’option 50 % ; aucun plafond propre au 30 % publié)."
           }
         }
@@ -4197,7 +4187,6 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 102600,
-            "safety_net_basis": "after_payout",
             "notes": "Éligible chaque jour au-dessus du buffer. Jusqu'à 2× le profit gagné depuis le dernier payout, plafonné (comptes achetés à partir du 2026-09-01 ; avant : 1500 $). Profit net positif exigé sur chaque cycle. Une seule demande ouverte à la fois. Microscalping (funded) : plus de 50 % des trades tenus plus de 10 secondes et plus de 50 % du profit venant de trades tenus plus de 10 secondes, sinon pas de payout. Option 30 % : plafonds standard (l’article ne réduit les plafonds que pour l’option 50 % ; aucun plafond propre au 30 % publié)."
           }
         }
@@ -4351,7 +4340,6 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 153600,
-            "safety_net_basis": "after_payout",
             "notes": "Éligible chaque jour au-dessus du buffer. Jusqu'à 2× le profit gagné depuis le dernier payout, plafonné (comptes achetés à partir du 2026-09-01 ; avant : 2500 $). Profit net positif exigé sur chaque cycle. Une seule demande ouverte à la fois. Microscalping (funded) : plus de 50 % des trades tenus plus de 10 secondes et plus de 50 % du profit venant de trades tenus plus de 10 secondes, sinon pas de payout. Option 30 % : plafonds standard (l’article ne réduit les plafonds que pour l’option 50 % ; aucun plafond propre au 30 % publié)."
           }
         }
@@ -4674,7 +4662,6 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 306100,
-            "safety_net_basis": "after_payout",
             "notes": "Éligible chaque jour au-dessus du buffer (solde 306100 $), 4000 $ maximum par jour ; 50 % de chaque payout doit venir de profit gagné depuis le dernier payout. Une seule demande ouverte à la fois. Microscalping (funded) : plus de 50 % des trades tenus plus de 10 secondes et plus de 50 % du profit venant de trades tenus plus de 10 secondes, sinon pas de payout."
           }
         }
@@ -4974,7 +4961,6 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 305100,
-            "safety_net_basis": "after_payout",
             "notes": "Éligible chaque jour au-dessus du buffer (solde 305100 $), 3500 $ maximum par jour ; 50 % de chaque payout doit venir de profit gagné depuis le dernier payout. Une seule demande ouverte à la fois. Microscalping (funded) : plus de 50 % des trades tenus plus de 10 secondes et plus de 50 % du profit venant de trades tenus plus de 10 secondes, sinon pas de payout."
           }
         }
