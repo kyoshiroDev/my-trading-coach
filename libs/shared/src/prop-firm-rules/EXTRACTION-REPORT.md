@@ -688,4 +688,16 @@ Champ `max_drawdown.locks_on_first_payout` ajouté et renseigné sur 92 phases, 
 | Tradeify | Select Flex 300K (v1 et actuel) | `approval` |
 | MyFundedFutures | Pro 50K / 100K / 150K | `approval` |
 
-Hors périmètre (règle laissée dans les notes) : Topstep, Funded Futures Family, TradeDay, MyFundedFutures Rapid, Tradeify Daily 300K, LucidPro / Daily / Direct, Top One X-Daily Spark.
+Hors périmètre (règle laissée dans les notes) : TradeDay, MyFundedFutures Rapid, Tradeify Daily 300K, LucidPro / Daily / Direct, Top One X-Daily Spark. Topstep et Funded Futures Family : modélisés depuis (#1247, section suivante).
+
+
+## Gel au premier payout : Topstep XFA et FFF Premier+ (#1247, 2026-11-27)
+
+Sources officielles relues le 2026-11-27 (lectures datées dans `veille/sources.json`) :
+
+| Firm | Phases | Règle lue | Déclencheur |
+|------|--------|-----------|-------------|
+| Topstep | XFA funded des 12 plans (Standard, Consistency, avec ou sans DLL ; 50K, 100K, 150K) | « What is the Maximum Loss Limit » et « Payout Policy » : après le premier payout (et chaque suivant), MLL fixé à 0 $, le solde de départ XFA. L'événement exact (demande, approbation, versement) n'est pas précisé. | `payout` |
+| Funded Futures Family | Premier+ funded, EOD et intraday (25K à 150K, 8 phases) | « Premier+ Payout Requirements » : à la première demande de payout, le drawdown remonte au solde de départ ; « Premier+ Drawdown » : jamais remis à zéro ensuite. | `request` |
+
+Niveau figé : celui déjà au catalogue (`locked_floor` = 0 $ pour les XFA, solde de départ pour Premier+), cohérent avec `locks_at − amount` (spec `payout-floor-lock.spec.ts`, 112 phases). Premier+ est passé « Labs » sur invitation le 2026-10-30 (mise à jour FFF du 11/11) : règle inchangée pour les comptes existants.

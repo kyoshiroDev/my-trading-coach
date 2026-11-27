@@ -190,6 +190,13 @@ describe('drawdownFloor : gel au premier payout (#696)', () => {
     });
   });
 
+  it('Topstep XFA (#1247) : solde de départ et niveau figé à 0, figé à 0 dès le premier payout', () => {
+    const xfa = rule({ startingBalance: 0, amount: 2_000, locksAt: 2_000, lockedFloor: 0, locksOnFirstPayout: 'payout' });
+    expect(drawdownFloor(xfa, 500)).toEqual({ floor: -1_500, locked: false });
+    // Un niveau figé à 0 reste un niveau connu (jamais pris pour une absence de valeur).
+    expect(drawdownFloor(xfa, 500, 500)).toEqual({ floor: 0, locked: true });
+  });
+
   it('le gel ne fait jamais baisser le plancher : suiveur déjà au-dessus de départ + 100 au moment du payout', () => {
     const pro = rule({ lockedFloor: 50_100, locksOnFirstPayout: 'approval' });
     // Plus haut +3 000 avant le payout : suiveur à 51 000, au-dessus de 50 100.

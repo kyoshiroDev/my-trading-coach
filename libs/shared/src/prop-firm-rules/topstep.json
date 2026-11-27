@@ -77,6 +77,7 @@
             "trails_on": "balance",
             "locks_at": 2000,
             "locked_floor": 0,
+            "locks_on_first_payout": "payout",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "Express Funded Account : solde de départ 0 $, MLL à -2000 $ qui monte avec le solde de fin de journée, verrouillé à 0 $ quand le solde atteint 2000 $. Après le premier payout, MLL fixé à 0 $ quel que soit son niveau. Surveillé en temps réel, latent compris ; atteint = compte fermé définitivement."
@@ -229,6 +230,7 @@
             "trails_on": "balance",
             "locks_at": 2000,
             "locked_floor": 0,
+            "locks_on_first_payout": "payout",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "Express Funded Account : solde de départ 0 $, MLL à -2000 $ qui monte avec le solde de fin de journée, verrouillé à 0 $ quand le solde atteint 2000 $. Après le premier payout, MLL fixé à 0 $ quel que soit son niveau. Surveillé en temps réel, latent compris ; atteint = compte fermé définitivement."
@@ -365,6 +367,7 @@
             "trails_on": "balance",
             "locks_at": 2000,
             "locked_floor": 0,
+            "locks_on_first_payout": "payout",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "Express Funded Account : solde de départ 0 $, MLL à -2000 $ qui monte avec le solde de fin de journée, verrouillé à 0 $ quand le solde atteint 2000 $. Après le premier payout, MLL fixé à 0 $ quel que soit son niveau. Surveillé en temps réel, latent compris ; atteint = compte fermé définitivement."
@@ -521,6 +524,7 @@
             "trails_on": "balance",
             "locks_at": 2000,
             "locked_floor": 0,
+            "locks_on_first_payout": "payout",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "Express Funded Account : solde de départ 0 $, MLL à -2000 $ qui monte avec le solde de fin de journée, verrouillé à 0 $ quand le solde atteint 2000 $. Après le premier payout, MLL fixé à 0 $ quel que soit son niveau. Surveillé en temps réel, latent compris ; atteint = compte fermé définitivement."
@@ -661,6 +665,7 @@
             "trails_on": "balance",
             "locks_at": 3000,
             "locked_floor": 0,
+            "locks_on_first_payout": "payout",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "Express Funded Account : solde de départ 0 $, MLL à -3000 $ qui monte avec le solde de fin de journée, verrouillé à 0 $ quand le solde atteint 3000 $. Après le premier payout, MLL fixé à 0 $ quel que soit son niveau. Surveillé en temps réel, latent compris ; atteint = compte fermé définitivement."
@@ -819,6 +824,7 @@
             "trails_on": "balance",
             "locks_at": 3000,
             "locked_floor": 0,
+            "locks_on_first_payout": "payout",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "Express Funded Account : solde de départ 0 $, MLL à -3000 $ qui monte avec le solde de fin de journée, verrouillé à 0 $ quand le solde atteint 3000 $. Après le premier payout, MLL fixé à 0 $ quel que soit son niveau. Surveillé en temps réel, latent compris ; atteint = compte fermé définitivement."
@@ -961,6 +967,7 @@
             "trails_on": "balance",
             "locks_at": 3000,
             "locked_floor": 0,
+            "locks_on_first_payout": "payout",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "Express Funded Account : solde de départ 0 $, MLL à -3000 $ qui monte avec le solde de fin de journée, verrouillé à 0 $ quand le solde atteint 3000 $. Après le premier payout, MLL fixé à 0 $ quel que soit son niveau. Surveillé en temps réel, latent compris ; atteint = compte fermé définitivement."
@@ -1123,6 +1130,7 @@
             "trails_on": "balance",
             "locks_at": 3000,
             "locked_floor": 0,
+            "locks_on_first_payout": "payout",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "Express Funded Account : solde de départ 0 $, MLL à -3000 $ qui monte avec le solde de fin de journée, verrouillé à 0 $ quand le solde atteint 3000 $. Après le premier payout, MLL fixé à 0 $ quel que soit son niveau. Surveillé en temps réel, latent compris ; atteint = compte fermé définitivement."
@@ -1269,6 +1277,7 @@
             "trails_on": "balance",
             "locks_at": 4500,
             "locked_floor": 0,
+            "locks_on_first_payout": "payout",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "Express Funded Account : solde de départ 0 $, MLL à -4500 $ qui monte avec le solde de fin de journée, verrouillé à 0 $ quand le solde atteint 4500 $. Après le premier payout, MLL fixé à 0 $ quel que soit son niveau. Surveillé en temps réel, latent compris ; atteint = compte fermé définitivement."
@@ -1433,6 +1442,7 @@
             "trails_on": "balance",
             "locks_at": 4500,
             "locked_floor": 0,
+            "locks_on_first_payout": "payout",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "Express Funded Account : solde de départ 0 $, MLL à -4500 $ qui monte avec le solde de fin de journée, verrouillé à 0 $ quand le solde atteint 4500 $. Après le premier payout, MLL fixé à 0 $ quel que soit son niveau. Surveillé en temps réel, latent compris ; atteint = compte fermé définitivement."
@@ -1581,6 +1591,7 @@
             "trails_on": "balance",
             "locks_at": 4500,
             "locked_floor": 0,
+            "locks_on_first_payout": "payout",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "Express Funded Account : solde de départ 0 $, MLL à -4500 $ qui monte avec le solde de fin de journée, verrouillé à 0 $ quand le solde atteint 4500 $. Après le premier payout, MLL fixé à 0 $ quel que soit son niveau. Surveillé en temps réel, latent compris ; atteint = compte fermé définitivement."
@@ -1749,6 +1760,7 @@
             "trails_on": "balance",
             "locks_at": 4500,
             "locked_floor": 0,
+            "locks_on_first_payout": "payout",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "Express Funded Account : solde de départ 0 $, MLL à -4500 $ qui monte avec le solde de fin de journée, verrouillé à 0 $ quand le solde atteint 4500 $. Après le premier payout, MLL fixé à 0 $ quel que soit son niveau. Surveillé en temps réel, latent compris ; atteint = compte fermé définitivement."
