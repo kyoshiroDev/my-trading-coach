@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import type { PropFirmPhaseRules } from '@mtc/shared';
+import { PROP_FIRM_CATALOG_FILES } from '@mtc/shared';
 import { computeProgress, consistencyDayCap, type ProgressInput } from './account-progress';
 import { sessionPnls } from './account-rules';
 
@@ -165,5 +166,124 @@ describe('Gain max du jour pour respecter la consistency (Premium, #370)', () =>
     }));
     expect(req(r, 'consistency')!.dayCap).toBeCloseTo(400); // 0,4 × 600 / 0,6
     expect(req(r, 'consistency')!.todayPnl).toBe(200);
+  });
+});
+
+const EXPECTED_AFTER_PAYOUT_PHASES = 112;
+
+describe('montant minimum d’un retrait selon le sens du safety net (#1228)', () => {
+  type CatalogPlan = { id: string; account_size: number; phases: (PropFirmPhaseRules & { starting_balance?: number | null })[] };
+  const plans = (PROP_FIRM_CATALOG_FILES as { plans: CatalogPlan[] }[]).flatMap((f) => f.plans);
+  const funded = (id: string) => {
+    const p = plans.find((x) => x.id === id)!;
+    const ph = p.phases.find((x) => x.payout?.safety_net_balance != null)!;
+    return { ph, start: ph.starting_balance ?? p.account_size };
+  };
+  const safety = (id: string, currentBalance: number) => {
+    const { ph, start } = funded(id);
+    return req(computeProgress(input({ phase: ph, startingBalance: start, phaseStartingBalance: start, currentBalance })), 'safety_net');
+  };
+
+  it('Top One Elite Daily 50K (après payout) : net 52 500 + minimum 500 = 53 000', () => {
+    expect(safety('toponefutures-elite-daily-50k', 52_999)).toMatchObject({ required: 53_000, met: false });
+    expect(safety('toponefutures-elite-daily-50k', 53_000)).toMatchObject({ required: 53_000, met: true });
+  });
+
+  it('MyFundedFutures Builder 50K (après payout, départ 0 $) : 2 100 + 500 = 2 600', () => {
+    expect(safety('myfundedfutures-builder-50k', 2_599)).toMatchObject({ required: 2_600, met: false });
+  });
+
+  it('compte saisi avec un autre solde de départ : net décalé puis minimum ajouté', () => {
+    const { ph } = funded('toponefutures-elite-daily-50k');
+    // Compte à 49 000 $ de départ pour une phase à 50 000 $ : 52 500 − 1 000 + 500 = 52 000.
+    const r = computeProgress(input({ phase: ph, startingBalance: 49_000, phaseStartingBalance: 50_000, currentBalance: 52_000 }));
+    expect(req(r, 'safety_net')).toMatchObject({ required: 52_000, met: true });
+  });
+
+  it('MyFundedFutures Rapid 50K (non classé, note ambiguë) : le net seul', () => {
+    expect(safety('myfundedfutures-rapid-50k', 2_100)).toMatchObject({ required: 2_100, met: true });
+  });
+
+  it('Phidias 50K et Tradeify Growth 25K (pour demander) : le net seul, inchangé', () => {
+    expect(safety('phidias-fundamental-50k', 52_600)).toMatchObject({ required: 52_600, met: true });
+    expect(safety('tradeify-growth-25k', 26_500)).toMatchObject({ required: 26_500, met: true });
+  });
+
+  it('« après payout » sans montant minimum : le net seul', () => {
+    const noMin = phase({ phase: 'funded', payout: payout({ safety_net_balance: 52_500, safety_net_basis: 'after_payout', min_amount: null }) as never });
+    expect(req(computeProgress(input({ phase: noMin, currentBalance: 52_500 })), 'safety_net')).toMatchObject({ required: 52_500, met: true });
+  });
+
+  it('équivalence sur tout le catalogue : seuls les plans « après payout » avec un minimum changent', () => {
+    const changed: string[] = [];
+    for (const p of plans) {
+      for (const ph of p.phases) {
+        if (!ph.payout) continue;
+        const start = ph.starting_balance ?? p.account_size;
+        const net = (ph.payout.safety_net_balance ?? start) as number;
+        // Ancien calcul = même phase sans le champ (absent = « pour demander »).
+        const before = { ...ph, payout: { ...ph.payout, safety_net_basis: undefined } } as PropFirmPhaseRules;
+        for (const currentBalance of [start, net - 1, net, net + 249, net + 499, net + 500, net + 1_500]) {
+          for (const sessions of [[], days(200, 300, 150, 400, 250), days(-100, 600)]) {
+            const base = { startingBalance: start, phaseStartingBalance: start, currentBalance, sessions };
+            const a = computeProgress(input({ ...base, phase: before }));
+            const b = computeProgress(input({ ...base, phase: ph }));
+            if (JSON.stringify(a) !== JSON.stringify(b)) changed.push(`${p.id}:${ph.phase}`);
+          }
+        }
+      }
+    }
+    const affected = [...new Set(changed)];
+    const expected = plans.flatMap((p) => p.phases.filter((ph) =>
+      ph.payout?.safety_net_basis === 'after_payout' && ph.payout.safety_net_balance != null && (ph.payout.min_amount ?? 0) > 0,
+    ).map((ph) => `${p.id}:${ph.phase}`));
+    expect(affected.sort()).toEqual(expected.sort());
+    // Compte figé : une modification du catalogue qui change ce périmètre doit se voir.
+    expect(affected.length).toBe(EXPECTED_AFTER_PAYOUT_PHASES);
+  });
+});
+
+describe('objectif de passage au palier suivant (#1227)', () => {
+  type CatalogPlan = { id: string; account_size: number; phases: (PropFirmPhaseRules & { starting_balance?: number | null })[] };
+  const all = (PROP_FIRM_CATALOG_FILES as { plans: CatalogPlan[] }[]).flatMap((f) => f.plans);
+  const phaseOf = (id: string, name: string) => all.find((x) => x.id === id)!.phases.find((x) => x.phase === name)!;
+
+  it('TCP 50K funded : 5 jours gagnants de 150 $ → payout possible, objectif de 3 000 $ non atteint', () => {
+    const r = computeProgress(input({ phase: phaseOf('earn2trade-tcp-nov02-50k', 'funded'), currentBalance: 50_800, sessions: days(160, 150, 170, 155, 165) }));
+    expect(r).toMatchObject({ kind: 'payout', done: true });
+  });
+
+  it('TCP 50K funded : 4 jours gagnants seulement → payout pas encore possible', () => {
+    const r = computeProgress(input({ phase: phaseOf('earn2trade-tcp-nov02-50k', 'funded'), currentBalance: 50_800, sessions: days(160, 150, 170, 100, 165) }));
+    expect(r).toMatchObject({ kind: 'payout', done: false });
+  });
+
+  it('Phidias Eval-to-Live 50K funded : l’objectif reste la condition du versement', () => {
+    expect(computeProgress(input({ phase: phaseOf('phidias-e2l-50k', 'funded'), currentBalance: 51_000 }))).toMatchObject({ kind: 'objective' });
+  });
+
+  it('équivalence sur tout le catalogue : seules les 6 phases funded TCP passent de l’objectif au payout', () => {
+    const changed = new Set<string>();
+    for (const p of all) {
+      for (const ph of p.phases) {
+        const start = ph.starting_balance ?? p.account_size;
+        const before = { ...ph, profit_target_role: undefined } as PropFirmPhaseRules;
+        for (const currentBalance of [start, start + 500, start + 5_000]) {
+          for (const sessions of [[], days(200, 300, 150, 400, 250), days(-100, 600)]) {
+            const base = { startingBalance: start, phaseStartingBalance: start, currentBalance, sessions };
+            const a = computeProgress(input({ ...base, phase: before }));
+            const b = computeProgress(input({ ...base, phase: ph }));
+            if (JSON.stringify(a) !== JSON.stringify(b)) {
+              expect([a?.kind, b?.kind]).toEqual(['objective', 'payout']);
+              changed.add(`${p.id}:${ph.phase}`);
+            }
+          }
+        }
+      }
+    }
+    expect([...changed].sort()).toEqual([
+      'earn2trade-tcp-100k:funded', 'earn2trade-tcp-25k:funded', 'earn2trade-tcp-50k:funded',
+      'earn2trade-tcp-nov02-100k:funded', 'earn2trade-tcp-nov02-25k:funded', 'earn2trade-tcp-nov02-50k:funded',
+    ]);
   });
 });

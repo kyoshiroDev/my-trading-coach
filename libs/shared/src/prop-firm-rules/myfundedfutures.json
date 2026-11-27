@@ -1087,6 +1087,7 @@
             "max_amount_schedule": null,
             "max_payouts": 5,
             "safety_net_balance": 1100,
+            "safety_net_basis": "after_payout",
             "notes": "2 jours qualifiants minimum par cycle. Premier payout : 250 $ au-dessus du buffer (1100 $) ; ensuite 250 $ de profit net depuis le dernier payout. Payout toutes les 48 h. 5 payouts sim maximum, puis passage en live. La FAQ dit « jusqu'à 2 000 $ » par payout (= 50K)."
           }
         }
@@ -1209,6 +1210,7 @@
             "max_amount_schedule": null,
             "max_payouts": 5,
             "safety_net_balance": 2100,
+            "safety_net_basis": "after_payout",
             "notes": "2 jours qualifiants minimum par cycle. Premier payout : 500 $ au-dessus du buffer (2100 $) ; ensuite 500 $ de profit net depuis le dernier payout. Payout toutes les 48 h. 5 payouts sim maximum, puis passage en live."
           }
         }
@@ -1336,6 +1338,7 @@
             "max_amount_schedule": null,
             "max_payouts": 5,
             "safety_net_balance": 1600,
+            "safety_net_basis": "after_payout",
             "notes": "2 jours qualifiants minimum par cycle. Premier payout : 500 $ au-dessus du buffer (1600 $) ; ensuite 500 $ de profit net depuis le dernier payout. Payout toutes les 48 h. 5 payouts sim maximum, puis passage en live."
           }
         }
@@ -1458,6 +1461,7 @@
             "max_amount_schedule": null,
             "max_payouts": 5,
             "safety_net_balance": 3100,
+            "safety_net_basis": "after_payout",
             "notes": "2 jours qualifiants minimum par cycle. Premier payout : 1000 $ au-dessus du buffer (3100 $) ; ensuite 1000 $ de profit net depuis le dernier payout. Payout toutes les 48 h. 5 payouts sim maximum, puis passage en live. La FAQ dit « jusqu'à 2 000 $ » par payout (= 50K)."
           }
         }
@@ -1580,6 +1584,7 @@
             "max_amount_schedule": null,
             "max_payouts": 5,
             "safety_net_balance": 4600,
+            "safety_net_basis": "after_payout",
             "notes": "2 jours qualifiants minimum par cycle. Premier payout : 1500 $ au-dessus du buffer (4600 $) ; ensuite 1500 $ de profit net depuis le dernier payout. Payout toutes les 48 h. 5 payouts sim maximum, puis passage en live. Plafond 4 500 $ par cycle (article « Builder Plan 150k - Comprehensive Guide » relu le 2026-10-22, et support MyFundedFutures, Ellis, 2026-10-06) ; la page du plan affiche 3 500 $ (contradiction notée, deux sources contre une)."
           }
         }

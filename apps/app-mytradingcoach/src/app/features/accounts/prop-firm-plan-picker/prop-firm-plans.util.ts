@@ -18,7 +18,7 @@ export interface PropFirmProgram {
   plans: PropFirmPlanSummary[];
 }
 
-export function programKey(plan: PropFirmPlanSummary): string {
+export function programKey(plan: Pick<PropFirmPlanSummary, 'planName' | 'configuration'>): string {
   const c = plan.configuration;
   return [
     plan.planName,

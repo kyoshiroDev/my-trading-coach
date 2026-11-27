@@ -727,3 +727,13 @@ Sources lues le 2026-11-27 : https://help.topstep.com/en/articles/15520357-topst
 - Prix : paiement unique 75 / 149 / 199 / 279 $ (149 $ pour Daily Payouts+), activation gratuite.
 
 Catalogue à 355 plans (`prop-firms:validate`, après #1241 et #1238).
+
+## Plans de même programme dans une firm (#1229, 2026-11-27)
+
+`prop-firms:validate` et un test de l'app (`prop-firm-plans.util.spec.ts`, sur le catalogue réel) refusent deux plans de même taille et même `programKey` (nom + options) dans une firm : le sélecteur et l'assistant de liaison n'en proposaient qu'un, sans message. Doublon trouvé : `elitetraderfunding-fast-track-eod-10k` et `-fast-track-static-10k`, tous deux « Fast Track » sans option (le drawdown statique ne peut pas s'exprimer dans `configuration.eval_drawdown`). Renommés « Fast Track End of Day » et « Fast Track Static », comme les autres plans de la firm ; ids inchangés (les comptes reliés gardent leur plan).
+
+## Earn2Trade TCP : objectif de passage au palier suivant (#1227, 2026-11-27)
+
+- Nouveau champ de phase `profit_target_role: 'advance'` : l'objectif fait passer au palier suivant et ne conditionne pas le retrait. La progression suit alors le payout (5 jours gagnants avant chaque retrait).
+- Renseigné sur les 6 phases funded Trader Career Path (`earn2trade-tcp-{25k,50k,100k}` et `earn2trade-tcp-nov02-{25k,50k,100k}`). Sources : article « What is the withdrawal policy » (5 jours gagnants avant chaque retrait, aucune condition d'objectif) et page Trader Career Path (« Profit Target to Advance »). Montants inchangés.
+- Phidias Eval-to-Live garde l'objectif comme condition du versement (« Switch to Live ») : pas de champ. Gauntlet Mini funded : pas d'objectif.

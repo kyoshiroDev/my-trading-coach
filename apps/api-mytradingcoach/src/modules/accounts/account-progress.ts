@@ -81,6 +81,8 @@ const bestDay = (s: SessionPnl[]) => Math.max(0, ...s.map((x) => x.pnl));
 
 export function computeProgress(input: ProgressInput): AccountProgress | null {
   const { phase } = input;
+  // Objectif « pour passer au palier suivant » (#1227) : le retrait n'en dépend pas, la progression suit le payout.
+  if (phase.profit_target_role === 'advance' && phase.payout) return payoutProgress(input, phase.payout);
   if (phase.profit_target != null && phase.profit_target > 0) return objectiveProgress(input, phase.profit_target);
   if (phase.payout) return payoutProgress(input, phase.payout);
   return null;
@@ -152,7 +154,10 @@ function payoutProgress(input: ProgressInput, payout: NonNullable<PropFirmPhaseR
 
   if (payout.safety_net_balance != null) {
     // Seuil exprimé depuis le solde de départ de la phase : décalé sur celui du compte.
-    const net = payout.safety_net_balance + (input.startingBalance - input.phaseStartingBalance);
+    // Net « à garder après le retrait » (#1228) : il faut le net + le montant minimum d'un retrait.
+    // Net « pour demander » ou non classé : le net seul (comportement d'avant).
+    const minAfter = payout.safety_net_basis === 'after_payout' && payout.min_amount != null && payout.min_amount > 0 ? payout.min_amount : 0;
+    const net = payout.safety_net_balance + (input.startingBalance - input.phaseStartingBalance) + minAfter;
     requirements.push({ key: 'safety_net', met: input.currentBalance >= net, current: input.currentBalance, required: net, unit: 'usd' });
   }
 

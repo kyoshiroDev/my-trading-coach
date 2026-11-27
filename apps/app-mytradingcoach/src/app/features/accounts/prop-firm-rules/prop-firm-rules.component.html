@@ -33,7 +33,7 @@
   <div class="pfr-grid">
     <!-- Objectif + durée -->
     <section class="pfr-card">
-      <h4 class="pfr-lbl"><svg [lucideIcon]="icons.Target" [size]="13"></svg>Objectif</h4>
+      <h4 class="pfr-lbl pfr-lbl--wrap"><svg [lucideIcon]="icons.Target" [size]="13"></svg>{{ ph.profit_target_role === 'advance' ? 'Objectif pour passer au palier suivant' : 'Objectif' }}</h4>
       <div class="pfr-val">{{ has(ph.profit_target) ? fmt.amount(ph.profit_target, cur) : 'Aucun' }}</div>
       <ul class="pfr-facts">
         <li>Jours de trading min : <b>{{ ph.min_trading_days ?? 'aucun' }}</b></li>
@@ -160,7 +160,13 @@
           @if (has(po.max_amount)) { <li>Payout max : <b>{{ fmt.amount(po.max_amount, cur) }}</b></li> }
           @if (po.max_amount_schedule?.length) { <li>Payout max par demande : <b>{{ fmt.scheduleLabel(po.max_amount_schedule!, cur, po.max_payouts) }}</b></li> }
           @if (has(po.max_payouts)) { <li>Nombre de payouts : <b>{{ po.max_payouts }}</b></li> }
-          @if (has(po.safety_net_balance)) { <li>Solde plancher : <b>{{ fmt.amount(po.safety_net_balance, cur) }}</b></li> }
+          @if (has(po.safety_net_balance)) {
+            @switch (po.safety_net_basis) {
+              @case ('after_payout') { <li>Solde à garder après le payout&nbsp;: <b>{{ fmt.amount(po.safety_net_balance, cur) }}</b></li> }
+              @case ('to_request') { <li>Solde minimum pour demander&nbsp;: <b>{{ fmt.amount(po.safety_net_balance, cur) }}</b></li> }
+              @default { <li>Solde plancher&nbsp;: <b>{{ fmt.amount(po.safety_net_balance, cur) }}</b></li> }
+            }
+          }
         </ul>
         @if (po.notes) { <details class="pfr-notes"><summary>Précisions</summary><p>{{ po.notes }}</p></details> }
       </section>

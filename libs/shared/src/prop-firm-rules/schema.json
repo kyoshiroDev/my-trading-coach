@@ -97,6 +97,7 @@
           "$ref": "#/$defs/nullableMoney"
         },
         "profit_target": { "type": ["number", "null"], "exclusiveMinimum": 0 },
+        "profit_target_role": { "enum": ["advance"], "description": "Ajout (#1227) : advance = l'objectif sert à passer au palier suivant, pas à retirer ; la progression suit alors le payout. Absent = l'objectif conditionne la sortie de phase ou le versement." },
         "daily_loss_limit": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/dailyLossLimit" }] },
         "max_drawdown": { "$ref": "#/$defs/maxDrawdown" },
         "consistency": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/consistency" }] },
@@ -283,6 +284,7 @@
         },
         "max_payouts": { "type": ["integer", "null"], "minimum": 1, "description": "Ajout : nombre max de payouts avant fermeture ou passage en live." },
         "safety_net_balance": { "$ref": "#/$defs/nullableMoney", "description": "Ajout : solde sous lequel aucun payout n'est possible (buffer / safety net)." },
+        "safety_net_basis": { "enum": ["after_payout", "to_request", null], "description": "Ajout (#1228) : sens du safety net. after_payout = solde à garder APRÈS le retrait (seuil = net + min_amount) ; to_request = solde minimum pour DEMANDER (seuil = net). Absent = non classé, traité comme to_request." },
         "notes": { "$ref": "#/$defs/nullableText" }
       }
     }

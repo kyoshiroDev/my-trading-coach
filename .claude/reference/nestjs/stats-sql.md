@@ -118,6 +118,9 @@ Amount », `realizedPnl`). Même jeton OAuth que l'import, aucune permission en 
 ### Progression objectif / payout (2026-10-04)
 
 `metrics.progress` (`accounts/account-progress.ts`, fonctions pures) pour un compte relié à un plan :
+- **Ordre** : `profit_target` > 0 → objectif, sinon `payout`. Exception (#1227) : `profit_target_role: 'advance'`
+  avec un `payout` → progression sur le payout (l'objectif fait seulement passer au palier suivant : Earn2Trade
+  TCP funded). Sans payout, `advance` reste sur l'objectif.
 - **Évaluation** (`profit_target`) : profit = solde courant (broker si connu) − solde de départ ;
   consistency `applies_to: profit_target` → objectif effectif = max(objectif, meilleur jour ÷ X %) ;
   `min_trading_days` = séances tradées.
@@ -125,7 +128,9 @@ Amount », `realizedPnl`). Même jeton OAuth que l'import, aucune permission en 
   l'utilisateur, sinon depuis le début — affiché) ; `min_days` + `min_daily_profit` (jours
   gagnants), `min_cycle_profit` ou palier de `min_cycle_profit_schedule` (1er payout, sinon le
   suivant), consistency `applies_to: payout` (plancher meilleur jour ÷ X %, palier idem),
-  `safety_net_balance` décalé sur le solde de départ du compte.
+  `safety_net_balance` décalé sur le solde de départ du compte ; + `min_amount` quand
+  `safety_net_basis = after_payout` (solde à garder après le retrait, #1228). Absent ou `to_request` :
+  le net seul. Sans net, `min_amount` n'est pas appliqué au profit du cycle (base retirable variable, #1321).
 - **Une règle null ne crée aucune exigence.** Plan `needsReview` → `progress.unconfirmed`.
 - **Payouts détectés** (`TradovatePayoutsService`, rapport `Cash History`, même cadence que les
   clôtures, curseur `BrokerConnection.payoutsCheckedThrough` qui n'avance que si toutes les

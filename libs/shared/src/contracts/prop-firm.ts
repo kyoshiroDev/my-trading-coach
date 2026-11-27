@@ -154,6 +154,8 @@ export interface PropFirmPayout {
   max_amount_schedule?: (number | null)[] | null;
   max_payouts?: number | null;
   safety_net_balance?: number | null;
+  /** Sens du safety net (#1228) : à garder après le retrait (net + min_amount) ou minimum pour demander (net). Absent = to_request. */
+  safety_net_basis?: 'after_payout' | 'to_request' | null;
   notes: string | null;
 }
 
@@ -162,6 +164,8 @@ export interface PropFirmPhaseRules {
   /** Solde de départ de la phase quand il diffère de la taille du compte (0 sur certains funded). */
   starting_balance?: number | null;
   profit_target: number | null;
+  /** `advance` (#1227) : l'objectif fait passer au palier suivant, il ne conditionne pas le retrait. Absent = il le conditionne. */
+  profit_target_role?: 'advance';
   daily_loss_limit: PropFirmDailyLossLimit | null;
   max_drawdown: PropFirmMaxDrawdown;
   consistency: PropFirmConsistency | null;

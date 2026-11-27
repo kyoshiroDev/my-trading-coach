@@ -146,6 +146,46 @@ Versions : les fichiers compose font foi, ne pas les recopier ici. **Prod éping
   date de fin du certificat (`openssl s_client … | openssl x509 -noout -enddate`).
 - Aucun nginx ne publie de port : seul Traefik reçoit le trafic public (HTTP/2 terminé par Traefik).
 
+### Mineures Postgres et Redis (#1202, 2026-11-27)
+
+Postgres sort ses mineures en février, mai, août et novembre ; Redis à chaque correctif. Docker-socket-proxy :
+`v0.5.0` reste la dernière (relevé du 2026-11-27). Le tag se change dans `infra/prod/databases/docker-compose.yml`,
+`infra/prod/load/docker-compose.load.yml` et `infra/prod/backups/restore-test.sh` (Postgres jetable du test de
+restauration), puis sur le serveur.
+
+- **Notes de version d'abord** : une mineure Postgres ne demande ni dump ni `pg_upgrade`, mais peut demander un
+  `REINDEX` ciblé. 17.12 (2026-11-12) : index btree sur `bpchar`, GIN, `gist_trgm_ops`, index TOAST après un
+  `REINDEX CONCURRENTLY`. MTC n'en a aucun (schéma Prisma : ni `@db.Char`, ni GIN, ni `pg_trgm` ; seule extension
+  `pg_stat_statements`) : rien à réindexer. À revérifier à chaque mineure.
+
+Commandes données à Greg, une par une, sur les deux VPS (jamais lancées par Claude) ; accord explicite pour la prod.
+
+- **Ancien VPS d'abord (dev et beta, un seul Postgres ; tags flottants `17-alpine`, `7.4-alpine`)** :
+  1. dump manuel de dev et de beta juste avant (même commande que `backup.sh`),
+     `mtc_<env>_AAAAMMJJTHHMM_avant-mineure.sql.gz` dans `/opt/backups/mtc/`, vérifié par `gzip -t` et sa taille ;
+  2. relever les versions en place (Greg note la sortie, elle sert au retour arrière) :
+     `docker exec mtc_postgres postgres --version`, `docker exec mtc_redis redis-server --version`,
+     `docker exec mtc_redis_beta redis-server --version` ;
+  3. `docker pull postgres:17-alpine` et `docker pull redis:7.4-alpine` ;
+  4. dans `/opt/infra/databases`, **les 2 fichiers** : `docker compose up -d && docker restart mtc_pgbouncer`, puis
+     `docker compose -f docker-compose.beta.yml up -d` (`mtc_redis_beta`) ;
+  5. vérifier `docker exec mtc_postgres postgres --version`, `docker exec mtc_redis redis-server --version`,
+     `docker exec mtc_redis_beta redis-server --version`, `dev.api.mytradingcoach.app/api/health/ready` et la beta.
+  Les conteneurs d'un autre projet sur ce VPS ne bougent pas.
+- **Prod (créneau calme)** :
+  1. dump manuel juste avant (commande de « Avant un reboot de la prod »), `mtc_prod_AAAAMMJJTHHMM_avant-mineure.sql.gz` ;
+  2. `docker pull` des deux tags ;
+  3. dans `/opt/infra/databases/` : `B=docker-compose.yml.bak-$(date +%Y%m%d-%H%M); cp -pn docker-compose.yml "$B" && cmp docker-compose.yml "$B"`,
+     tags changés,
+     `docker compose up -d && docker restart mtc_pgbouncer` (Postgres recréé : PgBouncer garde sinon l'ancienne IP,
+     voir plus haut). Coupure de quelques secondes ; Redis recréé recharge son AOF (jobs BullMQ gardés) ;
+  4. vérifier `docker exec mtc_postgres postgres --version`, `docker exec mtc_redis redis-server --version`,
+     `/api/health/ready`, `docker logs mtc_pgbouncer --tail=5` ;
+  5. recopier `restore-test.sh` dans `/opt/backups/` du serveur.
+- **Retour arrière** : une mineure se rétrograde sans dump (même format de données). Prod : remettre la copie
+  `.bak` du compose, puis `docker compose up -d && docker restart mtc_pgbouncer`. Ancien VPS (tags flottants) :
+  la `.bak` ne suffit pas, écrire à la main le tag précis relevé à l'étape 2 puis les mêmes commandes.
+
 ### Avant un reboot de la prod
 
 - **Dump manuel juste avant** (la sauvegarde auto date de 03:00) : même commande que `backup.sh`, fichier
