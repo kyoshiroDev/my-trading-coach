@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import topone from './toponefutures.json';
 import {
   drawdownFloor,
   DrawdownFloorRule,
@@ -241,5 +242,26 @@ describe('drawdownFloor : gel au premier payout (#696)', () => {
     expect(planDrawdownRule(withLock, acc)?.rule.locksOnFirstPayout).toBe(
       'request',
     );
+  });
+});
+
+describe('Top One Elite Access Static (#1241), plan réel du catalogue', () => {
+  const plan = (topone as { plans: { id: string; phases: { phase: string; max_drawdown: unknown }[] }[] }).plans.find(
+    (p) => p.id === 'toponefutures-elite-access-static-50k',
+  )!;
+  const phase = (name: string) => plan.phases.find((ph) => ph.phase === name)! as Parameters<typeof planDrawdownRule>[0];
+  const account = { startingBalance: 50_000, accountSize: 50_000, platform: null };
+
+  it('évaluation : plancher fixe à 48 000 $, il ne monte pas avec le plus haut', () => {
+    const { rule } = planDrawdownRule(phase('evaluation'), account)!;
+    expect(drawdownFloor(rule, 0)).toEqual({ floor: 48_000, locked: false });
+    expect(drawdownFloor(rule, 2_500).floor).toBe(48_000);
+  });
+
+  it('funded : suiveur EOD comme Elite Access, figé à 50 100 $ quand le solde atteint 52 100 $', () => {
+    const { rule } = planDrawdownRule(phase('funded'), account)!;
+    expect(drawdownFloor(rule, 1_000).floor).toBe(49_000);
+    expect(drawdownFloor(rule, 2_100)).toEqual({ floor: 50_100, locked: true });
+    expect(rule.locksOnFirstPayout ?? null).toBeNull();
   });
 });
