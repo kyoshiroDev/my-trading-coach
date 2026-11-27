@@ -82,6 +82,10 @@ de l'API (`PropFirmCatalogSyncService`, cf. `nestjs.md`) écraserait la modifica
   `availability`, `needsReview`, `active`), règles détaillées en Json au format du catalogue
   (`phases`, `price`, `configuration`), relues avec `propFirmPhaseSchema` / `propFirmPriceSchema`
   (Zod, `modules/prop-firms/prop-firm-catalog.schema.ts`). Un champ ajouté au JSON = aucune migration.
+  `configuration` (options du checkout) est relue par `planConfiguration`
+  (`modules/prop-firms/prop-firm-plan-configuration.ts`, module pur) : stricte, elle lève, pour la liste
+  et le détail (`getPlan` la renvoie depuis #1236) ; `planConfigurationOrNull` tolère et renvoie null
+  sans lever pour la règle d'un compte (`DrawdownPlanRule.configuration`, métriques de chaque compte).
 - `contentHash` (sha256 du contenu écrit) : la synchro n'écrit que les lignes dont l'empreinte change.
 - `availability` : `public` | `invite_only` | `discontinued` (chaîne libre, aucune migration). Un plan
   plus vendu reste dans le JSON en `discontinued` : masqué dans les sélecteurs et sur la landing,
