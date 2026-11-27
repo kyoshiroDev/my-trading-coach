@@ -122,6 +122,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 26500,
+            "safety_net_basis": "after_payout",
             "notes": "Retrait du profit au-dessus de 1500 $ (seuil de retrait), par e-mail, du lundi au vendredi. 100 % des 10 000 premiers dollars, puis 90 %. Minimum 1 000 $ (part du trader). Un retrait par semaine calendaire sans frais (tous comptes funded du trader confondus, remis à zéro le lundi 00:00 CT) ; chaque retrait suivant dans la même semaine coûte 10 % de la part du trader (« Priority Withdrawal »). Crypto : une demande par semaine, 3 000 $ maximum."
           }
         }
@@ -253,6 +254,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 52500,
+            "safety_net_basis": "after_payout",
             "notes": "Retrait du profit au-dessus de 2500 $ (seuil de retrait), par e-mail, du lundi au vendredi. 100 % des 10 000 premiers dollars, puis 90 %. Minimum 1 000 $ (part du trader). Un retrait par semaine calendaire sans frais (tous comptes funded du trader confondus, remis à zéro le lundi 00:00 CT) ; chaque retrait suivant dans la même semaine coûte 10 % de la part du trader (« Priority Withdrawal »). Crypto : une demande par semaine, 3 000 $ maximum."
           }
         }
@@ -390,6 +392,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 103500,
+            "safety_net_basis": "after_payout",
             "notes": "Retrait du profit au-dessus de 3500 $ (seuil de retrait), par e-mail, du lundi au vendredi. 100 % des 10 000 premiers dollars, puis 90 %. Minimum 1 000 $ (part du trader). Un retrait par semaine calendaire sans frais (tous comptes funded du trader confondus, remis à zéro le lundi 00:00 CT) ; chaque retrait suivant dans la même semaine coûte 10 % de la part du trader (« Priority Withdrawal »). Crypto : une demande par semaine, 3 000 $ maximum."
           }
         }
@@ -527,6 +530,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 155000,
+            "safety_net_basis": "after_payout",
             "notes": "Retrait du profit au-dessus de 5000 $ (seuil de retrait), par e-mail, du lundi au vendredi. 100 % des 10 000 premiers dollars, puis 90 %. Minimum 1 000 $ (part du trader). Un retrait par semaine calendaire sans frais (tous comptes funded du trader confondus, remis à zéro le lundi 00:00 CT) ; chaque retrait suivant dans la même semaine coûte 10 % de la part du trader (« Priority Withdrawal »). Crypto : une demande par semaine, 3 000 $ maximum."
           }
         }
@@ -664,6 +668,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 255500,
+            "safety_net_basis": "after_payout",
             "notes": "Retrait du profit au-dessus de 5500 $ (seuil de retrait), par e-mail, du lundi au vendredi. 100 % des 10 000 premiers dollars, puis 90 %. Minimum 1 000 $ (part du trader). Un retrait par semaine calendaire sans frais (tous comptes funded du trader confondus, remis à zéro le lundi 00:00 CT) ; chaque retrait suivant dans la même semaine coûte 10 % de la part du trader (« Priority Withdrawal »). Crypto : une demande par semaine, 3 000 $ maximum."
           }
         }
@@ -789,6 +794,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 26500,
+            "safety_net_basis": "after_payout",
             "notes": "Retrait du profit au-dessus de 1500 $ (seuil de retrait), par e-mail, du lundi au vendredi. 100 % des 10 000 premiers dollars, puis 90 %. Minimum 1 000 $ (part du trader). Un retrait par semaine calendaire sans frais (tous comptes funded du trader confondus, remis à zéro le lundi 00:00 CT) ; chaque retrait suivant dans la même semaine coûte 10 % de la part du trader (« Priority Withdrawal »). Crypto : une demande par semaine, 3 000 $ maximum."
           }
         }
@@ -920,6 +926,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 52500,
+            "safety_net_basis": "after_payout",
             "notes": "Retrait du profit au-dessus de 2500 $ (seuil de retrait), par e-mail, du lundi au vendredi. 100 % des 10 000 premiers dollars, puis 90 %. Minimum 1 000 $ (part du trader). Un retrait par semaine calendaire sans frais (tous comptes funded du trader confondus, remis à zéro le lundi 00:00 CT) ; chaque retrait suivant dans la même semaine coûte 10 % de la part du trader (« Priority Withdrawal »). Crypto : une demande par semaine, 3 000 $ maximum."
           }
         }
@@ -1057,6 +1064,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 103500,
+            "safety_net_basis": "after_payout",
             "notes": "Retrait du profit au-dessus de 3500 $ (seuil de retrait), par e-mail, du lundi au vendredi. 100 % des 10 000 premiers dollars, puis 90 %. Minimum 1 000 $ (part du trader). Un retrait par semaine calendaire sans frais (tous comptes funded du trader confondus, remis à zéro le lundi 00:00 CT) ; chaque retrait suivant dans la même semaine coûte 10 % de la part du trader (« Priority Withdrawal »). Crypto : une demande par semaine, 3 000 $ maximum."
           }
         }
@@ -1194,6 +1202,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 155000,
+            "safety_net_basis": "after_payout",
             "notes": "Retrait du profit au-dessus de 5000 $ (seuil de retrait), par e-mail, du lundi au vendredi. 100 % des 10 000 premiers dollars, puis 90 %. Minimum 1 000 $ (part du trader). Un retrait par semaine calendaire sans frais (tous comptes funded du trader confondus, remis à zéro le lundi 00:00 CT) ; chaque retrait suivant dans la même semaine coûte 10 % de la part du trader (« Priority Withdrawal »). Crypto : une demande par semaine, 3 000 $ maximum."
           }
         }
@@ -1331,6 +1340,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 255500,
+            "safety_net_basis": "after_payout",
             "notes": "Retrait du profit au-dessus de 5500 $ (seuil de retrait), par e-mail, du lundi au vendredi. 100 % des 10 000 premiers dollars, puis 90 %. Minimum 1 000 $ (part du trader). Un retrait par semaine calendaire sans frais (tous comptes funded du trader confondus, remis à zéro le lundi 00:00 CT) ; chaque retrait suivant dans la même semaine coûte 10 % de la part du trader (« Priority Withdrawal »). Crypto : une demande par semaine, 3 000 $ maximum."
           }
         }
@@ -1456,6 +1466,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 26500,
+            "safety_net_basis": "after_payout",
             "notes": "Retrait du profit au-dessus de 1500 $ (seuil de retrait), par e-mail, du lundi au vendredi. 100 % des 10 000 premiers dollars, puis 90 %. Minimum 1 000 $ (part du trader). Un retrait par semaine calendaire sans frais (tous comptes funded du trader confondus, remis à zéro le lundi 00:00 CT) ; chaque retrait suivant dans la même semaine coûte 10 % de la part du trader (« Priority Withdrawal »). Crypto : une demande par semaine, 3 000 $ maximum."
           }
         }
@@ -1587,6 +1598,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 52500,
+            "safety_net_basis": "after_payout",
             "notes": "Retrait du profit au-dessus de 2500 $ (seuil de retrait), par e-mail, du lundi au vendredi. 100 % des 10 000 premiers dollars, puis 90 %. Minimum 1 000 $ (part du trader). Un retrait par semaine calendaire sans frais (tous comptes funded du trader confondus, remis à zéro le lundi 00:00 CT) ; chaque retrait suivant dans la même semaine coûte 10 % de la part du trader (« Priority Withdrawal »). Crypto : une demande par semaine, 3 000 $ maximum."
           }
         }
@@ -1724,6 +1736,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 103500,
+            "safety_net_basis": "after_payout",
             "notes": "Retrait du profit au-dessus de 3500 $ (seuil de retrait), par e-mail, du lundi au vendredi. 100 % des 10 000 premiers dollars, puis 90 %. Minimum 1 000 $ (part du trader). Un retrait par semaine calendaire sans frais (tous comptes funded du trader confondus, remis à zéro le lundi 00:00 CT) ; chaque retrait suivant dans la même semaine coûte 10 % de la part du trader (« Priority Withdrawal »). Crypto : une demande par semaine, 3 000 $ maximum."
           }
         }
@@ -1861,6 +1874,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 155000,
+            "safety_net_basis": "after_payout",
             "notes": "Retrait du profit au-dessus de 5000 $ (seuil de retrait), par e-mail, du lundi au vendredi. 100 % des 10 000 premiers dollars, puis 90 %. Minimum 1 000 $ (part du trader). Un retrait par semaine calendaire sans frais (tous comptes funded du trader confondus, remis à zéro le lundi 00:00 CT) ; chaque retrait suivant dans la même semaine coûte 10 % de la part du trader (« Priority Withdrawal »). Crypto : une demande par semaine, 3 000 $ maximum."
           }
         }
@@ -1998,6 +2012,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 255500,
+            "safety_net_basis": "after_payout",
             "notes": "Retrait du profit au-dessus de 5500 $ (seuil de retrait), par e-mail, du lundi au vendredi. 100 % des 10 000 premiers dollars, puis 90 %. Minimum 1 000 $ (part du trader). Un retrait par semaine calendaire sans frais (tous comptes funded du trader confondus, remis à zéro le lundi 00:00 CT) ; chaque retrait suivant dans la même semaine coûte 10 % de la part du trader (« Priority Withdrawal »). Crypto : une demande par semaine, 3 000 $ maximum."
           }
         }

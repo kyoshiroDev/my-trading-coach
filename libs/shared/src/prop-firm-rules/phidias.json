@@ -532,6 +532,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 52600,
+            "safety_net_basis": "to_request",
             "notes": "Un jour ne compte que s'il fait au moins 150 $ de PnL positif. Retrait possible au-dessus de 52600 $, le solde ne peut pas redescendre sous 50100 $. Plafond 2000 $ par période, 500 $ minimum, via Riseworks. Split 80/20. Passage en LIVE discrétionnaire (5 payouts validés ou 100 000 $ de profits cumulés)."
           }
         }
@@ -644,6 +645,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 103700,
+            "safety_net_basis": "to_request",
             "notes": "Un jour ne compte que s'il fait au moins 200 $ de PnL positif. Retrait possible au-dessus de 103700 $, le solde ne peut pas redescendre sous 100100 $. Plafond 2500 $ par période, 500 $ minimum, via Riseworks. Split 80/20. Passage en LIVE discrétionnaire (5 payouts validés ou 100 000 $ de profits cumulés)."
           }
         }
@@ -756,6 +758,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 154500,
+            "safety_net_basis": "to_request",
             "notes": "Un jour ne compte que s'il fait au moins 250 $ de PnL positif. Retrait possible au-dessus de 154500 $, le solde ne peut pas redescendre sous 150100 $. Plafond 2750 $ par période, 500 $ minimum, via Riseworks. Split 80/20. Passage en LIVE discrétionnaire (5 payouts validés ou 100 000 $ de profits cumulés)."
           }
         }
@@ -868,6 +871,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 52600,
+            "safety_net_basis": "to_request",
             "notes": "Un jour ne compte que s'il fait au moins 150 $ de PnL positif. Retrait possible au-dessus de 52600 $, le solde ne peut pas redescendre sous 50100 $. Plafond 2000 $ par période, 500 $ minimum, via Riseworks. Split progressif selon le numéro de payout : 75 %, 80 %, 85 %, 90 %, puis 100 % dès le 5e (split_pct = 1er payout). Passage en LIVE discrétionnaire (5 payouts validés ou 100 000 $ de profits cumulés)."
           }
         }
@@ -980,6 +984,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 103700,
+            "safety_net_basis": "to_request",
             "notes": "Un jour ne compte que s'il fait au moins 200 $ de PnL positif. Retrait possible au-dessus de 103700 $, le solde ne peut pas redescendre sous 100100 $. Plafond 2500 $ par période, 500 $ minimum, via Riseworks. Split progressif selon le numéro de payout : 75 %, 80 %, 85 %, 90 %, puis 100 % dès le 5e (split_pct = 1er payout). Passage en LIVE discrétionnaire (5 payouts validés ou 100 000 $ de profits cumulés)."
           }
         }
@@ -1092,6 +1097,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 154500,
+            "safety_net_basis": "to_request",
             "notes": "Un jour ne compte que s'il fait au moins 250 $ de PnL positif. Retrait possible au-dessus de 154500 $, le solde ne peut pas redescendre sous 150100 $. Plafond 2750 $ par période, 500 $ minimum, via Riseworks. Split progressif selon le numéro de payout : 75 %, 80 %, 85 %, 90 %, puis 100 % dès le 5e (split_pct = 1er payout). Passage en LIVE discrétionnaire (5 payouts validés ou 100 000 $ de profits cumulés)."
           }
         }

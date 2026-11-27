@@ -152,7 +152,10 @@ function payoutProgress(input: ProgressInput, payout: NonNullable<PropFirmPhaseR
 
   if (payout.safety_net_balance != null) {
     // Seuil exprimé depuis le solde de départ de la phase : décalé sur celui du compte.
-    const net = payout.safety_net_balance + (input.startingBalance - input.phaseStartingBalance);
+    // Net « à garder après le retrait » (#1228) : il faut le net + le montant minimum d'un retrait.
+    // Net « pour demander » ou non classé : le net seul (comportement d'avant).
+    const minAfter = payout.safety_net_basis === 'after_payout' && payout.min_amount != null && payout.min_amount > 0 ? payout.min_amount : 0;
+    const net = payout.safety_net_balance + (input.startingBalance - input.phaseStartingBalance) + minAfter;
     requirements.push({ key: 'safety_net', met: input.currentBalance >= net, current: input.currentBalance, required: net, unit: 'usd' });
   }
 
