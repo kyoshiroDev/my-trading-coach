@@ -162,9 +162,9 @@
           @if (has(po.max_payouts)) { <li>Nombre de payouts : <b>{{ po.max_payouts }}</b></li> }
           @if (has(po.safety_net_balance)) {
             @switch (po.safety_net_basis) {
-              @case ('after_payout') { <li>Solde à garder après le retrait : <b>{{ fmt.amount(po.safety_net_balance, cur) }}</b></li> }
-              @case ('to_request') { <li>Solde minimum pour demander : <b>{{ fmt.amount(po.safety_net_balance, cur) }}</b></li> }
-              @default { <li>Solde plancher : <b>{{ fmt.amount(po.safety_net_balance, cur) }}</b></li> }
+              @case ('after_payout') { <li>Solde à garder après le retrait&nbsp;: <b>{{ fmt.amount(po.safety_net_balance, cur) }}</b></li> }
+              @case ('to_request') { <li>Solde minimum pour demander&nbsp;: <b>{{ fmt.amount(po.safety_net_balance, cur) }}</b></li> }
+              @default { <li>Solde plancher&nbsp;: <b>{{ fmt.amount(po.safety_net_balance, cur) }}</b></li> }
             }
           }
         </ul>
