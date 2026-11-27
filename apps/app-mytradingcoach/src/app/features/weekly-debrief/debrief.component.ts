@@ -12,7 +12,7 @@ import { MoneyPipe } from '../../shared/pipes/money.pipe';
 import { SelectedAccountStore } from '../../core/stores/selected-account.store';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { UserStore } from '../../core/stores/user.store';
-import { DatePipe, DecimalPipe } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import {
   LucideDynamicIcon,
   LucideCalendarDays as CalendarDays,
@@ -55,7 +55,6 @@ function typeBadge(type: string): { label: string; cls: string } | null {
     ErrorStateComponent,
     InfoTooltipComponent,
     DatePipe,
-    DecimalPipe,
     LucideDynamicIcon,
     TopbarComponent,
     PlanModalComponent,
