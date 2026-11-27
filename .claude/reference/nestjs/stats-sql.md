@@ -164,6 +164,11 @@ prend montant, type, verrouillage et solde de départ dans la phase, **pas** la 
   `locked_floor` de l'override, `rule.platform` ; inconnue → règle par défaut (jamais figée, la
   plus prudente) et `rule.platformChoices` pour l'avertir.
 - Montant null → `drawdown: null` + `drawdownUnconfirmed: true` (jamais de chiffre inventé).
+- **Plancher à confirmer** (#1233) : plan `needs_review` dont la règle fige le plancher (`locks_at`
+  ou `locks_on_first_payout`) → `rule.floorUnconfirmed: true` et le `disclaimer` ajoute « Plancher à
+  confirmer : la firm ne publie pas clairement quand il se fige. ». Le chiffre reste affiché (pas de
+  `drawdownUnconfirmed`) ; l'app le signale dans le texte du gel (Mes comptes) et l'aide de la carte
+  Drawdown. Plan à revoir sans aucun gel : rien de signalé.
 - `drawdown.source` (`plan` | `manual`) + `drawdown.rule` ; `disclaimer` propre au plan
   (positions ouvertes non incluses si `enforced_on = equity_realtime`, payouts non suivis).
 - Autres types de compte ou sans plan : calcul manuel inchangé (jours UTC, STATIC / TRAILING).

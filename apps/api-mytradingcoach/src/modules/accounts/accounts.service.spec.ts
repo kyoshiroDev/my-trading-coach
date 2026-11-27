@@ -6,6 +6,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { aggregateRuleTrades, previousSession, sessionPnls, tradingDay } from './account-rules';
+import { freezeClock } from '../../test/freeze-clock';
 import { AccountsService, brokerReferenceMismatch, type RuleBroker, type RulePayouts, type RulePlan } from './accounts.service';
 
 // Le AccountsController n'est gardé que par JwtAuthGuard : le multi-comptes
@@ -540,6 +541,28 @@ describe('AccountsService', () => {
         ph('funded', md({ locks_at: 2000, locked_floor: 0 }), 0),
       ],
     };
+
+    describe('plan « à revoir » avec gel du plancher (#1233)', () => {
+      freezeClock(new Date(Date.UTC(2026, 5, 2, 16)));
+      const acct = { ...manual, startingBalance: 50000, type: 'EVALUATION' as const };
+      const agg = { count: 2, wins: 1, losses: 1, realized: 400, maxCumulative: 1200, maxEodCumulative: 1200, bestDay: 1200, worstDay: -800 };
+      const now = new Date(Date.UTC(2026, 5, 2, 16));
+      const run = (plan: RulePlan) => svc.ruleMetricsFromAgg(acct, agg, plan, null, null, null, now, [], null);
+
+      it('gel au seuil sur un plan à revoir : plancher signalé à confirmer, dans la règle et l’avertissement', () => {
+        const m = run({ ...topstep, needsReview: true });
+        expect(m.drawdown?.rule?.floorUnconfirmed).toBe(true);
+        expect(m.disclaimer).toContain('Plancher à confirmer : la firm ne publie pas clairement quand il se fige.');
+      });
+
+      it('plan sûr, ou plan à revoir sans aucun gel : rien de signalé', () => {
+        expect(run(topstep).drawdown?.rule?.floorUnconfirmed).toBe(false);
+        const noLock: RulePlan = { ...topstep, needsReview: true, phases: [ph('evaluation', md({}))] };
+        const m = run(noLock);
+        expect(m.drawdown?.rule?.floorUnconfirmed).toBe(false);
+        expect(m.disclaimer).not.toContain('Plancher à confirmer');
+      });
+    });
 
     describe('perte journalière (Premium, #370)', () => {
       const dll = { amount: 1000, basis: 'equity', resets_at: '17:00 America/Chicago', breach: 'trading_paused_for_day', scaling_rule: null } as const;

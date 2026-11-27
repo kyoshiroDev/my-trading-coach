@@ -7,6 +7,15 @@ import { payoutLockPhrase } from '../../core/services/chart-series.util';
  * plan ne fige jamais le plancher.
  */
 export function floorLockText(
+  rule: Pick<DrawdownPlanRule, 'locked' | 'lockedBy' | 'payoutLockedSince' | 'locksAt' | 'lockedFloor' | 'locksOnFirstPayout' | 'floorUnconfirmed'>,
+  money: (v: number) => string,
+): string | null {
+  const text = lockText(rule, money);
+  // Plan « à revoir » (#1233) : le gel annoncé n'est pas sûr, on le dit à côté.
+  return text && rule.floorUnconfirmed ? `${text} (à confirmer : la firm ne publie pas clairement quand il se fige)` : text;
+}
+
+function lockText(
   rule: Pick<DrawdownPlanRule, 'locked' | 'lockedBy' | 'payoutLockedSince' | 'locksAt' | 'lockedFloor' | 'locksOnFirstPayout'>,
   money: (v: number) => string,
 ): string | null {

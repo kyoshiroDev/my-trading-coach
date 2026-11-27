@@ -390,6 +390,13 @@ describe('« ? » de la carte drawdown selon la règle du plan relié', () => {
     expect(t).toContain('plus haut solde de clôture à $1,000');
     expect(t).toContain('se fige à $25,100 quand ton solde atteint $26,100');
   });
+  it('plan « à revoir » avec gel (#1233) : plancher signalé à confirmer ; sans gel : rien', () => {
+    const unsure = { ...plan({ locksAt: 26_100, lockedFloor: 25_100 }), floorUnconfirmed: true } as Parameters<typeof drawdownHelp>[0];
+    expect(drawdownHelp(unsure, 'USD')).toContain('Plancher à confirmer\u00a0: la firm ne publie pas clairement quand il se fige.');
+    const noLock = { ...plan({}), floorUnconfirmed: true } as Parameters<typeof drawdownHelp>[0];
+    expect(drawdownHelp(noLock, 'USD')).not.toContain('Plancher à confirmer');
+    expect(drawdownHelp(plan({ locksAt: 26_100, lockedFloor: 25_100 }), 'USD')).not.toContain('Plancher à confirmer');
+  });
   it('gel au premier payout (#696) : seuil ou demande de payout, date du payout enregistré', () => {
     const t = drawdownHelp(plan({ locksAt: 26_100, lockedFloor: 25_100, locksOnFirstPayout: 'request' }), 'USD');
     expect(t).toContain('se fige à $25,100 quand ton solde atteint $26,100, ou dès ta première demande de payout');
