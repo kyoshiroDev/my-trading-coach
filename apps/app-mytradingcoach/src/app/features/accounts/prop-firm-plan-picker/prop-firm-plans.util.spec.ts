@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import type { PropFirmCatalogFirm, PropFirmPlanSummary } from '@mtc/shared';
-import { findPlan, phaseFor, programLabel, programsOf, rulesFromPlan, sizeLabel } from './prop-firm-plans.util';
+import { familyName, findPlan, phaseFor, programLabel, programsOf, rulesFromPlan, sizeLabel, versionDate } from './prop-firm-plans.util';
 
 function plan(p: Partial<PropFirmPlanSummary> & { id: string }): PropFirmPlanSummary {
   return {
@@ -156,5 +156,55 @@ describe('programsOf, plan plus vendu', () => {
 
   it('findPlan le retrouve toujours', () => {
     expect(findPlan([firm], 'lucid-old-50k')?.plan.id).toBe('lucid-old-50k');
+  });
+});
+
+describe('programsOf, versions d’une même famille (#1244)', () => {
+  // FFF : l'ancienne version est publique, le plan en vente et la version intermédiaire sont sur invitation.
+  const fff: PropFirmCatalogFirm = {
+    id: 'fff', name: 'Funded Futures Family', website: 'https://exemple.invalid', verifiedAt: '2026-11-23',
+    plans: [
+      plan({ id: 'acc-old-50k', planName: 'Accelerate S2F (achat avant le 22/10/2026)' }),
+      plan({ id: 'acc-oct22-50k', planName: 'Accelerate S2F (achat du 22/10/2026 au 29/10/2026)', availability: 'invite_only' }),
+      plan({ id: 'acc-50k', planName: 'Accelerate S2F', availability: 'invite_only' }),
+      plan({ id: 'payday-50k', planName: 'S2F Payday' }),
+      plan({ id: 'sniper-50k', planName: 'Sniper', availability: 'invite_only' }),
+    ],
+  };
+
+  it('plan en vente d’abord, puis les versions de la plus récente à la plus ancienne, quelle que soit la visibilité', () => {
+    expect(programsOf(fff).map((p) => p.plans[0].id)).toEqual(['acc-50k', 'acc-oct22-50k', 'acc-old-50k', 'payday-50k', 'sniper-50k']);
+  });
+
+  it('une famille entièrement sur invitation reste en dernier ; une famille dont une version est publique non', () => {
+    const order = programsOf(fff).map((p) => p.plans[0].planName);
+    expect(order.at(-1)).toBe('Sniper');
+    expect(order.indexOf('Accelerate S2F')).toBeLessThan(order.indexOf('S2F Payday'));
+  });
+
+  it('familyName et versionDate (JJ/MM/AAAA ou AAAA-MM-JJ, la plus récente)', () => {
+    expect(familyName('Accelerate S2F (achat avant le 22/10/2026)')).toBe('Accelerate S2F');
+    expect(familyName('Accelerate S2F')).toBe('Accelerate S2F');
+    expect(versionDate('Accelerate S2F (achat du 22/10/2026 au 29/10/2026)')).toBe('2026-10-29');
+    expect(versionDate('Select 300K V1 (achat avant le 2026-08-27)')).toBe('2026-08-27');
+    expect(versionDate('Straight to Funded (règles relevées le 02/11/2026)')).toBe('2026-11-02');
+    expect(versionDate('Accelerate S2F')).toBeNull();
+    expect(versionDate('Select 300K (V2)')).toBeNull();
+  });
+});
+
+describe('programsOf, options de même rang (#1234)', () => {
+  const opt = (id: string, payoutPath: 'consistency' | 'standard' | null, addon: string | null) =>
+    plan({ id, planName: 'LucidDaily', configuration: { dailyLossLimit: false, evalDrawdown: 'eod', payoutPath, addon } });
+
+  it('égalité de rang départagée par libellé, quel que soit l’ordre d’arrivée', () => {
+    const labels = (ids: string[]) => {
+      const all = { a: opt('a', null, 'c50'), b: opt('b', null, 'funded EOD'), c: opt('c', null, 'funded EOD + c30') };
+      const firm: PropFirmCatalogFirm = { ...lucid, plans: ids.map((i) => all[i as keyof typeof all]) };
+      return programsOf(firm).map((p) => p.label);
+    };
+    const expected = [...labels(['a', 'b', 'c'])].sort((x, y) => x.localeCompare(y));
+    expect(labels(['a', 'b', 'c'])).toEqual(expected);
+    expect(labels(['c', 'b', 'a'])).toEqual(expected);
   });
 });
