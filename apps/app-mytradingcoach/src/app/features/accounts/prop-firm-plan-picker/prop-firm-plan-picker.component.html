@@ -42,7 +42,7 @@
   @if (sel.plan.needsReview) {
     <p class="pf-note warn" data-testid="pf-needs-review">
       <svg [lucideIcon]="AlertTriangleIcon" [size]="14"></svg>
-      <span>Certaines règles de ce plan ne sont pas publiées clairement par {{ sel.firm.name }} : vérifie les valeurs ci-dessous.</span>
+      <span>Règles à confirmer&nbsp;: la firm les a changées ou ne les publie pas en entier. Vérifie sur son site avant de t'y fier.</span>
     </p>
   } @else {
     <p class="pf-note ok">
