@@ -28,6 +28,12 @@ describe('floorLockText (#696)', () => {
     ).toBe('figé depuis ton payout du 02/10/2026');
   });
 
+  it('Topstep XFA (#1247) : niveau figé à 0, jamais pris pour une absence', () => {
+    expect(floorLockText({ ...base, locksAt: 2_000, lockedFloor: 0, locksOnFirstPayout: 'payout' }, money)).toBe(
+      'se fige à USD 0 quand le solde atteint USD 2000, ou dès ton premier payout',
+    );
+  });
+
   it('plan qui ne fige jamais : rien', () => {
     expect(floorLockText({ ...base, locksAt: null, lockedFloor: null }, money)).toBeNull();
   });
