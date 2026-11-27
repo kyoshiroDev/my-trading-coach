@@ -258,10 +258,12 @@ describe('Top One Elite Access Static (#1241), plan réel du catalogue', () => {
     expect(drawdownFloor(rule, 2_500).floor).toBe(48_000);
   });
 
-  it('funded : suiveur EOD comme Elite Access, figé à 50 100 $ quand le solde atteint 52 100 $', () => {
+  it('funded : suiveur EOD comme Elite Access, figé à 50 100 $ quand le solde atteint 52 100 $ ou dès le premier payout', () => {
     const { rule } = planDrawdownRule(phase('funded'), account)!;
     expect(drawdownFloor(rule, 1_000).floor).toBe(49_000);
     expect(drawdownFloor(rule, 2_100)).toEqual({ floor: 50_100, locked: true });
-    expect(rule.locksOnFirstPayout ?? null).toBeNull();
+    expect(rule.locksOnFirstPayout).toBe('payout');
+    // Payout à +1 000 $ (avant 52 100 $) : figé à 50 100 $, ne suit plus le plus haut.
+    expect(drawdownFloor(rule, 1_800, 1_000)).toEqual({ floor: 50_100, locked: true });
   });
 });

@@ -3713,10 +3713,10 @@
             "trails_on": "balance",
             "locks_at": 26100,
             "locked_floor": 25100,
-            "locks_on_first_payout": null,
+            "locks_on_first_payout": "payout",
             "enforced_on": "eod_balance",
             "platform_overrides": null,
-            "basis_notes": "MLL EOD : 1000 $ sous le plus haut solde de clôture, contrôlé à la clôture seulement. Se fige à 25100 $ (départ + 100 $) quand le solde atteint 26100 $. Effet d'un payout sur le gel non précisé par les articles Static."
+            "basis_notes": "MLL EOD : 1000 $ sous le plus haut solde de clôture, contrôlé à la clôture seulement. Se fige à 25100 $ (départ + 100 $) quand le solde atteint 26100 $, et dès le premier payout : gel aligné sur Elite Access (déclencheur non précisé par les articles Static), à confirmer."
           },
           "consistency": {
             "max_single_day_pct": 0.4,
@@ -3773,7 +3773,7 @@
         "https://www.toponefutures.com/"
       ],
       "needs_review": true,
-      "notes": "Elite Access Static : seule différence annoncée avec Elite Access, le drawdown d'évaluation statique. À confirmer (#1241) : équivalence micros en évaluation non publiée ; effet d'un payout sur le gel du drawdown funded non précisé ; activation par taille reprise de l'accueil Elite Access (l'article Static donne seulement 139 à 359 $) ; base de la DLL formulée différemment selon les articles (solde de clôture de la veille ou solde de début de journée)."
+      "notes": "Elite Access Static : seule différence annoncée avec Elite Access, le drawdown d'évaluation statique. À confirmer (#1241) : équivalence micros en évaluation non publiée ; gel au premier payout du drawdown funded aligné sur Elite Access (déclencheur non précisé par les articles Static) ; activation par taille reprise de l'accueil Elite Access (l'article Static donne seulement 139 à 359 $) ; base de la DLL formulée différemment selon les articles (solde de clôture de la veille ou solde de début de journée)."
     },
     {
       "id": "toponefutures-elite-access-static-50k",
@@ -3844,10 +3844,10 @@
             "trails_on": "balance",
             "locks_at": 52100,
             "locked_floor": 50100,
-            "locks_on_first_payout": null,
+            "locks_on_first_payout": "payout",
             "enforced_on": "eod_balance",
             "platform_overrides": null,
-            "basis_notes": "MLL EOD : 2000 $ sous le plus haut solde de clôture, contrôlé à la clôture seulement. Se fige à 50100 $ (départ + 100 $) quand le solde atteint 52100 $. Effet d'un payout sur le gel non précisé par les articles Static."
+            "basis_notes": "MLL EOD : 2000 $ sous le plus haut solde de clôture, contrôlé à la clôture seulement. Se fige à 50100 $ (départ + 100 $) quand le solde atteint 52100 $, et dès le premier payout : gel aligné sur Elite Access (déclencheur non précisé par les articles Static), à confirmer."
           },
           "consistency": {
             "max_single_day_pct": 0.4,
@@ -3916,7 +3916,7 @@
         "https://www.toponefutures.com/"
       ],
       "needs_review": true,
-      "notes": "Elite Access Static : seule différence annoncée avec Elite Access, le drawdown d'évaluation statique. À confirmer (#1241) : équivalence micros en évaluation non publiée ; effet d'un payout sur le gel du drawdown funded non précisé ; activation par taille reprise de l'accueil Elite Access (l'article Static donne seulement 139 à 359 $) ; base de la DLL formulée différemment selon les articles (solde de clôture de la veille ou solde de début de journée)."
+      "notes": "Elite Access Static : seule différence annoncée avec Elite Access, le drawdown d'évaluation statique. À confirmer (#1241) : équivalence micros en évaluation non publiée ; gel au premier payout du drawdown funded aligné sur Elite Access (déclencheur non précisé par les articles Static) ; activation par taille reprise de l'accueil Elite Access (l'article Static donne seulement 139 à 359 $) ; base de la DLL formulée différemment selon les articles (solde de clôture de la veille ou solde de début de journée)."
     },
     {
       "id": "toponefutures-elite-access-static-100k",
@@ -3987,10 +3987,10 @@
             "trails_on": "balance",
             "locks_at": 103100,
             "locked_floor": 100100,
-            "locks_on_first_payout": null,
+            "locks_on_first_payout": "payout",
             "enforced_on": "eod_balance",
             "platform_overrides": null,
-            "basis_notes": "MLL EOD : 3000 $ sous le plus haut solde de clôture, contrôlé à la clôture seulement. Se fige à 100100 $ (départ + 100 $) quand le solde atteint 103100 $. Effet d'un payout sur le gel non précisé par les articles Static."
+            "basis_notes": "MLL EOD : 3000 $ sous le plus haut solde de clôture, contrôlé à la clôture seulement. Se fige à 100100 $ (départ + 100 $) quand le solde atteint 103100 $, et dès le premier payout : gel aligné sur Elite Access (déclencheur non précisé par les articles Static), à confirmer."
           },
           "consistency": {
             "max_single_day_pct": 0.4,
@@ -4065,7 +4065,7 @@
         "https://www.toponefutures.com/"
       ],
       "needs_review": true,
-      "notes": "Elite Access Static : seule différence annoncée avec Elite Access, le drawdown d'évaluation statique. À confirmer (#1241) : équivalence micros en évaluation non publiée ; effet d'un payout sur le gel du drawdown funded non précisé ; activation par taille reprise de l'accueil Elite Access (l'article Static donne seulement 139 à 359 $) ; base de la DLL formulée différemment selon les articles (solde de clôture de la veille ou solde de début de journée)."
+      "notes": "Elite Access Static : seule différence annoncée avec Elite Access, le drawdown d'évaluation statique. À confirmer (#1241) : équivalence micros en évaluation non publiée ; gel au premier payout du drawdown funded aligné sur Elite Access (déclencheur non précisé par les articles Static) ; activation par taille reprise de l'accueil Elite Access (l'article Static donne seulement 139 à 359 $) ; base de la DLL formulée différemment selon les articles (solde de clôture de la veille ou solde de début de journée)."
     },
     {
       "id": "toponefutures-elite-access-static-150k",
@@ -4136,10 +4136,10 @@
             "trails_on": "balance",
             "locks_at": 153600,
             "locked_floor": 150100,
-            "locks_on_first_payout": null,
+            "locks_on_first_payout": "payout",
             "enforced_on": "eod_balance",
             "platform_overrides": null,
-            "basis_notes": "MLL EOD : 3500 $ sous le plus haut solde de clôture, contrôlé à la clôture seulement. Se fige à 150100 $ (départ + 100 $) quand le solde atteint 153600 $. Effet d'un payout sur le gel non précisé par les articles Static."
+            "basis_notes": "MLL EOD : 3500 $ sous le plus haut solde de clôture, contrôlé à la clôture seulement. Se fige à 150100 $ (départ + 100 $) quand le solde atteint 153600 $, et dès le premier payout : gel aligné sur Elite Access (déclencheur non précisé par les articles Static), à confirmer."
           },
           "consistency": {
             "max_single_day_pct": 0.4,
@@ -4220,7 +4220,7 @@
         "https://www.toponefutures.com/"
       ],
       "needs_review": true,
-      "notes": "Elite Access Static : seule différence annoncée avec Elite Access, le drawdown d'évaluation statique. À confirmer (#1241) : équivalence micros en évaluation non publiée ; effet d'un payout sur le gel du drawdown funded non précisé ; activation par taille reprise de l'accueil Elite Access (l'article Static donne seulement 139 à 359 $) ; base de la DLL formulée différemment selon les articles (solde de clôture de la veille ou solde de début de journée)."
+      "notes": "Elite Access Static : seule différence annoncée avec Elite Access, le drawdown d'évaluation statique. À confirmer (#1241) : équivalence micros en évaluation non publiée ; gel au premier payout du drawdown funded aligné sur Elite Access (déclencheur non précisé par les articles Static) ; activation par taille reprise de l'accueil Elite Access (l'article Static donne seulement 139 à 359 $) ; base de la DLL formulée différemment selon les articles (solde de clôture de la veille ou solde de début de journée)."
     },
     {
       "id": "toponefutures-elite-access-static-nodll-25k",
@@ -4283,10 +4283,10 @@
             "trails_on": "balance",
             "locks_at": 26100,
             "locked_floor": 25100,
-            "locks_on_first_payout": null,
+            "locks_on_first_payout": "payout",
             "enforced_on": "eod_balance",
             "platform_overrides": null,
-            "basis_notes": "MLL EOD : 1000 $ sous le plus haut solde de clôture, contrôlé à la clôture seulement. Se fige à 25100 $ (départ + 100 $) quand le solde atteint 26100 $. Effet d'un payout sur le gel non précisé par les articles Static."
+            "basis_notes": "MLL EOD : 1000 $ sous le plus haut solde de clôture, contrôlé à la clôture seulement. Se fige à 25100 $ (départ + 100 $) quand le solde atteint 26100 $, et dès le premier payout : gel aligné sur Elite Access (déclencheur non précisé par les articles Static), à confirmer."
           },
           "consistency": {
             "max_single_day_pct": 0.4,
@@ -4344,7 +4344,7 @@
         "https://help.toponefutures.com/en/articles/17635087-no-daily-loss-limit-add-on-trade-without-daily-limits"
       ],
       "needs_review": true,
-      "notes": "Elite Access Static, variante sans Daily Loss Limit (à choisir à l'achat). Seule différence annoncée avec Elite Access : drawdown d'évaluation statique. À confirmer (#1241) : équivalence micros en évaluation non publiée ; effet d'un payout sur le gel du drawdown funded non précisé ; activation par taille reprise de l'accueil Elite Access (l'article Static donne seulement 139 à 359 $) ; base de la DLL formulée différemment selon les articles (solde de clôture de la veille ou solde de début de journée)."
+      "notes": "Elite Access Static, variante sans Daily Loss Limit (à choisir à l'achat). Seule différence annoncée avec Elite Access : drawdown d'évaluation statique. À confirmer (#1241) : équivalence micros en évaluation non publiée ; gel au premier payout du drawdown funded aligné sur Elite Access (déclencheur non précisé par les articles Static) ; activation par taille reprise de l'accueil Elite Access (l'article Static donne seulement 139 à 359 $) ; base de la DLL formulée différemment selon les articles (solde de clôture de la veille ou solde de début de journée)."
     },
     {
       "id": "toponefutures-elite-access-static-nodll-50k",
@@ -4407,10 +4407,10 @@
             "trails_on": "balance",
             "locks_at": 52100,
             "locked_floor": 50100,
-            "locks_on_first_payout": null,
+            "locks_on_first_payout": "payout",
             "enforced_on": "eod_balance",
             "platform_overrides": null,
-            "basis_notes": "MLL EOD : 2000 $ sous le plus haut solde de clôture, contrôlé à la clôture seulement. Se fige à 50100 $ (départ + 100 $) quand le solde atteint 52100 $. Effet d'un payout sur le gel non précisé par les articles Static."
+            "basis_notes": "MLL EOD : 2000 $ sous le plus haut solde de clôture, contrôlé à la clôture seulement. Se fige à 50100 $ (départ + 100 $) quand le solde atteint 52100 $, et dès le premier payout : gel aligné sur Elite Access (déclencheur non précisé par les articles Static), à confirmer."
           },
           "consistency": {
             "max_single_day_pct": 0.4,
@@ -4480,7 +4480,7 @@
         "https://help.toponefutures.com/en/articles/17635087-no-daily-loss-limit-add-on-trade-without-daily-limits"
       ],
       "needs_review": true,
-      "notes": "Elite Access Static, variante sans Daily Loss Limit (à choisir à l'achat). Seule différence annoncée avec Elite Access : drawdown d'évaluation statique. À confirmer (#1241) : équivalence micros en évaluation non publiée ; effet d'un payout sur le gel du drawdown funded non précisé ; activation par taille reprise de l'accueil Elite Access (l'article Static donne seulement 139 à 359 $) ; base de la DLL formulée différemment selon les articles (solde de clôture de la veille ou solde de début de journée)."
+      "notes": "Elite Access Static, variante sans Daily Loss Limit (à choisir à l'achat). Seule différence annoncée avec Elite Access : drawdown d'évaluation statique. À confirmer (#1241) : équivalence micros en évaluation non publiée ; gel au premier payout du drawdown funded aligné sur Elite Access (déclencheur non précisé par les articles Static) ; activation par taille reprise de l'accueil Elite Access (l'article Static donne seulement 139 à 359 $) ; base de la DLL formulée différemment selon les articles (solde de clôture de la veille ou solde de début de journée)."
     },
     {
       "id": "toponefutures-elite-access-static-nodll-100k",
@@ -4543,10 +4543,10 @@
             "trails_on": "balance",
             "locks_at": 103100,
             "locked_floor": 100100,
-            "locks_on_first_payout": null,
+            "locks_on_first_payout": "payout",
             "enforced_on": "eod_balance",
             "platform_overrides": null,
-            "basis_notes": "MLL EOD : 3000 $ sous le plus haut solde de clôture, contrôlé à la clôture seulement. Se fige à 100100 $ (départ + 100 $) quand le solde atteint 103100 $. Effet d'un payout sur le gel non précisé par les articles Static."
+            "basis_notes": "MLL EOD : 3000 $ sous le plus haut solde de clôture, contrôlé à la clôture seulement. Se fige à 100100 $ (départ + 100 $) quand le solde atteint 103100 $, et dès le premier payout : gel aligné sur Elite Access (déclencheur non précisé par les articles Static), à confirmer."
           },
           "consistency": {
             "max_single_day_pct": 0.4,
@@ -4622,7 +4622,7 @@
         "https://help.toponefutures.com/en/articles/17635087-no-daily-loss-limit-add-on-trade-without-daily-limits"
       ],
       "needs_review": true,
-      "notes": "Elite Access Static, variante sans Daily Loss Limit (à choisir à l'achat). Seule différence annoncée avec Elite Access : drawdown d'évaluation statique. À confirmer (#1241) : équivalence micros en évaluation non publiée ; effet d'un payout sur le gel du drawdown funded non précisé ; activation par taille reprise de l'accueil Elite Access (l'article Static donne seulement 139 à 359 $) ; base de la DLL formulée différemment selon les articles (solde de clôture de la veille ou solde de début de journée)."
+      "notes": "Elite Access Static, variante sans Daily Loss Limit (à choisir à l'achat). Seule différence annoncée avec Elite Access : drawdown d'évaluation statique. À confirmer (#1241) : équivalence micros en évaluation non publiée ; gel au premier payout du drawdown funded aligné sur Elite Access (déclencheur non précisé par les articles Static) ; activation par taille reprise de l'accueil Elite Access (l'article Static donne seulement 139 à 359 $) ; base de la DLL formulée différemment selon les articles (solde de clôture de la veille ou solde de début de journée)."
     },
     {
       "id": "toponefutures-elite-access-static-nodll-150k",
@@ -4685,10 +4685,10 @@
             "trails_on": "balance",
             "locks_at": 153600,
             "locked_floor": 150100,
-            "locks_on_first_payout": null,
+            "locks_on_first_payout": "payout",
             "enforced_on": "eod_balance",
             "platform_overrides": null,
-            "basis_notes": "MLL EOD : 3500 $ sous le plus haut solde de clôture, contrôlé à la clôture seulement. Se fige à 150100 $ (départ + 100 $) quand le solde atteint 153600 $. Effet d'un payout sur le gel non précisé par les articles Static."
+            "basis_notes": "MLL EOD : 3500 $ sous le plus haut solde de clôture, contrôlé à la clôture seulement. Se fige à 150100 $ (départ + 100 $) quand le solde atteint 153600 $, et dès le premier payout : gel aligné sur Elite Access (déclencheur non précisé par les articles Static), à confirmer."
           },
           "consistency": {
             "max_single_day_pct": 0.4,
@@ -4770,7 +4770,7 @@
         "https://help.toponefutures.com/en/articles/17635087-no-daily-loss-limit-add-on-trade-without-daily-limits"
       ],
       "needs_review": true,
-      "notes": "Elite Access Static, variante sans Daily Loss Limit (à choisir à l'achat). Seule différence annoncée avec Elite Access : drawdown d'évaluation statique. À confirmer (#1241) : équivalence micros en évaluation non publiée ; effet d'un payout sur le gel du drawdown funded non précisé ; activation par taille reprise de l'accueil Elite Access (l'article Static donne seulement 139 à 359 $) ; base de la DLL formulée différemment selon les articles (solde de clôture de la veille ou solde de début de journée)."
+      "notes": "Elite Access Static, variante sans Daily Loss Limit (à choisir à l'achat). Seule différence annoncée avec Elite Access : drawdown d'évaluation statique. À confirmer (#1241) : équivalence micros en évaluation non publiée ; gel au premier payout du drawdown funded aligné sur Elite Access (déclencheur non précisé par les articles Static) ; activation par taille reprise de l'accueil Elite Access (l'article Static donne seulement 139 à 359 $) ; base de la DLL formulée différemment selon les articles (solde de clôture de la veille ou solde de début de journée)."
     },
     {
       "id": "toponefutures-instant-25k",
