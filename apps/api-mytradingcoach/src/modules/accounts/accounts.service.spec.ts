@@ -554,6 +554,33 @@ describe('AccountsService', () => {
       });
     });
 
+    describe('plan « à revoir » avec gel du plancher (#1233)', () => {
+      freezeClock(new Date(Date.UTC(2026, 5, 2, 16)));
+      const acct = { ...manual, startingBalance: 50000, type: 'EVALUATION' as const };
+      const agg = { count: 2, wins: 1, losses: 1, realized: 400, maxCumulative: 1200, maxEodCumulative: 1200, bestDay: 1200, worstDay: -800 };
+      const now = new Date(Date.UTC(2026, 5, 2, 16));
+      const run = (plan: RulePlan) => svc.ruleMetricsFromAgg(acct, agg, plan, null, null, null, now, [], null);
+
+      it('gel au seuil sur un plan à revoir : plancher signalé à confirmer, dans la règle et l’avertissement', () => {
+        const m = run({ ...topstep, needsReview: true });
+        expect(m.drawdown?.rule?.floorUnconfirmed).toBe(true);
+        expect(m.disclaimer).toContain('Plancher à confirmer\u00a0: ce plan est à revoir chez nous, vérifie chez ta firm quand il se fige.');
+      });
+
+      it('gel seulement au premier payout (sans seuil) sur un plan à revoir : signalé aussi', () => {
+        const payoutOnly: RulePlan = { ...topstep, needsReview: true, phases: [ph('evaluation', md({ locked_floor: 50_100, locks_on_first_payout: 'request' }))] };
+        expect(run(payoutOnly).drawdown?.rule?.floorUnconfirmed).toBe(true);
+      });
+
+      it('plan sûr, ou plan à revoir sans aucun gel : rien de signalé', () => {
+        expect(run(topstep).drawdown?.rule?.floorUnconfirmed).toBe(false);
+        const noLock: RulePlan = { ...topstep, needsReview: true, phases: [ph('evaluation', md({}))] };
+        const m = run(noLock);
+        expect(m.drawdown?.rule?.floorUnconfirmed).toBe(false);
+        expect(m.disclaimer).not.toContain('Plancher à confirmer');
+      });
+    });
+
     describe('perte journalière (Premium, #370)', () => {
       const dll = { amount: 1000, basis: 'equity', resets_at: '17:00 America/Chicago', breach: 'trading_paused_for_day', scaling_rule: null } as const;
       const withDll: RulePlan = { ...topstep, phases: [{ ...topstep.phases[0], daily_loss_limit: dll }] };

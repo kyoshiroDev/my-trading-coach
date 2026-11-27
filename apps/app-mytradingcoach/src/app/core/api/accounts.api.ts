@@ -34,6 +34,8 @@ export interface DrawdownPlanRule {
   lockedBy: 'threshold' | 'payout' | null;
   /** Premier payout connu qui fige le plancher (`AAAA-MM-JJ`), sinon null. */
   payoutLockedSince: string | null;
+  /** Plan à revoir au catalogue avec un gel du plancher (#1233) : gel annoncé non sûr. Absent = non. */
+  floorUnconfirmed?: boolean;
   realtimeEquity: boolean;
   /** Origine du plus haut retenu (trailing EOD) : clôtures officielles ou trades ; null hors EOD. */
   peakSource: 'broker' | 'trades' | null;

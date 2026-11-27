@@ -181,6 +181,11 @@ export interface DrawdownPlanRule {
   lockedBy: 'threshold' | 'payout' | null;
   /** Premier payout connu qui fige le plancher (`AAAA-MM-JJ`), sinon null. */
   payoutLockedSince: string | null;
+  /**
+   * Plan à revoir au catalogue avec un gel du plancher (#1233) : le gel annoncé n'est pas sûr, la marge
+   * après le gel peut être surestimée. Absent = non.
+   */
+  floorUnconfirmed?: boolean;
   /** La firm contrôle le seuil en temps réel, positions ouvertes comprises. */
   realtimeEquity: boolean;
   /** Plateforme dont la règle a été appliquée (verrouillage propre à la plateforme), sinon null. */
@@ -580,6 +585,8 @@ export class AccountsService {
             locksOnFirstPayout,
             lockedBy,
             payoutLockedSince: lockedBy === 'payout' ? payoutLockedSince : null,
+            // Plan « à revoir » au catalogue avec un gel du plancher : le gel n'est pas sûr (#1233).
+            floorUnconfirmed: (plan.needsReview ?? false) && md.type !== 'static' && (locksAt != null || !!locksOnFirstPayout),
             realtimeEquity: md.enforced_on === 'equity_realtime',
             peakSource: md.type === 'trailing_eod' ? (fresh ? 'broker' : 'trades') : null,
             peakBalance: md.type === 'trailing_eod' ? startingBalance + peakProfit : null,
@@ -1179,6 +1186,7 @@ function planDisclaimer(rule: DrawdownPlanRule, broker: AccountRuleMetrics['brok
       ? ` ${rule.firmName} contrôle ce seuil en temps réel, positions ouvertes comprises : elles ne sont pas incluses ici.`
       : '') +
     (rule.kind === 'trailing_intraday' ? ' Les pics atteints pendant un trade ouvert ne sont pas tous connus : le seuil réel peut être plus haut.' : '') +
+    (rule.floorUnconfirmed ? ' Plancher à confirmer\u00a0: ce plan est à revoir chez nous, vérifie chez ta firm quand il se fige.' : '') +
     ' Les payouts ne sont pas suivis. Le statut du compte reste piloté par toi.'
   );
 }

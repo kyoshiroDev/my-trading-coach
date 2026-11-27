@@ -132,6 +132,21 @@ describe('Session live — suivi prop firm', () => {
     expect(text('live-prop-firm-plan')).toBe('Apex · EOD 50K');
   });
 
+  describe('plancher figé (#1233)', () => {
+    const locked = (floorUnconfirmed: boolean) => {
+      const m = metrics();
+      return { ...m, drawdown: { ...m.drawdown!, rule: { ...m.drawdown!.rule!, locked: true, lockedBy: 'threshold' as const, floorUnconfirmed } } };
+    };
+    it('plan sûr : « figé », sans réserve', () => {
+      const t = setup(locked(false)).text('live-prop-firm-drawdown');
+      expect(t).toContain(', figé');
+      expect(t).not.toContain('à confirmer');
+    });
+    it('plan à revoir : « figé (à confirmer) »', () => {
+      expect(setup(locked(true)).text('live-prop-firm-drawdown')).toContain(', figé (à confirmer)');
+    });
+  });
+
   it('plancher dépassé : le dit en clair', () => {
     const m = metrics();
     const { text } = setup(metrics({ drawdown: { ...m.drawdown!, margin: -40, pct: 0, breached: true } }));

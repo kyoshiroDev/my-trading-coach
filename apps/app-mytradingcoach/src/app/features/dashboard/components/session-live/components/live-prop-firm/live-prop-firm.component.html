@@ -98,7 +98,7 @@
           <div class="pf-sub">
             Plancher {{ money(dd.floor) }}
             @if (rule(); as r) {
-              · {{ ddKindLabel(r.kind) }}{{ r.locked ? ', figé' : '' }}
+              · {{ ddKindLabel(r.kind) }}{{ r.locked ? (r.floorUnconfirmed ? ', figé (à confirmer)' : ', figé') : '' }}
               @if (r.kind === 'trailing_eod') { · mis à jour à la clôture }
               @else if (r.kind === 'trailing_intraday' && r.peakBalance !== null) { · plus haut {{ money(r.peakBalance) }} }
             }
