@@ -170,7 +170,7 @@ Commandes données à Greg, une par une, sur les deux VPS (jamais lancées par C
      `docker exec mtc_redis_beta redis-server --version`, `dev.api.mytradingcoach.app/api/health/ready` et la beta.
   Les conteneurs d'un autre projet sur ce VPS ne bougent pas.
 - **Prod (créneau calme)** :
-  1. dump manuel juste avant (comme « Avant un reboot de la prod ») ;
+  1. dump manuel juste avant (commande de « Avant un reboot de la prod »), `mtc_prod_AAAAMMJJTHHMM_avant-mineure.sql.gz` ;
   2. `docker pull` des deux tags ;
   3. dans `/opt/infra/databases/` : `cp -p docker-compose.yml docker-compose.yml.bak-AAAAMMJJ-HHMM`, tags changés,
      `docker compose up -d && docker restart mtc_pgbouncer` (Postgres recréé : PgBouncer garde sinon l'ancienne IP,
@@ -178,8 +178,9 @@ Commandes données à Greg, une par une, sur les deux VPS (jamais lancées par C
   4. vérifier `docker exec mtc_postgres postgres --version`, `docker exec mtc_redis redis-server --version`,
      `/api/health/ready`, `docker logs mtc_pgbouncer --tail=5` ;
   5. recopier `restore-test.sh` dans `/opt/backups/` du serveur.
-- **Retour arrière** : une mineure se rétrograde sans dump (même format de données) : remettre la copie `.bak`
-  du compose, puis `docker compose up -d && docker restart mtc_pgbouncer`.
+- **Retour arrière** : une mineure se rétrograde sans dump (même format de données). Prod : remettre la copie
+  `.bak` du compose, puis `docker compose up -d && docker restart mtc_pgbouncer`. Ancien VPS (tags flottants) :
+  la `.bak` ne suffit pas, écrire à la main le tag précis d'avant (ex. `postgres:17.11-alpine`) puis les mêmes commandes.
 
 ### Avant un reboot de la prod
 
