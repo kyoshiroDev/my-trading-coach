@@ -157,17 +157,29 @@ restauration), puis sur le serveur.
   `REINDEX` ciblé. 17.12 (2026-11-12) : index btree sur `bpchar`, GIN, `gist_trgm_ops`, index TOAST après un
   `REINDEX CONCURRENTLY`. MTC n'en a aucun (schéma Prisma : ni `@db.Char`, ni GIN, ni `pg_trgm` ; seule extension
   `pg_stat_statements`) : rien à réindexer. À revérifier à chaque mineure.
+
+Commandes données à Greg, une par une, sur les deux VPS (jamais lancées par Claude) ; accord explicite pour la prod.
+
 - **Ancien VPS d'abord (dev et beta, un seul Postgres ; tags flottants `17-alpine`, `7.4-alpine`)** :
-  `docker pull postgres:17-alpine` et `redis:7.4-alpine`, puis dans `/opt/infra/databases`
-  `docker compose up -d && docker restart mtc_pgbouncer` ; vérifier `select version()`, `redis-server --version`,
-  `dev.api.mytradingcoach.app/api/health/ready` et la beta. Les conteneurs d'un autre projet sur ce VPS ne bougent pas.
-- **Prod (créneau calme, accord explicite de Greg, commandes une par une)** : dump manuel juste avant (comme
-  « Avant un reboot de la prod »), `docker pull` des deux tags, copie datée du compose de `/opt/infra/databases/`,
-  tags changés, `docker compose up -d && docker restart mtc_pgbouncer` (Postgres recréé : PgBouncer garde sinon
-  l'ancienne IP, voir plus haut). Coupure de quelques secondes (Postgres) ; Redis recréé recharge son AOF (jobs
-  BullMQ gardés). Vérifier : `docker exec mtc_postgres psql -U mtc_user -d mytradingcoach_prod -tc 'select version()'`,
-  `docker exec mtc_redis redis-server --version`, `/api/health/ready`, `docker logs mtc_pgbouncer --tail=5`.
-  Recopier `restore-test.sh` dans `/opt/backups/` du serveur.
+  1. dump manuel de dev et de beta juste avant (même commande que `backup.sh`),
+     `mtc_<env>_AAAAMMJJTHHMM_avant-mineure.sql.gz` dans `/opt/backups/mtc/`, vérifié par `gzip -t` et sa taille ;
+  2. `docker pull postgres:17-alpine` et `docker pull redis:7.4-alpine` ;
+  3. dans `/opt/infra/databases`, **les 2 fichiers** : `docker compose up -d && docker restart mtc_pgbouncer`, puis
+     `docker compose -f docker-compose.beta.yml up -d` (`mtc_redis_beta`) ;
+  4. vérifier `docker exec mtc_postgres postgres --version`, `docker exec mtc_redis redis-server --version`,
+     `docker exec mtc_redis_beta redis-server --version`, `dev.api.mytradingcoach.app/api/health/ready` et la beta.
+  Les conteneurs d'un autre projet sur ce VPS ne bougent pas.
+- **Prod (créneau calme)** :
+  1. dump manuel juste avant (comme « Avant un reboot de la prod ») ;
+  2. `docker pull` des deux tags ;
+  3. dans `/opt/infra/databases/` : `cp -p docker-compose.yml docker-compose.yml.bak-AAAAMMJJ-HHMM`, tags changés,
+     `docker compose up -d && docker restart mtc_pgbouncer` (Postgres recréé : PgBouncer garde sinon l'ancienne IP,
+     voir plus haut). Coupure de quelques secondes ; Redis recréé recharge son AOF (jobs BullMQ gardés) ;
+  4. vérifier `docker exec mtc_postgres postgres --version`, `docker exec mtc_redis redis-server --version`,
+     `/api/health/ready`, `docker logs mtc_pgbouncer --tail=5` ;
+  5. recopier `restore-test.sh` dans `/opt/backups/` du serveur.
+- **Retour arrière** : une mineure se rétrograde sans dump (même format de données) : remettre la copie `.bak`
+  du compose, puis `docker compose up -d && docker restart mtc_pgbouncer`.
 
 ### Avant un reboot de la prod
 
