@@ -189,6 +189,7 @@ describe('programsOf, versions d’une même famille (#1244)', () => {
     expect(versionDate('Select 300K V1 (achat avant le 2026-08-27)')).toBe('2026-08-27');
     expect(versionDate('Straight to Funded (règles relevées le 02/11/2026)')).toBe('2026-11-02');
     expect(versionDate('Accelerate S2F')).toBeNull();
+    expect(versionDate('Select 300K (V2)')).toBeNull();
   });
 });
 
