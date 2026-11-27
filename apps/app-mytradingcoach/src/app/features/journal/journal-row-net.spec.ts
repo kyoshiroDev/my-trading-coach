@@ -15,7 +15,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { TestBed } from '@angular/core/testing';
 import { signal, NO_ERRORS_SCHEMA } from '@angular/core';
-import { DatePipe, DecimalPipe, TitleCasePipe } from '@angular/common';
+import { DatePipe, TitleCasePipe } from '@angular/common';
 import { PnlColorPipe, PnlFormatPipe, MoneyPipe, EmotionEmojiPipe } from '../../shared/pipes';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
@@ -82,7 +82,7 @@ async function render(trades: Trade[]): Promise<HTMLElement> {
   TestBed.overrideComponent(JournalComponent, {
     set: {
       template: JOURNAL_HTML, styleUrls: [], styleUrl: undefined as unknown as string,
-      imports: [DatePipe, DecimalPipe, TitleCasePipe, PnlColorPipe, PnlFormatPipe, MoneyPipe, EmotionEmojiPipe],
+      imports: [DatePipe, TitleCasePipe, PnlColorPipe, PnlFormatPipe, MoneyPipe, EmotionEmojiPipe],
       schemas: [NO_ERRORS_SCHEMA],
     },
   });

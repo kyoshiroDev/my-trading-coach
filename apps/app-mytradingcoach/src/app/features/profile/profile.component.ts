@@ -10,7 +10,7 @@ import {
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { DatePipe, DecimalPipe } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { finalize } from 'rxjs/operators';
 import {
@@ -62,7 +62,7 @@ type ProfileTab = 'trader' | 'params';
 
 @Component({
   selector: 'mtc-profile',
-  imports: [DialogDirective, TopbarComponent, DatePipe, DecimalPipe, PlanModalComponent, SetupFormModalComponent, LucideDynamicIcon, PushSettingsComponent, InstallSettingsComponent],
+  imports: [DialogDirective, TopbarComponent, DatePipe, PlanModalComponent, SetupFormModalComponent, LucideDynamicIcon, PushSettingsComponent, InstallSettingsComponent],
   templateUrl: './profile.component.html',
   styleUrl: './profile.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

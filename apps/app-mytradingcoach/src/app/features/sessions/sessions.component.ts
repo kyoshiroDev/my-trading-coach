@@ -11,7 +11,7 @@ import {
   untracked,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { DatePipe, DecimalPipe } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { SessionApi, SessionHistoryItem } from '../../core/api/session.api';
 import { PnlFormatPipe } from '../../shared/pipes/pnl-format.pipe';
@@ -46,7 +46,7 @@ interface WeekGroup {
   selector: 'mtc-sessions',
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './sessions.component.css',
-  imports: [PctPipe, MixedCurrencyNoticeComponent, LucideDynamicIcon, ErrorStateComponent, DatePipe, DecimalPipe, PnlFormatPipe, EmotionEmojiPipe, RouterLink, AccountSelectorComponent, InactiveAccountsToggleComponent],
+  imports: [PctPipe, MixedCurrencyNoticeComponent, LucideDynamicIcon, ErrorStateComponent, DatePipe, PnlFormatPipe, EmotionEmojiPipe, RouterLink, AccountSelectorComponent, InactiveAccountsToggleComponent],
   templateUrl: './sessions.component.html',
 })
 export class SessionsComponent {

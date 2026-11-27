@@ -6,7 +6,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { NO_ERRORS_SCHEMA, signal } from '@angular/core';
-import { DatePipe, DecimalPipe } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { SessionsComponent } from './sessions.component';
@@ -39,7 +39,7 @@ function setup(accounts: { status: string }[]) {
   TestBed.overrideComponent(SessionsComponent, {
     set: {
       template: TEMPLATE,
-      imports: [DatePipe, DecimalPipe, PnlFormatPipe, EmotionEmojiPipe, InactiveAccountsToggleComponent],
+      imports: [DatePipe, PnlFormatPipe, EmotionEmojiPipe, InactiveAccountsToggleComponent],
       styleUrls: [], styleUrl: undefined as unknown as string,
       schemas: [NO_ERRORS_SCHEMA],
     },

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { NO_ERRORS_SCHEMA, computed, signal } from '@angular/core';
-import { DecimalPipe, NgTemplateOutlet } from '@angular/common';
+import { NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, convertToParamMap } from '@angular/router';
 import { of } from 'rxjs';
@@ -64,7 +64,7 @@ function setup(accounts: TradingAccount[], selected: string | 'all' = 'all', con
   TestBed.overrideComponent(AccountsComponent, {
     set: {
       template: TEMPLATE,
-      imports: [DecimalPipe, FormsModule, NgTemplateOutlet],
+      imports: [FormsModule, NgTemplateOutlet],
       styleUrls: [], styleUrl: undefined as unknown as string,
       schemas: [NO_ERRORS_SCHEMA],
     },
