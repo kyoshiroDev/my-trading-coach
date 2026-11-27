@@ -1065,7 +1065,7 @@
     },
     {
       "id": "elitetraderfunding-fast-track-eod-10k",
-      "plan_name": "Fast Track",
+      "plan_name": "Fast Track End of Day",
       "account_size": 10000,
       "currency": "USD",
       "availability": "public",
@@ -1175,7 +1175,7 @@
     },
     {
       "id": "elitetraderfunding-fast-track-static-10k",
-      "plan_name": "Fast Track",
+      "plan_name": "Fast Track Static",
       "account_size": 10000,
       "currency": "USD",
       "availability": "public",
