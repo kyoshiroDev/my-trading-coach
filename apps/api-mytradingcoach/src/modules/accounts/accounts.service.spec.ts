@@ -555,6 +555,11 @@ describe('AccountsService', () => {
         expect(m.disclaimer).toContain('Plancher à confirmer : la firm ne publie pas clairement quand il se fige.');
       });
 
+      it('gel seulement au premier payout (sans seuil) sur un plan à revoir : signalé aussi', () => {
+        const payoutOnly: RulePlan = { ...topstep, needsReview: true, phases: [ph('evaluation', md({ locked_floor: 50_100, locks_on_first_payout: 'request' }))] };
+        expect(run(payoutOnly).drawdown?.rule?.floorUnconfirmed).toBe(true);
+      });
+
       it('plan sûr, ou plan à revoir sans aucun gel : rien de signalé', () => {
         expect(run(topstep).drawdown?.rule?.floorUnconfirmed).toBe(false);
         const noLock: RulePlan = { ...topstep, needsReview: true, phases: [ph('evaluation', md({}))] };

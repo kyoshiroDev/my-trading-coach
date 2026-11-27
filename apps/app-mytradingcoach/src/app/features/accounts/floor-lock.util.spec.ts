@@ -36,10 +36,10 @@ describe('floorLockText (#696)', () => {
 
   it('plan « à revoir » (#1233) : le gel annoncé est signalé à confirmer', () => {
     expect(floorLockText({ ...base, locksOnFirstPayout: 'request', floorUnconfirmed: true }, money)).toBe(
-      'se fige à USD 50100 quand le solde atteint USD 52100, ou dès ta première demande de payout (à confirmer : la firm ne publie pas clairement quand il se fige)',
+      'se fige à USD 50100 quand le solde atteint USD 52100, ou dès ta première demande de payout (à confirmer\u00a0: la firm ne publie pas clairement quand il se fige)',
     );
     expect(floorLockText({ ...base, locked: true, lockedBy: 'threshold', floorUnconfirmed: true }, money)).toBe(
-      'figé (à confirmer : la firm ne publie pas clairement quand il se fige)',
+      'figé (à confirmer\u00a0: la firm ne publie pas clairement quand il se fige)',
     );
     expect(floorLockText({ ...base, locksAt: null, lockedFloor: null, floorUnconfirmed: true }, money)).toBeNull();
   });

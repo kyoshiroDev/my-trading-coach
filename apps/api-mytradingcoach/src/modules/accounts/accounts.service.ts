@@ -579,7 +579,7 @@ export class AccountsService {
             lockedBy,
             payoutLockedSince: lockedBy === 'payout' ? payoutLockedSince : null,
             // Plan « à revoir » au catalogue avec un gel du plancher : le gel n'est pas sûr (#1233).
-            floorUnconfirmed: (plan.needsReview ?? false) && (locksAt != null || !!locksOnFirstPayout),
+            floorUnconfirmed: (plan.needsReview ?? false) && md.type !== 'static' && (locksAt != null || !!locksOnFirstPayout),
             realtimeEquity: md.enforced_on === 'equity_realtime',
             peakSource: md.type === 'trailing_eod' ? (fresh ? 'broker' : 'trades') : null,
             peakBalance: md.type === 'trailing_eod' ? startingBalance + peakProfit : null,
