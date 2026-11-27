@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import type { PropFirmCatalogFirm, PropFirmPlanSummary } from '@mtc/shared';
-import { familyName, findPlan, phaseFor, programLabel, programsOf, rulesFromPlan, sizeLabel, versionDate } from './prop-firm-plans.util';
+import { PROP_FIRM_CATALOG_FILES } from '@mtc/shared';
+import { familyName, findPlan, phaseFor, programKey, programLabel, programsOf, rulesFromPlan, sizeLabel, versionDate } from './prop-firm-plans.util';
 
 function plan(p: Partial<PropFirmPlanSummary> & { id: string }): PropFirmPlanSummary {
   return {
@@ -206,5 +207,36 @@ describe('programsOf, options de même rang (#1234)', () => {
     const expected = [...labels(['a', 'b', 'c'])].sort((x, y) => x.localeCompare(y));
     expect(labels(['a', 'b', 'c'])).toEqual(expected);
     expect(labels(['c', 'b', 'a'])).toEqual(expected);
+  });
+});
+
+describe('catalogue réel : un programme par taille (#1229)', () => {
+  // Deux plans de même taille et même programKey dans une firm : programsOf et l'assistant de liaison
+  // n'en proposeraient qu'un, sans message. Le catalogue ne doit jamais en contenir.
+  type RawPlan = {
+    id: string; plan_name: string; account_size: number;
+    configuration: {
+      daily_loss_limit: boolean | null; eval_drawdown: 'eod' | 'intraday' | null;
+      payout_path?: 'standard' | 'consistency' | 'flex' | 'daily' | null; addon?: string | null;
+    } | null;
+  };
+  const files = PROP_FIRM_CATALOG_FILES as { firm: { id: string }; plans: RawPlan[] }[];
+
+  it('aucune firm n’a deux plans de même taille et même programKey', () => {
+    const doublons: string[] = [];
+    for (const f of files) {
+      const seen = new Map<string, string>();
+      for (const p of f.plans) {
+        const c = p.configuration;
+        const key = `${p.account_size}|${programKey({
+          planName: p.plan_name,
+          configuration: c && { dailyLossLimit: c.daily_loss_limit, evalDrawdown: c.eval_drawdown, payoutPath: c.payout_path ?? null, addon: c.addon ?? null },
+        })}`;
+        const other = seen.get(key);
+        if (other) doublons.push(`${f.firm.id} : ${other} et ${p.id}`);
+        seen.set(key, p.id);
+      }
+    }
+    expect(doublons).toEqual([]);
   });
 });

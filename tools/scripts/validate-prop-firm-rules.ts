@@ -15,7 +15,9 @@ interface Phase {
 
 interface Plan {
   id: string;
+  plan_name: string;
   account_size: number;
+  configuration: { daily_loss_limit: boolean | null; eval_drawdown: string | null; payout_path?: string | null; addon?: string | null } | null;
   phases: Phase[];
   source_urls: string[];
 }
@@ -45,6 +47,10 @@ for (const file of files) {
 
   if (`${data.firm.id}.json` !== file) errors.push(`${file}: firm.id "${data.firm.id}" ne correspond pas au nom du fichier`);
 
+  // Même clé que `programKey` (sélecteur de plan, assistant de liaison) : deux plans de même taille et
+  // même programme dans une firm, et seul le premier serait proposé, sans message (#1229).
+  const programs = new Map<string, string>();
+
   for (const plan of data.plans) {
     const where = `${file}: ${plan.id}`;
 
@@ -53,6 +59,11 @@ for (const file of files) {
     planIds.set(plan.id, file);
 
     if (!plan.id.startsWith(`${data.firm.id}-`)) errors.push(`${where}: l'id doit commencer par "${data.firm.id}-"`);
+    const c = plan.configuration;
+    const program = [plan.account_size, plan.plan_name, c?.eval_drawdown ?? '', c?.daily_loss_limit == null ? '' : String(c.daily_loss_limit), c?.payout_path ?? '', c?.addon ?? ''].join('|');
+    const twin = programs.get(program);
+    if (twin) errors.push(`${where}: même taille et même programme que ${twin} (nom et options identiques)`);
+    programs.set(program, plan.id);
     if (plan.source_urls.length === 0) errors.push(`${where}: aucune source_url`);
 
     for (const phase of plan.phases) {
