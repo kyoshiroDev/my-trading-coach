@@ -59,6 +59,7 @@ Tous documentés dans `schema.json`. Aucun champ du format de départ n'a été 
 | `plan.availability` | `invite_only` pour les plans non vendus au public (LucidMaxx). `discontinued` pour un plan plus vendu : masqué dans les sélecteurs et sur la landing, conservé pour les comptes déjà liés (X-Ultra). |
 | `plan.configuration` | Options du checkout qui distinguent deux plans de même taille. |
 | `price.activation_fee` | Frais d'activation du compte funded (Apex), séparés du prix de l'évaluation. |
+| `phase.profit_target_role` | `advance` : l'objectif sert à passer au palier suivant, pas à retirer (Earn2Trade TCP en LiveSim) ; la progression suit alors le payout. Absent = l'objectif conditionne la sortie de phase ou le versement (#1227). |
 | `phase.max_duration_days` | Accès limité dans le temps (évaluations Apex : 30 jours). |
 | `daily_loss_limit.tiers` | DLL par palier de profit (PA Apex). |
 | `daily_loss_limit.scaling_rule` | DLL dynamique non tabulable (LucidScale : 60 % du pic de profit EOD). |

@@ -97,6 +97,7 @@
           "$ref": "#/$defs/nullableMoney"
         },
         "profit_target": { "type": ["number", "null"], "exclusiveMinimum": 0 },
+        "profit_target_role": { "enum": ["advance"], "description": "Ajout (#1227) : advance = l'objectif sert à passer au palier suivant, pas à retirer ; la progression suit alors le payout. Absent = l'objectif conditionne la sortie de phase ou le versement." },
         "daily_loss_limit": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/dailyLossLimit" }] },
         "max_drawdown": { "$ref": "#/$defs/maxDrawdown" },
         "consistency": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/consistency" }] },

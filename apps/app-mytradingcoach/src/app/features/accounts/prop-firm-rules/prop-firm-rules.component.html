@@ -33,7 +33,7 @@
   <div class="pfr-grid">
     <!-- Objectif + durée -->
     <section class="pfr-card">
-      <h4 class="pfr-lbl"><svg [lucideIcon]="icons.Target" [size]="13"></svg>Objectif</h4>
+      <h4 class="pfr-lbl pfr-lbl--wrap"><svg [lucideIcon]="icons.Target" [size]="13"></svg>{{ ph.profit_target_role === 'advance' ? 'Objectif pour passer au palier suivant' : 'Objectif' }}</h4>
       <div class="pfr-val">{{ has(ph.profit_target) ? fmt.amount(ph.profit_target, cur) : 'Aucun' }}</div>
       <ul class="pfr-facts">
         <li>Jours de trading min : <b>{{ ph.min_trading_days ?? 'aucun' }}</b></li>

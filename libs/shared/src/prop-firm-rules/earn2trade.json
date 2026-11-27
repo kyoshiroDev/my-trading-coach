@@ -81,6 +81,7 @@
         {
           "phase": "funded",
           "profit_target": 1750,
+          "profit_target_role": "advance",
           "daily_loss_limit": {
             "amount": 550,
             "basis": "equity",
@@ -129,7 +130,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": null,
-            "notes": "Le partage dépend du montant de CHAQUE retrait : 50 % sous 1500 $, 80 % à partir de 1500 $. Plafond LiveSim : 1750 $ retirés au total avant le passage automatique en compte Live (pas un plafond par retrait), minimum net 100 $, versements hebdomadaires (mercredi). Activation LiveSim 139 $ prélevée sur le premier retrait seulement. Pas de buffer, pas de consistency. Avant CHAQUE retrait : 5 nouveaux jours gagnants (non consécutifs) d’au moins 100 $ de gain net chacun, même sous le solde de départ ; les jours déjà comptés pour un retrait ne servent plus. Growth plan : retirer l'objectif fait passer au palier supérieur (comptes Live, drawdown trailing intraday ; 200K et 400K à drawdown fixe)."
+            "notes": "Le partage dépend du montant de CHAQUE retrait : 50 % sous 1500 $, 80 % à partir de 1500 $. Plafond LiveSim : 1750 $ retirés au total avant le passage automatique en compte Live (pas un plafond par retrait), minimum net 100 $, versements hebdomadaires (mercredi). Activation LiveSim 139 $ prélevée sur le premier retrait seulement. Pas de buffer, pas de consistency. Avant CHAQUE retrait : 5 nouveaux jours gagnants (non consécutifs) d’au moins 100 $ de gain net chacun, même sous le solde de départ ; les jours déjà comptés pour un retrait ne servent plus. Growth plan : retirer l'objectif fait passer au palier supérieur (comptes Live, drawdown trailing intraday ; 200K et 400K à drawdown fixe). Source (#1227) : « Traders must complete at least 5 profitable trading days before each withdrawal request » (help.earn2trade.com, What is the withdrawal policy) ; l'objectif LiveSim est un « Profit Target to Advance » (earn2trade.com/trader-career-path), pas une condition de retrait."
           }
         }
       ],
@@ -213,6 +214,7 @@
         {
           "phase": "funded",
           "profit_target": 3000,
+          "profit_target_role": "advance",
           "daily_loss_limit": {
             "amount": 1100,
             "basis": "equity",
@@ -261,7 +263,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": null,
-            "notes": "Le partage dépend du montant de CHAQUE retrait : 50 % sous 2250 $, 80 % à partir de 2250 $. Plafond LiveSim : 3000 $ retirés au total avant le passage automatique en compte Live (pas un plafond par retrait), minimum net 100 $, versements hebdomadaires (mercredi). Activation LiveSim 139 $ prélevée sur le premier retrait seulement. Pas de buffer, pas de consistency. Avant CHAQUE retrait : 5 nouveaux jours gagnants (non consécutifs) d’au moins 150 $ de gain net chacun, même sous le solde de départ ; les jours déjà comptés pour un retrait ne servent plus. Growth plan : retirer l'objectif fait passer au palier supérieur (comptes Live, drawdown trailing intraday ; 200K et 400K à drawdown fixe)."
+            "notes": "Le partage dépend du montant de CHAQUE retrait : 50 % sous 2250 $, 80 % à partir de 2250 $. Plafond LiveSim : 3000 $ retirés au total avant le passage automatique en compte Live (pas un plafond par retrait), minimum net 100 $, versements hebdomadaires (mercredi). Activation LiveSim 139 $ prélevée sur le premier retrait seulement. Pas de buffer, pas de consistency. Avant CHAQUE retrait : 5 nouveaux jours gagnants (non consécutifs) d’au moins 150 $ de gain net chacun, même sous le solde de départ ; les jours déjà comptés pour un retrait ne servent plus. Growth plan : retirer l'objectif fait passer au palier supérieur (comptes Live, drawdown trailing intraday ; 200K et 400K à drawdown fixe). Source (#1227) : « Traders must complete at least 5 profitable trading days before each withdrawal request » (help.earn2trade.com, What is the withdrawal policy) ; l'objectif LiveSim est un « Profit Target to Advance » (earn2trade.com/trader-career-path), pas une condition de retrait."
           }
         }
       ],
@@ -345,6 +347,7 @@
         {
           "phase": "funded",
           "profit_target": 6000,
+          "profit_target_role": "advance",
           "daily_loss_limit": {
             "amount": 2200,
             "basis": "equity",
@@ -393,7 +396,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": null,
-            "notes": "Le partage dépend du montant de CHAQUE retrait : 50 % sous 3000 $, 80 % à partir de 3000 $. Plafond LiveSim : 6000 $ retirés au total avant le passage automatique en compte Live (pas un plafond par retrait), minimum net 100 $, versements hebdomadaires (mercredi). Activation LiveSim 139 $ prélevée sur le premier retrait seulement. Pas de buffer, pas de consistency. Avant CHAQUE retrait : 5 nouveaux jours gagnants (non consécutifs) d’au moins 200 $ de gain net chacun, même sous le solde de départ ; les jours déjà comptés pour un retrait ne servent plus. Growth plan : retirer l'objectif fait passer au palier supérieur (comptes Live, drawdown trailing intraday ; 200K et 400K à drawdown fixe)."
+            "notes": "Le partage dépend du montant de CHAQUE retrait : 50 % sous 3000 $, 80 % à partir de 3000 $. Plafond LiveSim : 6000 $ retirés au total avant le passage automatique en compte Live (pas un plafond par retrait), minimum net 100 $, versements hebdomadaires (mercredi). Activation LiveSim 139 $ prélevée sur le premier retrait seulement. Pas de buffer, pas de consistency. Avant CHAQUE retrait : 5 nouveaux jours gagnants (non consécutifs) d’au moins 200 $ de gain net chacun, même sous le solde de départ ; les jours déjà comptés pour un retrait ne servent plus. Growth plan : retirer l'objectif fait passer au palier supérieur (comptes Live, drawdown trailing intraday ; 200K et 400K à drawdown fixe). Source (#1227) : « Traders must complete at least 5 profitable trading days before each withdrawal request » (help.earn2trade.com, What is the withdrawal policy) ; l'objectif LiveSim est un « Profit Target to Advance » (earn2trade.com/trader-career-path), pas une condition de retrait."
           }
         }
       ],
@@ -1018,6 +1021,7 @@
         {
           "phase": "funded",
           "profit_target": 1750,
+          "profit_target_role": "advance",
           "daily_loss_limit": {
             "amount": 550,
             "basis": "equity",
@@ -1079,7 +1083,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": null,
-            "notes": "Le partage dépend du montant de CHAQUE retrait : 50 % sous 1500 $, 80 % à partir de 1500 $. Plafond LiveSim : 1750 $ retirés au total avant le passage automatique en compte Live (pas un plafond par retrait), minimum net 100 $, versements hebdomadaires (mercredi). Activation LiveSim 139 $ prélevée sur le premier retrait seulement. Pas de buffer, pas de consistency. Avant CHAQUE retrait : 5 nouveaux jours gagnants (non consécutifs) d’au moins 100 $ de gain net chacun, même sous le solde de départ ; les jours déjà comptés pour un retrait ne servent plus. Growth plan : retirer l'objectif fait passer au palier supérieur (comptes Live, drawdown trailing intraday ; 200K et 400K à drawdown fixe)."
+            "notes": "Le partage dépend du montant de CHAQUE retrait : 50 % sous 1500 $, 80 % à partir de 1500 $. Plafond LiveSim : 1750 $ retirés au total avant le passage automatique en compte Live (pas un plafond par retrait), minimum net 100 $, versements hebdomadaires (mercredi). Activation LiveSim 139 $ prélevée sur le premier retrait seulement. Pas de buffer, pas de consistency. Avant CHAQUE retrait : 5 nouveaux jours gagnants (non consécutifs) d’au moins 100 $ de gain net chacun, même sous le solde de départ ; les jours déjà comptés pour un retrait ne servent plus. Growth plan : retirer l'objectif fait passer au palier supérieur (comptes Live, drawdown trailing intraday ; 200K et 400K à drawdown fixe). Source (#1227) : « Traders must complete at least 5 profitable trading days before each withdrawal request » (help.earn2trade.com, What is the withdrawal policy) ; l'objectif LiveSim est un « Profit Target to Advance » (earn2trade.com/trader-career-path), pas une condition de retrait."
           }
         }
       ],
@@ -1182,6 +1186,7 @@
         {
           "phase": "funded",
           "profit_target": 3000,
+          "profit_target_role": "advance",
           "daily_loss_limit": {
             "amount": 1100,
             "basis": "equity",
@@ -1249,7 +1254,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": null,
-            "notes": "Le partage dépend du montant de CHAQUE retrait : 50 % sous 2250 $, 80 % à partir de 2250 $. Plafond LiveSim : 3000 $ retirés au total avant le passage automatique en compte Live (pas un plafond par retrait), minimum net 100 $, versements hebdomadaires (mercredi). Activation LiveSim 139 $ prélevée sur le premier retrait seulement. Pas de buffer, pas de consistency. Avant CHAQUE retrait : 5 nouveaux jours gagnants (non consécutifs) d’au moins 150 $ de gain net chacun, même sous le solde de départ ; les jours déjà comptés pour un retrait ne servent plus. Growth plan : retirer l'objectif fait passer au palier supérieur (comptes Live, drawdown trailing intraday ; 200K et 400K à drawdown fixe)."
+            "notes": "Le partage dépend du montant de CHAQUE retrait : 50 % sous 2250 $, 80 % à partir de 2250 $. Plafond LiveSim : 3000 $ retirés au total avant le passage automatique en compte Live (pas un plafond par retrait), minimum net 100 $, versements hebdomadaires (mercredi). Activation LiveSim 139 $ prélevée sur le premier retrait seulement. Pas de buffer, pas de consistency. Avant CHAQUE retrait : 5 nouveaux jours gagnants (non consécutifs) d’au moins 150 $ de gain net chacun, même sous le solde de départ ; les jours déjà comptés pour un retrait ne servent plus. Growth plan : retirer l'objectif fait passer au palier supérieur (comptes Live, drawdown trailing intraday ; 200K et 400K à drawdown fixe). Source (#1227) : « Traders must complete at least 5 profitable trading days before each withdrawal request » (help.earn2trade.com, What is the withdrawal policy) ; l'objectif LiveSim est un « Profit Target to Advance » (earn2trade.com/trader-career-path), pas une condition de retrait."
           }
         }
       ],
@@ -1358,6 +1363,7 @@
         {
           "phase": "funded",
           "profit_target": 6000,
+          "profit_target_role": "advance",
           "daily_loss_limit": {
             "amount": 2200,
             "basis": "equity",
@@ -1431,7 +1437,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": null,
-            "notes": "Le partage dépend du montant de CHAQUE retrait : 50 % sous 3000 $, 80 % à partir de 3000 $. Plafond LiveSim : 6000 $ retirés au total avant le passage automatique en compte Live (pas un plafond par retrait), minimum net 100 $, versements hebdomadaires (mercredi). Activation LiveSim 139 $ prélevée sur le premier retrait seulement. Pas de buffer, pas de consistency. Avant CHAQUE retrait : 5 nouveaux jours gagnants (non consécutifs) d’au moins 200 $ de gain net chacun, même sous le solde de départ ; les jours déjà comptés pour un retrait ne servent plus. Growth plan : retirer l'objectif fait passer au palier supérieur (comptes Live, drawdown trailing intraday ; 200K et 400K à drawdown fixe)."
+            "notes": "Le partage dépend du montant de CHAQUE retrait : 50 % sous 3000 $, 80 % à partir de 3000 $. Plafond LiveSim : 6000 $ retirés au total avant le passage automatique en compte Live (pas un plafond par retrait), minimum net 100 $, versements hebdomadaires (mercredi). Activation LiveSim 139 $ prélevée sur le premier retrait seulement. Pas de buffer, pas de consistency. Avant CHAQUE retrait : 5 nouveaux jours gagnants (non consécutifs) d’au moins 200 $ de gain net chacun, même sous le solde de départ ; les jours déjà comptés pour un retrait ne servent plus. Growth plan : retirer l'objectif fait passer au palier supérieur (comptes Live, drawdown trailing intraday ; 200K et 400K à drawdown fixe). Source (#1227) : « Traders must complete at least 5 profitable trading days before each withdrawal request » (help.earn2trade.com, What is the withdrawal policy) ; l'objectif LiveSim est un « Profit Target to Advance » (earn2trade.com/trader-career-path), pas une condition de retrait."
           }
         }
       ],

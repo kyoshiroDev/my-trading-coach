@@ -1,0 +1,7 @@
+une fois la ci fini je veut que tu attaque la colonne idées features en commencant par la #1292 et pour remonter jusqu'a la #263 apres chaque feature fini tu push et ouvre la PR vers dev tu attend que la ci soit ok et tu enchaine avec l'autre feature
+
+---
+
+Ticket #1227 (colonne « Idées features », projet n° 4) : Progression funded TCP Earn2Trade : profit_target masque la règle des 5 jours gagnants. Texte du ticket : « Les phases funded des plans Trader Career Path Earn2Trade ont un `profit_target` (1 750 / 3 000 / 6 000 $). `computeProgress` passe alors par l'objectif et ignore `payout.min_days` / `min_daily_profit` : la règle des 5 jours gagnants avant chaque retrait ne compte dans la progression que pour le Gauntlet Mini, alors qu'elle s'affiche dans la fiche des règles des deux. À trancher avec une source : l'objectif du TCP funded (« Profit Target to Advance », growth plan) est-il une condition de payout ? Ne pas retirer la valeur sans source. »
+
+Décision du relecteur (2026-11-27) : champ de phase explicite `profit_target_role: 'advance'` (schema.json, zod, contrat, README), renseigné sur les 6 phases funded TCP avec la source ; computeProgress : advance + payout → payout, sinon inchangé (Phidias E2L reste sur l'objectif) ; test d'équivalence avec la liste des 6 ids en dur ; libellé de la fiche « Objectif pour passer au palier suivant » ; pas de recherche d'autres firms ni de changement de montant.

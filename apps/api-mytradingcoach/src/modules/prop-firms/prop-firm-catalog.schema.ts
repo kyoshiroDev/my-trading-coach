@@ -95,6 +95,8 @@ export const propFirmPhaseSchema = z.strictObject({
   // Solde de départ quand il diffère de account_size (Topstep XFA, funded MyFundedFutures : 0).
   starting_balance: nullableMoney.optional(),
   profit_target: z.number().gt(0).nullable(),
+  // #1227 : objectif de passage au palier suivant (pas une condition de retrait).
+  profit_target_role: z.enum(['advance']).optional(),
   daily_loss_limit: dailyLossLimitSchema.nullable(),
   max_drawdown: maxDrawdownSchema,
   consistency: consistencySchema.nullable(),

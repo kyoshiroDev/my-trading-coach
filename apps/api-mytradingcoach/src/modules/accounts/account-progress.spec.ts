@@ -242,3 +242,48 @@ describe('montant minimum d’un retrait selon le sens du safety net (#1228)', (
     expect(affected.length).toBe(EXPECTED_AFTER_PAYOUT_PHASES);
   });
 });
+
+describe('objectif de passage au palier suivant (#1227)', () => {
+  type CatalogPlan = { id: string; account_size: number; phases: (PropFirmPhaseRules & { starting_balance?: number | null })[] };
+  const all = (PROP_FIRM_CATALOG_FILES as { plans: CatalogPlan[] }[]).flatMap((f) => f.plans);
+  const phaseOf = (id: string, name: string) => all.find((x) => x.id === id)!.phases.find((x) => x.phase === name)!;
+
+  it('TCP 50K funded : 5 jours gagnants de 150 $ → payout possible, objectif de 3 000 $ non atteint', () => {
+    const r = computeProgress(input({ phase: phaseOf('earn2trade-tcp-nov02-50k', 'funded'), currentBalance: 50_800, sessions: days(160, 150, 170, 155, 165) }));
+    expect(r).toMatchObject({ kind: 'payout', done: true });
+  });
+
+  it('TCP 50K funded : 4 jours gagnants seulement → payout pas encore possible', () => {
+    const r = computeProgress(input({ phase: phaseOf('earn2trade-tcp-nov02-50k', 'funded'), currentBalance: 50_800, sessions: days(160, 150, 170, 100, 165) }));
+    expect(r).toMatchObject({ kind: 'payout', done: false });
+  });
+
+  it('Phidias Eval-to-Live 50K funded : l’objectif reste la condition du versement', () => {
+    expect(computeProgress(input({ phase: phaseOf('phidias-e2l-50k', 'funded'), currentBalance: 51_000 }))).toMatchObject({ kind: 'objective' });
+  });
+
+  it('équivalence sur tout le catalogue : seules les 6 phases funded TCP passent de l’objectif au payout', () => {
+    const changed = new Set<string>();
+    for (const p of all) {
+      for (const ph of p.phases) {
+        const start = ph.starting_balance ?? p.account_size;
+        const before = { ...ph, profit_target_role: undefined } as PropFirmPhaseRules;
+        for (const currentBalance of [start, start + 500, start + 5_000]) {
+          for (const sessions of [[], days(200, 300, 150, 400, 250), days(-100, 600)]) {
+            const base = { startingBalance: start, phaseStartingBalance: start, currentBalance, sessions };
+            const a = computeProgress(input({ ...base, phase: before }));
+            const b = computeProgress(input({ ...base, phase: ph }));
+            if (JSON.stringify(a) !== JSON.stringify(b)) {
+              expect([a?.kind, b?.kind]).toEqual(['objective', 'payout']);
+              changed.add(`${p.id}:${ph.phase}`);
+            }
+          }
+        }
+      }
+    }
+    expect([...changed].sort()).toEqual([
+      'earn2trade-tcp-100k:funded', 'earn2trade-tcp-25k:funded', 'earn2trade-tcp-50k:funded',
+      'earn2trade-tcp-nov02-100k:funded', 'earn2trade-tcp-nov02-25k:funded', 'earn2trade-tcp-nov02-50k:funded',
+    ]);
+  });
+});

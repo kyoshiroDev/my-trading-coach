@@ -118,6 +118,9 @@ Amount », `realizedPnl`). Même jeton OAuth que l'import, aucune permission en 
 ### Progression objectif / payout (2026-10-04)
 
 `metrics.progress` (`accounts/account-progress.ts`, fonctions pures) pour un compte relié à un plan :
+- **Ordre** : `profit_target` > 0 → objectif, sinon `payout`. Exception (#1227) : `profit_target_role: 'advance'`
+  avec un `payout` → progression sur le payout (l'objectif fait seulement passer au palier suivant : Earn2Trade
+  TCP funded). Sans payout, `advance` reste sur l'objectif.
 - **Évaluation** (`profit_target`) : profit = solde courant (broker si connu) − solde de départ ;
   consistency `applies_to: profit_target` → objectif effectif = max(objectif, meilleur jour ÷ X %) ;
   `min_trading_days` = séances tradées.
