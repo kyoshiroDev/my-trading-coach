@@ -86,6 +86,11 @@ de l'API (`PropFirmCatalogSyncService`, cf. `nestjs.md`) écraserait la modifica
 - `availability` : `public` | `invite_only` | `discontinued` (chaîne libre, aucune migration). Un plan
   plus vendu reste dans le JSON en `discontinued` : masqué dans les sélecteurs et sur la landing,
   toujours servi par `/prop-firms` pour les comptes déjà liés (X-Ultra, 2026-11-02).
+  Côté API (#1242), `assertCatalogPlan` refuse en 400 un plan `discontinued` ou inactif à une nouvelle
+  liaison (création, changement de plan). Un compte déjà relié le garde (jamais revérifié si le plan
+  ne change pas). Exceptions voulues : la nouvelle tentative (`retryAccountData`) recopie le plan du
+  compte perdu, et le backfill au démarrage peut relier un compte antérieur au 02/10 à un plan devenu
+  `discontinued` (vendu à l'époque).
 - **Plan retiré du JSON → `active = false`, jamais supprimé** (des comptes peuvent le référencer).
   `PropFirmPlan.firmId` en `onDelete: Restrict`.
 - `verifiedAt` (date du relevé) est porté par `PropFirm`, pas par le plan.
