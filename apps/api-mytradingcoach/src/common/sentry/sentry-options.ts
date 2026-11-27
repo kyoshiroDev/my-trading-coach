@@ -32,8 +32,11 @@ const STRIPE_CUSTOMER_ID = /\bcus_[A-Za-z0-9]+/g;
 /**
  * Adresse e-mail recopiée dans un message d'erreur (Resend, Prisma, Stripe…) : jamais envoyée à
  * Sentry (#1263). Volontairement large : mieux vaut masquer un faux positif qu'envoyer une adresse.
+ * Quantificateurs BORNÉS (longueurs max de la RFC 5321) : sans borne, un texte long et piégé fait
+ * reculer le moteur en temps polynomial (31 s sur 50 000 caractères) et bloque la boucle
+ * d'événements, puisque ce filtre tourne sur chaque erreur envoyée.
  */
-const EMAIL = /[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}/g;
+const EMAIL = /[A-Za-z0-9._%+-]{1,64}@[A-Za-z0-9-]{1,63}(?:\.[A-Za-z0-9-]{1,63}){0,8}\.[A-Za-z]{2,24}/g;
 /** Texte libre d'un événement : identifiant client Stripe et adresses e-mail masqués. */
 export const maskText = (text: string) =>
   text.replace(STRIPE_CUSTOMER_ID, 'cus_[masqué]').replace(EMAIL, '[e-mail masqué]');
@@ -44,13 +47,26 @@ const SECRET_HEADERS = new Set(['authorization', 'cookie']);
 /**
  * Retire de l'erreur les données de la requête ; garde `user.id` et les tags (dont `path`).
  * Masque l'identifiant client Stripe (« No such customer: 'cus_…' ») et les adresses e-mail du
- * message, du message formaté (`logentry`) et des exceptions.
+ * message, du message formaté (`logentry`), des exceptions et de leurs frames (lignes de code,
+ * variables locales).
  */
 export function scrubEvent(event: ErrorEvent): ErrorEvent {
   if (typeof event.message === 'string') event.message = maskText(event.message);
   if (typeof event.logentry?.message === 'string') event.logentry.message = maskText(event.logentry.message);
   for (const ex of event.exception?.values ?? []) {
     if (typeof ex.value === 'string') ex.value = maskText(ex.value);
+    // Lignes de code jointes à chaque frame (intégration ContextLines) et variables locales si le SDK
+    // les joint : une adresse écrite dans le code ou portée par une variable partirait sinon (#1263).
+    for (const frame of ex.stacktrace?.frames ?? []) {
+      if (typeof frame.context_line === 'string') frame.context_line = maskText(frame.context_line);
+      if (frame.pre_context) frame.pre_context = frame.pre_context.map(maskText);
+      if (frame.post_context) frame.post_context = frame.post_context.map(maskText);
+      if (frame.vars) {
+        for (const [name, value] of Object.entries(frame.vars)) {
+          if (typeof value === 'string') frame.vars[name] = maskText(value);
+        }
+      }
+    }
   }
   const request = event.request;
   if (!request) return event;
