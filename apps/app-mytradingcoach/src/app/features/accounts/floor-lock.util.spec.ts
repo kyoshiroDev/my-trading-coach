@@ -28,6 +28,22 @@ describe('floorLockText (#696)', () => {
     ).toBe('figé depuis ton payout du 02/10/2026');
   });
 
+  it('Topstep XFA (#1247) : niveau figé à 0, jamais pris pour une absence', () => {
+    expect(floorLockText({ ...base, locksAt: 2_000, lockedFloor: 0, locksOnFirstPayout: 'payout' }, money)).toBe(
+      'se fige à USD 0 quand le solde atteint USD 2000, ou dès ton premier payout',
+    );
+  });
+
+  it('plan « à revoir » (#1233) : le gel annoncé est signalé à confirmer', () => {
+    expect(floorLockText({ ...base, locksOnFirstPayout: 'request', floorUnconfirmed: true }, money)).toBe(
+      'se fige à USD 50100 quand le solde atteint USD 52100, ou dès ta première demande de payout (à confirmer\u00a0: vérifie chez ta firm quand il se fige)',
+    );
+    expect(floorLockText({ ...base, locked: true, lockedBy: 'threshold', floorUnconfirmed: true }, money)).toBe(
+      'figé (à confirmer\u00a0: vérifie chez ta firm quand il se fige)',
+    );
+    expect(floorLockText({ ...base, locksAt: null, lockedFloor: null, floorUnconfirmed: true }, money)).toBeNull();
+  });
+
   it('plan qui ne fige jamais : rien', () => {
     expect(floorLockText({ ...base, locksAt: null, lockedFloor: null }, money)).toBeNull();
   });

@@ -46,6 +46,9 @@ const expected = new Map<string, string>([
     'elite-daily-nodll',
     'elite-access',
     'elite-access-nodll',
+    // #1241 : Elite Access Static, gel aligné sur Elite Access (sources Static muettes).
+    'elite-access-static',
+    'elite-access-static-nodll',
   ].flatMap((f) =>
     sizes.map(
       (s) => [`toponefutures-${f}-${s}:funded`, 'payout'] as [string, string],
@@ -83,6 +86,22 @@ const expected = new Map<string, string>([
   ...['50k', '100k', '150k'].map(
     (s) => [`myfundedfutures-pro-${s}:funded`, 'approval'] as [string, string],
   ),
+  // #1247 : Topstep XFA (MLL fixé à 0 $ après le premier payout, déclencheur non précisé).
+  ...['standard', 'standard-dll', 'consistency', 'consistency-dll'].flatMap((v) =>
+    ['50k', '100k', '150k'].map(
+      (s) => [`topstep-${v}-${s}:funded`, 'payout'] as [string, string],
+    ),
+  ),
+  // #1247 : FFF Premier+ (drawdown remonté au solde de départ à la première demande de payout).
+  ...['eod', 'intraday'].flatMap((v) =>
+    sizes.map(
+      (s) =>
+        [`fundedfuturesfamily-premier-${v}-${s}:funded`, 'request'] as [
+          string,
+          string,
+        ],
+    ),
+  ),
 ]);
 
 const actual = new Map<string, { trigger: string; phase: Phase }>();
@@ -94,8 +113,8 @@ for (const plan of plans) {
 }
 
 describe('gel du plancher au premier payout (#696)', () => {
-  it('92 phases, exactement celles relevées, avec leur déclencheur', () => {
-    expect(expected.size).toBe(92);
+  it('120 phases, exactement celles relevées, avec leur déclencheur', () => {
+    expect(expected.size).toBe(120);
     expect(
       Object.fromEntries([...actual].map(([k, v]) => [k, v.trigger])),
     ).toEqual(Object.fromEntries(expected));

@@ -102,3 +102,21 @@ Message factuel : « NFP dans 4 min, position ouverte sur NQ. » (libellé `name
   l'`accountId` (devise du compte, #947), et masque le bloc sinon.
 - Démo : trade NQ à 14:27 le vendredi précédent (3 min avant le NFP du faux vendredi), alerte D1 et stat
   dans le débrief de la semaine (`demo-data/news-shield-example.ts`).
+
+## Jauge de pression (#1270, étape 1 : étude, 2026-11-27)
+
+**Rien n'est affiché ni enregistré** : étude seulement, rapport `docs/audit-1270.md`. Les étapes 2 à 4
+(calcul en direct, Session live, débrief) attendent les décisions de Greg listées dans le rapport.
+
+- `behavior-pressure.ts` (pur) : `pressureAt(ctx: EntryContext)` à chaque nouvelle entrée, score
+  0 à 100, états `calm` (< 30), `watch`, `red` (≥ 60), et `learning` (neutre) tant que la référence
+  est en apprentissage. Signaux : ré-entrée après une perte (délai / délai médian du trader après une
+  perte), taille > p90 (majorée juste après une perte), rang au-delà du p90 de positions par séance,
+  pertes d'affilée, perte max du jour consommée, A1 et C2 (règles qui viennent d'ailleurs). Points et
+  seuils dans `behavior.constants.ts` (section « Jauge de pression »). Phrase factuelle = les deux
+  signaux les plus lourds ; jamais « émotion », jamais de tiret cadratin.
+- `replay` renvoie `pressure[]` (une lecture par position, même index) ; `evaluatePressure` (pur,
+  `behavior-pressure-eval.ts`) mesure le pouvoir prédictif : par état, P&L de la position et de la
+  suite de la séance, pire position ; par séance, pires journées vues en zone rouge avant leur plus bas.
+- `scripts/replay-pressure.ts` : `--demo` (jeu démo en mémoire, date figée, aucune base) ou dossier
+  d'export pseudonymisé au format #602. Un export prod ne se fait qu'avec l'accord de Greg.

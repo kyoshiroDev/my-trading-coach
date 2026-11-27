@@ -5,7 +5,7 @@
 <div class="pfr" data-testid="prop-firm-rules">
   <div class="pfr-head">
     <div class="pfr-title">
-      <span class="pfr-name">{{ p.planName }} · {{ fmt.amount(p.accountSize, cur) }}</span>
+      <span class="pfr-name">{{ title() }} · {{ fmt.amount(p.accountSize, cur) }}</span>
       <span class="pfr-meta">Règles officielles {{ p.firm.name }}, relevées le {{ verifiedLabel() }}</span>
     </div>
     @if (p.phases.length > 1) {
@@ -27,7 +27,7 @@
   }
   @if (p.needsReview) {
     <p class="pfr-warn" data-testid="pfr-needs-review"><svg [lucideIcon]="icons.AlertTriangle" [size]="14"></svg>
-      <span>Certaines règles de ce plan ne sont pas publiées clairement par {{ p.firm.name }}. Les valeurs « non documenté » sont à vérifier auprès de la firm.</span></p>
+      <span>Règles à confirmer&nbsp;: la firm les a changées ou ne les publie pas en entier. Vérifie sur son site avant de t'y fier.</span></p>
   }
 
   <div class="pfr-grid">

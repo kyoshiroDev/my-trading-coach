@@ -86,3 +86,44 @@ export const B_HIGH_SIGNALS = 3;
 export const C1_CONSECUTIVE_LOSSES = 3;
 /** C3 : taille ≥ N × la taille de la position perdante précédente sur le même actif. */
 export const C3_MARTINGALE_FACTOR = 2;
+
+// ── Jauge de pression (#1270, étude) ────────────────────────────────────────
+
+/**
+ * Jauge de pression : somme de points par signal, plafonnée à 100, TOUJOURS par rapport à la
+ * référence du trader (sauf règles du plan et limite déclarée, qui viennent d'ailleurs). Valeurs
+ * de départ de l'étude, à régler après le rejeu (`scripts/replay-pressure.ts`, `docs/audit-1270.md`).
+ * Rien n'est affiché tant que l'étude n'a pas montré un pouvoir prédictif.
+ */
+export const PRESSURE_MAX = 100;
+/** Seuils des états : sous `WATCH` calme, à partir de `RED` zone rouge. */
+export const PRESSURE_WATCH = 30;
+export const PRESSURE_RED = 60;
+
+/** Ré-entrée après une perte : délai / délai médian du trader après une perte → points. */
+export const PRESSURE_REENTRY: readonly { below: number; points: number }[] = [
+  { below: 1 / 3, points: 30 },
+  { below: 1 / 2, points: 20 },
+  { below: 1, points: 10 },
+];
+/** Taille au-dessus du p90 du trader sur l'actif ; majorée juste après une perte. */
+export const PRESSURE_SIZE_POINTS = 15;
+export const PRESSURE_SIZE_AFTER_LOSS_POINTS = 25;
+/** Rythme : rang de la position dans la séance au-delà du p90 de positions par séance du trader. */
+export const PRESSURE_PACE_POINTS = 15;
+export const PRESSURE_PACE_HIGH_FACTOR = 1.5;
+export const PRESSURE_PACE_HIGH_POINTS = 25;
+/** Pertes d'affilée dans la séance avant l'entrée → points (la plus haute ligne atteinte). */
+export const PRESSURE_STREAK: readonly { from: number; points: number }[] = [
+  { from: 4, points: 30 },
+  { from: 3, points: 20 },
+  { from: 2, points: 10 },
+];
+/** Part de la perte max du jour déjà consommée → points. */
+export const PRESSURE_DAILY_LOSS: readonly { above: number; points: number }[] = [
+  { above: 0.8, points: 30 },
+  { above: 0.5, points: 15 },
+];
+/** Règle du plan dépassée (taille) ou limite de positions déclarée par le trader dépassée. */
+export const PRESSURE_OVER_PLAN_POINTS = 30;
+export const PRESSURE_OVER_LIMIT_POINTS = 15;

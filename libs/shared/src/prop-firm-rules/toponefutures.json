@@ -3645,6 +3645,1134 @@
       "notes": "Elite Access Intraday : 10 comptes maximum. Variante sans Daily Loss Limit, à choisir à l'achat uniquement (ni après, ni à l'activation, ni au reset). Autres règles identiques au plan avec DLL."
     },
     {
+      "id": "toponefutures-elite-access-static-25k",
+      "plan_name": "Elite Access Static",
+      "account_size": 25000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": true,
+        "eval_drawdown": null,
+        "payout_path": null,
+        "addon": null
+      },
+      "price": {
+        "amount": 39,
+        "billing": "one_time",
+        "activation_fee": 139,
+        "notes": "Évaluation à 39 $ (paiement unique, toutes tailles), 30 jours pour réussir. Activation 139 $ : fourchette 139 à 359 $ de l'article Static, détail par taille repris de l'accueil Elite Access, à confirmer. Reset évaluation 35 $, reset funded 299 $ (Elite Access)."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 1500,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 1000,
+            "type": "static",
+            "trails_on": null,
+            "locks_at": null,
+            "locked_floor": 24000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "MLL statique : niveau fixe à 24000 $ (départ − 1000 $), jamais suiveur, contrôlé en temps réel sur l'equity (« checked in real time ») ; hard breach, reset 35 $."
+          },
+          "consistency": null,
+          "min_trading_days": 1,
+          "max_duration_days": 30,
+          "max_contracts": {
+            "minis": 1,
+            "micros": null,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Pleine taille dès le premier jour en évaluation. Équivalence micros non publiée pour Static."
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Sessions de 18:00 à 16:10 heure de New York (vendredi 16:00), pause 17:00-18:00, pas de week-end. Toute position encore ouverte à 16:10 est liquidée ; pas d'overnight. Durée minimale d'un trade : 10 secondes."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 500,
+            "basis": "equity",
+            "resets_at": "18:00 America/New_York",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Calculé sur le solde de début de journée ; pertes latentes et frais compris. Soft breach : positions fermées, pause jusqu'au rollover."
+          },
+          "max_drawdown": {
+            "amount": 1000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 26100,
+            "locked_floor": 25100,
+            "locks_on_first_payout": "payout",
+            "enforced_on": "eod_balance",
+            "platform_overrides": null,
+            "basis_notes": "MLL EOD : 1000 $ sous le plus haut solde de clôture, contrôlé à la clôture seulement. Se fige à 25100 $ (départ + 100 $) quand le solde atteint 26100 $, et dès le premier payout : gel aligné sur Elite Access (déclencheur non précisé par les articles Static), à confirmer."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.4,
+            "applies_to": "payout",
+            "notes": "Plus gros jour au plus 40 % du profit du cycle (trades clôturés), recalculé après chaque payout."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 1,
+            "micros": 10,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": null,
+                "minis": 1,
+                "micros": 10
+              }
+            ],
+            "notes": "Scaling funded selon le profit au solde de clôture, mis à jour une fois par jour."
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Sessions de 18:00 à 16:10 heure de New York (vendredi 16:00), pause 17:00-18:00, pas de week-end. Toute position encore ouverte à 16:10 est liquidée ; pas d'overnight. Durée minimale d'un trade : 10 secondes. Funded : aucune exécution (ouverture, clôture, ordre, modification de stop ou d'objectif) de 2 minutes avant à 2 minutes après une annonce à fort impact ; pas un échec automatique, mais profits retirés et payout refusé."
+          },
+          "payout": {
+            "min_days": 5,
+            "min_daily_profit": 200,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": 500,
+            "max_amount": 1000,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 26500,
+            "notes": "5 jours gagnants d'au moins 200 $ avant chaque payout. Buffer 1500 $ à garder : il faut 2000 $ de profit pour demander. Dès le 2e payout, 50 % au moins doivent venir de nouveaux profits. 90/10."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://help.toponefutures.com/en/articles/17889367-elite-access-static-accounts-overview",
+        "https://help.toponefutures.com/en/articles/17889369-elite-access-static-maximum-loss-limit-evaluation-phase-static",
+        "https://help.toponefutures.com/en/articles/17889370-elite-access-static-maximum-loss-limit-funded-phase-eod-trailing",
+        "https://help.toponefutures.com/en/articles/17889371-elite-access-static-daily-loss-limit-dll",
+        "https://help.toponefutures.com/en/articles/17889372-elite-access-static-evaluation-profit-target",
+        "https://help.toponefutures.com/en/articles/17889378-elite-access-static-payout-requirements",
+        "https://help.toponefutures.com/en/articles/10907081-daily-drawdown-what-you-need-to-know",
+        "https://www.toponefutures.com/"
+      ],
+      "needs_review": true,
+      "notes": "Elite Access Static : seule différence annoncée avec Elite Access, le drawdown d'évaluation statique. À confirmer (#1241) : équivalence micros en évaluation non publiée ; gel au premier payout du drawdown funded aligné sur Elite Access (déclencheur non précisé par les articles Static) ; activation par taille reprise de l'accueil Elite Access (l'article Static donne seulement 139 à 359 $) ; base de la DLL formulée différemment selon les articles (solde de clôture de la veille ou solde de début de journée)."
+    },
+    {
+      "id": "toponefutures-elite-access-static-50k",
+      "plan_name": "Elite Access Static",
+      "account_size": 50000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": true,
+        "eval_drawdown": null,
+        "payout_path": null,
+        "addon": null
+      },
+      "price": {
+        "amount": 39,
+        "billing": "one_time",
+        "activation_fee": 189,
+        "notes": "Évaluation à 39 $ (paiement unique, toutes tailles), 30 jours pour réussir. Activation 189 $ : fourchette 139 à 359 $ de l'article Static, détail par taille repris de l'accueil Elite Access, à confirmer. Reset évaluation 35 $, reset funded 499 $ (Elite Access)."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 3000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "static",
+            "trails_on": null,
+            "locks_at": null,
+            "locked_floor": 48000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "MLL statique : niveau fixe à 48000 $ (départ − 2000 $), jamais suiveur, contrôlé en temps réel sur l'equity (« checked in real time ») ; hard breach, reset 35 $."
+          },
+          "consistency": null,
+          "min_trading_days": 1,
+          "max_duration_days": 30,
+          "max_contracts": {
+            "minis": 3,
+            "micros": null,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Pleine taille dès le premier jour en évaluation. Équivalence micros non publiée pour Static."
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Sessions de 18:00 à 16:10 heure de New York (vendredi 16:00), pause 17:00-18:00, pas de week-end. Toute position encore ouverte à 16:10 est liquidée ; pas d'overnight. Durée minimale d'un trade : 10 secondes."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 1000,
+            "basis": "equity",
+            "resets_at": "18:00 America/New_York",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Calculé sur le solde de début de journée ; pertes latentes et frais compris. Soft breach : positions fermées, pause jusqu'au rollover."
+          },
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 52100,
+            "locked_floor": 50100,
+            "locks_on_first_payout": "payout",
+            "enforced_on": "eod_balance",
+            "platform_overrides": null,
+            "basis_notes": "MLL EOD : 2000 $ sous le plus haut solde de clôture, contrôlé à la clôture seulement. Se fige à 50100 $ (départ + 100 $) quand le solde atteint 52100 $, et dès le premier payout : gel aligné sur Elite Access (déclencheur non précisé par les articles Static), à confirmer."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.4,
+            "applies_to": "payout",
+            "notes": "Plus gros jour au plus 40 % du profit du cycle (trades clôturés), recalculé après chaque payout."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 3,
+            "micros": 30,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1500,
+                "minis": 1,
+                "micros": 10
+              },
+              {
+                "min_profit": 1500,
+                "max_profit": 2000,
+                "minis": 2,
+                "micros": 20
+              },
+              {
+                "min_profit": 2000,
+                "max_profit": null,
+                "minis": 3,
+                "micros": 30
+              }
+            ],
+            "notes": "Scaling funded selon le profit au solde de clôture, mis à jour une fois par jour."
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Sessions de 18:00 à 16:10 heure de New York (vendredi 16:00), pause 17:00-18:00, pas de week-end. Toute position encore ouverte à 16:10 est liquidée ; pas d'overnight. Durée minimale d'un trade : 10 secondes. Funded : aucune exécution (ouverture, clôture, ordre, modification de stop ou d'objectif) de 2 minutes avant à 2 minutes après une annonce à fort impact ; pas un échec automatique, mais profits retirés et payout refusé."
+          },
+          "payout": {
+            "min_days": 5,
+            "min_daily_profit": 250,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": 500,
+            "max_amount": 1500,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 52000,
+            "notes": "5 jours gagnants d'au moins 250 $ avant chaque payout. Buffer 2000 $ à garder : il faut 2500 $ de profit pour demander. Dès le 2e payout, 50 % au moins doivent venir de nouveaux profits. 90/10."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://help.toponefutures.com/en/articles/17889367-elite-access-static-accounts-overview",
+        "https://help.toponefutures.com/en/articles/17889369-elite-access-static-maximum-loss-limit-evaluation-phase-static",
+        "https://help.toponefutures.com/en/articles/17889370-elite-access-static-maximum-loss-limit-funded-phase-eod-trailing",
+        "https://help.toponefutures.com/en/articles/17889371-elite-access-static-daily-loss-limit-dll",
+        "https://help.toponefutures.com/en/articles/17889372-elite-access-static-evaluation-profit-target",
+        "https://help.toponefutures.com/en/articles/17889378-elite-access-static-payout-requirements",
+        "https://help.toponefutures.com/en/articles/10907081-daily-drawdown-what-you-need-to-know",
+        "https://www.toponefutures.com/"
+      ],
+      "needs_review": true,
+      "notes": "Elite Access Static : seule différence annoncée avec Elite Access, le drawdown d'évaluation statique. À confirmer (#1241) : équivalence micros en évaluation non publiée ; gel au premier payout du drawdown funded aligné sur Elite Access (déclencheur non précisé par les articles Static) ; activation par taille reprise de l'accueil Elite Access (l'article Static donne seulement 139 à 359 $) ; base de la DLL formulée différemment selon les articles (solde de clôture de la veille ou solde de début de journée)."
+    },
+    {
+      "id": "toponefutures-elite-access-static-100k",
+      "plan_name": "Elite Access Static",
+      "account_size": 100000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": true,
+        "eval_drawdown": null,
+        "payout_path": null,
+        "addon": null
+      },
+      "price": {
+        "amount": 39,
+        "billing": "one_time",
+        "activation_fee": 259,
+        "notes": "Évaluation à 39 $ (paiement unique, toutes tailles), 30 jours pour réussir. Activation 259 $ : fourchette 139 à 359 $ de l'article Static, détail par taille repris de l'accueil Elite Access, à confirmer. Reset évaluation 35 $, reset funded 849 $ (Elite Access)."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 6000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 3000,
+            "type": "static",
+            "trails_on": null,
+            "locks_at": null,
+            "locked_floor": 97000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "MLL statique : niveau fixe à 97000 $ (départ − 3000 $), jamais suiveur, contrôlé en temps réel sur l'equity (« checked in real time ») ; hard breach, reset 35 $."
+          },
+          "consistency": null,
+          "min_trading_days": 1,
+          "max_duration_days": 30,
+          "max_contracts": {
+            "minis": 5,
+            "micros": null,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Pleine taille dès le premier jour en évaluation. Équivalence micros non publiée pour Static."
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Sessions de 18:00 à 16:10 heure de New York (vendredi 16:00), pause 17:00-18:00, pas de week-end. Toute position encore ouverte à 16:10 est liquidée ; pas d'overnight. Durée minimale d'un trade : 10 secondes."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 1250,
+            "basis": "equity",
+            "resets_at": "18:00 America/New_York",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Calculé sur le solde de début de journée ; pertes latentes et frais compris. Soft breach : positions fermées, pause jusqu'au rollover."
+          },
+          "max_drawdown": {
+            "amount": 3000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 103100,
+            "locked_floor": 100100,
+            "locks_on_first_payout": "payout",
+            "enforced_on": "eod_balance",
+            "platform_overrides": null,
+            "basis_notes": "MLL EOD : 3000 $ sous le plus haut solde de clôture, contrôlé à la clôture seulement. Se fige à 100100 $ (départ + 100 $) quand le solde atteint 103100 $, et dès le premier payout : gel aligné sur Elite Access (déclencheur non précisé par les articles Static), à confirmer."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.4,
+            "applies_to": "payout",
+            "notes": "Plus gros jour au plus 40 % du profit du cycle (trades clôturés), recalculé après chaque payout."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 5,
+            "micros": 50,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1500,
+                "minis": 2,
+                "micros": 20
+              },
+              {
+                "min_profit": 1500,
+                "max_profit": 2000,
+                "minis": 3,
+                "micros": 30
+              },
+              {
+                "min_profit": 2000,
+                "max_profit": 3000,
+                "minis": 4,
+                "micros": 40
+              },
+              {
+                "min_profit": 3000,
+                "max_profit": null,
+                "minis": 5,
+                "micros": 50
+              }
+            ],
+            "notes": "Scaling funded selon le profit au solde de clôture, mis à jour une fois par jour."
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Sessions de 18:00 à 16:10 heure de New York (vendredi 16:00), pause 17:00-18:00, pas de week-end. Toute position encore ouverte à 16:10 est liquidée ; pas d'overnight. Durée minimale d'un trade : 10 secondes. Funded : aucune exécution (ouverture, clôture, ordre, modification de stop ou d'objectif) de 2 minutes avant à 2 minutes après une annonce à fort impact ; pas un échec automatique, mais profits retirés et payout refusé."
+          },
+          "payout": {
+            "min_days": 5,
+            "min_daily_profit": 300,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": 500,
+            "max_amount": 2000,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 103000,
+            "notes": "5 jours gagnants d'au moins 300 $ avant chaque payout. Buffer 3000 $ à garder : il faut 3500 $ de profit pour demander. Dès le 2e payout, 50 % au moins doivent venir de nouveaux profits. 90/10."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://help.toponefutures.com/en/articles/17889367-elite-access-static-accounts-overview",
+        "https://help.toponefutures.com/en/articles/17889369-elite-access-static-maximum-loss-limit-evaluation-phase-static",
+        "https://help.toponefutures.com/en/articles/17889370-elite-access-static-maximum-loss-limit-funded-phase-eod-trailing",
+        "https://help.toponefutures.com/en/articles/17889371-elite-access-static-daily-loss-limit-dll",
+        "https://help.toponefutures.com/en/articles/17889372-elite-access-static-evaluation-profit-target",
+        "https://help.toponefutures.com/en/articles/17889378-elite-access-static-payout-requirements",
+        "https://help.toponefutures.com/en/articles/10907081-daily-drawdown-what-you-need-to-know",
+        "https://www.toponefutures.com/"
+      ],
+      "needs_review": true,
+      "notes": "Elite Access Static : seule différence annoncée avec Elite Access, le drawdown d'évaluation statique. À confirmer (#1241) : équivalence micros en évaluation non publiée ; gel au premier payout du drawdown funded aligné sur Elite Access (déclencheur non précisé par les articles Static) ; activation par taille reprise de l'accueil Elite Access (l'article Static donne seulement 139 à 359 $) ; base de la DLL formulée différemment selon les articles (solde de clôture de la veille ou solde de début de journée)."
+    },
+    {
+      "id": "toponefutures-elite-access-static-150k",
+      "plan_name": "Elite Access Static",
+      "account_size": 150000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": true,
+        "eval_drawdown": null,
+        "payout_path": null,
+        "addon": null
+      },
+      "price": {
+        "amount": 39,
+        "billing": "one_time",
+        "activation_fee": 359,
+        "notes": "Évaluation à 39 $ (paiement unique, toutes tailles), 30 jours pour réussir. Activation 359 $ : fourchette 139 à 359 $ de l'article Static, détail par taille repris de l'accueil Elite Access, à confirmer. Reset évaluation 35 $, reset funded 1349 $ (Elite Access)."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 9000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 4000,
+            "type": "static",
+            "trails_on": null,
+            "locks_at": null,
+            "locked_floor": 146000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "MLL statique : niveau fixe à 146000 $ (départ − 4000 $), jamais suiveur, contrôlé en temps réel sur l'equity (« checked in real time ») ; hard breach, reset 35 $."
+          },
+          "consistency": null,
+          "min_trading_days": 1,
+          "max_duration_days": 30,
+          "max_contracts": {
+            "minis": 7,
+            "micros": null,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Pleine taille dès le premier jour en évaluation. Équivalence micros non publiée pour Static."
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Sessions de 18:00 à 16:10 heure de New York (vendredi 16:00), pause 17:00-18:00, pas de week-end. Toute position encore ouverte à 16:10 est liquidée ; pas d'overnight. Durée minimale d'un trade : 10 secondes."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 1750,
+            "basis": "equity",
+            "resets_at": "18:00 America/New_York",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Calculé sur le solde de début de journée ; pertes latentes et frais compris. Soft breach : positions fermées, pause jusqu'au rollover."
+          },
+          "max_drawdown": {
+            "amount": 3500,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 153600,
+            "locked_floor": 150100,
+            "locks_on_first_payout": "payout",
+            "enforced_on": "eod_balance",
+            "platform_overrides": null,
+            "basis_notes": "MLL EOD : 3500 $ sous le plus haut solde de clôture, contrôlé à la clôture seulement. Se fige à 150100 $ (départ + 100 $) quand le solde atteint 153600 $, et dès le premier payout : gel aligné sur Elite Access (déclencheur non précisé par les articles Static), à confirmer."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.4,
+            "applies_to": "payout",
+            "notes": "Plus gros jour au plus 40 % du profit du cycle (trades clôturés), recalculé après chaque payout."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 7,
+            "micros": 70,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1500,
+                "minis": 3,
+                "micros": 30
+              },
+              {
+                "min_profit": 1500,
+                "max_profit": 2500,
+                "minis": 4,
+                "micros": 40
+              },
+              {
+                "min_profit": 2500,
+                "max_profit": 3500,
+                "minis": 5,
+                "micros": 50
+              },
+              {
+                "min_profit": 3500,
+                "max_profit": 4500,
+                "minis": 6,
+                "micros": 60
+              },
+              {
+                "min_profit": 4500,
+                "max_profit": null,
+                "minis": 7,
+                "micros": 70
+              }
+            ],
+            "notes": "Scaling funded selon le profit au solde de clôture, mis à jour une fois par jour."
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Sessions de 18:00 à 16:10 heure de New York (vendredi 16:00), pause 17:00-18:00, pas de week-end. Toute position encore ouverte à 16:10 est liquidée ; pas d'overnight. Durée minimale d'un trade : 10 secondes. Funded : aucune exécution (ouverture, clôture, ordre, modification de stop ou d'objectif) de 2 minutes avant à 2 minutes après une annonce à fort impact ; pas un échec automatique, mais profits retirés et payout refusé."
+          },
+          "payout": {
+            "min_days": 5,
+            "min_daily_profit": 350,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": 500,
+            "max_amount": 2500,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 154500,
+            "notes": "5 jours gagnants d'au moins 350 $ avant chaque payout. Buffer 4500 $ à garder : il faut 5000 $ de profit pour demander. Dès le 2e payout, 50 % au moins doivent venir de nouveaux profits. 90/10."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://help.toponefutures.com/en/articles/17889367-elite-access-static-accounts-overview",
+        "https://help.toponefutures.com/en/articles/17889369-elite-access-static-maximum-loss-limit-evaluation-phase-static",
+        "https://help.toponefutures.com/en/articles/17889370-elite-access-static-maximum-loss-limit-funded-phase-eod-trailing",
+        "https://help.toponefutures.com/en/articles/17889371-elite-access-static-daily-loss-limit-dll",
+        "https://help.toponefutures.com/en/articles/17889372-elite-access-static-evaluation-profit-target",
+        "https://help.toponefutures.com/en/articles/17889378-elite-access-static-payout-requirements",
+        "https://help.toponefutures.com/en/articles/10907081-daily-drawdown-what-you-need-to-know",
+        "https://www.toponefutures.com/"
+      ],
+      "needs_review": true,
+      "notes": "Elite Access Static : seule différence annoncée avec Elite Access, le drawdown d'évaluation statique. À confirmer (#1241) : équivalence micros en évaluation non publiée ; gel au premier payout du drawdown funded aligné sur Elite Access (déclencheur non précisé par les articles Static) ; activation par taille reprise de l'accueil Elite Access (l'article Static donne seulement 139 à 359 $) ; base de la DLL formulée différemment selon les articles (solde de clôture de la veille ou solde de début de journée)."
+    },
+    {
+      "id": "toponefutures-elite-access-static-nodll-25k",
+      "plan_name": "Elite Access Static",
+      "account_size": 25000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": false,
+        "eval_drawdown": null,
+        "payout_path": null,
+        "addon": null
+      },
+      "price": {
+        "amount": 39,
+        "billing": "one_time",
+        "activation_fee": null,
+        "notes": "Option « No Daily Loss Limit » choisie au checkout : évaluation 39 $ ; activation environ 60 % plus chère que la version avec DLL, montant exact non publié. Reset évaluation 35 $."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 1500,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 1000,
+            "type": "static",
+            "trails_on": null,
+            "locks_at": null,
+            "locked_floor": 24000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "MLL statique : niveau fixe à 24000 $ (départ − 1000 $), jamais suiveur, contrôlé en temps réel sur l'equity (« checked in real time ») ; hard breach, reset 35 $."
+          },
+          "consistency": null,
+          "min_trading_days": 1,
+          "max_duration_days": 30,
+          "max_contracts": {
+            "minis": 1,
+            "micros": null,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Pleine taille dès le premier jour en évaluation. Équivalence micros non publiée pour Static."
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Sessions de 18:00 à 16:10 heure de New York (vendredi 16:00), pause 17:00-18:00, pas de week-end. Toute position encore ouverte à 16:10 est liquidée ; pas d'overnight. Durée minimale d'un trade : 10 secondes."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 1000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 26100,
+            "locked_floor": 25100,
+            "locks_on_first_payout": "payout",
+            "enforced_on": "eod_balance",
+            "platform_overrides": null,
+            "basis_notes": "MLL EOD : 1000 $ sous le plus haut solde de clôture, contrôlé à la clôture seulement. Se fige à 25100 $ (départ + 100 $) quand le solde atteint 26100 $, et dès le premier payout : gel aligné sur Elite Access (déclencheur non précisé par les articles Static), à confirmer."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.4,
+            "applies_to": "payout",
+            "notes": "Plus gros jour au plus 40 % du profit du cycle (trades clôturés), recalculé après chaque payout."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 1,
+            "micros": 10,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": null,
+                "minis": 1,
+                "micros": 10
+              }
+            ],
+            "notes": "Scaling funded selon le profit au solde de clôture, mis à jour une fois par jour."
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Sessions de 18:00 à 16:10 heure de New York (vendredi 16:00), pause 17:00-18:00, pas de week-end. Toute position encore ouverte à 16:10 est liquidée ; pas d'overnight. Durée minimale d'un trade : 10 secondes. Funded : aucune exécution (ouverture, clôture, ordre, modification de stop ou d'objectif) de 2 minutes avant à 2 minutes après une annonce à fort impact ; pas un échec automatique, mais profits retirés et payout refusé."
+          },
+          "payout": {
+            "min_days": 5,
+            "min_daily_profit": 200,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": 500,
+            "max_amount": 1000,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 26500,
+            "notes": "5 jours gagnants d'au moins 200 $ avant chaque payout. Buffer 1500 $ à garder : il faut 2000 $ de profit pour demander. Dès le 2e payout, 50 % au moins doivent venir de nouveaux profits. 90/10."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://help.toponefutures.com/en/articles/17889367-elite-access-static-accounts-overview",
+        "https://help.toponefutures.com/en/articles/17889369-elite-access-static-maximum-loss-limit-evaluation-phase-static",
+        "https://help.toponefutures.com/en/articles/17889370-elite-access-static-maximum-loss-limit-funded-phase-eod-trailing",
+        "https://help.toponefutures.com/en/articles/17889371-elite-access-static-daily-loss-limit-dll",
+        "https://help.toponefutures.com/en/articles/17889372-elite-access-static-evaluation-profit-target",
+        "https://help.toponefutures.com/en/articles/17889378-elite-access-static-payout-requirements",
+        "https://help.toponefutures.com/en/articles/10907081-daily-drawdown-what-you-need-to-know",
+        "https://www.toponefutures.com/",
+        "https://help.toponefutures.com/en/articles/17635087-no-daily-loss-limit-add-on-trade-without-daily-limits"
+      ],
+      "needs_review": true,
+      "notes": "Elite Access Static, variante sans Daily Loss Limit (à choisir à l'achat). Seule différence annoncée avec Elite Access : drawdown d'évaluation statique. À confirmer (#1241) : équivalence micros en évaluation non publiée ; gel au premier payout du drawdown funded aligné sur Elite Access (déclencheur non précisé par les articles Static) ; activation par taille reprise de l'accueil Elite Access (l'article Static donne seulement 139 à 359 $) ; base de la DLL formulée différemment selon les articles (solde de clôture de la veille ou solde de début de journée)."
+    },
+    {
+      "id": "toponefutures-elite-access-static-nodll-50k",
+      "plan_name": "Elite Access Static",
+      "account_size": 50000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": false,
+        "eval_drawdown": null,
+        "payout_path": null,
+        "addon": null
+      },
+      "price": {
+        "amount": 39,
+        "billing": "one_time",
+        "activation_fee": null,
+        "notes": "Option « No Daily Loss Limit » choisie au checkout : évaluation 39 $ ; activation environ 60 % plus chère que la version avec DLL, montant exact non publié. Reset évaluation 35 $."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 3000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "static",
+            "trails_on": null,
+            "locks_at": null,
+            "locked_floor": 48000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "MLL statique : niveau fixe à 48000 $ (départ − 2000 $), jamais suiveur, contrôlé en temps réel sur l'equity (« checked in real time ») ; hard breach, reset 35 $."
+          },
+          "consistency": null,
+          "min_trading_days": 1,
+          "max_duration_days": 30,
+          "max_contracts": {
+            "minis": 3,
+            "micros": null,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Pleine taille dès le premier jour en évaluation. Équivalence micros non publiée pour Static."
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Sessions de 18:00 à 16:10 heure de New York (vendredi 16:00), pause 17:00-18:00, pas de week-end. Toute position encore ouverte à 16:10 est liquidée ; pas d'overnight. Durée minimale d'un trade : 10 secondes."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 52100,
+            "locked_floor": 50100,
+            "locks_on_first_payout": "payout",
+            "enforced_on": "eod_balance",
+            "platform_overrides": null,
+            "basis_notes": "MLL EOD : 2000 $ sous le plus haut solde de clôture, contrôlé à la clôture seulement. Se fige à 50100 $ (départ + 100 $) quand le solde atteint 52100 $, et dès le premier payout : gel aligné sur Elite Access (déclencheur non précisé par les articles Static), à confirmer."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.4,
+            "applies_to": "payout",
+            "notes": "Plus gros jour au plus 40 % du profit du cycle (trades clôturés), recalculé après chaque payout."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 3,
+            "micros": 30,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1500,
+                "minis": 1,
+                "micros": 10
+              },
+              {
+                "min_profit": 1500,
+                "max_profit": 2000,
+                "minis": 2,
+                "micros": 20
+              },
+              {
+                "min_profit": 2000,
+                "max_profit": null,
+                "minis": 3,
+                "micros": 30
+              }
+            ],
+            "notes": "Scaling funded selon le profit au solde de clôture, mis à jour une fois par jour."
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Sessions de 18:00 à 16:10 heure de New York (vendredi 16:00), pause 17:00-18:00, pas de week-end. Toute position encore ouverte à 16:10 est liquidée ; pas d'overnight. Durée minimale d'un trade : 10 secondes. Funded : aucune exécution (ouverture, clôture, ordre, modification de stop ou d'objectif) de 2 minutes avant à 2 minutes après une annonce à fort impact ; pas un échec automatique, mais profits retirés et payout refusé."
+          },
+          "payout": {
+            "min_days": 5,
+            "min_daily_profit": 250,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": 500,
+            "max_amount": 1500,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 52000,
+            "notes": "5 jours gagnants d'au moins 250 $ avant chaque payout. Buffer 2000 $ à garder : il faut 2500 $ de profit pour demander. Dès le 2e payout, 50 % au moins doivent venir de nouveaux profits. 90/10."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://help.toponefutures.com/en/articles/17889367-elite-access-static-accounts-overview",
+        "https://help.toponefutures.com/en/articles/17889369-elite-access-static-maximum-loss-limit-evaluation-phase-static",
+        "https://help.toponefutures.com/en/articles/17889370-elite-access-static-maximum-loss-limit-funded-phase-eod-trailing",
+        "https://help.toponefutures.com/en/articles/17889371-elite-access-static-daily-loss-limit-dll",
+        "https://help.toponefutures.com/en/articles/17889372-elite-access-static-evaluation-profit-target",
+        "https://help.toponefutures.com/en/articles/17889378-elite-access-static-payout-requirements",
+        "https://help.toponefutures.com/en/articles/10907081-daily-drawdown-what-you-need-to-know",
+        "https://www.toponefutures.com/",
+        "https://help.toponefutures.com/en/articles/17635087-no-daily-loss-limit-add-on-trade-without-daily-limits"
+      ],
+      "needs_review": true,
+      "notes": "Elite Access Static, variante sans Daily Loss Limit (à choisir à l'achat). Seule différence annoncée avec Elite Access : drawdown d'évaluation statique. À confirmer (#1241) : équivalence micros en évaluation non publiée ; gel au premier payout du drawdown funded aligné sur Elite Access (déclencheur non précisé par les articles Static) ; activation par taille reprise de l'accueil Elite Access (l'article Static donne seulement 139 à 359 $) ; base de la DLL formulée différemment selon les articles (solde de clôture de la veille ou solde de début de journée)."
+    },
+    {
+      "id": "toponefutures-elite-access-static-nodll-100k",
+      "plan_name": "Elite Access Static",
+      "account_size": 100000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": false,
+        "eval_drawdown": null,
+        "payout_path": null,
+        "addon": null
+      },
+      "price": {
+        "amount": 39,
+        "billing": "one_time",
+        "activation_fee": null,
+        "notes": "Option « No Daily Loss Limit » choisie au checkout : évaluation 39 $ ; activation environ 60 % plus chère que la version avec DLL, montant exact non publié. Reset évaluation 35 $."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 6000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 3000,
+            "type": "static",
+            "trails_on": null,
+            "locks_at": null,
+            "locked_floor": 97000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "MLL statique : niveau fixe à 97000 $ (départ − 3000 $), jamais suiveur, contrôlé en temps réel sur l'equity (« checked in real time ») ; hard breach, reset 35 $."
+          },
+          "consistency": null,
+          "min_trading_days": 1,
+          "max_duration_days": 30,
+          "max_contracts": {
+            "minis": 5,
+            "micros": null,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Pleine taille dès le premier jour en évaluation. Équivalence micros non publiée pour Static."
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Sessions de 18:00 à 16:10 heure de New York (vendredi 16:00), pause 17:00-18:00, pas de week-end. Toute position encore ouverte à 16:10 est liquidée ; pas d'overnight. Durée minimale d'un trade : 10 secondes."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 3000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 103100,
+            "locked_floor": 100100,
+            "locks_on_first_payout": "payout",
+            "enforced_on": "eod_balance",
+            "platform_overrides": null,
+            "basis_notes": "MLL EOD : 3000 $ sous le plus haut solde de clôture, contrôlé à la clôture seulement. Se fige à 100100 $ (départ + 100 $) quand le solde atteint 103100 $, et dès le premier payout : gel aligné sur Elite Access (déclencheur non précisé par les articles Static), à confirmer."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.4,
+            "applies_to": "payout",
+            "notes": "Plus gros jour au plus 40 % du profit du cycle (trades clôturés), recalculé après chaque payout."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 5,
+            "micros": 50,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1500,
+                "minis": 2,
+                "micros": 20
+              },
+              {
+                "min_profit": 1500,
+                "max_profit": 2000,
+                "minis": 3,
+                "micros": 30
+              },
+              {
+                "min_profit": 2000,
+                "max_profit": 3000,
+                "minis": 4,
+                "micros": 40
+              },
+              {
+                "min_profit": 3000,
+                "max_profit": null,
+                "minis": 5,
+                "micros": 50
+              }
+            ],
+            "notes": "Scaling funded selon le profit au solde de clôture, mis à jour une fois par jour."
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Sessions de 18:00 à 16:10 heure de New York (vendredi 16:00), pause 17:00-18:00, pas de week-end. Toute position encore ouverte à 16:10 est liquidée ; pas d'overnight. Durée minimale d'un trade : 10 secondes. Funded : aucune exécution (ouverture, clôture, ordre, modification de stop ou d'objectif) de 2 minutes avant à 2 minutes après une annonce à fort impact ; pas un échec automatique, mais profits retirés et payout refusé."
+          },
+          "payout": {
+            "min_days": 5,
+            "min_daily_profit": 300,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": 500,
+            "max_amount": 2000,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 103000,
+            "notes": "5 jours gagnants d'au moins 300 $ avant chaque payout. Buffer 3000 $ à garder : il faut 3500 $ de profit pour demander. Dès le 2e payout, 50 % au moins doivent venir de nouveaux profits. 90/10."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://help.toponefutures.com/en/articles/17889367-elite-access-static-accounts-overview",
+        "https://help.toponefutures.com/en/articles/17889369-elite-access-static-maximum-loss-limit-evaluation-phase-static",
+        "https://help.toponefutures.com/en/articles/17889370-elite-access-static-maximum-loss-limit-funded-phase-eod-trailing",
+        "https://help.toponefutures.com/en/articles/17889371-elite-access-static-daily-loss-limit-dll",
+        "https://help.toponefutures.com/en/articles/17889372-elite-access-static-evaluation-profit-target",
+        "https://help.toponefutures.com/en/articles/17889378-elite-access-static-payout-requirements",
+        "https://help.toponefutures.com/en/articles/10907081-daily-drawdown-what-you-need-to-know",
+        "https://www.toponefutures.com/",
+        "https://help.toponefutures.com/en/articles/17635087-no-daily-loss-limit-add-on-trade-without-daily-limits"
+      ],
+      "needs_review": true,
+      "notes": "Elite Access Static, variante sans Daily Loss Limit (à choisir à l'achat). Seule différence annoncée avec Elite Access : drawdown d'évaluation statique. À confirmer (#1241) : équivalence micros en évaluation non publiée ; gel au premier payout du drawdown funded aligné sur Elite Access (déclencheur non précisé par les articles Static) ; activation par taille reprise de l'accueil Elite Access (l'article Static donne seulement 139 à 359 $) ; base de la DLL formulée différemment selon les articles (solde de clôture de la veille ou solde de début de journée)."
+    },
+    {
+      "id": "toponefutures-elite-access-static-nodll-150k",
+      "plan_name": "Elite Access Static",
+      "account_size": 150000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": false,
+        "eval_drawdown": null,
+        "payout_path": null,
+        "addon": null
+      },
+      "price": {
+        "amount": 39,
+        "billing": "one_time",
+        "activation_fee": null,
+        "notes": "Option « No Daily Loss Limit » choisie au checkout : évaluation 39 $ ; activation environ 60 % plus chère que la version avec DLL, montant exact non publié. Reset évaluation 35 $."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 9000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 4000,
+            "type": "static",
+            "trails_on": null,
+            "locks_at": null,
+            "locked_floor": 146000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "MLL statique : niveau fixe à 146000 $ (départ − 4000 $), jamais suiveur, contrôlé en temps réel sur l'equity (« checked in real time ») ; hard breach, reset 35 $."
+          },
+          "consistency": null,
+          "min_trading_days": 1,
+          "max_duration_days": 30,
+          "max_contracts": {
+            "minis": 7,
+            "micros": null,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Pleine taille dès le premier jour en évaluation. Équivalence micros non publiée pour Static."
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Sessions de 18:00 à 16:10 heure de New York (vendredi 16:00), pause 17:00-18:00, pas de week-end. Toute position encore ouverte à 16:10 est liquidée ; pas d'overnight. Durée minimale d'un trade : 10 secondes."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 3500,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 153600,
+            "locked_floor": 150100,
+            "locks_on_first_payout": "payout",
+            "enforced_on": "eod_balance",
+            "platform_overrides": null,
+            "basis_notes": "MLL EOD : 3500 $ sous le plus haut solde de clôture, contrôlé à la clôture seulement. Se fige à 150100 $ (départ + 100 $) quand le solde atteint 153600 $, et dès le premier payout : gel aligné sur Elite Access (déclencheur non précisé par les articles Static), à confirmer."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.4,
+            "applies_to": "payout",
+            "notes": "Plus gros jour au plus 40 % du profit du cycle (trades clôturés), recalculé après chaque payout."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 7,
+            "micros": 70,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1500,
+                "minis": 3,
+                "micros": 30
+              },
+              {
+                "min_profit": 1500,
+                "max_profit": 2500,
+                "minis": 4,
+                "micros": 40
+              },
+              {
+                "min_profit": 2500,
+                "max_profit": 3500,
+                "minis": 5,
+                "micros": 50
+              },
+              {
+                "min_profit": 3500,
+                "max_profit": 4500,
+                "minis": 6,
+                "micros": 60
+              },
+              {
+                "min_profit": 4500,
+                "max_profit": null,
+                "minis": 7,
+                "micros": 70
+              }
+            ],
+            "notes": "Scaling funded selon le profit au solde de clôture, mis à jour une fois par jour."
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Sessions de 18:00 à 16:10 heure de New York (vendredi 16:00), pause 17:00-18:00, pas de week-end. Toute position encore ouverte à 16:10 est liquidée ; pas d'overnight. Durée minimale d'un trade : 10 secondes. Funded : aucune exécution (ouverture, clôture, ordre, modification de stop ou d'objectif) de 2 minutes avant à 2 minutes après une annonce à fort impact ; pas un échec automatique, mais profits retirés et payout refusé."
+          },
+          "payout": {
+            "min_days": 5,
+            "min_daily_profit": 350,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": 500,
+            "max_amount": 2500,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 154500,
+            "notes": "5 jours gagnants d'au moins 350 $ avant chaque payout. Buffer 4500 $ à garder : il faut 5000 $ de profit pour demander. Dès le 2e payout, 50 % au moins doivent venir de nouveaux profits. 90/10."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://help.toponefutures.com/en/articles/17889367-elite-access-static-accounts-overview",
+        "https://help.toponefutures.com/en/articles/17889369-elite-access-static-maximum-loss-limit-evaluation-phase-static",
+        "https://help.toponefutures.com/en/articles/17889370-elite-access-static-maximum-loss-limit-funded-phase-eod-trailing",
+        "https://help.toponefutures.com/en/articles/17889371-elite-access-static-daily-loss-limit-dll",
+        "https://help.toponefutures.com/en/articles/17889372-elite-access-static-evaluation-profit-target",
+        "https://help.toponefutures.com/en/articles/17889378-elite-access-static-payout-requirements",
+        "https://help.toponefutures.com/en/articles/10907081-daily-drawdown-what-you-need-to-know",
+        "https://www.toponefutures.com/",
+        "https://help.toponefutures.com/en/articles/17635087-no-daily-loss-limit-add-on-trade-without-daily-limits"
+      ],
+      "needs_review": true,
+      "notes": "Elite Access Static, variante sans Daily Loss Limit (à choisir à l'achat). Seule différence annoncée avec Elite Access : drawdown d'évaluation statique. À confirmer (#1241) : équivalence micros en évaluation non publiée ; gel au premier payout du drawdown funded aligné sur Elite Access (déclencheur non précisé par les articles Static) ; activation par taille reprise de l'accueil Elite Access (l'article Static donne seulement 139 à 359 $) ; base de la DLL formulée différemment selon les articles (solde de clôture de la veille ou solde de début de journée)."
+    },
+    {
       "id": "toponefutures-instant-25k",
       "plan_name": "Instant Sim Funded 2.0",
       "account_size": 25000,

@@ -7,7 +7,8 @@ import {
   NotFoundException,
   Optional,
 } from '@nestjs/common';
-import type { AccountPlanHint, PropFirmDrawdownKind, PropFirmPayoutLockTrigger, PropFirmPhaseRules } from '@mtc/shared';
+import type { AccountPlanHint, PropFirmDrawdownKind, PropFirmPayoutLockTrigger, PropFirmPhaseRules, PropFirmPlanSummary } from '@mtc/shared';
+import { planConfigurationOrNull } from '../prop-firms/prop-firm-plan-configuration';
 import { ACCOUNT_LIMITS, drawdownFloor, drawdownPeakProfit, planDrawdownRule, roundCents } from '@mtc/shared';
 import {
   AccountStatus,
@@ -48,6 +49,8 @@ type RuleAccount = Pick<
 export interface RulePlan {
   firmName: string;
   planName: string;
+  /** Options du plan (DLL, drawdown d'évaluation, parcours de payout, option payante), null sans option. */
+  configuration?: PropFirmPlanSummary['configuration'];
   accountSize: number;
   phases: PropFirmPhaseRules[];
   /** Plan marqué « à revoir » au catalogue. */
@@ -136,6 +139,7 @@ export function brokerReferenceMismatch(gap: number, reference: number): boolean
 
 const PLAN_SELECT = {
   planName: true,
+  configuration: true,
   accountSize: true,
   phases: true,
   needsReview: true,
@@ -163,6 +167,8 @@ const RULE_DISCLAIMER =
 export interface DrawdownPlanRule {
   firmName: string;
   planName: string;
+  /** Options du plan, pour distinguer une variante (option consistency, funded EOD…) d'un plan standard (#1236). */
+  configuration: PropFirmPlanSummary['configuration'];
   phase: PropFirmPhaseRules['phase'];
   kind: PropFirmDrawdownKind;
   /** Solde (référentiel du compte) qui fige le seuil ; null = pas de verrouillage chiffré. */
@@ -175,6 +181,11 @@ export interface DrawdownPlanRule {
   lockedBy: 'threshold' | 'payout' | null;
   /** Premier payout connu qui fige le plancher (`AAAA-MM-JJ`), sinon null. */
   payoutLockedSince: string | null;
+  /**
+   * Plan à revoir au catalogue avec un gel du plancher (#1233) : le gel annoncé n'est pas sûr, la marge
+   * après le gel peut être surestimée. Absent = non.
+   */
+  floorUnconfirmed?: boolean;
   /** La firm contrôle le seuil en temps réel, positions ouvertes comprises. */
   realtimeEquity: boolean;
   /** Plateforme dont la règle a été appliquée (verrouillage propre à la plateforme), sinon null. */
@@ -565,6 +576,7 @@ export class AccountsService {
           rule: {
             firmName: plan.firmName,
             planName: plan.planName,
+            configuration: plan.configuration ?? null,
             phase: phase.phase,
             kind: md.type,
             locksAt,
@@ -573,6 +585,8 @@ export class AccountsService {
             locksOnFirstPayout,
             lockedBy,
             payoutLockedSince: lockedBy === 'payout' ? payoutLockedSince : null,
+            // Plan « à revoir » au catalogue avec un gel du plancher : le gel n'est pas sûr (#1233).
+            floorUnconfirmed: (plan.needsReview ?? false) && md.type !== 'static' && (locksAt != null || !!locksOnFirstPayout),
             realtimeEquity: md.enforced_on === 'equity_realtime',
             peakSource: md.type === 'trailing_eod' ? (fresh ? 'broker' : 'trades') : null,
             peakBalance: md.type === 'trailing_eod' ? startingBalance + peakProfit : null,
@@ -821,12 +835,15 @@ export class AccountsService {
   }
 
   /**
-   * Un compte ne se relie qu'à un plan ACTIF du catalogue. Sans ce contrôle, un id inconnu
-   * finirait en violation de FK (500) ; un plan retiré reste lisible sur les comptes qui le
-   * portaient déjà, mais ne se choisit plus.
+   * Plan proposé à une NOUVELLE liaison (création, ou changement de plan) : ACTIF au catalogue et
+   * encore vendu. Sans ce contrôle, un id inconnu finirait en violation de FK (500). Un plan retiré
+   * ou `discontinued` reste lisible et valable pour les comptes qui y sont déjà reliés (jamais
+   * revérifié quand le plan ne change pas), comme `keepPlanId` côté sélecteur (#1242).
    */
   private async assertCatalogPlan(planId: string): Promise<void> {
-    const found = await this.prisma.propFirmPlan.count({ where: { id: planId, active: true } });
+    const found = await this.prisma.propFirmPlan.count({
+      where: { id: planId, active: true, availability: { not: 'discontinued' } },
+    });
     if (!found) {
       throw new BadRequestException("Ce plan n'existe pas ou n'est plus proposé par la prop firm.");
     }
@@ -1145,11 +1162,11 @@ function phaseFor(plan: RulePlan, type: AccountType | undefined): PropFirmPhaseR
 }
 
 function toRulePlan(
-  row: { planName: string; accountSize: number; phases: unknown; needsReview?: boolean; firm: { name: string } } | null,
+  row: { planName: string; configuration?: unknown; accountSize: number; phases: unknown; needsReview?: boolean; firm: { name: string } } | null,
 ): RulePlan | null {
   if (!row || !Array.isArray(row.phases)) return null;
   return {
-    firmName: row.firm.name, planName: row.planName, accountSize: row.accountSize,
+    firmName: row.firm.name, planName: row.planName, configuration: planConfigurationOrNull(row.configuration), accountSize: row.accountSize,
     phases: row.phases as PropFirmPhaseRules[], needsReview: row.needsReview ?? false,
   };
 }
@@ -1169,6 +1186,7 @@ function planDisclaimer(rule: DrawdownPlanRule, broker: AccountRuleMetrics['brok
       ? ` ${rule.firmName} contrôle ce seuil en temps réel, positions ouvertes comprises : elles ne sont pas incluses ici.`
       : '') +
     (rule.kind === 'trailing_intraday' ? ' Les pics atteints pendant un trade ouvert ne sont pas tous connus : le seuil réel peut être plus haut.' : '') +
+    (rule.floorUnconfirmed ? ' Plancher à confirmer\u00a0: ce plan est à revoir chez nous, vérifie chez ta firm quand il se fige.' : '') +
     ' Les payouts ne sont pas suivis. Le statut du compte reste piloté par toi.'
   );
 }

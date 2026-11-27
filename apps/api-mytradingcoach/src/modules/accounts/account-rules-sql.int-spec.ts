@@ -12,6 +12,7 @@ import type { INestApplication } from '@nestjs/common';
 import { createIntegrationApp } from '../../test/integration-app.helper';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AccountsService, type RulePlan } from './accounts.service';
+import { planConfigurationOrNull } from '../prop-firms/prop-firm-plan-configuration';
 import { aggregateRuleTrades, ruleAggregatesSql, sessionPnls, sessionPnlsSql } from './account-rules';
 
 const RUN = `${Date.now().toString(36)}${Math.floor(Math.random() * 1e6).toString(36)}`;
@@ -93,7 +94,10 @@ describe('B2-03 — métriques des comptes : SQL ≡ calcul JavaScript d’avant
     const listed = await service.list(userId);
     expect(listed).toHaveLength(6);
     const row = await prisma.propFirmPlan.findUniqueOrThrow({ where: { id: 'topstep-standard-50k' }, include: { firm: true } });
-    const topstep: RulePlan = { firmName: row.firm.name, planName: row.planName, accountSize: row.accountSize, phases: row.phases as never };
+    const topstep: RulePlan = {
+      firmName: row.firm.name, planName: row.planName, configuration: planConfigurationOrNull(row.configuration),
+      accountSize: row.accountSize, phases: row.phases as never,
+    };
     for (const a of listed) {
       const trades = await prisma.trade.findMany({
         where: { userId, accountId: a.id, pnl: { not: null } },

@@ -6,6 +6,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { aggregateRuleTrades, previousSession, sessionPnls, tradingDay } from './account-rules';
+import { freezeClock } from '../../test/freeze-clock';
 import { AccountsService, brokerReferenceMismatch, type RuleBroker, type RulePayouts, type RulePlan } from './accounts.service';
 
 // Le AccountsController n'est gardé que par JwtAuthGuard : le multi-comptes
@@ -258,7 +259,7 @@ describe('AccountsService', () => {
       prisma.propFirmPlan.count.mockResolvedValue(1);
       prisma.tradingAccount.create.mockResolvedValue({ id: 'a1' });
       await svc.create('u1', { label: 'Apex 50k', propFirmPlanId: 'apex-eod-50k' } as never);
-      expect(prisma.propFirmPlan.count).toHaveBeenCalledWith({ where: { id: 'apex-eod-50k', active: true } });
+      expect(prisma.propFirmPlan.count).toHaveBeenCalledWith({ where: { id: 'apex-eod-50k', active: true, availability: { not: 'discontinued' } } });
       expect(prisma.tradingAccount.create).toHaveBeenCalledWith({
         data: { userId: 'u1', label: 'Apex 50k', propFirmPlanId: 'apex-eod-50k' },
       });
@@ -270,6 +271,16 @@ describe('AccountsService', () => {
         svc.create('u1', { label: 'X', propFirmPlanId: 'apex-retire-50k' } as never),
       ).rejects.toBeInstanceOf(BadRequestException);
       expect(prisma.tradingAccount.create).not.toHaveBeenCalled();
+    });
+
+    it('update — passer à un autre plan le revérifie, plan plus vendu compris (#1242)', async () => {
+      prisma.tradingAccount.findUnique.mockResolvedValue({ id: 'a1', userId: 'u1', status: 'ACTIVE', propFirmPlanId: 'apex-eod-50k' });
+      prisma.propFirmPlan.count.mockResolvedValue(0);
+      await expect(svc.update('u1', 'a1', { propFirmPlanId: 'toponefutures-elite-daily-nodll-50k' } as never)).rejects.toBeInstanceOf(BadRequestException);
+      expect(prisma.propFirmPlan.count).toHaveBeenCalledWith({
+        where: { id: 'toponefutures-elite-daily-nodll-50k', active: true, availability: { not: 'discontinued' } },
+      });
+      expect(prisma.tradingAccount.update).not.toHaveBeenCalled();
     });
 
     it('update — même plan qu’avant → aucun contrôle (un plan retiré reste sur le compte)', async () => {
@@ -530,6 +541,45 @@ describe('AccountsService', () => {
         ph('funded', md({ locks_at: 2000, locked_floor: 0 }), 0),
       ],
     };
+
+    describe('options du plan sur la règle (#1236)', () => {
+      freezeClock(new Date(Date.UTC(2026, 5, 2, 16)));
+      it('la règle du drawdown porte les options du plan (variante), null sans option (#1236)', () => {
+        const acct = { ...manual, startingBalance: 50000, type: 'EVALUATION' as const };
+        const agg = { count: 2, wins: 1, losses: 1, realized: 400, maxCumulative: 1200, maxEodCumulative: 1200, bestDay: 1200, worstDay: -800 };
+        const now = new Date(Date.UTC(2026, 5, 2, 16));
+        const configuration = { dailyLossLimit: true, evalDrawdown: null, payoutPath: 'consistency' as const, addon: null };
+        expect(svc.ruleMetricsFromAgg(acct, agg, { ...topstep, configuration }, null, null, null, now, [], null).drawdown?.rule?.configuration).toEqual(configuration);
+        expect(svc.ruleMetricsFromAgg(acct, agg, topstep, null, null, null, now, [], null).drawdown?.rule?.configuration).toBeNull();
+      });
+    });
+
+    describe('plan « à revoir » avec gel du plancher (#1233)', () => {
+      freezeClock(new Date(Date.UTC(2026, 5, 2, 16)));
+      const acct = { ...manual, startingBalance: 50000, type: 'EVALUATION' as const };
+      const agg = { count: 2, wins: 1, losses: 1, realized: 400, maxCumulative: 1200, maxEodCumulative: 1200, bestDay: 1200, worstDay: -800 };
+      const now = new Date(Date.UTC(2026, 5, 2, 16));
+      const run = (plan: RulePlan) => svc.ruleMetricsFromAgg(acct, agg, plan, null, null, null, now, [], null);
+
+      it('gel au seuil sur un plan à revoir : plancher signalé à confirmer, dans la règle et l’avertissement', () => {
+        const m = run({ ...topstep, needsReview: true });
+        expect(m.drawdown?.rule?.floorUnconfirmed).toBe(true);
+        expect(m.disclaimer).toContain('Plancher à confirmer\u00a0: ce plan est à revoir chez nous, vérifie chez ta firm quand il se fige.');
+      });
+
+      it('gel seulement au premier payout (sans seuil) sur un plan à revoir : signalé aussi', () => {
+        const payoutOnly: RulePlan = { ...topstep, needsReview: true, phases: [ph('evaluation', md({ locked_floor: 50_100, locks_on_first_payout: 'request' }))] };
+        expect(run(payoutOnly).drawdown?.rule?.floorUnconfirmed).toBe(true);
+      });
+
+      it('plan sûr, ou plan à revoir sans aucun gel : rien de signalé', () => {
+        expect(run(topstep).drawdown?.rule?.floorUnconfirmed).toBe(false);
+        const noLock: RulePlan = { ...topstep, needsReview: true, phases: [ph('evaluation', md({}))] };
+        const m = run(noLock);
+        expect(m.drawdown?.rule?.floorUnconfirmed).toBe(false);
+        expect(m.disclaimer).not.toContain('Plancher à confirmer');
+      });
+    });
 
     describe('perte journalière (Premium, #370)', () => {
       const dll = { amount: 1000, basis: 'equity', resets_at: '17:00 America/Chicago', breach: 'trading_paused_for_day', scaling_rule: null } as const;

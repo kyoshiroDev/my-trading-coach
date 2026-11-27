@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { Logger, ServiceUnavailableException } from '@nestjs/common';
-import { INACTIVITY_MAX_DELETIONS, INACTIVITY_MAX_NOTICES, InactivityPurgeService } from './inactivity-purge.service';
+import { INACTIVITY_MAX_DELETIONS, INACTIVITY_MAX_NOTICES, INACTIVITY_PAGE_SIZE, InactivityPurgeService } from './inactivity-purge.service';
 import { INACTIVITY_NOTICE_CAMPAIGN } from './inactivity-purge.util';
 import { freezeClock } from '../../test/freeze-clock';
 
@@ -115,5 +115,52 @@ describe('InactivityPurgeService (#824)', () => {
     const notices = Array.from({ length: INACTIVITY_MAX_NOTICES + 2 }, (_, i) => user(`n${i}`));
     const b = setup(notices, true);
     expect(await b.svc.run(at('2025-12-12'))).toMatchObject({ notices: [INACTIVITY_MAX_NOTICES, 0, 0, 0], deferred: 2 });
+  });
+  describe('pagination par curseur (#1257)', () => {
+    type Row = ReturnType<typeof user>;
+    /** findMany simulé : applique le curseur « après (createdAt, id) » et la taille de page. */
+    const paged = (rows: Row[]) =>
+      vi.fn(async (args: { where: { AND?: unknown[] }; take: number }) => {
+        type Cursor = { OR: [{ createdAt: { gt: Date } }, { createdAt: Date; id: { gt: string } }] };
+        const isCursor = (c: unknown): c is Cursor => !!(c as Cursor)?.OR?.[0]?.createdAt?.gt;
+        const cursor = args.where.AND?.find(isCursor);
+        const after = cursor ? { createdAt: cursor.OR[0].createdAt.gt, id: cursor.OR[1].id.gt } : null;
+        const sorted = [...rows].sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime() || a.id.localeCompare(b.id));
+        const rest = after
+          ? sorted.filter((r) => r.createdAt > after.createdAt || (r.createdAt.getTime() === after.createdAt.getTime() && r.id > after.id))
+          : sorted;
+        return rest.slice(0, args.take);
+      });
+
+    it('au-delà d’une page, les comptes suivants sont examinés : le dernier reçoit son préavis', async () => {
+      // 2 000 comptes en attente entre deux préavis (même inscription : le départage se fait par id), puis un compte dû.
+      const waiting = Array.from({ length: 2 * INACTIVITY_PAGE_SIZE }, (_, i) => user(`w${String(i).padStart(5, '0')}`, ['2025-12-12']));
+      const due = { ...user('zz_du'), createdAt: new Date('2023-06-01T00:00:00Z') };
+      const { svc, prisma, resend } = setup([], true);
+      prisma.user.findMany = paged([due, ...waiting]);
+      const r = await svc.run(at('2025-12-15'));
+      expect(r.notices).toEqual([1, 0, 0, 0]);
+      expect(resend.sendInactivityNotice).toHaveBeenCalledTimes(1);
+      expect(resend.sendInactivityNotice).toHaveBeenCalledWith(expect.objectContaining({ to: 'zz_du@exemple.test' }));
+      // 3 pages : 1 000, 1 000, puis 1 (la dernière, incomplète, arrête la lecture).
+      expect(prisma.user.findMany).toHaveBeenCalledTimes(3);
+      expect(prisma.user.findMany.mock.calls[0][0]).toMatchObject({ orderBy: [{ createdAt: 'asc' }, { id: 'asc' }], take: INACTIVITY_PAGE_SIZE });
+    });
+
+    it('page pile pleine : une lecture de plus, vide, puis arrêt', async () => {
+      const rows = Array.from({ length: INACTIVITY_PAGE_SIZE }, (_, i) => user(`p${String(i).padStart(4, '0')}`, ['2025-12-12']));
+      const { svc, prisma } = setup([], true);
+      prisma.user.findMany = paged(rows);
+      await svc.run(at('2025-12-15'));
+      expect(prisma.user.findMany).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  it('contre-épreuve : un compte qui n’a pas reçu ses 4 préavis n’est jamais supprimé, même à la date', async () => {
+    for (const sent of [[], ALL_NOTICES.slice(0, 1), ALL_NOTICES.slice(0, 2), ALL_NOTICES.slice(0, 3)]) {
+      const { svc, users } = setup([user('a', sent)], true);
+      expect((await svc.run(NOW)).deletions).toBe(0);
+      expect(users.deleteForInactivity).not.toHaveBeenCalled();
+    }
   });
 });

@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Test } from '@nestjs/testing';
 import { UsersService } from './users.service';
+import { PREFERENCE_FIELDS } from './preference-fields';
+import type { UpdatePreferencesDto } from './dto/update-preferences.dto';
 import { StripeAccountClosureService } from '../stripe/stripe-account-closure.service';
 import { Goal, Market } from './dto/onboarding.dto';
 import { AmbassadorService } from '../ambassador/ambassador.service';
@@ -164,6 +166,36 @@ describe('UsersService', () => {
       expect(mockPrisma.user.update).toHaveBeenCalledWith(
         expect.objectContaining({ data: { debriefAutomatic: false } }),
       );
+    });
+  });
+
+  describe('updatePreferences : liste blanche (#1267)', () => {
+    it('un champ hors liste n’est jamais écrit, même s’il passait la validation', async () => {
+      mockPrisma.user.update.mockResolvedValue(mockUser);
+      const dto = { notificationsEmail: true, plan: 'PREMIUM', role: 'ADMIN', isDemo: false, email: 'x@example.com' };
+      await service.updatePreferences('user-1', dto as unknown as UpdatePreferencesDto);
+      expect(mockPrisma.user.update.mock.calls.at(-1)![0].data).toEqual({ notificationsEmail: true });
+    });
+
+    it('chaque champ autorisé est recopié tel quel, aucun autre', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({ marketingConsent: true });
+      mockPrisma.user.update.mockResolvedValue(mockUser);
+      const dto: UpdatePreferencesDto = {
+        startingCapital: 50_000,
+        notificationsEmail: false,
+        debriefAutomatic: true,
+        marketingConsent: true,
+        tradingStyle: 'scalping',
+        tradingStrategy: ['breakout'],
+        tradingSessions: ['NEW_YORK'],
+        tradesPerDayMin: 1,
+        tradesPerDayMax: 5,
+        strategyDescription: 'ORB 5 min',
+        newsShieldMinutes: 10,
+      };
+      await service.updatePreferences('user-1', dto);
+      expect(Object.keys(dto).sort()).toEqual([...PREFERENCE_FIELDS].sort());
+      expect(mockPrisma.user.update.mock.calls.at(-1)![0].data).toEqual(dto);
     });
   });
 

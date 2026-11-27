@@ -82,10 +82,19 @@ de l'API (`PropFirmCatalogSyncService`, cf. `nestjs.md`) écraserait la modifica
   `availability`, `needsReview`, `active`), règles détaillées en Json au format du catalogue
   (`phases`, `price`, `configuration`), relues avec `propFirmPhaseSchema` / `propFirmPriceSchema`
   (Zod, `modules/prop-firms/prop-firm-catalog.schema.ts`). Un champ ajouté au JSON = aucune migration.
+  `configuration` (options du checkout) est relue par `planConfiguration`
+  (`modules/prop-firms/prop-firm-plan-configuration.ts`, module pur) : stricte, elle lève, pour la liste
+  et le détail (`getPlan` la renvoie depuis #1236) ; `planConfigurationOrNull` tolère et renvoie null
+  sans lever pour la règle d'un compte (`DrawdownPlanRule.configuration`, métriques de chaque compte).
 - `contentHash` (sha256 du contenu écrit) : la synchro n'écrit que les lignes dont l'empreinte change.
 - `availability` : `public` | `invite_only` | `discontinued` (chaîne libre, aucune migration). Un plan
   plus vendu reste dans le JSON en `discontinued` : masqué dans les sélecteurs et sur la landing,
   toujours servi par `/prop-firms` pour les comptes déjà liés (X-Ultra, 2026-11-02).
+  Côté API (#1242), `assertCatalogPlan` refuse en 400 un plan `discontinued` ou inactif à une nouvelle
+  liaison (création, changement de plan). Un compte déjà relié le garde (jamais revérifié si le plan
+  ne change pas). Exceptions voulues : la nouvelle tentative (`retryAccountData`) recopie le plan du
+  compte perdu, et le backfill au démarrage peut relier un compte antérieur au 02/10 à un plan devenu
+  `discontinued` (vendu à l'époque).
 - **Plan retiré du JSON → `active = false`, jamais supprimé** (des comptes peuvent le référencer).
   `PropFirmPlan.firmId` en `onDelete: Restrict`.
 - `verifiedAt` (date du relevé) est porté par `PropFirm`, pas par le plan.
@@ -95,16 +104,19 @@ de l'API (`PropFirmCatalogSyncService`, cf. `nestjs.md`) écraserait la modifica
   séance, Mes comptes et cartes Courbe d'équité / Drawdown (`design.md`). Le seed démo relie ses
   3 comptes : `apex-eod-50k` (suiveur EOD), `tradeify-select-flex-50k` (funded, payout en jours),
   `elitetraderfunding-static-25k` (statique, 25K).
-- **Gel du plancher au premier payout** (#696) : champ `max_drawdown.locks_on_first_payout`
+- **Gel du plancher au premier payout** (#696, #1247, #1241) : champ `max_drawdown.locks_on_first_payout`
   (`request` = dès la demande · `approval` = dès l'approbation · `payout` = non précisé par la firm),
-  sur 92 phases funded / direct : Lucid Flex, Top One (Elite, Access, X-Ultra, Instant, Ignite),
-  Tradeify (Growth, Select, Lightning, Select Flex 300K), MyFundedFutures Pro. Présent ⇒ drawdown
+  sur 120 phases funded / direct : Lucid Flex, Top One (Elite, Access, Access Static (aligné sur
+  Access, sources muettes), X-Ultra, Instant, Ignite), Tradeify (Growth, Select, Lightning, Select
+  Flex 300K), MyFundedFutures Pro, Topstep XFA, Funded Futures Family Premier+. Présent ⇒ drawdown
   suiveur et niveau figé connu (`locked_floor`, ou `locks_at − amount`) : vérifié par
   `payout-floor-lock.spec.ts`. Appliqué par `drawdownFloor(rule, peak, payoutFreezePeak)` : plancher
   = max(niveau figé, suiveur au moment du gel), jamais plus bas que le niveau figé. **Hors périmètre**
-  (restent dans `basis_notes`) : Topstep, Funded Futures Family, TradeDay, et le **suivi sur le profit
+  (restent dans `basis_notes`) : TradeDay, et le **suivi sur le profit
   brut payouts compris** (TradeDay Quick Pay). Les suiveurs intraday sont approchés (trades clôturés,
   pas le plus haut latent).
+  Topstep Static XFA (#1238) : MLL statique fixé à 0 $ au premier payout, gel non appliqué (drawdown
+  statique, ni dans `payout-floor-lock.spec.ts` ni dans `drawdownFloor`), suivi dans #1310.
 - `TradingAccount.planLinkChoice` (enum `PlanLinkChoice` : `LATER` · `PERSONAL` · `UNLISTED`) +
   `unlistedFirm` (migration `20261018140000_account_plan_link_choice`, additive, #612) : réponse à
   « Quel est ce compte ? » quand **aucun** plan n'est relié. Null = jamais demandé. Pas de valeur

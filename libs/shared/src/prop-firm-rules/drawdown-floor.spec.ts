@@ -1,4 +1,6 @@
 import { describe, it, expect } from 'vitest';
+import topstep from './topstep.json';
+import topone from './toponefutures.json';
 import {
   drawdownFloor,
   DrawdownFloorRule,
@@ -190,6 +192,13 @@ describe('drawdownFloor : gel au premier payout (#696)', () => {
     });
   });
 
+  it('Topstep XFA (#1247) : solde de départ et niveau figé à 0, figé à 0 dès le premier payout', () => {
+    const xfa = rule({ startingBalance: 0, amount: 2_000, locksAt: 2_000, lockedFloor: 0, locksOnFirstPayout: 'payout' });
+    expect(drawdownFloor(xfa, 500)).toEqual({ floor: -1_500, locked: false });
+    // Un niveau figé à 0 reste un niveau connu (jamais pris pour une absence de valeur).
+    expect(drawdownFloor(xfa, 500, 500)).toEqual({ floor: 0, locked: true });
+  });
+
   it('le gel ne fait jamais baisser le plancher : suiveur déjà au-dessus de départ + 100 au moment du payout', () => {
     const pro = rule({ lockedFloor: 50_100, locksOnFirstPayout: 'approval' });
     // Plus haut +3 000 avant le payout : suiveur à 51 000, au-dessus de 50 100.
@@ -234,5 +243,45 @@ describe('drawdownFloor : gel au premier payout (#696)', () => {
     expect(planDrawdownRule(withLock, acc)?.rule.locksOnFirstPayout).toBe(
       'request',
     );
+  });
+});
+
+describe('Top One Elite Access Static (#1241), plan réel du catalogue', () => {
+  const plan = (topone as { plans: { id: string; phases: { phase: string; max_drawdown: unknown }[] }[] }).plans.find(
+    (p) => p.id === 'toponefutures-elite-access-static-50k',
+  )!;
+  const phase = (name: string) => plan.phases.find((ph) => ph.phase === name)! as Parameters<typeof planDrawdownRule>[0];
+  const account = { startingBalance: 50_000, accountSize: 50_000, platform: null };
+
+  it('évaluation : plancher fixe à 48 000 $, il ne monte pas avec le plus haut', () => {
+    const { rule } = planDrawdownRule(phase('evaluation'), account)!;
+    expect(drawdownFloor(rule, 0)).toEqual({ floor: 48_000, locked: false });
+    expect(drawdownFloor(rule, 2_500).floor).toBe(48_000);
+  });
+
+  it('funded : suiveur EOD comme Elite Access, figé à 50 100 $ quand le solde atteint 52 100 $ ou dès le premier payout', () => {
+    const { rule } = planDrawdownRule(phase('funded'), account)!;
+    expect(drawdownFloor(rule, 1_000).floor).toBe(49_000);
+    expect(drawdownFloor(rule, 2_100)).toEqual({ floor: 50_100, locked: true });
+    expect(rule.locksOnFirstPayout).toBe('payout');
+    // Payout à +1 000 $ (avant 52 100 $) : figé à 50 100 $, ne suit plus le plus haut.
+    expect(drawdownFloor(rule, 1_800, 1_000)).toEqual({ floor: 50_100, locked: true });
+  });
+});
+
+describe('Topstep Static Trading Combine (#1238), plan réel du catalogue', () => {
+  const plan = (topstep as { plans: { id: string; phases: { phase: string; max_drawdown: unknown }[] }[] }).plans.find((p) => p.id === 'topstep-static-standard-50k')!;
+  const phase = (name: string) => plan.phases.find((ph) => ph.phase === name)! as Parameters<typeof planDrawdownRule>[0];
+
+  it('Combine : plancher fixe à 48 000 $, il ne monte pas avec le plus haut', () => {
+    const { rule } = planDrawdownRule(phase('evaluation'), { startingBalance: 50_000, accountSize: 50_000, platform: null })!;
+    expect(drawdownFloor(rule, 0)).toEqual({ floor: 48_000, locked: false });
+    expect(drawdownFloor(rule, 3_500).floor).toBe(48_000);
+  });
+
+  it('XFA Static : départ 0 $, plancher fixe à -2 000 $, aucun gel même avec un payout connu (non modélisé)', () => {
+    const { rule } = planDrawdownRule(phase('funded'), { startingBalance: 0, accountSize: 50_000, platform: null })!;
+    expect(drawdownFloor(rule, 1_500)).toEqual({ floor: -2_000, locked: false });
+    expect(drawdownFloor(rule, 1_500, 1_000)).toEqual({ floor: -2_000, locked: false });
   });
 });

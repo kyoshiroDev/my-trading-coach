@@ -13,8 +13,12 @@ import { INACTIVITY_NOTICE_COUNT } from '@mtc/shared';
 /** Plafonds par passage : pas de rafale Stripe ni Resend (le reste passe le lendemain). */
 export const INACTIVITY_MAX_DELETIONS = 50;
 export const INACTIVITY_MAX_NOTICES = 500;
-/** Comptes examinés par passage, les plus anciens d'abord. */
-export const INACTIVITY_SCAN_LIMIT = 5_000;
+/**
+ * Comptes lus par page, les plus anciens d'abord (#1257) : TOUS les comptes éligibles sont examinés à
+ * chaque passage, page après page, par curseur (inscription, id). Avant, la lecture s'arrêtait aux
+ * 5 000 premiers : au-delà, les comptes en attente entre deux préavis prenaient toutes les places.
+ */
+export const INACTIVITY_PAGE_SIZE = 1_000;
 
 /** Statuts Stripe qui ne protègent plus le compte : abonnement terminé. */
 const ENDED_SUBSCRIPTION = ['canceled', 'incomplete_expired'];
@@ -110,20 +114,10 @@ export class InactivityPurgeService {
     const enabled = this.enabled;
     const today = parisDay(now);
     const cutoff = selectionCutoff(now);
-    const candidates = await this.prisma.user.findMany({
-      where: inactiveWhere(now, cutoff),
-      select: {
-        id: true, email: true, name: true, lastSeenAt: true, lastLoginAt: true, createdAt: true,
-        emailSends: { where: { campaignKey: INACTIVITY_NOTICE_CAMPAIGN }, select: { sentAt: true } },
-      },
-      orderBy: { createdAt: 'asc' },
-      take: INACTIVITY_SCAN_LIMIT,
-    });
-
     const report: InactivityReport = {
       enabled, notices: Array(INACTIVITY_NOTICE_COUNT).fill(0), deletions: 0, failures: 0, deferred: 0,
     };
-    for (const u of candidates) {
+    for await (const u of this.candidates(now, cutoff)) {
       const activity = lastActivity(u);
       // Préavis du cycle en cours : envoyés après la dernière connexion (une connexion remet à zéro).
       const notices = u.emailSends.map((e) => e.sentAt).filter((d) => d > activity);
@@ -164,6 +158,37 @@ export class InactivityPurgeService {
         (report.excluded ? `, exclus ${JSON.stringify(report.excluded)}` : ''),
     );
     return report;
+  }
+
+  /**
+   * Comptes éligibles, page par page. Curseur « après (createdAt, id) » dans le WHERE et non curseur
+   * Prisma : un compte supprimé pendant le passage ne casse pas la page suivante.
+   */
+  private async *candidates(now: Date, cutoff: Date) {
+    let after: { createdAt: Date; id: string } | null = null;
+    for (;;) {
+      const where: Prisma.UserWhereInput = after
+        ? {
+            AND: [
+              inactiveWhere(now, cutoff),
+              { OR: [{ createdAt: { gt: after.createdAt } }, { createdAt: after.createdAt, id: { gt: after.id } }] },
+            ],
+          }
+        : inactiveWhere(now, cutoff);
+      const page = await this.prisma.user.findMany({
+        where,
+        select: {
+          id: true, email: true, name: true, lastSeenAt: true, lastLoginAt: true, createdAt: true,
+          emailSends: { where: { campaignKey: INACTIVITY_NOTICE_CAMPAIGN }, select: { sentAt: true } },
+        },
+        orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+        take: INACTIVITY_PAGE_SIZE,
+      });
+      yield* page;
+      if (page.length < INACTIVITY_PAGE_SIZE) return;
+      const last = page[page.length - 1];
+      after = { createdAt: last.createdAt, id: last.id };
+    }
   }
 
   private async sendNotice(

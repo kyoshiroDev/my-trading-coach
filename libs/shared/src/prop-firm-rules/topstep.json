@@ -77,6 +77,7 @@
             "trails_on": "balance",
             "locks_at": 2000,
             "locked_floor": 0,
+            "locks_on_first_payout": "payout",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "Express Funded Account : solde de départ 0 $, MLL à -2000 $ qui monte avec le solde de fin de journée, verrouillé à 0 $ quand le solde atteint 2000 $. Après le premier payout, MLL fixé à 0 $ quel que soit son niveau. Surveillé en temps réel, latent compris ; atteint = compte fermé définitivement."
@@ -229,6 +230,7 @@
             "trails_on": "balance",
             "locks_at": 2000,
             "locked_floor": 0,
+            "locks_on_first_payout": "payout",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "Express Funded Account : solde de départ 0 $, MLL à -2000 $ qui monte avec le solde de fin de journée, verrouillé à 0 $ quand le solde atteint 2000 $. Après le premier payout, MLL fixé à 0 $ quel que soit son niveau. Surveillé en temps réel, latent compris ; atteint = compte fermé définitivement."
@@ -365,6 +367,7 @@
             "trails_on": "balance",
             "locks_at": 2000,
             "locked_floor": 0,
+            "locks_on_first_payout": "payout",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "Express Funded Account : solde de départ 0 $, MLL à -2000 $ qui monte avec le solde de fin de journée, verrouillé à 0 $ quand le solde atteint 2000 $. Après le premier payout, MLL fixé à 0 $ quel que soit son niveau. Surveillé en temps réel, latent compris ; atteint = compte fermé définitivement."
@@ -521,6 +524,7 @@
             "trails_on": "balance",
             "locks_at": 2000,
             "locked_floor": 0,
+            "locks_on_first_payout": "payout",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "Express Funded Account : solde de départ 0 $, MLL à -2000 $ qui monte avec le solde de fin de journée, verrouillé à 0 $ quand le solde atteint 2000 $. Après le premier payout, MLL fixé à 0 $ quel que soit son niveau. Surveillé en temps réel, latent compris ; atteint = compte fermé définitivement."
@@ -661,6 +665,7 @@
             "trails_on": "balance",
             "locks_at": 3000,
             "locked_floor": 0,
+            "locks_on_first_payout": "payout",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "Express Funded Account : solde de départ 0 $, MLL à -3000 $ qui monte avec le solde de fin de journée, verrouillé à 0 $ quand le solde atteint 3000 $. Après le premier payout, MLL fixé à 0 $ quel que soit son niveau. Surveillé en temps réel, latent compris ; atteint = compte fermé définitivement."
@@ -819,6 +824,7 @@
             "trails_on": "balance",
             "locks_at": 3000,
             "locked_floor": 0,
+            "locks_on_first_payout": "payout",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "Express Funded Account : solde de départ 0 $, MLL à -3000 $ qui monte avec le solde de fin de journée, verrouillé à 0 $ quand le solde atteint 3000 $. Après le premier payout, MLL fixé à 0 $ quel que soit son niveau. Surveillé en temps réel, latent compris ; atteint = compte fermé définitivement."
@@ -961,6 +967,7 @@
             "trails_on": "balance",
             "locks_at": 3000,
             "locked_floor": 0,
+            "locks_on_first_payout": "payout",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "Express Funded Account : solde de départ 0 $, MLL à -3000 $ qui monte avec le solde de fin de journée, verrouillé à 0 $ quand le solde atteint 3000 $. Après le premier payout, MLL fixé à 0 $ quel que soit son niveau. Surveillé en temps réel, latent compris ; atteint = compte fermé définitivement."
@@ -1123,6 +1130,7 @@
             "trails_on": "balance",
             "locks_at": 3000,
             "locked_floor": 0,
+            "locks_on_first_payout": "payout",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "Express Funded Account : solde de départ 0 $, MLL à -3000 $ qui monte avec le solde de fin de journée, verrouillé à 0 $ quand le solde atteint 3000 $. Après le premier payout, MLL fixé à 0 $ quel que soit son niveau. Surveillé en temps réel, latent compris ; atteint = compte fermé définitivement."
@@ -1269,6 +1277,7 @@
             "trails_on": "balance",
             "locks_at": 4500,
             "locked_floor": 0,
+            "locks_on_first_payout": "payout",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "Express Funded Account : solde de départ 0 $, MLL à -4500 $ qui monte avec le solde de fin de journée, verrouillé à 0 $ quand le solde atteint 4500 $. Après le premier payout, MLL fixé à 0 $ quel que soit son niveau. Surveillé en temps réel, latent compris ; atteint = compte fermé définitivement."
@@ -1433,6 +1442,7 @@
             "trails_on": "balance",
             "locks_at": 4500,
             "locked_floor": 0,
+            "locks_on_first_payout": "payout",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "Express Funded Account : solde de départ 0 $, MLL à -4500 $ qui monte avec le solde de fin de journée, verrouillé à 0 $ quand le solde atteint 4500 $. Après le premier payout, MLL fixé à 0 $ quel que soit son niveau. Surveillé en temps réel, latent compris ; atteint = compte fermé définitivement."
@@ -1581,6 +1591,7 @@
             "trails_on": "balance",
             "locks_at": 4500,
             "locked_floor": 0,
+            "locks_on_first_payout": "payout",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "Express Funded Account : solde de départ 0 $, MLL à -4500 $ qui monte avec le solde de fin de journée, verrouillé à 0 $ quand le solde atteint 4500 $. Après le premier payout, MLL fixé à 0 $ quel que soit son niveau. Surveillé en temps réel, latent compris ; atteint = compte fermé définitivement."
@@ -1749,6 +1760,7 @@
             "trails_on": "balance",
             "locks_at": 4500,
             "locked_floor": 0,
+            "locks_on_first_payout": "payout",
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
             "basis_notes": "Express Funded Account : solde de départ 0 $, MLL à -4500 $ qui monte avec le solde de fin de journée, verrouillé à 0 $ quand le solde atteint 4500 $. Après le premier payout, MLL fixé à 0 $ quel que soit son niveau. Surveillé en temps réel, latent compris ; atteint = compte fermé définitivement."
@@ -1834,6 +1846,1157 @@
       ],
       "needs_review": false,
       "notes": "Option DLL ajoutée à l'achat, parcours de payout Consistency (choisi à l'activation du XFA, définitif). Compte Live Funded (appel de l'équipe risque, DLL dynamique) non modélisé."
+    },
+    {
+      "id": "topstep-static-standard-25k",
+      "plan_name": "Static Trading Combine",
+      "account_size": 25000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": null,
+        "eval_drawdown": null,
+        "payout_path": "standard",
+        "addon": null
+      },
+      "price": {
+        "amount": 75,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Paiement unique de 75 $ (pas d'abonnement, pas de rebill, pas de reset), activation du XFA gratuite (page Labs)."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 2000,
+          "daily_loss_limit": {
+            "amount": 500,
+            "basis": "equity",
+            "resets_at": "17:00 America/Chicago",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "DLL obligatoire sur les Static Trading Combines (page Labs), reportée sur le XFA. Contrôle comme la DLL Topstep : temps réel, latent compris ; atteinte = pause jusqu'à 17:00 CT, pas une violation."
+          },
+          "max_drawdown": {
+            "amount": 1000,
+            "type": "static",
+            "trails_on": null,
+            "locks_at": null,
+            "locked_floor": 24000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "MLL statique (page Labs, article MLL) : niveau fixe à 24000 $ (départ − 1000 $), ne bouge jamais. Surveillé en temps réel comme tout MLL Topstep."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.55,
+            "applies_to": "profit_target",
+            "notes": "Le meilleur jour doit rester sous 55 % de l'objectif (1100 $ sur 2000 $) (page Labs)."
+          },
+          "min_trading_days": null,
+          "max_duration_days": 90,
+          "max_contracts": {
+            "minis": 2,
+            "micros": 20,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Taille max ouverte à la fois (page Labs), micros 10:1. Durée de vie 90 jours, inactivité 30 jours."
+          },
+          "time_rules": {
+            "must_close_by": "15:10 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Toutes les positions fermées avant 15:10 CT ; Topstep commence à liquider vers 15:08 CT. Reprise à 17:00 CT. Produits qui ferment plus tôt (CBOT, bétail) : sortir avant leur clôture. News autorisées, mais trader sa taille maximale directement dans une annonce majeure programmée est une stratégie interdite."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "starting_balance": 0,
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 500,
+            "basis": "equity",
+            "resets_at": "17:00 America/Chicago",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "DLL obligatoire sur les Static Trading Combines (page Labs), reportée sur le XFA. Contrôle comme la DLL Topstep : temps réel, latent compris ; atteinte = pause jusqu'à 17:00 CT, pas une violation."
+          },
+          "max_drawdown": {
+            "amount": 1000,
+            "type": "static",
+            "trails_on": null,
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "XFA Static : solde de départ 0 $, MLL statique à -1000 $ (« starts below $0 and never moves »). Après le premier payout, MLL fixé à 0 $ : non appliqué par l'app (drawdown statique)."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 2,
+            "micros": 20,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Scaling du XFA Static (page Labs) : aucun scaling (2 minis / 20 micros) ; seuils de profit non publiés."
+          },
+          "time_rules": {
+            "must_close_by": "15:10 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Toutes les positions fermées avant 15:10 CT ; Topstep commence à liquider vers 15:08 CT. Reprise à 17:00 CT. Produits qui ferment plus tôt (CBOT, bétail) : sortir avant leur clôture. News autorisées, mais trader sa taille maximale directement dans une annonce majeure programmée est une stratégie interdite."
+          },
+          "payout": {
+            "min_days": null,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": null,
+            "min_amount": null,
+            "max_amount": null,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": null,
+            "notes": "Parcours Standard au choix. Règles de payout du XFA Static non publiées (la politique XFA classique n'est pas confirmée pour Static). « Payout Cap » 4000 $ : par payout ou à vie, non précisé. Back2Funded indisponible."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://help.topstep.com/en/articles/15520357-topstep-labs",
+        "https://help.topstep.com/en/articles/8284204-what-is-the-maximum-loss-limit"
+      ],
+      "needs_review": true,
+      "notes": "Static Trading Combine 25K, parcours de payout Standard. Topstep Labs (drop limité) : vendu à tous depuis la page Labs du Dashboard (« all now available for purchase any time »), peut s'arrêter ; passer en `discontinued` à la fin de la vente. Achat limité (Labs) : « 5 per Trader » (50K), « 5 per month » (100K, 150K), et la page dit aussi « 5 of each account per month » : contradiction non levée. À confirmer (#1238) : jours minimum du Combine, règles de payout du XFA Static (hors Daily Payouts+), nature du plafond de payout (par payout ou à vie), seuils de profit du scaling ; « Topstep Limited Products » introuvable (404). Gel du MLL à 0 $ au premier payout non appliqué par l'app (drawdown statique)."
+    },
+    {
+      "id": "topstep-static-standard-50k",
+      "plan_name": "Static Trading Combine",
+      "account_size": 50000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": null,
+        "eval_drawdown": null,
+        "payout_path": "standard",
+        "addon": null
+      },
+      "price": {
+        "amount": 149,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Paiement unique de 149 $ (pas d'abonnement, pas de rebill, pas de reset), activation du XFA gratuite (page Labs)."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 4000,
+          "daily_loss_limit": {
+            "amount": 1000,
+            "basis": "equity",
+            "resets_at": "17:00 America/Chicago",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "DLL obligatoire sur les Static Trading Combines (page Labs), reportée sur le XFA. Contrôle comme la DLL Topstep : temps réel, latent compris ; atteinte = pause jusqu'à 17:00 CT, pas une violation."
+          },
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "static",
+            "trails_on": null,
+            "locks_at": null,
+            "locked_floor": 48000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "MLL statique (page Labs, article MLL) : niveau fixe à 48000 $ (départ − 2000 $), ne bouge jamais. Surveillé en temps réel comme tout MLL Topstep."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.55,
+            "applies_to": "profit_target",
+            "notes": "Le meilleur jour doit rester sous 55 % de l'objectif (2200 $ sur 4000 $) (page Labs)."
+          },
+          "min_trading_days": null,
+          "max_duration_days": 90,
+          "max_contracts": {
+            "minis": 4,
+            "micros": 40,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Taille max ouverte à la fois (page Labs), micros 10:1. Durée de vie 90 jours, inactivité 30 jours."
+          },
+          "time_rules": {
+            "must_close_by": "15:10 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Toutes les positions fermées avant 15:10 CT ; Topstep commence à liquider vers 15:08 CT. Reprise à 17:00 CT. Produits qui ferment plus tôt (CBOT, bétail) : sortir avant leur clôture. News autorisées, mais trader sa taille maximale directement dans une annonce majeure programmée est une stratégie interdite."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "starting_balance": 0,
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 1000,
+            "basis": "equity",
+            "resets_at": "17:00 America/Chicago",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "DLL obligatoire sur les Static Trading Combines (page Labs), reportée sur le XFA. Contrôle comme la DLL Topstep : temps réel, latent compris ; atteinte = pause jusqu'à 17:00 CT, pas une violation."
+          },
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "static",
+            "trails_on": null,
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "XFA Static : solde de départ 0 $, MLL statique à -2000 $ (« starts below $0 and never moves »). Après le premier payout, MLL fixé à 0 $ : non appliqué par l'app (drawdown statique)."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 4,
+            "micros": 40,
+            "scaling": true,
+            "tiers": null,
+            "notes": "Scaling du XFA Static (page Labs) : 2 / 3 / 4 minis ; seuils de profit non publiés."
+          },
+          "time_rules": {
+            "must_close_by": "15:10 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Toutes les positions fermées avant 15:10 CT ; Topstep commence à liquider vers 15:08 CT. Reprise à 17:00 CT. Produits qui ferment plus tôt (CBOT, bétail) : sortir avant leur clôture. News autorisées, mais trader sa taille maximale directement dans une annonce majeure programmée est une stratégie interdite."
+          },
+          "payout": {
+            "min_days": null,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": null,
+            "min_amount": null,
+            "max_amount": null,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": null,
+            "notes": "Parcours Standard au choix. Règles de payout du XFA Static non publiées (la politique XFA classique n'est pas confirmée pour Static). « Payout Cap » 8000 $ : par payout ou à vie, non précisé. Back2Funded indisponible."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://help.topstep.com/en/articles/15520357-topstep-labs",
+        "https://help.topstep.com/en/articles/8284204-what-is-the-maximum-loss-limit"
+      ],
+      "needs_review": true,
+      "notes": "Static Trading Combine 50K, parcours de payout Standard. Topstep Labs (drop limité) : vendu à tous depuis la page Labs du Dashboard (« all now available for purchase any time »), peut s'arrêter ; passer en `discontinued` à la fin de la vente. Achat limité (Labs) : « 5 per Trader » (50K), « 5 per month » (100K, 150K), et la page dit aussi « 5 of each account per month » : contradiction non levée. À confirmer (#1238) : jours minimum du Combine, règles de payout du XFA Static (hors Daily Payouts+), nature du plafond de payout (par payout ou à vie), seuils de profit du scaling ; « Topstep Limited Products » introuvable (404). Gel du MLL à 0 $ au premier payout non appliqué par l'app (drawdown statique)."
+    },
+    {
+      "id": "topstep-static-standard-100k",
+      "plan_name": "Static Trading Combine",
+      "account_size": 100000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": null,
+        "eval_drawdown": null,
+        "payout_path": "standard",
+        "addon": null
+      },
+      "price": {
+        "amount": 199,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Paiement unique de 199 $ (pas d'abonnement, pas de rebill, pas de reset), activation du XFA gratuite (page Labs)."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 8000,
+          "daily_loss_limit": {
+            "amount": 2000,
+            "basis": "equity",
+            "resets_at": "17:00 America/Chicago",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "DLL obligatoire sur les Static Trading Combines (page Labs), reportée sur le XFA. Contrôle comme la DLL Topstep : temps réel, latent compris ; atteinte = pause jusqu'à 17:00 CT, pas une violation."
+          },
+          "max_drawdown": {
+            "amount": 4000,
+            "type": "static",
+            "trails_on": null,
+            "locks_at": null,
+            "locked_floor": 96000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "MLL statique (page Labs, article MLL) : niveau fixe à 96000 $ (départ − 4000 $), ne bouge jamais. Surveillé en temps réel comme tout MLL Topstep."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.55,
+            "applies_to": "profit_target",
+            "notes": "Le meilleur jour doit rester sous 55 % de l'objectif (4400 $ sur 8000 $) (page Labs)."
+          },
+          "min_trading_days": null,
+          "max_duration_days": 90,
+          "max_contracts": {
+            "minis": 10,
+            "micros": 100,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Taille max ouverte à la fois (page Labs), micros 10:1. Durée de vie 90 jours, inactivité 30 jours."
+          },
+          "time_rules": {
+            "must_close_by": "15:10 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Toutes les positions fermées avant 15:10 CT ; Topstep commence à liquider vers 15:08 CT. Reprise à 17:00 CT. Produits qui ferment plus tôt (CBOT, bétail) : sortir avant leur clôture. News autorisées, mais trader sa taille maximale directement dans une annonce majeure programmée est une stratégie interdite."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "starting_balance": 0,
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 2000,
+            "basis": "equity",
+            "resets_at": "17:00 America/Chicago",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "DLL obligatoire sur les Static Trading Combines (page Labs), reportée sur le XFA. Contrôle comme la DLL Topstep : temps réel, latent compris ; atteinte = pause jusqu'à 17:00 CT, pas une violation."
+          },
+          "max_drawdown": {
+            "amount": 4000,
+            "type": "static",
+            "trails_on": null,
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "XFA Static : solde de départ 0 $, MLL statique à -4000 $ (« starts below $0 and never moves »). Après le premier payout, MLL fixé à 0 $ : non appliqué par l'app (drawdown statique)."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 10,
+            "micros": 100,
+            "scaling": true,
+            "tiers": null,
+            "notes": "Scaling du XFA Static (page Labs) : 3 / 4 / 5 / 10 minis ; seuils de profit non publiés."
+          },
+          "time_rules": {
+            "must_close_by": "15:10 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Toutes les positions fermées avant 15:10 CT ; Topstep commence à liquider vers 15:08 CT. Reprise à 17:00 CT. Produits qui ferment plus tôt (CBOT, bétail) : sortir avant leur clôture. News autorisées, mais trader sa taille maximale directement dans une annonce majeure programmée est une stratégie interdite."
+          },
+          "payout": {
+            "min_days": null,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": null,
+            "min_amount": null,
+            "max_amount": null,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": null,
+            "notes": "Parcours Standard au choix. Règles de payout du XFA Static non publiées (la politique XFA classique n'est pas confirmée pour Static). « Payout Cap » 10000 $ : par payout ou à vie, non précisé. Back2Funded indisponible."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://help.topstep.com/en/articles/15520357-topstep-labs",
+        "https://help.topstep.com/en/articles/8284204-what-is-the-maximum-loss-limit"
+      ],
+      "needs_review": true,
+      "notes": "Static Trading Combine 100K, parcours de payout Standard. Topstep Labs (drop limité) : vendu à tous depuis la page Labs du Dashboard (« all now available for purchase any time »), peut s'arrêter ; passer en `discontinued` à la fin de la vente. Achat limité (Labs) : « 5 per Trader » (50K), « 5 per month » (100K, 150K), et la page dit aussi « 5 of each account per month » : contradiction non levée. À confirmer (#1238) : jours minimum du Combine, règles de payout du XFA Static (hors Daily Payouts+), nature du plafond de payout (par payout ou à vie), seuils de profit du scaling ; « Topstep Limited Products » introuvable (404). Gel du MLL à 0 $ au premier payout non appliqué par l'app (drawdown statique)."
+    },
+    {
+      "id": "topstep-static-standard-150k",
+      "plan_name": "Static Trading Combine",
+      "account_size": 150000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": null,
+        "eval_drawdown": null,
+        "payout_path": "standard",
+        "addon": null
+      },
+      "price": {
+        "amount": 279,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Paiement unique de 279 $ (pas d'abonnement, pas de rebill, pas de reset), activation du XFA gratuite (page Labs)."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 12000,
+          "daily_loss_limit": {
+            "amount": 3000,
+            "basis": "equity",
+            "resets_at": "17:00 America/Chicago",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "DLL obligatoire sur les Static Trading Combines (page Labs), reportée sur le XFA. Contrôle comme la DLL Topstep : temps réel, latent compris ; atteinte = pause jusqu'à 17:00 CT, pas une violation."
+          },
+          "max_drawdown": {
+            "amount": 6000,
+            "type": "static",
+            "trails_on": null,
+            "locks_at": null,
+            "locked_floor": 144000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "MLL statique (page Labs, article MLL) : niveau fixe à 144000 $ (départ − 6000 $), ne bouge jamais. Surveillé en temps réel comme tout MLL Topstep."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.55,
+            "applies_to": "profit_target",
+            "notes": "Le meilleur jour doit rester sous 55 % de l'objectif (6600 $ sur 12000 $) (page Labs)."
+          },
+          "min_trading_days": null,
+          "max_duration_days": 90,
+          "max_contracts": {
+            "minis": 15,
+            "micros": 150,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Taille max ouverte à la fois (page Labs), micros 10:1. Durée de vie 90 jours, inactivité 30 jours."
+          },
+          "time_rules": {
+            "must_close_by": "15:10 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Toutes les positions fermées avant 15:10 CT ; Topstep commence à liquider vers 15:08 CT. Reprise à 17:00 CT. Produits qui ferment plus tôt (CBOT, bétail) : sortir avant leur clôture. News autorisées, mais trader sa taille maximale directement dans une annonce majeure programmée est une stratégie interdite."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "starting_balance": 0,
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 3000,
+            "basis": "equity",
+            "resets_at": "17:00 America/Chicago",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "DLL obligatoire sur les Static Trading Combines (page Labs), reportée sur le XFA. Contrôle comme la DLL Topstep : temps réel, latent compris ; atteinte = pause jusqu'à 17:00 CT, pas une violation."
+          },
+          "max_drawdown": {
+            "amount": 6000,
+            "type": "static",
+            "trails_on": null,
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "XFA Static : solde de départ 0 $, MLL statique à -6000 $ (« starts below $0 and never moves »). Après le premier payout, MLL fixé à 0 $ : non appliqué par l'app (drawdown statique)."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 15,
+            "micros": 150,
+            "scaling": true,
+            "tiers": null,
+            "notes": "Scaling du XFA Static (page Labs) : 3 / 4 / 5 / 10 / 15 minis ; seuils de profit non publiés."
+          },
+          "time_rules": {
+            "must_close_by": "15:10 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Toutes les positions fermées avant 15:10 CT ; Topstep commence à liquider vers 15:08 CT. Reprise à 17:00 CT. Produits qui ferment plus tôt (CBOT, bétail) : sortir avant leur clôture. News autorisées, mais trader sa taille maximale directement dans une annonce majeure programmée est une stratégie interdite."
+          },
+          "payout": {
+            "min_days": null,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": null,
+            "min_amount": null,
+            "max_amount": null,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": null,
+            "notes": "Parcours Standard au choix. Règles de payout du XFA Static non publiées (la politique XFA classique n'est pas confirmée pour Static). « Payout Cap » 12000 $ : par payout ou à vie, non précisé. Back2Funded indisponible."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://help.topstep.com/en/articles/15520357-topstep-labs",
+        "https://help.topstep.com/en/articles/8284204-what-is-the-maximum-loss-limit"
+      ],
+      "needs_review": true,
+      "notes": "Static Trading Combine 150K, parcours de payout Standard. Topstep Labs (drop limité) : vendu à tous depuis la page Labs du Dashboard (« all now available for purchase any time »), peut s'arrêter ; passer en `discontinued` à la fin de la vente. Achat limité (Labs) : « 5 per Trader » (50K), « 5 per month » (100K, 150K), et la page dit aussi « 5 of each account per month » : contradiction non levée. À confirmer (#1238) : jours minimum du Combine, règles de payout du XFA Static (hors Daily Payouts+), nature du plafond de payout (par payout ou à vie), seuils de profit du scaling ; « Topstep Limited Products » introuvable (404). Gel du MLL à 0 $ au premier payout non appliqué par l'app (drawdown statique)."
+    },
+    {
+      "id": "topstep-static-consistency-25k",
+      "plan_name": "Static Trading Combine",
+      "account_size": 25000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": null,
+        "eval_drawdown": null,
+        "payout_path": "consistency",
+        "addon": null
+      },
+      "price": {
+        "amount": 75,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Paiement unique de 75 $ (pas d'abonnement, pas de rebill, pas de reset), activation du XFA gratuite (page Labs)."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 2000,
+          "daily_loss_limit": {
+            "amount": 500,
+            "basis": "equity",
+            "resets_at": "17:00 America/Chicago",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "DLL obligatoire sur les Static Trading Combines (page Labs), reportée sur le XFA. Contrôle comme la DLL Topstep : temps réel, latent compris ; atteinte = pause jusqu'à 17:00 CT, pas une violation."
+          },
+          "max_drawdown": {
+            "amount": 1000,
+            "type": "static",
+            "trails_on": null,
+            "locks_at": null,
+            "locked_floor": 24000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "MLL statique (page Labs, article MLL) : niveau fixe à 24000 $ (départ − 1000 $), ne bouge jamais. Surveillé en temps réel comme tout MLL Topstep."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.55,
+            "applies_to": "profit_target",
+            "notes": "Le meilleur jour doit rester sous 55 % de l'objectif (1100 $ sur 2000 $) (page Labs)."
+          },
+          "min_trading_days": null,
+          "max_duration_days": 90,
+          "max_contracts": {
+            "minis": 2,
+            "micros": 20,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Taille max ouverte à la fois (page Labs), micros 10:1. Durée de vie 90 jours, inactivité 30 jours."
+          },
+          "time_rules": {
+            "must_close_by": "15:10 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Toutes les positions fermées avant 15:10 CT ; Topstep commence à liquider vers 15:08 CT. Reprise à 17:00 CT. Produits qui ferment plus tôt (CBOT, bétail) : sortir avant leur clôture. News autorisées, mais trader sa taille maximale directement dans une annonce majeure programmée est une stratégie interdite."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "starting_balance": 0,
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 500,
+            "basis": "equity",
+            "resets_at": "17:00 America/Chicago",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "DLL obligatoire sur les Static Trading Combines (page Labs), reportée sur le XFA. Contrôle comme la DLL Topstep : temps réel, latent compris ; atteinte = pause jusqu'à 17:00 CT, pas une violation."
+          },
+          "max_drawdown": {
+            "amount": 1000,
+            "type": "static",
+            "trails_on": null,
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "XFA Static : solde de départ 0 $, MLL statique à -1000 $ (« starts below $0 and never moves »). Après le premier payout, MLL fixé à 0 $ : non appliqué par l'app (drawdown statique)."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.4,
+            "applies_to": "payout",
+            "notes": "Parcours Consistency : 40 % repris des tailles 50K à 150K (le tableau 25K dit seulement « Choose Consistency or Standard »)."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 2,
+            "micros": 20,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Scaling du XFA Static (page Labs) : aucun scaling (2 minis / 20 micros) ; seuils de profit non publiés."
+          },
+          "time_rules": {
+            "must_close_by": "15:10 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Toutes les positions fermées avant 15:10 CT ; Topstep commence à liquider vers 15:08 CT. Reprise à 17:00 CT. Produits qui ferment plus tôt (CBOT, bétail) : sortir avant leur clôture. News autorisées, mais trader sa taille maximale directement dans une annonce majeure programmée est une stratégie interdite."
+          },
+          "payout": {
+            "min_days": null,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": null,
+            "min_amount": null,
+            "max_amount": null,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": null,
+            "notes": "Parcours Consistency au choix. Règles de payout du XFA Static non publiées (la politique XFA classique n'est pas confirmée pour Static). « Payout Cap » 4000 $ : par payout ou à vie, non précisé. Back2Funded indisponible."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://help.topstep.com/en/articles/15520357-topstep-labs",
+        "https://help.topstep.com/en/articles/8284204-what-is-the-maximum-loss-limit"
+      ],
+      "needs_review": true,
+      "notes": "Static Trading Combine 25K, parcours de payout Consistency. Topstep Labs (drop limité) : vendu à tous depuis la page Labs du Dashboard (« all now available for purchase any time »), peut s'arrêter ; passer en `discontinued` à la fin de la vente. Achat limité (Labs) : « 5 per Trader » (50K), « 5 per month » (100K, 150K), et la page dit aussi « 5 of each account per month » : contradiction non levée. À confirmer (#1238) : jours minimum du Combine, règles de payout du XFA Static (hors Daily Payouts+), nature du plafond de payout (par payout ou à vie), seuils de profit du scaling ; « Topstep Limited Products » introuvable (404). Gel du MLL à 0 $ au premier payout non appliqué par l'app (drawdown statique)."
+    },
+    {
+      "id": "topstep-static-consistency-50k",
+      "plan_name": "Static Trading Combine",
+      "account_size": 50000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": null,
+        "eval_drawdown": null,
+        "payout_path": "consistency",
+        "addon": null
+      },
+      "price": {
+        "amount": 149,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Paiement unique de 149 $ (pas d'abonnement, pas de rebill, pas de reset), activation du XFA gratuite (page Labs)."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 4000,
+          "daily_loss_limit": {
+            "amount": 1000,
+            "basis": "equity",
+            "resets_at": "17:00 America/Chicago",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "DLL obligatoire sur les Static Trading Combines (page Labs), reportée sur le XFA. Contrôle comme la DLL Topstep : temps réel, latent compris ; atteinte = pause jusqu'à 17:00 CT, pas une violation."
+          },
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "static",
+            "trails_on": null,
+            "locks_at": null,
+            "locked_floor": 48000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "MLL statique (page Labs, article MLL) : niveau fixe à 48000 $ (départ − 2000 $), ne bouge jamais. Surveillé en temps réel comme tout MLL Topstep."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.55,
+            "applies_to": "profit_target",
+            "notes": "Le meilleur jour doit rester sous 55 % de l'objectif (2200 $ sur 4000 $) (page Labs)."
+          },
+          "min_trading_days": null,
+          "max_duration_days": 90,
+          "max_contracts": {
+            "minis": 4,
+            "micros": 40,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Taille max ouverte à la fois (page Labs), micros 10:1. Durée de vie 90 jours, inactivité 30 jours."
+          },
+          "time_rules": {
+            "must_close_by": "15:10 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Toutes les positions fermées avant 15:10 CT ; Topstep commence à liquider vers 15:08 CT. Reprise à 17:00 CT. Produits qui ferment plus tôt (CBOT, bétail) : sortir avant leur clôture. News autorisées, mais trader sa taille maximale directement dans une annonce majeure programmée est une stratégie interdite."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "starting_balance": 0,
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 1000,
+            "basis": "equity",
+            "resets_at": "17:00 America/Chicago",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "DLL obligatoire sur les Static Trading Combines (page Labs), reportée sur le XFA. Contrôle comme la DLL Topstep : temps réel, latent compris ; atteinte = pause jusqu'à 17:00 CT, pas une violation."
+          },
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "static",
+            "trails_on": null,
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "XFA Static : solde de départ 0 $, MLL statique à -2000 $ (« starts below $0 and never moves »). Après le premier payout, MLL fixé à 0 $ : non appliqué par l'app (drawdown statique)."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.4,
+            "applies_to": "payout",
+            "notes": "Parcours Consistency : plus gros jour au plus 40 % du profit (page Labs)."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 4,
+            "micros": 40,
+            "scaling": true,
+            "tiers": null,
+            "notes": "Scaling du XFA Static (page Labs) : 2 / 3 / 4 minis ; seuils de profit non publiés."
+          },
+          "time_rules": {
+            "must_close_by": "15:10 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Toutes les positions fermées avant 15:10 CT ; Topstep commence à liquider vers 15:08 CT. Reprise à 17:00 CT. Produits qui ferment plus tôt (CBOT, bétail) : sortir avant leur clôture. News autorisées, mais trader sa taille maximale directement dans une annonce majeure programmée est une stratégie interdite."
+          },
+          "payout": {
+            "min_days": null,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": null,
+            "min_amount": null,
+            "max_amount": null,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": null,
+            "notes": "Parcours Consistency au choix. Règles de payout du XFA Static non publiées (la politique XFA classique n'est pas confirmée pour Static). « Payout Cap » 8000 $ : par payout ou à vie, non précisé. Back2Funded indisponible."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://help.topstep.com/en/articles/15520357-topstep-labs",
+        "https://help.topstep.com/en/articles/8284204-what-is-the-maximum-loss-limit"
+      ],
+      "needs_review": true,
+      "notes": "Static Trading Combine 50K, parcours de payout Consistency. Topstep Labs (drop limité) : vendu à tous depuis la page Labs du Dashboard (« all now available for purchase any time »), peut s'arrêter ; passer en `discontinued` à la fin de la vente. Achat limité (Labs) : « 5 per Trader » (50K), « 5 per month » (100K, 150K), et la page dit aussi « 5 of each account per month » : contradiction non levée. À confirmer (#1238) : jours minimum du Combine, règles de payout du XFA Static (hors Daily Payouts+), nature du plafond de payout (par payout ou à vie), seuils de profit du scaling ; « Topstep Limited Products » introuvable (404). Gel du MLL à 0 $ au premier payout non appliqué par l'app (drawdown statique)."
+    },
+    {
+      "id": "topstep-static-consistency-100k",
+      "plan_name": "Static Trading Combine",
+      "account_size": 100000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": null,
+        "eval_drawdown": null,
+        "payout_path": "consistency",
+        "addon": null
+      },
+      "price": {
+        "amount": 199,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Paiement unique de 199 $ (pas d'abonnement, pas de rebill, pas de reset), activation du XFA gratuite (page Labs)."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 8000,
+          "daily_loss_limit": {
+            "amount": 2000,
+            "basis": "equity",
+            "resets_at": "17:00 America/Chicago",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "DLL obligatoire sur les Static Trading Combines (page Labs), reportée sur le XFA. Contrôle comme la DLL Topstep : temps réel, latent compris ; atteinte = pause jusqu'à 17:00 CT, pas une violation."
+          },
+          "max_drawdown": {
+            "amount": 4000,
+            "type": "static",
+            "trails_on": null,
+            "locks_at": null,
+            "locked_floor": 96000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "MLL statique (page Labs, article MLL) : niveau fixe à 96000 $ (départ − 4000 $), ne bouge jamais. Surveillé en temps réel comme tout MLL Topstep."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.55,
+            "applies_to": "profit_target",
+            "notes": "Le meilleur jour doit rester sous 55 % de l'objectif (4400 $ sur 8000 $) (page Labs)."
+          },
+          "min_trading_days": null,
+          "max_duration_days": 90,
+          "max_contracts": {
+            "minis": 10,
+            "micros": 100,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Taille max ouverte à la fois (page Labs), micros 10:1. Durée de vie 90 jours, inactivité 30 jours."
+          },
+          "time_rules": {
+            "must_close_by": "15:10 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Toutes les positions fermées avant 15:10 CT ; Topstep commence à liquider vers 15:08 CT. Reprise à 17:00 CT. Produits qui ferment plus tôt (CBOT, bétail) : sortir avant leur clôture. News autorisées, mais trader sa taille maximale directement dans une annonce majeure programmée est une stratégie interdite."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "starting_balance": 0,
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 2000,
+            "basis": "equity",
+            "resets_at": "17:00 America/Chicago",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "DLL obligatoire sur les Static Trading Combines (page Labs), reportée sur le XFA. Contrôle comme la DLL Topstep : temps réel, latent compris ; atteinte = pause jusqu'à 17:00 CT, pas une violation."
+          },
+          "max_drawdown": {
+            "amount": 4000,
+            "type": "static",
+            "trails_on": null,
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "XFA Static : solde de départ 0 $, MLL statique à -4000 $ (« starts below $0 and never moves »). Après le premier payout, MLL fixé à 0 $ : non appliqué par l'app (drawdown statique)."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.4,
+            "applies_to": "payout",
+            "notes": "Parcours Consistency : plus gros jour au plus 40 % du profit (page Labs)."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 10,
+            "micros": 100,
+            "scaling": true,
+            "tiers": null,
+            "notes": "Scaling du XFA Static (page Labs) : 3 / 4 / 5 / 10 minis ; seuils de profit non publiés."
+          },
+          "time_rules": {
+            "must_close_by": "15:10 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Toutes les positions fermées avant 15:10 CT ; Topstep commence à liquider vers 15:08 CT. Reprise à 17:00 CT. Produits qui ferment plus tôt (CBOT, bétail) : sortir avant leur clôture. News autorisées, mais trader sa taille maximale directement dans une annonce majeure programmée est une stratégie interdite."
+          },
+          "payout": {
+            "min_days": null,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": null,
+            "min_amount": null,
+            "max_amount": null,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": null,
+            "notes": "Parcours Consistency au choix. Règles de payout du XFA Static non publiées (la politique XFA classique n'est pas confirmée pour Static). « Payout Cap » 10000 $ : par payout ou à vie, non précisé. Back2Funded indisponible."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://help.topstep.com/en/articles/15520357-topstep-labs",
+        "https://help.topstep.com/en/articles/8284204-what-is-the-maximum-loss-limit"
+      ],
+      "needs_review": true,
+      "notes": "Static Trading Combine 100K, parcours de payout Consistency. Topstep Labs (drop limité) : vendu à tous depuis la page Labs du Dashboard (« all now available for purchase any time »), peut s'arrêter ; passer en `discontinued` à la fin de la vente. Achat limité (Labs) : « 5 per Trader » (50K), « 5 per month » (100K, 150K), et la page dit aussi « 5 of each account per month » : contradiction non levée. À confirmer (#1238) : jours minimum du Combine, règles de payout du XFA Static (hors Daily Payouts+), nature du plafond de payout (par payout ou à vie), seuils de profit du scaling ; « Topstep Limited Products » introuvable (404). Gel du MLL à 0 $ au premier payout non appliqué par l'app (drawdown statique)."
+    },
+    {
+      "id": "topstep-static-consistency-150k",
+      "plan_name": "Static Trading Combine",
+      "account_size": 150000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": null,
+        "eval_drawdown": null,
+        "payout_path": "consistency",
+        "addon": null
+      },
+      "price": {
+        "amount": 279,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Paiement unique de 279 $ (pas d'abonnement, pas de rebill, pas de reset), activation du XFA gratuite (page Labs)."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 12000,
+          "daily_loss_limit": {
+            "amount": 3000,
+            "basis": "equity",
+            "resets_at": "17:00 America/Chicago",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "DLL obligatoire sur les Static Trading Combines (page Labs), reportée sur le XFA. Contrôle comme la DLL Topstep : temps réel, latent compris ; atteinte = pause jusqu'à 17:00 CT, pas une violation."
+          },
+          "max_drawdown": {
+            "amount": 6000,
+            "type": "static",
+            "trails_on": null,
+            "locks_at": null,
+            "locked_floor": 144000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "MLL statique (page Labs, article MLL) : niveau fixe à 144000 $ (départ − 6000 $), ne bouge jamais. Surveillé en temps réel comme tout MLL Topstep."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.55,
+            "applies_to": "profit_target",
+            "notes": "Le meilleur jour doit rester sous 55 % de l'objectif (6600 $ sur 12000 $) (page Labs)."
+          },
+          "min_trading_days": null,
+          "max_duration_days": 90,
+          "max_contracts": {
+            "minis": 15,
+            "micros": 150,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Taille max ouverte à la fois (page Labs), micros 10:1. Durée de vie 90 jours, inactivité 30 jours."
+          },
+          "time_rules": {
+            "must_close_by": "15:10 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Toutes les positions fermées avant 15:10 CT ; Topstep commence à liquider vers 15:08 CT. Reprise à 17:00 CT. Produits qui ferment plus tôt (CBOT, bétail) : sortir avant leur clôture. News autorisées, mais trader sa taille maximale directement dans une annonce majeure programmée est une stratégie interdite."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "starting_balance": 0,
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 3000,
+            "basis": "equity",
+            "resets_at": "17:00 America/Chicago",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "DLL obligatoire sur les Static Trading Combines (page Labs), reportée sur le XFA. Contrôle comme la DLL Topstep : temps réel, latent compris ; atteinte = pause jusqu'à 17:00 CT, pas une violation."
+          },
+          "max_drawdown": {
+            "amount": 6000,
+            "type": "static",
+            "trails_on": null,
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "XFA Static : solde de départ 0 $, MLL statique à -6000 $ (« starts below $0 and never moves »). Après le premier payout, MLL fixé à 0 $ : non appliqué par l'app (drawdown statique)."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.4,
+            "applies_to": "payout",
+            "notes": "Parcours Consistency : plus gros jour au plus 40 % du profit (page Labs)."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 15,
+            "micros": 150,
+            "scaling": true,
+            "tiers": null,
+            "notes": "Scaling du XFA Static (page Labs) : 3 / 4 / 5 / 10 / 15 minis ; seuils de profit non publiés."
+          },
+          "time_rules": {
+            "must_close_by": "15:10 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Toutes les positions fermées avant 15:10 CT ; Topstep commence à liquider vers 15:08 CT. Reprise à 17:00 CT. Produits qui ferment plus tôt (CBOT, bétail) : sortir avant leur clôture. News autorisées, mais trader sa taille maximale directement dans une annonce majeure programmée est une stratégie interdite."
+          },
+          "payout": {
+            "min_days": null,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": null,
+            "min_amount": null,
+            "max_amount": null,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": null,
+            "notes": "Parcours Consistency au choix. Règles de payout du XFA Static non publiées (la politique XFA classique n'est pas confirmée pour Static). « Payout Cap » 12000 $ : par payout ou à vie, non précisé. Back2Funded indisponible."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://help.topstep.com/en/articles/15520357-topstep-labs",
+        "https://help.topstep.com/en/articles/8284204-what-is-the-maximum-loss-limit"
+      ],
+      "needs_review": true,
+      "notes": "Static Trading Combine 150K, parcours de payout Consistency. Topstep Labs (drop limité) : vendu à tous depuis la page Labs du Dashboard (« all now available for purchase any time »), peut s'arrêter ; passer en `discontinued` à la fin de la vente. Achat limité (Labs) : « 5 per Trader » (50K), « 5 per month » (100K, 150K), et la page dit aussi « 5 of each account per month » : contradiction non levée. À confirmer (#1238) : jours minimum du Combine, règles de payout du XFA Static (hors Daily Payouts+), nature du plafond de payout (par payout ou à vie), seuils de profit du scaling ; « Topstep Limited Products » introuvable (404). Gel du MLL à 0 $ au premier payout non appliqué par l'app (drawdown statique)."
+    },
+    {
+      "id": "topstep-static-daily-50k",
+      "plan_name": "Static Trading Combine Daily Payouts+",
+      "account_size": 50000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": null,
+        "eval_drawdown": null,
+        "payout_path": "daily",
+        "addon": null
+      },
+      "price": {
+        "amount": 149,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Paiement unique de 149 $ (pas d'abonnement, pas de rebill, pas de reset), activation du XFA gratuite (page Labs)."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 4000,
+          "daily_loss_limit": {
+            "amount": 1000,
+            "basis": "equity",
+            "resets_at": "17:00 America/Chicago",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "DLL obligatoire sur les Static Trading Combines (page Labs), reportée sur le XFA. Contrôle comme la DLL Topstep : temps réel, latent compris ; atteinte = pause jusqu'à 17:00 CT, pas une violation."
+          },
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "static",
+            "trails_on": null,
+            "locks_at": null,
+            "locked_floor": 48000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "MLL statique (page Labs, article MLL) : niveau fixe à 48000 $ (départ − 2000 $), ne bouge jamais. Surveillé en temps réel comme tout MLL Topstep."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.55,
+            "applies_to": "profit_target",
+            "notes": "Le meilleur jour doit rester sous 55 % de l'objectif (2200 $ sur 4000 $) (page Labs)."
+          },
+          "min_trading_days": null,
+          "max_duration_days": 90,
+          "max_contracts": {
+            "minis": 5,
+            "micros": 50,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Taille max ouverte à la fois (page Labs), micros 10:1. Durée de vie 90 jours, inactivité 30 jours."
+          },
+          "time_rules": {
+            "must_close_by": "15:10 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Toutes les positions fermées avant 15:10 CT ; Topstep commence à liquider vers 15:08 CT. Reprise à 17:00 CT. Produits qui ferment plus tôt (CBOT, bétail) : sortir avant leur clôture. News autorisées, mais trader sa taille maximale directement dans une annonce majeure programmée est une stratégie interdite."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "starting_balance": 0,
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 1000,
+            "basis": "equity",
+            "resets_at": "17:00 America/Chicago",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "DLL obligatoire sur les Static Trading Combines (page Labs), reportée sur le XFA. Contrôle comme la DLL Topstep : temps réel, latent compris ; atteinte = pause jusqu'à 17:00 CT, pas une violation."
+          },
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "static",
+            "trails_on": null,
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "XFA Static : solde de départ 0 $, MLL statique à -2000 $ (« starts below $0 and never moves »). Après le premier payout, MLL fixé à 0 $ : non appliqué par l'app (drawdown statique)."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 5,
+            "micros": 50,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1499.99,
+                "minis": 2,
+                "micros": 20
+              },
+              {
+                "min_profit": 1500,
+                "max_profit": 2000,
+                "minis": 3,
+                "micros": 30
+              },
+              {
+                "min_profit": 2000.01,
+                "max_profit": null,
+                "minis": 5,
+                "micros": 50
+              }
+            ],
+            "notes": "« XFA matches the standard $50K XFA scaling plan » (page Labs, drop #011) : paliers du XFA 50K standard. Scaling Plan selon le solde du compte (départ 0 $), mis à jour pour la session suivante, jamais en cours de séance. Micros 10:1 (exceptions : Micro Silver, Micro Bitcoin, Micro Ether)."
+          },
+          "time_rules": {
+            "must_close_by": "15:10 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Toutes les positions fermées avant 15:10 CT ; Topstep commence à liquider vers 15:08 CT. Reprise à 17:00 CT. Produits qui ferment plus tôt (CBOT, bétail) : sortir avant leur clôture. News autorisées, mais trader sa taille maximale directement dans une annonce majeure programmée est une stratégie interdite."
+          },
+          "payout": {
+            "min_days": null,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "min_amount": null,
+            "max_amount": null,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": null,
+            "notes": "Deux voies (page Labs) : Daily Payout (coussin de 2 000 $ de profit, 250 $ minimum et 1 500 $ maximum par payout, un par jour de trading) ou 5 jours gagnants d'au moins 150 $ (jusqu'à 50 % du solde, 8 000 $ maximum en Static). Split 90/10. Back2Funded indisponible."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://help.topstep.com/en/articles/15520357-topstep-labs",
+        "https://help.topstep.com/en/articles/8284204-what-is-the-maximum-loss-limit"
+      ],
+      "needs_review": true,
+      "notes": "Static Trading Combine Daily Payouts+ (drop #011), achat limité à 5 au total entre les versions EOD et Static. Topstep Labs (drop limité) : vendu à tous depuis la page Labs du Dashboard (« all now available for purchase any time »), peut s'arrêter ; passer en `discontinued` à la fin de la vente. Achat limité (Labs) : « 5 per Trader » (50K), « 5 per month » (100K, 150K), et la page dit aussi « 5 of each account per month » : contradiction non levée. À confirmer (#1238) : jours minimum du Combine, règles de payout du XFA Static (hors Daily Payouts+), nature du plafond de payout (par payout ou à vie), seuils de profit du scaling ; « Topstep Limited Products » introuvable (404). Gel du MLL à 0 $ au premier payout non appliqué par l'app (drawdown statique)."
     }
   ]
 }

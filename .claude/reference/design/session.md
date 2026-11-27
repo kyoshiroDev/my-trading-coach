@@ -74,7 +74,9 @@ et `(min-width: 1100px)` ; **aucune `max-width`**, aucun scroll horizontal à 36
   prochaine annonce → trade en cours → suivi du compte →
   trades clôturés → (mobile) Contexte marché + Clôturer la session en bas de page.
 - **Couleurs** : vert = gains, rouge = pertes, **cyan = live / IA** (chrono, pastille, badge LIVE,
-  analyse IA d'une annonce publiée), violet = chip de plan. Ligne d'annonce : **rouge si impact
+  analyse IA d'une annonce publiée), violet = chip de plan (#1231 : dans « Suivi du compte », toujours
+  sur sa propre ligne sous le titre, coupure `:has()::after` ; texte « firm · programLabel » replié sans
+  ellipsis, nom complet en `[title]` ; groupe LIVE / son affiché seulement s'il a du contenu). Ligne d'annonce : **rouge si impact
   fort, ambre si impact moyen** (couleur = impact le plus fort du créneau) ; ambre aussi pour la jauge
   perte du jour. Plusieurs annonces à la même heure : **une seule ligne**, la plus importante en
   tête, chip « +N » qui déplie une liste compacte (point de couleur + nom + impact) ; publiées : « N

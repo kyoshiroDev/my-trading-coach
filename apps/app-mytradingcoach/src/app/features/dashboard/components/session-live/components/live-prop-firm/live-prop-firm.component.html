@@ -1,10 +1,12 @@
 <section class="pf-panel" data-testid="live-prop-firm" aria-label="Suivi du compte">
   <header class="pf-head">
     <span class="pf-title">SUIVI DU COMPTE</span>
+    @if (rule()) {
+      <span class="pf-plan" data-testid="live-prop-firm-plan" [title]="planLabel()">{{ planLabel() }}</span>
+    }
+    <!-- Groupe de droite seulement s'il a du contenu : vide, il décalait le badge de 8 px (gap). -->
+    @if (live.connected() || userStore.isPremium()) {
     <span class="pf-head-end">
-      @if (rule(); as r) {
-        <span class="pf-plan">{{ r.firmName }} · {{ r.planName }}</span>
-      }
       @if (live.connected()) {
         <span class="pf-live" data-testid="live-prop-firm-live"><span class="pulse-dot"></span>LIVE</span>
       }
@@ -20,6 +22,7 @@
         </button>
       }
     </span>
+    }
   </header>
 
   @if (account(); as a) {
@@ -95,7 +98,7 @@
           <div class="pf-sub">
             Plancher {{ money(dd.floor) }}
             @if (rule(); as r) {
-              · {{ ddKindLabel(r.kind) }}{{ r.locked ? ', figé' : '' }}
+              · {{ ddKindLabel(r.kind) }}{{ r.locked ? (r.floorUnconfirmed ? ', figé (à confirmer)' : ', figé') : '' }}
               @if (r.kind === 'trailing_eod') { · mis à jour à la clôture }
               @else if (r.kind === 'trailing_intraday' && r.peakBalance !== null) { · plus haut {{ money(r.peakBalance) }} }
             }

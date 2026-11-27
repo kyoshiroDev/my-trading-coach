@@ -26,6 +26,10 @@
   Filet : `scrubEvent` et `scrubBreadcrumb` remplacent tout `cus_…` (message, exceptions, URL des
   appels sortants vers `/v1/customers/…`) par `cus_[masqué]`. L'identifiant d'abonnement (`sub_…`)
   reste dans le message `Subscription past_due/unpaid`.
+  **Jamais d'adresse e-mail** (#1263) : `captureException` envoie le message complet de l'erreur
+  (Resend, Prisma, Stripe peuvent y recopier une adresse). Filet : `maskText` (même fichier)
+  remplace toute adresse par `[e-mail masqué]` dans `message`, `logentry.message`, les exceptions,
+  leurs frames (lignes de code de ContextLines, variables locales) et le message des breadcrumbs, en plus du `cus_…`. Motif volontairement large (faux positif accepté).
   Vérification sur un vrai événement : `docs/ops/verif-sentry-donnees-requete.md`.
   Les 5xx sont remontées par le filtre global ; ne pas ajouter de `captureException` ailleurs.
 - **IA** : modèles dans `AI_MODELS` (`modules/infra/ai-pricing.const.ts`), jamais en dur ni en
