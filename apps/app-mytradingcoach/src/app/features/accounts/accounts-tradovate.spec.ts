@@ -529,7 +529,7 @@ describe('Mes comptes — verrouillage selon la plateforme', () => {
   beforeEach(() => TestBed.resetTestingModule());
 
   const rule = (over: Partial<NonNullable<NonNullable<TradingAccount['metrics']['drawdown']>['rule']>>) => ({
-    firmName: 'Apex Trader Funding', planName: 'EOD Trail', phase: 'evaluation' as const, kind: 'trailing_eod' as const,
+    firmName: 'Apex Trader Funding', planName: 'EOD Trail', configuration: null, phase: 'evaluation' as const, kind: 'trailing_eod' as const,
     locksAt: null, lockedFloor: null, locked: false, locksOnFirstPayout: null, lockedBy: null, payoutLockedSince: null, realtimeEquity: true, platform: null, platformChoices: [],
     peakSource: null as 'broker' | 'trades' | null, peakBalance: null as number | null, officialThrough: null as string | null, ...over,
   });
@@ -565,7 +565,7 @@ describe('Mes comptes — plus haut de clôture', () => {
     metrics: {
       ...acct('a', '').metrics,
       drawdown: { type: 'TRAILING', floor: 49_400, margin: 1_600, maxDrawdown: 2_000, pct: 0.8, breached: false, source: 'plan',
-        rule: { firmName: 'Lucid Trading', planName: 'LucidFlex', phase: 'evaluation', kind: 'trailing_eod', locksAt: null, lockedFloor: null,
+        rule: { firmName: 'Lucid Trading', planName: 'LucidFlex', configuration: null, phase: 'evaluation', kind: 'trailing_eod', locksAt: null, lockedFloor: null,
           locked: false, locksOnFirstPayout: null, lockedBy: null, payoutLockedSince: null, realtimeEquity: false, platform: null, platformChoices: [], peakSource: 'trades', peakBalance: 51_400, officialThrough: null, ...over } },
     },
   });

@@ -1,10 +1,10 @@
 <section class="pf-panel" data-testid="live-prop-firm" aria-label="Suivi du compte">
   <header class="pf-head">
     <span class="pf-title">SUIVI DU COMPTE</span>
+    @if (rule()) {
+      <span class="pf-plan" data-testid="live-prop-firm-plan" [title]="planLabel()">{{ planLabel() }}</span>
+    }
     <span class="pf-head-end">
-      @if (rule(); as r) {
-        <span class="pf-plan">{{ r.firmName }} · {{ r.planName }}</span>
-      }
       @if (live.connected()) {
         <span class="pf-live" data-testid="live-prop-firm-live"><span class="pulse-dot"></span>LIVE</span>
       }

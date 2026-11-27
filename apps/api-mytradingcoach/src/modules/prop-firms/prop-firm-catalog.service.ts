@@ -12,6 +12,20 @@ const phaseContractInSync: Same<PropFirmPhase, PropFirmPhaseRules> = true;
 void phaseContractInSync;
 
 /** Lecture du catalogue en base pour l'app (choix du plan d'un compte). */
+/**
+ * Options de checkout d'un plan (Json du catalogue relu avec son schéma), au format du contrat
+ * front ; null s'il n'y en a pas. Partagé par la liste, le détail et la règle d'un compte (#1236).
+ */
+export function planConfiguration(raw: unknown): PropFirmPlanSummary['configuration'] {
+  const c = propFirmConfigurationSchema.nullable().parse(raw ?? null);
+  return c && {
+    dailyLossLimit: c.daily_loss_limit,
+    evalDrawdown: c.eval_drawdown,
+    payoutPath: c.payout_path ?? null,
+    addon: c.addon ?? null,
+  };
+}
+
 @Injectable()
 export class PropFirmCatalogService {
   constructor(private readonly prisma: PrismaService) {}
@@ -40,19 +54,13 @@ export class PropFirmCatalogService {
             // Json relu avec le schéma du catalogue : la base ne contient que ce que la synchro
             // a validé, mais un Json non typé ne sort jamais vers le front sans contrôle.
             const phases = propFirmPhaseSchema.array().parse(plan.phases);
-            const configuration = propFirmConfigurationSchema.nullable().parse(plan.configuration ?? null);
             return {
               id: plan.id,
               planName: plan.planName,
               accountSize: plan.accountSize,
               currency: plan.currency,
               availability: availabilityOf(plan.availability),
-              configuration: configuration && {
-                dailyLossLimit: configuration.daily_loss_limit,
-                evalDrawdown: configuration.eval_drawdown,
-                payoutPath: configuration.payout_path ?? null,
-                addon: configuration.addon ?? null,
-              },
+              configuration: planConfiguration(plan.configuration),
               needsReview: plan.needsReview,
               platformDependent: [...new Set(phases.flatMap((p) => Object.keys(p.max_drawdown.platform_overrides ?? {})))].sort(),
               phases: phases.map((p) => ({
@@ -83,6 +91,7 @@ export class PropFirmCatalogService {
       accountSize: plan.accountSize,
       currency: plan.currency,
       availability: availabilityOf(plan.availability),
+      configuration: planConfiguration(plan.configuration),
       needsReview: plan.needsReview,
       notes: plan.notes,
       sourceUrls: plan.sourceUrls,

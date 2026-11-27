@@ -30,6 +30,7 @@ import {
 } from './prop-firm-rules.util';
 import { InfoTooltipComponent } from '@app/shared/components/info-tooltip/info-tooltip.component';
 import { DRAWDOWN_LABELS } from '@app/core/constants/drawdown-labels.const';
+import { programLabel } from '../prop-firm-plan-picker/prop-firm-plans.util';
 
 /**
  * Règles officielles du plan prop firm relié à un compte, phase par phase. Lecture seule :
@@ -67,6 +68,8 @@ export class PropFirmRulesComponent {
     () => this.plan().phases.find((p) => p.phase === this.phaseKey()) ?? this.plan().phases[0],
   );
   protected readonly currency = computed(() => this.plan().currency);
+  /** Nom du plan et ses options (variante consistency, funded EOD…), comme dans le sélecteur (#1236). */
+  protected readonly title = computed(() => programLabel(this.plan()));
   protected readonly verifiedLabel = computed(() =>
     new Date(`${this.plan().firm.verifiedAt}T12:00:00Z`).toLocaleDateString('fr-FR', {
       day: 'numeric',

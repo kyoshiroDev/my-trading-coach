@@ -178,6 +178,8 @@ export interface PropFirmPlanDetail {
   accountSize: number;
   currency: string;
   availability: PropFirmAvailability;
+  /** Options du checkout (même format que `PropFirmPlanSummary`), null s'il n'y en a pas (#1236). */
+  configuration: PropFirmPlanSummary['configuration'];
   needsReview: boolean;
   notes: string | null;
   sourceUrls: string[];

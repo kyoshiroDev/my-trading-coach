@@ -13,6 +13,15 @@
   font-family: var(--font-mono); font-size: 11px; color: var(--purple-bright); background: var(--purple-dim);
   padding: 3px 8px; border-radius: 6px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
+/* Badge du plan : avant LIVE et le son sur une ligne ; sous 768 px, sur sa propre ligne pleine largeur
+   pour que le nom et ses options (version, option consistency…) restent lisibles à 360 px (#1231). */
+.pf-plan { margin-left: auto; }
+.pf-plan + .pf-head-end { margin-left: 0; }
+@media (max-width: 767.98px) {
+  .pf-head { flex-wrap: wrap; }
+  .pf-plan { order: 3; flex-basis: 100%; max-width: max-content; margin-left: 0; }
+  .pf-plan + .pf-head-end { margin-left: auto; }
+}
 /* Cyan = live */
 .pf-live {
   display: inline-flex; align-items: center; gap: 5px; font-family: var(--font-mono); font-size: 11px; font-weight: 600;

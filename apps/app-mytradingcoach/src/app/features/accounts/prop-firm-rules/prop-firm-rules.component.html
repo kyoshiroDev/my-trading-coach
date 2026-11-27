@@ -5,7 +5,7 @@
 <div class="pfr" data-testid="prop-firm-rules">
   <div class="pfr-head">
     <div class="pfr-title">
-      <span class="pfr-name">{{ p.planName }} · {{ fmt.amount(p.accountSize, cur) }}</span>
+      <span class="pfr-name">{{ title() }} · {{ fmt.amount(p.accountSize, cur) }}</span>
       <span class="pfr-meta">Règles officielles {{ p.firm.name }}, relevées le {{ verifiedLabel() }}</span>
     </div>
     @if (p.phases.length > 1) {
