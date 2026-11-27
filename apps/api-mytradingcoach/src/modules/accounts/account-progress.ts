@@ -81,6 +81,8 @@ const bestDay = (s: SessionPnl[]) => Math.max(0, ...s.map((x) => x.pnl));
 
 export function computeProgress(input: ProgressInput): AccountProgress | null {
   const { phase } = input;
+  // Objectif « pour passer au palier suivant » (#1227) : le retrait n'en dépend pas, la progression suit le payout.
+  if (phase.profit_target_role === 'advance' && phase.payout) return payoutProgress(input, phase.payout);
   if (phase.profit_target != null && phase.profit_target > 0) return objectiveProgress(input, phase.profit_target);
   if (phase.payout) return payoutProgress(input, phase.payout);
   return null;
