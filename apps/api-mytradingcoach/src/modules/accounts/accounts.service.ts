@@ -821,14 +821,10 @@ export class AccountsService {
   }
 
   /**
-   * Un compte ne se relie qu'à un plan ACTIF du catalogue. Sans ce contrôle, un id inconnu
-   * finirait en violation de FK (500) ; un plan retiré reste lisible sur les comptes qui le
-   * portaient déjà, mais ne se choisit plus.
-   */
-  /**
-   * Plan proposé à une NOUVELLE liaison (création, ou changement de plan) : présent au catalogue et
-   * encore vendu. Un plan `discontinued` reste valable pour les comptes qui y sont déjà reliés
-   * (jamais revérifié quand le plan ne change pas), comme `keepPlanId` côté sélecteur (#1242).
+   * Plan proposé à une NOUVELLE liaison (création, ou changement de plan) : ACTIF au catalogue et
+   * encore vendu. Sans ce contrôle, un id inconnu finirait en violation de FK (500). Un plan retiré
+   * ou `discontinued` reste lisible et valable pour les comptes qui y sont déjà reliés (jamais
+   * revérifié quand le plan ne change pas), comme `keepPlanId` côté sélecteur (#1242).
    */
   private async assertCatalogPlan(planId: string): Promise<void> {
     const found = await this.prisma.propFirmPlan.count({
