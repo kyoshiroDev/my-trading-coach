@@ -544,14 +544,14 @@ describe('AccountsService', () => {
 
     describe('options du plan sur la règle (#1236)', () => {
       freezeClock(new Date(Date.UTC(2026, 5, 2, 16)));
-    it('la règle du drawdown porte les options du plan (variante), null sans option (#1236)', () => {
-      const acct = { ...manual, startingBalance: 50000, type: 'EVALUATION' as const };
-      const agg = { count: 2, wins: 1, losses: 1, realized: 400, maxCumulative: 1200, maxEodCumulative: 1200, bestDay: 1200, worstDay: -800 };
-      const now = new Date(Date.UTC(2026, 5, 2, 16));
-      const configuration = { dailyLossLimit: true, evalDrawdown: null, payoutPath: 'consistency' as const, addon: null };
-      expect(svc.ruleMetricsFromAgg(acct, agg, { ...topstep, configuration }, null, null, null, now, [], null).drawdown?.rule?.configuration).toEqual(configuration);
-      expect(svc.ruleMetricsFromAgg(acct, agg, topstep, null, null, null, now, [], null).drawdown?.rule?.configuration).toBeNull();
-    });
+      it('la règle du drawdown porte les options du plan (variante), null sans option (#1236)', () => {
+        const acct = { ...manual, startingBalance: 50000, type: 'EVALUATION' as const };
+        const agg = { count: 2, wins: 1, losses: 1, realized: 400, maxCumulative: 1200, maxEodCumulative: 1200, bestDay: 1200, worstDay: -800 };
+        const now = new Date(Date.UTC(2026, 5, 2, 16));
+        const configuration = { dailyLossLimit: true, evalDrawdown: null, payoutPath: 'consistency' as const, addon: null };
+        expect(svc.ruleMetricsFromAgg(acct, agg, { ...topstep, configuration }, null, null, null, now, [], null).drawdown?.rule?.configuration).toEqual(configuration);
+        expect(svc.ruleMetricsFromAgg(acct, agg, topstep, null, null, null, now, [], null).drawdown?.rule?.configuration).toBeNull();
+      });
     });
 
     describe('perte journalière (Premium, #370)', () => {
