@@ -36,7 +36,8 @@ const PAYOUT_PATH_LABELS: Record<NonNullable<NonNullable<PropFirmPlanSummary['co
   daily: 'payout Daily',
 };
 
-export function programLabel(plan: PropFirmPlanSummary): string {
+/** Nom du plan suivi de ses options ; accepte aussi un plan sans le reste du résumé (fiche, séance live, #1236). */
+export function programLabel(plan: Pick<PropFirmPlanSummary, 'planName' | 'configuration'>): string {
   const c = plan.configuration;
   const parts = [plan.planName];
   if (c?.evalDrawdown) parts.push(`drawdown ${c.evalDrawdown === 'eod' ? 'EOD' : 'intraday'}`);

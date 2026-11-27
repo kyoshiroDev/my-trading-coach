@@ -8,10 +8,14 @@
 .pf-head { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .pf-title { font-family: var(--font-mono); font-size: 11px; letter-spacing: .08em; color: var(--text-2); flex-shrink: 0; }
 .pf-head-end { margin-left: auto; display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
-/* Violet = plan */
+/* Violet = plan. Toujours sur sa propre ligne sous le titre, texte replié plutôt que coupé : la colonne
+   reste étroite à toutes les largeurs et l'infobulle n'existe pas au toucher (#1231, #1236). */
+.pf-head { flex-wrap: wrap; }
+.pf-head:has(.pf-plan)::after { content: ''; order: 2; flex-basis: 100%; margin-top: -8px; } /* annule le gap doublé par cette ligne vide */
 .pf-plan {
+  order: 3; max-width: 100%;
   font-family: var(--font-mono); font-size: 11px; color: var(--purple-bright); background: var(--purple-dim);
-  padding: 3px 8px; border-radius: 6px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  padding: 3px 8px; border-radius: 6px; min-width: 0; white-space: normal; overflow-wrap: anywhere;
 }
 /* Cyan = live */
 .pf-live {

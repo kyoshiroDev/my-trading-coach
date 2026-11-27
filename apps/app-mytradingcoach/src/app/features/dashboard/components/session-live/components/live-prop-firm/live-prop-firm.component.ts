@@ -33,6 +33,7 @@ import { AccountPlanWizardComponent } from '@app/features/accounts/account-plan-
 import { barWidth, drawdownTone, missedAlert, missedAlertPct, objectiveRatio } from './live-prop-firm.util';
 import { InfoTooltipComponent } from '@app/shared/components/info-tooltip/info-tooltip.component';
 import { DRAWDOWN_LABELS } from '@app/core/constants/drawdown-labels.const';
+import { programLabel } from '@app/features/accounts/prop-firm-plan-picker/prop-firm-plans.util';
 
 /**
  * Suivi prop firm de la session live (FREE) : à la place de « Trade rapide » quand le compte de
@@ -86,6 +87,11 @@ export class LivePropFirmComponent {
   protected readonly broker = computed(() => this.metrics()?.broker ?? null);
   protected readonly drawdown = computed(() => this.metrics()?.drawdown ?? null);
   protected readonly rule = computed(() => this.drawdown()?.rule ?? null);
+  /** Badge « firm · plan et options » (#1236) ; nom complet aussi en `title` (badge tronqué au besoin, #1231). */
+  protected readonly planLabel = computed(() => {
+    const r = this.rule();
+    return r ? `${r.firmName} · ${programLabel({ planName: r.planName, configuration: r.configuration ?? null })}` : '';
+  });
 
   protected readonly ddTone = computed(() => drawdownTone(this.drawdown()));
 

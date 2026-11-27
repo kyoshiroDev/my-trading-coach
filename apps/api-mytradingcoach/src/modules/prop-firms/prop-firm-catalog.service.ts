@@ -3,7 +3,8 @@ import type { PropFirmCatalogFirm, PropFirmPhaseRules, PropFirmPlanDetail, PropF
 import { dailyLossLimitStatus } from '@mtc/shared';
 import { PrismaService } from '../../prisma/prisma.service';
 import { availabilityOf } from './prop-firm-catalog.sync';
-import { propFirmConfigurationSchema, propFirmPhaseSchema, type PropFirmPhase } from './prop-firm-catalog.schema';
+import { propFirmPhaseSchema, type PropFirmPhase } from './prop-firm-catalog.schema';
+import { planConfiguration } from './prop-firm-plan-configuration';
 
 // Le contrat partagé (@mtc/shared) et le schéma Zod du catalogue décrivent la même donnée :
 // toute divergence (champ ajouté d'un seul côté, type changé) casse la compilation ici.
@@ -40,19 +41,13 @@ export class PropFirmCatalogService {
             // Json relu avec le schéma du catalogue : la base ne contient que ce que la synchro
             // a validé, mais un Json non typé ne sort jamais vers le front sans contrôle.
             const phases = propFirmPhaseSchema.array().parse(plan.phases);
-            const configuration = propFirmConfigurationSchema.nullable().parse(plan.configuration ?? null);
             return {
               id: plan.id,
               planName: plan.planName,
               accountSize: plan.accountSize,
               currency: plan.currency,
               availability: availabilityOf(plan.availability),
-              configuration: configuration && {
-                dailyLossLimit: configuration.daily_loss_limit,
-                evalDrawdown: configuration.eval_drawdown,
-                payoutPath: configuration.payout_path ?? null,
-                addon: configuration.addon ?? null,
-              },
+              configuration: planConfiguration(plan.configuration),
               needsReview: plan.needsReview,
               platformDependent: [...new Set(phases.flatMap((p) => Object.keys(p.max_drawdown.platform_overrides ?? {})))].sort(),
               phases: phases.map((p) => ({
@@ -83,6 +78,7 @@ export class PropFirmCatalogService {
       accountSize: plan.accountSize,
       currency: plan.currency,
       availability: availabilityOf(plan.availability),
+      configuration: planConfiguration(plan.configuration),
       needsReview: plan.needsReview,
       notes: plan.notes,
       sourceUrls: plan.sourceUrls,
