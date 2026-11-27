@@ -142,7 +142,8 @@ version ne trouve plus l'unique à 3 colonnes et son upsert échoue ; le relevé
   entière coupée (log « Refresh déjà renouvelé puis rejoué »). Les 60 s couvrent les onglets qui
   renouvellent en même temps (cookie partagé) et la réponse perdue rejouée. `POST /auth/logout`
   coupe la famille du refresh présenté ; les autres appareils restent connectés. Jeton sans `fid`
-  (d'avant #1002) : famille `j:<jti>`. La liste noire `auth:revoked-refresh:<jti>` des déconnexions
+  ou sans `jti` (d'avant #1002, tous expirés depuis le 21/11) : refresh refusé en 401, rien à couper au
+  logout (#1215). La liste noire `auth:revoked-refresh:<jti>` des déconnexions
   d'avant #1002 n'est plus lue depuis #1014 (ces jetons ont tous expiré, 7 j après la mise en prod du
   14/11). Redis en panne : refresh accepté (fail-open voulu).
   Connexion : e-mail inconnu ou compte sans mot de passe → argon2 vérifie un hash factice

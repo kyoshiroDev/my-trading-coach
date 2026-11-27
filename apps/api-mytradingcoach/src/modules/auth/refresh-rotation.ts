@@ -14,7 +14,8 @@ import type Redis from 'ioredis';
  *   famille entière est coupée (l'attaquant ET la vraie session, qui se reconnecte). Les autres
  *   appareils (autres familles) restent connectés.
  *
- * Famille inconnue (jeton d'avant ce correctif, Redis vidé) → le suivi démarre à ce refresh.
+ * Famille inconnue (Redis vidé) → le suivi démarre à ce refresh. Jeton sans `fid` (d'avant #1002, tous
+ * expirés depuis le 21/11) : refusé par `AuthService.refresh` (#1215).
  * Le tout en un script Lua : deux refresh simultanés ne peuvent pas lire le même état.
  */
 
@@ -28,15 +29,6 @@ export type RotationOutcome = 'ok' | 'revoked' | 'reused';
 
 /** Famille de refresh tokens. */
 export const refreshFamilyKey = (fid: string) => `auth:refresh-family:${fid}`;
-
-/**
- * Famille d'un jeton. Jeton d'avant #1002 (sans `fid`) mais avec `jti` : famille dérivée du `jti`, pour
- * qu'un rejeu de ce jeton après sa rotation retombe sur la même famille et soit détecté.
- */
-export function familyOf(payload: { fid?: string; jti?: string }): string | null {
-  if (payload.fid) return payload.fid;
-  return payload.jti ? `j:${payload.jti}` : null;
-}
 
 // KEYS[1] famille (la liste noire par jti d'avant #1002 n'est plus lue depuis #1014 : ses jetons ont expiré)
 // ARGV : jti présenté · nouveau jti · maintenant (ms) · tolérance (ms) · TTL (s)

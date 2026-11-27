@@ -28,7 +28,7 @@ import { GoogleAuthDto } from './dto/google-auth.dto';
 import { GoogleIdTokenVerifier, GoogleTokenRefusedException } from './google-id-token.verifier';
 import { resolveGoogleAuthConfig } from '../../config/google-auth-config';
 import { redeleteCutoff, signupTrialData } from '../trial/signup-trial';
-import { REFRESH_TTL_S, familyOf, revokeFamily, rotateRefresh } from './refresh-rotation';
+import { REFRESH_TTL_S, revokeFamily, rotateRefresh } from './refresh-rotation';
 import { emailEquals } from '../../common/utils/email.util';
 
 const RESET_TOKEN_TTL_MS = 60 * 60 * 1000; // 1 heure
@@ -501,10 +501,11 @@ export class AuthService {
       throw new UnauthorizedException('Refresh token invalide ou expiré');
     }
 
-    // Jeton sans `jti` (d'avant #994, 7 j au plus) : aucun suivi possible, une nouvelle famille démarre.
-    const fid = familyOf(payload) ?? crypto.randomUUID();
+    // Jeton sans `fid` ou sans `jti` : émis avant #1002 (prod le 14/11), donc expiré depuis le 21/11 (#1215).
+    const { fid, jti } = payload;
+    if (!fid || !jti) throw new UnauthorizedException('Refresh token invalide ou expiré');
     const nextJti = crypto.randomUUID();
-    if (payload.jti) await this.checkRotation(user.id, fid, payload.jti, nextJti);
+    await this.checkRotation(user.id, fid, jti, nextJti);
 
     const { tokenVersion, ...me } = user;
     const tokens = await this.generateTokens({ id: user.id, email: user.email, tokenVersion }, { fid, jti: nextJti });
@@ -641,8 +642,7 @@ export class AuthService {
       const payload = await this.jwtService.verifyAsync<{ jti?: string; fid?: string }>(refreshToken, {
         secret: process.env['JWT_REFRESH_SECRET'],
       });
-      const fid = familyOf(payload);
-      if (fid) await revokeFamily(this.redis.client, fid);
+      if (payload.fid) await revokeFamily(this.redis.client, payload.fid);
     } catch (err) {
       this.logger.warn(`Révocation du refresh à la déconnexion impossible : ${(err as Error).message}`);
     }
