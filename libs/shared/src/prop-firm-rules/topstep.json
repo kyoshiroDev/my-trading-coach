@@ -1969,7 +1969,7 @@
         "https://help.topstep.com/en/articles/8284204-what-is-the-maximum-loss-limit"
       ],
       "needs_review": true,
-      "notes": "Static Trading Combine 25K, parcours de payout Standard. Topstep Labs (drop limité) : vendu à tous depuis la page Labs du Dashboard (« all now available for purchase any time »), peut s'arrêter ; passer en `discontinued` à la fin de la vente. Achat limité (Labs) : « 5 per Trader » (50K), « 5 per month » (100K, 150K), et la page dit aussi « 5 of each account per month » : contradiction non levée. À confirmer (#1238) : jours minimum du Combine, règles de payout du XFA Static (hors Daily Payouts+), nature du plafond de payout (par payout ou à vie), seuils de profit du scaling ; page Labs lue tronquée, « Topstep Limited Products » introuvable (404). Gel du MLL à 0 $ au premier payout non appliqué par l'app (drawdown statique)."
+      "notes": "Static Trading Combine 25K, parcours de payout Standard. Topstep Labs (drop limité) : vendu à tous depuis la page Labs du Dashboard (« all now available for purchase any time »), peut s'arrêter ; passer en `discontinued` à la fin de la vente. Achat limité (Labs) : « 5 per Trader » (50K), « 5 per month » (100K, 150K), et la page dit aussi « 5 of each account per month » : contradiction non levée. À confirmer (#1238) : jours minimum du Combine, règles de payout du XFA Static (hors Daily Payouts+), nature du plafond de payout (par payout ou à vie), seuils de profit du scaling ; « Topstep Limited Products » introuvable (404). Gel du MLL à 0 $ au premier payout non appliqué par l'app (drawdown statique)."
     },
     {
       "id": "topstep-static-standard-50k",
@@ -2093,7 +2093,7 @@
         "https://help.topstep.com/en/articles/8284204-what-is-the-maximum-loss-limit"
       ],
       "needs_review": true,
-      "notes": "Static Trading Combine 50K, parcours de payout Standard. Topstep Labs (drop limité) : vendu à tous depuis la page Labs du Dashboard (« all now available for purchase any time »), peut s'arrêter ; passer en `discontinued` à la fin de la vente. Achat limité (Labs) : « 5 per Trader » (50K), « 5 per month » (100K, 150K), et la page dit aussi « 5 of each account per month » : contradiction non levée. À confirmer (#1238) : jours minimum du Combine, règles de payout du XFA Static (hors Daily Payouts+), nature du plafond de payout (par payout ou à vie), seuils de profit du scaling ; page Labs lue tronquée, « Topstep Limited Products » introuvable (404). Gel du MLL à 0 $ au premier payout non appliqué par l'app (drawdown statique)."
+      "notes": "Static Trading Combine 50K, parcours de payout Standard. Topstep Labs (drop limité) : vendu à tous depuis la page Labs du Dashboard (« all now available for purchase any time »), peut s'arrêter ; passer en `discontinued` à la fin de la vente. Achat limité (Labs) : « 5 per Trader » (50K), « 5 per month » (100K, 150K), et la page dit aussi « 5 of each account per month » : contradiction non levée. À confirmer (#1238) : jours minimum du Combine, règles de payout du XFA Static (hors Daily Payouts+), nature du plafond de payout (par payout ou à vie), seuils de profit du scaling ; « Topstep Limited Products » introuvable (404). Gel du MLL à 0 $ au premier payout non appliqué par l'app (drawdown statique)."
     },
     {
       "id": "topstep-static-standard-100k",
@@ -2217,7 +2217,7 @@
         "https://help.topstep.com/en/articles/8284204-what-is-the-maximum-loss-limit"
       ],
       "needs_review": true,
-      "notes": "Static Trading Combine 100K, parcours de payout Standard. Topstep Labs (drop limité) : vendu à tous depuis la page Labs du Dashboard (« all now available for purchase any time »), peut s'arrêter ; passer en `discontinued` à la fin de la vente. Achat limité (Labs) : « 5 per Trader » (50K), « 5 per month » (100K, 150K), et la page dit aussi « 5 of each account per month » : contradiction non levée. À confirmer (#1238) : jours minimum du Combine, règles de payout du XFA Static (hors Daily Payouts+), nature du plafond de payout (par payout ou à vie), seuils de profit du scaling ; page Labs lue tronquée, « Topstep Limited Products » introuvable (404). Gel du MLL à 0 $ au premier payout non appliqué par l'app (drawdown statique)."
+      "notes": "Static Trading Combine 100K, parcours de payout Standard. Topstep Labs (drop limité) : vendu à tous depuis la page Labs du Dashboard (« all now available for purchase any time »), peut s'arrêter ; passer en `discontinued` à la fin de la vente. Achat limité (Labs) : « 5 per Trader » (50K), « 5 per month » (100K, 150K), et la page dit aussi « 5 of each account per month » : contradiction non levée. À confirmer (#1238) : jours minimum du Combine, règles de payout du XFA Static (hors Daily Payouts+), nature du plafond de payout (par payout ou à vie), seuils de profit du scaling ; « Topstep Limited Products » introuvable (404). Gel du MLL à 0 $ au premier payout non appliqué par l'app (drawdown statique)."
     },
     {
       "id": "topstep-static-standard-150k",
@@ -2341,7 +2341,7 @@
         "https://help.topstep.com/en/articles/8284204-what-is-the-maximum-loss-limit"
       ],
       "needs_review": true,
-      "notes": "Static Trading Combine 150K, parcours de payout Standard. Topstep Labs (drop limité) : vendu à tous depuis la page Labs du Dashboard (« all now available for purchase any time »), peut s'arrêter ; passer en `discontinued` à la fin de la vente. Achat limité (Labs) : « 5 per Trader » (50K), « 5 per month » (100K, 150K), et la page dit aussi « 5 of each account per month » : contradiction non levée. À confirmer (#1238) : jours minimum du Combine, règles de payout du XFA Static (hors Daily Payouts+), nature du plafond de payout (par payout ou à vie), seuils de profit du scaling ; page Labs lue tronquée, « Topstep Limited Products » introuvable (404). Gel du MLL à 0 $ au premier payout non appliqué par l'app (drawdown statique)."
+      "notes": "Static Trading Combine 150K, parcours de payout Standard. Topstep Labs (drop limité) : vendu à tous depuis la page Labs du Dashboard (« all now available for purchase any time »), peut s'arrêter ; passer en `discontinued` à la fin de la vente. Achat limité (Labs) : « 5 per Trader » (50K), « 5 per month » (100K, 150K), et la page dit aussi « 5 of each account per month » : contradiction non levée. À confirmer (#1238) : jours minimum du Combine, règles de payout du XFA Static (hors Daily Payouts+), nature du plafond de payout (par payout ou à vie), seuils de profit du scaling ; « Topstep Limited Products » introuvable (404). Gel du MLL à 0 $ au premier payout non appliqué par l'app (drawdown statique)."
     },
     {
       "id": "topstep-static-consistency-25k",
@@ -2432,7 +2432,7 @@
           "consistency": {
             "max_single_day_pct": 0.4,
             "applies_to": "payout",
-            "notes": "Parcours Consistency : plus gros jour au plus 40 % du profit (page Labs)."
+            "notes": "Parcours Consistency : 40 % repris des tailles 50K à 150K (le tableau 25K dit seulement « Choose Consistency or Standard »)."
           },
           "min_trading_days": null,
           "max_duration_days": null,
@@ -2469,7 +2469,7 @@
         "https://help.topstep.com/en/articles/8284204-what-is-the-maximum-loss-limit"
       ],
       "needs_review": true,
-      "notes": "Static Trading Combine 25K, parcours de payout Consistency. Topstep Labs (drop limité) : vendu à tous depuis la page Labs du Dashboard (« all now available for purchase any time »), peut s'arrêter ; passer en `discontinued` à la fin de la vente. Achat limité (Labs) : « 5 per Trader » (50K), « 5 per month » (100K, 150K), et la page dit aussi « 5 of each account per month » : contradiction non levée. À confirmer (#1238) : jours minimum du Combine, règles de payout du XFA Static (hors Daily Payouts+), nature du plafond de payout (par payout ou à vie), seuils de profit du scaling ; page Labs lue tronquée, « Topstep Limited Products » introuvable (404). Gel du MLL à 0 $ au premier payout non appliqué par l'app (drawdown statique)."
+      "notes": "Static Trading Combine 25K, parcours de payout Consistency. Topstep Labs (drop limité) : vendu à tous depuis la page Labs du Dashboard (« all now available for purchase any time »), peut s'arrêter ; passer en `discontinued` à la fin de la vente. Achat limité (Labs) : « 5 per Trader » (50K), « 5 per month » (100K, 150K), et la page dit aussi « 5 of each account per month » : contradiction non levée. À confirmer (#1238) : jours minimum du Combine, règles de payout du XFA Static (hors Daily Payouts+), nature du plafond de payout (par payout ou à vie), seuils de profit du scaling ; « Topstep Limited Products » introuvable (404). Gel du MLL à 0 $ au premier payout non appliqué par l'app (drawdown statique)."
     },
     {
       "id": "topstep-static-consistency-50k",
@@ -2597,7 +2597,7 @@
         "https://help.topstep.com/en/articles/8284204-what-is-the-maximum-loss-limit"
       ],
       "needs_review": true,
-      "notes": "Static Trading Combine 50K, parcours de payout Consistency. Topstep Labs (drop limité) : vendu à tous depuis la page Labs du Dashboard (« all now available for purchase any time »), peut s'arrêter ; passer en `discontinued` à la fin de la vente. Achat limité (Labs) : « 5 per Trader » (50K), « 5 per month » (100K, 150K), et la page dit aussi « 5 of each account per month » : contradiction non levée. À confirmer (#1238) : jours minimum du Combine, règles de payout du XFA Static (hors Daily Payouts+), nature du plafond de payout (par payout ou à vie), seuils de profit du scaling ; page Labs lue tronquée, « Topstep Limited Products » introuvable (404). Gel du MLL à 0 $ au premier payout non appliqué par l'app (drawdown statique)."
+      "notes": "Static Trading Combine 50K, parcours de payout Consistency. Topstep Labs (drop limité) : vendu à tous depuis la page Labs du Dashboard (« all now available for purchase any time »), peut s'arrêter ; passer en `discontinued` à la fin de la vente. Achat limité (Labs) : « 5 per Trader » (50K), « 5 per month » (100K, 150K), et la page dit aussi « 5 of each account per month » : contradiction non levée. À confirmer (#1238) : jours minimum du Combine, règles de payout du XFA Static (hors Daily Payouts+), nature du plafond de payout (par payout ou à vie), seuils de profit du scaling ; « Topstep Limited Products » introuvable (404). Gel du MLL à 0 $ au premier payout non appliqué par l'app (drawdown statique)."
     },
     {
       "id": "topstep-static-consistency-100k",
@@ -2725,7 +2725,7 @@
         "https://help.topstep.com/en/articles/8284204-what-is-the-maximum-loss-limit"
       ],
       "needs_review": true,
-      "notes": "Static Trading Combine 100K, parcours de payout Consistency. Topstep Labs (drop limité) : vendu à tous depuis la page Labs du Dashboard (« all now available for purchase any time »), peut s'arrêter ; passer en `discontinued` à la fin de la vente. Achat limité (Labs) : « 5 per Trader » (50K), « 5 per month » (100K, 150K), et la page dit aussi « 5 of each account per month » : contradiction non levée. À confirmer (#1238) : jours minimum du Combine, règles de payout du XFA Static (hors Daily Payouts+), nature du plafond de payout (par payout ou à vie), seuils de profit du scaling ; page Labs lue tronquée, « Topstep Limited Products » introuvable (404). Gel du MLL à 0 $ au premier payout non appliqué par l'app (drawdown statique)."
+      "notes": "Static Trading Combine 100K, parcours de payout Consistency. Topstep Labs (drop limité) : vendu à tous depuis la page Labs du Dashboard (« all now available for purchase any time »), peut s'arrêter ; passer en `discontinued` à la fin de la vente. Achat limité (Labs) : « 5 per Trader » (50K), « 5 per month » (100K, 150K), et la page dit aussi « 5 of each account per month » : contradiction non levée. À confirmer (#1238) : jours minimum du Combine, règles de payout du XFA Static (hors Daily Payouts+), nature du plafond de payout (par payout ou à vie), seuils de profit du scaling ; « Topstep Limited Products » introuvable (404). Gel du MLL à 0 $ au premier payout non appliqué par l'app (drawdown statique)."
     },
     {
       "id": "topstep-static-consistency-150k",
@@ -2853,7 +2853,7 @@
         "https://help.topstep.com/en/articles/8284204-what-is-the-maximum-loss-limit"
       ],
       "needs_review": true,
-      "notes": "Static Trading Combine 150K, parcours de payout Consistency. Topstep Labs (drop limité) : vendu à tous depuis la page Labs du Dashboard (« all now available for purchase any time »), peut s'arrêter ; passer en `discontinued` à la fin de la vente. Achat limité (Labs) : « 5 per Trader » (50K), « 5 per month » (100K, 150K), et la page dit aussi « 5 of each account per month » : contradiction non levée. À confirmer (#1238) : jours minimum du Combine, règles de payout du XFA Static (hors Daily Payouts+), nature du plafond de payout (par payout ou à vie), seuils de profit du scaling ; page Labs lue tronquée, « Topstep Limited Products » introuvable (404). Gel du MLL à 0 $ au premier payout non appliqué par l'app (drawdown statique)."
+      "notes": "Static Trading Combine 150K, parcours de payout Consistency. Topstep Labs (drop limité) : vendu à tous depuis la page Labs du Dashboard (« all now available for purchase any time »), peut s'arrêter ; passer en `discontinued` à la fin de la vente. Achat limité (Labs) : « 5 per Trader » (50K), « 5 per month » (100K, 150K), et la page dit aussi « 5 of each account per month » : contradiction non levée. À confirmer (#1238) : jours minimum du Combine, règles de payout du XFA Static (hors Daily Payouts+), nature du plafond de payout (par payout ou à vie), seuils de profit du scaling ; « Topstep Limited Products » introuvable (404). Gel du MLL à 0 $ au premier payout non appliqué par l'app (drawdown statique)."
     },
     {
       "id": "topstep-static-daily-50k",
@@ -2948,8 +2948,27 @@
             "minis": 5,
             "micros": 50,
             "scaling": true,
-            "tiers": null,
-            "notes": "« XFA matches the standard $50K XFA scaling plan » (5 minis / 50 micros), alors que le tableau 50K Static donne 2 / 3 / 4 : contradiction, seuils de profit non publiés."
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1499.99,
+                "minis": 2,
+                "micros": 20
+              },
+              {
+                "min_profit": 1500,
+                "max_profit": 2000,
+                "minis": 3,
+                "micros": 30
+              },
+              {
+                "min_profit": 2000.01,
+                "max_profit": null,
+                "minis": 5,
+                "micros": 50
+              }
+            ],
+            "notes": "« XFA matches the standard $50K XFA scaling plan » (page Labs, drop #011) : paliers du XFA 50K standard. Scaling Plan selon le solde du compte (départ 0 $), mis à jour pour la session suivante, jamais en cours de séance. Micros 10:1 (exceptions : Micro Silver, Micro Bitcoin, Micro Ether)."
           },
           "time_rules": {
             "must_close_by": "15:10 America/Chicago",
@@ -2977,7 +2996,7 @@
         "https://help.topstep.com/en/articles/8284204-what-is-the-maximum-loss-limit"
       ],
       "needs_review": true,
-      "notes": "Static Trading Combine Daily Payouts+ (drop #011), achat limité à 5 au total entre les versions EOD et Static. Topstep Labs (drop limité) : vendu à tous depuis la page Labs du Dashboard (« all now available for purchase any time »), peut s'arrêter ; passer en `discontinued` à la fin de la vente. Achat limité (Labs) : « 5 per Trader » (50K), « 5 per month » (100K, 150K), et la page dit aussi « 5 of each account per month » : contradiction non levée. À confirmer (#1238) : jours minimum du Combine, règles de payout du XFA Static (hors Daily Payouts+), nature du plafond de payout (par payout ou à vie), seuils de profit du scaling ; page Labs lue tronquée, « Topstep Limited Products » introuvable (404). Gel du MLL à 0 $ au premier payout non appliqué par l'app (drawdown statique)."
+      "notes": "Static Trading Combine Daily Payouts+ (drop #011), achat limité à 5 au total entre les versions EOD et Static. Topstep Labs (drop limité) : vendu à tous depuis la page Labs du Dashboard (« all now available for purchase any time »), peut s'arrêter ; passer en `discontinued` à la fin de la vente. Achat limité (Labs) : « 5 per Trader » (50K), « 5 per month » (100K, 150K), et la page dit aussi « 5 of each account per month » : contradiction non levée. À confirmer (#1238) : jours minimum du Combine, règles de payout du XFA Static (hors Daily Payouts+), nature du plafond de payout (par payout ou à vie), seuils de profit du scaling ; « Topstep Limited Products » introuvable (404). Gel du MLL à 0 $ au premier payout non appliqué par l'app (drawdown statique)."
     }
   ]
 }
