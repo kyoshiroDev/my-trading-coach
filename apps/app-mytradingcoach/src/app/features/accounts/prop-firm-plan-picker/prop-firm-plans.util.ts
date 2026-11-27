@@ -54,7 +54,40 @@ function optionRank(plan: PropFirmPlanSummary): number {
 }
 
 /**
- * Programmes d'une firm par nom, puis options ; les plans sur invitation en dernier.
+ * Famille d'un plan : son nom sans la parenthèse de version (« Accelerate S2F (achat avant le
+ * 22/10/2026) » → « Accelerate S2F »). Le plan en vente porte le nom nu.
+ */
+export function familyName(planName: string): string {
+  return planName.replace(/\s*\([^()]*\)\s*$/, '');
+}
+
+/**
+ * Date la plus récente citée dans la parenthèse de version (JJ/MM/AAAA ou AAAA-MM-JJ), en
+ * AAAA-MM-JJ ; `null` pour le plan en vente (nom sans parenthèse) ou sans date lisible.
+ */
+export function versionDate(planName: string): string | null {
+  const m = /\(([^()]*)\)\s*$/.exec(planName);
+  if (!m) return null;
+  const dates = [
+    ...[...m[1].matchAll(/\b(\d{2})\/(\d{2})\/(\d{4})\b/g)].map(([, d, mo, y]) => `${y}-${mo}-${d}`),
+    ...[...m[1].matchAll(/\b(\d{4}-\d{2}-\d{2})\b/g)].map(([, iso]) => iso),
+  ];
+  return dates.length ? dates.sort().at(-1)! : null;
+}
+
+/** Rang de version dans une famille : le plan en vente (0), puis les anciennes versions, la plus récente d'abord. */
+function compareVersions(a: string, b: string): number {
+  const va = familyName(a) === a;
+  const vb = familyName(b) === b;
+  if (va !== vb) return va ? -1 : 1;
+  return (versionDate(b) ?? '').localeCompare(versionDate(a) ?? '');
+}
+
+/**
+ * Programmes d'une firm par famille de plans (nom sans version), les familles entièrement sur
+ * invitation en dernier. Dans une famille, le plan en vente d'abord puis les anciennes versions
+ * de la plus récente à la plus ancienne, quelle que soit leur visibilité (#1244) ; puis les options,
+ * et le libellé en dernier recours (#1234 : options de même rang).
  * Un plan plus vendu n'est pas proposé, sauf s'il est déjà celui du compte (`keepPlanId`).
  */
 export function programsOf(firm: PropFirmCatalogFirm, keepPlanId: string | null = null): PropFirmProgram[] {
@@ -73,12 +106,23 @@ export function programsOf(firm: PropFirmCatalogFirm, keepPlanId: string | null 
   }
   const programs = [...byKey.values()];
   for (const p of programs) p.plans.sort((a, b) => a.accountSize - b.accountSize);
-  return programs.sort(
-    (a, b) =>
-      Number(a.inviteOnly) - Number(b.inviteOnly) ||
-      a.plans[0].planName.localeCompare(b.plans[0].planName) ||
-      optionRank(a.plans[0]) - optionRank(b.plans[0]),
-  );
+  // Une famille n'est « sur invitation » que si tous ses programmes le sont.
+  const familyInvite = new Map<string, boolean>();
+  for (const p of programs) {
+    const f = familyName(p.plans[0].planName);
+    familyInvite.set(f, (familyInvite.get(f) ?? true) && p.inviteOnly);
+  }
+  return programs.sort((a, b) => {
+    const fa = familyName(a.plans[0].planName);
+    const fb = familyName(b.plans[0].planName);
+    return (
+      Number(familyInvite.get(fa)) - Number(familyInvite.get(fb)) ||
+      fa.localeCompare(fb) ||
+      compareVersions(a.plans[0].planName, b.plans[0].planName) ||
+      optionRank(a.plans[0]) - optionRank(b.plans[0]) ||
+      a.label.localeCompare(b.label)
+    );
+  });
 }
 
 export function findPlan(

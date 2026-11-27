@@ -54,7 +54,7 @@ describe('veille du 2026-11-22', () => {
     const after = get(`earn2trade-${kind}-nov02-${size}`);
     expect(before.plan_name).toContain('achat avant le 02/11/2026');
     expect(after.plan_name).toBe(kind === 'tcp' ? 'Trader Career Path' : 'Gauntlet Mini');
-    // programsOf trie par nom : le plan en vente passe en premier parce que son nom est le début de celui du plan d'origine.
+    // programsOf range les versions par famille (nom sans parenthèse) : le plan en vente passe en premier (#1244).
     expect(before.plan_name.startsWith(`${after.plan_name} (`)).toBe(true);
     expect(after.phases).toHaveLength(before.phases.length);
     after.phases.forEach((phase, i) => {
