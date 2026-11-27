@@ -736,8 +736,8 @@ describe('AuthService', () => {
       await expect(service.refresh('t')).rejects.toThrow(UnauthorizedException);
     });
 
-    it('refresh token d’avant #618 (sans version) = version 0 → accepté', async () => {
-      (mockJwt as Record<string, unknown>)['verifyAsync'] = vi.fn().mockResolvedValue({ sub: 'user-123', email: 'a@b.c' });
+    it('refresh token sans version = version 0 → accepté', async () => {
+      (mockJwt as Record<string, unknown>)['verifyAsync'] = vi.fn().mockResolvedValue({ sub: 'user-123', email: 'a@b.c', jti: 'jti-1', fid: 'fam-1' });
       mockPrisma.user.findUnique.mockResolvedValue({ ...mockSafeUser, password: 'h', googleId: null, tokenVersion: 0 });
       await expect(service.refresh('t')).resolves.toMatchObject({ access_token: 'mock_token' });
     });
@@ -776,20 +776,20 @@ describe('AuthService', () => {
       expect([nKeys, famKey, jti, nextJti]).toEqual([1, 'auth:refresh-family:fam-1', 'jti-1', opts.jwtid]);
     });
 
-    it('jeton d’avant #1002 (jti sans famille) : famille dérivée du jti, gardée ensuite', async () => {
-      verify({ sub: 'user-123', email: 'a@b.c', tv: 0, jti: 'jti-old' });
+    it('jeton sans famille ou sans jti (d’avant #1002, expiré) → 401, sans suivi Redis (#1215)', async () => {
       knownUser();
-      await service.refresh('t');
-      expect(mockRedis.client.eval.mock.calls[0][2]).toBe('auth:refresh-family:j:jti-old');
-      expect((refreshSign() as [{ fid: string }])[0].fid).toBe('j:jti-old');
+      verify({ sub: 'user-123', email: 'a@b.c', tv: 0, jti: 'jti-old' });
+      await expect(service.refresh('t')).rejects.toThrow(UnauthorizedException);
+      verify({ sub: 'user-123', email: 'a@b.c', tv: 0 });
+      await expect(service.refresh('t')).rejects.toThrow(UnauthorizedException);
+      expect(mockRedis.client.eval).not.toHaveBeenCalled();
+      expect(refreshSign()).toBeUndefined();
     });
 
-    it('jeton d’avant #994 (sans jti) : accepté sans suivi, nouvelle famille', async () => {
-      verify({ sub: 'user-123', email: 'a@b.c', tv: 0 });
-      knownUser();
-      await expect(service.refresh('t')).resolves.toMatchObject({ access_token: 'mock_token' });
-      expect(mockRedis.client.eval).not.toHaveBeenCalled();
-      expect((refreshSign() as [{ fid: string }])[0].fid).toMatch(/^[0-9a-f-]{36}$/);
+    it('logout avec un jeton sans famille : rien à couper, aucune erreur', async () => {
+      verify({ sub: 'user-123', jti: 'jti-old' });
+      await expect(service.revokeRefreshToken('t')).resolves.toBeUndefined();
+      expect(mockMulti.hset).not.toHaveBeenCalled();
     });
 
     it('famille ou jeton révoqué → 401', async () => {
