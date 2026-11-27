@@ -80,6 +80,7 @@ Tous documentés dans `schema.json`. Aucun champ du format de départ n'a été 
 | `payout.split_after` | Partage qui change au-delà d'un cumul payé par compte (`split_pct` = avant le seuil). |
 | `payout.max_payouts` | Nombre de payouts avant fermeture ou passage en live. |
 | `payout.safety_net_balance` | Solde sous lequel aucun payout n'est possible (buffer / safety net). |
+| `payout.safety_net_basis` | Sens du safety net (#1228) : `after_payout` = solde à garder après le retrait (seuil de demande = net + `min_amount`), `to_request` = solde minimum pour demander (net seul). Ne renseigner qu'avec une source qui le dit ; absent = traité comme `to_request`. |
 
 ### Lire un drawdown
 

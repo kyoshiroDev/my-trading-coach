@@ -3801,6 +3801,7 @@
             ],
             "max_payouts": null,
             "safety_net_balance": 52100,
+            "safety_net_basis": "after_payout",
             "notes": "5 jours gagnants de 200 $ minimum avant chaque payout. Solde au-dessus de 52 100 $ (buffer non retirable). Plafond 1 250 $ puis 1 500 $ dès le 3e payout. 90/10."
           }
         }
@@ -3889,6 +3890,7 @@
             ],
             "max_payouts": null,
             "safety_net_balance": 52100,
+            "safety_net_basis": "after_payout",
             "notes": "5 jours gagnants de 200 $ minimum avant chaque payout. 4 000 $ de nouveau profit par cycle, remis à zéro après chaque payout. Solde au-dessus de 52 100 $ (buffer non retirable). Plafond 1 250 $ puis 1 500 $ dès le 3e payout. 90/10."
           }
         }
@@ -3974,6 +3976,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 52100,
+            "safety_net_basis": "after_payout",
             "notes": "5 jours gagnants de 200 $ minimum avant chaque payout. 1 500 $ de nouveau profit par cycle, remis à zéro après chaque payout. Solde au-dessus de 52 100 $ (buffer non retirable). Plafond 500 $ par payout. 90/10."
           }
         }
@@ -4059,6 +4062,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 26100,
+            "safety_net_basis": "after_payout",
             "notes": "5 jours gagnants de 200 $ minimum avant chaque payout. 2 000 $ de nouveau profit par cycle, remis à zéro après chaque payout. Buffer de 1 100 $ non retirable (solde de 26 100 $). Plafond 500 $ par payout. Minimum de payout non publié pour le 25K. 90/10."
           }
         }

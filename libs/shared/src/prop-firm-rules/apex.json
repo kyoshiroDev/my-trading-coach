@@ -1733,6 +1733,7 @@
             ],
             "max_payouts": null,
             "safety_net_balance": 26600,
+            "safety_net_basis": "to_request",
             "notes": "8 jours de trading depuis la dernière demande, dont au moins 5 avec 50 $ de profit ou plus. Plafond 1500 $ sur les 5 premiers payouts, sans plafond à partir du 6e. Safety net (26600) exigé pour les 3 premiers payouts seulement ; un payout de 500 $ reste possible dès qu'il est atteint."
           }
         }
@@ -1886,6 +1887,7 @@
             ],
             "max_payouts": null,
             "safety_net_balance": 52600,
+            "safety_net_basis": "to_request",
             "notes": "8 jours de trading depuis la dernière demande, dont au moins 5 avec 50 $ de profit ou plus. Plafond 2000 $ sur les 5 premiers payouts, sans plafond à partir du 6e. Safety net (52600) exigé pour les 3 premiers payouts seulement ; un payout de 500 $ reste possible dès qu'il est atteint."
           }
         }
@@ -2039,6 +2041,7 @@
             ],
             "max_payouts": null,
             "safety_net_balance": 103100,
+            "safety_net_basis": "to_request",
             "notes": "8 jours de trading depuis la dernière demande, dont au moins 5 avec 50 $ de profit ou plus. Plafond 2500 $ sur les 5 premiers payouts, sans plafond à partir du 6e. Safety net (103100) exigé pour les 3 premiers payouts seulement ; un payout de 500 $ reste possible dès qu'il est atteint."
           }
         }
@@ -2192,6 +2195,7 @@
             ],
             "max_payouts": null,
             "safety_net_balance": 155100,
+            "safety_net_basis": "to_request",
             "notes": "8 jours de trading depuis la dernière demande, dont au moins 5 avec 50 $ de profit ou plus. Plafond 2750 $ sur les 5 premiers payouts, sans plafond à partir du 6e. Safety net (155100) exigé pour les 3 premiers payouts seulement ; un payout de 500 $ reste possible dès qu'il est atteint."
           }
         }
@@ -2345,6 +2349,7 @@
             ],
             "max_payouts": null,
             "safety_net_balance": 256600,
+            "safety_net_basis": "to_request",
             "notes": "8 jours de trading depuis la dernière demande, dont au moins 5 avec 50 $ de profit ou plus. Plafond 3000 $ sur les 5 premiers payouts, sans plafond à partir du 6e. Safety net (256600) exigé pour les 3 premiers payouts seulement ; un payout de 500 $ reste possible dès qu'il est atteint."
           }
         }
@@ -2498,6 +2503,7 @@
             ],
             "max_payouts": null,
             "safety_net_balance": 307600,
+            "safety_net_basis": "to_request",
             "notes": "8 jours de trading depuis la dernière demande, dont au moins 5 avec 50 $ de profit ou plus. Plafond 3500 $ sur les 5 premiers payouts, sans plafond à partir du 6e. Safety net (307600) exigé pour les 3 premiers payouts seulement ; un payout de 500 $ reste possible dès qu'il est atteint."
           }
         }

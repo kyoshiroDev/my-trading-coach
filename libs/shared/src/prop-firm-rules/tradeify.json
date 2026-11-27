@@ -139,6 +139,7 @@
             ],
             "max_payouts": null,
             "safety_net_balance": 26500,
+            "safety_net_basis": "to_request",
             "notes": "5 jours avec plus de 100 $ de profit (remis à zéro après chaque payout), consistency 35 %, solde minimum 26500 $ pour demander. Plafond par demande selon le numéro de payout (le dernier vaut pour les suivants). Rapprochement quotidien 18:00-20:00 ET. Microscalping (funded) : plus de 50 % des trades tenus plus de 10 secondes et plus de 50 % du profit venant de trades tenus plus de 10 secondes, sinon pas de payout."
           }
         }
@@ -280,6 +281,7 @@
             ],
             "max_payouts": null,
             "safety_net_balance": 53000,
+            "safety_net_basis": "to_request",
             "notes": "5 jours avec plus de 150 $ de profit (remis à zéro après chaque payout), consistency 35 %, solde minimum 53000 $ pour demander. Plafond par demande selon le numéro de payout (le dernier vaut pour les suivants). Rapprochement quotidien 18:00-20:00 ET. Microscalping (funded) : plus de 50 % des trades tenus plus de 10 secondes et plus de 50 % du profit venant de trades tenus plus de 10 secondes, sinon pas de payout."
           }
         }
@@ -421,6 +423,7 @@
             ],
             "max_payouts": null,
             "safety_net_balance": 104500,
+            "safety_net_basis": "to_request",
             "notes": "5 jours avec plus de 200 $ de profit (remis à zéro après chaque payout), consistency 35 %, solde minimum 104500 $ pour demander. Plafond par demande selon le numéro de payout (le dernier vaut pour les suivants). Rapprochement quotidien 18:00-20:00 ET. Microscalping (funded) : plus de 50 % des trades tenus plus de 10 secondes et plus de 50 % du profit venant de trades tenus plus de 10 secondes, sinon pas de payout."
           }
         }
@@ -562,6 +565,7 @@
             ],
             "max_payouts": null,
             "safety_net_balance": 156500,
+            "safety_net_basis": "to_request",
             "notes": "5 jours avec plus de 250 $ de profit (remis à zéro après chaque payout), consistency 35 %, solde minimum 156500 $ pour demander. Plafond par demande selon le numéro de payout (le dernier vaut pour les suivants). Rapprochement quotidien 18:00-20:00 ET. Microscalping (funded) : plus de 50 % des trades tenus plus de 10 secondes et plus de 50 % du profit venant de trades tenus plus de 10 secondes, sinon pas de payout."
           }
         }
