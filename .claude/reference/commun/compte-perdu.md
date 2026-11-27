@@ -75,7 +75,8 @@ statistique, ajouter un test « compte FAILED ou ARCHIVED exclu par défaut, inc
   (`updateMany` seulement si l'incident porte ENCORE ce retrait : deux lectures simultanées sans effet
   croisé, un retrait plus récent jamais effacé).
 - `POST /accounts/:id/retry` : nouvelle tentative d'un compte `FAILED` du propriétaire (409 sinon,
-  404 pour un autre utilisateur). Même firme, plan, taille et règles (`retryAccountData`) ; rien
+  404 pour un autre utilisateur). Même firme, plan, taille et règles (`retryAccountData`), le plan
+  étant recopié même s'il n'est plus vendu (#1242) ; rien
   n'est copié (trades, connexion broker, dernier payout). Libellé incrémenté côté serveur par
   `nextAttemptLabel` (`@mtc/shared`, partagé avec l'app qui l'annonce avant la création :
   « Apex 50K #2 », plus grand numéro + 1). Quota du plan appliqué.
