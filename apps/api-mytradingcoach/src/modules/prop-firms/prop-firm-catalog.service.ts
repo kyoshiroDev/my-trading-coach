@@ -3,7 +3,8 @@ import type { PropFirmCatalogFirm, PropFirmPhaseRules, PropFirmPlanDetail, PropF
 import { dailyLossLimitStatus } from '@mtc/shared';
 import { PrismaService } from '../../prisma/prisma.service';
 import { availabilityOf } from './prop-firm-catalog.sync';
-import { propFirmConfigurationSchema, propFirmPhaseSchema, type PropFirmPhase } from './prop-firm-catalog.schema';
+import { propFirmPhaseSchema, type PropFirmPhase } from './prop-firm-catalog.schema';
+import { planConfiguration } from './prop-firm-plan-configuration';
 
 // Le contrat partagé (@mtc/shared) et le schéma Zod du catalogue décrivent la même donnée :
 // toute divergence (champ ajouté d'un seul côté, type changé) casse la compilation ici.
@@ -12,20 +13,6 @@ const phaseContractInSync: Same<PropFirmPhase, PropFirmPhaseRules> = true;
 void phaseContractInSync;
 
 /** Lecture du catalogue en base pour l'app (choix du plan d'un compte). */
-/**
- * Options de checkout d'un plan (Json du catalogue relu avec son schéma), au format du contrat
- * front ; null s'il n'y en a pas. Partagé par la liste, le détail et la règle d'un compte (#1236).
- */
-export function planConfiguration(raw: unknown): PropFirmPlanSummary['configuration'] {
-  const c = propFirmConfigurationSchema.nullable().parse(raw ?? null);
-  return c && {
-    dailyLossLimit: c.daily_loss_limit,
-    evalDrawdown: c.eval_drawdown,
-    payoutPath: c.payout_path ?? null,
-    addon: c.addon ?? null,
-  };
-}
-
 @Injectable()
 export class PropFirmCatalogService {
   constructor(private readonly prisma: PrismaService) {}

@@ -8,7 +8,7 @@ import {
   Optional,
 } from '@nestjs/common';
 import type { AccountPlanHint, PropFirmDrawdownKind, PropFirmPayoutLockTrigger, PropFirmPhaseRules, PropFirmPlanSummary } from '@mtc/shared';
-import { planConfiguration } from '../prop-firms/prop-firm-catalog.service';
+import { planConfigurationOrNull } from '../prop-firms/prop-firm-plan-configuration';
 import { ACCOUNT_LIMITS, drawdownFloor, drawdownPeakProfit, planDrawdownRule, roundCents } from '@mtc/shared';
 import {
   AccountStatus,
@@ -1159,7 +1159,7 @@ function toRulePlan(
 ): RulePlan | null {
   if (!row || !Array.isArray(row.phases)) return null;
   return {
-    firmName: row.firm.name, planName: row.planName, configuration: planConfiguration(row.configuration), accountSize: row.accountSize,
+    firmName: row.firm.name, planName: row.planName, configuration: planConfigurationOrNull(row.configuration), accountSize: row.accountSize,
     phases: row.phases as PropFirmPhaseRules[], needsReview: row.needsReview ?? false,
   };
 }

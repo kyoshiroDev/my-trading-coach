@@ -4,6 +4,8 @@
     @if (rule()) {
       <span class="pf-plan" data-testid="live-prop-firm-plan" [title]="planLabel()">{{ planLabel() }}</span>
     }
+    <!-- Groupe de droite seulement s'il a du contenu : vide, il décalait le badge de 8 px (gap). -->
+    @if (live.connected() || userStore.isPremium()) {
     <span class="pf-head-end">
       @if (live.connected()) {
         <span class="pf-live" data-testid="live-prop-firm-live"><span class="pulse-dot"></span>LIVE</span>
@@ -20,6 +22,7 @@
         </button>
       }
     </span>
+    }
   </header>
 
   @if (account(); as a) {

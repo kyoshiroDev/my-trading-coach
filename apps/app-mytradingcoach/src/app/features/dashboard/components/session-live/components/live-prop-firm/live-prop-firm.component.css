@@ -8,19 +8,14 @@
 .pf-head { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .pf-title { font-family: var(--font-mono); font-size: 11px; letter-spacing: .08em; color: var(--text-2); flex-shrink: 0; }
 .pf-head-end { margin-left: auto; display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
-/* Violet = plan */
+/* Violet = plan. Toujours sur sa propre ligne sous le titre, texte replié plutôt que coupé : la colonne
+   reste étroite à toutes les largeurs et l'infobulle n'existe pas au toucher (#1231, #1236). */
+.pf-head { flex-wrap: wrap; }
+.pf-head:has(.pf-plan)::after { content: ''; order: 2; flex-basis: 100%; }
 .pf-plan {
+  order: 3; max-width: 100%;
   font-family: var(--font-mono); font-size: 11px; color: var(--purple-bright); background: var(--purple-dim);
-  padding: 3px 8px; border-radius: 6px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-}
-/* Badge du plan : avant LIVE et le son sur une ligne ; sous 768 px, sur sa propre ligne pleine largeur
-   pour que le nom et ses options (version, option consistency…) restent lisibles à 360 px (#1231). */
-.pf-plan { margin-left: auto; }
-.pf-plan + .pf-head-end { margin-left: 0; }
-@media (max-width: 767.98px) {
-  .pf-head { flex-wrap: wrap; }
-  .pf-plan { order: 3; flex-basis: 100%; max-width: max-content; margin-left: 0; }
-  .pf-plan + .pf-head-end { margin-left: auto; }
+  padding: 3px 8px; border-radius: 6px; min-width: 0; white-space: normal; overflow-wrap: anywhere;
 }
 /* Cyan = live */
 .pf-live {
