@@ -8,8 +8,8 @@ import tpt from './takeprofittrader.json';
 interface Phase {
   phase: string;
   profit_target: number | null;
-  daily_loss_limit: { amount: number | null; breach: string } | null;
-  max_drawdown: { amount: number; type: string; locks_at: number | null; locked_floor: number | null };
+  daily_loss_limit: { amount: number | null; breach: string; basis: string | null; resets_at: string | null } | null;
+  max_drawdown: { amount: number; type: string; locks_at: number | null; locked_floor: number | null; trails_on: string; enforced_on: string };
   max_contracts: { minis: number | null; micros: number | null };
   payout: { safety_net_balance: number | null; split_pct: number } | null;
   time_rules: { notes: string | null } | null;
@@ -82,10 +82,15 @@ describe('veille du 2026-11-28, lot 6a (Take Profit Trader)', () => {
     const pro = phase(plan, 'funded');
     expect(ev.profit_target).toBe(target);
     for (const [p, type] of [[ev, evalType], [pro, proType]] as const) {
-      expect(p.max_drawdown).toMatchObject({ amount: dd, type, locks_at: accountSize + dd, locked_floor: accountSize });
+      expect(p.max_drawdown).toMatchObject({
+        amount: dd, type, locks_at: accountSize + dd, locked_floor: accountSize,
+        trails_on: type === 'trailing_eod' ? 'balance' : 'equity', enforced_on: 'equity_realtime',
+      });
       expect(p.max_contracts).toMatchObject({ minis, micros: minis * 10 });
       // DLL du parcours EOD : pire cas (« hard breach » sous le solde de départ) retenu.
-      expect(p.daily_loss_limit).toEqual(dll == null ? null : expect.objectContaining({ amount: dll, breach: 'account_failed' }));
+      expect(p.daily_loss_limit).toEqual(
+        dll == null ? null : expect.objectContaining({ amount: dll, breach: 'account_failed', basis: 'equity', resets_at: '18:00 America/New_York' }),
+      );
     }
     expect(pro.payout).toMatchObject({ safety_net_balance: accountSize + dd, split_pct: 0.8 });
   });
