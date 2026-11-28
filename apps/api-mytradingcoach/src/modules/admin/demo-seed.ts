@@ -230,7 +230,7 @@ export async function seedTradingData(
 
   // Alertes de comportement passées (#671) : ambre et rouge dans « Alertes de la semaine », un détecteur coupé
   // dans le Profil. Visibles quand BEHAVIOR_ALERTS_UI est allumé.
-  for (const a of behaviorAlertsExample(days)) {
+  for (const a of behaviorAlertsExample(days, now)) {
     await prisma.behaviorAlert.create({
       data: {
         userId: user.id, accountId: accountIdByKey.get('apex')!, tradeDay: new Date(`${tradingDay(a.createdAt)}T00:00:00.000Z`),

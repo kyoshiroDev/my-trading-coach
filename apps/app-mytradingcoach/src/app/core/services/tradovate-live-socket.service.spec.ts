@@ -8,6 +8,8 @@ import { SelectedAccountStore } from '../stores/selected-account.store';
 import { TradovateStore } from '../stores/tradovate.store';
 import { SessionStore } from '../stores/session.store';
 import { PropAlertsService } from './prop-alerts.service';
+import { AlertSoundService } from './alert-sound.service';
+import { BehaviorAlertsStore } from '../stores/behavior-alerts.store';
 
 /** Socket.io simulée : on déclenche les événements serveur à la main. */
 const fake = vi.hoisted(() => {
@@ -32,12 +34,15 @@ vi.mock('socket.io-client', () => ({
   },
 }));
 
-function setup(activeSession = false) {
+function setup(activeSession = false, behaviorUi = false) {
   const toast = { success: vi.fn() };
   const accounts = { load: vi.fn(), reloadSoon: vi.fn() };
   const tradovate = { load: vi.fn() };
   const session = { hasActiveSession: signal(activeSession), refreshLive: vi.fn(), refreshLiveSoon: vi.fn() };
   const alerts = { handle: vi.fn(), handleTilt: vi.fn(), handleNews: vi.fn() };
+  const tone = signal<{ tone: 'amber' | 'red' } | null>(null);
+  const behavior = { uiEnabled: signal(behaviorUi), tone, push: vi.fn() };
+  const sound = { play: vi.fn() };
   TestBed.configureTestingModule({
     providers: [
       { provide: PropAlertsService, useValue: alerts },
@@ -45,10 +50,12 @@ function setup(activeSession = false) {
       { provide: SelectedAccountStore, useValue: accounts },
       { provide: TradovateStore, useValue: tradovate },
       { provide: SessionStore, useValue: session },
+      { provide: BehaviorAlertsStore, useValue: behavior },
+      { provide: AlertSoundService, useValue: sound },
     ],
   });
   const service = TestBed.inject(TradovateLiveSocketService);
-  return { service, toast, accounts, tradovate, session, alerts };
+  return { service, toast, accounts, tradovate, session, alerts, behavior, sound };
 }
 
 const trades = (created: number): TradovateLiveTrades =>
@@ -189,5 +196,27 @@ describe('TradovateLiveSocketService — temps réel Tradovate côté app', () =
     expect(s.removeAllListeners).toHaveBeenCalled();
     expect(s.connect).not.toHaveBeenCalled();
     expect(service.connected()).toBe(false);
+  });
+
+  const behaviorEvent = { type: 'B_REVENGE', severity: 'medium', accountId: 'acc-1', message: 'Nouvelle entrée NQ', at: '2026-11-27T15:00:00.000Z' };
+
+  it('behavior:alert, affichage éteint (#671) : rien poussé, aucun son', () => {
+    const { service, behavior, sound } = setup(true, false);
+    service.connect();
+    fake.sockets[0].emit('behavior:alert', behaviorEvent);
+    expect(behavior.push).not.toHaveBeenCalled();
+    expect(sound.play).not.toHaveBeenCalled();
+  });
+
+  it('behavior:alert, affichage allumé : alerte poussée, son warning en ambre, critical en rouge', () => {
+    const { service, behavior, sound } = setup(true, true);
+    service.connect();
+    behavior.push.mockImplementation(() => behavior.tone.set({ tone: 'amber' }));
+    fake.sockets[0].emit('behavior:alert', behaviorEvent);
+    expect(behavior.push).toHaveBeenCalledWith(behaviorEvent);
+    expect(sound.play).toHaveBeenLastCalledWith('warning');
+    behavior.push.mockImplementation(() => behavior.tone.set({ tone: 'red' }));
+    fake.sockets[0].emit('behavior:alert', { ...behaviorEvent, type: 'C1_LOSS_STREAK', severity: 'high' });
+    expect(sound.play).toHaveBeenLastCalledWith('critical');
   });
 });
