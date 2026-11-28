@@ -36,7 +36,8 @@ const get = (id: string): Plan => {
 
 describe('veille du 2026-11-23, lot 5c (FFF)', () => {
   it('relue en entier : date de la relecture', () => {
-    expect((fff as Firm).verified_at).toBe('2026-11-23');
+    // Relue à nouveau le 2026-11-28 (lot 6c) : voir veille-2026-11-28-lot6c.spec.ts.
+    expect((fff as Firm).verified_at).toBe('2026-11-28');
   });
 
   it.each([

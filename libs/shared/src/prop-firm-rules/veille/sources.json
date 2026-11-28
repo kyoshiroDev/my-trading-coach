@@ -361,7 +361,7 @@
   "https://help.blusky.pro/en/articles/12434458-blulive-buffer-stage": {
     "kind": "date",
     "values": [
-      "2026-11-19T20:55:09Z"
+      "2026-11-23T18:50:41Z"
     ],
     "firms": [
       "blusky"
@@ -1605,7 +1605,7 @@
   "https://help.topstep.com/en/articles/10490293-daily-loss-limit-in-the-trading-combine-and-express-funded-account": {
     "kind": "date",
     "values": [
-      "2026-06-30T17:30:14Z"
+      "2026-11-23T15:09:16Z"
     ],
     "firms": [
       "topstep"
@@ -1620,7 +1620,7 @@
   "https://help.topstep.com/en/articles/14289835-topstep-pricing-and-payment-questions": {
     "kind": "date",
     "values": [
-      "2026-11-16T19:02:21Z"
+      "2026-11-27T18:22:27Z"
     ],
     "firms": [
       "topstep"
@@ -1665,7 +1665,7 @@
   "https://help.topstep.com/en/articles/8284204-what-is-the-maximum-loss-limit": {
     "kind": "date",
     "values": [
-      "2026-11-19T21:44:01Z"
+      "2026-11-23T16:34:38Z"
     ],
     "firms": [
       "topstep"
@@ -1748,7 +1748,7 @@
   "https://help.topstep.com/en/articles/8284233-topstep-payout-policy": {
     "kind": "date",
     "values": [
-      "2026-11-22T21:13:57Z"
+      "2026-11-24T20:04:01Z"
     ],
     "firms": [
       "topstep"
@@ -2468,8 +2468,10 @@
     ]
   },
   "https://lucidtrading.com/": {
-    "kind": "hash",
-    "values": [],
+    "kind": "date",
+    "values": [
+      "2026-09-21T14:27:00+00:00"
+    ],
     "firms": [
       "lucid"
     ],
@@ -3438,6 +3440,7 @@
   "https://uprofit.com/day-programs": {
     "kind": "hash",
     "values": [
+      "5c4db5c5c9116db6",
       "4d43593d062147a6",
       "dee586fbecb6d697"
     ],
@@ -3841,6 +3844,7 @@
   "https://www.fundedfuturesfamily.com/": {
     "kind": "hash",
     "values": [
+      "bd5e4c0ef7440c9b",
       "e1579bc5b5c0fc46"
     ],
     "firms": [
@@ -3930,6 +3934,7 @@
   "https://www.tradeday.com/#pricing": {
     "kind": "hash",
     "values": [
+      "85834d23166bc97c",
       "382d2e4f377d6a99",
       "02013b3518e704c5",
       "dea277ffef61df91"

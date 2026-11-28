@@ -71,7 +71,7 @@ redéployer : rien à lancer sur le VPS.
 
 ## Catalogue des règles prop firm (PROMPT-136, 2026-10-02)
 
-Tables `PropFirm` et `PropFirmPlan` (migration `20261003120000_prop_firm_catalog`, purement additive ; 16 firms, 255 plans au 2026-10-05 : Lucid, Apex, Topstep, Tradeify, MyFundedFutures, TradeDay, Take Profit Trader, Phidias, Earn2Trade, Top One Futures, BluSky, Funded Futures Family, OneUp Trader, UProfit, Bulenox, Elite Trader Funding) :
+Tables `PropFirm` et `PropFirmPlan` (migration `20261003120000_prop_firm_catalog`, purement additive ; 16 firms, 255 plans au 2026-10-05 : Lucid, Apex, Topstep, Tradeify, MyFundedFutures, TradeDay, Take Profit Trader, Phidias, Earn2Trade, Top One Futures, BluSky, Funded Family One (ex-Funded Futures Family, id `fundedfuturesfamily`, renommée le 2026-11-28), OneUp Trader, UProfit, Bulenox, Elite Trader Funding) :
 **miroir** du catalogue JSON `libs/shared/src/prop-firm-rules/<firm>.json`, qui reste la source de
 vérité. Ne jamais les modifier à la main ni par une migration de données : la synchro au démarrage
 de l'API (`PropFirmCatalogSyncService`, cf. `nestjs.md`) écraserait la modification.
@@ -108,7 +108,7 @@ de l'API (`PropFirmCatalogSyncService`, cf. `nestjs.md`) écraserait la modifica
   (`request` = dès la demande · `approval` = dès l'approbation · `payout` = non précisé par la firm),
   sur 121 phases funded / direct : Lucid Flex, Top One (Elite, Access, Access Static (aligné sur
   Access, sources muettes), X-Ultra, Instant, Ignite), Tradeify (Growth, Select, Lightning, Select
-  Flex 300K), MyFundedFutures Pro, Topstep XFA, Funded Futures Family Premier+. Présent ⇒ drawdown
+  Flex 300K), MyFundedFutures Pro, Topstep XFA, Funded Family One Premier+. Présent ⇒ drawdown
   suiveur et niveau figé connu (`locked_floor`, ou `locks_at − amount`) : vérifié par
   `payout-floor-lock.spec.ts`. Appliqué par `drawdownFloor(rule, peak, payoutFreezePeak)` : plancher
   = max(niveau figé, suiveur au moment du gel), jamais plus bas que le niveau figé. **Hors périmètre**

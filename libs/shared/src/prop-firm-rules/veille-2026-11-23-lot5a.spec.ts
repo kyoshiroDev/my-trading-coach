@@ -22,7 +22,8 @@ const get = (id: string): Plan => {
 
 describe('veille du 2026-11-23, lot 5a', () => {
   it('les trois firms relues en entier portent la date de la relecture', () => {
-    for (const firm of [topstep, tradeday, uprofit] as Firm[]) expect(firm.verified_at).toBe('2026-11-23');
+    // Relues à nouveau le 2026-11-28 (lot 6c) : voir veille-2026-11-28-lot6c.spec.ts.
+    for (const firm of [topstep, tradeday, uprofit] as Firm[]) expect(firm.verified_at).toBe('2026-11-28');
   });
 
   it.each([

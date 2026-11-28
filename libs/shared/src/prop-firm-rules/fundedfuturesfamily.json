@@ -1,8 +1,8 @@
 {
   "firm": {
     "id": "fundedfuturesfamily",
-    "name": "Funded Futures Family",
-    "website": "https://www.fundedfuturesfamily.com",
+    "name": "Funded Family One",
+    "website": "https://fundedfamilyone.com",
     "help_center": "https://intercom.help/funded-futures-family/en/",
     "platforms": [
       "tradovate",
@@ -11,7 +11,7 @@
       "rithmic"
     ]
   },
-  "verified_at": "2026-11-23",
+  "verified_at": "2026-11-28",
   "plans": [
     {
       "id": "fundedfuturesfamily-prime-25k",
@@ -26,10 +26,10 @@
         "addon": null
       },
       "price": {
-        "amount": null,
+        "amount": 144,
         "billing": "monthly",
         "activation_fee": 0,
-        "notes": "Prix affiché uniquement au paiement, dans le dashboard FFF (réponse du support, 2026-10-04). Pas de frais d'activation."
+        "notes": "144 $ par mois. Prix réguliers (barrés) de l'accueil fundedfamilyone.com, lus dans Chrome le 2026-11-28 ; le prix bas affiché s'applique avec le code FFONE. Pas de frais d'activation."
       },
       "phases": [
         {
@@ -163,7 +163,7 @@
         "amount": null,
         "billing": "monthly",
         "activation_fee": 0,
-        "notes": "Prix affiché uniquement au paiement, dans le dashboard FFF (réponse du support, 2026-10-04). Pas de frais d'activation."
+        "notes": "Option Max (limite de contrats d'évaluation relevée, règles funded identiques) : prix de l'option non affiché séparément sur l'accueil (2026-11-28). Pas de frais d'activation."
       },
       "phases": [
         {
@@ -300,10 +300,10 @@
         "addon": null
       },
       "price": {
-        "amount": null,
+        "amount": 204,
         "billing": "monthly",
         "activation_fee": 0,
-        "notes": "Prix affiché uniquement au paiement, dans le dashboard FFF (réponse du support, 2026-10-04). Pas de frais d'activation."
+        "notes": "204 $ par mois. Prix réguliers (barrés) de l'accueil fundedfamilyone.com, lus dans Chrome le 2026-11-28 ; le prix bas affiché s'applique avec le code FFONE. Pas de frais d'activation."
       },
       "phases": [
         {
@@ -437,7 +437,7 @@
         "amount": null,
         "billing": "monthly",
         "activation_fee": 0,
-        "notes": "Prix affiché uniquement au paiement, dans le dashboard FFF (réponse du support, 2026-10-04). Pas de frais d'activation."
+        "notes": "Option Max (limite de contrats d'évaluation relevée, règles funded identiques) : prix de l'option non affiché séparément sur l'accueil (2026-11-28). Pas de frais d'activation."
       },
       "phases": [
         {
@@ -574,10 +574,10 @@
         "addon": null
       },
       "price": {
-        "amount": null,
+        "amount": 319,
         "billing": "monthly",
         "activation_fee": 0,
-        "notes": "Prix affiché uniquement au paiement, dans le dashboard FFF (réponse du support, 2026-10-04). Pas de frais d'activation."
+        "notes": "319 $ par mois. Prix réguliers (barrés) de l'accueil fundedfamilyone.com, lus dans Chrome le 2026-11-28 ; le prix bas affiché s'applique avec le code FFONE. Pas de frais d'activation."
       },
       "phases": [
         {
@@ -711,7 +711,7 @@
         "amount": null,
         "billing": "monthly",
         "activation_fee": 0,
-        "notes": "Prix affiché uniquement au paiement, dans le dashboard FFF (réponse du support, 2026-10-04). Pas de frais d'activation."
+        "notes": "Option Max (limite de contrats d'évaluation relevée, règles funded identiques) : prix de l'option non affiché séparément sur l'accueil (2026-11-28). Pas de frais d'activation."
       },
       "phases": [
         {
@@ -854,10 +854,10 @@
         "addon": null
       },
       "price": {
-        "amount": null,
+        "amount": 425,
         "billing": "monthly",
         "activation_fee": 0,
-        "notes": "Prix affiché uniquement au paiement, dans le dashboard FFF (réponse du support, 2026-10-04). Pas de frais d'activation."
+        "notes": "425 $ par mois. Prix réguliers (barrés) de l'accueil fundedfamilyone.com, lus dans Chrome le 2026-11-28 ; le prix bas affiché s'applique avec le code FFONE. Pas de frais d'activation."
       },
       "phases": [
         {
@@ -997,7 +997,7 @@
         "amount": null,
         "billing": "monthly",
         "activation_fee": 0,
-        "notes": "Prix affiché uniquement au paiement, dans le dashboard FFF (réponse du support, 2026-10-04). Pas de frais d'activation."
+        "notes": "Option Max (limite de contrats d'évaluation relevée, règles funded identiques) : prix de l'option non affiché séparément sur l'accueil (2026-11-28). Pas de frais d'activation."
       },
       "phases": [
         {
@@ -1146,10 +1146,10 @@
         "addon": null
       },
       "price": {
-        "amount": null,
+        "amount": 136.5,
         "billing": "monthly",
         "activation_fee": 0,
-        "notes": "Prix affiché uniquement au paiement, dans le dashboard FFF (réponse du support, 2026-10-04). Pas de frais d'activation."
+        "notes": "136,50 $ par mois. Prix réguliers (barrés) de l'accueil fundedfamilyone.com, lus dans Chrome le 2026-11-28 ; le prix bas affiché s'applique avec le code FFONE. Pas de frais d'activation. Une seule carte Premier+ par taille sur la page, sans distinction EOD / intraday."
       },
       "phases": [
         {
@@ -1284,10 +1284,10 @@
         "addon": null
       },
       "price": {
-        "amount": null,
+        "amount": 181.5,
         "billing": "monthly",
         "activation_fee": 0,
-        "notes": "Prix affiché uniquement au paiement, dans le dashboard FFF (réponse du support, 2026-10-04). Pas de frais d'activation."
+        "notes": "181,50 $ par mois. Prix réguliers (barrés) de l'accueil fundedfamilyone.com, lus dans Chrome le 2026-11-28 ; le prix bas affiché s'applique avec le code FFONE. Pas de frais d'activation. Une seule carte Premier+ par taille sur la page, sans distinction EOD / intraday. Fast Pass (passage en un jour) en option : 45 $ sur le 50K."
       },
       "phases": [
         {
@@ -1422,10 +1422,10 @@
         "addon": null
       },
       "price": {
-        "amount": null,
+        "amount": 278.5,
         "billing": "monthly",
         "activation_fee": 0,
-        "notes": "Prix affiché uniquement au paiement, dans le dashboard FFF (réponse du support, 2026-10-04). Pas de frais d'activation."
+        "notes": "278,50 $ par mois. Prix réguliers (barrés) de l'accueil fundedfamilyone.com, lus dans Chrome le 2026-11-28 ; le prix bas affiché s'applique avec le code FFONE. Pas de frais d'activation. Une seule carte Premier+ par taille sur la page, sans distinction EOD / intraday."
       },
       "phases": [
         {
@@ -1566,10 +1566,10 @@
         "addon": null
       },
       "price": {
-        "amount": null,
+        "amount": 499,
         "billing": "monthly",
         "activation_fee": 0,
-        "notes": "Prix affiché uniquement au paiement, dans le dashboard FFF (réponse du support, 2026-10-04). Pas de frais d'activation."
+        "notes": "499 $ par mois. Prix réguliers (barrés) de l'accueil fundedfamilyone.com, lus dans Chrome le 2026-11-28 ; le prix bas affiché s'applique avec le code FFONE. Pas de frais d'activation. Une seule carte Premier+ par taille sur la page, sans distinction EOD / intraday."
       },
       "phases": [
         {
@@ -1716,10 +1716,10 @@
         "addon": null
       },
       "price": {
-        "amount": null,
+        "amount": 136.5,
         "billing": "monthly",
         "activation_fee": 0,
-        "notes": "Prix affiché uniquement au paiement, dans le dashboard FFF (réponse du support, 2026-10-04). Pas de frais d'activation."
+        "notes": "136,50 $ par mois. Prix réguliers (barrés) de l'accueil fundedfamilyone.com, lus dans Chrome le 2026-11-28 ; le prix bas affiché s'applique avec le code FFONE. Pas de frais d'activation. Une seule carte Premier+ par taille sur la page, sans distinction EOD / intraday."
       },
       "phases": [
         {
@@ -1854,10 +1854,10 @@
         "addon": null
       },
       "price": {
-        "amount": null,
+        "amount": 181.5,
         "billing": "monthly",
         "activation_fee": 0,
-        "notes": "Prix affiché uniquement au paiement, dans le dashboard FFF (réponse du support, 2026-10-04). Pas de frais d'activation."
+        "notes": "181,50 $ par mois. Prix réguliers (barrés) de l'accueil fundedfamilyone.com, lus dans Chrome le 2026-11-28 ; le prix bas affiché s'applique avec le code FFONE. Pas de frais d'activation. Une seule carte Premier+ par taille sur la page, sans distinction EOD / intraday. Fast Pass (passage en un jour) en option : 45 $ sur le 50K."
       },
       "phases": [
         {
@@ -1992,10 +1992,10 @@
         "addon": null
       },
       "price": {
-        "amount": null,
+        "amount": 278.5,
         "billing": "monthly",
         "activation_fee": 0,
-        "notes": "Prix affiché uniquement au paiement, dans le dashboard FFF (réponse du support, 2026-10-04). Pas de frais d'activation."
+        "notes": "278,50 $ par mois. Prix réguliers (barrés) de l'accueil fundedfamilyone.com, lus dans Chrome le 2026-11-28 ; le prix bas affiché s'applique avec le code FFONE. Pas de frais d'activation. Une seule carte Premier+ par taille sur la page, sans distinction EOD / intraday."
       },
       "phases": [
         {
@@ -2136,10 +2136,10 @@
         "addon": null
       },
       "price": {
-        "amount": null,
+        "amount": 499,
         "billing": "monthly",
         "activation_fee": 0,
-        "notes": "Prix affiché uniquement au paiement, dans le dashboard FFF (réponse du support, 2026-10-04). Pas de frais d'activation."
+        "notes": "499 $ par mois. Prix réguliers (barrés) de l'accueil fundedfamilyone.com, lus dans Chrome le 2026-11-28 ; le prix bas affiché s'applique avec le code FFONE. Pas de frais d'activation. Une seule carte Premier+ par taille sur la page, sans distinction EOD / intraday."
       },
       "phases": [
         {
@@ -2281,10 +2281,10 @@
       "availability": "public",
       "configuration": null,
       "price": {
-        "amount": 16,
+        "amount": 179,
         "billing": "monthly",
         "activation_fee": 0,
-        "notes": "À partir de 16 $/mois (25K, selon le centre d'aide). Pas de frais d'activation."
+        "notes": "179 $ par mois. Prix réguliers (barrés) de l'accueil fundedfamilyone.com, lus dans Chrome le 2026-11-28 ; le prix bas affiché s'applique avec le code FFONE. Pas de frais d'activation."
       },
       "phases": [
         {
@@ -2417,10 +2417,10 @@
       "availability": "public",
       "configuration": null,
       "price": {
-        "amount": null,
+        "amount": 265,
         "billing": "monthly",
         "activation_fee": 0,
-        "notes": "Prix affiché uniquement au paiement, dans le dashboard FFF (réponse du support, 2026-10-04). Pas de frais d'activation."
+        "notes": "265 $ par mois. Prix réguliers (barrés) de l'accueil fundedfamilyone.com, lus dans Chrome le 2026-11-28 ; le prix bas affiché s'applique avec le code FFONE. Pas de frais d'activation."
       },
       "phases": [
         {
@@ -2553,10 +2553,10 @@
       "availability": "public",
       "configuration": null,
       "price": {
-        "amount": null,
+        "amount": 475,
         "billing": "monthly",
         "activation_fee": 0,
-        "notes": "Prix affiché uniquement au paiement, dans le dashboard FFF (réponse du support, 2026-10-04). Pas de frais d'activation."
+        "notes": "475 $ par mois. Prix réguliers (barrés) de l'accueil fundedfamilyone.com, lus dans Chrome le 2026-11-28 ; le prix bas affiché s'applique avec le code FFONE. Pas de frais d'activation."
       },
       "phases": [
         {
@@ -2695,10 +2695,10 @@
       "availability": "public",
       "configuration": null,
       "price": {
-        "amount": null,
+        "amount": 675,
         "billing": "monthly",
         "activation_fee": 0,
-        "notes": "Prix affiché uniquement au paiement, dans le dashboard FFF (réponse du support, 2026-10-04). Pas de frais d'activation."
+        "notes": "675 $ par mois. Prix réguliers (barrés) de l'accueil fundedfamilyone.com, lus dans Chrome le 2026-11-28 ; le prix bas affiché s'applique avec le code FFONE. Pas de frais d'activation."
       },
       "phases": [
         {
@@ -4082,10 +4082,10 @@
       "availability": "public",
       "configuration": null,
       "price": {
-        "amount": null,
+        "amount": 699.99,
         "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Achat unique. Prix affiché au paiement, variable selon les promotions (annonce d'octobre 2026)."
+        "notes": "699,99 $ en paiement unique (prix régulier de l'accueil fundedfamilyone.com, lu dans Chrome le 2026-11-28) ; promotions fréquentes."
       },
       "phases": [
         {

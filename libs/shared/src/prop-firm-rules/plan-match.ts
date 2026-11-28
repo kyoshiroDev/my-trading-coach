@@ -41,13 +41,15 @@ function norm(s: string): string {
 
 /**
  * Firm désignée par un texte libre (`broker`, à défaut le libellé) : le texte contient l'id de
- * la firm (« Apex 50k #1 » → apex) ou fait partie de son nom (« Apex » ⊂ « Apex Trader Funding »).
+ * la firm (« Apex 50k #1 » → apex) ou fait partie de son nom ou de son id (« Apex » ⊂ « Apex Trader
+ * Funding »). L'id garde l'ancien nom d'une firm renommée (« Funded Futures » ⊂ fundedfuturesfamily,
+ * devenue Funded Family One) : un libellé saisi avant le renommage reste reconnu.
  * Null si aucune ou plusieurs firms répondent : on ne devine pas.
  */
 function firmOf(catalog: readonly PropFirmCatalogFirm[], text: string): PropFirmCatalogFirm | null {
   const t = norm(text);
   if (t.length < 4) return null;
-  const hits = catalog.filter((f) => t.includes(norm(f.id)) || norm(f.name).includes(t));
+  const hits = catalog.filter((f) => t.includes(norm(f.id)) || norm(f.name).includes(t) || norm(f.id).includes(t));
   return hits.length === 1 ? hits[0] : null;
 }
 
