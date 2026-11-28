@@ -33,7 +33,8 @@ const get = (id: string): Plan => {
 describe('veille du 2026-11-23, lot 4', () => {
   it('les deux firms relues en entier portent la date de la relecture', () => {
     expect((tradeify as Firm).verified_at).toBe('2026-11-23');
-    expect((mff as Firm).verified_at).toBe('2026-11-23');
+    // MyFundedFutures relue à nouveau le 2026-11-28 (lot 6b) : voir veille-2026-11-28-lot6b.spec.ts.
+    expect((mff as Firm).verified_at).toBe('2026-11-28');
   });
 
   it.each([

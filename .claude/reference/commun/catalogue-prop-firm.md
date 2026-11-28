@@ -106,7 +106,7 @@ de l'API (`PropFirmCatalogSyncService`, cf. `nestjs.md`) écraserait la modifica
   `elitetraderfunding-static-25k` (statique, 25K).
 - **Gel du plancher au premier payout** (#696, #1247, #1241) : champ `max_drawdown.locks_on_first_payout`
   (`request` = dès la demande · `approval` = dès l'approbation · `payout` = non précisé par la firm),
-  sur 120 phases funded / direct : Lucid Flex, Top One (Elite, Access, Access Static (aligné sur
+  sur 121 phases funded / direct : Lucid Flex, Top One (Elite, Access, Access Static (aligné sur
   Access, sources muettes), X-Ultra, Instant, Ignite), Tradeify (Growth, Select, Lightning, Select
   Flex 300K), MyFundedFutures Pro, Topstep XFA, Funded Futures Family Premier+. Présent ⇒ drawdown
   suiveur et niveau figé connu (`locked_floor`, ou `locks_at − amount`) : vérifié par

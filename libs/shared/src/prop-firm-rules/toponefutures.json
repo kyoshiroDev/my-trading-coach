@@ -10,7 +10,7 @@
       "tradingview"
     ]
   },
-  "verified_at": "2026-11-23",
+  "verified_at": "2026-11-28",
   "plans": [
     {
       "id": "toponefutures-elite-daily-25k",
@@ -1391,8 +1391,8 @@
         "https://help.toponefutures.com/en/articles/10907430-understanding-the-profit-split-on-sim-funded-accounts",
         "https://www.toponefutures.com/"
       ],
-      "needs_review": false,
-      "notes": "Elite Access : 10 comptes maximum."
+      "needs_review": true,
+      "notes": "Elite Access : 10 comptes maximum. Objectif : l'article d'aide « Elite Access Accounts Overview » (mis à jour le 2026-11-26) donne 6 % (1 500 / 3 000 / 6 000 / 9 000 $), la page d'accueil (2026-11-28) annonce « 4 % » (1 000 / 2 000 / 4 000 / 6 000 $) : sources contradictoires, montants de l'article gardés, à revérifier."
     },
     {
       "id": "toponefutures-elite-access-50k",
@@ -1545,8 +1545,8 @@
         "https://help.toponefutures.com/en/articles/10907430-understanding-the-profit-split-on-sim-funded-accounts",
         "https://www.toponefutures.com/"
       ],
-      "needs_review": false,
-      "notes": "Elite Access : 10 comptes maximum."
+      "needs_review": true,
+      "notes": "Elite Access : 10 comptes maximum. Objectif : l'article d'aide « Elite Access Accounts Overview » (mis à jour le 2026-11-26) donne 6 % (1 500 / 3 000 / 6 000 / 9 000 $), la page d'accueil (2026-11-28) annonce « 4 % » (1 000 / 2 000 / 4 000 / 6 000 $) : sources contradictoires, montants de l'article gardés, à revérifier."
     },
     {
       "id": "toponefutures-elite-access-100k",
@@ -1705,8 +1705,8 @@
         "https://help.toponefutures.com/en/articles/10907430-understanding-the-profit-split-on-sim-funded-accounts",
         "https://www.toponefutures.com/"
       ],
-      "needs_review": false,
-      "notes": "Elite Access : 10 comptes maximum."
+      "needs_review": true,
+      "notes": "Elite Access : 10 comptes maximum. Objectif : l'article d'aide « Elite Access Accounts Overview » (mis à jour le 2026-11-26) donne 6 % (1 500 / 3 000 / 6 000 / 9 000 $), la page d'accueil (2026-11-28) annonce « 4 % » (1 000 / 2 000 / 4 000 / 6 000 $) : sources contradictoires, montants de l'article gardés, à revérifier."
     },
     {
       "id": "toponefutures-elite-access-150k",
@@ -1871,8 +1871,8 @@
         "https://help.toponefutures.com/en/articles/10907430-understanding-the-profit-split-on-sim-funded-accounts",
         "https://www.toponefutures.com/"
       ],
-      "needs_review": false,
-      "notes": "Elite Access : 10 comptes maximum. La carte de la page d’accueil affiche une perte journalière funded de 1 850 $ (2026-11-23) ; les articles de règles (DLL Access et Access Intraday du 2026-11-17, Daily drawdown) disent 1 750 $ : ce sont les articles qui font foi."
+      "needs_review": true,
+      "notes": "Elite Access : 10 comptes maximum. La carte de la page d’accueil affiche une perte journalière funded de 1 850 $ (2026-11-23) ; les articles de règles (DLL Access et Access Intraday du 2026-11-17, Daily drawdown) disent 1 750 $ : ce sont les articles qui font foi. Objectif : l'article d'aide « Elite Access Accounts Overview » (mis à jour le 2026-11-26) donne 6 % (1 500 / 3 000 / 6 000 / 9 000 $), la page d'accueil (2026-11-28) annonce « 4 % » (1 000 / 2 000 / 4 000 / 6 000 $) : sources contradictoires, montants de l'article gardés, à revérifier."
     },
     {
       "id": "toponefutures-elite-access-nodll-25k",
@@ -2006,8 +2006,8 @@
         "https://www.toponefutures.com/",
         "https://help.toponefutures.com/en/articles/17635087-no-daily-loss-limit-add-on-trade-without-daily-limits"
       ],
-      "needs_review": false,
-      "notes": "Elite Access : 10 comptes maximum. Variante sans Daily Loss Limit, à choisir à l'achat uniquement (ni après, ni à l'activation, ni au reset). Autres règles identiques au plan avec DLL."
+      "needs_review": true,
+      "notes": "Elite Access : 10 comptes maximum. Variante sans Daily Loss Limit, à choisir à l'achat uniquement (ni après, ni à l'activation, ni au reset). Autres règles identiques au plan avec DLL. Objectif : l'article d'aide « Elite Access Accounts Overview » (mis à jour le 2026-11-26) donne 6 % (1 500 / 3 000 / 6 000 / 9 000 $), la page d'accueil (2026-11-28) annonce « 4 % » (1 000 / 2 000 / 4 000 / 6 000 $) : sources contradictoires, montants de l'article gardés, à revérifier."
     },
     {
       "id": "toponefutures-elite-access-nodll-50k",
@@ -2153,8 +2153,8 @@
         "https://www.toponefutures.com/",
         "https://help.toponefutures.com/en/articles/17635087-no-daily-loss-limit-add-on-trade-without-daily-limits"
       ],
-      "needs_review": false,
-      "notes": "Elite Access : 10 comptes maximum. Variante sans Daily Loss Limit, à choisir à l'achat uniquement (ni après, ni à l'activation, ni au reset). Autres règles identiques au plan avec DLL."
+      "needs_review": true,
+      "notes": "Elite Access : 10 comptes maximum. Variante sans Daily Loss Limit, à choisir à l'achat uniquement (ni après, ni à l'activation, ni au reset). Autres règles identiques au plan avec DLL. Objectif : l'article d'aide « Elite Access Accounts Overview » (mis à jour le 2026-11-26) donne 6 % (1 500 / 3 000 / 6 000 / 9 000 $), la page d'accueil (2026-11-28) annonce « 4 % » (1 000 / 2 000 / 4 000 / 6 000 $) : sources contradictoires, montants de l'article gardés, à revérifier."
     },
     {
       "id": "toponefutures-elite-access-nodll-100k",
@@ -2306,8 +2306,8 @@
         "https://www.toponefutures.com/",
         "https://help.toponefutures.com/en/articles/17635087-no-daily-loss-limit-add-on-trade-without-daily-limits"
       ],
-      "needs_review": false,
-      "notes": "Elite Access : 10 comptes maximum. Variante sans Daily Loss Limit, à choisir à l'achat uniquement (ni après, ni à l'activation, ni au reset). Autres règles identiques au plan avec DLL."
+      "needs_review": true,
+      "notes": "Elite Access : 10 comptes maximum. Variante sans Daily Loss Limit, à choisir à l'achat uniquement (ni après, ni à l'activation, ni au reset). Autres règles identiques au plan avec DLL. Objectif : l'article d'aide « Elite Access Accounts Overview » (mis à jour le 2026-11-26) donne 6 % (1 500 / 3 000 / 6 000 / 9 000 $), la page d'accueil (2026-11-28) annonce « 4 % » (1 000 / 2 000 / 4 000 / 6 000 $) : sources contradictoires, montants de l'article gardés, à revérifier."
     },
     {
       "id": "toponefutures-elite-access-nodll-150k",
@@ -2465,8 +2465,8 @@
         "https://www.toponefutures.com/",
         "https://help.toponefutures.com/en/articles/17635087-no-daily-loss-limit-add-on-trade-without-daily-limits"
       ],
-      "needs_review": false,
-      "notes": "Elite Access : 10 comptes maximum. Variante sans Daily Loss Limit, à choisir à l'achat uniquement (ni après, ni à l'activation, ni au reset). Autres règles identiques au plan avec DLL."
+      "needs_review": true,
+      "notes": "Elite Access : 10 comptes maximum. Variante sans Daily Loss Limit, à choisir à l'achat uniquement (ni après, ni à l'activation, ni au reset). Autres règles identiques au plan avec DLL. Objectif : l'article d'aide « Elite Access Accounts Overview » (mis à jour le 2026-11-26) donne 6 % (1 500 / 3 000 / 6 000 / 9 000 $), la page d'accueil (2026-11-28) annonce « 4 % » (1 000 / 2 000 / 4 000 / 6 000 $) : sources contradictoires, montants de l'article gardés, à revérifier."
     },
     {
       "id": "toponefutures-elite-access-intraday-25k",
@@ -2605,8 +2605,8 @@
         "https://help.toponefutures.com/en/articles/10907430-understanding-the-profit-split-on-sim-funded-accounts",
         "https://www.toponefutures.com/"
       ],
-      "needs_review": false,
-      "notes": "Elite Access Intraday : 10 comptes maximum."
+      "needs_review": true,
+      "notes": "Elite Access Intraday : 10 comptes maximum. Objectif : l'article d'aide « Elite Access Accounts Overview » (mis à jour le 2026-11-26) donne 6 % (1 500 / 3 000 / 6 000 / 9 000 $), la page d'accueil (2026-11-28) annonce « 4 % » (1 000 / 2 000 / 4 000 / 6 000 $) : sources contradictoires, montants de l'article gardés, à revérifier."
     },
     {
       "id": "toponefutures-elite-access-intraday-50k",
@@ -2757,8 +2757,8 @@
         "https://help.toponefutures.com/en/articles/10907430-understanding-the-profit-split-on-sim-funded-accounts",
         "https://www.toponefutures.com/"
       ],
-      "needs_review": false,
-      "notes": "Elite Access Intraday : 10 comptes maximum."
+      "needs_review": true,
+      "notes": "Elite Access Intraday : 10 comptes maximum. Objectif : l'article d'aide « Elite Access Accounts Overview » (mis à jour le 2026-11-26) donne 6 % (1 500 / 3 000 / 6 000 / 9 000 $), la page d'accueil (2026-11-28) annonce « 4 % » (1 000 / 2 000 / 4 000 / 6 000 $) : sources contradictoires, montants de l'article gardés, à revérifier."
     },
     {
       "id": "toponefutures-elite-access-intraday-100k",
@@ -2915,8 +2915,8 @@
         "https://help.toponefutures.com/en/articles/10907430-understanding-the-profit-split-on-sim-funded-accounts",
         "https://www.toponefutures.com/"
       ],
-      "needs_review": false,
-      "notes": "Elite Access Intraday : 10 comptes maximum."
+      "needs_review": true,
+      "notes": "Elite Access Intraday : 10 comptes maximum. Objectif : l'article d'aide « Elite Access Accounts Overview » (mis à jour le 2026-11-26) donne 6 % (1 500 / 3 000 / 6 000 / 9 000 $), la page d'accueil (2026-11-28) annonce « 4 % » (1 000 / 2 000 / 4 000 / 6 000 $) : sources contradictoires, montants de l'article gardés, à revérifier."
     },
     {
       "id": "toponefutures-elite-access-intraday-150k",
@@ -3079,8 +3079,8 @@
         "https://help.toponefutures.com/en/articles/10907430-understanding-the-profit-split-on-sim-funded-accounts",
         "https://www.toponefutures.com/"
       ],
-      "needs_review": false,
-      "notes": "Elite Access Intraday : 10 comptes maximum. La carte de la page d’accueil affiche une perte journalière funded de 1 850 $ (2026-11-23) ; les articles de règles (DLL Access et Access Intraday du 2026-11-17, Daily drawdown) disent 1 750 $ : ce sont les articles qui font foi."
+      "needs_review": true,
+      "notes": "Elite Access Intraday : 10 comptes maximum. La carte de la page d’accueil affiche une perte journalière funded de 1 850 $ (2026-11-23) ; les articles de règles (DLL Access et Access Intraday du 2026-11-17, Daily drawdown) disent 1 750 $ : ce sont les articles qui font foi. Objectif : l'article d'aide « Elite Access Accounts Overview » (mis à jour le 2026-11-26) donne 6 % (1 500 / 3 000 / 6 000 / 9 000 $), la page d'accueil (2026-11-28) annonce « 4 % » (1 000 / 2 000 / 4 000 / 6 000 $) : sources contradictoires, montants de l'article gardés, à revérifier."
     },
     {
       "id": "toponefutures-elite-access-intraday-nodll-25k",
@@ -3212,8 +3212,8 @@
         "https://www.toponefutures.com/",
         "https://help.toponefutures.com/en/articles/17635087-no-daily-loss-limit-add-on-trade-without-daily-limits"
       ],
-      "needs_review": false,
-      "notes": "Elite Access Intraday : 10 comptes maximum. Variante sans Daily Loss Limit, à choisir à l'achat uniquement (ni après, ni à l'activation, ni au reset). Autres règles identiques au plan avec DLL."
+      "needs_review": true,
+      "notes": "Elite Access Intraday : 10 comptes maximum. Variante sans Daily Loss Limit, à choisir à l'achat uniquement (ni après, ni à l'activation, ni au reset). Autres règles identiques au plan avec DLL. Objectif : l'article d'aide « Elite Access Accounts Overview » (mis à jour le 2026-11-26) donne 6 % (1 500 / 3 000 / 6 000 / 9 000 $), la page d'accueil (2026-11-28) annonce « 4 % » (1 000 / 2 000 / 4 000 / 6 000 $) : sources contradictoires, montants de l'article gardés, à revérifier."
     },
     {
       "id": "toponefutures-elite-access-intraday-nodll-50k",
@@ -3357,8 +3357,8 @@
         "https://www.toponefutures.com/",
         "https://help.toponefutures.com/en/articles/17635087-no-daily-loss-limit-add-on-trade-without-daily-limits"
       ],
-      "needs_review": false,
-      "notes": "Elite Access Intraday : 10 comptes maximum. Variante sans Daily Loss Limit, à choisir à l'achat uniquement (ni après, ni à l'activation, ni au reset). Autres règles identiques au plan avec DLL."
+      "needs_review": true,
+      "notes": "Elite Access Intraday : 10 comptes maximum. Variante sans Daily Loss Limit, à choisir à l'achat uniquement (ni après, ni à l'activation, ni au reset). Autres règles identiques au plan avec DLL. Objectif : l'article d'aide « Elite Access Accounts Overview » (mis à jour le 2026-11-26) donne 6 % (1 500 / 3 000 / 6 000 / 9 000 $), la page d'accueil (2026-11-28) annonce « 4 % » (1 000 / 2 000 / 4 000 / 6 000 $) : sources contradictoires, montants de l'article gardés, à revérifier."
     },
     {
       "id": "toponefutures-elite-access-intraday-nodll-100k",
@@ -3508,8 +3508,8 @@
         "https://www.toponefutures.com/",
         "https://help.toponefutures.com/en/articles/17635087-no-daily-loss-limit-add-on-trade-without-daily-limits"
       ],
-      "needs_review": false,
-      "notes": "Elite Access Intraday : 10 comptes maximum. Variante sans Daily Loss Limit, à choisir à l'achat uniquement (ni après, ni à l'activation, ni au reset). Autres règles identiques au plan avec DLL."
+      "needs_review": true,
+      "notes": "Elite Access Intraday : 10 comptes maximum. Variante sans Daily Loss Limit, à choisir à l'achat uniquement (ni après, ni à l'activation, ni au reset). Autres règles identiques au plan avec DLL. Objectif : l'article d'aide « Elite Access Accounts Overview » (mis à jour le 2026-11-26) donne 6 % (1 500 / 3 000 / 6 000 / 9 000 $), la page d'accueil (2026-11-28) annonce « 4 % » (1 000 / 2 000 / 4 000 / 6 000 $) : sources contradictoires, montants de l'article gardés, à revérifier."
     },
     {
       "id": "toponefutures-elite-access-intraday-nodll-150k",
@@ -3665,8 +3665,8 @@
         "https://www.toponefutures.com/",
         "https://help.toponefutures.com/en/articles/17635087-no-daily-loss-limit-add-on-trade-without-daily-limits"
       ],
-      "needs_review": false,
-      "notes": "Elite Access Intraday : 10 comptes maximum. Variante sans Daily Loss Limit, à choisir à l'achat uniquement (ni après, ni à l'activation, ni au reset). Autres règles identiques au plan avec DLL."
+      "needs_review": true,
+      "notes": "Elite Access Intraday : 10 comptes maximum. Variante sans Daily Loss Limit, à choisir à l'achat uniquement (ni après, ni à l'activation, ni au reset). Autres règles identiques au plan avec DLL. Objectif : l'article d'aide « Elite Access Accounts Overview » (mis à jour le 2026-11-26) donne 6 % (1 500 / 3 000 / 6 000 / 9 000 $), la page d'accueil (2026-11-28) annonce « 4 % » (1 000 / 2 000 / 4 000 / 6 000 $) : sources contradictoires, montants de l'article gardés, à revérifier."
     },
     {
       "id": "toponefutures-elite-access-static-25k",
@@ -3798,7 +3798,7 @@
         "https://www.toponefutures.com/"
       ],
       "needs_review": true,
-      "notes": "Elite Access Static : seule différence annoncée avec Elite Access, le drawdown d'évaluation statique. À confirmer (#1241) : équivalence micros en évaluation non publiée ; gel au premier payout du drawdown funded aligné sur Elite Access (déclencheur non précisé par les articles Static) ; activation par taille reprise de l'accueil Elite Access (l'article Static donne seulement 139 à 359 $) ; base de la DLL formulée différemment selon les articles (solde de clôture de la veille ou solde de début de journée)."
+      "notes": "Elite Access Static : seule différence annoncée avec Elite Access, le drawdown d'évaluation statique. À confirmer (#1241) : équivalence micros en évaluation non publiée ; gel au premier payout du drawdown funded aligné sur Elite Access (déclencheur non précisé par les articles Static) ; activation par taille reprise de l'accueil Elite Access (l'article Static donne seulement 139 à 359 $) ; base de la DLL formulée différemment selon les articles (solde de clôture de la veille ou solde de début de journée). Objectif : l'article d'aide « Elite Access Accounts Overview » (mis à jour le 2026-11-26) donne 6 % (1 500 / 3 000 / 6 000 / 9 000 $), la page d'accueil (2026-11-28) annonce « 4 % » (1 000 / 2 000 / 4 000 / 6 000 $) : sources contradictoires, montants de l'article gardés, à revérifier."
     },
     {
       "id": "toponefutures-elite-access-static-50k",
@@ -3942,7 +3942,7 @@
         "https://www.toponefutures.com/"
       ],
       "needs_review": true,
-      "notes": "Elite Access Static : seule différence annoncée avec Elite Access, le drawdown d'évaluation statique. À confirmer (#1241) : équivalence micros en évaluation non publiée ; gel au premier payout du drawdown funded aligné sur Elite Access (déclencheur non précisé par les articles Static) ; activation par taille reprise de l'accueil Elite Access (l'article Static donne seulement 139 à 359 $) ; base de la DLL formulée différemment selon les articles (solde de clôture de la veille ou solde de début de journée)."
+      "notes": "Elite Access Static : seule différence annoncée avec Elite Access, le drawdown d'évaluation statique. À confirmer (#1241) : équivalence micros en évaluation non publiée ; gel au premier payout du drawdown funded aligné sur Elite Access (déclencheur non précisé par les articles Static) ; activation par taille reprise de l'accueil Elite Access (l'article Static donne seulement 139 à 359 $) ; base de la DLL formulée différemment selon les articles (solde de clôture de la veille ou solde de début de journée). Objectif : l'article d'aide « Elite Access Accounts Overview » (mis à jour le 2026-11-26) donne 6 % (1 500 / 3 000 / 6 000 / 9 000 $), la page d'accueil (2026-11-28) annonce « 4 % » (1 000 / 2 000 / 4 000 / 6 000 $) : sources contradictoires, montants de l'article gardés, à revérifier."
     },
     {
       "id": "toponefutures-elite-access-static-100k",
@@ -4092,7 +4092,7 @@
         "https://www.toponefutures.com/"
       ],
       "needs_review": true,
-      "notes": "Elite Access Static : seule différence annoncée avec Elite Access, le drawdown d'évaluation statique. À confirmer (#1241) : équivalence micros en évaluation non publiée ; gel au premier payout du drawdown funded aligné sur Elite Access (déclencheur non précisé par les articles Static) ; activation par taille reprise de l'accueil Elite Access (l'article Static donne seulement 139 à 359 $) ; base de la DLL formulée différemment selon les articles (solde de clôture de la veille ou solde de début de journée)."
+      "notes": "Elite Access Static : seule différence annoncée avec Elite Access, le drawdown d'évaluation statique. À confirmer (#1241) : équivalence micros en évaluation non publiée ; gel au premier payout du drawdown funded aligné sur Elite Access (déclencheur non précisé par les articles Static) ; activation par taille reprise de l'accueil Elite Access (l'article Static donne seulement 139 à 359 $) ; base de la DLL formulée différemment selon les articles (solde de clôture de la veille ou solde de début de journée). Objectif : l'article d'aide « Elite Access Accounts Overview » (mis à jour le 2026-11-26) donne 6 % (1 500 / 3 000 / 6 000 / 9 000 $), la page d'accueil (2026-11-28) annonce « 4 % » (1 000 / 2 000 / 4 000 / 6 000 $) : sources contradictoires, montants de l'article gardés, à revérifier."
     },
     {
       "id": "toponefutures-elite-access-static-150k",
@@ -4248,7 +4248,7 @@
         "https://www.toponefutures.com/"
       ],
       "needs_review": true,
-      "notes": "Elite Access Static : seule différence annoncée avec Elite Access, le drawdown d'évaluation statique. À confirmer (#1241) : équivalence micros en évaluation non publiée ; gel au premier payout du drawdown funded aligné sur Elite Access (déclencheur non précisé par les articles Static) ; activation par taille reprise de l'accueil Elite Access (l'article Static donne seulement 139 à 359 $) ; base de la DLL formulée différemment selon les articles (solde de clôture de la veille ou solde de début de journée)."
+      "notes": "Elite Access Static : seule différence annoncée avec Elite Access, le drawdown d'évaluation statique. À confirmer (#1241) : équivalence micros en évaluation non publiée ; gel au premier payout du drawdown funded aligné sur Elite Access (déclencheur non précisé par les articles Static) ; activation par taille reprise de l'accueil Elite Access (l'article Static donne seulement 139 à 359 $) ; base de la DLL formulée différemment selon les articles (solde de clôture de la veille ou solde de début de journée). Objectif : l'article d'aide « Elite Access Accounts Overview » (mis à jour le 2026-11-26) donne 6 % (1 500 / 3 000 / 6 000 / 9 000 $), la page d'accueil (2026-11-28) annonce « 4 % » (1 000 / 2 000 / 4 000 / 6 000 $) : sources contradictoires, montants de l'article gardés, à revérifier."
     },
     {
       "id": "toponefutures-elite-access-static-nodll-25k",
@@ -4373,7 +4373,7 @@
         "https://help.toponefutures.com/en/articles/17635087-no-daily-loss-limit-add-on-trade-without-daily-limits"
       ],
       "needs_review": true,
-      "notes": "Elite Access Static, variante sans Daily Loss Limit (à choisir à l'achat). Seule différence annoncée avec Elite Access : drawdown d'évaluation statique. À confirmer (#1241) : équivalence micros en évaluation non publiée ; gel au premier payout du drawdown funded aligné sur Elite Access (déclencheur non précisé par les articles Static) ; activation par taille reprise de l'accueil Elite Access (l'article Static donne seulement 139 à 359 $) ; base de la DLL formulée différemment selon les articles (solde de clôture de la veille ou solde de début de journée)."
+      "notes": "Elite Access Static, variante sans Daily Loss Limit (à choisir à l'achat). Seule différence annoncée avec Elite Access : drawdown d'évaluation statique. À confirmer (#1241) : équivalence micros en évaluation non publiée ; gel au premier payout du drawdown funded aligné sur Elite Access (déclencheur non précisé par les articles Static) ; activation par taille reprise de l'accueil Elite Access (l'article Static donne seulement 139 à 359 $) ; base de la DLL formulée différemment selon les articles (solde de clôture de la veille ou solde de début de journée). Objectif : l'article d'aide « Elite Access Accounts Overview » (mis à jour le 2026-11-26) donne 6 % (1 500 / 3 000 / 6 000 / 9 000 $), la page d'accueil (2026-11-28) annonce « 4 % » (1 000 / 2 000 / 4 000 / 6 000 $) : sources contradictoires, montants de l'article gardés, à revérifier."
     },
     {
       "id": "toponefutures-elite-access-static-nodll-50k",
@@ -4510,7 +4510,7 @@
         "https://help.toponefutures.com/en/articles/17635087-no-daily-loss-limit-add-on-trade-without-daily-limits"
       ],
       "needs_review": true,
-      "notes": "Elite Access Static, variante sans Daily Loss Limit (à choisir à l'achat). Seule différence annoncée avec Elite Access : drawdown d'évaluation statique. À confirmer (#1241) : équivalence micros en évaluation non publiée ; gel au premier payout du drawdown funded aligné sur Elite Access (déclencheur non précisé par les articles Static) ; activation par taille reprise de l'accueil Elite Access (l'article Static donne seulement 139 à 359 $) ; base de la DLL formulée différemment selon les articles (solde de clôture de la veille ou solde de début de journée)."
+      "notes": "Elite Access Static, variante sans Daily Loss Limit (à choisir à l'achat). Seule différence annoncée avec Elite Access : drawdown d'évaluation statique. À confirmer (#1241) : équivalence micros en évaluation non publiée ; gel au premier payout du drawdown funded aligné sur Elite Access (déclencheur non précisé par les articles Static) ; activation par taille reprise de l'accueil Elite Access (l'article Static donne seulement 139 à 359 $) ; base de la DLL formulée différemment selon les articles (solde de clôture de la veille ou solde de début de journée). Objectif : l'article d'aide « Elite Access Accounts Overview » (mis à jour le 2026-11-26) donne 6 % (1 500 / 3 000 / 6 000 / 9 000 $), la page d'accueil (2026-11-28) annonce « 4 % » (1 000 / 2 000 / 4 000 / 6 000 $) : sources contradictoires, montants de l'article gardés, à revérifier."
     },
     {
       "id": "toponefutures-elite-access-static-nodll-100k",
@@ -4653,7 +4653,7 @@
         "https://help.toponefutures.com/en/articles/17635087-no-daily-loss-limit-add-on-trade-without-daily-limits"
       ],
       "needs_review": true,
-      "notes": "Elite Access Static, variante sans Daily Loss Limit (à choisir à l'achat). Seule différence annoncée avec Elite Access : drawdown d'évaluation statique. À confirmer (#1241) : équivalence micros en évaluation non publiée ; gel au premier payout du drawdown funded aligné sur Elite Access (déclencheur non précisé par les articles Static) ; activation par taille reprise de l'accueil Elite Access (l'article Static donne seulement 139 à 359 $) ; base de la DLL formulée différemment selon les articles (solde de clôture de la veille ou solde de début de journée)."
+      "notes": "Elite Access Static, variante sans Daily Loss Limit (à choisir à l'achat). Seule différence annoncée avec Elite Access : drawdown d'évaluation statique. À confirmer (#1241) : équivalence micros en évaluation non publiée ; gel au premier payout du drawdown funded aligné sur Elite Access (déclencheur non précisé par les articles Static) ; activation par taille reprise de l'accueil Elite Access (l'article Static donne seulement 139 à 359 $) ; base de la DLL formulée différemment selon les articles (solde de clôture de la veille ou solde de début de journée). Objectif : l'article d'aide « Elite Access Accounts Overview » (mis à jour le 2026-11-26) donne 6 % (1 500 / 3 000 / 6 000 / 9 000 $), la page d'accueil (2026-11-28) annonce « 4 % » (1 000 / 2 000 / 4 000 / 6 000 $) : sources contradictoires, montants de l'article gardés, à revérifier."
     },
     {
       "id": "toponefutures-elite-access-static-nodll-150k",
@@ -4802,7 +4802,7 @@
         "https://help.toponefutures.com/en/articles/17635087-no-daily-loss-limit-add-on-trade-without-daily-limits"
       ],
       "needs_review": true,
-      "notes": "Elite Access Static, variante sans Daily Loss Limit (à choisir à l'achat). Seule différence annoncée avec Elite Access : drawdown d'évaluation statique. À confirmer (#1241) : équivalence micros en évaluation non publiée ; gel au premier payout du drawdown funded aligné sur Elite Access (déclencheur non précisé par les articles Static) ; activation par taille reprise de l'accueil Elite Access (l'article Static donne seulement 139 à 359 $) ; base de la DLL formulée différemment selon les articles (solde de clôture de la veille ou solde de début de journée)."
+      "notes": "Elite Access Static, variante sans Daily Loss Limit (à choisir à l'achat). Seule différence annoncée avec Elite Access : drawdown d'évaluation statique. À confirmer (#1241) : équivalence micros en évaluation non publiée ; gel au premier payout du drawdown funded aligné sur Elite Access (déclencheur non précisé par les articles Static) ; activation par taille reprise de l'accueil Elite Access (l'article Static donne seulement 139 à 359 $) ; base de la DLL formulée différemment selon les articles (solde de clôture de la veille ou solde de début de journée). Objectif : l'article d'aide « Elite Access Accounts Overview » (mis à jour le 2026-11-26) donne 6 % (1 500 / 3 000 / 6 000 / 9 000 $), la page d'accueil (2026-11-28) annonce « 4 % » (1 000 / 2 000 / 4 000 / 6 000 $) : sources contradictoires, montants de l'article gardés, à revérifier."
     },
     {
       "id": "toponefutures-instant-25k",
@@ -6384,6 +6384,366 @@
       ],
       "needs_review": false,
       "notes": "Série limitée à 1 500 comptes, en vente depuis le 1er octobre 2026. 3 comptes X-Ultra maximum. Prix non affiché sur la page d'accueil. Plus vendu (« Launch closed », page Launchpad lue le 2026-11-02) : masqué à l'achat, conservé pour les comptes déjà liés, règles inchangées."
+    },
+    {
+      "id": "toponefutures-x-hyper-50k",
+      "plan_name": "X-HYPER",
+      "account_size": 50000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": 158,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "158 $ (paiement unique, avant code promo ; -50 % avec le code LAUNCHPAD), page Launchpad lue le 2026-11-28. Reset 69 $. Pas d'activation."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 4000,
+          "daily_loss_limit": {
+            "amount": 1000,
+            "basis": "equity",
+            "resets_at": "18:00 America/New_York",
+            "breach": "account_failed",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Hard breach (page Launchpad) : atteindre la DLL fait échouer. Base et reset 18:00 New York selon les règles générales de Top One."
+          },
+          "max_drawdown": {
+            "amount": 4000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "MLL EOD de 4000 $ (évaluation, page Launchpad). Verrouillage non publié pour X-HYPER (X-Ultra se figeait à départ + 100 $) : non repris, à confirmer."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.5,
+            "applies_to": "profit_target",
+            "notes": "Meilleur jour au plus 50 % du profit total au moment de réussir."
+          },
+          "min_trading_days": null,
+          "max_duration_days": 30,
+          "max_contracts": {
+            "minis": 5,
+            "micros": null,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Micros non publiés."
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Sessions de 18:00 à 16:10 heure de New York (vendredi 16:00), pause 17:00-18:00, pas de week-end. Toute position encore ouverte à 16:10 est liquidée ; pas d'overnight. Durée minimale d'un trade : 10 secondes. Pas de règle news sur X-HYPER. Inactivité de 14 jours : compte fermé."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 1000,
+            "basis": "equity",
+            "resets_at": "18:00 America/New_York",
+            "breach": "account_failed",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Hard breach (page Launchpad) : atteindre la DLL fait échouer. Base et reset 18:00 New York selon les règles générales de Top One."
+          },
+          "max_drawdown": {
+            "amount": 3000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "MLL EOD de 3000 $ (funded, page Launchpad). Verrouillage non publié pour X-HYPER (X-Ultra se figeait à départ + 100 $) : non repris, à confirmer."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 4,
+            "micros": null,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Micros et éventuel scaling non publiés."
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Sessions de 18:00 à 16:10 heure de New York (vendredi 16:00), pause 17:00-18:00, pas de week-end. Toute position encore ouverte à 16:10 est liquidée ; pas d'overnight. Durée minimale d'un trade : 10 secondes. Pas de règle news sur X-HYPER. Inactivité de 14 jours : compte fermé."
+          },
+          "payout": {
+            "min_days": null,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": 50,
+            "max_amount": 5000,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": null,
+            "notes": "Payout « tous les 5 jours », minimum 50 $, plafond par payout publié, partage 90 % (tableau « Funded rules »). Pas de buffer ni de consistency funded. Le titre « 100% profit withdrawal » désigne le retrait sans buffer ; nombre de jours gagnants requis non publié."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://www.toponefutures.com/launchpad",
+        "https://www.toponefutures.com/"
+      ],
+      "needs_review": true,
+      "notes": "Launchpad LP-04, série limitée à 1 500 comptes (page Launchpad lue le 2026-11-28). 3 comptes X-HYPER maximum. Micros, verrouillage du drawdown et jours gagnants avant payout non publiés : estimation."
+    },
+    {
+      "id": "toponefutures-x-hyper-100k",
+      "plan_name": "X-HYPER",
+      "account_size": 100000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": 218,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "218 $ (paiement unique, avant code promo ; -50 % avec le code LAUNCHPAD), page Launchpad lue le 2026-11-28. Reset 99 $. Pas d'activation."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 8000,
+          "daily_loss_limit": {
+            "amount": 1500,
+            "basis": "equity",
+            "resets_at": "18:00 America/New_York",
+            "breach": "account_failed",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Hard breach (page Launchpad) : atteindre la DLL fait échouer. Base et reset 18:00 New York selon les règles générales de Top One."
+          },
+          "max_drawdown": {
+            "amount": 8000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "MLL EOD de 8000 $ (évaluation, page Launchpad). Verrouillage non publié pour X-HYPER (X-Ultra se figeait à départ + 100 $) : non repris, à confirmer."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.5,
+            "applies_to": "profit_target",
+            "notes": "Meilleur jour au plus 50 % du profit total au moment de réussir."
+          },
+          "min_trading_days": null,
+          "max_duration_days": 30,
+          "max_contracts": {
+            "minis": 10,
+            "micros": null,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Micros non publiés."
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Sessions de 18:00 à 16:10 heure de New York (vendredi 16:00), pause 17:00-18:00, pas de week-end. Toute position encore ouverte à 16:10 est liquidée ; pas d'overnight. Durée minimale d'un trade : 10 secondes. Pas de règle news sur X-HYPER. Inactivité de 14 jours : compte fermé."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 1500,
+            "basis": "equity",
+            "resets_at": "18:00 America/New_York",
+            "breach": "account_failed",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Hard breach (page Launchpad) : atteindre la DLL fait échouer. Base et reset 18:00 New York selon les règles générales de Top One."
+          },
+          "max_drawdown": {
+            "amount": 4500,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "MLL EOD de 4500 $ (funded, page Launchpad). Verrouillage non publié pour X-HYPER (X-Ultra se figeait à départ + 100 $) : non repris, à confirmer."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 8,
+            "micros": null,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Micros et éventuel scaling non publiés."
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Sessions de 18:00 à 16:10 heure de New York (vendredi 16:00), pause 17:00-18:00, pas de week-end. Toute position encore ouverte à 16:10 est liquidée ; pas d'overnight. Durée minimale d'un trade : 10 secondes. Pas de règle news sur X-HYPER. Inactivité de 14 jours : compte fermé."
+          },
+          "payout": {
+            "min_days": null,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": 50,
+            "max_amount": 6000,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": null,
+            "notes": "Payout « tous les 5 jours », minimum 50 $, plafond par payout publié, partage 90 % (tableau « Funded rules »). Pas de buffer ni de consistency funded. Le titre « 100% profit withdrawal » désigne le retrait sans buffer ; nombre de jours gagnants requis non publié."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://www.toponefutures.com/launchpad",
+        "https://www.toponefutures.com/"
+      ],
+      "needs_review": true,
+      "notes": "Launchpad LP-04, série limitée à 1 500 comptes (page Launchpad lue le 2026-11-28). 3 comptes X-HYPER maximum. Micros, verrouillage du drawdown et jours gagnants avant payout non publiés : estimation."
+    },
+    {
+      "id": "toponefutures-x-hyper-150k",
+      "plan_name": "X-HYPER",
+      "account_size": 150000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": 298,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "298 $ (paiement unique, avant code promo ; -50 % avec le code LAUNCHPAD), page Launchpad lue le 2026-11-28. Reset 139 $. Pas d'activation."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 12000,
+          "daily_loss_limit": {
+            "amount": 2000,
+            "basis": "equity",
+            "resets_at": "18:00 America/New_York",
+            "breach": "account_failed",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Hard breach (page Launchpad) : atteindre la DLL fait échouer. Base et reset 18:00 New York selon les règles générales de Top One."
+          },
+          "max_drawdown": {
+            "amount": 12000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "MLL EOD de 12000 $ (évaluation, page Launchpad). Verrouillage non publié pour X-HYPER (X-Ultra se figeait à départ + 100 $) : non repris, à confirmer."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.5,
+            "applies_to": "profit_target",
+            "notes": "Meilleur jour au plus 50 % du profit total au moment de réussir."
+          },
+          "min_trading_days": null,
+          "max_duration_days": 30,
+          "max_contracts": {
+            "minis": 15,
+            "micros": null,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Micros non publiés."
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Sessions de 18:00 à 16:10 heure de New York (vendredi 16:00), pause 17:00-18:00, pas de week-end. Toute position encore ouverte à 16:10 est liquidée ; pas d'overnight. Durée minimale d'un trade : 10 secondes. Pas de règle news sur X-HYPER. Inactivité de 14 jours : compte fermé."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 2000,
+            "basis": "equity",
+            "resets_at": "18:00 America/New_York",
+            "breach": "account_failed",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Hard breach (page Launchpad) : atteindre la DLL fait échouer. Base et reset 18:00 New York selon les règles générales de Top One."
+          },
+          "max_drawdown": {
+            "amount": 6000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "MLL EOD de 6000 $ (funded, page Launchpad). Verrouillage non publié pour X-HYPER (X-Ultra se figeait à départ + 100 $) : non repris, à confirmer."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 12,
+            "micros": null,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Micros et éventuel scaling non publiés."
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Sessions de 18:00 à 16:10 heure de New York (vendredi 16:00), pause 17:00-18:00, pas de week-end. Toute position encore ouverte à 16:10 est liquidée ; pas d'overnight. Durée minimale d'un trade : 10 secondes. Pas de règle news sur X-HYPER. Inactivité de 14 jours : compte fermé."
+          },
+          "payout": {
+            "min_days": null,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": 50,
+            "max_amount": 8000,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": null,
+            "notes": "Payout « tous les 5 jours », minimum 50 $, plafond par payout publié, partage 90 % (tableau « Funded rules »). Pas de buffer ni de consistency funded. Le titre « 100% profit withdrawal » désigne le retrait sans buffer ; nombre de jours gagnants requis non publié."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://www.toponefutures.com/launchpad",
+        "https://www.toponefutures.com/"
+      ],
+      "needs_review": true,
+      "notes": "Launchpad LP-04, série limitée à 1 500 comptes (page Launchpad lue le 2026-11-28). 3 comptes X-HYPER maximum. Micros, verrouillage du drawdown et jours gagnants avant payout non publiés : estimation."
     },
     {
       "id": "toponefutures-x-daily-spark-50k",
