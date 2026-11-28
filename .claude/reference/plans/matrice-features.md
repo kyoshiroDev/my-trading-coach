@@ -8,7 +8,7 @@
 
 ## Matrice feature × plan (grille de référence)
 
-**Socle FREE** : compagnon de session complet (pré-session + live + débrief), journal (émotions, setups), import + historique illimité, **trades illimités**, `/analytics/summary` (win rate, P&L, streak), vues de base du dashboard (équité simple, P&L/jour, top actifs simple, répartition setups en %, émotions), **1 compte de trading**, la **vue multi-comptes triée par exposition** (comptes déjà actifs, #668), et l'**IA mutualisée** :
+**Socle FREE** : compagnon de session complet (pré-session + live + débrief, y compris le **contrat de session** #667 derrière `SESSION_CONTRACT_ENABLED` : saisie, suivi, alerte in-app et règles enfreintes avec le P&L après, gratuit à titre provisoire, à valider par Greg), journal (émotions, setups), import + historique illimité, **trades illimités**, `/analytics/summary` (win rate, P&L, streak), vues de base du dashboard (équité simple, P&L/jour, top actifs simple, répartition setups en %, émotions), **1 compte de trading**, la **vue multi-comptes triée par exposition** (comptes déjà actifs, #668), et l'**IA mutualisée** :
 - 📊 **Contexte marché** (DXY, taux US, indices)
 - 📅 **Calendrier éco IA** (bull/bear par actifs)
 - 📰 **Flux news filtrées** sur tes actifs (+ traduction Haiku cachée)

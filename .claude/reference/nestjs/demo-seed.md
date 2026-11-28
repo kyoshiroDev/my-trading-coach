@@ -193,3 +193,9 @@ de la Session live. Pas sur l'Apex : le même latent y consommerait aussi la per
 equity, 1 000 $) et la ferait dépasser. Apex et Tradeify gardent equity = solde (aucun latent inventé).
 Vérifié par `demo-seed-idempotence.spec.ts` (« compte proche de sa limite »).
 
+
+**Contrat de session (#667, 2026-11-28)** : `demo-data/session-contract-example.ts` (module pur, chargé par tsx) pose un
+contrat sur la séance clôturée la plus récente d'au moins 4 trades : trades max enfreint à l'avant-dernier trade (1 trade
+« ensuite »), relevé de 1 juste après (modification tracée, l'infraction reste comptée) ; perte max, pertes d'affilée et
+actifs tenus ; annonces ±5 min. Supprimé avec les séances (cascade) à chaque relance. Visible quand
+`SESSION_CONTRACT_ENABLED` est allumé. Vérifié sur le jeu réel à 5 dates (`session-contract-example.spec.ts`).

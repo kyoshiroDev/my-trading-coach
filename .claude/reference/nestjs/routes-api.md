@@ -39,9 +39,16 @@ GET    /api/analytics/activity/:year/:month      FREE (donnée propre de l'utili
 GET    /api/analytics/top-assets                 FREE (vue de base), ?from&to
 GET    /api/analytics/daily-recap/yesterday      JWT → récap de la DERNIÈRE journée tradée sur 7 jours (le lundi : vendredi, #947)
 
-POST   /api/session/start              JWT → démarrer une session, { mood: MoodState }
+POST   /api/session/start              JWT → démarrer une session, { mood: MoodState, accountId?, contract? }
+                                       (`contract` = `SessionContractDto`, ignoré si SESSION_CONTRACT_ENABLED est éteint, #667)
+GET    /api/session/contract/config    JWT (gratuit) → `{ enabled }` : contrat de session allumé (#667)
+GET    /api/session/contract/defaults  JWT, 404 flag éteint → préremplissage `SessionContractDefaults` (dernière séance
+                                       du compte, sinon profil ; `firmDailyLossLimit`, `looserThanFirm`), ?accountId vérifié
+PATCH  /api/session/:id/contract       JWT, 404 flag éteint → upsert du contrat d'une séance ACTIVE à soi (404 sinon, 400 si
+                                       clôturée), chaque changement tracé dans `edits` (50 au plus) ; démo 403
 GET    /api/session/active             JWT → session active en cours (null si aucune)
-GET    /api/session/today              JWT → session du jour : l'active, sinon la dernière clôturée aujourd'hui
+GET    /api/session/today              JWT → session du jour : l'active, sinon la dernière clôturée aujourd'hui ;
+                                       + `contract` et `evaluation` (évaluée à la lecture) si la séance a un contrat (#667)
 GET    /api/session/history            JWT → séances clôturées ; chaque ligne porte `accountId`, `wins`, `losses` (computeTradeStats, net), #947
                                        (avec ses trades) — utilisée par l'app au chargement (#456)
 POST   /api/session/:id/close          JWT → clôturer, { mood: MoodState, notes? }
