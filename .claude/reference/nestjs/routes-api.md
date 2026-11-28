@@ -58,6 +58,11 @@ POST   /api/events                     JWT + @DemoAllowed → événements d'usa
                                        `PRODUCT_EVENTS` : entonnoir Premium, place = 1er segment de route ;
                                        installation de l'app, place = plateforme), 204, best-effort
 GET    /api/admin/funnel               ADMIN (?includeTests) → visites → inscrits → Premium vu → offres → clic essai → retour Stripe ; signupTrial (#769, B3) ; démo (ouvertures, bandeau vu, relance, clics par placement)
+POST   /api/help/ask                   JWT + @DemoAllowed, 404 si HELP_CHAT_ENABLED éteint → `HelpAskResponse` (base locale, fiche du catalogue,
+                                       Haiku en repli, sinon passage à un humain) ; quota 30/jour (démo : 10/jour par IP hachée), 429 (#493)
+POST   /api/public/help/ask            PUBLIC (10/min/IP, 10/jour par IP hachée), 404 flag éteint → idem, fiches « all », liens absolus vers l'app
+POST   /api/help/ticket                JWT (démo 403), 3/heure, 404 flag éteint → e-mail à support@ (transcription) + accusé de réception
+POST   /api/public/help/ticket         PUBLIC (3/heure/IP), 404 flag éteint → idem pour un visiteur
 POST   /api/public/funnel              PUBLIC (60/min/IP), 204 → étape du parcours d'inscription ou engagement landing { step, source?, medium?, campaign?, inApp?, detail?, path? }
 GET    /api/admin/signup-funnel        ADMIN (?days=7|30, défaut 30) → visites + étapes par source/medium/campagne × inApp, erreurs par code
 GET    /api/admin/landing-engagement   ADMIN (?days=7|30, défaut 30) → vues + défilement/temps/sélecteur de / et /prop-firm par page × source/medium/campagne

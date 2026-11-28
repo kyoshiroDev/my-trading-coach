@@ -163,6 +163,7 @@ model User {
   /// Détecteurs coupés par le trader (« Pas pour mon style », #671).
   behaviorDetectorMutes BehaviorDetectorMute[]
   sessionContracts      SessionContract[]
+  helpQuestions         HelpQuestion[]
   giveawayDraws    GiveawayDraw[]
   giveawayWins     GiveawayWin[]
   lastSeenAt      DateTime?
@@ -1545,3 +1546,23 @@ model GiveawayWin {
 
   @@index([userId, createdAt])
 }
+
+/// Chatbot de support (#493) : chaque question posée, sans IP ni donnée de trading. Purgée à 90 jours
+/// (`RETENTION_RULES`), supprimée avec le compte. `userId` null = visiteur de la landing.
+model HelpQuestion {
+  id        String   @id @default(cuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  anonymous Boolean  @default(false)
+  /// Question tronquée à 500 caractères.
+  question  String
+  /// KB | LLM | ESCALATE | TICKET
+  source    String
+  kbId      String?
+  page      String?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([userId, createdAt])
+}
+

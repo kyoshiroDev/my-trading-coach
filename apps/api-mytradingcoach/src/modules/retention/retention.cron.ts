@@ -24,6 +24,7 @@ export const RETENTION_RULES = [
  */
 export const DAILY_RETENTION_RULES = [
   { table: 'ProductEventDaily', column: 'date', days: 396 }, // 13 mois
+  { table: 'HelpQuestion', column: 'createdAt', days: 90 }, // questions du chatbot de support (#493)
 ] as const;
 
 /** Lignes supprimées par requête : de courtes transactions, pas un DELETE géant qui verrouille. */
