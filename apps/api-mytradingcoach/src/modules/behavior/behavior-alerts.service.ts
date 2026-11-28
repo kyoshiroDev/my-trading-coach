@@ -31,10 +31,9 @@ const spamKey = (accountId: string, day: string, type: string) => `behavior:spam
 /** E1 (#672) : une alerte par position (compte, contrat, ouverture). */
 export const stopOnceKey = (accountId: string, contractId: number, opened: string) => `behavior:stop:${accountId}:${contractId}:${opened}`;
 
-/** Enregistrement des alertes : actif sauf `BEHAVIOR_ALERTS_RECORD=false` (interrupteur d'urgence). */
-export const behaviorAlertsRecordEnabled = () => process.env['BEHAVIOR_ALERTS_RECORD'] !== 'false';
-/** Affichage dans l'app : `BEHAVIOR_ALERTS_UI=true` seulement. Phase 1 : faux, rien n'est envoyé. */
-export const behaviorAlertsUiEnabled = () => process.env['BEHAVIOR_ALERTS_UI'] === 'true';
+import { behaviorAlertsRecordEnabled, behaviorAlertsUiEnabled } from './behavior-flags';
+// Interrupteurs déplacés dans `behavior-flags.ts` (#671) : réexportés pour les imports existants.
+export { behaviorAlertsRecordEnabled, behaviorAlertsUiEnabled };
 
 export interface BehaviorAlertEvent extends BehaviorAlertDraft {
   id: string;
