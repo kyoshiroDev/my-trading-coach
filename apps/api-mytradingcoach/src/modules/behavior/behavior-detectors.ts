@@ -33,7 +33,8 @@ export type BehaviorAlertType =
   | 'C1_LOSS_STREAK'
   | 'C2_OVER_DAILY_LIMIT'
   | 'C3_MARTINGALE'
-  | 'D1_NEWS_WINDOW';
+  | 'D1_NEWS_WINDOW'
+  | 'E1_STOP_WIDENED';
 
 export type BehaviorAlertSeverity = 'medium' | 'high';
 
