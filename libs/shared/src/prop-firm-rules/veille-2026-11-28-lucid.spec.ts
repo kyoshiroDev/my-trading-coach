@@ -63,13 +63,17 @@ describe('veille du 2026-11-28 : Lucid (#858)', () => {
     expect(SIZES.map((s) => get(`lucid-maxx-${s}`).price.amount)).toEqual([185, 300, 450, 675]);
   });
 
-  it('LucidPro : buffer à garder après le payout (#1320), minimum 500 $', () => {
+  it('LucidPro : buffer à garder après le payout (sorti de la liste #1320), minimum 500 $', () => {
     const pro = firm.plans.filter((p) => p.id.startsWith('lucid-pro-'));
     expect(pro).toHaveLength(8);
     for (const p of pro) {
       const funded = p.phases.find((ph) => ph.phase === 'funded')!;
       expect(funded.payout).toMatchObject({ safety_net_basis: 'after_payout', min_amount: 500 });
     }
+  });
+
+  it('plus aucune note « non relevé » sur un plan qui a son prix', () => {
+    for (const p of firm.plans.filter((x) => x.price.amount != null)) expect(p.notes ?? '').not.toMatch(/non relevé/);
   });
 
   it('payouts à la demande liés au DLL (Pro, Flex, Daily)', () => {
