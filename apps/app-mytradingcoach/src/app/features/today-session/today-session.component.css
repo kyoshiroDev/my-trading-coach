@@ -405,3 +405,7 @@
 
 /* « Publier mes résultats » (bêta) : sous les 4 stats, aligné à droite, bouton secondaire */
 .debrief-share-row { display: flex; justify-content: flex-end; margin-top: -4px; }
+
+/* Vue live : `clip` et non `hidden` (#671) : rogne pareil sans créer de conteneur de défilement, sinon le bloc
+   collant de la Session live (barre de séance + alerte de comportement) ne colle jamais au défilement de la page. */
+.ts-live-wrap { flex: 1; display: flex; flex-direction: column; overflow: clip; min-height: 0; }

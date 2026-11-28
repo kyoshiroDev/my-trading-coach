@@ -3,7 +3,7 @@ import {
   computed, effect, inject, signal, untracked,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { DatePipe, DecimalPipe, TitleCasePipe } from '@angular/common';
+import { DatePipe, TitleCasePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { forkJoin, of, map, catchError } from 'rxjs';
 import { netPnl } from '@mtc/shared';
@@ -47,7 +47,7 @@ import {
   selector: 'mtc-journal',
   imports: [PctPipe,
     DialogDirective,
-    DatePipe, DecimalPipe, TitleCasePipe, LucideDynamicIcon,
+    DatePipe, TitleCasePipe, LucideDynamicIcon,
     TopbarComponent, TradeFormComponent, TradeStopDialogComponent, CsvImportComponent,
     PnlColorPipe, PnlFormatPipe, MoneyPipe, EmotionEmojiPipe, InfoTooltipComponent,
     MixedCurrencyNoticeComponent, InactiveAccountsToggleComponent, ErrorStateComponent,

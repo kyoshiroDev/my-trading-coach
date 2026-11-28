@@ -27,6 +27,7 @@ AI_MAX_CONCURRENCY=4     # optionnel : appels modèle simultanés, tous process 
 # NEWS_SHIELD_ENABLED=true  # bouclier annonces (#670), lu par les process web qui tiennent les WebSocket Tradovate
 #                           # (minuteur du gateway) : absente = coupé. Dev : allumé au merge ; prod : posé par Greg
 #                           # après vérification sur dev. Changer la valeur = recréer api_blue/api_green (env_file).
+# SESSION_CONTRACT_ENABLED=true  # contrat de session (#667), lu par les process web (routes /session/contract*, et BehaviorAlertsService appelé par le gateway Tradovate) : absente ou autre que 'true' = coupé, routes en 404. Allumée par Greg (dev puis prod) après le ticket d'interface. Changer la valeur = recréer api_blue/api_green (env_file), `docker restart` ne relit pas l'env.
 # INACTIVITY_PURGE_ENABLED=true  # purge des comptes inactifs (#824), lue par le WORKER CRON. Absente/false = journal
 #                                # seul (rien envoyé ni supprimé). Allumée par Greg seulement après la PR politique §3 + CGU
 #                                # déployée et la lecture du journal « Comptes inactifs (journal seul) » en prod.

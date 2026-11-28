@@ -16,6 +16,9 @@ import { releaseGap } from '../eco-calendar/eco-calendar.gap';
 import { seedDemoPush } from './demo-data/push';
 import { DEMO_INCIDENT_ANALYSIS, LOST_DEMO_ACCOUNTS, buildLostDemoIncident, buildLostDemoTrades } from './demo-data/lost-accounts';
 import { newsShieldExample } from './demo-data/news-shield-example';
+import { stopWidenedExample } from './demo-data/stop-widened-example';
+import { DEMO_MUTED_DETECTOR, behaviorAlertsExample } from './demo-data/behavior-alerts-example';
+import { sessionContractExample } from './demo-data/session-contract-example';
 import { newsWindowStats } from '../debrief/debrief-news-window';
 
 /**
@@ -101,6 +104,8 @@ export async function seedTradingData(
   await prisma.tradingAccount.deleteMany({ where: { userId: user.id } });
   await prisma.weeklyDebrief.deleteMany({ where: { userId: user.id } });
   await prisma.dailyRecap.deleteMany({ where: { userId: user.id } });
+  // Détecteurs coupés (#671) : propres au compte démo, recréés plus bas (les alertes partent avec les comptes).
+  await prisma.behaviorDetectorMute.deleteMany({ where: { userId: user.id } });
 
   const accountIdByKey = new Map<AccountKey, string>();
   // Plans du catalogue (synchronisé au démarrage de l'API) : seed lancé sur une base pas encore
@@ -131,6 +136,7 @@ export async function seedTradingData(
 
   // Sessions (une par jour de trading) + trades rattachés.
   let reflectionToggle = 0;
+  const sessionIdByDay = new Map<string, string>();
   for (const d of days) {
     if (!d.trades.length && !d.openTrade) continue;
     const isToday = d.kind === 'today';
@@ -169,6 +175,7 @@ export async function seedTradingData(
         }),
       },
     });
+    sessionIdByDay.set(`${d.daysAgo}:${d.account}`, session.id);
     for (const t of d.trades) {
       await prisma.trade.create({
         data: {
@@ -198,6 +205,16 @@ export async function seedTradingData(
     }
   }
 
+  // Contrat de session (#667) : une infraction, un « ensuite » et une modification tracée, visibles au débrief de
+  // séance quand SESSION_CONTRACT_ENABLED est allumé. Supprimé avec les séances (cascade) à chaque relance.
+  const contractExample = sessionContractExample(days);
+  const contractSessionId = contractExample ? sessionIdByDay.get(`${contractExample.daysAgo}:${contractExample.account}`) : undefined;
+  if (contractExample && contractSessionId) {
+    await prisma.sessionContract.create({
+      data: { sessionId: contractSessionId, userId: user.id, ...contractExample.rules, edits: contractExample.edits as unknown as Prisma.InputJsonValue },
+    });
+  }
+
   // Bouclier annonces (#670) : le trade NQ d'exemple est déjà dans la journée Apex du vendredi
   // précédent (`injectNewsExample`, compté partout). Ici, l'alerte que le bouclier aurait levée.
   const newsExample = newsShieldExample(now);
@@ -211,6 +228,30 @@ export async function seedTradingData(
       },
     });
   }
+
+  // Stop éloigné (#672) : alerte E1 sur le dernier trade NQ perdant de l'Apex, invisible avant #671.
+  const stopExample = stopWidenedExample(days);
+  if (stopExample) {
+    const a = stopExample.alert;
+    await prisma.behaviorAlert.create({
+      data: {
+        userId: user.id, accountId: accountIdByKey.get('apex')!, tradeDay: new Date(`${tradingDay(a.createdAt)}T00:00:00.000Z`),
+        type: a.type, severity: a.severity, message: a.message, context: a.context as Prisma.InputJsonValue, createdAt: a.createdAt,
+      },
+    });
+  }
+
+  // Alertes de comportement passées (#671) : ambre et rouge dans « Alertes de la semaine », un détecteur coupé
+  // dans le Profil. Visibles quand BEHAVIOR_ALERTS_UI est allumé.
+  for (const a of behaviorAlertsExample(days, now)) {
+    await prisma.behaviorAlert.create({
+      data: {
+        userId: user.id, accountId: accountIdByKey.get('apex')!, tradeDay: new Date(`${tradingDay(a.createdAt)}T00:00:00.000Z`),
+        type: a.type, severity: a.severity, message: a.message, context: a.context as Prisma.InputJsonValue, createdAt: a.createdAt,
+      },
+    });
+  }
+  await prisma.behaviorDetectorMute.create({ data: { userId: user.id, detector: DEMO_MUTED_DETECTOR } });
 
   // Compte perdu : un compte ÉCHOUÉ (dont l'Apex actif est la nouvelle tentative) et un ARCHIVÉ, avec
   // leurs trades d'avant la fenêtre. La démo montre ainsi la ligne « n comptes exclus

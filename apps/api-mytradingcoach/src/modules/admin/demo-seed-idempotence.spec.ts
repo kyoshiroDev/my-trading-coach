@@ -127,6 +127,8 @@ function fakePrisma(calls: Call[]) {
     accountRiskDay: model('accountRiskDay'),
     propRiskEvent: model('propRiskEvent'),
     behaviorAlert: model('behaviorAlert'),
+    behaviorDetectorMute: model('behaviorDetectorMute'),
+    sessionContract: model('sessionContract'),
     accountIncident: model('accountIncident'),
     userPushDevice: model('userPushDevice'),
     traderPushPreference: model('traderPushPreference'),

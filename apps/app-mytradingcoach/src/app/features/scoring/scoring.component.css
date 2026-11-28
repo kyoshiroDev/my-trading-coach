@@ -213,7 +213,7 @@
 }
 .btn-primary {
   background: var(--primary);
-  color: white;
+  color: var(--text-on-primary);
   border: none;
   border-radius: 8px;
   padding: 10px 24px;

@@ -6,7 +6,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { NO_ERRORS_SCHEMA, signal } from '@angular/core';
-import { DatePipe, DecimalPipe, registerLocaleData } from '@angular/common';
+import { DatePipe, registerLocaleData } from '@angular/common';
 import localeFr from '@angular/common/locales/fr';
 import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
@@ -52,7 +52,7 @@ function setup() {
   TestBed.overrideComponent(SessionsComponent, {
     set: {
       template: TEMPLATE,
-      imports: [DatePipe, DecimalPipe, PnlFormatPipe, EmotionEmojiPipe, PctPipe],
+      imports: [DatePipe, PnlFormatPipe, EmotionEmojiPipe, PctPipe],
       styleUrls: [], styleUrl: undefined as unknown as string,
       schemas: [NO_ERRORS_SCHEMA],
     },

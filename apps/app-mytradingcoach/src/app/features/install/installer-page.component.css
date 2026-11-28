@@ -32,7 +32,7 @@
   font: 600 14px var(--font-body); text-decoration: none; cursor: pointer; border: 1px solid transparent;
 }
 /* Même bouton que la feuille d'installation (.is-btn--primary) : --primary est le fond prévu pour un texte blanc (theme.css, 5,2:1). */
-.ip-btn--primary { background: var(--primary); border-color: var(--primary); color: #fff; }
+.ip-btn--primary { background: var(--primary); border-color: var(--primary); color: var(--text-on-primary); }
 .ip-btn--primary:hover { background: var(--primary-hover); border-color: var(--primary-hover); }
 .ip-btn--ghost { background: transparent; color: var(--text-2); border-color: var(--border-hover); }
 .ip-btn:focus-visible { outline: 2px solid var(--blue-bright); outline-offset: 2px; }

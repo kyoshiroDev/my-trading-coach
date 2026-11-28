@@ -64,7 +64,7 @@ describe('B — trade de vengeance (relatif au trader)', () => {
     expect(a?.type).toBe('B_REVENGE');
     expect(a?.severity).toBe('medium');
     expect(a?.context['signals']).toEqual(['fast_reentry', 'size_above_p75']);
-    expect(a?.message).toBe("Nouvelle entrée MNQ : 10 s après la perte (d'habitude 60 s), 3 contrats (d'habitude 1).");
+    expect(a?.message).toBe('Nouvelle entrée MNQ\u00a0: 10 s après la perte (d’habitude 60 s), 3 contrats (d’habitude 1).');
   });
 
   it('retournement + 2e perte d’affilée, sans vitesse ni taille : B ; 3 signaux = haute', () => {
@@ -174,7 +174,7 @@ describe('A1 / A3 / C', () => {
   it('A3 : au-delà de 50 % de la perte max du jour', () => {
     expect(detectEntryDayStarted(ctx({ dailyLoss: { limit: 1000, used: 500 } }))).toBeNull();
     expect(detectEntryDayStarted(ctx({ dailyLoss: { limit: 1000, used: 510 } }))?.message).toBe(
-      'Nouvelle entrée avec 51 % de la perte max du jour déjà consommée.',
+      'Nouvelle entrée avec 51\u00a0% de la perte max du jour déjà consommée.',
     );
   });
 
@@ -187,7 +187,7 @@ describe('A1 / A3 / C', () => {
   it('C2 : au-delà de la limite déclarée, rien si non renseignée', () => {
     const closed = [pos({ pnl: 1, closedSec: 1 }), pos({ pnl: 1, closedSec: 2 })];
     expect(detectOverDailyLimit(ctx({ closed, tradesPerDayMax: 3 }))).toBeNull();
-    expect(detectOverDailyLimit(ctx({ closed, tradesPerDayMax: 2 }))?.message).toBe('3e position de la séance, ta limite déclarée est de 2 par jour.');
+    expect(detectOverDailyLimit(ctx({ closed, tradesPerDayMax: 2 }))?.message).toBe('3ᵉ position de la séance, ta limite déclarée est de 2 par jour.');
     expect(detectOverDailyLimit(ctx({ closed, tradesPerDayMax: null }))).toBeNull();
   });
 

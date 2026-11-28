@@ -18,6 +18,8 @@
      d'accent pour le texte, les icônes et les graphiques (trop clair sous du texte blanc). */
   --primary: #2563eb;
   --primary-hover: #1d4ed8;
+  /* Texte sur --primary / --primary-hover (#1195) : seul blanc du thème, jamais sur un autre fond. */
+  --text-on-primary: #fff;
 
   /* ─── Semantic colors ─── */
   --green: #10b981;

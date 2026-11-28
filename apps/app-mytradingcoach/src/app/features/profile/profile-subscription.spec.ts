@@ -8,7 +8,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { TestBed } from '@angular/core/testing';
 import { signal, NO_ERRORS_SCHEMA } from '@angular/core';
-import { DatePipe, DecimalPipe } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -78,7 +78,7 @@ function render(opts: {
     ],
   });
   TestBed.overrideComponent(ProfileComponent, { set: {
-      template: TEMPLATE, imports: [DatePipe, DecimalPipe], schemas: [NO_ERRORS_SCHEMA],
+      template: TEMPLATE, imports: [DatePipe], schemas: [NO_ERRORS_SCHEMA],
       styleUrls: [], styleUrl: undefined as unknown as string,
     }, });
   const fixture = TestBed.createComponent(ProfileComponent);

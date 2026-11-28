@@ -91,3 +91,17 @@ export interface WeeklyDebrief {
   stats: { winRate: number; totalPnl: number; totalTrades: number; newsWindow?: DebriefNewsWindow };
   generatedAt: string;
 }
+
+/**
+ * Entrée de l'historique (`GET /debrief/history`, #959) : de quoi remplir le sélecteur de semaine,
+ * sans le contenu IA (le débrief choisi se charge par `GET /debrief/:year/:week`). Pas de P&L : la
+ * semaine peut mêler plusieurs devises (#947).
+ */
+export interface DebriefHistoryItem {
+  id: string;
+  year: number;
+  weekNumber: number;
+  startDate: string;
+  endDate: string;
+  totalTrades: number;
+}

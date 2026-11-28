@@ -337,7 +337,7 @@
 
 .user .msg-bubble {
   background: var(--primary);
-  color: white;
+  color: var(--text-on-primary);
   border-radius: 10px 10px 2px 10px;
 }
 
@@ -407,7 +407,7 @@
 
 .btn-send {
   background: var(--primary);
-  color: white;
+  color: var(--text-on-primary);
   border: none;
   border-radius: 8px;
   width: 36px;
@@ -464,7 +464,7 @@
   margin-top: 8px;
   display: inline-block;
   background: var(--primary);
-  color: white;
+  color: var(--text-on-primary);
   border-radius: 8px;
   padding: 10px 24px;
   font-size: 14px;

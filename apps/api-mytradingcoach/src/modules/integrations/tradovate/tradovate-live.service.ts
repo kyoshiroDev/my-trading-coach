@@ -15,6 +15,7 @@ import {
   applyOrder,
   applyOrderStrategyLink,
   applyOrderVersion,
+  stopVersionChange,
   emptyOrderBook,
   workingOrders,
   workingOrdersKey,
@@ -29,6 +30,7 @@ import { createLimiter } from '../../../common/utils/concurrency.util';
 import { appRole } from '../../../config/app-role';
 import { trackableConnection, TradovateWatchService } from './tradovate-watch.service';
 import { WATCH_SWEEP_MS, type WatchVerdict } from './tradovate-watch';
+import { BehaviorAlertsService } from '../../behavior/behavior-alerts.service';
 
 /** Bail « un seul WebSocket Tradovate par user », tous workers du cluster confondus. */
 export const LIVE_LEASE_TTL_MS = 30_000;
@@ -147,6 +149,8 @@ export class TradovateLiveService implements OnModuleInit, OnModuleDestroy {
     @Optional() @Inject(LIVE_SOCKET_FACTORY) private readonly socketFactory?: LiveSocketFactory,
     /** Veille serveur (#770) : optionnelle pour garder les tests unitaires légers. */
     @Optional() private readonly watch?: TradovateWatchService,
+    /** Détecteur E1 « stop éloigné » (#672) : optionnel pour garder les tests unitaires légers. */
+    @Optional() private readonly behavior?: BehaviorAlertsService,
   ) {}
 
   /**
@@ -419,7 +423,14 @@ export class TradovateLiveService implements OnModuleInit, OnModuleDestroy {
     const book = u.books.get(c.id);
     if (!book) return; // avant l'instantané initial : il contiendra cet ordre
     if (e.entityType === 'order') applyOrder(book, e.entity, Number(c.externalAccountId), e.eventType);
-    else if (e.entityType === 'orderVersion') applyOrderVersion(book, e.entity);
+    else if (e.entityType === 'orderVersion') {
+      // E1 (#672) : comparer à la version précédente AVANT de la remplacer. Lecture seule, rien sur l'ordre.
+      const moved = stopVersionChange(book, e.entity);
+      applyOrderVersion(book, e.entity);
+      if (moved && this.behavior && c.accountId) {
+        void this.behavior.onStopMoved(userId, c.accountId, c.id, moved, (event, payload) => this.emitter(userId, event, payload));
+      }
+    }
     else {
       applyOrderStrategyLink(book, e.entity, e.eventType);
       // Mesure #963 : un seul log par connexion, au premier lien reçu en direct.

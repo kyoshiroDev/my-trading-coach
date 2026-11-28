@@ -169,7 +169,7 @@ input::placeholder {
 .btn-submit {
   width: 100%;
   background: var(--primary);
-  color: #fff;
+  color: var(--text-on-primary);
   border: none;
   border-radius: 8px;
   padding: 12px;

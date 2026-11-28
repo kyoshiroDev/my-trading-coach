@@ -19,7 +19,7 @@
       "multicharts"
     ]
   },
-  "verified_at": "2026-10-22",
+  "verified_at": "2026-11-28",
   "plans": [
     {
       "id": "lucid-flex-25k",
@@ -32,10 +32,10 @@
         "eval_drawdown": null
       },
       "price": {
-        "amount": null,
+        "amount": 97,
         "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Le prix dépend des options choisies et le site renvoie au checkout pour le prix final ; promotions temporaires en cours. Non relevé de façon fiable, donc laissé à null. Option DLL ON = version la moins chère."
+        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Prix catalogue relevé sur le configurateur de lucidtrading.com le 2026-11-28 (prix avant coupon : coupon temporaire de 30 % en cours ; le prix barré du site reste celui de base même quand une option ajoute des frais, seul le prix avec coupon suit, d'où prix catalogue = prix avec coupon / 0,7)."
       },
       "phases": [
         {
@@ -147,7 +147,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": false,
-      "notes": "Variante DLL OFF. Consistency standard de 40 % en évaluation, 3 jours minimum (article LucidFlex Evaluation Account du 2026-10-19). Une évaluation achetée avant ce changement relevait de l'ancienne règle à 50 % : la relier au plan « option consistency 50 % » de même taille."
+      "notes": "Variante DLL OFF. Consistency standard de 40 % en évaluation, 3 jours minimum (article LucidFlex Evaluation Account du 2026-10-19). Une évaluation achetée avant ce changement relevait de l'ancienne règle à 50 % : la relier au plan « option consistency 50 % » de même taille. Sans DLL : pas de payout à la demande en séance (le configurateur lie cette option au DLL, relevé du 2026-11-28)."
     },
     {
       "id": "lucid-flex-50k",
@@ -160,10 +160,10 @@
         "eval_drawdown": null
       },
       "price": {
-        "amount": null,
+        "amount": 177,
         "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Le prix dépend des options choisies et le site renvoie au checkout pour le prix final ; promotions temporaires en cours. Non relevé de façon fiable, donc laissé à null. Option DLL ON = version la moins chère."
+        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Prix catalogue relevé sur le configurateur de lucidtrading.com le 2026-11-28 (prix avant coupon : coupon temporaire de 30 % en cours ; le prix barré du site reste celui de base même quand une option ajoute des frais, seul le prix avec coupon suit, d'où prix catalogue = prix avec coupon / 0,7)."
       },
       "phases": [
         {
@@ -281,7 +281,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": false,
-      "notes": "Variante DLL OFF. Consistency standard de 40 % en évaluation, 3 jours minimum (article LucidFlex Evaluation Account du 2026-10-19). Une évaluation achetée avant ce changement relevait de l'ancienne règle à 50 % : la relier au plan « option consistency 50 % » de même taille."
+      "notes": "Variante DLL OFF. Consistency standard de 40 % en évaluation, 3 jours minimum (article LucidFlex Evaluation Account du 2026-10-19). Une évaluation achetée avant ce changement relevait de l'ancienne règle à 50 % : la relier au plan « option consistency 50 % » de même taille. Sans DLL : pas de payout à la demande en séance (le configurateur lie cette option au DLL, relevé du 2026-11-28)."
     },
     {
       "id": "lucid-flex-100k",
@@ -294,10 +294,10 @@
         "eval_drawdown": null
       },
       "price": {
-        "amount": null,
+        "amount": 279,
         "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Le prix dépend des options choisies et le site renvoie au checkout pour le prix final ; promotions temporaires en cours. Non relevé de façon fiable, donc laissé à null. Option DLL ON = version la moins chère."
+        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Prix catalogue relevé sur le configurateur de lucidtrading.com le 2026-11-28 (prix avant coupon : coupon temporaire de 30 % en cours ; le prix barré du site reste celui de base même quand une option ajoute des frais, seul le prix avec coupon suit, d'où prix catalogue = prix avec coupon / 0,7)."
       },
       "phases": [
         {
@@ -421,7 +421,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": false,
-      "notes": "Variante DLL OFF. Consistency standard de 40 % en évaluation, 3 jours minimum (article LucidFlex Evaluation Account du 2026-10-19). Une évaluation achetée avant ce changement relevait de l'ancienne règle à 50 % : la relier au plan « option consistency 50 % » de même taille."
+      "notes": "Variante DLL OFF. Consistency standard de 40 % en évaluation, 3 jours minimum (article LucidFlex Evaluation Account du 2026-10-19). Une évaluation achetée avant ce changement relevait de l'ancienne règle à 50 % : la relier au plan « option consistency 50 % » de même taille. Sans DLL : pas de payout à la demande en séance (le configurateur lie cette option au DLL, relevé du 2026-11-28)."
     },
     {
       "id": "lucid-flex-150k",
@@ -434,10 +434,10 @@
         "eval_drawdown": null
       },
       "price": {
-        "amount": null,
+        "amount": 379,
         "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Le prix dépend des options choisies et le site renvoie au checkout pour le prix final ; promotions temporaires en cours. Non relevé de façon fiable, donc laissé à null. Option DLL ON = version la moins chère."
+        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Prix catalogue relevé sur le configurateur de lucidtrading.com le 2026-11-28 (prix avant coupon : coupon temporaire de 30 % en cours ; le prix barré du site reste celui de base même quand une option ajoute des frais, seul le prix avec coupon suit, d'où prix catalogue = prix avec coupon / 0,7)."
       },
       "phases": [
         {
@@ -567,7 +567,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": false,
-      "notes": "Variante DLL OFF. Consistency standard de 40 % en évaluation, 3 jours minimum (article LucidFlex Evaluation Account du 2026-10-19). Une évaluation achetée avant ce changement relevait de l'ancienne règle à 50 % : la relier au plan « option consistency 50 % » de même taille."
+      "notes": "Variante DLL OFF. Consistency standard de 40 % en évaluation, 3 jours minimum (article LucidFlex Evaluation Account du 2026-10-19). Une évaluation achetée avant ce changement relevait de l'ancienne règle à 50 % : la relier au plan « option consistency 50 % » de même taille. Sans DLL : pas de payout à la demande en séance (le configurateur lie cette option au DLL, relevé du 2026-11-28)."
     },
     {
       "id": "lucid-flex-dll-25k",
@@ -580,10 +580,10 @@
         "eval_drawdown": null
       },
       "price": {
-        "amount": null,
+        "amount": 76,
         "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Le prix dépend des options choisies et le site renvoie au checkout pour le prix final ; promotions temporaires en cours. Non relevé de façon fiable, donc laissé à null. Option DLL ON = version la moins chère."
+        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Prix catalogue relevé sur le configurateur de lucidtrading.com le 2026-11-28 (prix avant coupon : coupon temporaire de 30 % en cours ; le prix barré du site reste celui de base même quand une option ajoute des frais, seul le prix avec coupon suit, d'où prix catalogue = prix avec coupon / 0,7)."
       },
       "phases": [
         {
@@ -711,7 +711,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": false,
-      "notes": "Variante DLL ON (DLL en évaluation et en funded). Consistency standard de 40 % en évaluation, 3 jours minimum (article LucidFlex Evaluation Account du 2026-10-19). Une évaluation achetée avant ce changement relevait de l'ancienne règle à 50 % : la relier au plan « option consistency 50 % » de même taille."
+      "notes": "Variante DLL ON (DLL en évaluation et en funded). Consistency standard de 40 % en évaluation, 3 jours minimum (article LucidFlex Evaluation Account du 2026-10-19). Une évaluation achetée avant ce changement relevait de l'ancienne règle à 50 % : la relier au plan « option consistency 50 % » de même taille. Payouts à la demande (en séance) : actifs avec le DLL, impossibles sans (le configurateur lie les deux options, relevé du 2026-11-28)."
     },
     {
       "id": "lucid-flex-dll-50k",
@@ -724,10 +724,10 @@
         "eval_drawdown": null
       },
       "price": {
-        "amount": null,
+        "amount": 127,
         "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Le prix dépend des options choisies et le site renvoie au checkout pour le prix final ; promotions temporaires en cours. Non relevé de façon fiable, donc laissé à null. Option DLL ON = version la moins chère."
+        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Prix catalogue relevé sur le configurateur de lucidtrading.com le 2026-11-28 (prix avant coupon : coupon temporaire de 30 % en cours ; le prix barré du site reste celui de base même quand une option ajoute des frais, seul le prix avec coupon suit, d'où prix catalogue = prix avec coupon / 0,7)."
       },
       "phases": [
         {
@@ -861,7 +861,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": false,
-      "notes": "Variante DLL ON (DLL en évaluation et en funded). Consistency standard de 40 % en évaluation, 3 jours minimum (article LucidFlex Evaluation Account du 2026-10-19). Une évaluation achetée avant ce changement relevait de l'ancienne règle à 50 % : la relier au plan « option consistency 50 % » de même taille."
+      "notes": "Variante DLL ON (DLL en évaluation et en funded). Consistency standard de 40 % en évaluation, 3 jours minimum (article LucidFlex Evaluation Account du 2026-10-19). Une évaluation achetée avant ce changement relevait de l'ancienne règle à 50 % : la relier au plan « option consistency 50 % » de même taille. Payouts à la demande (en séance) : actifs avec le DLL, impossibles sans (le configurateur lie les deux options, relevé du 2026-11-28)."
     },
     {
       "id": "lucid-flex-dll-100k",
@@ -874,10 +874,10 @@
         "eval_drawdown": null
       },
       "price": {
-        "amount": null,
+        "amount": 215,
         "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Le prix dépend des options choisies et le site renvoie au checkout pour le prix final ; promotions temporaires en cours. Non relevé de façon fiable, donc laissé à null. Option DLL ON = version la moins chère."
+        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Prix catalogue relevé sur le configurateur de lucidtrading.com le 2026-11-28 (prix avant coupon : coupon temporaire de 30 % en cours ; le prix barré du site reste celui de base même quand une option ajoute des frais, seul le prix avec coupon suit, d'où prix catalogue = prix avec coupon / 0,7)."
       },
       "phases": [
         {
@@ -1017,7 +1017,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": false,
-      "notes": "Variante DLL ON (DLL en évaluation et en funded). Consistency standard de 40 % en évaluation, 3 jours minimum (article LucidFlex Evaluation Account du 2026-10-19). Une évaluation achetée avant ce changement relevait de l'ancienne règle à 50 % : la relier au plan « option consistency 50 % » de même taille."
+      "notes": "Variante DLL ON (DLL en évaluation et en funded). Consistency standard de 40 % en évaluation, 3 jours minimum (article LucidFlex Evaluation Account du 2026-10-19). Une évaluation achetée avant ce changement relevait de l'ancienne règle à 50 % : la relier au plan « option consistency 50 % » de même taille. Payouts à la demande (en séance) : actifs avec le DLL, impossibles sans (le configurateur lie les deux options, relevé du 2026-11-28)."
     },
     {
       "id": "lucid-flex-dll-150k",
@@ -1030,10 +1030,10 @@
         "eval_drawdown": null
       },
       "price": {
-        "amount": null,
+        "amount": 323,
         "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Le prix dépend des options choisies et le site renvoie au checkout pour le prix final ; promotions temporaires en cours. Non relevé de façon fiable, donc laissé à null. Option DLL ON = version la moins chère."
+        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Prix catalogue relevé sur le configurateur de lucidtrading.com le 2026-11-28 (prix avant coupon : coupon temporaire de 30 % en cours ; le prix barré du site reste celui de base même quand une option ajoute des frais, seul le prix avec coupon suit, d'où prix catalogue = prix avec coupon / 0,7)."
       },
       "phases": [
         {
@@ -1179,7 +1179,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": false,
-      "notes": "Variante DLL ON (DLL en évaluation et en funded). Consistency standard de 40 % en évaluation, 3 jours minimum (article LucidFlex Evaluation Account du 2026-10-19). Une évaluation achetée avant ce changement relevait de l'ancienne règle à 50 % : la relier au plan « option consistency 50 % » de même taille."
+      "notes": "Variante DLL ON (DLL en évaluation et en funded). Consistency standard de 40 % en évaluation, 3 jours minimum (article LucidFlex Evaluation Account du 2026-10-19). Une évaluation achetée avant ce changement relevait de l'ancienne règle à 50 % : la relier au plan « option consistency 50 % » de même taille. Payouts à la demande (en séance) : actifs avec le DLL, impossibles sans (le configurateur lie les deux options, relevé du 2026-11-28)."
     },
     {
       "id": "lucid-flex-c50-25k",
@@ -1193,10 +1193,10 @@
         "addon": "consistency 50\u00a0%"
       },
       "price": {
-        "amount": null,
+        "amount": 111,
         "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Le prix dépend des options choisies et le site renvoie au checkout pour le prix final ; promotions temporaires en cours. Non relevé de façon fiable, donc laissé à null. Option DLL ON = version la moins chère."
+        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Prix catalogue relevé sur le configurateur de lucidtrading.com le 2026-11-28 (prix avant coupon : coupon temporaire de 30 % en cours ; le prix barré du site reste celui de base même quand une option ajoute des frais, seul le prix avec coupon suit, d'où prix catalogue = prix avec coupon / 0,7)."
       },
       "phases": [
         {
@@ -1308,7 +1308,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": false,
-      "notes": "Variante DLL OFF, option consistency 50 % (payante au checkout) : évaluation réussie en 2 jours minimum. Prix plus élevé que la version à 40 %, non relevé."
+      "notes": "Variante DLL OFF, option consistency 50 % (payante au checkout) : évaluation réussie en 2 jours minimum. Prix plus élevé que la version à 40 % (relevé le 2026-11-28, voir le prix). Sans DLL : pas de payout à la demande en séance (le configurateur lie cette option au DLL, relevé du 2026-11-28)."
     },
     {
       "id": "lucid-flex-c50-50k",
@@ -1322,10 +1322,10 @@
         "addon": "consistency 50\u00a0%"
       },
       "price": {
-        "amount": null,
+        "amount": 198,
         "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Le prix dépend des options choisies et le site renvoie au checkout pour le prix final ; promotions temporaires en cours. Non relevé de façon fiable, donc laissé à null. Option DLL ON = version la moins chère."
+        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Prix catalogue relevé sur le configurateur de lucidtrading.com le 2026-11-28 (prix avant coupon : coupon temporaire de 30 % en cours ; le prix barré du site reste celui de base même quand une option ajoute des frais, seul le prix avec coupon suit, d'où prix catalogue = prix avec coupon / 0,7)."
       },
       "phases": [
         {
@@ -1443,7 +1443,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": false,
-      "notes": "Variante DLL OFF, option consistency 50 % (payante au checkout) : évaluation réussie en 2 jours minimum. Prix plus élevé que la version à 40 %, non relevé."
+      "notes": "Variante DLL OFF, option consistency 50 % (payante au checkout) : évaluation réussie en 2 jours minimum. Prix plus élevé que la version à 40 % (relevé le 2026-11-28, voir le prix). Sans DLL : pas de payout à la demande en séance (le configurateur lie cette option au DLL, relevé du 2026-11-28)."
     },
     {
       "id": "lucid-flex-c50-100k",
@@ -1457,10 +1457,10 @@
         "addon": "consistency 50\u00a0%"
       },
       "price": {
-        "amount": null,
+        "amount": 308,
         "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Le prix dépend des options choisies et le site renvoie au checkout pour le prix final ; promotions temporaires en cours. Non relevé de façon fiable, donc laissé à null. Option DLL ON = version la moins chère."
+        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Prix catalogue relevé sur le configurateur de lucidtrading.com le 2026-11-28 (prix avant coupon : coupon temporaire de 30 % en cours ; le prix barré du site reste celui de base même quand une option ajoute des frais, seul le prix avec coupon suit, d'où prix catalogue = prix avec coupon / 0,7)."
       },
       "phases": [
         {
@@ -1584,7 +1584,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": false,
-      "notes": "Variante DLL OFF, option consistency 50 % (payante au checkout) : évaluation réussie en 2 jours minimum. Prix plus élevé que la version à 40 %, non relevé."
+      "notes": "Variante DLL OFF, option consistency 50 % (payante au checkout) : évaluation réussie en 2 jours minimum. Prix plus élevé que la version à 40 % (relevé le 2026-11-28, voir le prix). Sans DLL : pas de payout à la demande en séance (le configurateur lie cette option au DLL, relevé du 2026-11-28)."
     },
     {
       "id": "lucid-flex-c50-150k",
@@ -1598,10 +1598,10 @@
         "addon": "consistency 50\u00a0%"
       },
       "price": {
-        "amount": null,
+        "amount": 422,
         "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Le prix dépend des options choisies et le site renvoie au checkout pour le prix final ; promotions temporaires en cours. Non relevé de façon fiable, donc laissé à null. Option DLL ON = version la moins chère."
+        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Prix catalogue relevé sur le configurateur de lucidtrading.com le 2026-11-28 (prix avant coupon : coupon temporaire de 30 % en cours ; le prix barré du site reste celui de base même quand une option ajoute des frais, seul le prix avec coupon suit, d'où prix catalogue = prix avec coupon / 0,7)."
       },
       "phases": [
         {
@@ -1731,7 +1731,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": false,
-      "notes": "Variante DLL OFF, option consistency 50 % (payante au checkout) : évaluation réussie en 2 jours minimum. Prix plus élevé que la version à 40 %, non relevé."
+      "notes": "Variante DLL OFF, option consistency 50 % (payante au checkout) : évaluation réussie en 2 jours minimum. Prix plus élevé que la version à 40 % (relevé le 2026-11-28, voir le prix). Sans DLL : pas de payout à la demande en séance (le configurateur lie cette option au DLL, relevé du 2026-11-28)."
     },
     {
       "id": "lucid-flex-dll-c50-25k",
@@ -1745,10 +1745,10 @@
         "addon": "consistency 50\u00a0%"
       },
       "price": {
-        "amount": null,
+        "amount": 83,
         "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Le prix dépend des options choisies et le site renvoie au checkout pour le prix final ; promotions temporaires en cours. Non relevé de façon fiable, donc laissé à null. Option DLL ON = version la moins chère."
+        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Prix catalogue relevé sur le configurateur de lucidtrading.com le 2026-11-28 (prix avant coupon : coupon temporaire de 30 % en cours ; le prix barré du site reste celui de base même quand une option ajoute des frais, seul le prix avec coupon suit, d'où prix catalogue = prix avec coupon / 0,7)."
       },
       "phases": [
         {
@@ -1876,7 +1876,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": false,
-      "notes": "Variante DLL ON (DLL en évaluation et en funded), option consistency 50 % (payante au checkout) : évaluation réussie en 2 jours minimum. Prix plus élevé que la version à 40 %, non relevé."
+      "notes": "Variante DLL ON (DLL en évaluation et en funded), option consistency 50 % (payante au checkout) : évaluation réussie en 2 jours minimum. Prix plus élevé que la version à 40 % (relevé le 2026-11-28, voir le prix). Payouts à la demande (en séance) : actifs avec le DLL, impossibles sans (le configurateur lie les deux options, relevé du 2026-11-28)."
     },
     {
       "id": "lucid-flex-dll-c50-50k",
@@ -1890,10 +1890,10 @@
         "addon": "consistency 50\u00a0%"
       },
       "price": {
-        "amount": null,
+        "amount": 138,
         "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Le prix dépend des options choisies et le site renvoie au checkout pour le prix final ; promotions temporaires en cours. Non relevé de façon fiable, donc laissé à null. Option DLL ON = version la moins chère."
+        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Prix catalogue relevé sur le configurateur de lucidtrading.com le 2026-11-28 (prix avant coupon : coupon temporaire de 30 % en cours ; le prix barré du site reste celui de base même quand une option ajoute des frais, seul le prix avec coupon suit, d'où prix catalogue = prix avec coupon / 0,7)."
       },
       "phases": [
         {
@@ -2027,7 +2027,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": false,
-      "notes": "Variante DLL ON (DLL en évaluation et en funded), option consistency 50 % (payante au checkout) : évaluation réussie en 2 jours minimum. Prix plus élevé que la version à 40 %, non relevé."
+      "notes": "Variante DLL ON (DLL en évaluation et en funded), option consistency 50 % (payante au checkout) : évaluation réussie en 2 jours minimum. Prix plus élevé que la version à 40 % (relevé le 2026-11-28, voir le prix). Payouts à la demande (en séance) : actifs avec le DLL, impossibles sans (le configurateur lie les deux options, relevé du 2026-11-28)."
     },
     {
       "id": "lucid-flex-dll-c50-100k",
@@ -2041,10 +2041,10 @@
         "addon": "consistency 50\u00a0%"
       },
       "price": {
-        "amount": null,
+        "amount": 243,
         "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Le prix dépend des options choisies et le site renvoie au checkout pour le prix final ; promotions temporaires en cours. Non relevé de façon fiable, donc laissé à null. Option DLL ON = version la moins chère."
+        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Prix catalogue relevé sur le configurateur de lucidtrading.com le 2026-11-28 (prix avant coupon : coupon temporaire de 30 % en cours ; le prix barré du site reste celui de base même quand une option ajoute des frais, seul le prix avec coupon suit, d'où prix catalogue = prix avec coupon / 0,7)."
       },
       "phases": [
         {
@@ -2184,7 +2184,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": false,
-      "notes": "Variante DLL ON (DLL en évaluation et en funded), option consistency 50 % (payante au checkout) : évaluation réussie en 2 jours minimum. Prix plus élevé que la version à 40 %, non relevé."
+      "notes": "Variante DLL ON (DLL en évaluation et en funded), option consistency 50 % (payante au checkout) : évaluation réussie en 2 jours minimum. Prix plus élevé que la version à 40 % (relevé le 2026-11-28, voir le prix). Payouts à la demande (en séance) : actifs avec le DLL, impossibles sans (le configurateur lie les deux options, relevé du 2026-11-28)."
     },
     {
       "id": "lucid-flex-dll-c50-150k",
@@ -2198,10 +2198,10 @@
         "addon": "consistency 50\u00a0%"
       },
       "price": {
-        "amount": null,
+        "amount": 358,
         "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Le prix dépend des options choisies et le site renvoie au checkout pour le prix final ; promotions temporaires en cours. Non relevé de façon fiable, donc laissé à null. Option DLL ON = version la moins chère."
+        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Prix catalogue relevé sur le configurateur de lucidtrading.com le 2026-11-28 (prix avant coupon : coupon temporaire de 30 % en cours ; le prix barré du site reste celui de base même quand une option ajoute des frais, seul le prix avec coupon suit, d'où prix catalogue = prix avec coupon / 0,7)."
       },
       "phases": [
         {
@@ -2347,7 +2347,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": false,
-      "notes": "Variante DLL ON (DLL en évaluation et en funded), option consistency 50 % (payante au checkout) : évaluation réussie en 2 jours minimum. Prix plus élevé que la version à 40 %, non relevé."
+      "notes": "Variante DLL ON (DLL en évaluation et en funded), option consistency 50 % (payante au checkout) : évaluation réussie en 2 jours minimum. Prix plus élevé que la version à 40 % (relevé le 2026-11-28, voir le prix). Payouts à la demande (en séance) : actifs avec le DLL, impossibles sans (le configurateur lie les deux options, relevé du 2026-11-28)."
     },
     {
       "id": "lucid-pro-25k",
@@ -2360,10 +2360,10 @@
         "eval_drawdown": null
       },
       "price": {
-        "amount": null,
+        "amount": 137,
         "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Le prix dépend des options choisies et le site renvoie au checkout pour le prix final ; promotions temporaires en cours. Non relevé de façon fiable, donc laissé à null."
+        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Prix catalogue relevé sur le configurateur de lucidtrading.com le 2026-11-28 (prix avant coupon : coupon temporaire de 30 % en cours ; le prix barré du site reste celui de base même quand une option ajoute des frais, seul le prix avec coupon suit, d'où prix catalogue = prix avec coupon / 0,7)."
       },
       "phases": [
         {
@@ -2446,7 +2446,8 @@
             ],
             "max_payouts": 5,
             "safety_net_balance": 26100,
-            "notes": "Profit minimum par cycle, consistency 40 % et solde au-dessus du buffer (MLL initial + 100 $). Plafond : 1er payout puis payouts 2+. max_payouts = 5 d'après l'article New Live Structure (payout 5 = dernier palier avant revue live). Comptes antérieurs au 2025-11-28 : 100 % sur les premiers 10 000 $. min_days = 3 vient du site (« Days to Payout 3 », fiche « Funded Rules ») ; l'article LucidPro Payouts ne mentionne pas de minimum de jours. 3 jours de trading minimum par cycle, liés à la consistency de 40 % (support Lucid, Discord, 2026-10-04)."
+            "safety_net_basis": "after_payout",
+            "notes": "Profit minimum par cycle, consistency 40 % et solde au-dessus du buffer (MLL initial + 100 $). Plafond : 1er payout puis payouts 2+. max_payouts = 5 d'après l'article New Live Structure (payout 5 = dernier palier avant revue live). Comptes antérieurs au 2025-11-28 : 100 % sur les premiers 10 000 $. min_days = 3 vient du site (« Days to Payout 3 », fiche « Funded Rules ») ; l'article LucidPro Payouts ne mentionne pas de minimum de jours. 3 jours de trading minimum par cycle, liés à la consistency de 40 % (support Lucid, Discord, 2026-10-04). Buffer à garder APRÈS le payout (safety_net_basis after_payout, #1320) : « Minimum Balance for $500 Payout » = buffer + 500 $ et « You can not take payout from the buffer balance » (article LucidPro Payouts, relu le 2026-11-28)."
           }
         }
       ],
@@ -2465,7 +2466,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": false,
-      "notes": "Variante DLL OFF (aucune DLL en évaluation ni en funded)."
+      "notes": "Variante DLL OFF (aucune DLL en évaluation ni en funded). Sans DLL : pas de payout à la demande en séance (le configurateur lie cette option au DLL, relevé du 2026-11-28)."
     },
     {
       "id": "lucid-pro-50k",
@@ -2478,10 +2479,10 @@
         "eval_drawdown": null
       },
       "price": {
-        "amount": null,
+        "amount": 223,
         "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Le prix dépend des options choisies et le site renvoie au checkout pour le prix final ; promotions temporaires en cours. Non relevé de façon fiable, donc laissé à null."
+        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Prix catalogue relevé sur le configurateur de lucidtrading.com le 2026-11-28 (prix avant coupon : coupon temporaire de 30 % en cours ; le prix barré du site reste celui de base même quand une option ajoute des frais, seul le prix avec coupon suit, d'où prix catalogue = prix avec coupon / 0,7)."
       },
       "phases": [
         {
@@ -2564,7 +2565,8 @@
             ],
             "max_payouts": 5,
             "safety_net_balance": 52100,
-            "notes": "Profit minimum par cycle, consistency 40 % et solde au-dessus du buffer (MLL initial + 100 $). Plafond : 1er payout puis payouts 2+. max_payouts = 5 d'après l'article New Live Structure (payout 5 = dernier palier avant revue live). Comptes antérieurs au 2025-11-28 : 100 % sur les premiers 10 000 $. min_days = 3 vient du site (« Days to Payout 3 », fiche « Funded Rules ») ; l'article LucidPro Payouts ne mentionne pas de minimum de jours. 3 jours de trading minimum par cycle, liés à la consistency de 40 % (support Lucid, Discord, 2026-10-04)."
+            "safety_net_basis": "after_payout",
+            "notes": "Profit minimum par cycle, consistency 40 % et solde au-dessus du buffer (MLL initial + 100 $). Plafond : 1er payout puis payouts 2+. max_payouts = 5 d'après l'article New Live Structure (payout 5 = dernier palier avant revue live). Comptes antérieurs au 2025-11-28 : 100 % sur les premiers 10 000 $. min_days = 3 vient du site (« Days to Payout 3 », fiche « Funded Rules ») ; l'article LucidPro Payouts ne mentionne pas de minimum de jours. 3 jours de trading minimum par cycle, liés à la consistency de 40 % (support Lucid, Discord, 2026-10-04). Buffer à garder APRÈS le payout (safety_net_basis after_payout, #1320) : « Minimum Balance for $500 Payout » = buffer + 500 $ et « You can not take payout from the buffer balance » (article LucidPro Payouts, relu le 2026-11-28)."
           }
         }
       ],
@@ -2583,7 +2585,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": false,
-      "notes": "Variante DLL OFF (aucune DLL en évaluation ni en funded)."
+      "notes": "Variante DLL OFF (aucune DLL en évaluation ni en funded). Sans DLL : pas de payout à la demande en séance (le configurateur lie cette option au DLL, relevé du 2026-11-28)."
     },
     {
       "id": "lucid-pro-100k",
@@ -2596,10 +2598,10 @@
         "eval_drawdown": null
       },
       "price": {
-        "amount": null,
+        "amount": 322,
         "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Le prix dépend des options choisies et le site renvoie au checkout pour le prix final ; promotions temporaires en cours. Non relevé de façon fiable, donc laissé à null."
+        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Prix catalogue relevé sur le configurateur de lucidtrading.com le 2026-11-28 (prix avant coupon : coupon temporaire de 30 % en cours ; le prix barré du site reste celui de base même quand une option ajoute des frais, seul le prix avec coupon suit, d'où prix catalogue = prix avec coupon / 0,7)."
       },
       "phases": [
         {
@@ -2682,7 +2684,8 @@
             ],
             "max_payouts": 5,
             "safety_net_balance": 103100,
-            "notes": "Profit minimum par cycle, consistency 40 % et solde au-dessus du buffer (MLL initial + 100 $). Plafond : 1er payout puis payouts 2+. max_payouts = 5 d'après l'article New Live Structure (payout 5 = dernier palier avant revue live). Comptes antérieurs au 2025-11-28 : 100 % sur les premiers 10 000 $. min_days = 3 vient du site (« Days to Payout 3 », fiche « Funded Rules ») ; l'article LucidPro Payouts ne mentionne pas de minimum de jours. 3 jours de trading minimum par cycle, liés à la consistency de 40 % (support Lucid, Discord, 2026-10-04)."
+            "safety_net_basis": "after_payout",
+            "notes": "Profit minimum par cycle, consistency 40 % et solde au-dessus du buffer (MLL initial + 100 $). Plafond : 1er payout puis payouts 2+. max_payouts = 5 d'après l'article New Live Structure (payout 5 = dernier palier avant revue live). Comptes antérieurs au 2025-11-28 : 100 % sur les premiers 10 000 $. min_days = 3 vient du site (« Days to Payout 3 », fiche « Funded Rules ») ; l'article LucidPro Payouts ne mentionne pas de minimum de jours. 3 jours de trading minimum par cycle, liés à la consistency de 40 % (support Lucid, Discord, 2026-10-04). Buffer à garder APRÈS le payout (safety_net_basis after_payout, #1320) : « Minimum Balance for $500 Payout » = buffer + 500 $ et « You can not take payout from the buffer balance » (article LucidPro Payouts, relu le 2026-11-28)."
           }
         }
       ],
@@ -2701,7 +2704,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": false,
-      "notes": "Variante DLL OFF (aucune DLL en évaluation ni en funded)."
+      "notes": "Variante DLL OFF (aucune DLL en évaluation ni en funded). Sans DLL : pas de payout à la demande en séance (le configurateur lie cette option au DLL, relevé du 2026-11-28)."
     },
     {
       "id": "lucid-pro-150k",
@@ -2714,10 +2717,10 @@
         "eval_drawdown": null
       },
       "price": {
-        "amount": null,
+        "amount": 429,
         "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Le prix dépend des options choisies et le site renvoie au checkout pour le prix final ; promotions temporaires en cours. Non relevé de façon fiable, donc laissé à null."
+        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Prix catalogue relevé sur le configurateur de lucidtrading.com le 2026-11-28 (prix avant coupon : coupon temporaire de 30 % en cours ; le prix barré du site reste celui de base même quand une option ajoute des frais, seul le prix avec coupon suit, d'où prix catalogue = prix avec coupon / 0,7)."
       },
       "phases": [
         {
@@ -2800,7 +2803,8 @@
             ],
             "max_payouts": 5,
             "safety_net_balance": 154600,
-            "notes": "Profit minimum par cycle, consistency 40 % et solde au-dessus du buffer (MLL initial + 100 $). Plafond : 1er payout puis payouts 2+. max_payouts = 5 d'après l'article New Live Structure (payout 5 = dernier palier avant revue live). Comptes antérieurs au 2025-11-28 : 100 % sur les premiers 10 000 $. min_days = 3 vient du site (« Days to Payout 3 », fiche « Funded Rules ») ; l'article LucidPro Payouts ne mentionne pas de minimum de jours. 3 jours de trading minimum par cycle, liés à la consistency de 40 % (support Lucid, Discord, 2026-10-04)."
+            "safety_net_basis": "after_payout",
+            "notes": "Profit minimum par cycle, consistency 40 % et solde au-dessus du buffer (MLL initial + 100 $). Plafond : 1er payout puis payouts 2+. max_payouts = 5 d'après l'article New Live Structure (payout 5 = dernier palier avant revue live). Comptes antérieurs au 2025-11-28 : 100 % sur les premiers 10 000 $. min_days = 3 vient du site (« Days to Payout 3 », fiche « Funded Rules ») ; l'article LucidPro Payouts ne mentionne pas de minimum de jours. 3 jours de trading minimum par cycle, liés à la consistency de 40 % (support Lucid, Discord, 2026-10-04). Buffer à garder APRÈS le payout (safety_net_basis after_payout, #1320) : « Minimum Balance for $500 Payout » = buffer + 500 $ et « You can not take payout from the buffer balance » (article LucidPro Payouts, relu le 2026-11-28)."
           }
         }
       ],
@@ -2819,7 +2823,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": false,
-      "notes": "Variante DLL OFF (aucune DLL en évaluation ni en funded)."
+      "notes": "Variante DLL OFF (aucune DLL en évaluation ni en funded). Sans DLL : pas de payout à la demande en séance (le configurateur lie cette option au DLL, relevé du 2026-11-28)."
     },
     {
       "id": "lucid-pro-dll-25k",
@@ -2832,10 +2836,10 @@
         "eval_drawdown": null
       },
       "price": {
-        "amount": null,
+        "amount": 116,
         "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Le prix dépend des options choisies et le site renvoie au checkout pour le prix final ; promotions temporaires en cours. Non relevé de façon fiable, donc laissé à null."
+        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Prix catalogue relevé sur le configurateur de lucidtrading.com le 2026-11-28 (prix avant coupon : coupon temporaire de 30 % en cours ; le prix barré du site reste celui de base même quand une option ajoute des frais, seul le prix avec coupon suit, d'où prix catalogue = prix avec coupon / 0,7)."
       },
       "phases": [
         {
@@ -2934,7 +2938,8 @@
             ],
             "max_payouts": 5,
             "safety_net_balance": 26100,
-            "notes": "Profit minimum par cycle, consistency 40 % et solde au-dessus du buffer (MLL initial + 100 $). Plafond : 1er payout puis payouts 2+. max_payouts = 5 d'après l'article New Live Structure (payout 5 = dernier palier avant revue live). Comptes antérieurs au 2025-11-28 : 100 % sur les premiers 10 000 $. min_days = 3 vient du site (« Days to Payout 3 », fiche « Funded Rules ») ; l'article LucidPro Payouts ne mentionne pas de minimum de jours. 3 jours de trading minimum par cycle, liés à la consistency de 40 % (support Lucid, Discord, 2026-10-04). Avec DLL : payouts à la demande ; une demande en séance suspend le trading jusqu’à la fin de la séance (LucidPro Customization, 17/11)."
+            "safety_net_basis": "after_payout",
+            "notes": "Profit minimum par cycle, consistency 40 % et solde au-dessus du buffer (MLL initial + 100 $). Plafond : 1er payout puis payouts 2+. max_payouts = 5 d'après l'article New Live Structure (payout 5 = dernier palier avant revue live). Comptes antérieurs au 2025-11-28 : 100 % sur les premiers 10 000 $. min_days = 3 vient du site (« Days to Payout 3 », fiche « Funded Rules ») ; l'article LucidPro Payouts ne mentionne pas de minimum de jours. 3 jours de trading minimum par cycle, liés à la consistency de 40 % (support Lucid, Discord, 2026-10-04). Avec DLL : payouts à la demande ; une demande en séance suspend le trading jusqu’à la fin de la séance (LucidPro Customization, 17/11). Buffer à garder APRÈS le payout (safety_net_basis after_payout, #1320) : « Minimum Balance for $500 Payout » = buffer + 500 $ et « You can not take payout from the buffer balance » (article LucidPro Payouts, relu le 2026-11-28)."
           }
         }
       ],
@@ -2953,7 +2958,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": false,
-      "notes": "Variante DLL ON (DLL en évaluation et en funded). Contradiction de sources sur la DLL 25K (voir phases). DLL de 600 $ avec l'option DLL activée, confirmée (support Lucid, Discord, 2026-10-04)."
+      "notes": "Variante DLL ON (DLL en évaluation et en funded). Contradiction de sources sur la DLL 25K (voir phases). DLL de 600 $ avec l'option DLL activée, confirmée (support Lucid, Discord, 2026-10-04). Payouts à la demande (en séance) : actifs avec le DLL, impossibles sans (le configurateur lie les deux options, relevé du 2026-11-28)."
     },
     {
       "id": "lucid-pro-dll-50k",
@@ -2966,10 +2971,10 @@
         "eval_drawdown": null
       },
       "price": {
-        "amount": null,
+        "amount": 180,
         "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Le prix dépend des options choisies et le site renvoie au checkout pour le prix final ; promotions temporaires en cours. Non relevé de façon fiable, donc laissé à null."
+        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Prix catalogue relevé sur le configurateur de lucidtrading.com le 2026-11-28 (prix avant coupon : coupon temporaire de 30 % en cours ; le prix barré du site reste celui de base même quand une option ajoute des frais, seul le prix avec coupon suit, d'où prix catalogue = prix avec coupon / 0,7)."
       },
       "phases": [
         {
@@ -3068,7 +3073,8 @@
             ],
             "max_payouts": 5,
             "safety_net_balance": 52100,
-            "notes": "Profit minimum par cycle, consistency 40 % et solde au-dessus du buffer (MLL initial + 100 $). Plafond : 1er payout puis payouts 2+. max_payouts = 5 d'après l'article New Live Structure (payout 5 = dernier palier avant revue live). Comptes antérieurs au 2025-11-28 : 100 % sur les premiers 10 000 $. min_days = 3 vient du site (« Days to Payout 3 », fiche « Funded Rules ») ; l'article LucidPro Payouts ne mentionne pas de minimum de jours. 3 jours de trading minimum par cycle, liés à la consistency de 40 % (support Lucid, Discord, 2026-10-04). Avec DLL : payouts à la demande ; une demande en séance suspend le trading jusqu’à la fin de la séance (LucidPro Customization, 17/11)."
+            "safety_net_basis": "after_payout",
+            "notes": "Profit minimum par cycle, consistency 40 % et solde au-dessus du buffer (MLL initial + 100 $). Plafond : 1er payout puis payouts 2+. max_payouts = 5 d'après l'article New Live Structure (payout 5 = dernier palier avant revue live). Comptes antérieurs au 2025-11-28 : 100 % sur les premiers 10 000 $. min_days = 3 vient du site (« Days to Payout 3 », fiche « Funded Rules ») ; l'article LucidPro Payouts ne mentionne pas de minimum de jours. 3 jours de trading minimum par cycle, liés à la consistency de 40 % (support Lucid, Discord, 2026-10-04). Avec DLL : payouts à la demande ; une demande en séance suspend le trading jusqu’à la fin de la séance (LucidPro Customization, 17/11). Buffer à garder APRÈS le payout (safety_net_basis after_payout, #1320) : « Minimum Balance for $500 Payout » = buffer + 500 $ et « You can not take payout from the buffer balance » (article LucidPro Payouts, relu le 2026-11-28)."
           }
         }
       ],
@@ -3087,7 +3093,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": false,
-      "notes": "Variante DLL ON (DLL en évaluation et en funded)."
+      "notes": "Variante DLL ON (DLL en évaluation et en funded). Payouts à la demande (en séance) : actifs avec le DLL, impossibles sans (le configurateur lie les deux options, relevé du 2026-11-28)."
     },
     {
       "id": "lucid-pro-dll-100k",
@@ -3100,10 +3106,10 @@
         "eval_drawdown": null
       },
       "price": {
-        "amount": null,
+        "amount": 272,
         "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Le prix dépend des options choisies et le site renvoie au checkout pour le prix final ; promotions temporaires en cours. Non relevé de façon fiable, donc laissé à null."
+        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Prix catalogue relevé sur le configurateur de lucidtrading.com le 2026-11-28 (prix avant coupon : coupon temporaire de 30 % en cours ; le prix barré du site reste celui de base même quand une option ajoute des frais, seul le prix avec coupon suit, d'où prix catalogue = prix avec coupon / 0,7)."
       },
       "phases": [
         {
@@ -3202,7 +3208,8 @@
             ],
             "max_payouts": 5,
             "safety_net_balance": 103100,
-            "notes": "Profit minimum par cycle, consistency 40 % et solde au-dessus du buffer (MLL initial + 100 $). Plafond : 1er payout puis payouts 2+. max_payouts = 5 d'après l'article New Live Structure (payout 5 = dernier palier avant revue live). Comptes antérieurs au 2025-11-28 : 100 % sur les premiers 10 000 $. min_days = 3 vient du site (« Days to Payout 3 », fiche « Funded Rules ») ; l'article LucidPro Payouts ne mentionne pas de minimum de jours. 3 jours de trading minimum par cycle, liés à la consistency de 40 % (support Lucid, Discord, 2026-10-04). Avec DLL : payouts à la demande ; une demande en séance suspend le trading jusqu’à la fin de la séance (LucidPro Customization, 17/11)."
+            "safety_net_basis": "after_payout",
+            "notes": "Profit minimum par cycle, consistency 40 % et solde au-dessus du buffer (MLL initial + 100 $). Plafond : 1er payout puis payouts 2+. max_payouts = 5 d'après l'article New Live Structure (payout 5 = dernier palier avant revue live). Comptes antérieurs au 2025-11-28 : 100 % sur les premiers 10 000 $. min_days = 3 vient du site (« Days to Payout 3 », fiche « Funded Rules ») ; l'article LucidPro Payouts ne mentionne pas de minimum de jours. 3 jours de trading minimum par cycle, liés à la consistency de 40 % (support Lucid, Discord, 2026-10-04). Avec DLL : payouts à la demande ; une demande en séance suspend le trading jusqu’à la fin de la séance (LucidPro Customization, 17/11). Buffer à garder APRÈS le payout (safety_net_basis after_payout, #1320) : « Minimum Balance for $500 Payout » = buffer + 500 $ et « You can not take payout from the buffer balance » (article LucidPro Payouts, relu le 2026-11-28)."
           }
         }
       ],
@@ -3221,7 +3228,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": false,
-      "notes": "Variante DLL ON (DLL en évaluation et en funded)."
+      "notes": "Variante DLL ON (DLL en évaluation et en funded). Payouts à la demande (en séance) : actifs avec le DLL, impossibles sans (le configurateur lie les deux options, relevé du 2026-11-28)."
     },
     {
       "id": "lucid-pro-dll-150k",
@@ -3237,7 +3244,7 @@
         "amount": 365,
         "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. 365 $ pour la configuration 150K Pro avec DLL (accueil lu le 2026-11-02, 255,50 $ avec le coupon en cours, reset 255 $). Les autres configurations ne sont pas relevées."
+        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Prix catalogue relevé sur le configurateur de lucidtrading.com le 2026-11-28 (prix avant coupon : coupon temporaire de 30 % en cours ; le prix barré du site reste celui de base même quand une option ajoute des frais, seul le prix avec coupon suit, d'où prix catalogue = prix avec coupon / 0,7)."
       },
       "phases": [
         {
@@ -3336,7 +3343,8 @@
             ],
             "max_payouts": 5,
             "safety_net_balance": 154600,
-            "notes": "Profit minimum par cycle, consistency 40 % et solde au-dessus du buffer (MLL initial + 100 $). Plafond : 1er payout puis payouts 2+. max_payouts = 5 d'après l'article New Live Structure (payout 5 = dernier palier avant revue live). Comptes antérieurs au 2025-11-28 : 100 % sur les premiers 10 000 $. min_days = 3 vient du site (« Days to Payout 3 », fiche « Funded Rules ») ; l'article LucidPro Payouts ne mentionne pas de minimum de jours. 3 jours de trading minimum par cycle, liés à la consistency de 40 % (support Lucid, Discord, 2026-10-04). Avec DLL : payouts à la demande ; une demande en séance suspend le trading jusqu’à la fin de la séance (LucidPro Customization, 17/11)."
+            "safety_net_basis": "after_payout",
+            "notes": "Profit minimum par cycle, consistency 40 % et solde au-dessus du buffer (MLL initial + 100 $). Plafond : 1er payout puis payouts 2+. max_payouts = 5 d'après l'article New Live Structure (payout 5 = dernier palier avant revue live). Comptes antérieurs au 2025-11-28 : 100 % sur les premiers 10 000 $. min_days = 3 vient du site (« Days to Payout 3 », fiche « Funded Rules ») ; l'article LucidPro Payouts ne mentionne pas de minimum de jours. 3 jours de trading minimum par cycle, liés à la consistency de 40 % (support Lucid, Discord, 2026-10-04). Avec DLL : payouts à la demande ; une demande en séance suspend le trading jusqu’à la fin de la séance (LucidPro Customization, 17/11). Buffer à garder APRÈS le payout (safety_net_basis after_payout, #1320) : « Minimum Balance for $500 Payout » = buffer + 500 $ et « You can not take payout from the buffer balance » (article LucidPro Payouts, relu le 2026-11-28)."
           }
         }
       ],
@@ -3355,7 +3363,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": false,
-      "notes": "Variante DLL ON (DLL en évaluation et en funded)."
+      "notes": "Variante DLL ON (DLL en évaluation et en funded). Payouts à la demande (en séance) : actifs avec le DLL, impossibles sans (le configurateur lie les deux options, relevé du 2026-11-28)."
     },
     {
       "id": "lucid-daily-eod-25k",
@@ -3368,10 +3376,10 @@
         "eval_drawdown": "eod"
       },
       "price": {
-        "amount": null,
+        "amount": 115,
         "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Le prix dépend des options choisies et le site renvoie au checkout pour le prix final ; promotions temporaires en cours. Non relevé de façon fiable, donc laissé à null."
+        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Prix catalogue relevé sur le configurateur de lucidtrading.com le 2026-11-28 (prix avant coupon : coupon temporaire de 30 % en cours ; le prix barré du site reste celui de base même quand une option ajoute des frais, seul le prix avec coupon suit, d'où prix catalogue = prix avec coupon / 0,7)."
       },
       "phases": [
         {
@@ -3470,7 +3478,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": false,
-      "notes": "Variante DLL OFF, drawdown d'évaluation EOD ; funded en intraday par défaut ; l’option funded EOD fait l’objet de plans dédiés (LucidDaily Customization, 18/11). Consistency standard de 40 % en évaluation (article LucidDaily Customization du 2026-10-20 et sélecteur de lucidtrading.com relu le 2026-10-22 ; l'article LucidDaily Consistency, daté du 2026-07-27, dit encore 50 %). Une évaluation achetée avant ce changement relevait de l'ancienne règle à 50 % : la relier au plan « option consistency 50 % » de même taille et même configuration."
+      "notes": "Variante DLL OFF, drawdown d'évaluation EOD ; funded en intraday par défaut ; l’option funded EOD fait l’objet de plans dédiés (LucidDaily Customization, 18/11). Consistency standard de 40 % en évaluation (article LucidDaily Customization du 2026-10-20 et sélecteur de lucidtrading.com relu le 2026-10-22 ; l'article LucidDaily Consistency, daté du 2026-07-27, dit encore 50 %). Une évaluation achetée avant ce changement relevait de l'ancienne règle à 50 % : la relier au plan « option consistency 50 % » de même taille et même configuration. Sans DLL : pas de payout à la demande en séance (le configurateur lie cette option au DLL, relevé du 2026-11-28)."
     },
     {
       "id": "lucid-daily-eod-50k",
@@ -3483,10 +3491,10 @@
         "eval_drawdown": "eod"
       },
       "price": {
-        "amount": null,
+        "amount": 165,
         "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Le prix dépend des options choisies et le site renvoie au checkout pour le prix final ; promotions temporaires en cours. Non relevé de façon fiable, donc laissé à null."
+        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Prix catalogue relevé sur le configurateur de lucidtrading.com le 2026-11-28 (prix avant coupon : coupon temporaire de 30 % en cours ; le prix barré du site reste celui de base même quand une option ajoute des frais, seul le prix avec coupon suit, d'où prix catalogue = prix avec coupon / 0,7)."
       },
       "phases": [
         {
@@ -3585,7 +3593,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": false,
-      "notes": "Variante DLL OFF, drawdown d'évaluation EOD ; funded en intraday par défaut ; l’option funded EOD fait l’objet de plans dédiés (LucidDaily Customization, 18/11). Consistency standard de 40 % en évaluation (article LucidDaily Customization du 2026-10-20 et sélecteur de lucidtrading.com relu le 2026-10-22 ; l'article LucidDaily Consistency, daté du 2026-07-27, dit encore 50 %). Une évaluation achetée avant ce changement relevait de l'ancienne règle à 50 % : la relier au plan « option consistency 50 % » de même taille et même configuration."
+      "notes": "Variante DLL OFF, drawdown d'évaluation EOD ; funded en intraday par défaut ; l’option funded EOD fait l’objet de plans dédiés (LucidDaily Customization, 18/11). Consistency standard de 40 % en évaluation (article LucidDaily Customization du 2026-10-20 et sélecteur de lucidtrading.com relu le 2026-10-22 ; l'article LucidDaily Consistency, daté du 2026-07-27, dit encore 50 %). Une évaluation achetée avant ce changement relevait de l'ancienne règle à 50 % : la relier au plan « option consistency 50 % » de même taille et même configuration. Sans DLL : pas de payout à la demande en séance (le configurateur lie cette option au DLL, relevé du 2026-11-28)."
     },
     {
       "id": "lucid-daily-eod-100k",
@@ -3598,10 +3606,10 @@
         "eval_drawdown": "eod"
       },
       "price": {
-        "amount": null,
+        "amount": 258,
         "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Le prix dépend des options choisies et le site renvoie au checkout pour le prix final ; promotions temporaires en cours. Non relevé de façon fiable, donc laissé à null."
+        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Prix catalogue relevé sur le configurateur de lucidtrading.com le 2026-11-28 (prix avant coupon : coupon temporaire de 30 % en cours ; le prix barré du site reste celui de base même quand une option ajoute des frais, seul le prix avec coupon suit, d'où prix catalogue = prix avec coupon / 0,7)."
       },
       "phases": [
         {
@@ -3700,7 +3708,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": false,
-      "notes": "Variante DLL OFF, drawdown d'évaluation EOD ; funded en intraday par défaut ; l’option funded EOD fait l’objet de plans dédiés (LucidDaily Customization, 18/11). Consistency standard de 40 % en évaluation (article LucidDaily Customization du 2026-10-20 et sélecteur de lucidtrading.com relu le 2026-10-22 ; l'article LucidDaily Consistency, daté du 2026-07-27, dit encore 50 %). Une évaluation achetée avant ce changement relevait de l'ancienne règle à 50 % : la relier au plan « option consistency 50 % » de même taille et même configuration."
+      "notes": "Variante DLL OFF, drawdown d'évaluation EOD ; funded en intraday par défaut ; l’option funded EOD fait l’objet de plans dédiés (LucidDaily Customization, 18/11). Consistency standard de 40 % en évaluation (article LucidDaily Customization du 2026-10-20 et sélecteur de lucidtrading.com relu le 2026-10-22 ; l'article LucidDaily Consistency, daté du 2026-07-27, dit encore 50 %). Une évaluation achetée avant ce changement relevait de l'ancienne règle à 50 % : la relier au plan « option consistency 50 % » de même taille et même configuration. Sans DLL : pas de payout à la demande en séance (le configurateur lie cette option au DLL, relevé du 2026-11-28)."
     },
     {
       "id": "lucid-daily-eod-150k",
@@ -3713,10 +3721,10 @@
         "eval_drawdown": "eod"
       },
       "price": {
-        "amount": null,
+        "amount": 358,
         "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Le prix dépend des options choisies et le site renvoie au checkout pour le prix final ; promotions temporaires en cours. Non relevé de façon fiable, donc laissé à null."
+        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Prix catalogue relevé sur le configurateur de lucidtrading.com le 2026-11-28 (prix avant coupon : coupon temporaire de 30 % en cours ; le prix barré du site reste celui de base même quand une option ajoute des frais, seul le prix avec coupon suit, d'où prix catalogue = prix avec coupon / 0,7)."
       },
       "phases": [
         {
@@ -3815,7 +3823,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": false,
-      "notes": "Variante DLL OFF, drawdown d'évaluation EOD ; funded en intraday par défaut ; l’option funded EOD fait l’objet de plans dédiés (LucidDaily Customization, 18/11). Consistency standard de 40 % en évaluation (article LucidDaily Customization du 2026-10-20 et sélecteur de lucidtrading.com relu le 2026-10-22 ; l'article LucidDaily Consistency, daté du 2026-07-27, dit encore 50 %). Une évaluation achetée avant ce changement relevait de l'ancienne règle à 50 % : la relier au plan « option consistency 50 % » de même taille et même configuration."
+      "notes": "Variante DLL OFF, drawdown d'évaluation EOD ; funded en intraday par défaut ; l’option funded EOD fait l’objet de plans dédiés (LucidDaily Customization, 18/11). Consistency standard de 40 % en évaluation (article LucidDaily Customization du 2026-10-20 et sélecteur de lucidtrading.com relu le 2026-10-22 ; l'article LucidDaily Consistency, daté du 2026-07-27, dit encore 50 %). Une évaluation achetée avant ce changement relevait de l'ancienne règle à 50 % : la relier au plan « option consistency 50 % » de même taille et même configuration. Sans DLL : pas de payout à la demande en séance (le configurateur lie cette option au DLL, relevé du 2026-11-28)."
     },
     {
       "id": "lucid-daily-intraday-25k",
@@ -3828,10 +3836,10 @@
         "eval_drawdown": "intraday"
       },
       "price": {
-        "amount": null,
+        "amount": 93,
         "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Le prix dépend des options choisies et le site renvoie au checkout pour le prix final ; promotions temporaires en cours. Non relevé de façon fiable, donc laissé à null."
+        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Prix catalogue relevé sur le configurateur de lucidtrading.com le 2026-11-28 (prix avant coupon : coupon temporaire de 30 % en cours ; le prix barré du site reste celui de base même quand une option ajoute des frais, seul le prix avec coupon suit, d'où prix catalogue = prix avec coupon / 0,7)."
       },
       "phases": [
         {
@@ -3930,7 +3938,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": false,
-      "notes": "Variante DLL OFF, drawdown d'évaluation intraday ; funded en intraday par défaut ; l’option funded EOD fait l’objet de plans dédiés (LucidDaily Customization, 18/11). Consistency standard de 40 % en évaluation (article LucidDaily Customization du 2026-10-20 et sélecteur de lucidtrading.com relu le 2026-10-22 ; l'article LucidDaily Consistency, daté du 2026-07-27, dit encore 50 %). Une évaluation achetée avant ce changement relevait de l'ancienne règle à 50 % : la relier au plan « option consistency 50 % » de même taille et même configuration."
+      "notes": "Variante DLL OFF, drawdown d'évaluation intraday ; funded en intraday par défaut ; l’option funded EOD fait l’objet de plans dédiés (LucidDaily Customization, 18/11). Consistency standard de 40 % en évaluation (article LucidDaily Customization du 2026-10-20 et sélecteur de lucidtrading.com relu le 2026-10-22 ; l'article LucidDaily Consistency, daté du 2026-07-27, dit encore 50 %). Une évaluation achetée avant ce changement relevait de l'ancienne règle à 50 % : la relier au plan « option consistency 50 % » de même taille et même configuration. Sans DLL : pas de payout à la demande en séance (le configurateur lie cette option au DLL, relevé du 2026-11-28)."
     },
     {
       "id": "lucid-daily-intraday-50k",
@@ -3943,10 +3951,10 @@
         "eval_drawdown": "intraday"
       },
       "price": {
-        "amount": null,
+        "amount": 129,
         "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Le prix dépend des options choisies et le site renvoie au checkout pour le prix final ; promotions temporaires en cours. Non relevé de façon fiable, donc laissé à null."
+        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Prix catalogue relevé sur le configurateur de lucidtrading.com le 2026-11-28 (prix avant coupon : coupon temporaire de 30 % en cours ; le prix barré du site reste celui de base même quand une option ajoute des frais, seul le prix avec coupon suit, d'où prix catalogue = prix avec coupon / 0,7)."
       },
       "phases": [
         {
@@ -4045,7 +4053,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": false,
-      "notes": "Variante DLL OFF, drawdown d'évaluation intraday ; funded en intraday par défaut ; l’option funded EOD fait l’objet de plans dédiés (LucidDaily Customization, 18/11). Consistency standard de 40 % en évaluation (article LucidDaily Customization du 2026-10-20 et sélecteur de lucidtrading.com relu le 2026-10-22 ; l'article LucidDaily Consistency, daté du 2026-07-27, dit encore 50 %). Une évaluation achetée avant ce changement relevait de l'ancienne règle à 50 % : la relier au plan « option consistency 50 % » de même taille et même configuration."
+      "notes": "Variante DLL OFF, drawdown d'évaluation intraday ; funded en intraday par défaut ; l’option funded EOD fait l’objet de plans dédiés (LucidDaily Customization, 18/11). Consistency standard de 40 % en évaluation (article LucidDaily Customization du 2026-10-20 et sélecteur de lucidtrading.com relu le 2026-10-22 ; l'article LucidDaily Consistency, daté du 2026-07-27, dit encore 50 %). Une évaluation achetée avant ce changement relevait de l'ancienne règle à 50 % : la relier au plan « option consistency 50 % » de même taille et même configuration. Sans DLL : pas de payout à la demande en séance (le configurateur lie cette option au DLL, relevé du 2026-11-28)."
     },
     {
       "id": "lucid-daily-intraday-100k",
@@ -4058,10 +4066,10 @@
         "eval_drawdown": "intraday"
       },
       "price": {
-        "amount": null,
+        "amount": 215,
         "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Le prix dépend des options choisies et le site renvoie au checkout pour le prix final ; promotions temporaires en cours. Non relevé de façon fiable, donc laissé à null."
+        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Prix catalogue relevé sur le configurateur de lucidtrading.com le 2026-11-28 (prix avant coupon : coupon temporaire de 30 % en cours ; le prix barré du site reste celui de base même quand une option ajoute des frais, seul le prix avec coupon suit, d'où prix catalogue = prix avec coupon / 0,7)."
       },
       "phases": [
         {
@@ -4160,7 +4168,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": false,
-      "notes": "Variante DLL OFF, drawdown d'évaluation intraday ; funded en intraday par défaut ; l’option funded EOD fait l’objet de plans dédiés (LucidDaily Customization, 18/11). Consistency standard de 40 % en évaluation (article LucidDaily Customization du 2026-10-20 et sélecteur de lucidtrading.com relu le 2026-10-22 ; l'article LucidDaily Consistency, daté du 2026-07-27, dit encore 50 %). Une évaluation achetée avant ce changement relevait de l'ancienne règle à 50 % : la relier au plan « option consistency 50 % » de même taille et même configuration."
+      "notes": "Variante DLL OFF, drawdown d'évaluation intraday ; funded en intraday par défaut ; l’option funded EOD fait l’objet de plans dédiés (LucidDaily Customization, 18/11). Consistency standard de 40 % en évaluation (article LucidDaily Customization du 2026-10-20 et sélecteur de lucidtrading.com relu le 2026-10-22 ; l'article LucidDaily Consistency, daté du 2026-07-27, dit encore 50 %). Une évaluation achetée avant ce changement relevait de l'ancienne règle à 50 % : la relier au plan « option consistency 50 % » de même taille et même configuration. Sans DLL : pas de payout à la demande en séance (le configurateur lie cette option au DLL, relevé du 2026-11-28)."
     },
     {
       "id": "lucid-daily-intraday-150k",
@@ -4173,10 +4181,10 @@
         "eval_drawdown": "intraday"
       },
       "price": {
-        "amount": null,
+        "amount": 300,
         "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Le prix dépend des options choisies et le site renvoie au checkout pour le prix final ; promotions temporaires en cours. Non relevé de façon fiable, donc laissé à null."
+        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Prix catalogue relevé sur le configurateur de lucidtrading.com le 2026-11-28 (prix avant coupon : coupon temporaire de 30 % en cours ; le prix barré du site reste celui de base même quand une option ajoute des frais, seul le prix avec coupon suit, d'où prix catalogue = prix avec coupon / 0,7)."
       },
       "phases": [
         {
@@ -4275,7 +4283,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": false,
-      "notes": "Variante DLL OFF, drawdown d'évaluation intraday ; funded en intraday par défaut ; l’option funded EOD fait l’objet de plans dédiés (LucidDaily Customization, 18/11). Consistency standard de 40 % en évaluation (article LucidDaily Customization du 2026-10-20 et sélecteur de lucidtrading.com relu le 2026-10-22 ; l'article LucidDaily Consistency, daté du 2026-07-27, dit encore 50 %). Une évaluation achetée avant ce changement relevait de l'ancienne règle à 50 % : la relier au plan « option consistency 50 % » de même taille et même configuration."
+      "notes": "Variante DLL OFF, drawdown d'évaluation intraday ; funded en intraday par défaut ; l’option funded EOD fait l’objet de plans dédiés (LucidDaily Customization, 18/11). Consistency standard de 40 % en évaluation (article LucidDaily Customization du 2026-10-20 et sélecteur de lucidtrading.com relu le 2026-10-22 ; l'article LucidDaily Consistency, daté du 2026-07-27, dit encore 50 %). Une évaluation achetée avant ce changement relevait de l'ancienne règle à 50 % : la relier au plan « option consistency 50 % » de même taille et même configuration. Sans DLL : pas de payout à la demande en séance (le configurateur lie cette option au DLL, relevé du 2026-11-28)."
     },
     {
       "id": "lucid-daily-dll-eod-25k",
@@ -4288,10 +4296,10 @@
         "eval_drawdown": "eod"
       },
       "price": {
-        "amount": null,
+        "amount": 86,
         "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Le prix dépend des options choisies et le site renvoie au checkout pour le prix final ; promotions temporaires en cours. Non relevé de façon fiable, donc laissé à null."
+        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Prix catalogue relevé sur le configurateur de lucidtrading.com le 2026-11-28 (prix avant coupon : coupon temporaire de 30 % en cours ; le prix barré du site reste celui de base même quand une option ajoute des frais, seul le prix avec coupon suit, d'où prix catalogue = prix avec coupon / 0,7)."
       },
       "phases": [
         {
@@ -4406,7 +4414,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": false,
-      "notes": "Variante DLL ON, drawdown d'évaluation EOD ; funded en intraday par défaut ; l’option funded EOD fait l’objet de plans dédiés (LucidDaily Customization, 18/11). Consistency standard de 40 % en évaluation (article LucidDaily Customization du 2026-10-20 et sélecteur de lucidtrading.com relu le 2026-10-22 ; l'article LucidDaily Consistency, daté du 2026-07-27, dit encore 50 %). Une évaluation achetée avant ce changement relevait de l'ancienne règle à 50 % : la relier au plan « option consistency 50 % » de même taille et même configuration. Funded EOD avec DLL non confirmé par Lucid (Customization, 18/11) : pas de plan dédié."
+      "notes": "Variante DLL ON, drawdown d'évaluation EOD ; funded en intraday par défaut ; l’option funded EOD fait l’objet de plans dédiés (LucidDaily Customization, 18/11). Consistency standard de 40 % en évaluation (article LucidDaily Customization du 2026-10-20 et sélecteur de lucidtrading.com relu le 2026-10-22 ; l'article LucidDaily Consistency, daté du 2026-07-27, dit encore 50 %). Une évaluation achetée avant ce changement relevait de l'ancienne règle à 50 % : la relier au plan « option consistency 50 % » de même taille et même configuration. Funded EOD avec DLL non confirmé par Lucid (Customization, 18/11) : pas de plan dédié. Payouts à la demande (en séance) : actifs avec le DLL, impossibles sans (le configurateur lie les deux options, relevé du 2026-11-28)."
     },
     {
       "id": "lucid-daily-dll-eod-50k",
@@ -4419,10 +4427,10 @@
         "eval_drawdown": "eod"
       },
       "price": {
-        "amount": null,
+        "amount": 122,
         "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Le prix dépend des options choisies et le site renvoie au checkout pour le prix final ; promotions temporaires en cours. Non relevé de façon fiable, donc laissé à null."
+        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Prix catalogue relevé sur le configurateur de lucidtrading.com le 2026-11-28 (prix avant coupon : coupon temporaire de 30 % en cours ; le prix barré du site reste celui de base même quand une option ajoute des frais, seul le prix avec coupon suit, d'où prix catalogue = prix avec coupon / 0,7)."
       },
       "phases": [
         {
@@ -4537,7 +4545,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": false,
-      "notes": "Variante DLL ON, drawdown d'évaluation EOD ; funded en intraday par défaut ; l’option funded EOD fait l’objet de plans dédiés (LucidDaily Customization, 18/11). Consistency standard de 40 % en évaluation (article LucidDaily Customization du 2026-10-20 et sélecteur de lucidtrading.com relu le 2026-10-22 ; l'article LucidDaily Consistency, daté du 2026-07-27, dit encore 50 %). Une évaluation achetée avant ce changement relevait de l'ancienne règle à 50 % : la relier au plan « option consistency 50 % » de même taille et même configuration. Funded EOD avec DLL non confirmé par Lucid (Customization, 18/11) : pas de plan dédié."
+      "notes": "Variante DLL ON, drawdown d'évaluation EOD ; funded en intraday par défaut ; l’option funded EOD fait l’objet de plans dédiés (LucidDaily Customization, 18/11). Consistency standard de 40 % en évaluation (article LucidDaily Customization du 2026-10-20 et sélecteur de lucidtrading.com relu le 2026-10-22 ; l'article LucidDaily Consistency, daté du 2026-07-27, dit encore 50 %). Une évaluation achetée avant ce changement relevait de l'ancienne règle à 50 % : la relier au plan « option consistency 50 % » de même taille et même configuration. Funded EOD avec DLL non confirmé par Lucid (Customization, 18/11) : pas de plan dédié. Payouts à la demande (en séance) : actifs avec le DLL, impossibles sans (le configurateur lie les deux options, relevé du 2026-11-28)."
     },
     {
       "id": "lucid-daily-dll-eod-100k",
@@ -4550,10 +4558,10 @@
         "eval_drawdown": "eod"
       },
       "price": {
-        "amount": null,
+        "amount": 200,
         "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Le prix dépend des options choisies et le site renvoie au checkout pour le prix final ; promotions temporaires en cours. Non relevé de façon fiable, donc laissé à null."
+        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Prix catalogue relevé sur le configurateur de lucidtrading.com le 2026-11-28 (prix avant coupon : coupon temporaire de 30 % en cours ; le prix barré du site reste celui de base même quand une option ajoute des frais, seul le prix avec coupon suit, d'où prix catalogue = prix avec coupon / 0,7)."
       },
       "phases": [
         {
@@ -4668,7 +4676,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": false,
-      "notes": "Variante DLL ON, drawdown d'évaluation EOD ; funded en intraday par défaut ; l’option funded EOD fait l’objet de plans dédiés (LucidDaily Customization, 18/11). Consistency standard de 40 % en évaluation (article LucidDaily Customization du 2026-10-20 et sélecteur de lucidtrading.com relu le 2026-10-22 ; l'article LucidDaily Consistency, daté du 2026-07-27, dit encore 50 %). Une évaluation achetée avant ce changement relevait de l'ancienne règle à 50 % : la relier au plan « option consistency 50 % » de même taille et même configuration. Funded EOD avec DLL non confirmé par Lucid (Customization, 18/11) : pas de plan dédié."
+      "notes": "Variante DLL ON, drawdown d'évaluation EOD ; funded en intraday par défaut ; l’option funded EOD fait l’objet de plans dédiés (LucidDaily Customization, 18/11). Consistency standard de 40 % en évaluation (article LucidDaily Customization du 2026-10-20 et sélecteur de lucidtrading.com relu le 2026-10-22 ; l'article LucidDaily Consistency, daté du 2026-07-27, dit encore 50 %). Une évaluation achetée avant ce changement relevait de l'ancienne règle à 50 % : la relier au plan « option consistency 50 % » de même taille et même configuration. Funded EOD avec DLL non confirmé par Lucid (Customization, 18/11) : pas de plan dédié. Payouts à la demande (en séance) : actifs avec le DLL, impossibles sans (le configurateur lie les deux options, relevé du 2026-11-28)."
     },
     {
       "id": "lucid-daily-dll-eod-150k",
@@ -4681,10 +4689,10 @@
         "eval_drawdown": "eod"
       },
       "price": {
-        "amount": null,
+        "amount": 286,
         "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Le prix dépend des options choisies et le site renvoie au checkout pour le prix final ; promotions temporaires en cours. Non relevé de façon fiable, donc laissé à null."
+        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Prix catalogue relevé sur le configurateur de lucidtrading.com le 2026-11-28 (prix avant coupon : coupon temporaire de 30 % en cours ; le prix barré du site reste celui de base même quand une option ajoute des frais, seul le prix avec coupon suit, d'où prix catalogue = prix avec coupon / 0,7)."
       },
       "phases": [
         {
@@ -4799,7 +4807,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": false,
-      "notes": "Variante DLL ON, drawdown d'évaluation EOD ; funded en intraday par défaut ; l’option funded EOD fait l’objet de plans dédiés (LucidDaily Customization, 18/11). Consistency standard de 40 % en évaluation (article LucidDaily Customization du 2026-10-20 et sélecteur de lucidtrading.com relu le 2026-10-22 ; l'article LucidDaily Consistency, daté du 2026-07-27, dit encore 50 %). Une évaluation achetée avant ce changement relevait de l'ancienne règle à 50 % : la relier au plan « option consistency 50 % » de même taille et même configuration. Funded EOD avec DLL non confirmé par Lucid (Customization, 18/11) : pas de plan dédié."
+      "notes": "Variante DLL ON, drawdown d'évaluation EOD ; funded en intraday par défaut ; l’option funded EOD fait l’objet de plans dédiés (LucidDaily Customization, 18/11). Consistency standard de 40 % en évaluation (article LucidDaily Customization du 2026-10-20 et sélecteur de lucidtrading.com relu le 2026-10-22 ; l'article LucidDaily Consistency, daté du 2026-07-27, dit encore 50 %). Une évaluation achetée avant ce changement relevait de l'ancienne règle à 50 % : la relier au plan « option consistency 50 % » de même taille et même configuration. Funded EOD avec DLL non confirmé par Lucid (Customization, 18/11) : pas de plan dédié. Payouts à la demande (en séance) : actifs avec le DLL, impossibles sans (le configurateur lie les deux options, relevé du 2026-11-28)."
     },
     {
       "id": "lucid-daily-dll-intraday-25k",
@@ -4812,10 +4820,10 @@
         "eval_drawdown": "intraday"
       },
       "price": {
-        "amount": null,
+        "amount": 72,
         "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Le prix dépend des options choisies et le site renvoie au checkout pour le prix final ; promotions temporaires en cours. Non relevé de façon fiable, donc laissé à null."
+        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Prix catalogue relevé sur le configurateur de lucidtrading.com le 2026-11-28 (prix avant coupon : coupon temporaire de 30 % en cours ; le prix barré du site reste celui de base même quand une option ajoute des frais, seul le prix avec coupon suit, d'où prix catalogue = prix avec coupon / 0,7)."
       },
       "phases": [
         {
@@ -4930,7 +4938,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": false,
-      "notes": "Variante DLL ON, drawdown d'évaluation intraday ; funded en intraday par défaut ; l’option funded EOD fait l’objet de plans dédiés (LucidDaily Customization, 18/11). Consistency standard de 40 % en évaluation (article LucidDaily Customization du 2026-10-20 et sélecteur de lucidtrading.com relu le 2026-10-22 ; l'article LucidDaily Consistency, daté du 2026-07-27, dit encore 50 %). Une évaluation achetée avant ce changement relevait de l'ancienne règle à 50 % : la relier au plan « option consistency 50 % » de même taille et même configuration."
+      "notes": "Variante DLL ON, drawdown d'évaluation intraday ; funded en intraday par défaut ; l’option funded EOD fait l’objet de plans dédiés (LucidDaily Customization, 18/11). Consistency standard de 40 % en évaluation (article LucidDaily Customization du 2026-10-20 et sélecteur de lucidtrading.com relu le 2026-10-22 ; l'article LucidDaily Consistency, daté du 2026-07-27, dit encore 50 %). Une évaluation achetée avant ce changement relevait de l'ancienne règle à 50 % : la relier au plan « option consistency 50 % » de même taille et même configuration. Payouts à la demande (en séance) : actifs avec le DLL, impossibles sans (le configurateur lie les deux options, relevé du 2026-11-28)."
     },
     {
       "id": "lucid-daily-dll-intraday-50k",
@@ -4943,10 +4951,10 @@
         "eval_drawdown": "intraday"
       },
       "price": {
-        "amount": null,
+        "amount": 94,
         "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Le prix dépend des options choisies et le site renvoie au checkout pour le prix final ; promotions temporaires en cours. Non relevé de façon fiable, donc laissé à null."
+        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Prix catalogue relevé sur le configurateur de lucidtrading.com le 2026-11-28 (prix avant coupon : coupon temporaire de 30 % en cours ; le prix barré du site reste celui de base même quand une option ajoute des frais, seul le prix avec coupon suit, d'où prix catalogue = prix avec coupon / 0,7)."
       },
       "phases": [
         {
@@ -5061,7 +5069,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": false,
-      "notes": "Variante DLL ON, drawdown d'évaluation intraday ; funded en intraday par défaut ; l’option funded EOD fait l’objet de plans dédiés (LucidDaily Customization, 18/11). Consistency standard de 40 % en évaluation (article LucidDaily Customization du 2026-10-20 et sélecteur de lucidtrading.com relu le 2026-10-22 ; l'article LucidDaily Consistency, daté du 2026-07-27, dit encore 50 %). Une évaluation achetée avant ce changement relevait de l'ancienne règle à 50 % : la relier au plan « option consistency 50 % » de même taille et même configuration."
+      "notes": "Variante DLL ON, drawdown d'évaluation intraday ; funded en intraday par défaut ; l’option funded EOD fait l’objet de plans dédiés (LucidDaily Customization, 18/11). Consistency standard de 40 % en évaluation (article LucidDaily Customization du 2026-10-20 et sélecteur de lucidtrading.com relu le 2026-10-22 ; l'article LucidDaily Consistency, daté du 2026-07-27, dit encore 50 %). Une évaluation achetée avant ce changement relevait de l'ancienne règle à 50 % : la relier au plan « option consistency 50 % » de même taille et même configuration. Payouts à la demande (en séance) : actifs avec le DLL, impossibles sans (le configurateur lie les deux options, relevé du 2026-11-28)."
     },
     {
       "id": "lucid-daily-dll-intraday-100k",
@@ -5074,10 +5082,10 @@
         "eval_drawdown": "intraday"
       },
       "price": {
-        "amount": null,
+        "amount": 158,
         "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Le prix dépend des options choisies et le site renvoie au checkout pour le prix final ; promotions temporaires en cours. Non relevé de façon fiable, donc laissé à null."
+        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Prix catalogue relevé sur le configurateur de lucidtrading.com le 2026-11-28 (prix avant coupon : coupon temporaire de 30 % en cours ; le prix barré du site reste celui de base même quand une option ajoute des frais, seul le prix avec coupon suit, d'où prix catalogue = prix avec coupon / 0,7)."
       },
       "phases": [
         {
@@ -5192,7 +5200,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": false,
-      "notes": "Variante DLL ON, drawdown d'évaluation intraday ; funded en intraday par défaut ; l’option funded EOD fait l’objet de plans dédiés (LucidDaily Customization, 18/11). Consistency standard de 40 % en évaluation (article LucidDaily Customization du 2026-10-20 et sélecteur de lucidtrading.com relu le 2026-10-22 ; l'article LucidDaily Consistency, daté du 2026-07-27, dit encore 50 %). Une évaluation achetée avant ce changement relevait de l'ancienne règle à 50 % : la relier au plan « option consistency 50 % » de même taille et même configuration."
+      "notes": "Variante DLL ON, drawdown d'évaluation intraday ; funded en intraday par défaut ; l’option funded EOD fait l’objet de plans dédiés (LucidDaily Customization, 18/11). Consistency standard de 40 % en évaluation (article LucidDaily Customization du 2026-10-20 et sélecteur de lucidtrading.com relu le 2026-10-22 ; l'article LucidDaily Consistency, daté du 2026-07-27, dit encore 50 %). Une évaluation achetée avant ce changement relevait de l'ancienne règle à 50 % : la relier au plan « option consistency 50 % » de même taille et même configuration. Payouts à la demande (en séance) : actifs avec le DLL, impossibles sans (le configurateur lie les deux options, relevé du 2026-11-28)."
     },
     {
       "id": "lucid-daily-dll-intraday-150k",
@@ -5205,10 +5213,10 @@
         "eval_drawdown": "intraday"
       },
       "price": {
-        "amount": null,
+        "amount": 229,
         "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Le prix dépend des options choisies et le site renvoie au checkout pour le prix final ; promotions temporaires en cours. Non relevé de façon fiable, donc laissé à null."
+        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Prix catalogue relevé sur le configurateur de lucidtrading.com le 2026-11-28 (prix avant coupon : coupon temporaire de 30 % en cours ; le prix barré du site reste celui de base même quand une option ajoute des frais, seul le prix avec coupon suit, d'où prix catalogue = prix avec coupon / 0,7)."
       },
       "phases": [
         {
@@ -5323,7 +5331,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": false,
-      "notes": "Variante DLL ON, drawdown d'évaluation intraday ; funded en intraday par défaut ; l’option funded EOD fait l’objet de plans dédiés (LucidDaily Customization, 18/11). Consistency standard de 40 % en évaluation (article LucidDaily Customization du 2026-10-20 et sélecteur de lucidtrading.com relu le 2026-10-22 ; l'article LucidDaily Consistency, daté du 2026-07-27, dit encore 50 %). Une évaluation achetée avant ce changement relevait de l'ancienne règle à 50 % : la relier au plan « option consistency 50 % » de même taille et même configuration."
+      "notes": "Variante DLL ON, drawdown d'évaluation intraday ; funded en intraday par défaut ; l’option funded EOD fait l’objet de plans dédiés (LucidDaily Customization, 18/11). Consistency standard de 40 % en évaluation (article LucidDaily Customization du 2026-10-20 et sélecteur de lucidtrading.com relu le 2026-10-22 ; l'article LucidDaily Consistency, daté du 2026-07-27, dit encore 50 %). Une évaluation achetée avant ce changement relevait de l'ancienne règle à 50 % : la relier au plan « option consistency 50 % » de même taille et même configuration. Payouts à la demande (en séance) : actifs avec le DLL, impossibles sans (le configurateur lie les deux options, relevé du 2026-11-28)."
     },
     {
       "id": "lucid-daily-c50-eod-25k",
@@ -5337,10 +5345,10 @@
         "addon": "consistency 50\u00a0%"
       },
       "price": {
-        "amount": null,
+        "amount": 129,
         "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Le prix dépend des options choisies et le site renvoie au checkout pour le prix final ; promotions temporaires en cours. Non relevé de façon fiable, donc laissé à null."
+        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Prix catalogue relevé sur le configurateur de lucidtrading.com le 2026-11-28 (prix avant coupon : coupon temporaire de 30 % en cours ; le prix barré du site reste celui de base même quand une option ajoute des frais, seul le prix avec coupon suit, d'où prix catalogue = prix avec coupon / 0,7)."
       },
       "phases": [
         {
@@ -5439,7 +5447,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": false,
-      "notes": "Variante DLL OFF, drawdown d'évaluation EOD ; funded en intraday par défaut ; l’option funded EOD fait l’objet de plans dédiés (LucidDaily Customization, 18/11). Option consistency 50 % (payante au checkout, article LucidDaily Customization du 2026-10-20). Prix plus élevé que la version à 40 %, non relevé."
+      "notes": "Variante DLL OFF, drawdown d'évaluation EOD ; funded en intraday par défaut ; l’option funded EOD fait l’objet de plans dédiés (LucidDaily Customization, 18/11). Option consistency 50 % (payante au checkout, article LucidDaily Customization du 2026-10-20). Prix plus élevé que la version à 40 % (relevé le 2026-11-28, voir le prix). Sans DLL : pas de payout à la demande en séance (le configurateur lie cette option au DLL, relevé du 2026-11-28)."
     },
     {
       "id": "lucid-daily-c50-eod-50k",
@@ -5453,10 +5461,10 @@
         "addon": "consistency 50\u00a0%"
       },
       "price": {
-        "amount": null,
+        "amount": 186,
         "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Le prix dépend des options choisies et le site renvoie au checkout pour le prix final ; promotions temporaires en cours. Non relevé de façon fiable, donc laissé à null."
+        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Prix catalogue relevé sur le configurateur de lucidtrading.com le 2026-11-28 (prix avant coupon : coupon temporaire de 30 % en cours ; le prix barré du site reste celui de base même quand une option ajoute des frais, seul le prix avec coupon suit, d'où prix catalogue = prix avec coupon / 0,7)."
       },
       "phases": [
         {
@@ -5555,7 +5563,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": false,
-      "notes": "Variante DLL OFF, drawdown d'évaluation EOD ; funded en intraday par défaut ; l’option funded EOD fait l’objet de plans dédiés (LucidDaily Customization, 18/11). Option consistency 50 % (payante au checkout, article LucidDaily Customization du 2026-10-20). Prix plus élevé que la version à 40 %, non relevé."
+      "notes": "Variante DLL OFF, drawdown d'évaluation EOD ; funded en intraday par défaut ; l’option funded EOD fait l’objet de plans dédiés (LucidDaily Customization, 18/11). Option consistency 50 % (payante au checkout, article LucidDaily Customization du 2026-10-20). Prix plus élevé que la version à 40 % (relevé le 2026-11-28, voir le prix). Sans DLL : pas de payout à la demande en séance (le configurateur lie cette option au DLL, relevé du 2026-11-28)."
     },
     {
       "id": "lucid-daily-c50-eod-100k",
@@ -5569,10 +5577,10 @@
         "addon": "consistency 50\u00a0%"
       },
       "price": {
-        "amount": null,
+        "amount": 286,
         "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Le prix dépend des options choisies et le site renvoie au checkout pour le prix final ; promotions temporaires en cours. Non relevé de façon fiable, donc laissé à null."
+        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Prix catalogue relevé sur le configurateur de lucidtrading.com le 2026-11-28 (prix avant coupon : coupon temporaire de 30 % en cours ; le prix barré du site reste celui de base même quand une option ajoute des frais, seul le prix avec coupon suit, d'où prix catalogue = prix avec coupon / 0,7)."
       },
       "phases": [
         {
@@ -5671,7 +5679,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": false,
-      "notes": "Variante DLL OFF, drawdown d'évaluation EOD ; funded en intraday par défaut ; l’option funded EOD fait l’objet de plans dédiés (LucidDaily Customization, 18/11). Option consistency 50 % (payante au checkout, article LucidDaily Customization du 2026-10-20). Prix plus élevé que la version à 40 %, non relevé."
+      "notes": "Variante DLL OFF, drawdown d'évaluation EOD ; funded en intraday par défaut ; l’option funded EOD fait l’objet de plans dédiés (LucidDaily Customization, 18/11). Option consistency 50 % (payante au checkout, article LucidDaily Customization du 2026-10-20). Prix plus élevé que la version à 40 % (relevé le 2026-11-28, voir le prix). Sans DLL : pas de payout à la demande en séance (le configurateur lie cette option au DLL, relevé du 2026-11-28)."
     },
     {
       "id": "lucid-daily-c50-eod-150k",
@@ -5685,10 +5693,10 @@
         "addon": "consistency 50\u00a0%"
       },
       "price": {
-        "amount": null,
+        "amount": 400,
         "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Le prix dépend des options choisies et le site renvoie au checkout pour le prix final ; promotions temporaires en cours. Non relevé de façon fiable, donc laissé à null."
+        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Prix catalogue relevé sur le configurateur de lucidtrading.com le 2026-11-28 (prix avant coupon : coupon temporaire de 30 % en cours ; le prix barré du site reste celui de base même quand une option ajoute des frais, seul le prix avec coupon suit, d'où prix catalogue = prix avec coupon / 0,7)."
       },
       "phases": [
         {
@@ -5787,7 +5795,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": false,
-      "notes": "Variante DLL OFF, drawdown d'évaluation EOD ; funded en intraday par défaut ; l’option funded EOD fait l’objet de plans dédiés (LucidDaily Customization, 18/11). Option consistency 50 % (payante au checkout, article LucidDaily Customization du 2026-10-20). Prix plus élevé que la version à 40 %, non relevé."
+      "notes": "Variante DLL OFF, drawdown d'évaluation EOD ; funded en intraday par défaut ; l’option funded EOD fait l’objet de plans dédiés (LucidDaily Customization, 18/11). Option consistency 50 % (payante au checkout, article LucidDaily Customization du 2026-10-20). Prix plus élevé que la version à 40 % (relevé le 2026-11-28, voir le prix). Sans DLL : pas de payout à la demande en séance (le configurateur lie cette option au DLL, relevé du 2026-11-28)."
     },
     {
       "id": "lucid-daily-c50-intraday-25k",
@@ -5801,10 +5809,10 @@
         "addon": "consistency 50\u00a0%"
       },
       "price": {
-        "amount": null,
+        "amount": 108,
         "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Le prix dépend des options choisies et le site renvoie au checkout pour le prix final ; promotions temporaires en cours. Non relevé de façon fiable, donc laissé à null."
+        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Prix catalogue relevé sur le configurateur de lucidtrading.com le 2026-11-28 (prix avant coupon : coupon temporaire de 30 % en cours ; le prix barré du site reste celui de base même quand une option ajoute des frais, seul le prix avec coupon suit, d'où prix catalogue = prix avec coupon / 0,7)."
       },
       "phases": [
         {
@@ -5903,7 +5911,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": false,
-      "notes": "Variante DLL OFF, drawdown d'évaluation intraday ; funded en intraday par défaut ; l’option funded EOD fait l’objet de plans dédiés (LucidDaily Customization, 18/11). Option consistency 50 % (payante au checkout, article LucidDaily Customization du 2026-10-20). Prix plus élevé que la version à 40 %, non relevé."
+      "notes": "Variante DLL OFF, drawdown d'évaluation intraday ; funded en intraday par défaut ; l’option funded EOD fait l’objet de plans dédiés (LucidDaily Customization, 18/11). Option consistency 50 % (payante au checkout, article LucidDaily Customization du 2026-10-20). Prix plus élevé que la version à 40 % (relevé le 2026-11-28, voir le prix). Sans DLL : pas de payout à la demande en séance (le configurateur lie cette option au DLL, relevé du 2026-11-28)."
     },
     {
       "id": "lucid-daily-c50-intraday-50k",
@@ -5917,10 +5925,10 @@
         "addon": "consistency 50\u00a0%"
       },
       "price": {
-        "amount": null,
+        "amount": 143,
         "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Le prix dépend des options choisies et le site renvoie au checkout pour le prix final ; promotions temporaires en cours. Non relevé de façon fiable, donc laissé à null."
+        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Prix catalogue relevé sur le configurateur de lucidtrading.com le 2026-11-28 (prix avant coupon : coupon temporaire de 30 % en cours ; le prix barré du site reste celui de base même quand une option ajoute des frais, seul le prix avec coupon suit, d'où prix catalogue = prix avec coupon / 0,7)."
       },
       "phases": [
         {
@@ -6019,7 +6027,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": false,
-      "notes": "Variante DLL OFF, drawdown d'évaluation intraday ; funded en intraday par défaut ; l’option funded EOD fait l’objet de plans dédiés (LucidDaily Customization, 18/11). Option consistency 50 % (payante au checkout, article LucidDaily Customization du 2026-10-20). Prix plus élevé que la version à 40 %, non relevé."
+      "notes": "Variante DLL OFF, drawdown d'évaluation intraday ; funded en intraday par défaut ; l’option funded EOD fait l’objet de plans dédiés (LucidDaily Customization, 18/11). Option consistency 50 % (payante au checkout, article LucidDaily Customization du 2026-10-20). Prix plus élevé que la version à 40 % (relevé le 2026-11-28, voir le prix). Sans DLL : pas de payout à la demande en séance (le configurateur lie cette option au DLL, relevé du 2026-11-28)."
     },
     {
       "id": "lucid-daily-c50-intraday-100k",
@@ -6033,10 +6041,10 @@
         "addon": "consistency 50\u00a0%"
       },
       "price": {
-        "amount": null,
+        "amount": 243,
         "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Le prix dépend des options choisies et le site renvoie au checkout pour le prix final ; promotions temporaires en cours. Non relevé de façon fiable, donc laissé à null."
+        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Prix catalogue relevé sur le configurateur de lucidtrading.com le 2026-11-28 (prix avant coupon : coupon temporaire de 30 % en cours ; le prix barré du site reste celui de base même quand une option ajoute des frais, seul le prix avec coupon suit, d'où prix catalogue = prix avec coupon / 0,7)."
       },
       "phases": [
         {
@@ -6135,7 +6143,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": false,
-      "notes": "Variante DLL OFF, drawdown d'évaluation intraday ; funded en intraday par défaut ; l’option funded EOD fait l’objet de plans dédiés (LucidDaily Customization, 18/11). Option consistency 50 % (payante au checkout, article LucidDaily Customization du 2026-10-20). Prix plus élevé que la version à 40 %, non relevé."
+      "notes": "Variante DLL OFF, drawdown d'évaluation intraday ; funded en intraday par défaut ; l’option funded EOD fait l’objet de plans dédiés (LucidDaily Customization, 18/11). Option consistency 50 % (payante au checkout, article LucidDaily Customization du 2026-10-20). Prix plus élevé que la version à 40 % (relevé le 2026-11-28, voir le prix). Sans DLL : pas de payout à la demande en séance (le configurateur lie cette option au DLL, relevé du 2026-11-28)."
     },
     {
       "id": "lucid-daily-c50-intraday-150k",
@@ -6149,10 +6157,10 @@
         "addon": "consistency 50\u00a0%"
       },
       "price": {
-        "amount": null,
+        "amount": 336,
         "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Le prix dépend des options choisies et le site renvoie au checkout pour le prix final ; promotions temporaires en cours. Non relevé de façon fiable, donc laissé à null."
+        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Prix catalogue relevé sur le configurateur de lucidtrading.com le 2026-11-28 (prix avant coupon : coupon temporaire de 30 % en cours ; le prix barré du site reste celui de base même quand une option ajoute des frais, seul le prix avec coupon suit, d'où prix catalogue = prix avec coupon / 0,7)."
       },
       "phases": [
         {
@@ -6251,7 +6259,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": false,
-      "notes": "Variante DLL OFF, drawdown d'évaluation intraday ; funded en intraday par défaut ; l’option funded EOD fait l’objet de plans dédiés (LucidDaily Customization, 18/11). Option consistency 50 % (payante au checkout, article LucidDaily Customization du 2026-10-20). Prix plus élevé que la version à 40 %, non relevé."
+      "notes": "Variante DLL OFF, drawdown d'évaluation intraday ; funded en intraday par défaut ; l’option funded EOD fait l’objet de plans dédiés (LucidDaily Customization, 18/11). Option consistency 50 % (payante au checkout, article LucidDaily Customization du 2026-10-20). Prix plus élevé que la version à 40 % (relevé le 2026-11-28, voir le prix). Sans DLL : pas de payout à la demande en séance (le configurateur lie cette option au DLL, relevé du 2026-11-28)."
     },
     {
       "id": "lucid-daily-dll-c50-eod-25k",
@@ -6265,10 +6273,10 @@
         "addon": "consistency 50\u00a0%"
       },
       "price": {
-        "amount": null,
+        "amount": 93,
         "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Le prix dépend des options choisies et le site renvoie au checkout pour le prix final ; promotions temporaires en cours. Non relevé de façon fiable, donc laissé à null."
+        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Prix catalogue relevé sur le configurateur de lucidtrading.com le 2026-11-28 (prix avant coupon : coupon temporaire de 30 % en cours ; le prix barré du site reste celui de base même quand une option ajoute des frais, seul le prix avec coupon suit, d'où prix catalogue = prix avec coupon / 0,7)."
       },
       "phases": [
         {
@@ -6383,7 +6391,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": false,
-      "notes": "Variante DLL ON, drawdown d'évaluation EOD ; funded en intraday par défaut ; l’option funded EOD fait l’objet de plans dédiés (LucidDaily Customization, 18/11). Option consistency 50 % (payante au checkout, article LucidDaily Customization du 2026-10-20). Prix plus élevé que la version à 40 %, non relevé. Funded EOD avec DLL non confirmé par Lucid (Customization, 18/11) : pas de plan dédié."
+      "notes": "Variante DLL ON, drawdown d'évaluation EOD ; funded en intraday par défaut ; l’option funded EOD fait l’objet de plans dédiés (LucidDaily Customization, 18/11). Option consistency 50 % (payante au checkout, article LucidDaily Customization du 2026-10-20). Prix plus élevé que la version à 40 % (relevé le 2026-11-28, voir le prix). Funded EOD avec DLL non confirmé par Lucid (Customization, 18/11) : pas de plan dédié. Payouts à la demande (en séance) : actifs avec le DLL, impossibles sans (le configurateur lie les deux options, relevé du 2026-11-28)."
     },
     {
       "id": "lucid-daily-dll-c50-eod-50k",
@@ -6397,10 +6405,10 @@
         "addon": "consistency 50\u00a0%"
       },
       "price": {
-        "amount": null,
+        "amount": 136,
         "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Le prix dépend des options choisies et le site renvoie au checkout pour le prix final ; promotions temporaires en cours. Non relevé de façon fiable, donc laissé à null."
+        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Prix catalogue relevé sur le configurateur de lucidtrading.com le 2026-11-28 (prix avant coupon : coupon temporaire de 30 % en cours ; le prix barré du site reste celui de base même quand une option ajoute des frais, seul le prix avec coupon suit, d'où prix catalogue = prix avec coupon / 0,7)."
       },
       "phases": [
         {
@@ -6515,7 +6523,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": false,
-      "notes": "Variante DLL ON, drawdown d'évaluation EOD ; funded en intraday par défaut ; l’option funded EOD fait l’objet de plans dédiés (LucidDaily Customization, 18/11). Option consistency 50 % (payante au checkout, article LucidDaily Customization du 2026-10-20). Prix plus élevé que la version à 40 %, non relevé. Funded EOD avec DLL non confirmé par Lucid (Customization, 18/11) : pas de plan dédié."
+      "notes": "Variante DLL ON, drawdown d'évaluation EOD ; funded en intraday par défaut ; l’option funded EOD fait l’objet de plans dédiés (LucidDaily Customization, 18/11). Option consistency 50 % (payante au checkout, article LucidDaily Customization du 2026-10-20). Prix plus élevé que la version à 40 % (relevé le 2026-11-28, voir le prix). Funded EOD avec DLL non confirmé par Lucid (Customization, 18/11) : pas de plan dédié. Payouts à la demande (en séance) : actifs avec le DLL, impossibles sans (le configurateur lie les deux options, relevé du 2026-11-28)."
     },
     {
       "id": "lucid-daily-dll-c50-eod-100k",
@@ -6529,10 +6537,10 @@
         "addon": "consistency 50\u00a0%"
       },
       "price": {
-        "amount": null,
+        "amount": 222,
         "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Le prix dépend des options choisies et le site renvoie au checkout pour le prix final ; promotions temporaires en cours. Non relevé de façon fiable, donc laissé à null."
+        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Prix catalogue relevé sur le configurateur de lucidtrading.com le 2026-11-28 (prix avant coupon : coupon temporaire de 30 % en cours ; le prix barré du site reste celui de base même quand une option ajoute des frais, seul le prix avec coupon suit, d'où prix catalogue = prix avec coupon / 0,7)."
       },
       "phases": [
         {
@@ -6647,7 +6655,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": false,
-      "notes": "Variante DLL ON, drawdown d'évaluation EOD ; funded en intraday par défaut ; l’option funded EOD fait l’objet de plans dédiés (LucidDaily Customization, 18/11). Option consistency 50 % (payante au checkout, article LucidDaily Customization du 2026-10-20). Prix plus élevé que la version à 40 %, non relevé. Funded EOD avec DLL non confirmé par Lucid (Customization, 18/11) : pas de plan dédié."
+      "notes": "Variante DLL ON, drawdown d'évaluation EOD ; funded en intraday par défaut ; l’option funded EOD fait l’objet de plans dédiés (LucidDaily Customization, 18/11). Option consistency 50 % (payante au checkout, article LucidDaily Customization du 2026-10-20). Prix plus élevé que la version à 40 % (relevé le 2026-11-28, voir le prix). Funded EOD avec DLL non confirmé par Lucid (Customization, 18/11) : pas de plan dédié. Payouts à la demande (en séance) : actifs avec le DLL, impossibles sans (le configurateur lie les deux options, relevé du 2026-11-28)."
     },
     {
       "id": "lucid-daily-dll-c50-eod-150k",
@@ -6661,10 +6669,10 @@
         "addon": "consistency 50\u00a0%"
       },
       "price": {
-        "amount": null,
+        "amount": 315,
         "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Le prix dépend des options choisies et le site renvoie au checkout pour le prix final ; promotions temporaires en cours. Non relevé de façon fiable, donc laissé à null."
+        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Prix catalogue relevé sur le configurateur de lucidtrading.com le 2026-11-28 (prix avant coupon : coupon temporaire de 30 % en cours ; le prix barré du site reste celui de base même quand une option ajoute des frais, seul le prix avec coupon suit, d'où prix catalogue = prix avec coupon / 0,7)."
       },
       "phases": [
         {
@@ -6779,7 +6787,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": false,
-      "notes": "Variante DLL ON, drawdown d'évaluation EOD ; funded en intraday par défaut ; l’option funded EOD fait l’objet de plans dédiés (LucidDaily Customization, 18/11). Option consistency 50 % (payante au checkout, article LucidDaily Customization du 2026-10-20). Prix plus élevé que la version à 40 %, non relevé. Funded EOD avec DLL non confirmé par Lucid (Customization, 18/11) : pas de plan dédié."
+      "notes": "Variante DLL ON, drawdown d'évaluation EOD ; funded en intraday par défaut ; l’option funded EOD fait l’objet de plans dédiés (LucidDaily Customization, 18/11). Option consistency 50 % (payante au checkout, article LucidDaily Customization du 2026-10-20). Prix plus élevé que la version à 40 % (relevé le 2026-11-28, voir le prix). Funded EOD avec DLL non confirmé par Lucid (Customization, 18/11) : pas de plan dédié. Payouts à la demande (en séance) : actifs avec le DLL, impossibles sans (le configurateur lie les deux options, relevé du 2026-11-28)."
     },
     {
       "id": "lucid-daily-dll-c50-intraday-25k",
@@ -6793,10 +6801,10 @@
         "addon": "consistency 50\u00a0%"
       },
       "price": {
-        "amount": null,
+        "amount": 79,
         "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Le prix dépend des options choisies et le site renvoie au checkout pour le prix final ; promotions temporaires en cours. Non relevé de façon fiable, donc laissé à null."
+        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Prix catalogue relevé sur le configurateur de lucidtrading.com le 2026-11-28 (prix avant coupon : coupon temporaire de 30 % en cours ; le prix barré du site reste celui de base même quand une option ajoute des frais, seul le prix avec coupon suit, d'où prix catalogue = prix avec coupon / 0,7)."
       },
       "phases": [
         {
@@ -6911,7 +6919,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": false,
-      "notes": "Variante DLL ON, drawdown d'évaluation intraday ; funded en intraday par défaut ; l’option funded EOD fait l’objet de plans dédiés (LucidDaily Customization, 18/11). Option consistency 50 % (payante au checkout, article LucidDaily Customization du 2026-10-20). Prix plus élevé que la version à 40 %, non relevé."
+      "notes": "Variante DLL ON, drawdown d'évaluation intraday ; funded en intraday par défaut ; l’option funded EOD fait l’objet de plans dédiés (LucidDaily Customization, 18/11). Option consistency 50 % (payante au checkout, article LucidDaily Customization du 2026-10-20). Prix plus élevé que la version à 40 % (relevé le 2026-11-28, voir le prix). Payouts à la demande (en séance) : actifs avec le DLL, impossibles sans (le configurateur lie les deux options, relevé du 2026-11-28)."
     },
     {
       "id": "lucid-daily-dll-c50-intraday-50k",
@@ -6925,10 +6933,10 @@
         "addon": "consistency 50\u00a0%"
       },
       "price": {
-        "amount": null,
+        "amount": 108,
         "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Le prix dépend des options choisies et le site renvoie au checkout pour le prix final ; promotions temporaires en cours. Non relevé de façon fiable, donc laissé à null."
+        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Prix catalogue relevé sur le configurateur de lucidtrading.com le 2026-11-28 (prix avant coupon : coupon temporaire de 30 % en cours ; le prix barré du site reste celui de base même quand une option ajoute des frais, seul le prix avec coupon suit, d'où prix catalogue = prix avec coupon / 0,7)."
       },
       "phases": [
         {
@@ -7043,7 +7051,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": false,
-      "notes": "Variante DLL ON, drawdown d'évaluation intraday ; funded en intraday par défaut ; l’option funded EOD fait l’objet de plans dédiés (LucidDaily Customization, 18/11). Option consistency 50 % (payante au checkout, article LucidDaily Customization du 2026-10-20). Prix plus élevé que la version à 40 %, non relevé."
+      "notes": "Variante DLL ON, drawdown d'évaluation intraday ; funded en intraday par défaut ; l’option funded EOD fait l’objet de plans dédiés (LucidDaily Customization, 18/11). Option consistency 50 % (payante au checkout, article LucidDaily Customization du 2026-10-20). Prix plus élevé que la version à 40 % (relevé le 2026-11-28, voir le prix). Payouts à la demande (en séance) : actifs avec le DLL, impossibles sans (le configurateur lie les deux options, relevé du 2026-11-28)."
     },
     {
       "id": "lucid-daily-dll-c50-intraday-100k",
@@ -7057,10 +7065,10 @@
         "addon": "consistency 50\u00a0%"
       },
       "price": {
-        "amount": null,
+        "amount": 179,
         "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Le prix dépend des options choisies et le site renvoie au checkout pour le prix final ; promotions temporaires en cours. Non relevé de façon fiable, donc laissé à null."
+        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Prix catalogue relevé sur le configurateur de lucidtrading.com le 2026-11-28 (prix avant coupon : coupon temporaire de 30 % en cours ; le prix barré du site reste celui de base même quand une option ajoute des frais, seul le prix avec coupon suit, d'où prix catalogue = prix avec coupon / 0,7)."
       },
       "phases": [
         {
@@ -7175,7 +7183,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": false,
-      "notes": "Variante DLL ON, drawdown d'évaluation intraday ; funded en intraday par défaut ; l’option funded EOD fait l’objet de plans dédiés (LucidDaily Customization, 18/11). Option consistency 50 % (payante au checkout, article LucidDaily Customization du 2026-10-20). Prix plus élevé que la version à 40 %, non relevé."
+      "notes": "Variante DLL ON, drawdown d'évaluation intraday ; funded en intraday par défaut ; l’option funded EOD fait l’objet de plans dédiés (LucidDaily Customization, 18/11). Option consistency 50 % (payante au checkout, article LucidDaily Customization du 2026-10-20). Prix plus élevé que la version à 40 % (relevé le 2026-11-28, voir le prix). Payouts à la demande (en séance) : actifs avec le DLL, impossibles sans (le configurateur lie les deux options, relevé du 2026-11-28)."
     },
     {
       "id": "lucid-daily-dll-c50-intraday-150k",
@@ -7189,10 +7197,10 @@
         "addon": "consistency 50\u00a0%"
       },
       "price": {
-        "amount": null,
+        "amount": 258,
         "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Le prix dépend des options choisies et le site renvoie au checkout pour le prix final ; promotions temporaires en cours. Non relevé de façon fiable, donc laissé à null."
+        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Prix catalogue relevé sur le configurateur de lucidtrading.com le 2026-11-28 (prix avant coupon : coupon temporaire de 30 % en cours ; le prix barré du site reste celui de base même quand une option ajoute des frais, seul le prix avec coupon suit, d'où prix catalogue = prix avec coupon / 0,7)."
       },
       "phases": [
         {
@@ -7307,7 +7315,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": false,
-      "notes": "Variante DLL ON, drawdown d'évaluation intraday ; funded en intraday par défaut ; l’option funded EOD fait l’objet de plans dédiés (LucidDaily Customization, 18/11). Option consistency 50 % (payante au checkout, article LucidDaily Customization du 2026-10-20). Prix plus élevé que la version à 40 %, non relevé."
+      "notes": "Variante DLL ON, drawdown d'évaluation intraday ; funded en intraday par défaut ; l’option funded EOD fait l’objet de plans dédiés (LucidDaily Customization, 18/11). Option consistency 50 % (payante au checkout, article LucidDaily Customization du 2026-10-20). Prix plus élevé que la version à 40 % (relevé le 2026-11-28, voir le prix). Payouts à la demande (en séance) : actifs avec le DLL, impossibles sans (le configurateur lie les deux options, relevé du 2026-11-28)."
     },
     {
       "id": "lucid-daily-eod-funded-eod-25k",
@@ -7321,10 +7329,10 @@
         "addon": "funded EOD"
       },
       "price": {
-        "amount": null,
+        "amount": 229,
         "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Version la plus chère de LucidDaily selon Lucid, prix non publié. Paiement unique, pas d’abonnement ni de frais d’activation."
+        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Prix catalogue relevé sur le configurateur de lucidtrading.com le 2026-11-28 (prix avant coupon : coupon temporaire de 30 % en cours ; le prix barré du site reste celui de base même quand une option ajoute des frais, seul le prix avec coupon suit, d'où prix catalogue = prix avec coupon / 0,7)."
       },
       "phases": [
         {
@@ -7423,7 +7431,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": true,
-      "notes": "Variante DLL OFF, drawdown EOD en évaluation ET en funded (« Option 4 », LucidDaily Customization, 18/11), consistency 40 % (standard). Blocage du MLL en funded EOD à confirmer."
+      "notes": "Variante DLL OFF, drawdown EOD en évaluation ET en funded (« Option 4 », LucidDaily Customization, 18/11), consistency 40 % (standard). Blocage du MLL en funded EOD à confirmer. Sans DLL : pas de payout à la demande en séance (le configurateur lie cette option au DLL, relevé du 2026-11-28)."
     },
     {
       "id": "lucid-daily-c30-eod-funded-eod-25k",
@@ -7437,10 +7445,10 @@
         "addon": "funded EOD + consistency 30\u00a0%"
       },
       "price": {
-        "amount": null,
+        "amount": 179,
         "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Version la plus chère de LucidDaily selon Lucid, prix non publié. Paiement unique, pas d’abonnement ni de frais d’activation."
+        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Prix catalogue relevé sur le configurateur de lucidtrading.com le 2026-11-28 (prix avant coupon : coupon temporaire de 30 % en cours ; le prix barré du site reste celui de base même quand une option ajoute des frais, seul le prix avec coupon suit, d'où prix catalogue = prix avec coupon / 0,7)."
       },
       "phases": [
         {
@@ -7539,7 +7547,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": true,
-      "notes": "Variante DLL OFF, drawdown EOD en évaluation ET en funded (« Option 4 », LucidDaily Customization, 18/11), consistency 30 % (option). Blocage du MLL en funded EOD à confirmer."
+      "notes": "Variante DLL OFF, drawdown EOD en évaluation ET en funded (« Option 4 », LucidDaily Customization, 18/11), consistency 30 % (option). Blocage du MLL en funded EOD à confirmer. Sans DLL : pas de payout à la demande en séance (le configurateur lie cette option au DLL, relevé du 2026-11-28)."
     },
     {
       "id": "lucid-daily-eod-funded-eod-50k",
@@ -7553,10 +7561,10 @@
         "addon": "funded EOD"
       },
       "price": {
-        "amount": null,
+        "amount": 336,
         "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Version la plus chère de LucidDaily selon Lucid, prix non publié. Paiement unique, pas d’abonnement ni de frais d’activation."
+        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Prix catalogue relevé sur le configurateur de lucidtrading.com le 2026-11-28 (prix avant coupon : coupon temporaire de 30 % en cours ; le prix barré du site reste celui de base même quand une option ajoute des frais, seul le prix avec coupon suit, d'où prix catalogue = prix avec coupon / 0,7)."
       },
       "phases": [
         {
@@ -7655,7 +7663,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": true,
-      "notes": "Variante DLL OFF, drawdown EOD en évaluation ET en funded (« Option 4 », LucidDaily Customization, 18/11), consistency 40 % (standard). Blocage du MLL en funded EOD à confirmer."
+      "notes": "Variante DLL OFF, drawdown EOD en évaluation ET en funded (« Option 4 », LucidDaily Customization, 18/11), consistency 40 % (standard). Blocage du MLL en funded EOD à confirmer. Sans DLL : pas de payout à la demande en séance (le configurateur lie cette option au DLL, relevé du 2026-11-28)."
     },
     {
       "id": "lucid-daily-c30-eod-funded-eod-50k",
@@ -7669,10 +7677,10 @@
         "addon": "funded EOD + consistency 30\u00a0%"
       },
       "price": {
-        "amount": null,
+        "amount": 265,
         "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Version la plus chère de LucidDaily selon Lucid, prix non publié. Paiement unique, pas d’abonnement ni de frais d’activation."
+        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Prix catalogue relevé sur le configurateur de lucidtrading.com le 2026-11-28 (prix avant coupon : coupon temporaire de 30 % en cours ; le prix barré du site reste celui de base même quand une option ajoute des frais, seul le prix avec coupon suit, d'où prix catalogue = prix avec coupon / 0,7)."
       },
       "phases": [
         {
@@ -7771,7 +7779,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": true,
-      "notes": "Variante DLL OFF, drawdown EOD en évaluation ET en funded (« Option 4 », LucidDaily Customization, 18/11), consistency 30 % (option). Blocage du MLL en funded EOD à confirmer."
+      "notes": "Variante DLL OFF, drawdown EOD en évaluation ET en funded (« Option 4 », LucidDaily Customization, 18/11), consistency 30 % (option). Blocage du MLL en funded EOD à confirmer. Sans DLL : pas de payout à la demande en séance (le configurateur lie cette option au DLL, relevé du 2026-11-28)."
     },
     {
       "id": "lucid-daily-eod-funded-eod-100k",
@@ -7785,10 +7793,10 @@
         "addon": "funded EOD"
       },
       "price": {
-        "amount": null,
+        "amount": 500,
         "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Version la plus chère de LucidDaily selon Lucid, prix non publié. Paiement unique, pas d’abonnement ni de frais d’activation."
+        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Prix catalogue relevé sur le configurateur de lucidtrading.com le 2026-11-28 (prix avant coupon : coupon temporaire de 30 % en cours ; le prix barré du site reste celui de base même quand une option ajoute des frais, seul le prix avec coupon suit, d'où prix catalogue = prix avec coupon / 0,7)."
       },
       "phases": [
         {
@@ -7887,7 +7895,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": true,
-      "notes": "Variante DLL OFF, drawdown EOD en évaluation ET en funded (« Option 4 », LucidDaily Customization, 18/11), consistency 40 % (standard). Blocage du MLL en funded EOD à confirmer."
+      "notes": "Variante DLL OFF, drawdown EOD en évaluation ET en funded (« Option 4 », LucidDaily Customization, 18/11), consistency 40 % (standard). Blocage du MLL en funded EOD à confirmer. Sans DLL : pas de payout à la demande en séance (le configurateur lie cette option au DLL, relevé du 2026-11-28)."
     },
     {
       "id": "lucid-daily-c30-eod-funded-eod-100k",
@@ -7901,10 +7909,10 @@
         "addon": "funded EOD + consistency 30\u00a0%"
       },
       "price": {
-        "amount": null,
+        "amount": 400,
         "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Version la plus chère de LucidDaily selon Lucid, prix non publié. Paiement unique, pas d’abonnement ni de frais d’activation."
+        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Prix catalogue relevé sur le configurateur de lucidtrading.com le 2026-11-28 (prix avant coupon : coupon temporaire de 30 % en cours ; le prix barré du site reste celui de base même quand une option ajoute des frais, seul le prix avec coupon suit, d'où prix catalogue = prix avec coupon / 0,7)."
       },
       "phases": [
         {
@@ -8003,7 +8011,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": true,
-      "notes": "Variante DLL OFF, drawdown EOD en évaluation ET en funded (« Option 4 », LucidDaily Customization, 18/11), consistency 30 % (option). Blocage du MLL en funded EOD à confirmer."
+      "notes": "Variante DLL OFF, drawdown EOD en évaluation ET en funded (« Option 4 », LucidDaily Customization, 18/11), consistency 30 % (option). Blocage du MLL en funded EOD à confirmer. Sans DLL : pas de payout à la demande en séance (le configurateur lie cette option au DLL, relevé du 2026-11-28)."
     },
     {
       "id": "lucid-daily-eod-funded-eod-150k",
@@ -8017,10 +8025,10 @@
         "addon": "funded EOD"
       },
       "price": {
-        "amount": null,
+        "amount": 700,
         "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Version la plus chère de LucidDaily selon Lucid, prix non publié. Paiement unique, pas d’abonnement ni de frais d’activation."
+        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Prix catalogue relevé sur le configurateur de lucidtrading.com le 2026-11-28 (prix avant coupon : coupon temporaire de 30 % en cours ; le prix barré du site reste celui de base même quand une option ajoute des frais, seul le prix avec coupon suit, d'où prix catalogue = prix avec coupon / 0,7)."
       },
       "phases": [
         {
@@ -8119,7 +8127,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": true,
-      "notes": "Variante DLL OFF, drawdown EOD en évaluation ET en funded (« Option 4 », LucidDaily Customization, 18/11), consistency 40 % (standard). Blocage du MLL en funded EOD à confirmer."
+      "notes": "Variante DLL OFF, drawdown EOD en évaluation ET en funded (« Option 4 », LucidDaily Customization, 18/11), consistency 40 % (standard). Blocage du MLL en funded EOD à confirmer. Sans DLL : pas de payout à la demande en séance (le configurateur lie cette option au DLL, relevé du 2026-11-28)."
     },
     {
       "id": "lucid-daily-c30-eod-funded-eod-150k",
@@ -8133,10 +8141,10 @@
         "addon": "funded EOD + consistency 30\u00a0%"
       },
       "price": {
-        "amount": null,
+        "amount": 558,
         "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Version la plus chère de LucidDaily selon Lucid, prix non publié. Paiement unique, pas d’abonnement ni de frais d’activation."
+        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Prix catalogue relevé sur le configurateur de lucidtrading.com le 2026-11-28 (prix avant coupon : coupon temporaire de 30 % en cours ; le prix barré du site reste celui de base même quand une option ajoute des frais, seul le prix avec coupon suit, d'où prix catalogue = prix avec coupon / 0,7)."
       },
       "phases": [
         {
@@ -8235,7 +8243,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": true,
-      "notes": "Variante DLL OFF, drawdown EOD en évaluation ET en funded (« Option 4 », LucidDaily Customization, 18/11), consistency 30 % (option). Blocage du MLL en funded EOD à confirmer."
+      "notes": "Variante DLL OFF, drawdown EOD en évaluation ET en funded (« Option 4 », LucidDaily Customization, 18/11), consistency 30 % (option). Blocage du MLL en funded EOD à confirmer. Sans DLL : pas de payout à la demande en séance (le configurateur lie cette option au DLL, relevé du 2026-11-28)."
     },
     {
       "id": "lucid-direct-25k",
@@ -8248,7 +8256,7 @@
         "amount": 329,
         "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Prix catalogue affiché sur lucidtrading.com le 2026-10-02, avant coupon (coupon temporaire en cours)."
+        "notes": "Prix catalogue affiché sur lucidtrading.com, inchangé au relevé du 2026-11-28, avant coupon (coupon temporaire de 30 % en cours)."
       },
       "phases": [
         {
@@ -8335,7 +8343,7 @@
         "amount": 515,
         "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Prix catalogue affiché sur lucidtrading.com le 2026-10-02, avant coupon (coupon temporaire en cours)."
+        "notes": "Prix catalogue affiché sur lucidtrading.com, inchangé au relevé du 2026-11-28, avant coupon (coupon temporaire de 30 % en cours)."
       },
       "phases": [
         {
@@ -8430,7 +8438,7 @@
         "amount": 700,
         "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Prix catalogue affiché sur lucidtrading.com le 2026-10-02, avant coupon (coupon temporaire en cours)."
+        "notes": "Prix catalogue affiché sur lucidtrading.com, inchangé au relevé du 2026-11-28, avant coupon (coupon temporaire de 30 % en cours)."
       },
       "phases": [
         {
@@ -8525,7 +8533,7 @@
         "amount": 836,
         "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Prix catalogue affiché sur lucidtrading.com le 2026-10-02, avant coupon (coupon temporaire en cours)."
+        "notes": "Prix catalogue affiché sur lucidtrading.com, inchangé au relevé du 2026-11-28, avant coupon (coupon temporaire de 30 % en cours)."
       },
       "phases": [
         {

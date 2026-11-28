@@ -6,6 +6,7 @@ import {
   emptyOrderBook,
   parseWorkingOrders,
   protectionFor,
+  stopVersionChange,
   workingOrders,
   type WorkingOrder,
 } from './tradovate-orders';
@@ -217,5 +218,36 @@ describe('protectionFor — SL / TP d’une position', () => {
     const orders = [order({ stopPrice: 21_480 })];
     expect(protectionFor({ ...long, contractId: undefined }, orders)).toEqual({ stopPrice: null, targetPrice: null });
     expect(protectionFor({ ...long, entryPrice: null }, orders)).toEqual({ stopPrice: null, targetPrice: null });
+  });
+});
+
+describe('déplacement d’un stop (#672) : comparé AVANT la nouvelle version', () => {
+  const book = () => {
+    const b = emptyOrderBook();
+    applyOrder(b, { id: 10, accountId: EXT, contractId: 7, action: 'Sell', ordStatus: 'Working' }, EXT);
+    applyOrderVersion(b, { id: 100, orderId: 10, orderType: 'Stop', stopPrice: 21_490 });
+    return b;
+  };
+
+  it('stop dont le prix change → ancien et nouveau prix', () => {
+    expect(stopVersionChange(book(), { id: 101, orderId: 10, orderType: 'Stop', stopPrice: 21_480 })).toEqual({
+      orderId: 10, contractId: 7, action: 'Sell', prevStop: 21_490, nextStop: 21_480,
+    });
+  });
+
+  it('première version vue, version rejouée plus ancienne, prix inchangé : rien', () => {
+    const b = emptyOrderBook();
+    applyOrder(b, { id: 10, accountId: EXT, contractId: 7, action: 'Sell', ordStatus: 'Working' }, EXT);
+    expect(stopVersionChange(b, { id: 100, orderId: 10, orderType: 'Stop', stopPrice: 21_490 })).toBeNull();
+    expect(stopVersionChange(book(), { id: 99, orderId: 10, orderType: 'Stop', stopPrice: 21_480 })).toBeNull();
+    expect(stopVersionChange(book(), { id: 101, orderId: 10, orderType: 'Stop', stopPrice: 21_490 })).toBeNull();
+  });
+
+  it('ordre limite ou ordre hors carnet : rien', () => {
+    const b = emptyOrderBook();
+    applyOrder(b, { id: 11, accountId: EXT, contractId: 7, action: 'Sell', ordStatus: 'Working' }, EXT);
+    applyOrderVersion(b, { id: 110, orderId: 11, orderType: 'Limit', price: 21_600 });
+    expect(stopVersionChange(b, { id: 111, orderId: 11, orderType: 'Limit', price: 21_610 })).toBeNull();
+    expect(stopVersionChange(book(), { id: 101, orderId: 99, orderType: 'Stop', stopPrice: 21_480 })).toBeNull();
   });
 });

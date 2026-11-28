@@ -10,7 +10,7 @@ tools: Read, Grep, Glob, Bash
 
 Appelé comme vérificateur : tu lis seulement le diff de ton domaine (`git diff origin/dev...HEAD -- apps/app-mytradingcoach apps/admin-mytradingcoach apps/landing-mytradingcoach libs/front/ui`), les règles de cet agent et, dans l'index en bas, les seules références utiles au diff. Pas les agents des autres domaines. Tu ne modifies rien. Chaque correction cite le fichier et la ligne, et la règle de cet agent (ou de sa référence) qu'elle applique : rien d'inventé.
 
-1. Dark only : jamais de thème clair, jamais `#000` / `#fff` (seule exception validée : panneau du paiement, #525) ; texte `#fff` sur un fond `--primary` / `--primary-hover` (5,2:1 et 6,7:1, prescrit par `theme.css`, #1085). `--blue` / `--blue-bright` ne portent jamais de texte clair.
+1. Dark only : jamais de thème clair, jamais `#000` / `#fff` (seule exception validée : panneau du paiement, #525) ; texte sur un fond `--primary` / `--primary-hover` en `var(--text-on-primary)` (blanc, 5,2:1 et 6,7:1, `theme.css`, #1085, token depuis #1195), jamais `#fff` en dur. `--blue` / `--blue-bright` ne portent jamais de texte clair.
 2. Tokens « The Terminal Palette » seulement, aucune couleur en dur.
 3. Bleu = signal (CTA, interactif) ; vert = gains, rouge = pertes, jamais inversé ni décoratif.
 4. Valeurs numériques en `var(--font-mono)` avec chiffres tabulaires.
@@ -47,7 +47,7 @@ Points pour le relecteur : ce qui sort de mon domaine ou demande un arbitrage
 
 ### Non-négociables (à chaque fois)
 
-- **Dark only** — jamais de thème clair. Le plus sombre = `--bg` (#080c14). **Jamais #000 / #fff** (sauf texte blanc sur `--primary` / `--primary-hover`, #1085).
+- **Dark only** — jamais de thème clair. Le plus sombre = `--bg` (#080c14). **Jamais #000 / #fff** (texte sur `--primary` / `--primary-hover` : `var(--text-on-primary)`, #1195).
 - **Bleu = signal** (#3b82f6) : CTA et éléments interactifs uniquement.
 - **Vert = gains uniquement · Rouge = pertes uniquement.** Jamais inversé, jamais décoratif.
 - Toute **valeur numérique** et tout **label** = JetBrains Mono + `tabular-nums`.
@@ -90,6 +90,8 @@ Points pour le relecteur : ce qui sort de mon domaine ou demande un arbitrage
 --blue: #3b82f6;
 --blue-bright: #60a5fa;                /* emphase, liens, hover */
 --blue-glow: rgba(59, 130, 246, 0.15);
+--primary: #2563eb;  --primary-hover: #1d4ed8;  /* fonds pleins qui portent du texte */
+--text-on-primary: #fff;              /* seul texte posé sur --primary (#1195) */
 
 /* Statuts trading — usage STRICT */
 --green: #10b981;          --green-dim: rgba(16, 185, 129, 0.12);   /* gains uniquement */
@@ -156,7 +158,7 @@ Points pour le relecteur : ce qui sort de mon domaine ou demande un arbitrage
 | Couleur | Usage autorisé | Usage INTERDIT |
 |---|---|---|
 | `--green` | Gains, PnL > 0 | Décoratif, succès génériques |
-| `--red` | Pertes, PnL < 0 ; session live : annonce éco à **impact fort** (ligne Prochaine annonce / Publiée), choix produit 2026-10-18 | Erreurs non-trading, danger générique |
+| `--red` | Pertes, PnL < 0 ; session live : annonce éco à **impact fort** (ligne Prochaine annonce / Publiée), choix produit 2026-10-18 ; bandeau d'alerte de comportement de gravité haute (ou 2ᵉ signal en 30 min) dans la Session live et sa pastille dans « Alertes de la semaine » du Débrief, choix produit 2026-11-28 (#671), gravité jamais portée par la couleur seule (icône, titre, texte masqué) | Erreurs non-trading, danger générique |
 | `--blue` | CTA, liens, éléments interactifs | Statuts trading |
 | `--yellow` | Warnings, attention, urgence ; session live : annonce éco à **impact moyen** et jauge perte du jour (≥ 50 % consommés) | Succès, gains |
 | `--cyan` | Indicateurs live / IA (pulse) | Décoratif, CTA |
@@ -194,7 +196,7 @@ Points pour le relecteur : ce qui sort de mon domaine ou demande un arbitrage
 - **Feuille d'installation** (`features/install/`, maquette `mockup-installation-pwa.html`) : feuille en
   bas d'écran sur mobile (iPhone : flottante au-dessus de la barre de Safari, flèche vers Partager),
   boîte centrée de 440 px à partir de 768 px (une feuille n'est pas une page : son plafond est permis).
-  Variables de `theme.css` uniquement, sauf le blanc des boutons `--primary` ; écran verrouillé en
+  Variables de `theme.css` uniquement (texte des boutons `--primary` : `--text-on-primary`) ; écran verrouillé en
   `--bg-3` → `--bg-2`, icône d'appli en `--grad-brand`, exemple d'alerte bordé `--yellow`. Boutons 44 px
   au moins. Ligne « Installer l'app » du Profil : toute la largeur, comme la section Notifications
   (mesuré de 360 à 2560 px, aucun défilement horizontal). Vérifié par `install.styles.spec.ts`.

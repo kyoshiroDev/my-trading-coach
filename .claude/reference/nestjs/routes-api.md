@@ -39,9 +39,18 @@ GET    /api/analytics/activity/:year/:month      FREE (donnée propre de l'utili
 GET    /api/analytics/top-assets                 FREE (vue de base), ?from&to
 GET    /api/analytics/daily-recap/yesterday      JWT → récap de la DERNIÈRE journée tradée sur 7 jours (le lundi : vendredi, #947)
 
-POST   /api/session/start              JWT → démarrer une session, { mood: MoodState }
+POST   /api/session/start              JWT → démarrer une session, { mood: MoodState, accountId?, contract? }
+                                       (`contract` = `SessionContractDto`, ignoré si SESSION_CONTRACT_ENABLED est éteint, #667)
+GET    /api/session/contract/config    JWT (gratuit) → `{ enabled }` : contrat de session allumé (#667)
+GET    /api/session/contract/defaults  JWT, 404 flag éteint → préremplissage `SessionContractDefaults` (dernière séance
+                                       du compte, sinon profil ; `firmDailyLossLimit` = `metrics.dailyLoss.limit` de Mes comptes, Premium seulement
+                                       comme la perte du jour #370, sinon null ; `looserThanFirm`), ?accountId vérifié, lecture seule
+                                       (aucun compte créé : `accountId` null sans compte)
+PATCH  /api/session/:id/contract       JWT, 404 flag éteint → upsert du contrat d'une séance ACTIVE à soi (404 sinon, 400 si
+                                       clôturée), chaque changement tracé dans `edits` (50 au plus) ; démo 403
 GET    /api/session/active             JWT → session active en cours (null si aucune)
-GET    /api/session/today              JWT → session du jour : l'active, sinon la dernière clôturée aujourd'hui
+GET    /api/session/today              JWT → session du jour : l'active, sinon la dernière clôturée aujourd'hui ;
+                                       + `contract` et `evaluation` (évaluée à la lecture) si la séance a un contrat (#667)
 GET    /api/session/history            JWT → séances clôturées ; chaque ligne porte `accountId`, `wins`, `losses` (computeTradeStats, net), #947
                                        (avec ses trades) — utilisée par l'app au chargement (#456)
 POST   /api/session/:id/close          JWT → clôturer, { mood: MoodState, notes? }
@@ -114,8 +123,14 @@ GET    /api/debrief/current            PREMIUM
 GET    /api/debrief/:year/:week        PREMIUM
 GET    /api/debrief/:year/:week/pdf    PREMIUM → export PDF via puppeteer ; @Throttle 5/min, file par process ≤ 10 rendus (`PDF_QUEUE_MAX`) sinon 503 (S3 #1045)
 PATCH  /api/debrief/:debriefId/objectives/:index/note PREMIUM → `ObjectiveNoteDto` (texte ≤ 1000, réinjecté dans le prompt suivant) (C11 #1045)
-GET    /api/debrief/history            PREMIUM
+GET    /api/debrief/history            PREMIUM → 52 dernières semaines en entrées légères `DebriefHistoryItem` (id, semaine, dates, nombre de trades ; ni analyse ni P&L) : sélecteur de semaine de l'écran Débrief (#959)
 POST   /api/debrief/generate           PREMIUM → 1/jour par user (rendue si l IA échoue) ; semaine sans trade clôturé → 400 « Aucun trade clôturé cette semaine pour l’instant… » (C8 #1046, #1056)
+
+GET    /api/behavior/config            AUTH (sans Premium) → `{ uiEnabled }` : affichage des alertes de comportement allumé (`BEHAVIOR_ALERTS_UI`, #671)
+GET    /api/behavior/mutes             PREMIUM, 404 flag éteint → détecteurs coupés (« Pas pour mon style »)
+POST   /api/behavior/mutes             PREMIUM, 404 flag éteint → `MuteDetectorDto { detector }` (liste fermée `BEHAVIOR_MUTABLE_DETECTORS`), idempotent ; démo 403
+DELETE /api/behavior/mutes/:detector   PREMIUM, 404 flag éteint → 204 idempotent, 400 détecteur inconnu ; démo 403
+GET    /api/behavior/alerts?from&to    PREMIUM, 404 flag éteint → alertes de la période (31 jours au plus, hors types signal et comptes perdus) et ce qui a suivi
 
 GET    /api/vps/servers                ADMIN → serveurs du sélecteur Surveillance [{id,label,readOnly}]
 GET    /api/vps/stats                  ADMIN → stats système SSH

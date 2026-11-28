@@ -1,0 +1,27 @@
+@if (status() === 'error') {
+  <div class="card" data-testid="debrief-behavior-alerts">
+    <div class="card-header"><div class="card-title">Alertes de la semaine</div></div>
+    <mtc-error-state message="Les alertes de la semaine n’ont pas pu être chargées. Vérifie ta connexion puis réessaie." (retry)="reload()" />
+  </div>
+} @else if (status() === 'loaded' && alerts().length > 0) {
+  <div class="card" data-testid="debrief-behavior-alerts">
+    <div class="card-header">
+      <div class="card-title">Alertes de la semaine</div>
+      <span class="ba-sub">« Ensuite »&nbsp;: trades clôturés sur le même compte, jusqu’à l’alerte suivante ou la fin de la séance, P&amp;L net dans la devise du compte</span>
+    </div>
+    <ul class="al-list">
+      @for (a of alerts(); track a.id) {
+        <li class="al-item" [attr.data-testid]="'debrief-behavior-alert-' + a.id">
+          <span class="dot" [class.red]="a.severity === 'high'" aria-hidden="true"></span>
+          <span class="al-label">
+            <span class="sr-only">{{ a.severity === 'high' ? 'Gravité haute' : 'Gravité moyenne' }}&nbsp;: </span>{{ labels[a.type] }}
+            @if (a.mutedByUser) { <span class="muted-tag">coupé</span> }
+          </span>
+          <span class="al-when">{{ a.createdAt | date: 'EEE HH:mm' }}</span>
+          <span class="al-msg">{{ a.message }}</span>
+          <span class="al-after">Ensuite&nbsp;: {{ a.after.count }} trade{{ a.after.count > 1 ? 's' : '' }}@if (a.after.count > 0) { · <span [class.neg]="a.after.pnl < 0" [class.pos]="a.after.pnl > 0">{{ a.after.pnl | pnlFormat: null : a.accountId }}</span> }</span>
+        </li>
+      }
+    </ul>
+  </div>
+}

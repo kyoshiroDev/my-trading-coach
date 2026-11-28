@@ -1,10 +1,11 @@
 import { describe, it, expect, vi } from 'vitest';
 import { TiltAlertsService, type TiltAlertEvent } from './tilt-alerts.service';
+import { freezeClock } from '../../../test/freeze-clock';
 
 const NOW = new Date(Date.UTC(2026, 5, 2, 16));
 const at = (min: number) => new Date(NOW.getTime() - 60 * 60_000 + min * 60_000);
 
-function setup(opts: { premium?: boolean; demo?: boolean; mood?: string | null } = {}) {
+function setup(opts: { premium?: boolean; demo?: boolean; mood?: string | null; tradesPerDayMax?: number | null } = {}) {
   const keys = new Set<string>();
   const redis = {
     client: {
@@ -16,7 +17,7 @@ function setup(opts: { premium?: boolean; demo?: boolean; mood?: string | null }
     { id: '1', pnl: -100, quantity: 1, tradedAt: at(0) },
   ];
   const prisma = {
-    user: { findUnique: vi.fn(async () => ({ plan: opts.premium === false ? 'FREE' : 'PREMIUM', role: 'USER', trialEndsAt: null, isDemo: !!opts.demo })) },
+    user: { findUnique: vi.fn(async () => ({ plan: opts.premium === false ? 'FREE' : 'PREMIUM', role: 'USER', trialEndsAt: null, isDemo: !!opts.demo, tradesPerDayMax: opts.tradesPerDayMax ?? null })) },
     tradingAccount: { findFirst: vi.fn(async () => ({ label: 'Apex 50k' })) },
     trade: { findMany: vi.fn(async () => trades) },
     tradeSession: { findFirst: vi.fn(async () => (opts.mood === undefined ? { moodStart: 'TIRED' } : opts.mood ? { moodStart: opts.mood } : null)) },
@@ -74,5 +75,57 @@ describe('TiltAlertsService.check', () => {
     ]);
     await svc.check('u', 'a', emit, NOW);
     expect(events).toHaveLength(0);
+  });
+});
+
+// #671 : moteur de comportement affiché = l'anti-tilt se tait ; jamais deux alertes pour la même chose.
+describe('TiltAlertsService : relais au moteur de comportement (#671)', () => {
+  freezeClock(NOW);
+
+  const withJournal = () => {
+    const base = setup();
+    const journal = { recordEvent: vi.fn(async () => undefined) };
+    const svc = new TiltAlertsService(base.prisma as never, { client: { set: vi.fn(async () => 'OK') } } as never, journal as never, base.notifier as never);
+    return { ...base, svc, journal };
+  };
+
+  it('BEHAVIOR_ALERTS_UI=true : ni toast ni push, le journal reste écrit', async () => {
+    process.env['BEHAVIOR_ALERTS_UI'] = 'true';
+    try {
+      const { svc, emit, events, notifier, journal } = withJournal();
+      await svc.check('u', 'a', emit, NOW);
+      expect(events).toEqual([]);
+      expect(notifier.notify).not.toHaveBeenCalled();
+      expect(journal.recordEvent).toHaveBeenCalledWith('u', 'a', expect.any(String), 'tilt', 'revenge', expect.anything());
+    } finally {
+      delete process.env['BEHAVIOR_ALERTS_UI'];
+    }
+  });
+
+  it('flag éteint : inchangé (toast, push et journal)', async () => {
+    const { svc, emit, events, notifier, journal } = withJournal();
+    await svc.check('u', 'a', emit, NOW);
+    expect(events).toHaveLength(1);
+    expect(notifier.notify).toHaveBeenCalledTimes(1);
+    expect(journal.recordEvent).toHaveBeenCalledTimes(1);
+  });
+
+  it('flag allumé, surtrading sans limite déclarée : l’anti-tilt garde ce signal (promis par anti_tilt)', async () => {
+    process.env['BEHAVIOR_ALERTS_UI'] = 'true';
+    try {
+      const day = (d: number, h: number) => new Date(Date.UTC(2026, 5, d, h));
+      const past = Array.from({ length: 12 }, (_, i) => [0, 1, 2].map((k) => ({ id: `p${i}${k}`, pnl: 10, quantity: 1, tradedAt: day(i + 15, 14 + k) })).flat()).flat()
+        .map((t) => ({ ...t, tradedAt: new Date(t.tradedAt.getTime() - 30 * 86_400_000) }));
+      const today = Array.from({ length: 8 }, (_, k) => ({ id: `t${k}`, pnl: 5, quantity: 1, tradedAt: new Date(NOW.getTime() - (8 - k) * 60_000) }));
+      for (const [limit, expected] of [[null, 1], [0, 1], [5, 0]] as const) {
+        const base = setup({ tradesPerDayMax: limit });
+        base.setTrades([...today].reverse().concat([...past].reverse()));
+        const svc = new TiltAlertsService(base.prisma as never, { client: { set: vi.fn(async () => 'OK') } } as never, undefined, base.notifier as never);
+        await svc.check('u', 'a', base.emit, NOW);
+        expect(base.events.filter((e) => e.signal === 'overtrading')).toHaveLength(expected);
+      }
+    } finally {
+      delete process.env['BEHAVIOR_ALERTS_UI'];
+    }
   });
 });

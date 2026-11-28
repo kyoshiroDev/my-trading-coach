@@ -38,3 +38,16 @@ describe('FounderAdminService.list — offre qui ne vend plus (A11 #1065)', () =
     expect(res.offer.ended).toBe(ended);
   });
 });
+
+// #1156 : `FounderSeat.interval` est un String en base, le contrat admin dit 'month' | 'year'.
+describe('FounderAdminService.list — période rétrécie au contrat (#1156)', () => {
+  it.each([['year', 'year'], ['month', 'month'], ['week', 'month']])('%s → %s', async (stored, expected) => {
+    founders.getConfig.mockResolvedValue({ open: true, endsAt: null });
+    founders.seatsLeft.mockResolvedValue(10);
+    prisma.founderSeat.findMany.mockResolvedValue([{
+      number: 1, status: 'ACTIVE', interval: stored, cta: null, takenAt: NOW, endedAt: null, user: null,
+    }]);
+    const res = await service.list({ page: 1 });
+    expect(res.rows[0].interval).toBe(expected);
+  });
+});

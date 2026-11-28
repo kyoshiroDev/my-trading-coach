@@ -7,7 +7,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { PctPipe } from '@mtc/front-ui';
 import { TestBed } from '@angular/core/testing';
 import { signal, NO_ERRORS_SCHEMA } from '@angular/core';
-import { DatePipe, DecimalPipe, TitleCasePipe } from '@angular/common';
+import { DatePipe, TitleCasePipe } from '@angular/common';
 import { PnlColorPipe, PnlFormatPipe, MoneyPipe, EmotionEmojiPipe } from '../../shared/pipes';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
@@ -76,7 +76,7 @@ async function render(trades: Trade[]) {
   TestBed.overrideComponent(JournalComponent, {
     set: {
       template: JOURNAL_HTML, styleUrls: [], styleUrl: undefined as unknown as string,
-      imports: [DatePipe, DecimalPipe, TitleCasePipe, PnlColorPipe, PnlFormatPipe, MoneyPipe, EmotionEmojiPipe, PctPipe],
+      imports: [DatePipe, TitleCasePipe, PnlColorPipe, PnlFormatPipe, MoneyPipe, EmotionEmojiPipe, PctPipe],
       schemas: [NO_ERRORS_SCHEMA],
     },
   });

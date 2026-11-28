@@ -1,10 +1,10 @@
 import { BadRequestException, ForbiddenException, Injectable, Logger, NotFoundException, Optional } from '@nestjs/common';
 import { newsWindowStats, type NewsWindowStats } from './debrief-news-window';
-import { NEWS_SHIELD_DEFAULT_MINUTES, type NewsEvent, newsLabel, newsShieldMinutes } from '../behavior/behavior-news';
-import { parisDate } from '../eco-calendar/eco-calendar.schedule';
+import { NEWS_SHIELD_DEFAULT_MINUTES, newsShieldMinutes } from '../behavior/behavior-news';
+import { highImpactEventsBetween } from '../behavior/high-impact-events';
 import { Plan, Prisma, Role, WeeklyDebrief } from '@prisma/client';
 import { effectiveEmotion } from '../../common/utils/effective-emotion.util';
-import { averageKnownRiskReward, computeTradeStats, netPnl } from '@mtc/shared';
+import { averageKnownRiskReward, computeTradeStats, netPnl, type DebriefHistoryItem } from '@mtc/shared';
 import { userAmountsCurrency } from '../../common/utils/user-currency.util';
 import { DebriefPdfData } from '../pdf/pdf.service';
 import { OBJECTIVE_CHECK_TYPES, DebriefAccountInput } from '../ai/prompts/debrief.prompt';
@@ -95,11 +95,21 @@ export class DebriefService {
     return debrief;
   }
 
-  async getHistory(userId: string) {
-    return this.prisma.weeklyDebrief.findMany({
+  /** 52 dernières semaines, sans le contenu (#959) : le sélecteur de l'écran Débrief. */
+  async getHistory(userId: string): Promise<DebriefHistoryItem[]> {
+    const rows = await this.prisma.weeklyDebrief.findMany({
       where: { userId },
       orderBy: [{ year: 'desc' }, { weekNumber: 'desc' }],
       take: 52,
+      select: { id: true, year: true, weekNumber: true, startDate: true, endDate: true, stats: true },
+    });
+    return rows.map((r) => {
+      const total = (r.stats as { totalTrades?: unknown } | null)?.totalTrades;
+      return {
+        id: r.id, year: r.year, weekNumber: r.weekNumber,
+        startDate: r.startDate.toISOString(), endDate: r.endDate.toISOString(),
+        totalTrades: typeof total === 'number' ? total : 0,
+      };
     });
   }
 
@@ -338,16 +348,10 @@ export class DebriefService {
     startDate: Date,
     endDate: Date,
   ): Promise<NewsWindowStats | null> {
-    const [user, rows] = await Promise.all([
+    const [user, events] = await Promise.all([
       this.prisma.user.findUnique({ where: { id: userId }, select: { newsShieldMinutes: true } }),
-      this.prisma.ecoEvent.findMany({
-        where: { impact: 'high', date: { gte: parisDate(startDate), lte: parisDate(endDate) } },
-        select: { date: true, time: true, name: true, nameFr: true, currency: true },
-      }),
+      highImpactEventsBetween(this.prisma, startDate, endDate),
     ]);
-    const events = rows
-      .map((r) => ({ at: parisWallTimeToUtc(r.date, r.time), label: newsLabel(r), currency: r.currency }))
-      .filter((e): e is NewsEvent => e.at !== null);
     return newsWindowStats(trades, events, newsShieldMinutes(user?.newsShieldMinutes) || NEWS_SHIELD_DEFAULT_MINUTES);
   }
 

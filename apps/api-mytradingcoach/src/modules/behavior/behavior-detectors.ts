@@ -14,7 +14,7 @@ import {
 } from './behavior.constants';
 import type { BehaviorBaselineData } from './behavior-baseline';
 import { type BehaviorPosition, isLoss } from './behavior-positions';
-import { roundCents } from '@mtc/shared';
+import { overMax, roundCents, trailingLosses } from '@mtc/shared';
 import { type NewsEvent, newsShieldDraft } from './behavior-news';
 
 /**
@@ -25,17 +25,9 @@ import { type NewsEvent, newsShieldDraft } from './behavior-news';
  * de vente, AMF), sans morale. Pas de tiret cadratin (règle PROMPT-174).
  */
 
-export type BehaviorAlertType =
-  | 'A1_SIZE_OVER_PLAN'
-  | 'A2_DAILY_LOSS_DISTANCE'
-  | 'A3_ENTRY_DAY_STARTED'
-  | 'B_REVENGE'
-  | 'C1_LOSS_STREAK'
-  | 'C2_OVER_DAILY_LIMIT'
-  | 'C3_MARTINGALE'
-  | 'D1_NEWS_WINDOW';
-
-export type BehaviorAlertSeverity = 'medium' | 'high';
+// Types partagés avec l'app (#671) : réexportés ici pour les imports existants de l'API.
+import type { BehaviorAlertSeverity, BehaviorAlertType } from '@mtc/shared';
+export type { BehaviorAlertSeverity, BehaviorAlertType };
 
 export interface BehaviorAlertDraft {
   type: BehaviorAlertType;
@@ -70,6 +62,11 @@ export interface EntryContext {
   news?: NewsEvent[];
   /** Fenêtre du bouclier en minutes (0 = coupé). */
   newsShieldMinutes?: number;
+  /**
+   * Contrat de session (#667) : « arrêt après N pertes d'affilée ». Fixé = seuil de C1, et C1 sonne aussi en
+   * apprentissage (la règle vient du trader, comme C2). Absent = seuil par défaut, muet en apprentissage.
+   */
+  contractLossStreak?: number | null;
 }
 
 /** Référence fiable : sinon B, C1 et C3 restent muets (période d'apprentissage). */
@@ -108,7 +105,7 @@ export function detectSizeOverPlan(ctx: EntryContext): BehaviorAlertDraft | null
   return {
     type: 'A1_SIZE_OVER_PLAN',
     severity: 'high',
-    message: `Position de ${desc} : au-dessus du maximum du plan (${fmtQty(over.limit)} ${over.unit}).`,
+    message: `Position de ${desc}\u00a0: au-dessus du maximum du plan (${fmtQty(over.limit)} ${over.unit}).`,
     context: { ...over, positions: ctx.open },
   };
 }
@@ -139,7 +136,7 @@ export function detectEntryDayStarted(ctx: EntryContext): BehaviorAlertDraft | n
   return {
     type: 'A3_ENTRY_DAY_STARTED',
     severity: share >= 0.8 ? 'high' : 'medium',
-    message: `Nouvelle entrée avec ${Math.round(share * 100)} % de la perte max du jour déjà consommée.`,
+    message: `Nouvelle entrée avec ${Math.round(share * 100)}\u00a0% de la perte max du jour déjà consommée.`,
     context: { used: ctx.dailyLoss.used, limit: ctx.dailyLoss.limit, share: Math.round(share * 1000) / 1000 },
   };
 }
@@ -171,15 +168,15 @@ export function detectRevenge(ctx: EntryContext): BehaviorAlertDraft | null {
 
   const parts: string[] = [];
   for (const s of signals) {
-    if (s === 'fast_reentry') parts.push(`${fmtDelay(delay)} après la perte (d'habitude ${fmtDelay(b.medianGapAfterLossMs!)})`);
-    if (s === 'size_above_p75') parts.push(`${fmtQty(ctx.entry.quantity)} contrats (d'habitude ${fmtQty(size!.median)})`);
+    if (s === 'fast_reentry') parts.push(`${fmtDelay(delay)} après la perte (d’habitude ${fmtDelay(b.medianGapAfterLossMs!)})`);
+    if (s === 'size_above_p75') parts.push(`${fmtQty(ctx.entry.quantity)} contrats (d’habitude ${fmtQty(size!.median)})`);
     if (s === 'flip') parts.push('sens inversé sur le même actif');
     if (s === 'second_loss') parts.push('après 2 pertes d’affilée');
   }
   return {
     type: 'B_REVENGE',
     severity: signals.length >= B_HIGH_SIGNALS ? 'high' : 'medium',
-    message: `Nouvelle entrée ${ctx.entry.asset} : ${parts.join(', ')}.`,
+    message: `Nouvelle entrée ${ctx.entry.asset}\u00a0: ${parts.join(', ')}.`,
     context: {
       signals,
       delayMs: delay,
@@ -195,12 +192,12 @@ export function detectRevenge(ctx: EntryContext): BehaviorAlertDraft | null {
 
 // ── C. Forcer après une perte ───────────────────────────────────────────────
 
-/** C1 — nouvelle entrée après 3 pertes consécutives dans la séance. */
+/** C1 — nouvelle entrée après 3 pertes consécutives dans la séance (ou N, fixé par le contrat de session). */
 export function detectLossStreak(ctx: EntryContext): BehaviorAlertDraft | null {
-  if (isLearning(ctx.baseline)) return null;
-  let streak = 0;
-  for (let i = ctx.closed.length - 1; i >= 0 && isLoss(ctx.closed[i]); i--) streak++;
-  if (streak < C1_CONSECUTIVE_LOSSES) return null;
+  const fromContract = ctx.contractLossStreak != null && ctx.contractLossStreak > 0 ? ctx.contractLossStreak : null;
+  if (fromContract == null && isLearning(ctx.baseline)) return null;
+  const streak = trailingLosses(ctx.closed.map((p) => p.pnl));
+  if (streak < (fromContract ?? C1_CONSECUTIVE_LOSSES)) return null;
   const lost = ctx.closed.slice(-streak).reduce((s, p) => s + p.pnl, 0);
   return {
     type: 'C1_LOSS_STREAK',
@@ -213,13 +210,12 @@ export function detectLossStreak(ctx: EntryContext): BehaviorAlertDraft | null {
 /** C2 — plus de positions dans la séance que la limite déclarée par le trader. */
 export function detectOverDailyLimit(ctx: EntryContext): BehaviorAlertDraft | null {
   const max = ctx.tradesPerDayMax;
-  if (max == null || max <= 0) return null;
   const count = ctx.closed.length + 1;
-  if (count <= max) return null;
+  if (max == null || !overMax(count, max)) return null;
   return {
     type: 'C2_OVER_DAILY_LIMIT',
     severity: 'medium',
-    message: `${count}e position de la séance, ta limite déclarée est de ${max} par jour.`,
+    message: `${count}ᵉ position de la séance, ta limite déclarée est de ${max} par jour.`,
     context: { count, max },
   };
 }

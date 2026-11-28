@@ -8,7 +8,7 @@
 
 ## Matrice feature × plan (grille de référence)
 
-**Socle FREE** : compagnon de session complet (pré-session + live + débrief), journal (émotions, setups), import + historique illimité, **trades illimités**, `/analytics/summary` (win rate, P&L, streak), vues de base du dashboard (équité simple, P&L/jour, top actifs simple, répartition setups en %, émotions), **1 compte de trading**, la **vue multi-comptes triée par exposition** (comptes déjà actifs, #668), et l'**IA mutualisée** :
+**Socle FREE** : compagnon de session complet (pré-session + live + débrief, y compris le **contrat de session** #667 derrière `SESSION_CONTRACT_ENABLED` : saisie, suivi, alerte in-app et règles enfreintes avec le P&L après, gratuit à titre provisoire, à valider par Greg), journal (émotions, setups), import + historique illimité, **trades illimités**, `/analytics/summary` (win rate, P&L, streak), vues de base du dashboard (équité simple, P&L/jour, top actifs simple, répartition setups en %, émotions), **1 compte de trading**, la **vue multi-comptes triée par exposition** (comptes déjà actifs, #668), et l'**IA mutualisée** :
 - 📊 **Contexte marché** (DXY, taux US, indices)
 - 📅 **Calendrier éco IA** (bull/bear par actifs)
 - 📰 **Flux news filtrées** sur tes actifs (+ traduction Haiku cachée)
@@ -33,6 +33,11 @@
   push vers les appareils abonnés, #666 ; app fermée, limites, objectif et payout relevés par la
   synchro de fond, jusqu'à 15 min de décalage ; veille serveur #770, éteinte tant que
   `TRADOVATE_WATCH_MAX` n'est pas posé : en direct aussi app fermée pendant la séance, Premium seulement)
+  - **Alertes de comportement affichées** (#671, derrière `BEHAVIOR_ALERTS_UI`, éteint) : Premium.
+    Flag allumé, l'anti-tilt est remplacé par les alertes du moteur (bandeau de la Session live, push),
+    sauf le surtrading relatif, gardé par l'anti-tilt tant que le trader n'a pas déclaré une limite (`tradesPerDayMax` absent ou 0)
+    (C2 ne couvre que la limite déclarée). « Pas pour mon style » (Profil) et « Alertes de la semaine »
+    (Débrief hebdo) : Premium. Gratuit : teaser. `PLAN_BENEFITS` inchangé (`anti_tilt`).
 
 ### Avantages affichés : liste officielle (`PLAN_BENEFITS`, `@mtc/shared`, validée le 2026-10-19)
 

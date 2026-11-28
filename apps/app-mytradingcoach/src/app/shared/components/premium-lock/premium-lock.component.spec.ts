@@ -121,11 +121,12 @@ describe('PremiumLockComponent · composant conforme (#1189)', () => {
     }
   });
 
-  it('couleurs en tokens : ni rgba ni violet ; seul #fff (texte sur --primary)', () => {
+  it('couleurs en tokens : ni rgba ni violet ni couleur en dur (texte du bouton : --text-on-primary, #1195)', () => {
     expect(css).not.toMatch(/rgba?\(/);
     expect(css).not.toContain('--purple');
     const sansCommentaires = css.replace(/\/\*[\s\S]*?\*\//g, '');
-    expect(sansCommentaires.match(/#[0-9a-fA-F]{3,6}\b/g) ?? []).toEqual(['#fff']);
+    expect(sansCommentaires.match(/#[0-9a-fA-F]{3,6}\b/g) ?? []).toEqual([]);
+    expect(css.match(/\.pl-btn\s*\{([^}]*)\}/)?.[1]).toMatch(/color:\s*var\(--text-on-primary\)/);
   });
 
   it('bouton jamais plus large que la carte : passage à la ligne permanent (libellé fondateur ~340 px)', () => {

@@ -116,7 +116,7 @@ h1 { font-family: var(--font-display); font-weight: 700; font-size: 28px; letter
 
 .pay {
   display: block; width: 100%; border: 0; border-radius: 12px; padding: 14px 18px;
-  background: var(--primary); color: #fff; font-family: var(--font-body); font-weight: 600; font-size: 15px; /* 5,2:1, sur --blue 3,7:1 (#1085) */
+  background: var(--primary); color: var(--text-on-primary); font-family: var(--font-body); font-weight: 600; font-size: 15px; /* 5,2:1, sur --blue 3,7:1 (#1085) */
   text-align: center; text-decoration: none; cursor: pointer; transition: background 0.15s, transform 0.15s;
 }
 .pay:hover:not(:disabled) { background: var(--primary-hover); transform: translateY(-1px); }

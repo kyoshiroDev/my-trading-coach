@@ -1,3 +1,5 @@
+import { BehaviorMutesComponent } from './behavior-mutes/behavior-mutes.component';
+import { BehaviorAlertsStore } from '../../core/stores/behavior-alerts.store';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -10,7 +12,7 @@ import {
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { DatePipe, DecimalPipe } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { finalize } from 'rxjs/operators';
 import {
@@ -62,7 +64,7 @@ type ProfileTab = 'trader' | 'params';
 
 @Component({
   selector: 'mtc-profile',
-  imports: [DialogDirective, TopbarComponent, DatePipe, DecimalPipe, PlanModalComponent, SetupFormModalComponent, LucideDynamicIcon, PushSettingsComponent, InstallSettingsComponent],
+  imports: [DialogDirective, TopbarComponent, DatePipe, PlanModalComponent, SetupFormModalComponent, LucideDynamicIcon, PushSettingsComponent, InstallSettingsComponent, BehaviorMutesComponent],
   templateUrl: './profile.component.html',
   styleUrl: './profile.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -72,6 +74,8 @@ export class ProfileComponent implements OnInit {
   protected readonly paywall = inject(PaywallCtaService);
   protected readonly GiftIcon = Gift;
   protected readonly userStore = inject(UserStore);
+  /** Alertes de comportement (#671) : section affichée seulement si `BEHAVIOR_ALERTS_UI` est allumé. */
+  protected readonly behaviorAlerts = inject(BehaviorAlertsStore);
   private readonly accountsStore = inject(SelectedAccountStore);
   /** Capital du profil dans la devise des comptes comptés (aucune devise propre), jamais « $ » en dur (#947). */
   protected readonly capitalLabel = computed(() =>
@@ -239,6 +243,7 @@ export class ProfileComponent implements OnInit {
   protected readonly dedupeRemoved = signal<number | null>(null);
 
   constructor() {
+    this.behaviorAlerts.loadConfig();
     // Sync prefs uniquement : les signaux stratégie sont gérés dans ngOnInit + saveStrategy.
     // F14 (#1047) : seulement quand les valeurs du serveur CHANGENT. La relecture de /auth/me
     // (toutes les 5 min) renvoie un nouvel objet identique : elle écrasait une case modifiée et pas

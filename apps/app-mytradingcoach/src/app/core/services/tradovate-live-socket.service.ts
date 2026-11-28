@@ -8,6 +8,9 @@ import { SelectedAccountStore } from '../stores/selected-account.store';
 import { TradovateStore } from '../stores/tradovate.store';
 import { SessionStore } from '../stores/session.store';
 import { type NewsAlertEvent, PropAlertsService, type PropAlertEvent, type TiltAlertEvent } from './prop-alerts.service';
+import type { BehaviorAlertEvent } from '@mtc/shared';
+import { BehaviorAlertsStore } from '../stores/behavior-alerts.store';
+import { AlertSoundService } from './alert-sound.service';
 
 /** Trades créés par la synchro poussée (rattrapage à l'ouverture, ou événement Tradovate). */
 export interface TradovateLiveTrades {
@@ -39,6 +42,8 @@ export class TradovateLiveSocketService {
   private readonly tradovate = inject(TradovateStore);
   private readonly session = inject(SessionStore);
   private readonly alerts = inject(PropAlertsService);
+  private readonly behaviorAlerts = inject(BehaviorAlertsStore);
+  private readonly sound = inject(AlertSoundService);
 
   private socket: Socket | null = null;
   private retry: ReturnType<typeof setTimeout> | null = null;
@@ -87,6 +92,12 @@ export class TradovateLiveSocketService {
     socket.on('tilt:alert', (e: TiltAlertEvent) => this.alerts.handleTilt(e));
     // Bouclier annonces (#670) : position ouverte peu avant une annonce forte, gratuit pour tous.
     socket.on('news:alert', (e: NewsAlertEvent) => this.alerts.handleNews(e));
+    // Alertes de comportement (#671) : bandeau de la Session live, son selon la gravité.
+    socket.on('behavior:alert', (e: BehaviorAlertEvent) => {
+      if (!this.behaviorAlerts.uiEnabled()) return;
+      this.behaviorAlerts.push(e);
+      this.sound.play(this.behaviorAlerts.tone()?.tone === 'red' ? 'critical' : 'warning');
+    });
     // Connexion Tradovate à refaire : la carte « Mes comptes » l'affiche.
     socket.on('tradovate:status', () => this.tradovate.load());
   }

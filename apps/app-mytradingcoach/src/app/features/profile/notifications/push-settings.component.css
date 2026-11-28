@@ -57,7 +57,7 @@
   background: var(--bg-3); color: var(--text); border: 1px solid var(--border-hover); cursor: pointer; width: 100%;
 }
 .pn-btn:hover:not(:disabled) { border-color: var(--blue); }
-.pn-btn--primary { background: var(--primary); border-color: var(--primary); color: #fff; }
+.pn-btn--primary { background: var(--primary); border-color: var(--primary); color: var(--text-on-primary); }
 .pn-btn--primary:hover:not(:disabled) { background: var(--primary-hover); border-color: var(--primary-hover); }
 .pn-btn--sm { width: auto; font-size: 13px; padding: 0 14px; flex-shrink: 0; }
 .pn-btn:disabled { opacity: 0.5; cursor: not-allowed; }

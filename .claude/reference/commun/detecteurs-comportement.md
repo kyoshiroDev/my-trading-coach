@@ -61,7 +61,8 @@ Module `modules/behavior/`. **Rien n'est affiché** tant que Greg n'a pas valid�
   médiane / p75 / p90 par actif, positions par séance). Table dédiée plutôt qu'un Json sur `User` :
   `User` est lu à chaque requête authentifiée et la référence a son propre cycle (recalcul à la
   bascule CME, à la volée si datée d'une journée précédente). Rien à ajouter au seed démo : la démo
-  n'enregistre pas d'alertes (lecture seule, pas de synchro live).
+  n'enregistre pas d'alertes (lecture seule, pas de synchro live). Exceptions : D1 (#670) et E1 (#672) ont
+  chacun une alerte d'exemple dans le seed (`demo-data/news-shield-example.ts`, `demo-data/stop-widened-example.ts`).
 - `BehaviorAlert` (migration `20261018130000_behavior_alert`, table nouvelle, additive) : alerte de
   comportement enregistrée en direct, **en silence** en phase 1. `userId` (cascade), `accountId`
   (cascade), `tradeDay` (`DATE`, journée CME = séance du moteur avec le compte), `sessionId`
@@ -120,3 +121,69 @@ Message factuel : « NFP dans 4 min, position ouverte sur NQ. » (libellé `name
   suite de la séance, pire position ; par séance, pires journées vues en zone rouge avant leur plus bas.
 - `scripts/replay-pressure.ts` : `--demo` (jeu démo en mémoire, date figée, aucune base) ou dossier
   d'export pseudonymisé au format #602. Un export prod ne se fait qu'avec l'accord de Greg.
+
+## E1 stop éloigné (#672, 2026-11-28)
+
+Détecteur **`E1_STOP_WIDENED`**, silencieux comme A, B, C (`BEHAVIOR_ALERTS_UI`). Rapport : `docs/audit-672.md`.
+- Déclenché par le WebSocket Tradovate, pas à l'entrée : `TradovateLiveService.onOrder` compare l'ancienne et la
+  nouvelle version d'un ordre stop (`stopVersionChange`, avant `applyOrderVersion`), puis
+  `BehaviorAlertsService.onStopMoved` lit la position du contrat en Redis (aucun appel Tradovate en plus).
+- Règle (`behavior-stop.ts`, pur) : stop de sortie qui s'éloigne de l'entrée en finissant du côté perte, d'au moins
+  `E1_MIN_TICKS` (2) ; ticks par `getTickSize`. **Pas de condition sur le latent** : il n'est pas connu au moment où le
+  stop bouge (écart avec le ticket tranché par le relecteur, `decisions.md`). Rapprocher, rester côté gain ou un stop
+  d'entrée : rien.
+- Une fois par position : `behavior:stop:<compte>:<contrat>:<ouverture>` (SET NX, 12 h). Message factuel « Stop éloigné
+  de 6 ticks sur NQ (risque porté à 14 ticks). », severity `medium` (gravité à fixer à #671). Hors démo, aucune action
+  sur l'ordre (lecture seule, contrat NinjaTrader).
+
+## Phase 2 : affichage (#671, 2026-11-28)
+
+Tout derrière **`BEHAVIOR_ALERTS_UI`** (`behavior-flags.ts`, `true` seulement ; éteint par défaut). Plan : `docs/audit-alertes-comportement.md`.
+- **Envoi** (`BehaviorAlertsService`, `audience`) : une alerte enregistrée part vers l'app (socket `behavior:alert`) et en push
+  seulement si le flag est allumé, si le trader a l'accès Premium (`subscriptionState().premiumAccess`) et s'il n'a pas coupé ce
+  détecteur ; sinon elle est enregistrée en silence (`mutedByUser` pour un détecteur coupé). E1 reçoit le push comme les autres.
+- **« Pas pour mon style »** : table `BehaviorDetectorMute (userId, detector)`, routes `GET/POST /behavior/mutes`,
+  `DELETE /behavior/mutes/:detector` (Premium, 404 flag éteint, mutations bloquées en démo). Détecteurs coupables :
+  `BEHAVIOR_MUTABLE_DETECTORS` (`@mtc/shared`), D1 exclu (réglage propre `newsShieldMinutes`).
+- **Configuration** : `GET /behavior/config` `{ uiEnabled }`, authentifiée (401 sans jeton), sans Premium (teaser). Choisie plutôt
+  que `/auth/me` : la réponse de `UsersService` (profil) a son propre `select` et ferait disparaître un champ ajouté à `toMe`.
+- **Historique** : `GET /behavior/alerts?from&to` (31 jours au plus) : alertes de la période, comme le Débrief hebdo hors
+  comptes échoués et archivés, et pour chacune les trades clôturés du même compte jusqu'à l'alerte suivante, dans la même
+  journée CME (`alertAftermath`, pur) : nombre, P&L net dans la devise du compte.
+- **Anti-tilt #371** : flag allumé, `TiltAlertsService` n'envoie plus ni toast ni push (journal `tilt` gardé), sauf le
+  surtrading relatif quand le trader n'a pas déclaré de limite (`tradesPerDayMax` absent ou 0) (C2 ne couvre que la limite déclarée) ; flag éteint,
+  inchangé. Jamais deux alertes pour la même chose. Retrait des fichiers : ticket de suite, après l'activation en prod.
+- **Types « signal »** (`BEHAVIOR_SIGNAL_TYPES`) : `F1_EMOTION_AFTER_LOSS` (« Revenge » ou « Peur » saisi à la main moins de
+  15 min après un trade perdant du même compte, `BehaviorSignalsService`, depuis `TradesService.create`). Jamais émis ; exclus
+  de l'historique et de l'autopsie (#669) ; sans poids dans les seuils tant que le rapport silencieux n'est pas validé.
+- **App** : `BehaviorAlertsStore` (alertes de la séance en mémoire, `behaviorTone` : rouge si gravité haute ou autre détecteur
+  du même compte en 30 min) ; bandeau `mtc-live-behavior-alert` dans le bloc collant de la Session live (deux zones
+  `aria-live` persistantes, polie et assertive) ; `mtc-debrief-behavior-alerts` ; `mtc-behavior-mutes` au Profil. Trade
+  rapide : plus d'émotion présélectionnée.
+- **Messages des détecteurs** : espace insécable avant « : » et « % », « 11ᵉ », apostrophe ’ (affichés tels quels).
+- **Démo** : alertes ambre et rouge et un détecteur coupé (`demo-data/behavior-alerts-example.ts`) ; pas de bandeau (pas de
+  séance live en démo).
+- **Hors périmètre** : seuils (après validation du rapport silencieux par Greg), activation du flag (dev puis prod, par Greg),
+  conservation de `BehaviorAlert` (#1338).
+
+## Contrat de session (#667, 2026-11-28)
+
+- Primitives écrites une fois dans `@mtc/shared` (`session-rules.ts`) : `trailingLosses` (C1), `overMax` (C2),
+  `nearHighImpactNews` (stat #670 du débrief, règle des annonces du contrat) ; `assetCurrencies` et `assetRoot`
+  déplacés dans `asset-currencies.ts` (réexporté par `eco-calendar.briefing.ts`). Spec d'équivalence C1 / C2 ↔ contrat
+  (`behavior-contract-equivalence.spec.ts`).
+- Séance avec contrat et `SESSION_CONTRACT_ENABLED` allumé : `BehaviorAlertsService.check` prend la règle en vigueur
+  à l'entrée (`ruleAt`) comme seuil de C2 (`maxTrades`, sinon `tradesPerDayMax`), de D1 (`newsMinutes`, sinon le
+  bouclier) et de C1 (`contractLossStreak`) ; C1 avec contrat sonne aussi en apprentissage. Sans contrat : inchangé.
+- Évaluation (`evaluateContract`, `@mtc/shared`) : infraction au trade qui franchit la règle (trades max : le N+1ᵉ ;
+  pertes d'affilée : l'entrée après N pertes ; perte max : P&L net réalisé DU JOUR sous −X (journée CME du compte,
+  séances précédentes du jour comprises comme point de départ, `dayPnlBefore`, sans être jugées) ; actifs : racine hors liste ;
+  annonces : `tradedAt` dans [T−X, T+X] d'une annonce forte de ses devises, sans objet sans annonce du jour). Règle en
+  vigueur reconstituée depuis `edits` : desserrer après l'infraction ne l'efface pas. « Ensuite » = trades clôturés
+  suivants, net, devise du compte. Calculée à la lecture (`GET /session/today`, `GET /session/history/:id`).
+- Unité de « trades max » : le contrat compte les lignes `Trade` (journal, débrief), C2 avec un seuil du contrat compte
+  les positions regroupées (`groupPositions`, enregistré seulement). L'alerte du contrat côté front (ticket
+  d'interface) suit les lignes : une sortie en plusieurs fois peut donc franchir le contrat avant C2, c'est voulu.
+- Interface (pré-session, live, débrief) : ticket de suite ; l'alerte du contrat (ambre) y remplacera le bandeau
+  #671 de C1 et C2 pour ces règles.
+

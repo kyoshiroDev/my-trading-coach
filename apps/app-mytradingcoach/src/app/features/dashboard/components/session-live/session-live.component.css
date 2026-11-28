@@ -41,7 +41,7 @@
 
 .session-start-btn {
   background: var(--primary);
-  color: #fff;
+  color: var(--text-on-primary);
   border: none;
   border-radius: 9px;
   padding: 11px 22px;
@@ -65,6 +65,17 @@
 }
 
 /* ─── Bandeau collant ─── */
+/* Mobile : le bouton menu est fixe en haut à droite, le bloc colle sous lui (marge haute de la page : 12 px). */
+.lv-sticky { position: sticky; top: calc(var(--topbar-h) - var(--space-3)); z-index: 5; min-width: 0; background: var(--bg); }
+/* Sentinelle du bloc collant (StickyStuckDirective) : 1 px sans place dans la mise en page. */
+.lv-sentinel { height: 1px; margin-bottom: -1px; visibility: hidden; pointer-events: none; }
+/* Collé : le fond remonte jusqu'en haut de la zone de défilement (bande du bouton menu, marge haute de la page),
+   sinon le contenu défilant passe au-dessus de la barre. Au repos, pas de fond : il recouvrirait l'en-tête. */
+.lv-sticky.is-stuck { box-shadow: 0 calc(-1 * var(--topbar-h)) 0 var(--bg); }
+@media (min-width: 769px) {
+  .lv-sticky { top: 0; }
+  .lv-sticky.is-stuck { box-shadow: 0 calc(-1 * var(--space-4)) 0 var(--bg); }
+}
 .lv-bar { border-radius: 12px; overflow: hidden; border: 1px solid rgba(255, 255, 255, .06); }
 
 .lv-body { display: flex; flex-direction: column; gap: 14px; padding-top: 14px; min-width: 0; }
@@ -150,4 +161,17 @@
   /* Le suivi prop firm remplit la colonne (disclaimer en pied) ; le simple P&L reste compact */
   .lv-account { align-self: stretch; display: flex; flex-direction: column; }
   .lv-account > mtc-live-prop-firm { flex: 1; }
+}
+
+/* Teaser des alertes de comportement (#671, compte gratuit) : même ligne que celui de « Mes comptes ». */
+.pf-teaser {
+  display: flex; justify-content: space-between; align-items: center; gap: var(--space-2); width: 100%; min-height: 78px;
+  background: transparent; border: 1px dashed var(--border-hover); border-radius: 10px; padding: 0 var(--space-3);
+  font: var(--fs-sm) var(--font-body); color: var(--text-2); text-align: left; cursor: pointer;
+}
+.pf-teaser:hover { color: var(--text); border-color: color-mix(in srgb, var(--text) 28%, transparent); }
+.pf-teaser:focus-visible { outline: 2px solid var(--blue-bright); outline-offset: 2px; }
+.pf-badge {
+  flex-shrink: 0; font-family: var(--font-mono); font-size: var(--fs-2xs); font-weight: 700; letter-spacing: .04em;
+  color: var(--purple-bright); background: var(--purple-dim); border-radius: var(--radius-sm); padding: 2px 6px;
 }

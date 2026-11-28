@@ -46,6 +46,7 @@ describe('Débrief : un seul chargement à l’ouverture (F6 #1047)', () => {
     http.expectOne((r) => r.url.endsWith('/debrief/current')).flush({ data: null });
     // Requêtes annexes du composant (comptes) : hors sujet ici.
     for (const req of http.match((r) => r.url.endsWith('/accounts'))) req.flush({ data: [] });
+    for (const req of http.match((r) => r.url.endsWith('/behavior/config'))) req.flush({ data: { uiEnabled: false } });
 
     vi.advanceTimersByTime(60_000);
 

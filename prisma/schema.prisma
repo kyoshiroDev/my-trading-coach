@@ -160,6 +160,9 @@ model User {
   /// Référence personnelle des détecteurs de comportement (#602), une ligne au plus.
   behaviorBaseline BehaviorBaseline?
   behaviorAlerts   BehaviorAlert[]
+  /// Détecteurs coupés par le trader (« Pas pour mon style », #671).
+  behaviorDetectorMutes BehaviorDetectorMute[]
+  sessionContracts      SessionContract[]
   giveawayDraws    GiveawayDraw[]
   giveawayWins     GiveawayWin[]
   lastSeenAt      DateTime?
@@ -379,11 +382,34 @@ model TradeSession {
   account            TradingAccount? @relation(fields: [accountId], references: [id], onDelete: SetNull)
   trades             Trade[]
   behaviorAlerts     BehaviorAlert[]
+  contract           SessionContract?
   createdAt          DateTime        @default(now())
 
   @@index([userId, startedAt])
   @@index([userId, status])
   @@index([accountId])
+}
+
+/// Contrat de session (#667) : les règles que le trader se fixe pour UNE séance, plus strictes que celles
+/// de sa firm. null = règle non fixée ; `allowedAssets` vide = tous les actifs. `edits` = trace des
+/// modifications pendant la séance (`{ at, field, from, to }`, 50 au plus). Évalué à la lecture, rien de stocké.
+model SessionContract {
+  sessionId            String       @id
+  session              TradeSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  userId               String
+  user                 User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// Perte max du jour, montant positif dans la devise du compte de la séance.
+  maxDailyLoss         Float?
+  maxConsecutiveLosses Int?
+  maxTrades            Int?
+  /// Minutes avant et après une annonce à fort impact.
+  newsMinutes          Int?
+  allowedAssets        String[]     @default([])
+  edits                Json         @default("[]")
+  createdAt            DateTime     @default(now())
+  updatedAt            DateTime     @updatedAt
+
+  @@index([userId, createdAt])
 }
 
 /// Réponse à « Quel est ce compte ? » pour un compte sans plan du catalogue (#612).
@@ -930,6 +956,19 @@ model BehaviorAlert {
   @@index([accountId, tradeDay])
   @@index([sessionId])
   @@index([tradeId])
+}
+
+/// Détecteur de comportement coupé par le trader (« Pas pour mon style », #671). L'alerte reste
+/// enregistrée (`BehaviorAlert.mutedByUser = true`) : seuls le socket et le push sont coupés.
+/// Gardé tant que le compte existe (cascade).
+model BehaviorDetectorMute {
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// `BEHAVIOR_MUTABLE_DETECTORS` de `@mtc/shared` (TEXT, comme `BehaviorAlert.type`).
+  detector  String
+  createdAt DateTime @default(now())
+
+  @@id([userId, detector])
 }
 
 model StripeEvent {
