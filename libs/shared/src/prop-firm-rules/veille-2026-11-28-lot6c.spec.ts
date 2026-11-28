@@ -63,8 +63,13 @@ describe('veille du 2026-11-28, lot 6c', () => {
   });
 
   it('BluSky : le profit au-delà de l’objectif de la Buffer Zone n’est pas transféré', () => {
-    const withBuffer = (blusky as Firm).plans.filter((p) => JSON.stringify(p).includes('Buffer Zone'));
+    const plans = (blusky as Firm).plans;
+    const withBuffer = plans.filter((p) => /^blusky-(launch|propel)-/.test(p.id));
     expect(withBuffer.length).toBeGreaterThan(0);
-    for (const plan of withBuffer) expect(JSON.stringify(plan)).toContain('Excess earnings will not be transferred');
+    for (const plan of withBuffer) expect(plan.notes).toContain('Excess earnings will not be transferred');
+    // Orbit n'a pas de Buffer Zone : la précision ne le concerne pas.
+    const orbit = plans.filter((p) => p.id.startsWith('blusky-orbit-'));
+    expect(orbit.length).toBeGreaterThan(0);
+    for (const plan of orbit) expect(JSON.stringify(plan)).not.toContain('Excess earnings');
   });
 });

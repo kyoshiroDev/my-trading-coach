@@ -84,4 +84,19 @@ describe('matchPlans', () => {
   it('un compte funded se compare à la phase funded (sans objectif)', () => {
     expect(ids(account({ type: 'FUNDED', profitTarget: 3000 }))).toEqual(['apex-eod-50k', 'apex-intraday-50k']);
   });
+
+  it('firm renommée (FFF devenue Funded Family One) : l’ancien libellé reste reconnu par l’id, sans lever d’ambiguïté existante', () => {
+    const catalog = [
+      firm('fundedfuturesfamily', 'Funded Family One', [plan('fundedfuturesfamily-prime-50k', 50_000)]),
+      firm('myfundedfutures', 'MyFundedFutures', [plan('myfundedfutures-pro-50k', 50_000)]),
+    ];
+    const of = (broker: string) => matchPlans(catalog, account({ broker }))?.firm.id ?? null;
+    expect(of('Funded Futures Family')).toBe('fundedfuturesfamily');
+    expect(of('Futures Family')).toBe('fundedfuturesfamily');
+    expect(of('Funded Family')).toBe('fundedfuturesfamily');
+    // « Funded Futures » désigne les deux firms : on ne devine pas (comme avant le renommage).
+    expect(of('Funded Futures')).toBeNull();
+    expect(of('MyFundedFutures')).toBe('myfundedfutures');
+  });
 });
+

@@ -48,7 +48,7 @@
           "consistency": {
             "max_single_day_pct": 0.55,
             "applies_to": "profit_target",
-            "notes": "Calculée sur la somme des jours GAGNANTS (les jours perdants sont exclus du dénominateur). Pas un échec : vérifiée au passage de phase ou à la demande de payout. 55 % en évaluation (« 55% Consistency Rule in Launch and Propel … Evaluations », articles Evaluation Rules et Understanding the Consistency Rule, 2026-11-19) ; la Buffer Zone garde 34 % (21 % pour le 300K). Le profit au-delà de l'objectif de la Buffer Zone n'est pas transféré (« Excess earnings will not be transferred to your Sim Funded account », article « BluLive Buffer Stage », relu le 2026-11-28)."
+            "notes": "Calculée sur la somme des jours GAGNANTS (les jours perdants sont exclus du dénominateur). Pas un échec : vérifiée au passage de phase ou à la demande de payout. 55 % en évaluation (« 55% Consistency Rule in Launch and Propel … Evaluations », articles Evaluation Rules et Understanding the Consistency Rule, 2026-11-19) ; la Buffer Zone garde 34 % (21 % pour le 300K)."
           },
           "min_trading_days": null,
           "max_duration_days": null,
@@ -160,7 +160,7 @@
           "consistency": {
             "max_single_day_pct": 0.55,
             "applies_to": "profit_target",
-            "notes": "Calculée sur la somme des jours GAGNANTS (les jours perdants sont exclus du dénominateur). Pas un échec : vérifiée au passage de phase ou à la demande de payout. 55 % en évaluation (« 55% Consistency Rule in Launch and Propel … Evaluations », articles Evaluation Rules et Understanding the Consistency Rule, 2026-11-19) ; la Buffer Zone garde 34 % (21 % pour le 300K). Le profit au-delà de l'objectif de la Buffer Zone n'est pas transféré (« Excess earnings will not be transferred to your Sim Funded account », article « BluLive Buffer Stage », relu le 2026-11-28)."
+            "notes": "Calculée sur la somme des jours GAGNANTS (les jours perdants sont exclus du dénominateur). Pas un échec : vérifiée au passage de phase ou à la demande de payout. 55 % en évaluation (« 55% Consistency Rule in Launch and Propel … Evaluations », articles Evaluation Rules et Understanding the Consistency Rule, 2026-11-19) ; la Buffer Zone garde 34 % (21 % pour le 300K)."
           },
           "min_trading_days": null,
           "max_duration_days": null,
@@ -272,7 +272,7 @@
           "consistency": {
             "max_single_day_pct": 0.55,
             "applies_to": "profit_target",
-            "notes": "Calculée sur la somme des jours GAGNANTS (les jours perdants sont exclus du dénominateur). Pas un échec : vérifiée au passage de phase ou à la demande de payout. 55 % en évaluation (« 55% Consistency Rule in Launch and Propel … Evaluations », articles Evaluation Rules et Understanding the Consistency Rule, 2026-11-19) ; la Buffer Zone garde 34 % (21 % pour le 300K). Le profit au-delà de l'objectif de la Buffer Zone n'est pas transféré (« Excess earnings will not be transferred to your Sim Funded account », article « BluLive Buffer Stage », relu le 2026-11-28)."
+            "notes": "Calculée sur la somme des jours GAGNANTS (les jours perdants sont exclus du dénominateur). Pas un échec : vérifiée au passage de phase ou à la demande de payout. 55 % en évaluation (« 55% Consistency Rule in Launch and Propel … Evaluations », articles Evaluation Rules et Understanding the Consistency Rule, 2026-11-19) ; la Buffer Zone garde 34 % (21 % pour le 300K)."
           },
           "min_trading_days": null,
           "max_duration_days": null,
@@ -384,7 +384,7 @@
           "consistency": {
             "max_single_day_pct": 0.55,
             "applies_to": "profit_target",
-            "notes": "Calculée sur la somme des jours GAGNANTS (les jours perdants sont exclus du dénominateur). Pas un échec : vérifiée au passage de phase ou à la demande de payout. 55 % en évaluation (« 55% Consistency Rule in Launch and Propel … Evaluations », articles Evaluation Rules et Understanding the Consistency Rule, 2026-11-19) ; la Buffer Zone garde 34 % (21 % pour le 300K). Le profit au-delà de l'objectif de la Buffer Zone n'est pas transféré (« Excess earnings will not be transferred to your Sim Funded account », article « BluLive Buffer Stage », relu le 2026-11-28)."
+            "notes": "Calculée sur la somme des jours GAGNANTS (les jours perdants sont exclus du dénominateur). Pas un échec : vérifiée au passage de phase ou à la demande de payout. 55 % en évaluation (« 55% Consistency Rule in Launch and Propel … Evaluations », articles Evaluation Rules et Understanding the Consistency Rule, 2026-11-19) ; la Buffer Zone garde 34 % (21 % pour le 300K)."
           },
           "min_trading_days": null,
           "max_duration_days": null,
@@ -496,7 +496,7 @@
           "consistency": {
             "max_single_day_pct": 0.55,
             "applies_to": "profit_target",
-            "notes": "Calculée sur la somme des jours GAGNANTS (les jours perdants sont exclus du dénominateur). Pas un échec : vérifiée au passage de phase ou à la demande de payout. 55 % en évaluation (« 55% Consistency Rule in Launch and Propel … Evaluations », articles Evaluation Rules et Understanding the Consistency Rule, 2026-11-19) ; la Buffer Zone garde 34 % (21 % pour le 300K). Le profit au-delà de l'objectif de la Buffer Zone n'est pas transféré (« Excess earnings will not be transferred to your Sim Funded account », article « BluLive Buffer Stage », relu le 2026-11-28)."
+            "notes": "Calculée sur la somme des jours GAGNANTS (les jours perdants sont exclus du dénominateur). Pas un échec : vérifiée au passage de phase ou à la demande de payout. 55 % en évaluation (« 55% Consistency Rule in Launch and Propel … Evaluations », articles Evaluation Rules et Understanding the Consistency Rule, 2026-11-19) ; la Buffer Zone garde 34 % (21 % pour le 300K)."
           },
           "min_trading_days": null,
           "max_duration_days": null,
@@ -608,7 +608,7 @@
           "consistency": {
             "max_single_day_pct": 0.55,
             "applies_to": "profit_target",
-            "notes": "Calculée sur la somme des jours GAGNANTS (les jours perdants sont exclus du dénominateur). Pas un échec : vérifiée au passage de phase ou à la demande de payout. 55 % en évaluation (« 55% Consistency Rule in Launch and Propel … Evaluations », articles Evaluation Rules et Understanding the Consistency Rule, 2026-11-19) ; la Buffer Zone garde 34 % (21 % pour le 300K). Le profit au-delà de l'objectif de la Buffer Zone n'est pas transféré (« Excess earnings will not be transferred to your Sim Funded account », article « BluLive Buffer Stage », relu le 2026-11-28)."
+            "notes": "Calculée sur la somme des jours GAGNANTS (les jours perdants sont exclus du dénominateur). Pas un échec : vérifiée au passage de phase ou à la demande de payout. 55 % en évaluation (« 55% Consistency Rule in Launch and Propel … Evaluations », articles Evaluation Rules et Understanding the Consistency Rule, 2026-11-19) ; la Buffer Zone garde 34 % (21 % pour le 300K)."
           },
           "min_trading_days": null,
           "max_duration_days": null,
@@ -720,7 +720,7 @@
           "consistency": {
             "max_single_day_pct": 0.55,
             "applies_to": "profit_target",
-            "notes": "Calculée sur la somme des jours GAGNANTS (les jours perdants sont exclus du dénominateur). Pas un échec : vérifiée au passage de phase ou à la demande de payout. 55 % en évaluation (« 55% Consistency Rule in Launch and Propel … Evaluations », articles Evaluation Rules et Understanding the Consistency Rule, 2026-11-19) ; la Buffer Zone garde 34 % (21 % pour le 300K). Le profit au-delà de l'objectif de la Buffer Zone n'est pas transféré (« Excess earnings will not be transferred to your Sim Funded account », article « BluLive Buffer Stage », relu le 2026-11-28)."
+            "notes": "Calculée sur la somme des jours GAGNANTS (les jours perdants sont exclus du dénominateur). Pas un échec : vérifiée au passage de phase ou à la demande de payout. 55 % en évaluation (« 55% Consistency Rule in Launch and Propel … Evaluations », articles Evaluation Rules et Understanding the Consistency Rule, 2026-11-19) ; la Buffer Zone garde 34 % (21 % pour le 300K)."
           },
           "min_trading_days": null,
           "max_duration_days": null,
@@ -832,7 +832,7 @@
           "consistency": {
             "max_single_day_pct": 0.55,
             "applies_to": "profit_target",
-            "notes": "Calculée sur la somme des jours GAGNANTS (les jours perdants sont exclus du dénominateur). Pas un échec : vérifiée au passage de phase ou à la demande de payout. 55 % en évaluation (« 55% Consistency Rule in Launch and Propel … Evaluations », articles Evaluation Rules et Understanding the Consistency Rule, 2026-11-19) ; la Buffer Zone garde 34 % (21 % pour le 300K). Le profit au-delà de l'objectif de la Buffer Zone n'est pas transféré (« Excess earnings will not be transferred to your Sim Funded account », article « BluLive Buffer Stage », relu le 2026-11-28)."
+            "notes": "Calculée sur la somme des jours GAGNANTS (les jours perdants sont exclus du dénominateur). Pas un échec : vérifiée au passage de phase ou à la demande de payout. 55 % en évaluation (« 55% Consistency Rule in Launch and Propel … Evaluations », articles Evaluation Rules et Understanding the Consistency Rule, 2026-11-19) ; la Buffer Zone garde 34 % (21 % pour le 300K)."
           },
           "min_trading_days": null,
           "max_duration_days": null,
@@ -944,7 +944,7 @@
           "consistency": {
             "max_single_day_pct": 0.55,
             "applies_to": "profit_target",
-            "notes": "Calculée sur la somme des jours GAGNANTS (les jours perdants sont exclus du dénominateur). Pas un échec : vérifiée au passage de phase ou à la demande de payout. 55 % en évaluation (« 55% Consistency Rule in Launch and Propel … Evaluations », articles Evaluation Rules et Understanding the Consistency Rule, 2026-11-19) ; la Buffer Zone garde 34 % (21 % pour le 300K). Le profit au-delà de l'objectif de la Buffer Zone n'est pas transféré (« Excess earnings will not be transferred to your Sim Funded account », article « BluLive Buffer Stage », relu le 2026-11-28)."
+            "notes": "Calculée sur la somme des jours GAGNANTS (les jours perdants sont exclus du dénominateur). Pas un échec : vérifiée au passage de phase ou à la demande de payout. 55 % en évaluation (« 55% Consistency Rule in Launch and Propel … Evaluations », articles Evaluation Rules et Understanding the Consistency Rule, 2026-11-19) ; la Buffer Zone garde 34 % (21 % pour le 300K)."
           },
           "min_trading_days": null,
           "max_duration_days": null,
@@ -1133,7 +1133,7 @@
         "https://blusky.pro/"
       ],
       "needs_review": false,
-      "notes": "Orbit : deux phases, pas de Buffer Zone, pas de DLL. Le profit au-delà de l'objectif de la Buffer Zone n'est pas transféré (« Excess earnings will not be transferred to your Sim Funded account », article « BluLive Buffer Stage », relu le 2026-11-28)."
+      "notes": "Orbit : deux phases, pas de Buffer Zone, pas de DLL."
     },
     {
       "id": "blusky-orbit-100k",
@@ -1243,7 +1243,7 @@
         "https://blusky.pro/"
       ],
       "needs_review": false,
-      "notes": "Orbit : deux phases, pas de Buffer Zone, pas de DLL. Le profit au-delà de l'objectif de la Buffer Zone n'est pas transféré (« Excess earnings will not be transferred to your Sim Funded account », article « BluLive Buffer Stage », relu le 2026-11-28)."
+      "notes": "Orbit : deux phases, pas de Buffer Zone, pas de DLL."
     },
     {
       "id": "blusky-orbit-150k",
@@ -1353,7 +1353,7 @@
         "https://blusky.pro/"
       ],
       "needs_review": false,
-      "notes": "Orbit : deux phases, pas de Buffer Zone, pas de DLL. Le profit au-delà de l'objectif de la Buffer Zone n'est pas transféré (« Excess earnings will not be transferred to your Sim Funded account », article « BluLive Buffer Stage », relu le 2026-11-28)."
+      "notes": "Orbit : deux phases, pas de Buffer Zone, pas de DLL."
     },
     {
       "id": "blusky-orbit-200k",
@@ -1463,7 +1463,7 @@
         "https://blusky.pro/"
       ],
       "needs_review": false,
-      "notes": "Orbit : deux phases, pas de Buffer Zone, pas de DLL. Le profit au-delà de l'objectif de la Buffer Zone n'est pas transféré (« Excess earnings will not be transferred to your Sim Funded account », article « BluLive Buffer Stage », relu le 2026-11-28)."
+      "notes": "Orbit : deux phases, pas de Buffer Zone, pas de DLL."
     },
     {
       "id": "blusky-instant-50k",
