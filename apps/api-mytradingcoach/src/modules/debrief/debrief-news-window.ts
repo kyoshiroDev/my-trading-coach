@@ -1,5 +1,4 @@
-import { computeTradeStats } from '@mtc/shared';
-import { assetCurrencies } from '../eco-calendar/eco-calendar.briefing';
+import { computeTradeStats, nearHighImpactNews } from '@mtc/shared';
 import type { NewsEvent } from '../behavior/behavior-news';
 
 /**
@@ -39,11 +38,9 @@ const bucket = (trades: WindowTrade[]): NewsWindowBucket => {
 export function newsWindowStats(trades: WindowTrade[], events: NewsEvent[], minutes: number): NewsWindowStats | null {
   const closed = trades.filter((t) => t.pnl != null);
   if (!closed.length) return null;
-  const span = minutes * 60_000;
   const byAccount = new Map<string | null, { inside: WindowTrade[]; outside: WindowTrade[] }>();
   for (const t of closed) {
-    const ccys = assetCurrencies(t.asset);
-    const near = events.some((e) => ccys.includes(e.currency) && Math.abs(t.tradedAt.getTime() - e.at.getTime()) <= span);
+    const near = nearHighImpactNews(t.tradedAt, t.asset, events, minutes);
     const key = t.accountId ?? null;
     const b = byAccount.get(key) ?? { inside: [], outside: [] };
     (near ? b.inside : b.outside).push(t);
