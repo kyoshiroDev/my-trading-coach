@@ -133,6 +133,7 @@
   color: var(--text-2);
   font-family: var(--font-mono);
   font-size: 12px;
+  font-variant-numeric: tabular-nums;
   text-overflow: ellipsis;
   cursor: pointer;
   transition: all .15s;
