@@ -189,12 +189,21 @@ export class DebriefComponent {
       });
   }
 
-  /** Semaines disponibles (#959). En échec, le sélecteur reste masqué : le débrief affiché suffit. */
+  /**
+   * Semaines disponibles (#959). En échec, le sélecteur reste masqué et un toast le dit : le débrief
+   * affiché reste juste, pas d'écran d'erreur à sa place.
+   */
   private loadHistory(): void {
     this.debriefApi
       .getHistory()
       .pipe(map((res) => res.data), takeUntilDestroyed(this.destroyRef))
-      .subscribe({ next: (items) => this.history.set(items), error: () => this.history.set([]) });
+      .subscribe({
+        next: (items) => this.history.set(items),
+        error: () => {
+          this.history.set([]);
+          this.toast.error('Les semaines passées n’ont pas pu être chargées. Recharge la page pour les retrouver.');
+        },
+      });
   }
 
   /** Affiche le débrief d'une semaine passée (#959) ; l'export PDF suit la semaine affichée. */

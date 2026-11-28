@@ -135,10 +135,11 @@ describe('Débrief : semaines passées (#959)', () => {
     expect(open(debrief(47), [item(47)]).select()).toBeNull();
   });
 
-  it('historique en échec : pas de sélecteur, le débrief s’affiche', () => {
+  it('historique en échec : toast, pas de sélecteur, le débrief s’affiche', () => {
     const { el, select } = open(debrief(47), 'error');
     expect(select()).toBeNull();
     expect(el.querySelector('.week-title')?.textContent).toContain('Semaine 47');
+    expect(toast.error).toHaveBeenCalledWith('Les semaines passées n’ont pas pu être chargées. Recharge la page pour les retrouver.');
   });
 
   it('aucun débrief : pas d’appel à l’historique', () => {
