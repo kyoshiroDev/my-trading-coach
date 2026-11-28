@@ -8,7 +8,8 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { GiveawayDisplayConsent, Role, Prisma, TrialSource } from '@prisma/client';
-import { UTM_NONE, addCalendarMonths, type AcquisitionUtm, type AdminOfferPremiumResponse, type AdminRemoveOfferedPremiumResponse } from '@mtc/shared';
+import { withBillingInterval } from './billing-interval.util';
+import { UTM_NONE, addCalendarMonths, type AcquisitionUtm, type AdminOfferPremiumResponse, type AdminRemoveOfferedPremiumResponse, type AdminSubscriptionsData, type AdminUser, type AdminUsersList, type WithDates } from '@mtc/shared';
 import { PrismaService } from '../../prisma/prisma.service';
 import { closedTradeStats } from '../analytics/analytics.sql';
 import { AmbassadorService } from '../ambassador/ambassador.service';
@@ -190,7 +191,8 @@ export class UsersService {
       this.prisma.user.count({ where }),
     ]);
 
-    return { users, total, page, limit };
+    // Contrat de l'admin vérifié ici (#1156) : un champ retiré ou renommé casse le typecheck de l'API.
+    return { users: users.map(withBillingInterval), total, page, limit } satisfies WithDates<AdminUsersList>;
   }
 
   // ── Admin : modale « Modifier » (nom, compte interne) ─────────────────────
@@ -212,7 +214,7 @@ export class UsersService {
       select: ADMIN_USER_SELECT,
     });
     await this.userCache?.invalidate(targetId); // nom relu par le JWT (SCA-B3-01)
-    return updated;
+    return withBillingInterval(updated) satisfies WithDates<AdminUser>;
   }
 
   // ── Admin : suppression ───────────────────────────────────────────────────
@@ -871,15 +873,15 @@ export class UsersService {
     // Objet brut : l'intercepteur global ajoute `{ data }`. L'ancien `{ data: { … } }` donnait
     // `{ data: { data: … } }` et la page admin Abonnements lisait des champs vides (plantage).
     return {
-      stripeUsers,
+      stripeUsers: stripeUsers.map(withBillingInterval),
       /** Abonnés payants au total (A8 #1065) : KPI et pagination, `stripeUsers` n'en est qu'une page. */
       stripeTotal,
-      betaTesters,
-      trialUsers,
-      pausedUsers,
+      betaTesters: betaTesters.map(withBillingInterval),
+      trialUsers: trialUsers.map(withBillingInterval),
+      pausedUsers: pausedUsers.map(withBillingInterval),
       page,
       limit,
-    };
+    } satisfies WithDates<AdminSubscriptionsData>;
   }
 
   async adminDetail(userId: string) {

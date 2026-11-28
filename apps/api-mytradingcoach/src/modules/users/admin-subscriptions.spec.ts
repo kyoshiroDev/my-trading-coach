@@ -63,9 +63,9 @@ describe('UsersService.adminSubscriptions (#1065)', () => {
 
   it('A10 : abonnements en pause listés à part', async () => {
     prisma.user.findMany.mockImplementation(async (a: { where: unknown }) =>
-      isDeepStrictEqual(a.where, { isDemo: false, role: { not: 'ADMIN' }, ...subscriptionStateWhere('paused', NOW) }) ? [{ id: 'p1' }] : []);
+      isDeepStrictEqual(a.where, { isDemo: false, role: { not: 'ADMIN' }, ...subscriptionStateWhere('paused', NOW) }) ? [{ id: 'p1', stripeInterval: 'month' }] : []);
     const res = await service.adminSubscriptions();
-    expect(res.pausedUsers).toEqual([{ id: 'p1' }]);
+    expect(res.pausedUsers).toEqual([{ id: 'p1', stripeInterval: 'month' }]);
   });
 
   // Relecteur (#1065), règle 9 de plans.md : comme les accès manuels et le MRR (REAL_USERS_WHERE), les

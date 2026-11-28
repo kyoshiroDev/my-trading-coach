@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { FounderSeatStatus } from '@prisma/client';
-import { FOUNDER_OFFER } from '@mtc/shared';
+import { FOUNDER_OFFER, type AdminFoundersData, type WithDates } from '@mtc/shared';
 import { PrismaService } from '../../prisma/prisma.service';
 import { FounderOfferService } from './founder-offer.service';
 
@@ -63,7 +63,8 @@ export class FounderAdminService {
       rows: rows.map((r) => ({
         number: r.number,
         status: r.status,
-        interval: r.interval,
+        // Rétréci au contrat (#1156), comme user-detail.service.ts : toutes les écritures passent par FounderInterval.
+        interval: r.interval === 'year' ? ('year' as const) : ('month' as const),
         cta: r.cta,
         takenAt: r.takenAt,
         endedAt: r.endedAt,
@@ -73,6 +74,6 @@ export class FounderAdminService {
         medium: r.user?.acquisitionMedium ?? null,
         campaign: r.user?.acquisitionCampaign ?? null,
       })),
-    };
+    } satisfies WithDates<AdminFoundersData>; // contrat de l'admin vérifié côté API (#1156)
   }
 }

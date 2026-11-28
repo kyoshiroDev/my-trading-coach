@@ -14,6 +14,15 @@
 - Les dates y sont des `string` ISO (ce que le front reçoit). Côté API, les DTO de requête
   `implements` le contrat (`CreateTradeDto implements CreateTradeRequest`) : un champ ajouté d'un
   seul côté casse la compilation.
+- **Réponses (#1156)** : la méthode de service déclare son type (`Promise<AdminFunnelData>`), ou l'objet
+  renvoyé porte `satisfies WithDates<Contrat>` quand il contient les `Date` de Prisma (`WithDates`,
+  `contracts/serialized.ts` : une `Date` acceptée là où le contrat attend un `string` libre, jamais à la
+  place d'une union littérale). Champ `String` en base mais littéral dans le contrat (`stripeInterval`,
+  `FounderSeat.interval`) : rétréci à l'exécution, jamais un cast : `billingInterval`
+  (`users/billing-interval.util.ts`, inconnu → `null`) pour un champ nullable, `=== 'year' ? 'year' : 'month'`
+  (comme `user-detail.service.ts`) pour un champ non nul. En place : `GET /admin/users` (`AdminUsersList`), `PATCH /admin/users/:id`,
+  `/admin/users/subscriptions`, `/admin/founders`. Restent sans contrat partagé : `/admin/users/stats`,
+  `/admin/users/online` (types locaux de `admin.api.ts`).
 - Enums : `EmotionState.FOCUSED` (valeur) / `EmotionState` (type). Le test API
   `common/contracts-sync.spec.ts` compare chaque enum à Prisma : après une migration qui touche un
   enum, mettre à jour `contracts/enums.ts`.
