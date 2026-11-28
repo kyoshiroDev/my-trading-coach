@@ -148,6 +148,21 @@ describe('DebriefService', () => {
         expect.objectContaining({ take: 52 }),
       );
     });
+
+    // #959 : liste du sélecteur de semaine, sans le contenu IA (52 débriefs complets = réponse lourde).
+    it('entrées légères : semaine, dates ISO, nombre de trades, sans analyse ni P&L', async () => {
+      mockPrisma.weeklyDebrief.findMany.mockResolvedValue([mockDebrief, { ...mockDebrief, id: 'd0', weekNumber: 14, stats: {} }]);
+
+      const result = await service.getHistory('user-123');
+
+      expect(mockPrisma.weeklyDebrief.findMany.mock.calls[0][0].select).toEqual({
+        id: true, year: true, weekNumber: true, startDate: true, endDate: true, stats: true,
+      });
+      expect(result).toEqual([
+        { id: 'debrief-1', year: 2026, weekNumber: 15, startDate: '2026-04-07T00:00:00.000Z', endDate: '2026-04-13T00:00:00.000Z', totalTrades: 5 },
+        { id: 'd0', year: 2026, weekNumber: 14, startDate: '2026-04-07T00:00:00.000Z', endDate: '2026-04-13T00:00:00.000Z', totalTrades: 0 },
+      ]);
+    });
   });
 
   describe('getPDFData : trades clôturés seulement (C13 #1046, convention #947)', () => {

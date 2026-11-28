@@ -114,7 +114,7 @@ GET    /api/debrief/current            PREMIUM
 GET    /api/debrief/:year/:week        PREMIUM
 GET    /api/debrief/:year/:week/pdf    PREMIUM → export PDF via puppeteer ; @Throttle 5/min, file par process ≤ 10 rendus (`PDF_QUEUE_MAX`) sinon 503 (S3 #1045)
 PATCH  /api/debrief/:debriefId/objectives/:index/note PREMIUM → `ObjectiveNoteDto` (texte ≤ 1000, réinjecté dans le prompt suivant) (C11 #1045)
-GET    /api/debrief/history            PREMIUM
+GET    /api/debrief/history            PREMIUM → 52 dernières semaines en entrées légères `DebriefHistoryItem` (id, semaine, dates, nombre de trades ; ni analyse ni P&L) : sélecteur de semaine de l'écran Débrief (#959)
 POST   /api/debrief/generate           PREMIUM → 1/jour par user (rendue si l IA échoue) ; semaine sans trade clôturé → 400 « Aucun trade clôturé cette semaine pour l’instant… » (C8 #1046, #1056)
 
 GET    /api/vps/servers                ADMIN → serveurs du sélecteur Surveillance [{id,label,readOnly}]

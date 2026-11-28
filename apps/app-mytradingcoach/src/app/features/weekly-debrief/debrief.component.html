@@ -59,7 +59,7 @@
       <!-- Header -->
       <div class="debrief-header">
         <div>
-          <h2 class="week-title">
+          <h2 class="week-title" data-testid="debrief-week-title">
             Semaine {{ debrief()!.weekNumber }} · {{ debrief()!.year }}
           </h2>
           <div class="week-meta">
@@ -71,16 +71,37 @@
             {{ debrief()!.generatedAt | date: 'd MMM à HH:mm' }}
           </div>
         </div>
-        @if (userStore.isPremium()) {
-          <button class="export-btn" [disabled]="exportLoading()" (click)="exportPDF()" title="Exporter en PDF">
-            @if (exportLoading()) {
-              <span class="export-spinner"></span>
-            } @else {
-              <svg [lucideIcon]="DownloadIcon" [size]="13"></svg>
-            }
-            Export PDF
-          </button>
-        }
+        <div class="debrief-actions">
+          <!-- Débriefs passés (#959) : visible dès qu'il y a une autre semaine que celle affichée. -->
+          @if (history().length > 1) {
+            <span class="week-picker">
+              <select
+                aria-label="Choisir la semaine du débrief"
+                data-testid="debrief-week-select"
+                [value]="selectedWeek()"
+                [disabled]="weekLoading()"
+                (change)="selectWeek($any($event.target).value)"
+              >
+                @for (h of history(); track h.id) {
+                  <option [value]="weekKey(h)" [selected]="weekKey(h) === selectedWeek()">
+                    Semaine {{ h.weekNumber }} · {{ h.startDate | date: 'd MMM' }} → {{ h.endDate | date: 'd MMM yyyy' }} · {{ h.totalTrades }} trade{{ h.totalTrades > 1 ? 's' : '' }}
+                  </option>
+                }
+              </select>
+              <svg class="wp-chev" [lucideIcon]="ChevronDownIcon" [size]="12" aria-hidden="true"></svg>
+            </span>
+          }
+          @if (userStore.isPremium()) {
+            <button class="export-btn" [disabled]="exportLoading()" (click)="exportPDF()" title="Exporter en PDF">
+              @if (exportLoading()) {
+                <span class="export-spinner"></span>
+              } @else {
+                <svg [lucideIcon]="DownloadIcon" [size]="13"></svg>
+              }
+              Export PDF
+            </button>
+          }
+        </div>
       </div>
 
       <!-- Onglets -->

@@ -2,8 +2,8 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '@app/environments/environment';
-import type { DebriefBadgeItem as DebriefItem, DebriefInsights, DebriefObjective, ObjectiveCheck, WeeklyDebrief } from '@mtc/shared';
-export type { DebriefItem, DebriefInsights, DebriefObjective, ObjectiveCheck, WeeklyDebrief };
+import type { DebriefBadgeItem as DebriefItem, DebriefHistoryItem, DebriefInsights, DebriefObjective, ObjectiveCheck, WeeklyDebrief } from '@mtc/shared';
+export type { DebriefItem, DebriefHistoryItem, DebriefInsights, DebriefObjective, ObjectiveCheck, WeeklyDebrief };
 
 @Injectable({ providedIn: 'root' })
 export class DebriefApi {
@@ -22,8 +22,9 @@ export class DebriefApi {
     );
   }
 
-  getHistory(): Observable<{ data: WeeklyDebrief[] }> {
-    return this.http.get<{ data: WeeklyDebrief[] }>(`${this.base}/history`);
+  /** Semaines disponibles, sans le contenu (#959) : le sélecteur de l'écran Débrief. */
+  getHistory(): Observable<{ data: DebriefHistoryItem[] }> {
+    return this.http.get<{ data: DebriefHistoryItem[] }>(`${this.base}/history`);
   }
 
   /** PDF du débrief d'une semaine (blob à télécharger). */

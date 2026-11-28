@@ -18,19 +18,25 @@ import {
   LucideCalendarDays as CalendarDays,
   LucideRefreshCw as RefreshCw,
   LucideDownload as Download,
+  LucideChevronDown as ChevronDown,
 } from '@lucide/angular';
 import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
 import { ToastService } from '../../core/services/toast.service';
 import { apiErrorMessage } from '../../core/utils/api-error';
 import { map } from 'rxjs/operators';
 import { DebriefApi } from '../../core/api/debrief.api';
-import type { DebriefAccountSection as AccountSection, DebriefBadgeItem as DebriefItem, WeeklyDebrief } from '@mtc/shared';
+import type { DebriefAccountSection as AccountSection, DebriefBadgeItem as DebriefItem, DebriefHistoryItem, WeeklyDebrief } from '@mtc/shared';
 import { ErrorStateComponent, PctPipe } from '@mtc/front-ui';
 import { InfoTooltipComponent } from '@app/shared/components/info-tooltip/info-tooltip.component';
 import { DRAWDOWN_LABELS } from '@app/core/constants/drawdown-labels.const';
 import { PaywallCtaService } from '@app/core/services/paywall-cta.service';
 
 const TAB_KEY = 'mtc.debriefTab';
+
+/** Clé d'une semaine dans le sélecteur (#959). */
+function weekKey(w: { year: number; weekNumber: number }): string {
+  return `${w.year}-${w.weekNumber}`;
+}
 
 function badgeClass(badge: string): string {
   const map: Record<string, string> = {
@@ -80,12 +86,24 @@ export class DebriefComponent {
   protected readonly CalendarDaysIcon = CalendarDays;
   protected readonly RefreshCwIcon = RefreshCw;
   protected readonly DownloadIcon = Download;
+  protected readonly ChevronDownIcon = ChevronDown;
 
   protected readonly debrief = signal<WeeklyDebrief | null>(null);
   protected readonly isLoading = signal(true);
   protected readonly loadError = signal(false);
   protected readonly isGenerating = signal(false);
   protected readonly exportLoading = signal(false);
+
+  /** Débriefs passés (#959) : semaines du sélecteur, la plus récente en premier. */
+  protected readonly history = signal<DebriefHistoryItem[]>([]);
+  protected readonly weekLoading = signal(false);
+  /** Numéro de la dernière demande d'affichage : une semaine chargée après une génération est ignorée. */
+  private viewSeq = 0;
+  /** Semaine affichée, au format du sélecteur (`année-semaine`). */
+  protected readonly selectedWeek = computed(() => {
+    const d = this.debrief();
+    return d ? weekKey(d) : '';
+  });
 
   protected readonly activeTab = signal<string>(this.readTab());
 
@@ -162,12 +180,55 @@ export class DebriefComponent {
         next: (data) => {
           this.debrief.set(data);
           this.isLoading.set(false);
+          if (data) this.loadHistory(); // null = aucun débrief du tout : rien à lister
         },
         error: () => {
           this.isLoading.set(false);
           this.loadError.set(true);
         },
       });
+  }
+
+  /**
+   * Semaines disponibles (#959). En échec, le sélecteur reste masqué et un toast le dit : le débrief
+   * affiché reste juste, pas d'écran d'erreur à sa place.
+   */
+  private loadHistory(): void {
+    this.debriefApi
+      .getHistory()
+      .pipe(map((res) => res.data), takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (items) => this.history.set(items),
+        error: () => {
+          this.history.set([]);
+          this.toast.error('Les semaines passées n’ont pas pu être chargées. Recharge la page pour les retrouver.');
+        },
+      });
+  }
+
+  /** Affiche le débrief d'une semaine passée (#959) ; l'export PDF suit la semaine affichée. */
+  protected selectWeek(key: string): void {
+    const item = this.history().find((h) => weekKey(h) === key);
+    if (!item || key === this.selectedWeek() || this.weekLoading()) return;
+    this.weekLoading.set(true);
+    const seq = ++this.viewSeq;
+    this.debriefApi
+      .getByWeek(item.year, item.weekNumber)
+      .pipe(map((res) => res.data), takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (data) => {
+          this.weekLoading.set(false);
+          if (seq === this.viewSeq) this.debrief.set(data); // sinon un débrief vient d'être généré
+        },
+        error: () => {
+          this.weekLoading.set(false);
+          this.toast.error(`Le débrief de la semaine ${item.weekNumber} n’a pas pu être chargé. Réessaie.`);
+        },
+      });
+  }
+
+  protected weekKey(w: { year: number; weekNumber: number }): string {
+    return weekKey(w);
   }
 
   protected selectTab(id: string): void {
@@ -219,6 +280,7 @@ export class DebriefComponent {
   generateDebrief() {
     if (this.isGenerating()) return;
     this.isGenerating.set(true);
+    this.viewSeq++; // une semaine passée en cours de chargement ne remplacera pas le débrief généré
     this.debriefApi
       .generate()
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -226,6 +288,7 @@ export class DebriefComponent {
         next: (res) => {
           this.debrief.set(res.data);
           this.isGenerating.set(false);
+          this.loadHistory(); // la semaine en cours vient peut-être d'être créée
         },
         error: (err) => {
           this.isGenerating.set(false);
