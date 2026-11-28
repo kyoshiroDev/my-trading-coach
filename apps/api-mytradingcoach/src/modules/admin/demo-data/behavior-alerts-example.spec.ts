@@ -18,7 +18,7 @@ describe('démo : alertes de comportement passées (#671)', () => {
     const d = day([trade('2026-11-24T15:00:00Z', -100), trade('2026-11-24T15:20:00Z', -80), trade('2026-11-24T15:40:00Z', -60), trade('2026-11-24T16:00:00Z', 50)]);
     const [b, c] = behaviorAlertsExample([d]);
     expect(b).toMatchObject({ type: 'B_REVENGE', severity: 'medium', createdAt: new Date('2026-11-24T15:17:00Z') });
-    expect(b.message).toBe('Nouvelle entrée NQ : 40 s après la perte (d’habitude 3 min), 3 contrats (d’habitude 2).');
+    expect(b.message).toBe('Nouvelle entrée NQ\u00a0: 40 s après la perte (d’habitude 3 min), 3 contrats (d’habitude 2).');
     expect(c).toMatchObject({ type: 'C1_LOSS_STREAK', severity: 'high', message: 'Nouvelle entrée après 3 pertes d’affilée dans la séance.', createdAt: new Date('2026-11-24T15:38:00Z') });
   });
 

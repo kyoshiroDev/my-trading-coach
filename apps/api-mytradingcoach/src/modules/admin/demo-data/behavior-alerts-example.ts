@@ -30,7 +30,7 @@ export function behaviorAlertsExample(days: readonly DemoDay[]): DemoBehaviorAle
     {
       type: 'B_REVENGE',
       severity: 'medium',
-      message: `Nouvelle entrée ${second.asset} : 40 s après la perte (d’habitude 3 min), ${second.quantity + 1} contrats (d’habitude ${second.quantity}).`,
+      message: `Nouvelle entrée ${second.asset}\u00a0: 40 s après la perte (d’habitude 3 min), ${second.quantity + 1} contrats (d’habitude ${second.quantity}).`,
       createdAt: before(second.tradedAt, 3),
       context: { signals: ['fast_reentry', 'size_above_p75'] },
     },
