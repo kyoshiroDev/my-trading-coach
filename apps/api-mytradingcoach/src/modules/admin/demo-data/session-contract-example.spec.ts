@@ -23,6 +23,8 @@ describe('démo : contrat de session (#667)', () => {
       expect(['maxDailyLoss', 'maxConsecutiveLosses', 'allowedAssets'].map((r) => byRule[r].status)).toEqual(['respected', 'respected', 'respected']);
       expect(ex!.edits).toHaveLength(1);
     },
+    // Jeu démo complet généré par cas (~25 s sur une machine chargée).
+    60_000,
   );
 
   it('aucune séance clôturée d’au moins 4 trades : pas de contrat', () => {
