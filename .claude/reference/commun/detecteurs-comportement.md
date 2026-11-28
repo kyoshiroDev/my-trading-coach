@@ -135,3 +135,32 @@ Détecteur **`E1_STOP_WIDENED`**, silencieux comme A, B, C (`BEHAVIOR_ALERTS_UI`
 - Une fois par position : `behavior:stop:<compte>:<contrat>:<ouverture>` (SET NX, 12 h). Message factuel « Stop éloigné
   de 6 ticks sur NQ (risque porté à 14 ticks). », severity `medium` (gravité à fixer à #671). Hors démo, aucune action
   sur l'ordre (lecture seule, contrat NinjaTrader).
+
+## Phase 2 : affichage (#671, 2026-11-28)
+
+Tout derrière **`BEHAVIOR_ALERTS_UI`** (`behavior-flags.ts`, `true` seulement ; éteint par défaut). Plan : `docs/audit-alertes-comportement.md`.
+- **Envoi** (`BehaviorAlertsService`, `audience`) : une alerte enregistrée part vers l'app (socket `behavior:alert`) et en push
+  seulement si le flag est allumé, si le trader a l'accès Premium (`subscriptionState().premiumAccess`) et s'il n'a pas coupé ce
+  détecteur ; sinon elle est enregistrée en silence (`mutedByUser` pour un détecteur coupé). E1 reçoit le push comme les autres.
+- **« Pas pour mon style »** : table `BehaviorDetectorMute (userId, detector)`, routes `GET/POST /behavior/mutes`,
+  `DELETE /behavior/mutes/:detector` (Premium, 404 flag éteint, mutations bloquées en démo). Détecteurs coupables :
+  `BEHAVIOR_MUTABLE_DETECTORS` (`@mtc/shared`), D1 exclu (réglage propre `newsShieldMinutes`).
+- **Configuration** : `GET /behavior/config` `{ uiEnabled }`, authentifiée (401 sans jeton), sans Premium (teaser). Choisie plutôt
+  que `/auth/me` : la réponse de `UsersService` (profil) a son propre `select` et ferait disparaître un champ ajouté à `toMe`.
+- **Historique** : `GET /behavior/alerts?from&to` (31 jours au plus) : alertes de la période, comme le Débrief hebdo hors
+  comptes échoués et archivés, et pour chacune les trades clôturés du même compte jusqu'à l'alerte suivante, dans la même
+  journée CME (`alertAftermath`, pur) : nombre, P&L net dans la devise du compte.
+- **Anti-tilt #371** : flag allumé, `TiltAlertsService` n'envoie plus ni toast ni push (journal `tilt` gardé) ; flag éteint,
+  inchangé. Jamais deux alertes pour la même chose. Retrait des fichiers : ticket de suite, après l'activation en prod.
+- **Types « signal »** (`BEHAVIOR_SIGNAL_TYPES`) : `F1_EMOTION_AFTER_LOSS` (« Revenge » ou « Peur » saisi à la main moins de
+  15 min après un trade perdant du même compte, `BehaviorSignalsService`, depuis `TradesService.create`). Jamais émis ; exclus
+  de l'historique et de l'autopsie (#669) ; sans poids dans les seuils tant que le rapport silencieux n'est pas validé.
+- **App** : `BehaviorAlertsStore` (alertes de la séance en mémoire, `behaviorTone` : rouge si gravité haute ou autre détecteur
+  du même compte en 30 min) ; bandeau `mtc-live-behavior-alert` dans le bloc collant de la Session live (deux zones
+  `aria-live` persistantes, polie et assertive) ; `mtc-debrief-behavior-alerts` ; `mtc-behavior-mutes` au Profil. Trade
+  rapide : plus d'émotion présélectionnée.
+- **Messages des détecteurs** : espace insécable avant « : » et « % », « 11ᵉ », apostrophe ’ (affichés tels quels).
+- **Démo** : alertes ambre et rouge et un détecteur coupé (`demo-data/behavior-alerts-example.ts`) ; pas de bandeau (pas de
+  séance live en démo).
+- **Hors périmètre** : seuils (après validation du rapport silencieux par Greg), activation du flag (dev puis prod, par Greg),
+  conservation de `BehaviorAlert` (#1338).
