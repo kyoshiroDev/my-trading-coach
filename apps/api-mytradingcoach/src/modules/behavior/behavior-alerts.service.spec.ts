@@ -55,6 +55,7 @@ function setup(opts: { demo?: boolean; seen?: Record<string, number> | null; pos
 
 afterEach(() => {
   delete process.env['BEHAVIOR_ALERTS_UI'];
+  delete process.env['BEHAVIOR_ALERTS_RECORD'];
 });
 
 describe('BehaviorAlertsService.check', () => {
@@ -165,5 +166,74 @@ describe('BehaviorAlertsService.check — bouclier annonces à l’entrée (#670
     await svc.check('u', 'a', s.emit, NOW);
     expect(newsShield.upcoming).not.toHaveBeenCalled();
     expect(newsShield.record).not.toHaveBeenCalled();
+  });
+});
+
+describe('BehaviorAlertsService.onStopMoved (E1 stop éloigné, #672)', () => {
+  freezeClock(NOW);
+  function stopSetup(opts: { demo?: boolean } = {}) {
+    const store = new Map<string, string>();
+    store.set('tradovate:positions:conn', JSON.stringify({
+      at: NOW.toISOString(),
+      positions: [{ asset: 'NQ', side: 'LONG', quantity: 2, entryPrice: 21_500, since: at(5).toISOString(), contractId: 7 }],
+    }));
+    const redis = {
+      client: {
+        get: vi.fn(async (k: string) => store.get(k) ?? null),
+        set: vi.fn(async (k: string, v: string, ...args: unknown[]) => {
+          if (args.includes('NX') && store.has(k)) return null;
+          store.set(k, v);
+          return 'OK';
+        }),
+      },
+    };
+    const created: Record<string, unknown>[] = [];
+    const prisma = {
+      user: { findUnique: vi.fn(async () => ({ isDemo: !!opts.demo })) },
+      tradeSession: { findFirst: vi.fn(async () => null) },
+      behaviorAlert: { create: vi.fn(async (args: { data: Record<string, unknown> }) => (created.push(args.data), { id: `al${created.length}` })) },
+    };
+    const svc = new BehaviorAlertsService(prisma as never, redis as never, {} as never, {} as never);
+    const events: BehaviorAlertEvent[] = [];
+    const emit = (_e: 'behavior:alert' | 'news:alert', p: BehaviorAlertEvent) => events.push(p);
+    return { svc, emit, events, created };
+  }
+  const widen = { orderId: 10, contractId: 7, action: 'Sell' as const, prevStop: 21_498, nextStop: 21_496.5 };
+
+  it('stop de sortie éloigné côté perte : enregistré en silence, une fois par position', async () => {
+    const { svc, emit, events, created } = stopSetup();
+    expect(await svc.onStopMoved('u', 'a', 'conn', widen, emit, NOW)).toBe(true);
+    expect(created).toHaveLength(1);
+    expect(created[0]).toMatchObject({
+      userId: 'u', accountId: 'a', type: 'E1_STOP_WIDENED', severity: 'medium',
+      message: 'Stop éloigné de 6 ticks sur NQ (risque porté à 14 ticks).', tradeDay: new Date('2026-09-01T00:00:00.000Z'),
+    });
+    expect(events).toEqual([]);
+    // Deuxième éloignement sur la même position : rien de plus.
+    expect(await svc.onStopMoved('u', 'a', 'conn', { ...widen, prevStop: 21_496.5, nextStop: 21_494 }, emit, NOW)).toBe(false);
+    expect(created).toHaveLength(1);
+  });
+
+  it('BEHAVIOR_ALERTS_UI=true : l’alerte part aussi vers l’app', async () => {
+    process.env['BEHAVIOR_ALERTS_UI'] = 'true';
+    const { svc, emit, events } = stopSetup();
+    await svc.onStopMoved('u', 'a', 'conn', widen, emit, NOW);
+    expect(events.map((e) => e.type)).toEqual(['E1_STOP_WIDENED']);
+  });
+
+  it('stop d’entrée (même sens que la position), rapprochement, compte démo : rien', async () => {
+    const a = stopSetup();
+    expect(await a.svc.onStopMoved('u', 'a', 'conn', { ...widen, action: 'Buy' }, a.emit, NOW)).toBe(false);
+    expect(await a.svc.onStopMoved('u', 'a', 'conn', { ...widen, prevStop: 21_496, nextStop: 21_498 }, a.emit, NOW)).toBe(false);
+    const demo = stopSetup({ demo: true });
+    expect(await demo.svc.onStopMoved('u', 'a', 'conn', widen, demo.emit, NOW)).toBe(false);
+    expect([...a.created, ...demo.created]).toEqual([]);
+  });
+
+  it('BEHAVIOR_ALERTS_RECORD=false coupe tout', async () => {
+    process.env['BEHAVIOR_ALERTS_RECORD'] = 'false';
+    const { svc, emit, created } = stopSetup();
+    expect(await svc.onStopMoved('u', 'a', 'conn', widen, emit, NOW)).toBe(false);
+    expect(created).toEqual([]);
   });
 });

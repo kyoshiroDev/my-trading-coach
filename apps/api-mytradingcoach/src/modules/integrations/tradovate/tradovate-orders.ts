@@ -141,6 +141,31 @@ export function applyOrderStrategyLink(book: OrderBook, entity: TradovateOrderSt
   if (finite(entity.id)) book.links.set(entity.id, orderId);
 }
 
+/** Déplacement d'un ordre stop de sortie (#672) : ancien et nouveau prix de déclenchement. */
+export interface StopVersionChange {
+  orderId: number;
+  contractId: number;
+  action: OrderAction;
+  prevStop: number;
+  nextStop: number;
+}
+
+/**
+ * À appeler AVANT `applyOrderVersion` : la version précédente est encore dans le carnet. Renvoie le
+ * déplacement si l'ordre est un stop actif connu dont le prix change ; sinon `null` (première version
+ * vue, version plus ancienne rejouée, ordre limite, prix inchangé).
+ */
+export function stopVersionChange(book: OrderBook, entity: TradovateOrderVersionEntity): StopVersionChange | null {
+  if (!finite(entity.orderId)) return null;
+  const order = book.orders.get(entity.orderId);
+  const prev = book.versions.get(entity.orderId);
+  if (!order || !prev || !finite(order.contractId) || (order.action !== 'Buy' && order.action !== 'Sell')) return null;
+  if (finite(prev.id) && finite(entity.id) && prev.id >= entity.id) return null;
+  if (!entity.orderType || !STOP_TYPES.has(entity.orderType) || !STOP_TYPES.has(prev.orderType ?? '')) return null;
+  if (!finite(prev.stopPrice) || !finite(entity.stopPrice) || prev.stopPrice === entity.stopPrice) return null;
+  return { orderId: entity.orderId, contractId: order.contractId, action: order.action, prevStop: prev.stopPrice, nextStop: entity.stopPrice };
+}
+
 /** Nouvelle version d'un ordre : seule la plus récente (id le plus grand) est gardée. */
 export function applyOrderVersion(book: OrderBook, entity: TradovateOrderVersionEntity): void {
   if (!finite(entity.orderId)) return;

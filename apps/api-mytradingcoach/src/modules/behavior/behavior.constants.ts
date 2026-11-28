@@ -127,3 +127,13 @@ export const PRESSURE_DAILY_LOSS: readonly { above: number; points: number }[] =
 /** Règle du plan dépassée (taille) ou limite de positions déclarée par le trader dépassée. */
 export const PRESSURE_OVER_PLAN_POINTS = 30;
 export const PRESSURE_OVER_LIMIT_POINTS = 15;
+
+// ── E1 stop éloigné (#672) ────────────────────────────────────────────────────
+
+/**
+ * Écart minimal (ticks) entre l'ancien et le nouveau stop pour signaler un éloignement : en dessous,
+ * un glissement d'un tick (stop suiveur, clic imprécis) n'est pas un geste.
+ */
+export const E1_MIN_TICKS = 2;
+/** Une alerte E1 par position : clé gardée le temps d'une séance (comme `behavior:pos`). */
+export const E1_ONCE_TTL_S = 12 * 3600;

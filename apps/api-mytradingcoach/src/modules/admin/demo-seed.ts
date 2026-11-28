@@ -16,6 +16,7 @@ import { releaseGap } from '../eco-calendar/eco-calendar.gap';
 import { seedDemoPush } from './demo-data/push';
 import { DEMO_INCIDENT_ANALYSIS, LOST_DEMO_ACCOUNTS, buildLostDemoIncident, buildLostDemoTrades } from './demo-data/lost-accounts';
 import { newsShieldExample } from './demo-data/news-shield-example';
+import { stopWidenedExample } from './demo-data/stop-widened-example';
 import { newsWindowStats } from '../debrief/debrief-news-window';
 
 /**
@@ -208,6 +209,18 @@ export async function seedTradingData(
       data: {
         userId: user.id, accountId: accountIdByKey.get('apex')!, tradeDay: new Date(`${tradingDay(a.createdAt)}T00:00:00.000Z`),
         type: a.type, severity: a.severity, message: a.message, context: a.context, createdAt: a.createdAt,
+      },
+    });
+  }
+
+  // Stop éloigné (#672) : alerte E1 sur le dernier trade NQ perdant de l'Apex, invisible avant #671.
+  const stopExample = stopWidenedExample(days);
+  if (stopExample) {
+    const a = stopExample.alert;
+    await prisma.behaviorAlert.create({
+      data: {
+        userId: user.id, accountId: accountIdByKey.get('apex')!, tradeDay: new Date(`${tradingDay(a.createdAt)}T00:00:00.000Z`),
+        type: a.type, severity: a.severity, message: a.message, context: a.context as Prisma.InputJsonValue, createdAt: a.createdAt,
       },
     });
   }

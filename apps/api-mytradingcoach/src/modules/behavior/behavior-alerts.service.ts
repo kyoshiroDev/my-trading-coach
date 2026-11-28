@@ -7,7 +7,10 @@ import { AccountsService } from '../accounts/accounts.service';
 import { tradingDay } from '../accounts/account-rules';
 import { activeSessionWhere } from '../session/active-session';
 import { openPositionsKey, parseOpenPositions } from '../integrations/tradovate/tradovate-open-positions';
-import { ANTI_SPAM_MS } from './behavior.constants';
+import { ANTI_SPAM_MS, E1_ONCE_TTL_S } from './behavior.constants';
+import { stopWidenedDraft, stopWidening } from './behavior-stop';
+import { getTickSize } from '../trades/instruments.const';
+import type { StopVersionChange } from '../integrations/tradovate/tradovate-orders';
 import { BEHAVIOR_TRADE_SELECT, BehaviorBaselineService, toBehaviorTrade } from './behavior-baseline.service';
 import { type BehaviorAlertDraft, type EntryContext, evaluateEntry } from './behavior-detectors';
 import { type SeenPositions, newEntries, snapshot } from './behavior-entries';
@@ -25,6 +28,8 @@ const SEEN_TTL_S = 12 * 3600;
 
 export const seenKey = (accountId: string) => `behavior:pos:${accountId}`;
 const spamKey = (accountId: string, day: string, type: string) => `behavior:spam:${accountId}:${day}:${type}`;
+/** E1 (#672) : une alerte par position (compte, contrat, ouverture). */
+export const stopOnceKey = (accountId: string, contractId: number, opened: string) => `behavior:stop:${accountId}:${contractId}:${opened}`;
 
 /** Enregistrement des alertes : actif sauf `BEHAVIOR_ALERTS_RECORD=false` (interrupteur d'urgence). */
 export const behaviorAlertsRecordEnabled = () => process.env['BEHAVIOR_ALERTS_RECORD'] !== 'false';
@@ -150,6 +155,51 @@ export class BehaviorAlertsService implements OnModuleDestroy {
       }
     }
     return recorded;
+  }
+
+  /**
+   * E1 « stop éloigné » (#672) : appelé par le WebSocket Tradovate quand un ordre stop change de prix
+   * (avant que la nouvelle version remplace l'ancienne). Lit la position du contrat en Redis (aucun
+   * appel Tradovate), évalue le détecteur pur, enregistre une fois par position. Silencieux comme les
+   * autres (`BEHAVIOR_ALERTS_UI`). Best-effort : un échec est journalisé, jamais propagé.
+   */
+  async onStopMoved(userId: string, accountId: string, connectionId: string, change: StopVersionChange, emit: BehaviorAlertEmit, now = new Date()): Promise<boolean> {
+    if (!behaviorAlertsRecordEnabled()) return false;
+    try {
+      const state = parseOpenPositions(await this.redis.client.get(openPositionsKey(connectionId)));
+      // Stop de SORTIE : vente pour un LONG, achat pour un SHORT, sur le même contrat.
+      const side = change.action === 'Sell' ? 'LONG' : 'SHORT';
+      const pos = state?.positions.find((p) => p.contractId === change.contractId && p.side === side);
+      if (!pos || pos.entryPrice == null) return false;
+      const tickSize = getTickSize(pos.asset);
+      if (!tickSize) return false;
+      const w = stopWidening({ side, entryPrice: pos.entryPrice, prevStop: change.prevStop, nextStop: change.nextStop, tickSize });
+      if (!w) return false;
+      const user = await this.prisma.user.findUnique({ where: { id: userId }, select: { isDemo: true } });
+      if (!user || user.isDemo) return false;
+      // Une fois par position : un renfort (prix moyen modifié) garde la même ouverture.
+      const opened = pos.since ?? String(pos.entryPrice);
+      const ok = await this.redis.client.set(stopOnceKey(accountId, change.contractId, opened), '1', 'EX', E1_ONCE_TTL_S, 'NX');
+      if (ok !== 'OK') return false;
+      const draft = stopWidenedDraft(pos.asset, w, {
+        side, entryPrice: pos.entryPrice, prevStop: change.prevStop, nextStop: change.nextStop, quantity: pos.quantity,
+      });
+      const day = tradingDay(now);
+      const session = await this.prisma.tradeSession.findFirst({ where: activeSessionWhere(userId), orderBy: { startedAt: 'desc' }, select: { id: true } });
+      const row = await this.prisma.behaviorAlert.create({
+        data: {
+          userId, accountId, tradeDay: new Date(`${day}T00:00:00.000Z`), sessionId: session?.id ?? null,
+          type: draft.type, severity: draft.severity, message: draft.message,
+          context: draft.context as Prisma.InputJsonValue,
+        },
+        select: { id: true },
+      });
+      if (behaviorAlertsUiEnabled()) emit('behavior:alert', { ...draft, id: row.id, accountId });
+      return true;
+    } catch (err: unknown) {
+      this.logger.warn(`Stop éloigné non évalué (compte ${accountId}) : ${err instanceof Error ? err.message : 'Error'}`);
+      return false;
+    }
   }
 
   /** Séance en cours (positions clôturées du jour), référence, règles du plan relié. */
