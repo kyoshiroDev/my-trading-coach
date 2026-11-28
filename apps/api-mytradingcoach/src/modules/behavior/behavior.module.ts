@@ -7,6 +7,7 @@ import { NewsShieldService } from './news-shield.service';
 import { BehaviorController } from './behavior.controller';
 import { BehaviorMutesService } from './behavior-mutes.service';
 import { BehaviorUiGuard } from './behavior-ui.guard';
+import { BehaviorHistoryService } from './behavior-history.service';
 
 /**
  * Détecteurs de comportement (#602, phase 1) : référence personnelle et moteur d'alertes.
@@ -17,7 +18,7 @@ import { BehaviorUiGuard } from './behavior-ui.guard';
   // TraderPushModule : push des alertes affichées (#666).
   imports: [AccountsModule, TraderPushModule],
   controllers: [BehaviorController],
-  providers: [BehaviorBaselineService, BehaviorAlertsService, NewsShieldService, BehaviorMutesService, BehaviorUiGuard],
+  providers: [BehaviorBaselineService, BehaviorAlertsService, NewsShieldService, BehaviorMutesService, BehaviorHistoryService, BehaviorUiGuard],
   exports: [BehaviorBaselineService, BehaviorAlertsService, NewsShieldService, BehaviorMutesService],
 })
 export class BehaviorModule {}

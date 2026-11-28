@@ -108,3 +108,16 @@ describe('/behavior/mutes', () => {
     expect((await call('/mutes', tokens.demo, { method: 'POST', body: JSON.stringify({ detector: 'C1_LOSS_STREAK' }) })).status).toBe(403);
   });
 });
+
+describe('GET /behavior/alerts', () => {
+  it('flag éteint : 404 ; gratuit : 403 ; période de plus de 31 jours : 400 ; Premium : liste', async () => {
+    const q = '?from=2026-11-23&to=2026-11-29';
+    expect((await call(`/alerts${q}`, tokens.premium)).status).toBe(404);
+    process.env['BEHAVIOR_ALERTS_UI'] = 'true';
+    expect((await call(`/alerts${q}`, tokens.free)).status).toBe(403);
+    expect((await call('/alerts?from=2026-10-01&to=2026-11-29', tokens.premium)).status).toBe(400);
+    const res = await call(`/alerts${q}`, tokens.premium);
+    expect(res.status).toBe(200);
+    expect(((await res.json()) as { data: unknown[] }).data).toEqual([]);
+  });
+});
