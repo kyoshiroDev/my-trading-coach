@@ -14,7 +14,7 @@
       "quantower"
     ]
   },
-  "verified_at": "2026-11-23",
+  "verified_at": "2026-11-28",
   "plans": [
     {
       "id": "myfundedfutures-rapid-25k",
@@ -750,7 +750,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 52100,
-            "notes": "Payout possible 14 jours calendaires après le premier trade ET buffer franchi (52100 $). Retrait unique possible avant le buffer complet : jusqu'à 60 % des profits (minimum 1 000 $). Plafond 100 000 $ par utilisateur. Passage en live étudié après 3 payouts consécutifs."
+            "notes": "Payout possible 14 jours calendaires après le premier trade ET buffer franchi (52100 $). Plafond 100 000 $ par utilisateur. Passage en live étudié après 3 payouts consécutifs."
           }
         }
       ],
@@ -763,7 +763,7 @@
         "https://help.myfundedfutures.com/en/articles/9558251-permitted-times-to-trade"
       ],
       "needs_review": false,
-      "notes": "Activité : au moins un trade tous les 7 jours calendaires. Plan Pro refondu (article « Comprehensive Look into Redesigned Pro Plan », relu le 2026-10-22) : les comptes Pro achetés avant la refonte gardent les anciennes règles (« Accounts on the old Pro products keep every old rule »), dont 5 / 10 / 15 contrats en Sim Funded."
+      "notes": "Activité : au moins un trade tous les 7 jours calendaires. Plan Pro refondu (article « Comprehensive Look into Redesigned Pro Plan », relu le 2026-10-22) : les comptes Pro achetés avant la refonte gardent les anciennes règles (« Accounts on the old Pro products keep every old rule »), dont 5 / 10 / 15 contrats en Sim Funded. Depuis le 23/11/2026 : un seul compte Sim Funded Pro actif par taille (50K, 100K et 150K peuvent l'être en même temps) (article « Comprehensive Look into Redesigned Pro Plan », relu le 2026-11-28)."
     },
     {
       "id": "myfundedfutures-pro-100k",
@@ -857,7 +857,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 103100,
-            "notes": "Payout possible 14 jours calendaires après le premier trade ET buffer franchi (103100 $). Retrait unique possible avant le buffer complet : jusqu'à 60 % des profits (minimum 1 000 $). Plafond 100 000 $ par utilisateur. Passage en live étudié après 3 payouts consécutifs."
+            "notes": "Payout possible 14 jours calendaires après le premier trade ET buffer franchi (103100 $). Plafond 100 000 $ par utilisateur. Passage en live étudié après 3 payouts consécutifs."
           }
         }
       ],
@@ -870,7 +870,7 @@
         "https://help.myfundedfutures.com/en/articles/9558251-permitted-times-to-trade"
       ],
       "needs_review": false,
-      "notes": "Activité : au moins un trade tous les 7 jours calendaires. Plan Pro refondu (article « Comprehensive Look into Redesigned Pro Plan », relu le 2026-10-22) : les comptes Pro achetés avant la refonte gardent les anciennes règles (« Accounts on the old Pro products keep every old rule »), dont 5 / 10 / 15 contrats en Sim Funded."
+      "notes": "Activité : au moins un trade tous les 7 jours calendaires. Plan Pro refondu (article « Comprehensive Look into Redesigned Pro Plan », relu le 2026-10-22) : les comptes Pro achetés avant la refonte gardent les anciennes règles (« Accounts on the old Pro products keep every old rule »), dont 5 / 10 / 15 contrats en Sim Funded. Depuis le 23/11/2026 : un seul compte Sim Funded Pro actif par taille (50K, 100K et 150K peuvent l'être en même temps) (article « Comprehensive Look into Redesigned Pro Plan », relu le 2026-11-28)."
     },
     {
       "id": "myfundedfutures-pro-150k",
@@ -964,7 +964,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 154600,
-            "notes": "Payout possible 14 jours calendaires après le premier trade ET buffer franchi (154600 $). Retrait unique possible avant le buffer complet : jusqu'à 60 % des profits (minimum 1 000 $). Plafond 100 000 $ par utilisateur. Passage en live étudié après 3 payouts consécutifs."
+            "notes": "Payout possible 14 jours calendaires après le premier trade ET buffer franchi (154600 $). Plafond 100 000 $ par utilisateur. Passage en live étudié après 3 payouts consécutifs."
           }
         }
       ],
@@ -977,7 +977,110 @@
         "https://help.myfundedfutures.com/en/articles/9558251-permitted-times-to-trade"
       ],
       "needs_review": false,
-      "notes": "Activité : au moins un trade tous les 7 jours calendaires. Plan Pro refondu (article « Comprehensive Look into Redesigned Pro Plan », relu le 2026-10-22) : les comptes Pro achetés avant la refonte gardent les anciennes règles (« Accounts on the old Pro products keep every old rule »), dont 5 / 10 / 15 contrats en Sim Funded."
+      "notes": "Activité : au moins un trade tous les 7 jours calendaires. Plan Pro refondu (article « Comprehensive Look into Redesigned Pro Plan », relu le 2026-10-22) : les comptes Pro achetés avant la refonte gardent les anciennes règles (« Accounts on the old Pro products keep every old rule »), dont 5 / 10 / 15 contrats en Sim Funded. Depuis le 23/11/2026 : un seul compte Sim Funded Pro actif par taille (50K, 100K et 150K peuvent l'être en même temps) (article « Comprehensive Look into Redesigned Pro Plan », relu le 2026-11-28)."
+    },
+    {
+      "id": "myfundedfutures-pro-oneday-50k",
+      "plan_name": "Pro One Day",
+      "account_size": 50000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": null,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Prix non publié au 28/11/2026 (absent de la page du plan Pro et de l'article)."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 4000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 52100,
+            "locked_floor": 50100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Max Loss EOD : suit le plus haut solde de fin de journée et se verrouille à capital + 100 $. Les pertes latentes comptent : une position ouverte qui passe sous le seuil fait échouer l'évaluation."
+          },
+          "consistency": null,
+          "min_trading_days": 1,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 3,
+            "micros": 30,
+            "scaling": false,
+            "tiers": null,
+            "notes": "3 mini / 30 micro en évaluation (tableau « Pro 50k - One Day », article relu le 2026-11-28)."
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Trading de 18:00 ET à 16:10 ET ; positions ouvertes fermées automatiquement à 16:10 ET les jours normaux (sans échec). Jours fériés : pas de fermeture automatique, rester en position à la clôture = échec. News Tier 1 autorisées en évaluation."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": null,
+            "locked_floor": 50100,
+            "locks_on_first_payout": "approval",
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Trailing EOD sur le plus haut de fin de journée. Verrouillage APRÈS LE PREMIER PAYOUT approuvé, à capital + 100 $ (50100 $), puis statique. Avant le premier payout, il continue de suivre."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 3,
+            "micros": 3,
+            "scaling": false,
+            "tiers": null,
+            "notes": "« 3 mini / 3 micro » en Sim Funded, comme le Pro 50K (chiffre publié repris tel quel)."
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Trading de 18:00 ET à 16:10 ET ; positions fermées automatiquement à 16:10 ET les jours normaux. Jours fériés : pas de fermeture automatique. News Tier 1 (FOMC, minutes FOMC, emploi, CPI ; EIA et rapports agricoles selon les produits) interdites : aucune position ni ordre de 2 minutes avant à 2 minutes après."
+          },
+          "payout": {
+            "min_days": null,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.8,
+            "min_amount": 1000,
+            "max_amount": 100000,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 52100,
+            "notes": "Payout possible 14 jours calendaires après le premier trade ET buffer franchi (52100 $). Plafond 100 000 $ par utilisateur. Passage en live étudié après 3 payouts consécutifs."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://myfundedfutures.com/plans/pro",
+        "https://help.myfundedfutures.com/en/articles/17573707-comprehensive-look-into-redesigned-pro-plan",
+        "https://help.myfundedfutures.com/en/articles/8348565-end-of-day-eod-drawdown-explained",
+        "https://help.myfundedfutures.com/en/articles/12802721-intraday-drawdown-explained",
+        "https://help.myfundedfutures.com/en/articles/8230009-news-trading-policy",
+        "https://help.myfundedfutures.com/en/articles/9558251-permitted-times-to-trade"
+      ],
+      "needs_review": false,
+      "notes": "Variante « One Day » du Pro 50K (article « Comprehensive Look into Redesigned Pro Plan », relu le 2026-11-28) : objectif 4 000 $, MLL EOD 2 000 $, pas de DLL, pas de consistency, 1 jour minimum, 3 / 30 contrats. Le Sim Funded suit les règles du Pro 50K (« Pro 50k One Day account follow the same rules as the Pro 50k »). Depuis le 23/11/2026 : un seul compte Sim Funded Pro actif par taille (50K, 100K et 150K peuvent l'être en même temps) (article « Comprehensive Look into Redesigned Pro Plan », relu le 2026-11-28)."
     },
     {
       "id": "myfundedfutures-builder-25k",
