@@ -1,4 +1,4 @@
-import { test, expect, type Locator } from '@playwright/test';
+import { test, expect, type Locator, type Page } from '@playwright/test';
 
 /**
  * Débriefs passés (#959) : sélecteur de semaine de l'écran Débrief en petite largeur. Parcours démo
@@ -6,7 +6,9 @@ import { test, expect, type Locator } from '@playwright/test';
  * PAGE (boîtes mesurées) et changement de semaine réel, pas de capture.
  */
 
-type Sized = { scrollWidth: number; clientWidth: number };
+type Doc = { document: { documentElement: { scrollWidth: number } } };
+/** Largeur réelle de la page (le projet e2e n'a pas les types DOM : document typé à la main). */
+const pageWidth = (page: Page) => page.evaluate(() => (globalThis as unknown as Doc).document.documentElement.scrollWidth);
 
 async function box(l: Locator) {
   const b = await l.boundingBox();
@@ -30,10 +32,9 @@ for (const width of [360, 390]) {
       expect(s.x + s.width, 'sélecteur hors écran').toBeLessThanOrEqual(width);
       // 16 px sous 768 px (styles.css) : pas de zoom iOS au toucher.
       expect(await select.evaluate((el) => getComputedStyle(el as unknown as Element).fontSize)).toBe('16px');
-      // Largeur réelle de la page (le projet e2e n'a pas les types DOM : élément typé à la main).
-      expect(await page.locator('html').evaluate((el) => (el as unknown as Sized).scrollWidth)).toBeLessThanOrEqual(width);
+      expect(await pageWidth(page)).toBeLessThanOrEqual(width);
 
-      const title = page.locator('.week-title');
+      const title = page.getByTestId('debrief-week-title');
       const before = (await title.textContent())?.trim();
       const values = await select.locator('option').evaluateAll((os) => os.map((o) => (o as unknown as { value: string }).value));
       expect(values.length, 'démo : plusieurs semaines attendues').toBeGreaterThan(1);
@@ -41,7 +42,7 @@ for (const width of [360, 390]) {
       await select.selectOption(values.find((v) => v !== current)!);
       await expect(title).not.toHaveText(before ?? '');
       // Après le changement, toujours rien hors écran.
-      expect(await page.locator('html').evaluate((el) => (el as unknown as Sized).scrollWidth)).toBeLessThanOrEqual(width);
+      expect(await pageWidth(page)).toBeLessThanOrEqual(width);
     });
   });
 }
