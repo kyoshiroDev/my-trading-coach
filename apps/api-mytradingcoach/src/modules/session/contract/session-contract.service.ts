@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { AccountStatus, Prisma, SessionStatus } from '@prisma/client';
+import { Prisma, SessionStatus } from '@prisma/client';
 import {
   SESSION_CONTRACT_BOUNDS,
   SESSION_CONTRACT_RULES,
@@ -41,7 +41,7 @@ export class SessionContractService {
     // sinon l'actif le plus récent), sans jamais le créer sur un GET (démo comprise).
     const resolved = accountId && accountId !== 'all'
       ? (await this.accounts.accountWhere(userId, accountId)).accountId
-      : await this.defaultAccountId(userId);
+      : await this.accounts.findDefaultAccountId(userId);
     // Aucun compte encore (premier démarrage) : préremplissage du profil, le compte sera créé au démarrage.
     const [last, user] = await Promise.all([
       resolved
@@ -81,14 +81,6 @@ export class SessionContractService {
       firmDailyLossLimit,
       looserThanFirm: firmDailyLossLimit != null && rules.maxDailyLoss != null && rules.maxDailyLoss > firmDailyLossLimit,
     };
-  }
-
-  private async defaultAccountId(userId: string): Promise<string | undefined> {
-    const where = { userId, status: AccountStatus.ACTIVE };
-    const principal = await this.prisma.tradingAccount.findFirst({ where: { ...where, label: 'Compte principal' }, select: { id: true } });
-    if (principal) return principal.id;
-    const recent = await this.prisma.tradingAccount.findFirst({ where, orderBy: { createdAt: 'desc' }, select: { id: true } });
-    return recent?.id;
   }
 
   /**

@@ -44,6 +44,7 @@ function setup(o: { contract?: object | null; status?: 'ACTIVE' | 'CLOSED'; last
   const accounts = {
     accountWhere: vi.fn(async () => ({ accountId: 'acc' })),
     ensureDefaultAccountId: vi.fn(async () => 'acc'),
+    findDefaultAccountId: vi.fn(async () => 'acc' as string | undefined),
     // Limite de Mes comptes (palier déjà résolu par AccountsService), jamais recalculée par le contrat.
     list: vi.fn(async () => [{ id: 'acc', metrics: { dailyLoss: o.firmLimit != null ? { limit: o.firmLimit } : null } }]),
   };
@@ -73,11 +74,11 @@ describe('SessionContractService (#667)', () => {
   });
 
   it('préremplissage sans compte choisi : compte par défaut lu, jamais créé ; aucun compte : profil, compte à null', async () => {
-    const { svc, prisma } = setup();
+    const { svc } = setup();
     const accounts = (svc as unknown as { accounts: { ensureDefaultAccountId: ReturnType<typeof vi.fn> } }).accounts;
     await svc.defaults('u', undefined, NOW);
     expect(accounts.ensureDefaultAccountId).not.toHaveBeenCalled();
-    prisma.tradingAccount.findFirst.mockResolvedValue(null as never);
+    (svc as unknown as { accounts: { findDefaultAccountId: ReturnType<typeof vi.fn> } }).accounts.findDefaultAccountId.mockResolvedValue(undefined);
     expect(await svc.defaults('u', undefined, NOW)).toMatchObject({ accountId: null, source: 'profile', firmDailyLossLimit: null });
   });
 
