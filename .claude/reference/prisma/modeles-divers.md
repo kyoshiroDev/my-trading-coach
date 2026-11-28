@@ -106,6 +106,7 @@ worker cron seulement. `DELETE … WHERE id IN (SELECT id … LIMIT 5000)` en bo
 Une ligne par séance (`sessionId @id`, cascade avec la séance et l'utilisateur, index `[userId, createdAt]` pour le
 préremplissage « dernière séance du compte »). Règles typées et nullables (`maxDailyLoss Float?` en devise du compte,
 `maxConsecutiveLosses`, `maxTrades`, `newsMinutes`), `allowedAssets String[]` (racines en majuscules, vide = tous),
-`edits Json` (trace `{ at, field, from, to }`, 50 au plus). Rien d'évalué n'est stocké. Migration additive
+`edits Json` (trace `{ at, field, from, to }`, 50 au plus). Rien d'évalué n'est stocké. La perte max se juge sur la
+journée de trading du compte (les séances précédentes du jour donnent le point de départ), pas sur la seule séance. Migration additive
 `20261128140000_session_contract`. Pas de doublon de `User.tradesPerDayMax` : il préremplit le premier contrat.
 

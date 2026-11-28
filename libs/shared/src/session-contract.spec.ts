@@ -76,6 +76,17 @@ describe('evaluateContract (#667)', () => {
     expect(r).toMatchObject({ status: 'breached', breachTradeId: 'b', after: { count: 1, pnl: 29 }, measure: -72.1 });
   });
 
+  it('perte max DU JOUR : la 2ᵉ séance part du cumul de la 1ʳᵉ (pas de remise à zéro)', () => {
+    const trades: ContractTrade[] = [
+      { id: 'x', asset: 'MNQ', tradedAt: at('16:00'), pnl: -40 },
+      { id: 'y', asset: 'MNQ', tradedAt: at('16:10'), pnl: -30 },
+    ];
+    const r = evaluateContract({ ...none, maxDailyLoss: 300 }, trades, undefined, { dayPnlBefore: -250 }).rules[0];
+    expect(r).toMatchObject({ status: 'breached', breachTradeId: 'y', after: { count: 0, pnl: 0 }, measure: -320 });
+    // Sans séance précédente : tenue.
+    expect(evaluateContract({ ...none, maxDailyLoss: 300 }, trades).rules[0]).toMatchObject({ status: 'respected', measure: -70 });
+  });
+
   it('actifs : un trade hors liste ; liste vide = tous', () => {
     const r = evaluateContract({ ...none, allowedAssets: ['MNQ'] }, SCENARIO).rules[0];
     expect(r).toMatchObject({ status: 'breached', breachTradeId: 't3', measure: 5 });

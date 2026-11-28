@@ -103,4 +103,29 @@ describe('SessionContractService (#667)', () => {
     const view = await svc.update('u', 's', { maxTrades: 2 }, NOW);
     expect(view.edits).toEqual([{ at: NOW.toISOString(), field: 'maxTrades', from: null, to: 2 }]);
   });
+
+  it('évaluation : perte max du jour avec les trades du compte d’avant la séance, journée CME (bascule à 17 h Chicago)', async () => {
+    process.env['SESSION_CONTRACT_ENABLED'] = 'true';
+    // Séance démarrée à 18 h 30 ET (23 h 30 UTC) : la journée CME a commencé à 17 h Chicago (23 h UTC).
+    const startedAt = new Date('2026-11-27T23:30:00.000Z');
+    const row = { sessionId: 's', userId: 'u', ...EMPTY, maxDailyLoss: 300, edits: [], createdAt: startedAt, updatedAt: startedAt };
+    const trades = [
+      { id: 'veille', pnl: -500, commission: 0, tradedAt: new Date('2026-11-27T22:30:00.000Z') }, // journée précédente
+      { id: 'avant', pnl: -250, commission: 2, tradedAt: new Date('2026-11-27T23:10:00.000Z') }, // même journée, autre séance
+      { id: 's1', asset: 'MNQ', pnl: -60, commission: 0, tradedAt: new Date('2026-11-27T23:40:00.000Z') },
+    ];
+    const prisma = {
+      sessionContract: { findUnique: vi.fn(async () => row) },
+      trade: {
+        findMany: vi.fn(async ({ where }: { where: { sessionId?: string; tradedAt: { gte: Date; lt?: Date } } }) =>
+          where.sessionId
+            ? trades.filter((t) => t.id === 's1')
+            : trades.filter((t) => t.tradedAt >= where.tradedAt.gte && (!where.tradedAt.lt || t.tradedAt < where.tradedAt.lt))),
+      },
+    };
+    const svc = new SessionContractService(prisma as never, {} as never);
+    const out = await svc.forSession('u', { id: 's', accountId: 'acc', startedAt, endedAt: null }, NOW);
+    expect(out?.evaluation.rules[0]).toMatchObject({ rule: 'maxDailyLoss', status: 'breached', breachTradeId: 's1', measure: -312 });
+  });
 });
+

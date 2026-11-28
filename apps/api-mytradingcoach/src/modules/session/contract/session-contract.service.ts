@@ -4,6 +4,8 @@ import {
   SESSION_CONTRACT_BOUNDS,
   SESSION_CONTRACT_RULES,
   evaluateContract,
+  netPnl,
+  roundCents,
   subscriptionState,
   type SessionContract,
   type SessionContractDefaults,
@@ -17,6 +19,7 @@ import { highImpactEventsBetween } from '../../behavior/high-impact-events';
 import { newsShieldMinutes } from '../../behavior/behavior-news';
 import type { SessionContractDto } from '../dto/session-contract.dto';
 import { sessionContractEnabled } from './session-contract.flag';
+import { tradingDayStart } from '../active-session';
 import { EMPTY, editsBetween, mergeRules, normalizeAssets, rulesOf, toView } from './session-contract.view';
 
 export { editsBetween, mergeRules, normalizeAssets, toView } from './session-contract.view';
@@ -153,7 +156,27 @@ export class SessionContractService {
       orderBy: { tradedAt: 'asc' },
     });
     const newsRule = row.newsMinutes != null || contract.edits.some((e) => e.field === 'newsMinutes');
-    const events = newsRule ? await highImpactEventsBetween(this.prisma, session.startedAt, session.endedAt ?? now) : undefined;
-    return { contract, evaluation: evaluateContract(contract, trades, events) };
+    const [events, dayPnlBefore] = await Promise.all([
+      newsRule ? highImpactEventsBetween(this.prisma, session.startedAt, session.endedAt ?? now) : Promise.resolve(undefined),
+      this.dayPnlBefore(userId, session),
+    ]);
+    return { contract, evaluation: evaluateContract(contract, trades, events, { dayPnlBefore }) };
+  }
+
+  /**
+   * P&L net réalisé du compte dans la même journée de trading CME, AVANT le démarrage de la séance (autre
+   * séance du jour) : point de départ de la perte max du jour. Ces trades ne sont pas jugés par le contrat.
+   */
+  private async dayPnlBefore(userId: string, session: { accountId: string | null; startedAt: Date }): Promise<number> {
+    const before = await this.prisma.trade.findMany({
+      where: {
+        userId,
+        pnl: { not: null },
+        tradedAt: { gte: tradingDayStart(session.startedAt), lt: session.startedAt },
+        ...(session.accountId ? { accountId: session.accountId } : {}),
+      },
+      select: { pnl: true, commission: true },
+    });
+    return roundCents(before.reduce((sum, t) => sum + (netPnl(t) ?? 0), 0));
   }
 }

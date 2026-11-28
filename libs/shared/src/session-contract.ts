@@ -58,13 +58,17 @@ const list = (v: SessionContractValue) => (Array.isArray(v) ? v : []);
 
 /**
  * Évalue le contrat sur les trades CLÔTURÉS de la séance (ouverts ignorés), triés par heure. `events` :
- * annonces à fort impact de la journée (absent = règle des annonces sans objet).
+ * annonces à fort impact de la journée (absent = règle des annonces sans objet). `dayPnlBefore` : P&L net
+ * réalisé du même compte plus tôt dans la même journée de trading (autre séance) ; la perte max est celle
+ * DU JOUR, une nouvelle séance ne remet pas le compteur à zéro. Ces trades-là ne sont pas jugés.
  */
 export function evaluateContract(
   contract: SessionContractRules & { edits?: readonly SessionContractEdit[] },
   trades: readonly ContractTrade[],
   events?: readonly HighImpactEvent[],
+  opts: { dayPnlBefore?: number } = {},
 ): SessionContractEvaluation {
+  const dayStart = roundCents(opts.dayPnlBefore ?? 0);
   const closed = trades
     .filter((t) => t.pnl != null)
     .map((t) => ({ id: t.id, asset: t.asset, at: toDate(t.tradedAt), net: netPnl(t) ?? 0 }))
@@ -75,7 +79,7 @@ export function evaluateContract(
     if (!everSet(contract, rule)) continue;
     let breach = -1;
     let measure = 0;
-    let cum = 0;
+    let cum = dayStart;
     let worstStreak = 0;
     closed.forEach((t, i) => {
       const limit = ruleAt(contract, rule, t.at);

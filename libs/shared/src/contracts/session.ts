@@ -127,7 +127,7 @@ export interface SessionContractRuleResult {
   /** Trades clôturés APRÈS le trade fautif (celui-ci exclu), P&L net dans la devise du compte. */
   after: { count: number; pnl: number } | null;
   /**
-   * Mesure à afficher : trades de la séance, plus longue série de pertes, P&L net réalisé, trades sur un
+   * Mesure à afficher : trades de la séance, plus longue série de pertes, P&L net réalisé DU JOUR (séances précédentes du compte comprises), trades sur un
    * actif autorisé, trades dans la fenêtre d'une annonce.
    */
   measure: number;
