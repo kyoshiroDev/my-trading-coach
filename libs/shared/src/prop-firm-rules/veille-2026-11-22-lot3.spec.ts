@@ -32,9 +32,8 @@ const get = (id: string): Plan => {
 };
 
 describe('veille du 2026-11-22, lot 3', () => {
-  it('Apex relu en entier ; Lucid relu en partie, date inchangée', () => {
+  it('Apex relu en entier (Lucid, relu en partie ici, a été relu en entier le 2026-11-28, #858)', () => {
     expect((apex as Firm).verified_at).toBe('2026-11-22');
-    expect((lucid as Firm).verified_at).toBe('2026-10-22');
   });
 
   it.each([
@@ -56,7 +55,7 @@ describe('veille du 2026-11-22, lot 3', () => {
       const plan = get(`lucid-daily-${prefix}eod-funded-eod-${size}`);
       const [evalPhase, funded] = plan.phases;
       expect(plan.needs_review).toBe(true);
-      expect(plan.price.amount).toBeNull();
+      // Prix relevés le 2026-11-28 (#858) : voir veille-2026-11-28-lucid.spec.ts.
       expect(plan.configuration).toMatchObject({ daily_loss_limit: false, eval_drawdown: 'eod' });
       expect(evalPhase.profit_target).toBe(base.phases[0].profit_target);
       expect(evalPhase.max_drawdown).toEqual(base.phases[0].max_drawdown);

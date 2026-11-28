@@ -737,3 +737,11 @@ Catalogue à 355 plans (`prop-firms:validate`, après #1241 et #1238).
 - Nouveau champ de phase `profit_target_role: 'advance'` : l'objectif fait passer au palier suivant et ne conditionne pas le retrait. La progression suit alors le payout (5 jours gagnants avant chaque retrait).
 - Renseigné sur les 6 phases funded Trader Career Path (`earn2trade-tcp-{25k,50k,100k}` et `earn2trade-tcp-nov02-{25k,50k,100k}`). Sources : article « What is the withdrawal policy » (5 jours gagnants avant chaque retrait, aucune condition d'objectif) et page Trader Career Path (« Profit Target to Advance »). Montants inchangés.
 - Phidias Eval-to-Live garde l'objectif comme condition du versement (« Switch to Live ») : pas de champ. Gauntlet Mini funded : pas d'objectif.
+
+## Lucid relu en entier (#858, 2026-11-28)
+
+- **Prix** : configurateur de lucidtrading.com lu dans Chrome (page protégée hors navigateur). Les 68 configurations publiques ont maintenant un prix catalogue (avant coupon). Le site affiche un coupon de 30 % partout et garde le prix barré de base même quand une option ajoute des frais : le prix catalogue d'une configuration = prix avec coupon / 0,7 (vérifié à la main sur le 25K Pro : 116 $ → 81,20 $ ; sans DLL 137 $ → 95,90 $). Direct inchangé (329 / 515 / 700 / 836 $). LucidMaxx (sur invitation) inchangé.
+- **Payouts à la demande** : le configurateur lie l'option au DLL (Pro, Flex, Daily) : DLL actif ⇔ payout à la demande ; noté sur chaque plan.
+- **LucidPro** : buffer à garder après le payout (`safety_net_basis: after_payout`, retiré de #1320) : l'article LucidPro Payouts donne « Minimum Balance for $500 Payout » = buffer + 500 $.
+- **31 articles du centre d'aide** : `dateModified` inchangé depuis la veille précédente, aucune autre règle chiffrée modifiée. Contradictions de la source déjà notées et laissées telles quelles (DLL du 25K Pro, consistency d'éval Daily 40 % ou 50 %, base de la LucidScale).
+- **Hors de ce relevé** (suivi à part) : configurations Daily DLL + funded EOD vendues par le configurateur mais absentes du catalogue (8 plans) ; nouvelle structure live, étapes 2 et 3 de LucidMaxx, détails des payouts à la demande (fenêtre 18:00 à 15:45 ET, trading suspendu après la demande).

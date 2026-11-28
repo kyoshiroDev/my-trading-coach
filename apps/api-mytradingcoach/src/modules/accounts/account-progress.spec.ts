@@ -169,7 +169,8 @@ describe('Gain max du jour pour respecter la consistency (Premium, #370)', () =>
   });
 });
 
-const EXPECTED_AFTER_PAYOUT_PHASES = 112;
+// 112 au départ (#1228), + 8 phases funded LucidPro passées « après payout » le 2026-11-28 (#858).
+const EXPECTED_AFTER_PAYOUT_PHASES = 120;
 
 describe('montant minimum d’un retrait selon le sens du safety net (#1228)', () => {
   type CatalogPlan = { id: string; account_size: number; phases: (PropFirmPhaseRules & { starting_balance?: number | null })[] };
@@ -198,6 +199,12 @@ describe('montant minimum d’un retrait selon le sens du safety net (#1228)', (
     // Compte à 49 000 $ de départ pour une phase à 50 000 $ : 52 500 − 1 000 + 500 = 52 000.
     const r = computeProgress(input({ phase: ph, startingBalance: 49_000, phaseStartingBalance: 50_000, currentBalance: 52_000 }));
     expect(req(r, 'safety_net')).toMatchObject({ required: 52_000, met: true });
+  });
+
+  // #858 : « Minimum Balance for $500 Payout » = buffer + 500 $ (article LucidPro Payouts).
+  it('LucidPro 25K (après payout, relu le 2026-11-28) : buffer 26 100 $ + 500 $', () => {
+    expect(safety('lucid-pro-25k', 26_599)).toMatchObject({ required: 26_600, met: false });
+    expect(safety('lucid-pro-dll-25k', 26_600)).toMatchObject({ required: 26_600, met: true });
   });
 
   it('MyFundedFutures Rapid 50K (non classé, note ambiguë) : le net seul', () => {

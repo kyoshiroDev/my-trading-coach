@@ -401,8 +401,8 @@ describe('Apex et Lucid', () => {
     },
   );
 
-  it('Lucid : 365 $ sur le seul 150K Pro avec DLL', () => {
+  // Le 150K Pro sans DLL, laissé à null ici, a été relevé le 2026-11-28 (#858, veille-2026-11-28-lucid.spec.ts).
+  it('Lucid : 365 $ sur le 150K Pro avec DLL', () => {
     expect(get('lucid-pro-dll-150k').price.amount).toBe(365);
-    expect(get('lucid-pro-150k').price.amount).toBeNull();
   });
 });

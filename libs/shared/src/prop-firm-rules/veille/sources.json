@@ -2477,6 +2477,10 @@
       {
         "date": "2026-11-02",
         "modification": "150K Pro avec DLL : 365 $."
+      },
+      {
+        "date": "2026-11-28",
+        "modification": "Relecture complète (#858) : prix catalogue des 68 configurations publiques relevés sur le configurateur (avant coupon de 30 %) ; payouts à la demande liés au DLL ; Daily funded EOD : consistency 30 % ou 40 %."
       }
     ]
   },
@@ -2707,6 +2711,12 @@
     ],
     "firms": [
       "lucid"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-28",
+        "modification": "Relecture complète (#858) : aucune règle modifiée."
+      }
     ]
   },
   "https://support.lucidtrading.com/en/articles/11404728-other-trading-activities": {
@@ -2721,6 +2731,10 @@
       {
         "date": "2026-11-22",
         "modification": "Relecture (lot 3) : violation news → pas de payout à la demande pendant 30 jours → note LucidDaily."
+      },
+      {
+        "date": "2026-11-28",
+        "modification": "Relecture complète (#858) : aucune règle modifiée."
       }
     ]
   },
@@ -2731,6 +2745,12 @@
     ],
     "firms": [
       "lucid"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-28",
+        "modification": "Relecture complète (#858) : aucune règle modifiée."
+      }
     ]
   },
   "https://support.lucidtrading.com/en/articles/12890029-lucidpro-evaluation-account": {
@@ -2740,6 +2760,12 @@
     ],
     "firms": [
       "lucid"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-28",
+        "modification": "Relecture complète (#858) : aucune règle modifiée."
+      }
     ]
   },
   "https://support.lucidtrading.com/en/articles/12890069-lucidpro-funded-account": {
@@ -2749,6 +2775,12 @@
     ],
     "firms": [
       "lucid"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-28",
+        "modification": "Relecture complète (#858) : aucune règle modifiée."
+      }
     ]
   },
   "https://support.lucidtrading.com/en/articles/12890092-lucidpro-payouts": {
@@ -2758,6 +2790,12 @@
     ],
     "firms": [
       "lucid"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-28",
+        "modification": "Relecture complète (#858) : buffer à garder après le payout (Minimum Balance for $500 Payout = buffer + 500 $) → safety_net_basis after_payout sur LucidPro."
+      }
     ]
   },
   "https://support.lucidtrading.com/en/articles/12890109-lucidpro-consistency-percentage": {
@@ -2767,6 +2805,12 @@
     ],
     "firms": [
       "lucid"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-28",
+        "modification": "Relecture complète (#858) : aucune règle modifiée."
+      }
     ]
   },
   "https://support.lucidtrading.com/en/articles/12890122-lucidpro-daily-loss-limit": {
@@ -2776,6 +2820,12 @@
     ],
     "firms": [
       "lucid"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-28",
+        "modification": "Relecture complète (#858) : aucune règle modifiée."
+      }
     ]
   },
   "https://support.lucidtrading.com/en/articles/12890136-lucidpro-drawdown": {
@@ -2785,6 +2835,12 @@
     ],
     "firms": [
       "lucid"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-28",
+        "modification": "Relecture complète (#858) : aucune règle modifiée."
+      }
     ]
   },
   "https://support.lucidtrading.com/en/articles/12890148-luciddirect-funded-account": {
@@ -2794,6 +2850,12 @@
     ],
     "firms": [
       "lucid"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-28",
+        "modification": "Relecture complète (#858) : aucune règle modifiée."
+      }
     ]
   },
   "https://support.lucidtrading.com/en/articles/12890164-luciddirect-payout-objectives": {
@@ -2803,6 +2865,12 @@
     ],
     "firms": [
       "lucid"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-28",
+        "modification": "Relecture complète (#858) : aucune règle modifiée."
+      }
     ]
   },
   "https://support.lucidtrading.com/en/articles/12890178-luciddirect-consistency-percentage": {
@@ -2812,6 +2880,12 @@
     ],
     "firms": [
       "lucid"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-28",
+        "modification": "Relecture complète (#858) : aucune règle modifiée."
+      }
     ]
   },
   "https://support.lucidtrading.com/en/articles/12890185-luciddirect-daily-loss-limit": {
@@ -2821,6 +2895,12 @@
     ],
     "firms": [
       "lucid"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-28",
+        "modification": "Relecture complète (#858) : aucune règle modifiée."
+      }
     ]
   },
   "https://support.lucidtrading.com/en/articles/12890192-luciddirect-drawdown": {
@@ -2830,6 +2910,12 @@
     ],
     "firms": [
       "lucid"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-28",
+        "modification": "Relecture complète (#858) : aucune règle modifiée."
+      }
     ]
   },
   "https://support.lucidtrading.com/en/articles/12945790-lucidflex-evaluation-account": {
@@ -2839,6 +2925,12 @@
     ],
     "firms": [
       "lucid"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-28",
+        "modification": "Relecture complète (#858) : aucune règle modifiée."
+      }
     ]
   },
   "https://support.lucidtrading.com/en/articles/12945795-lucidflex-funded-account": {
@@ -2848,6 +2940,12 @@
     ],
     "firms": [
       "lucid"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-28",
+        "modification": "Relecture complète (#858) : aucune règle modifiée."
+      }
     ]
   },
   "https://support.lucidtrading.com/en/articles/12945796-lucidflex-payouts": {
@@ -2857,6 +2955,12 @@
     ],
     "firms": [
       "lucid"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-28",
+        "modification": "Relecture complète (#858) : aucune règle modifiée."
+      }
     ]
   },
   "https://support.lucidtrading.com/en/articles/12945805-lucidflex-consistency-percentage": {
@@ -2866,6 +2970,12 @@
     ],
     "firms": [
       "lucid"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-28",
+        "modification": "Relecture complète (#858) : aucune règle modifiée."
+      }
     ]
   },
   "https://support.lucidtrading.com/en/articles/12945808-lucidflex-scaling-plan": {
@@ -2875,6 +2985,12 @@
     ],
     "firms": [
       "lucid"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-28",
+        "modification": "Relecture complète (#858) : aucune règle modifiée."
+      }
     ]
   },
   "https://support.lucidtrading.com/en/articles/12945815-lucidflex-drawdown": {
@@ -2884,6 +3000,12 @@
     ],
     "firms": [
       "lucid"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-28",
+        "modification": "Relecture complète (#858) : aucune règle modifiée."
+      }
     ]
   },
   "https://support.lucidtrading.com/en/articles/15996664-luciddaily-evaluation": {
@@ -2893,6 +3015,12 @@
     ],
     "firms": [
       "lucid"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-28",
+        "modification": "Relecture complète (#858) : aucune règle modifiée."
+      }
     ]
   },
   "https://support.lucidtrading.com/en/articles/15997244-luciddaily-funded-account": {
@@ -2907,6 +3035,10 @@
       {
         "date": "2026-11-22",
         "modification": "Relecture (lot 3) : funded intraday par défaut, EOD en option → notes corrigées ; tailles et règles inchangées."
+      },
+      {
+        "date": "2026-11-28",
+        "modification": "Relecture complète (#858) : aucune règle modifiée."
       }
     ]
   },
@@ -2922,6 +3054,10 @@
       {
         "date": "2026-11-22",
         "modification": "Relecture (lot 3, #1218) : aucune règle modifiée."
+      },
+      {
+        "date": "2026-11-28",
+        "modification": "Relecture complète (#858) : aucune règle modifiée."
       }
     ]
   },
@@ -2932,6 +3068,12 @@
     ],
     "firms": [
       "lucid"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-28",
+        "modification": "Relecture complète (#858) : aucune règle modifiée."
+      }
     ]
   },
   "https://support.lucidtrading.com/en/articles/15998425-luciddaily-drawdown": {
@@ -2946,6 +3088,10 @@
       {
         "date": "2026-11-22",
         "modification": "Relecture (lot 3) : funded intraday par défaut, EOD en option → notes corrigées."
+      },
+      {
+        "date": "2026-11-28",
+        "modification": "Relecture complète (#858) : aucune règle modifiée."
       }
     ]
   },
@@ -2961,6 +3107,10 @@
       {
         "date": "2026-11-22",
         "modification": "Relecture (lot 3) : « Option 4 » DLL off + EOD en évaluation et en funded, consistency 30/40 % → 8 plans lucid-daily-*eod-funded-eod-* ajoutés (needs_review : blocage du MLL en funded EOD non publié)."
+      },
+      {
+        "date": "2026-11-28",
+        "modification": "Relecture complète (#858) : aucune règle modifiée."
       }
     ]
   },
@@ -2971,6 +3121,12 @@
     ],
     "firms": [
       "lucid"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-28",
+        "modification": "Relecture complète (#858) : aucune règle modifiée."
+      }
     ]
   },
   "https://support.lucidtrading.com/en/articles/16226050-lucidflex-customization": {
@@ -2980,6 +3136,12 @@
     ],
     "firms": [
       "lucid"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-28",
+        "modification": "Relecture complète (#858) : aucune règle modifiée."
+      }
     ]
   },
   "https://support.lucidtrading.com/en/articles/16226068-lucidpro-customization": {
@@ -2994,6 +3156,10 @@
       {
         "date": "2026-11-22",
         "modification": "Relecture (lot 3) : payouts à la demande avec DLL, trading suspendu après une demande en séance → note de payout LucidPro DLL."
+      },
+      {
+        "date": "2026-11-28",
+        "modification": "Relecture complète (#858) : aucune règle modifiée."
       }
     ]
   },
@@ -3004,6 +3170,12 @@
     ],
     "firms": [
       "lucid"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-28",
+        "modification": "Relecture complète (#858) : aucune règle modifiée."
+      }
     ]
   },
   "https://support.lucidtrading.com/en/articles/17327076-new-lucidmaxx-program": {
@@ -3013,6 +3185,12 @@
     ],
     "firms": [
       "lucid"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-28",
+        "modification": "Relecture complète (#858) : aucune règle modifiée."
+      }
     ]
   },
   "https://takeprofittrader.com/": {
