@@ -28,7 +28,9 @@ AI_MAX_CONCURRENCY=4     # optionnel : appels modèle simultanés, tous process 
 #                           # (minuteur du gateway) : absente = coupé. Dev : allumé au merge ; prod : posé par Greg
 #                           # après vérification sur dev. Changer la valeur = recréer api_blue/api_green (env_file).
 # SESSION_CONTRACT_ENABLED=true  # contrat de session (#667), lu par les process web (routes /session/contract*, et BehaviorAlertsService appelé par le gateway Tradovate) : absente ou autre que 'true' = coupé, routes en 404. Allumée par Greg (dev puis prod) après le ticket d'interface. Changer la valeur = recréer api_blue/api_green (env_file), `docker restart` ne relit pas l'env.
-# HELP_CHAT_ENABLED=true  # chatbot de support (#493), lu par les process web : absente ou autre que 'true' = coupé, routes /help/* et /public/help/* en 404. Allumée par Greg après le widget (étape 3) et le texte de confidentialité. HELP_CHAT_DAILY_LLM_MAX (défaut 500) : plafond d'appels IA par jour ; HELP_KB_MATCH_MIN (défaut 2) : score minimal de la recherche locale. Changer la valeur = recréer api_blue/api_green (env_file).
+# HELP_CHAT_ENABLED=true  # chatbot de support (#493), lu par les process web : absente ou autre que 'true' = coupé, routes /help/* et /public/help/* en 404. Allumée par Greg après le widget (étape 3) et le texte de confidentialité. Changer la valeur = recréer api_blue/api_green (env_file).
+# HELP_CHAT_DAILY_LLM_MAX=500  # chatbot de support (#493) : plafond d'appels IA par jour, tous utilisateurs (défaut 500).
+# HELP_KB_MATCH_MIN=2  # chatbot de support (#493) : score minimal de la recherche locale avant le repli IA (défaut 2).
 # INACTIVITY_PURGE_ENABLED=true  # purge des comptes inactifs (#824), lue par le WORKER CRON. Absente/false = journal
 #                                # seul (rien envoyé ni supprimé). Allumée par Greg seulement après la PR politique §3 + CGU
 #                                # déployée et la lecture du journal « Comptes inactifs (journal seul) » en prod.

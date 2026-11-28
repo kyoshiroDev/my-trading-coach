@@ -1548,7 +1548,7 @@ model GiveawayWin {
 }
 
 /// Chatbot de support (#493) : chaque question posée, sans IP ni donnée de trading. Purgée à 90 jours
-/// (`RETENTION_RULES`), supprimée avec le compte. `userId` null = visiteur de la landing.
+/// (`DAILY_RETENTION_RULES`), supprimée avec le compte. `userId` null = visiteur de la landing.
 model HelpQuestion {
   id        String   @id @default(cuid())
   userId    String?
@@ -1560,6 +1560,8 @@ model HelpQuestion {
   source    String
   kbId      String?
   page      String?
+  /// 👍/👎 sous la réponse (étape 3), null = pas de retour.
+  helpful   Boolean?
   createdAt DateTime @default(now())
 
   @@index([createdAt])

@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import type { PropFirmCatalogFirm } from '@mtc/shared';
+import { AI_MODELS } from '../infra/ai-pricing.const';
 import { freezeClock } from '../../test/freeze-clock';
-import { HelpService, absolutizeLinks, hashHelpIp } from './help.service';
+import { HELP_TICKET_ACK_DAILY_MAX, HelpService, absolutizeLinks, hashHelpIp } from './help.service';
 import { citedFirm, citedSize, firmAnswer } from './help-firms';
 import { isRoleHijack, isTradingAdvice, rankEntries, unknownAmounts, HELP_REFUSAL_ADVICE, HELP_REFUSAL_ROLE } from './help-search';
 import { buildHelpUserMessage } from './help-prompt';
@@ -44,7 +45,7 @@ function setup(o: { aiEnabled?: boolean; llmText?: string; llmMax?: number; coun
   const svc = new HelpService(prisma as never, redis as never, anthropic as never, catalog as never, founder as never, resend as never, config as never);
   return { svc, anthropic, prisma, resend, redis, store };
 }
-const user = { kind: 'user' as const, userId: 'u1', plan: 'FREE' };
+const user = { kind: 'user' as const, userId: 'u1', email: 'compte@example.test', plan: 'FREE' };
 const visitor = { kind: 'visitor' as const, ip: '1.2.3.4' };
 
 afterEach(() => {
@@ -111,7 +112,7 @@ describe('HelpService.ask (#493)', () => {
     expect(r).toMatchObject({ source: 'KB', kbId: 'connecter-tradovate' });
     expect(r.answer).not.toContain('{{');
     expect(anthropic.create).not.toHaveBeenCalled();
-    expect(prisma.helpQuestion.create).toHaveBeenCalledWith({ data: expect.objectContaining({ userId: 'u1', source: 'KB', kbId: 'connecter-tradovate', anonymous: false }) });
+    expect(prisma.helpQuestion.create).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ userId: 'u1', source: 'KB', kbId: 'connecter-tradovate', anonymous: false }) }));
   });
 
   it('question hors base : Haiku, max_tokens ≤ 400, prompt système en cache, usage journalisé sous help_chat', async () => {
@@ -120,7 +121,7 @@ describe('HelpService.ask (#493)', () => {
     expect(r.source).toBe('LLM');
     const [params, meta] = anthropic.create.mock.calls[0] as unknown as [{ max_tokens: number; model: string; system: { cache_control: unknown }[] }, { feature: string }];
     expect(params.max_tokens).toBeLessThanOrEqual(400);
-    expect(params.model).toBe('claude-haiku-5-5');
+    expect(params.model).toBe(AI_MODELS.fast);
     expect(params.system[0].cache_control).toEqual({ type: 'ephemeral' });
     expect(meta.feature).toBe('help_chat');
   });
@@ -192,16 +193,40 @@ describe('HelpService.ask (#493)', () => {
 });
 
 describe('HelpService.ticket (#493)', () => {
-  it('e-mail à support@ avec la transcription, accusé de réception depuis support@, enregistré TICKET', async () => {
+  it('connecté : e-mail du compte (pas l’adresse saisie), transcription marquée non vérifiée, accusé fixe depuis support@', async () => {
     const { svc, resend, prisma } = setup();
-    await svc.ticket(user, 'trader@example.test', 'Ma synchro ne marche pas', [{ question: 'synchro ?', answer: 'Va dans Mes comptes' }], '/accounts');
+    await svc.ticket(user, 'tiers@example.test', 'Ma synchro ne marche pas', [{ question: 'synchro ?', answer: 'Va dans Mes comptes' }], '/accounts');
     const [toSupport, ack] = resend.send.mock.calls.map((c) => c[0] as unknown as { to: string; text: string; from?: string; replyTo?: string });
-    expect(toSupport).toMatchObject({ to: 'support@mytradingcoach.app', replyTo: 'trader@example.test' });
+    expect(toSupport).toMatchObject({ to: 'support@mytradingcoach.app', replyTo: 'compte@example.test' });
+    expect(toSupport.text).toContain('non vérifié');
     expect(toSupport.text).toContain('Q : synchro ?');
     expect(toSupport.text).toContain('Page : /accounts');
-    expect(ack).toMatchObject({ to: 'trader@example.test', replyTo: 'support@mytradingcoach.app' });
+    expect(ack).toMatchObject({ to: 'compte@example.test', replyTo: 'support@mytradingcoach.app' });
     expect(ack.from).toContain('support@mytradingcoach.app');
+    expect(ack.text).not.toContain('Ma synchro');
+    expect(JSON.stringify(resend.send.mock.calls)).not.toContain('tiers@example.test');
     expect(JSON.stringify(resend.send.mock.calls)).not.toContain('hello@');
-    expect(prisma.helpQuestion.create).toHaveBeenCalledWith({ data: expect.objectContaining({ source: 'TICKET' }) });
+    expect(prisma.helpQuestion.create).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ source: 'TICKET' }) }));
+  });
+
+  it('visiteur : accusé sous plafond global du jour ; au-delà, le ticket part sans accusé', async () => {
+    const free = setup();
+    await free.svc.ticket(visitor, 'v@example.test', 'aide');
+    expect(free.resend.send).toHaveBeenCalledTimes(2);
+    const full = setup({ counters: { 'help:ack:2026-11-28': HELP_TICKET_ACK_DAILY_MAX } });
+    await full.svc.ticket(visitor, 'v@example.test', 'aide');
+    expect(full.resend.send).toHaveBeenCalledTimes(1);
+    expect(full.resend.send.mock.calls[0][0]).toMatchObject({ to: 'support@mytradingcoach.app' });
+  });
+});
+
+describe('HelpService.ask : id de la question (#493)', () => {
+  it('renvoie l’id enregistré, null si l’écriture échoue', async () => {
+    const ok = setup();
+    ok.prisma.helpQuestion.create.mockResolvedValueOnce({ id: 'q1' } as never);
+    expect((await ok.svc.ask(user, false, 'Comment connecter Tradovate ?')).questionId).toBe('q1');
+    const ko = setup();
+    ko.prisma.helpQuestion.create.mockRejectedValueOnce(new Error('db'));
+    expect((await ko.svc.ask(user, false, 'Comment connecter Tradovate ?')).questionId).toBeNull();
   });
 });

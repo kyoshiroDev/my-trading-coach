@@ -26,7 +26,7 @@ On tiér par **structure de coût**, PAS par « IA vs pas d'IA ».
   une prop firm lue dans le catalogue (aucun appel), Haiku seulement en repli, `max_tokens` 400, prompt système en
   cache ; quotas 30 questions/jour (connecté), 10/jour par IP hachée (visiteur et compte démo) ; plafond global
   `HELP_CHAT_DAILY_LLM_MAX` (500/jour par défaut, ≈ 0,0005 $ l'appel, ≈ 0,25 $/jour au plafond), alerte e-mail
-  interne à 80 % ; `AiUsageLog` `feature: 'help_chat'` ; IA éteinte (`AI_ENABLED`) = réponse simulée, aucun appel.
+  interne à 80 % ; `AiUsageLog` `feature: 'help_chat'`, `userId: null` même connecté (coût de support mutualisé, hors quota IA personnel) ; IA éteinte (`AI_ENABLED`) = réponse simulée, aucun appel.
 - **SCALE AVEC L'USAGE** — O(users × engagement) → **PREMIUM** :
   - Chat coach, IA Insights à la demande, recap quotidien.
 - L'import IA (broker inconnu → Anthropic, gardé `NODE_ENV=production`) est une IA **personnelle** → **PREMIUM**.

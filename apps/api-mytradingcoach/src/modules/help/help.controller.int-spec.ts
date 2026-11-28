@@ -4,11 +4,15 @@
  */
 import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest';
 import { ValidationPipe, type INestApplication } from '@nestjs/common';
+import type { NestExpressApplication } from '@nestjs/platform-express';
+import { configureProxy } from '../../config/proxy';
 import { createIntegrationApp } from '../../test/integration-app.helper';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuthUserCacheService } from '../infra/auth-user-cache.service';
 
 const RUN = `${Date.now().toString(36)}${Math.floor(Math.random() * 1e6).toString(36)}`;
+/** IP propre à ce run (quota visiteur de 10/jour : un Redis local persistant ne doit pas faire échouer les runs suivants). */
+const RUN_IP = `10.${Math.floor(Math.random() * 250) + 1}.${Math.floor(Math.random() * 250) + 1}.${Math.floor(Math.random() * 250) + 1}`;
 const USER_EMAIL = `int-help-u-${RUN}@test.local`;
 const DEMO_EMAIL = `int-help-d-${RUN}@test.local`;
 let app: INestApplication;
@@ -27,7 +31,7 @@ async function register(email: string): Promise<string> {
 const post = (path: string, body: object, token?: string) =>
   fetch(`${baseUrl}/api${path}`, {
     method: 'POST',
-    headers: { 'content-type': 'application/json', 'x-forwarded-for': `10.0.0.${RUN.length}`, ...(token ? { authorization: `Bearer ${token}` } : {}) },
+    headers: { 'content-type': 'application/json', 'x-forwarded-for': RUN_IP, ...(token ? { authorization: `Bearer ${token}` } : {}) },
     body: JSON.stringify(body),
   });
 const json = async <T>(res: Response) => ((await res.json()) as { data: T }).data;
@@ -35,6 +39,7 @@ const json = async <T>(res: Response) => ((await res.json()) as { data: T }).dat
 beforeAll(async () => {
   ({ app, baseUrl } = await createIntegrationApp({
     setup: (a) => {
+      configureProxy(a as NestExpressApplication);
       a.setGlobalPrefix('api');
       a.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }));
     },
@@ -88,7 +93,9 @@ describe('chatbot de support', () => {
 
   it('compte démo : question permise, ticket refusé (403)', async () => {
     process.env['HELP_CHAT_ENABLED'] = 'true';
-    expect((await post('/help/ask', { message: 'Comment voir la démo ?' }, tokens.demo)).status).toBe(200);
+    const demoAsk = await post('/help/ask', { message: 'Comment connecter Tradovate ?' }, tokens.demo);
+    expect(demoAsk.status).toBe(200);
+    expect(await json(demoAsk)).toMatchObject({ source: 'KB' });
     expect((await post('/help/ticket', { email: 'demo@b.test', message: 'aide' }, tokens.demo)).status).toBe(403);
   });
 });

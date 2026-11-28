@@ -37,6 +37,9 @@ import { HELP_SYSTEM_PROMPT, buildHelpUserMessage } from './help-prompt';
 import { HELP_DAILY_QUOTA, helpChatDailyLlmMax } from './help.flags';
 
 /** Qui pose la question : compte connecté (hors démo) ou visiteur / démo, compté par IP hachée. */
+/** Accusés de réception par jour vers une adresse saisie sur la route publique (anti-envoi vers des tiers). */
+export const HELP_TICKET_ACK_DAILY_MAX = 50;
+
 export type HelpCaller =
   | { kind: 'user'; userId: string; email?: string; plan?: string }
   | { kind: 'visitor'; ip: string; userId?: string };
@@ -123,6 +126,18 @@ export class HelpService {
     if (count > max) throw new HttpException('Tu as atteint la limite de questions pour aujourd’hui. Écris à support@mytradingcoach.app.', HttpStatus.TOO_MANY_REQUESTS);
   }
 
+  /** Accusé de réception vers une adresse saisie par un visiteur : plafond global du jour (Redis absent = aucun). */
+  private async reserveAck(): Promise<boolean> {
+    const key = `help:ack:${todayParis()}`;
+    try {
+      const n = await this.redis.client.incr(key);
+      if (n === 1) await this.redis.client.expire(key, TTL_S);
+      return n <= HELP_TICKET_ACK_DAILY_MAX;
+    } catch {
+      return false;
+    }
+  }
+
   /** Réserve un appel IA sous le plafond global du jour ; alerte unique à 80 %. */
   private async reserveLlm(): Promise<boolean> {
     const day = todayParis();
@@ -145,8 +160,9 @@ export class HelpService {
     }
   }
 
-  private async record(caller: HelpCaller, question: string, source: string, kbId: string | null, page?: string): Promise<void> {
-    await this.prisma.helpQuestion
+  /** Question enregistrée ; renvoie son id (null si l'écriture échoue : la réponse part quand même). */
+  private async record(caller: HelpCaller, question: string, source: string, kbId: string | null, page?: string): Promise<string | null> {
+    const row = await this.prisma.helpQuestion
       .create({
         data: {
           userId: caller.kind === 'user' ? caller.userId : (caller.userId ?? null),
@@ -156,8 +172,13 @@ export class HelpService {
           kbId,
           page: page?.slice(0, 200) ?? null,
         },
+        select: { id: true },
       })
-      .catch((err: unknown) => this.logger.warn(`Question non enregistrée : ${err instanceof Error ? err.name : 'Error'}`));
+      .catch((err: unknown) => {
+        this.logger.warn(`Question non enregistrée : ${err instanceof Error ? err.name : 'Error'}`);
+        return null;
+      });
+    return row?.id ?? null;
   }
 
   async ask(caller: HelpCaller, publicRoute: boolean, message: string, history: readonly HelpHistoryTurn[] = [], page?: string): Promise<HelpAskResponse> {
@@ -165,11 +186,11 @@ export class HelpService {
     await this.takeQuota(caller, secret);
     const reply = await this.answer(publicRoute, message, history);
     const out = publicRoute ? { ...reply, answer: absolutizeLinks(reply.answer, this.appUrl) } : reply;
-    await this.record(caller, message, out.source, out.kbId, page);
-    return out;
+    const questionId = await this.record(caller, message, out.source, out.kbId, page);
+    return { ...out, questionId };
   }
 
-  private async answer(publicRoute: boolean, message: string, history: readonly HelpHistoryTurn[]): Promise<HelpAskResponse> {
+  private async answer(publicRoute: boolean, message: string, history: readonly HelpHistoryTurn[]): Promise<Omit<HelpAskResponse, 'questionId'>> {
     if (isRoleHijack(message)) return { source: 'KB', answer: HELP_REFUSAL_ROLE, kbId: 'refus-role', suggestHuman: false };
     if (isTradingAdvice(message)) return { source: 'KB', answer: HELP_REFUSAL_ADVICE, kbId: 'refus-conseil', suggestHuman: false };
 
@@ -219,10 +240,12 @@ export class HelpService {
   }
 
   /** Passage à un humain : e-mail à support@ avec la transcription, accusé de réception au demandeur. */
-  async ticket(caller: HelpCaller, email: string, message: string, history: readonly HelpHistoryTurn[] = [], page?: string): Promise<void> {
+  async ticket(caller: HelpCaller, typedEmail: string, message: string, history: readonly HelpHistoryTurn[] = [], page?: string): Promise<void> {
+    // Compte connecté : l'adresse du compte, jamais une adresse saisie (pas d'e-mail vers un tiers).
+    const email = caller.kind === 'user' && caller.email ? caller.email : typedEmail;
     const plan = caller.kind === 'user' ? (caller.plan ?? 'inconnu') : 'visiteur';
     const transcript = history.map((t) => `Q : ${t.question}\nR : ${t.answer}`).join('\n\n') || '(aucun échange)';
-    const body = `Demande de support (chatbot)\nE-mail : ${email}\nCompte : ${caller.kind === 'user' ? caller.userId : 'visiteur'} (plan ${plan})\nPage : ${page ?? '-'}\n\nMessage :\n${message}\n\nConversation :\n${transcript}`;
+    const body = `Demande de support (chatbot)\nE-mail : ${email}\nCompte : ${caller.kind === 'user' ? caller.userId : 'visiteur'} (plan ${plan})\nPage : ${page ?? '-'}\n\nMessage :\n${message}\n\nConversation (historique fourni par le navigateur, non vérifié) :\n${transcript}`;
     await this.resend.send({
       to: HELP_SUPPORT_INBOX,
       replyTo: email,
@@ -230,14 +253,18 @@ export class HelpService {
       text: body,
       html: `<pre style="font-family:monospace;font-size:14px;white-space:pre-wrap">${escapeHtml(body)}</pre>`,
     });
-    await this.resend.send({
-      to: email,
-      from: HELP_SUPPORT_FROM,
-      replyTo: HELP_SUPPORT_INBOX,
-      subject: 'On a bien reçu ta demande',
-      text: `Bonjour,\n\nOn a bien reçu ta demande, on te répond par e-mail.\n\nTon message :\n${message}\n\nL'équipe MyTradingCoach`,
-      html: `<p>Bonjour,</p><p>On a bien reçu ta demande, on te répond par e-mail.</p><p>Ton message :</p><pre style="white-space:pre-wrap">${escapeHtml(message)}</pre><p>L'équipe MyTradingCoach</p>`,
-    });
+    // Accusé de réception : texte fixe (rien de saisi n'est recopié) ; adresse saisie par un visiteur → sous
+    // un plafond global du jour, au-delà le ticket part quand même vers support@, sans accusé.
+    if (caller.kind === 'user' || (await this.reserveAck())) {
+      await this.resend.send({
+        to: email,
+        from: HELP_SUPPORT_FROM,
+        replyTo: HELP_SUPPORT_INBOX,
+        subject: 'On a bien reçu ta demande',
+        text: "Bonjour,\n\nOn a bien reçu ta demande, on te répond par e-mail.\n\nL'équipe MyTradingCoach",
+        html: "<p>Bonjour,</p><p>On a bien reçu ta demande, on te répond par e-mail.</p><p>L'équipe MyTradingCoach</p>",
+      });
+    }
     await this.record(caller, message, 'TICKET', null, page);
   }
 }

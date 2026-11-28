@@ -291,7 +291,7 @@ export const HELP_KB: readonly HelpKbEntry[] = [
     "links": [
       "/register"
     ],
-    "body": "À l'inscription, tu as {{TRIAL_DAYS}} jours de Premium offerts, sans carte bancaire.\nÀ la fin, ton compte repasse automatiquement en Gratuit, sans rien perdre et sans prélèvement. Pour rester en Premium, choisis une offre : l'abonnement démarre tout de suite, sans nouvel essai.\nCes jours offerts ne sont accordés qu'une fois par personne. Ton compte date d'avant cette offre et tu n'as jamais eu d'essai ? Un essai de {{STRIPE_TRIAL_DAYS}} jours avec carte reste possible sur le mensuel."
+    "body": "À l'inscription, tu as {{TRIAL_DAYS}} jours de Premium offerts, sans carte bancaire.\nÀ la fin, ton compte repasse automatiquement en Gratuit, sans rien perdre et sans prélèvement. Pour rester en Premium, choisis une offre : l'abonnement démarre tout de suite, sans nouvel essai.\nCes jours offerts ne sont accordés qu'une fois par personne. Ton compte date d'avant cette offre et tu n'as jamais eu d'essai ? Un essai de {{STRIPE_TRIAL_DAYS}} jours avec carte reste possible sur le mensuel, hors offre fondateur."
   },
   {
     "id": "fin-essai",
@@ -358,7 +358,7 @@ export const HELP_KB: readonly HelpKbEntry[] = [
     "links": [
       "/register"
     ],
-    "body": "Oui. Le plan Gratuit n'a pas de limite de durée et ne demande aucune carte bancaire.\nIl couvre le quotidien : synchro Tradovate en lecture seule, {{FREE_ACCOUNT_LIMIT}} compte avec les règles de sa prop firm suivi en direct, journal et trades illimités, préparation et débrief de chaque séance, calendrier éco, news et contexte marché.\nÀ l'inscription, tu as en plus {{TRIAL_DAYS}} jours de Premium offerts."
+    "body": "Oui. Le plan Gratuit n'a pas de limite de durée et ne demande aucune carte bancaire.\nIl couvre le quotidien : synchro Tradovate en lecture seule, {{FREE_ACCOUNT_LIMIT}} compte avec les règles de sa prop firm suivies en direct pendant la séance quand l'app est ouverte, journal et trades illimités, préparation et débrief de chaque séance, calendrier éco, news et contexte marché.\nÀ l'inscription, tu as en plus {{TRIAL_DAYS}} jours de Premium offerts."
   },
   {
     "id": "import-csv",
@@ -760,7 +760,7 @@ export const HELP_KB: readonly HelpKbEntry[] = [
     "links": [
       "/profil?tab=params"
     ],
-    "body": "Va dans [Profil > Paramètres](/profil?tab=params), bloc « Abonnement », puis « Gérer mon abonnement » (ou « Gérer / annuler mon essai ») : la résiliation se fait dans l'espace de facturation.\nTu gardes Premium jusqu'à la fin de la période déjà payée, puis tu repasses en gratuit, sans nouveau prélèvement. Fondateur ou code partenaire : résilier met fin à ton tarif, et tu ne pourras pas le récupérer.\nPendant ton Premium offert à l'inscription, il n'y a rien à résilier."
+    "body": "Va dans [Profil > Paramètres](/profil?tab=params), bloc « Abonnement », puis « Gérer mon abonnement » (ou « Gérer / annuler mon essai ») : la résiliation se fait dans l'espace de facturation.\nTu gardes Premium jusqu'à la fin de la période déjà payée, puis tu repasses en gratuit, sans nouveau prélèvement. Fondateur ou code partenaire : résilier met fin à ton tarif, et tu ne pourras pas le récupérer.\nPendant ton Premium offert à l'inscription, il n'y a rien à résilier, sauf si tu as réservé une place fondateur : annule la réservation avant la fin de ton Premium offert pour ne pas être prélevé."
   },
   {
     "id": "seance-du-jour",

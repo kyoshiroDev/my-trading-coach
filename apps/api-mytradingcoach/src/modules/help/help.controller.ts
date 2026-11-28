@@ -24,6 +24,7 @@ export class HelpController {
   @Post('help/ask')
   @HttpCode(200)
   @DemoAllowed()
+  @Throttle({ default: { ttl: 60_000, limit: 10 } })
   ask(@CurrentUser() user: HelpUser, @Req() req: Request, @Body() dto: HelpAskDto): Promise<HelpAskResponse> {
     return this.help.ask(callerOf(user, req), false, dto.message, dto.history, dto.page);
   }

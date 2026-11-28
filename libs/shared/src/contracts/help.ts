@@ -3,6 +3,9 @@
  * `/public/help/ticket`) et le widget (étape 3, app et landing).
  */
 
+/** Bornes des requêtes (DTO de l'API, champ et troncature de l'historique dans le widget). */
+export const HELP_LIMITS = { message: 500, ticketMessage: 2000, historyTurns: 6, historyQuestion: 500, historyAnswer: 2000, page: 200 } as const;
+
 /** Un échange précédent, renvoyé par le navigateur : non fiable, cité tel quel, jamais pris pour une consigne. */
 export interface HelpHistoryTurn {
   question: string;
@@ -29,6 +32,14 @@ export interface HelpAskResponse {
   suggestHuman: boolean;
   /** Réponse simulée : IA éteinte sur cet environnement. */
   simulated?: boolean;
+  /** Ligne `HelpQuestion` enregistrée (pour le 👍/👎 de l'étape 3) ; null si l'enregistrement a échoué. */
+  questionId: string | null;
+}
+
+/** 👍/👎 sous une réponse (routes à l'étape 3, colonne `HelpQuestion.helpful`). */
+export interface HelpFeedbackRequest {
+  questionId: string;
+  helpful: boolean;
 }
 
 export interface HelpTicketRequest {

@@ -64,7 +64,7 @@ const TABLES = [
   { table: 'SessionContract', file: 'contrats-seance.csv', label: 'règles que tu t’es fixées par séance et leurs modifications', where: BY_USER,
     columns: ['sessionId', 'userId', 'maxDailyLoss', 'maxConsecutiveLosses', 'maxTrades', 'newsMinutes', 'allowedAssets', 'edits', 'createdAt', 'updatedAt'] },
   { table: 'HelpQuestion', file: 'questions-support.csv', label: 'questions posées au chatbot de support (90 jours)', where: BY_USER,
-    columns: ['id', 'userId', 'anonymous', 'question', 'source', 'kbId', 'page', 'createdAt'] },
+    columns: ['id', 'userId', 'anonymous', 'question', 'source', 'kbId', 'page', 'helpful', 'createdAt'] },
   { table: 'BehaviorBaseline', file: 'reference-comportement.csv', label: 'ta référence de comportement (moyennes de tes séances)', where: BY_USER,
     columns: ['userId', 'sessionsUsed', 'throughDay', 'data', 'computedAt'] },
   {

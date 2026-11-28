@@ -47,7 +47,7 @@ describe('base de connaissances du support (#493)', () => {
       expect(e.body).not.toMatch(/partenaire officiel/i);
       expect(e.body).not.toMatch(/\bvous\b/i);
       const lines = e.body.split('\n').filter((l) => l.trim()).length;
-      expect(lines, `${e.id} : ${lines} lignes`).toBeLessThanOrEqual(8);
+      expect(lines, `${e.id} : ${lines} lignes`).toBeLessThanOrEqual(6);
     }
   });
 

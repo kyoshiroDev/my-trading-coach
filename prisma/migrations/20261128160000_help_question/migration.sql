@@ -8,6 +8,7 @@ CREATE TABLE "HelpQuestion" (
     "source" TEXT NOT NULL,
     "kbId" TEXT,
     "page" TEXT,
+    "helpful" BOOLEAN,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "HelpQuestion_pkey" PRIMARY KEY ("id")

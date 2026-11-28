@@ -1,33 +1,33 @@
 import { Type } from 'class-transformer';
 import { ArrayMaxSize, IsArray, IsEmail, IsOptional, IsString, MaxLength, MinLength, ValidateNested } from 'class-validator';
-import type { HelpAskRequest, HelpHistoryTurn, HelpTicketRequest } from '@mtc/shared';
+import { HELP_LIMITS as L, type HelpAskRequest, type HelpHistoryTurn, type HelpTicketRequest } from '@mtc/shared';
 
 export class HelpHistoryTurnDto implements HelpHistoryTurn {
   @IsString()
-  @MaxLength(500)
+  @MaxLength(L.historyQuestion)
   question!: string;
 
   @IsString()
-  @MaxLength(500)
+  @MaxLength(L.historyAnswer)
   answer!: string;
 }
 
 export class HelpAskDto implements HelpAskRequest {
   @IsString()
   @MinLength(1)
-  @MaxLength(500)
+  @MaxLength(L.message)
   message!: string;
 
   @IsOptional()
   @IsArray()
-  @ArrayMaxSize(6)
+  @ArrayMaxSize(L.historyTurns)
   @ValidateNested({ each: true })
   @Type(() => HelpHistoryTurnDto)
   history?: HelpHistoryTurnDto[];
 
   @IsOptional()
   @IsString()
-  @MaxLength(200)
+  @MaxLength(L.page)
   page?: string;
 }
 
@@ -38,18 +38,18 @@ export class HelpTicketDto implements HelpTicketRequest {
 
   @IsString()
   @MinLength(1)
-  @MaxLength(2000)
+  @MaxLength(L.ticketMessage)
   message!: string;
 
   @IsOptional()
   @IsArray()
-  @ArrayMaxSize(6)
+  @ArrayMaxSize(L.historyTurns)
   @ValidateNested({ each: true })
   @Type(() => HelpHistoryTurnDto)
   history?: HelpHistoryTurnDto[];
 
   @IsOptional()
   @IsString()
-  @MaxLength(200)
+  @MaxLength(L.page)
   page?: string;
 }
