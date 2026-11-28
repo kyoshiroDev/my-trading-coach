@@ -24,6 +24,7 @@ import type { HelpKbEntry } from './kb-parse';
 import { HELP_KB_STATIC_VARIABLES, renderKbBody } from './kb-render';
 import {
   HELP_ESCALATE,
+  HELP_ADVICE_PREMIUM,
   HELP_REFUSAL_ADVICE,
   HELP_REFUSAL_ROLE,
   HELP_SIMULATED,
@@ -42,7 +43,7 @@ export const HELP_TICKET_ACK_DAILY_MAX = 50;
 
 /** Qui pose la question : compte connecté (hors démo) ou visiteur / démo, compté par IP hachée. */
 export type HelpCaller =
-  | { kind: 'user'; userId: string; email?: string; plan?: string }
+  | { kind: 'user'; userId: string; email?: string; plan?: string; premium?: boolean }
   | { kind: 'visitor'; ip: string; userId?: string };
 
 export const HELP_SUPPORT_INBOX = 'support@mytradingcoach.app';
@@ -185,15 +186,24 @@ export class HelpService {
   async ask(caller: HelpCaller, publicRoute: boolean, message: string, history: readonly HelpHistoryTurn[] = [], page?: string): Promise<HelpAskResponse> {
     const secret = this.config.get<string>('JWT_SECRET') ?? '';
     await this.takeQuota(caller, secret);
-    const reply = await this.answer(publicRoute, message, history);
+    const reply = await this.answer(caller, publicRoute, message, history);
     const out = publicRoute ? { ...reply, answer: absolutizeLinks(reply.answer, this.appUrl) } : reply;
     const questionId = await this.record(caller, message, out.source, out.kbId, page);
     return { ...out, questionId };
   }
 
-  private async answer(publicRoute: boolean, message: string, history: readonly HelpHistoryTurn[]): Promise<Omit<HelpAskResponse, 'questionId'>> {
+  private async answer(
+    caller: HelpCaller,
+    publicRoute: boolean,
+    message: string,
+    history: readonly HelpHistoryTurn[],
+  ): Promise<Omit<HelpAskResponse, 'questionId'>> {
     if (isRoleHijack(message)) return { source: 'KB', answer: HELP_REFUSAL_ROLE, kbId: 'refus-role', suggestHuman: false };
-    if (isTradingAdvice(message)) return { source: 'KB', answer: HELP_REFUSAL_ADVICE, kbId: 'refus-conseil', suggestHuman: false };
+    if (isTradingAdvice(message)) {
+      // Dans l'app, un compte avec accès Premium est renvoyé vers le coach IA (analyse de ses propres trades).
+      const premium = !publicRoute && caller.kind === 'user' && caller.premium === true;
+      return { source: 'KB', answer: premium ? `${HELP_REFUSAL_ADVICE}\n${HELP_ADVICE_PREMIUM}` : HELP_REFUSAL_ADVICE, kbId: 'refus-conseil', suggestHuman: false };
+    }
 
     const firms = await this.catalog.list().catch(() => [] as PropFirmCatalogFirm[]);
     const firm = citedFirm(message, firms);

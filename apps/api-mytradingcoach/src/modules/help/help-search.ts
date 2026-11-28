@@ -93,6 +93,9 @@ export const HELP_REFUSAL_ADVICE =
   "Je ne donne pas de conseil de trading : ni sur un trade, ni sur un setup, ni sur une direction. Tes décisions restent les tiennes.\n" +
   "Je peux t'aider sur MyTradingCoach : comptes, synchro Tradovate, séance, journal, plans.";
 
+/** Ajouté au refus pour un compte avec accès Premium, dans l'app seulement. */
+export const HELP_ADVICE_PREMIUM = 'Pour une analyse de tes propres trades, ouvre [Insights IA](/ai-insights).';
+
 export const HELP_REFUSAL_ROLE =
   "Je suis l'assistant de support de MyTradingCoach et je m'en tiens à ça.\n" +
   "Pose-moi une question sur l'app : comptes, synchro Tradovate, séance, journal, plans.";

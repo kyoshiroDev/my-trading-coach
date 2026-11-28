@@ -36,6 +36,12 @@ export function citedSize(question: string): number | null {
   return full ? Number(full[1]) * 1000 : null;
 }
 
+/** Date ISO (« 2026-11-22 ») en français (« 22 novembre 2026 »), lue en UTC. */
+export const frDate = (iso: string): string => {
+  const d = new Date(`${iso.slice(0, 10)}T00:00:00Z`);
+  return Number.isNaN(d.getTime()) ? iso : d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
+};
+
 /** Montant lisible : milliers et symbole séparés par une espace insécable. */
 const money = (n: number, currency: string) =>
   `${String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, '\u00a0')}\u00a0${currency === 'EUR' ? '€' : '$'}`;
@@ -67,7 +73,8 @@ export function firmAnswer(firm: PropFirmCatalogFirm, size: number | null, suppo
     lines.push(`${firm.name} est dans le catalogue, en ${sizes.join(', ')}.`);
     lines.push('Précise la taille de ton compte (par exemple « 50K ») pour que je te donne ses règles.');
   }
-  lines.push(`Relevé le ${firm.verifiedAt} sur les pages officielles de la firme. Seules les règles officielles de la firme font foi.`);
+  const where = firm.website ? `sur [le site officiel de la firme](${firm.website})` : 'sur les pages officielles de la firme';
+  lines.push(`Relevé le ${frDate(firm.verifiedAt)} ${where}. Seules les règles officielles de la firme font foi.`);
   if (!supportsTradovate) lines.push(HELP_FIRM_NOT_TRADOVATE);
   return lines.join('\n');
 }
