@@ -76,3 +76,34 @@ describe('TiltAlertsService.check', () => {
     expect(events).toHaveLength(0);
   });
 });
+
+// #671 : moteur de comportement affiché = l'anti-tilt se tait ; jamais deux alertes pour la même chose.
+describe('TiltAlertsService : relais au moteur de comportement (#671)', () => {
+  const withJournal = () => {
+    const base = setup();
+    const journal = { recordEvent: vi.fn(async () => undefined) };
+    const svc = new TiltAlertsService(base.prisma as never, { client: { set: vi.fn(async () => 'OK') } } as never, journal as never, base.notifier as never);
+    return { ...base, svc, journal };
+  };
+
+  it('BEHAVIOR_ALERTS_UI=true : ni toast ni push, le journal reste écrit', async () => {
+    process.env['BEHAVIOR_ALERTS_UI'] = 'true';
+    try {
+      const { svc, emit, events, notifier, journal } = withJournal();
+      await svc.check('u', 'a', emit, NOW);
+      expect(events).toEqual([]);
+      expect(notifier.notify).not.toHaveBeenCalled();
+      expect(journal.recordEvent).toHaveBeenCalledWith('u', 'a', expect.any(String), 'tilt', 'revenge', expect.anything());
+    } finally {
+      delete process.env['BEHAVIOR_ALERTS_UI'];
+    }
+  });
+
+  it('flag éteint : inchangé (toast, push et journal)', async () => {
+    const { svc, emit, events, notifier, journal } = withJournal();
+    await svc.check('u', 'a', emit, NOW);
+    expect(events).toHaveLength(1);
+    expect(notifier.notify).toHaveBeenCalledTimes(1);
+    expect(journal.recordEvent).toHaveBeenCalledTimes(1);
+  });
+});

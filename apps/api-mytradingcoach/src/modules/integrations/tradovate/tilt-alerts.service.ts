@@ -5,6 +5,7 @@ import { RedisService } from '../../infra/redis.service';
 import { tradingDay } from '../../accounts/account-rules';
 import { activeSessionWhere } from '../../session/active-session';
 import { isPremiumAccess } from '../../discord/discord-access.util';
+import { behaviorAlertsUiEnabled } from '../../behavior/behavior-flags';
 import { detectTilt, type TiltFinding, type TiltTrade } from './tilt-detection';
 import { PropRiskJournalService } from './prop-risk-journal.service';
 import { TraderNotifier } from '../../push/trader-notifier.service';
@@ -108,8 +109,12 @@ export class TiltAlertsService implements OnModuleDestroy {
       const sent = await this.redis.client.set(`tilt-alert:${accountId}:${f.signal}:${f.ref}`, '1', 'EX', KEY_TTL_S, 'NX');
       if (sent !== 'OK') continue;
       const event: TiltAlertEvent = { ...f, accountId, accountLabel: account.label, moodStart: session?.moodStart ?? null };
-      emit('tilt:alert', event);
-      this.notifier?.notify(userId, 'BEHAVIOR', TRADER_PUSH_MESSAGES.tilt(event), { accountId, dedupKey: `tilt:${f.signal}` });
+      // Moteur de comportement affiché (#671) : l'anti-tilt se tait (ni toast ni push), jamais deux alertes
+      // pour la même chose ; le journal reste écrit (récap, débrief IA, autopsie). Flag éteint : inchangé.
+      if (!behaviorAlertsUiEnabled()) {
+        emit('tilt:alert', event);
+        this.notifier?.notify(userId, 'BEHAVIOR', TRADER_PUSH_MESSAGES.tilt(event), { accountId, dedupKey: `tilt:${f.signal}` });
+      }
       const { signal, ref: _ref, ...details } = f;
       await this.journal
         ?.recordEvent(userId, accountId, day, 'tilt', signal, details)
