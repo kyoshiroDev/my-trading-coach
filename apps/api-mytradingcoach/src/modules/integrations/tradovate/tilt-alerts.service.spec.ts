@@ -117,7 +117,7 @@ describe('TiltAlertsService : relais au moteur de comportement (#671)', () => {
       const past = Array.from({ length: 12 }, (_, i) => [0, 1, 2].map((k) => ({ id: `p${i}${k}`, pnl: 10, quantity: 1, tradedAt: day(i + 15, 14 + k) })).flat()).flat()
         .map((t) => ({ ...t, tradedAt: new Date(t.tradedAt.getTime() - 30 * 86_400_000) }));
       const today = Array.from({ length: 8 }, (_, k) => ({ id: `t${k}`, pnl: 5, quantity: 1, tradedAt: new Date(NOW.getTime() - (8 - k) * 60_000) }));
-      for (const [limit, expected] of [[null, 1], [5, 0]] as const) {
+      for (const [limit, expected] of [[null, 1], [0, 1], [5, 0]] as const) {
         const base = setup({ tradesPerDayMax: limit });
         base.setTrades([...today].reverse().concat([...past].reverse()));
         const svc = new TiltAlertsService(base.prisma as never, { client: { set: vi.fn(async () => 'OK') } } as never, undefined, base.notifier as never);

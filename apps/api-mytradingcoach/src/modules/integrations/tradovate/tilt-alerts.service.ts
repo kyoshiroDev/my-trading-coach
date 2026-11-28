@@ -112,8 +112,8 @@ export class TiltAlertsService implements OnModuleDestroy {
       // Moteur de comportement affiché (#671) : l'anti-tilt se tait (ni toast ni push) pour ce que le moteur
       // couvre, jamais deux alertes pour la même chose ; le journal reste écrit (récap, débrief IA, autopsie).
       // Le surtrading relatif n'a d'équivalent moteur (C2) que si le trader a déclaré `tradesPerDayMax` :
-      // sans limite déclarée, l'anti-tilt garde ce signal (promis par `PLAN_BENEFITS.anti_tilt`). Flag éteint : inchangé.
-      const engineCovers = behaviorAlertsUiEnabled() && (f.signal !== 'overtrading' || user.tradesPerDayMax != null);
+      // sans limite déclarée (absente ou 0, C2 muet), l'anti-tilt garde ce signal (promis par `PLAN_BENEFITS.anti_tilt`). Flag éteint : inchangé.
+      const engineCovers = behaviorAlertsUiEnabled() && (f.signal !== 'overtrading' || (user.tradesPerDayMax ?? 0) > 0);
       if (!engineCovers) {
         emit('tilt:alert', event);
         this.notifier?.notify(userId, 'BEHAVIOR', TRADER_PUSH_MESSAGES.tilt(event), { accountId, dedupKey: `tilt:${f.signal}` });

@@ -35,7 +35,7 @@
   `TRADOVATE_WATCH_MAX` n'est pas posé : en direct aussi app fermée pendant la séance, Premium seulement)
   - **Alertes de comportement affichées** (#671, derrière `BEHAVIOR_ALERTS_UI`, éteint) : Premium.
     Flag allumé, l'anti-tilt est remplacé par les alertes du moteur (bandeau de la Session live, push),
-    sauf le surtrading relatif, gardé par l'anti-tilt tant que le trader n'a pas déclaré `tradesPerDayMax`
+    sauf le surtrading relatif, gardé par l'anti-tilt tant que le trader n'a pas déclaré une limite (`tradesPerDayMax` absent ou 0)
     (C2 ne couvre que la limite déclarée). « Pas pour mon style » (Profil) et « Alertes de la semaine »
     (Débrief hebdo) : Premium. Gratuit : teaser. `PLAN_BENEFITS` inchangé (`anti_tilt`).
 

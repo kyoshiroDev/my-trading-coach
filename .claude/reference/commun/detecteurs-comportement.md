@@ -151,7 +151,7 @@ Tout derrière **`BEHAVIOR_ALERTS_UI`** (`behavior-flags.ts`, `true` seulement ;
   comptes échoués et archivés, et pour chacune les trades clôturés du même compte jusqu'à l'alerte suivante, dans la même
   journée CME (`alertAftermath`, pur) : nombre, P&L net dans la devise du compte.
 - **Anti-tilt #371** : flag allumé, `TiltAlertsService` n'envoie plus ni toast ni push (journal `tilt` gardé), sauf le
-  surtrading relatif quand le trader n'a pas déclaré `tradesPerDayMax` (C2 ne couvre que la limite déclarée) ; flag éteint,
+  surtrading relatif quand le trader n'a pas déclaré de limite (`tradesPerDayMax` absent ou 0) (C2 ne couvre que la limite déclarée) ; flag éteint,
   inchangé. Jamais deux alertes pour la même chose. Retrait des fichiers : ticket de suite, après l'activation en prod.
 - **Types « signal »** (`BEHAVIOR_SIGNAL_TYPES`) : `F1_EMOTION_AFTER_LOSS` (« Revenge » ou « Peur » saisi à la main moins de
   15 min après un trade perdant du même compte, `BehaviorSignalsService`, depuis `TradesService.create`). Jamais émis ; exclus
