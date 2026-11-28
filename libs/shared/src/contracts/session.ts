@@ -138,6 +138,11 @@ export interface SessionContractEvaluation {
   /** Règles tenues / applicables (« sans objet » exclu). */
   respected: number;
   applicable: number;
+  /**
+   * P&L net du compte plus tôt dans la journée de trading (autres séances) : point de départ de la perte max du
+   * jour. L'app le repasse à `evaluateContract` pour le suivi en direct (même chiffre qu'au débrief).
+   */
+  dayPnlBefore: number;
 }
 
 /** Corps de `POST /session/start` (`contract`) et de `PATCH /session/:id/contract` : champ absent = inchangé. */

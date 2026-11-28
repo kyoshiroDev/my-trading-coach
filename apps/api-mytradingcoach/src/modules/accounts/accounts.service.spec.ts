@@ -56,6 +56,12 @@ describe('AccountsService', () => {
   });
 
   describe('ensureDefaultAccountId — compte par défaut hérite du capital profil', () => {
+    it('findDefaultAccountId (#667) : lecture seule, undefined sans compte actif, jamais de création', async () => {
+      prisma.tradingAccount.findFirst.mockResolvedValue(null);
+      expect(await svc.findDefaultAccountId('u1')).toBeUndefined();
+      expect(prisma.tradingAccount.create).not.toHaveBeenCalled();
+    });
+
     it('crée « Compte principal » avec le startingBalance = capital du profil', async () => {
       prisma.tradingAccount.findFirst.mockResolvedValue(null); // pas de principal, pas de récent
       prisma.user.findUnique.mockResolvedValue({ startingCapital: 50000 });

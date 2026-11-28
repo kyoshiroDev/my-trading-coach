@@ -124,7 +124,7 @@ describe('SessionContractService (#667)', () => {
       },
     };
     const svc = new SessionContractService(prisma as never, {} as never);
-    const out = await svc.forSession('u', { id: 's', accountId: 'acc', startedAt, endedAt: null }, NOW);
+    const out = await svc.forSession('u', { id: 's', accountId: 'acc', startedAt, endedAt: null }, new Date('2026-11-28T00:30:00.000Z'));
     expect(out?.evaluation.rules[0]).toMatchObject({ rule: 'maxDailyLoss', status: 'breached', breachTradeId: 's1', measure: -312 });
   });
 });

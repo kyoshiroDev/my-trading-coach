@@ -140,5 +140,5 @@ export function evaluateContract(
   const order = { breached: 0, respected: 1, not_applicable: 2 } as const;
   rules.sort((a, b) => order[a.status] - order[b.status] || (a.breachAt ?? '').localeCompare(b.breachAt ?? ''));
   const applicable = rules.filter((r) => r.status !== 'not_applicable').length;
-  return { rules, respected: rules.filter((r) => r.status === 'respected').length, applicable };
+  return { rules, respected: rules.filter((r) => r.status === 'respected').length, applicable, dayPnlBefore: dayStart };
 }

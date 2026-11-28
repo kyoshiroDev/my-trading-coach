@@ -158,7 +158,8 @@ export class SessionContractService {
     const newsRule = row.newsMinutes != null || contract.edits.some((e) => e.field === 'newsMinutes');
     const [events, dayPnlBefore] = await Promise.all([
       newsRule ? highImpactEventsBetween(this.prisma, session.startedAt, session.endedAt ?? now) : Promise.resolve(undefined),
-      this.dayPnlBefore(userId, session),
+      // Point de départ de la perte max du jour, seulement si la règle a été fixée.
+      row.maxDailyLoss != null || contract.edits.some((e) => e.field === 'maxDailyLoss') ? this.dayPnlBefore(userId, session) : Promise.resolve(0),
     ]);
     return { contract, evaluation: evaluateContract(contract, trades, events, { dayPnlBefore }) };
   }
@@ -168,12 +169,14 @@ export class SessionContractService {
    * séance du jour) : point de départ de la perte max du jour. Ces trades ne sont pas jugés par le contrat.
    */
   private async dayPnlBefore(userId: string, session: { accountId: string | null; startedAt: Date }): Promise<number> {
+    // Séance sans compte (ancienne donnée) : jamais de cumul entre comptes (#947), on part de 0.
+    if (!session.accountId) return 0;
     const before = await this.prisma.trade.findMany({
       where: {
         userId,
         pnl: { not: null },
         tradedAt: { gte: tradingDayStart(session.startedAt), lt: session.startedAt },
-        ...(session.accountId ? { accountId: session.accountId } : {}),
+        accountId: session.accountId,
       },
       select: { pnl: true, commission: true },
     });
