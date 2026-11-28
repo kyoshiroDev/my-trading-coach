@@ -1,4 +1,6 @@
-import { IsEnum, IsOptional, IsString } from 'class-validator';
+import { Type } from 'class-transformer';
+import { IsEnum, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { SessionContractDto } from './session-contract.dto';
 import { MoodState } from '@prisma/client';
 
 export class CreateSessionDto {
@@ -9,4 +11,10 @@ export class CreateSessionDto {
   @IsString()
   @IsOptional()
   accountId?: string;
+
+  // Contrat de session (#667), ignoré tant que SESSION_CONTRACT_ENABLED est éteint.
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => SessionContractDto)
+  contract?: SessionContractDto;
 }

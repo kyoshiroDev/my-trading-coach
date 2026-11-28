@@ -50,6 +50,24 @@ export interface SessionContract extends SessionContractRules {
   updatedAt: string;
 }
 
+/** Préremplissage de la pré-session (`GET /session/contract/defaults`). */
+export interface SessionContractDefaults {
+  accountId: string;
+  rules: SessionContractRules;
+  /** D'où viennent les valeurs : dernière séance du compte, profil, ou rien. */
+  source: 'last_session' | 'profile' | 'none';
+  lastSessionAt: string | null;
+  /** Limite de perte du jour de la firm (estimation MyTradingCoach), null sans règle. */
+  firmDailyLossLimit: number | null;
+  /** Perte max perso plus large que la limite de la firm. */
+  looserThanFirm: boolean;
+}
+
+/** `GET /session/contract/config` : l'app sait si le contrat est allumé. */
+export interface SessionContractConfig {
+  enabled: boolean;
+}
+
 export type SessionContractStatus = 'respected' | 'breached' | 'not_applicable';
 
 export interface SessionContractRuleResult {

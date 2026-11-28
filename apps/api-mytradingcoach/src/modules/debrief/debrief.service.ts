@@ -1,7 +1,7 @@
 import { BadRequestException, ForbiddenException, Injectable, Logger, NotFoundException, Optional } from '@nestjs/common';
 import { newsWindowStats, type NewsWindowStats } from './debrief-news-window';
-import { NEWS_SHIELD_DEFAULT_MINUTES, type NewsEvent, newsLabel, newsShieldMinutes } from '../behavior/behavior-news';
-import { parisDate } from '../eco-calendar/eco-calendar.schedule';
+import { NEWS_SHIELD_DEFAULT_MINUTES, newsShieldMinutes } from '../behavior/behavior-news';
+import { highImpactEventsBetween } from '../behavior/high-impact-events';
 import { Plan, Prisma, Role, WeeklyDebrief } from '@prisma/client';
 import { effectiveEmotion } from '../../common/utils/effective-emotion.util';
 import { averageKnownRiskReward, computeTradeStats, netPnl, type DebriefHistoryItem } from '@mtc/shared';
@@ -348,16 +348,10 @@ export class DebriefService {
     startDate: Date,
     endDate: Date,
   ): Promise<NewsWindowStats | null> {
-    const [user, rows] = await Promise.all([
+    const [user, events] = await Promise.all([
       this.prisma.user.findUnique({ where: { id: userId }, select: { newsShieldMinutes: true } }),
-      this.prisma.ecoEvent.findMany({
-        where: { impact: 'high', date: { gte: parisDate(startDate), lte: parisDate(endDate) } },
-        select: { date: true, time: true, name: true, nameFr: true, currency: true },
-      }),
+      highImpactEventsBetween(this.prisma, startDate, endDate),
     ]);
-    const events = rows
-      .map((r) => ({ at: parisWallTimeToUtc(r.date, r.time), label: newsLabel(r), currency: r.currency }))
-      .filter((e): e is NewsEvent => e.at !== null);
     return newsWindowStats(trades, events, newsShieldMinutes(user?.newsShieldMinutes) || NEWS_SHIELD_DEFAULT_MINUTES);
   }
 

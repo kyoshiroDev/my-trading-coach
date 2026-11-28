@@ -18,6 +18,10 @@ import { UpdateSessionDto } from './dto/update-session.dto';
 import { CloseSessionDto } from './dto/close-session.dto';
 import { AccountsService } from '../accounts/accounts.service';
 import { parseIncludeInactive } from '../accounts/account-status-scope';
+import type { SessionContractConfig } from '@mtc/shared';
+import { SessionContractService } from './contract/session-contract.service';
+import { SessionContractGuard, sessionContractEnabled } from './contract/session-contract.flag';
+import { SessionContractDto } from './dto/session-contract.dto';
 
 // Le compagnon de session (pré-session, live, débrief de base) est le hook du plan FREE.
 // Accessible à tous les comptes connectés ; les limites FREE sont portées par les trades
@@ -29,14 +33,40 @@ export class SessionController {
   constructor(
     private readonly sessionService: SessionService,
     private readonly accounts: AccountsService,
+    private readonly contracts: SessionContractService,
   ) {}
 
   @Post('start')
-  start(
+  async start(
     @CurrentUser() user: { id: string },
     @Body() dto: CreateSessionDto,
   ) {
-    return this.sessionService.startSession(user.id, dto.mood, dto.accountId);
+    const session = await this.sessionService.startSession(user.id, dto.mood, dto.accountId);
+    // Contrat de session (#667) : ignoré tant que SESSION_CONTRACT_ENABLED est éteint.
+    await this.contracts.createForSession(user.id, session.id, dto.contract);
+    return session;
+  }
+
+  // ── Contrat de session (#667), gratuit (décision provisoire du 2026-11-28) ──
+
+  /** L'app sait si le contrat est allumé (réponse authentifiée, jamais un endpoint public). */
+  @Get('contract/config')
+  contractConfig(): SessionContractConfig {
+    return { enabled: sessionContractEnabled() };
+  }
+
+  /** Préremplissage de la pré-session : dernière séance du compte, sinon profil. */
+  @Get('contract/defaults')
+  @UseGuards(SessionContractGuard)
+  contractDefaults(@CurrentUser() user: { id: string }, @Query('accountId') accountId?: string) {
+    return this.contracts.defaults(user.id, accountId);
+  }
+
+  /** Modification pendant la séance (ACTIVE), tracée. Démo : bloquée par DemoReadOnlyGuard. */
+  @Patch(':id/contract')
+  @UseGuards(SessionContractGuard)
+  updateContract(@CurrentUser() user: { id: string }, @Param('id') id: string, @Body() dto: SessionContractDto) {
+    return this.contracts.update(user.id, id, dto);
   }
 
   @Get('active')
@@ -45,8 +75,9 @@ export class SessionController {
   }
 
   @Get('today')
-  getToday(@CurrentUser() user: { id: string; isDemo?: boolean }) {
-    return this.sessionService.getTodaySession(user.id, user.isDemo === true);
+  async getToday(@CurrentUser() user: { id: string; isDemo?: boolean }) {
+    const session = await this.sessionService.getTodaySession(user.id, user.isDemo === true);
+    return session ? { ...session, ...(await this.contracts.forSession(user.id, session)) } : session;
   }
 
   @Post(':id/close')
@@ -91,11 +122,12 @@ export class SessionController {
   }
 
   @Get('history/:id')
-  getDetail(
+  async getDetail(
     @CurrentUser() user: { id: string },
     @Param('id') id: string,
   ) {
-    return this.sessionService.getSessionDetail(user.id, id);
+    const session = await this.sessionService.getSessionDetail(user.id, id);
+    return { ...session, ...(await this.contracts.forSession(user.id, session)) };
   }
 
   @Get('today/trades')
