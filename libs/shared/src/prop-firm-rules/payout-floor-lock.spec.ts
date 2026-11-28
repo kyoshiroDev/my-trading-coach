@@ -86,6 +86,8 @@ const expected = new Map<string, string>([
   ...['50k', '100k', '150k'].map(
     (s) => [`myfundedfutures-pro-${s}:funded`, 'approval'] as [string, string],
   ),
+  // Lot 6b (2026-11-28) : Pro One Day, funded « same rules as the Pro 50k ».
+  ['myfundedfutures-pro-oneday-50k:funded', 'approval'],
   // #1247 : Topstep XFA (MLL fixé à 0 $ après le premier payout, déclencheur non précisé).
   ...['standard', 'standard-dll', 'consistency', 'consistency-dll'].flatMap((v) =>
     ['50k', '100k', '150k'].map(
@@ -113,8 +115,8 @@ for (const plan of plans) {
 }
 
 describe('gel du plancher au premier payout (#696)', () => {
-  it('120 phases, exactement celles relevées, avec leur déclencheur', () => {
-    expect(expected.size).toBe(120);
+  it('121 phases, exactement celles relevées, avec leur déclencheur', () => {
+    expect(expected.size).toBe(121);
     expect(
       Object.fromEntries([...actual].map(([k, v]) => [k, v.trigger])),
     ).toEqual(Object.fromEntries(expected));
