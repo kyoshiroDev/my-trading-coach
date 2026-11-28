@@ -25,7 +25,12 @@ const ROOTS: Record<string, string[]> = {
  * Une paire ou un symbole sans échéance reste tel quel (« EURUSD »).
  */
 export function assetRoot(asset: string): string {
-  return asset.trim().toUpperCase().split(/[\s:]/)[0].replace(/([FGHJKMNQUVXZ]\d{1,4}|\d{2}-\d{2})$/, '');
+  const token = asset.trim().toUpperCase().split(/[\s:]/)[0];
+  // Symbole connu tel quel (indices CFD « UK100 », « EU50 ») : jamais pris pour une échéance.
+  if (ROOTS[token]) return token;
+  const root = token.replace(/([FGHJKMNQUVXZ]\d{1,4}|\d{2}-\d{2})$/, '');
+  // Une seule lettre restante = pas une racine de contrat (« EU50 » → « E ») : symbole gardé entier.
+  return root.length >= 2 ? root : token;
 }
 
 /**

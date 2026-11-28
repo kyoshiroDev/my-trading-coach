@@ -1,10 +1,10 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma, SessionStatus } from '@prisma/client';
+import { AccountStatus, Prisma, SessionStatus } from '@prisma/client';
 import {
   SESSION_CONTRACT_BOUNDS,
   SESSION_CONTRACT_RULES,
   evaluateContract,
-  type PropFirmPhaseRules,
+  subscriptionState,
   type SessionContract,
   type SessionContractDefaults,
   type SessionContractEdit,
@@ -13,10 +13,8 @@ import {
 } from '@mtc/shared';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { AccountsService } from '../../accounts/accounts.service';
-import { dailyLossLimitAt, phaseForAccountType } from '../../behavior/behavior-plan';
 import { highImpactEventsBetween } from '../../behavior/high-impact-events';
 import { newsShieldMinutes } from '../../behavior/behavior-news';
-import { tradingDayStart } from '../active-session';
 import type { SessionContractDto } from '../dto/session-contract.dto';
 import { sessionContractEnabled } from './session-contract.flag';
 import { EMPTY, editsBetween, mergeRules, normalizeAssets, rulesOf, toView } from './session-contract.view';
@@ -39,20 +37,26 @@ export class SessionContractService {
    * bouclier, actifs). Signale une perte max perso plus large que la limite de la firm (phase du plan).
    */
   async defaults(userId: string, accountId?: string, now = new Date()): Promise<SessionContractDefaults> {
+    // Lecture seule : sans compte choisi, le compte que `startSession` prendrait (« Compte principal » actif,
+    // sinon l'actif le plus récent), sans jamais le créer sur un GET (démo comprise).
     const resolved = accountId && accountId !== 'all'
       ? (await this.accounts.accountWhere(userId, accountId)).accountId
-      : await this.accounts.ensureDefaultAccountId(userId);
-    if (!resolved) throw new NotFoundException('Compte introuvable');
-
-    const [last, user, firmDailyLossLimit] = await Promise.all([
-      this.prisma.sessionContract.findFirst({
-        where: { userId, session: { accountId: resolved } },
-        orderBy: { createdAt: 'desc' },
-        include: { session: { select: { startedAt: true } } },
+      : await this.defaultAccountId(userId);
+    // Aucun compte encore (premier démarrage) : préremplissage du profil, le compte sera créé au démarrage.
+    const [last, user] = await Promise.all([
+      resolved
+        ? this.prisma.sessionContract.findFirst({
+          where: { userId, session: { accountId: resolved } },
+          orderBy: { createdAt: 'desc' },
+          include: { session: { select: { startedAt: true } } },
+        })
+        : null,
+      this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { tradesPerDayMax: true, newsShieldMinutes: true, tradingAssets: true, plan: true, role: true, trialEndsAt: true },
       }),
-      this.prisma.user.findUnique({ where: { id: userId }, select: { tradesPerDayMax: true, newsShieldMinutes: true, tradingAssets: true } }),
-      this.firmDailyLossLimit(userId, resolved, now),
     ]);
+    const firmDailyLossLimit = resolved && user ? await this.firmDailyLossLimit(userId, resolved, user, now) : null;
 
     let rules: SessionContractRules;
     let source: SessionContractDefaults['source'];
@@ -70,7 +74,7 @@ export class SessionContractService {
       source = SESSION_CONTRACT_RULES.some((f) => (f === 'allowedAssets' ? rules.allowedAssets.length : rules[f] != null)) ? 'profile' : 'none';
     }
     return {
-      accountId: resolved,
+      accountId: resolved ?? null,
       rules,
       source,
       lastSessionAt: last?.session.startedAt.toISOString() ?? null,
@@ -79,22 +83,27 @@ export class SessionContractService {
     };
   }
 
-  /** Limite de perte du jour de la firm (phase du plan relié), estimation ; null sans règle. */
-  private async firmDailyLossLimit(userId: string, accountId: string, now: Date): Promise<number | null> {
-    const account = await this.prisma.tradingAccount.findFirst({
-      where: { id: accountId, userId },
-      select: { type: true, propFirmPlan: { select: { phases: true } } },
-    });
-    const phases = (account?.propFirmPlan?.phases ?? []) as unknown as PropFirmPhaseRules[];
-    const phase = phaseForAccountType(phases, account?.type);
-    if (!phase?.daily_loss_limit) return null;
-    // Palier selon le profit réalisé avant la journée en cours (net de frais).
-    const agg = await this.prisma.trade.aggregate({
-      where: { userId, accountId, pnl: { not: null }, tradedAt: { lt: tradingDayStart(now) } },
-      _sum: { pnl: true, commission: true },
-    });
-    const profit = (agg._sum.pnl ?? 0) - Math.abs(agg._sum.commission ?? 0);
-    return dailyLossLimitAt(phase, profit);
+  private async defaultAccountId(userId: string): Promise<string | undefined> {
+    const where = { userId, status: AccountStatus.ACTIVE };
+    const principal = await this.prisma.tradingAccount.findFirst({ where: { ...where, label: 'Compte principal' }, select: { id: true } });
+    if (principal) return principal.id;
+    const recent = await this.prisma.tradingAccount.findFirst({ where, orderBy: { createdAt: 'desc' }, select: { id: true } });
+    return recent?.id;
+  }
+
+  /**
+   * Limite de perte du jour de la firm : celle de Mes comptes et du moteur (`metrics.dailyLoss`, palier selon la
+   * clôture de la veille), jamais recalculée ici. Premium seulement, comme la perte du jour (#370) : null sinon.
+   */
+  private async firmDailyLossLimit(
+    userId: string,
+    accountId: string,
+    user: { plan: string | null; role: string | null; trialEndsAt: Date | null },
+    now: Date,
+  ): Promise<number | null> {
+    if (!subscriptionState(user, now).premiumAccess) return null;
+    const account = (await this.accounts.list(userId, { premium: true })).find((a) => a.id === accountId);
+    return account?.metrics.dailyLoss?.limit ?? null;
   }
 
   /** Contrat enregistré avec la séance (démarrage). Rien si l'interrupteur est éteint ou sans règle. */
@@ -146,7 +155,8 @@ export class SessionContractService {
     if (!row || row.userId !== userId) return null;
     const contract = toView(row);
     const trades = await this.prisma.trade.findMany({
-      where: { userId, sessionId: session.id, ...(session.accountId ? { accountId: session.accountId } : {}) },
+      // Trades d'avant le démarrage (rattachés à la clôture) : jamais jugés par le contrat.
+      where: { userId, sessionId: session.id, tradedAt: { gte: session.startedAt }, ...(session.accountId ? { accountId: session.accountId } : {}) },
       select: { id: true, asset: true, tradedAt: true, pnl: true, commission: true },
       orderBy: { tradedAt: 'asc' },
     });

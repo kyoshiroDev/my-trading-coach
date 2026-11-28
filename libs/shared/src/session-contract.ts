@@ -1,6 +1,14 @@
 import { assetRoot } from './asset-currencies';
 import { type HighImpactEvent, nearHighImpactNews, overMax, trailingLosses } from './session-rules';
 import { netPnl, roundCents } from './trade-stats';
+import type {
+  SessionContractEdit,
+  SessionContractRule,
+  SessionContractRuleResult,
+  SessionContractRules,
+  SessionContractEvaluation,
+  SessionContractValue,
+} from './contracts/session';
 
 /**
  * Contrat de session (#667) : les règles que le trader se fixe avant la séance, plus strictes que celles
@@ -8,8 +16,7 @@ import { netPnl, roundCents } from './trade-stats';
  * lecture, rien de stocké. Les primitives viennent de `session-rules.ts` (les mêmes que le moteur).
  */
 
-export const SESSION_CONTRACT_RULES = ['maxDailyLoss', 'maxConsecutiveLosses', 'maxTrades', 'newsMinutes', 'allowedAssets'] as const;
-export type SessionContractRule = (typeof SESSION_CONTRACT_RULES)[number];
+export const SESSION_CONTRACT_RULES = ['maxDailyLoss', 'maxConsecutiveLosses', 'maxTrades', 'newsMinutes', 'allowedAssets'] as const satisfies readonly SessionContractRule[];
 
 /** Bornes des règles (DTO de l'API, formulaire de l'app). */
 export const SESSION_CONTRACT_BOUNDS = {
@@ -20,79 +27,6 @@ export const SESSION_CONTRACT_BOUNDS = {
   allowedAssets: { maxItems: 20, maxLength: 20 },
   edits: { maxItems: 50 },
 } as const;
-
-/** Règles du contrat. null = règle non fixée ; `allowedAssets` vide = tous les actifs. */
-export interface SessionContractRules {
-  /** Perte max du jour, montant POSITIF dans la devise du compte. */
-  maxDailyLoss: number | null;
-  maxConsecutiveLosses: number | null;
-  maxTrades: number | null;
-  /** Minutes avant et après une annonce à fort impact. */
-  newsMinutes: number | null;
-  /** Racines d'actifs en majuscules (« MNQ », « MES »). */
-  allowedAssets: string[];
-}
-
-export type SessionContractValue = number | string[] | null;
-
-/** Trace d'une modification pendant la séance. `at` en ISO. */
-export interface SessionContractEdit {
-  at: string;
-  field: SessionContractRule;
-  from: SessionContractValue;
-  to: SessionContractValue;
-}
-
-/** Contrat d'une séance tel que renvoyé par l'API. */
-export interface SessionContract extends SessionContractRules {
-  edits: SessionContractEdit[];
-  createdAt: string;
-  updatedAt: string;
-}
-
-/** Préremplissage de la pré-session (`GET /session/contract/defaults`). */
-export interface SessionContractDefaults {
-  accountId: string;
-  rules: SessionContractRules;
-  /** D'où viennent les valeurs : dernière séance du compte, profil, ou rien. */
-  source: 'last_session' | 'profile' | 'none';
-  lastSessionAt: string | null;
-  /** Limite de perte du jour de la firm (estimation MyTradingCoach), null sans règle. */
-  firmDailyLossLimit: number | null;
-  /** Perte max perso plus large que la limite de la firm. */
-  looserThanFirm: boolean;
-}
-
-/** `GET /session/contract/config` : l'app sait si le contrat est allumé. */
-export interface SessionContractConfig {
-  enabled: boolean;
-}
-
-export type SessionContractStatus = 'respected' | 'breached' | 'not_applicable';
-
-export interface SessionContractRuleResult {
-  rule: SessionContractRule;
-  status: SessionContractStatus;
-  /** Limite en vigueur au trade fautif, sinon la limite finale. */
-  limit: SessionContractValue;
-  /** Trade qui franchit la règle (le premier), heure en ISO. */
-  breachTradeId: string | null;
-  breachAt: string | null;
-  /** Trades clôturés APRÈS le trade fautif (celui-ci exclu), P&L net dans la devise du compte. */
-  after: { count: number; pnl: number } | null;
-  /**
-   * Mesure à afficher : trades de la séance, plus longue série de pertes, P&L net réalisé, trades sur un
-   * actif autorisé, trades dans la fenêtre d'une annonce.
-   */
-  measure: number;
-}
-
-export interface SessionContractEvaluation {
-  rules: SessionContractRuleResult[];
-  /** Règles tenues / applicables (« sans objet » exclu). */
-  respected: number;
-  applicable: number;
-}
 
 export interface ContractTrade {
   id: string;

@@ -43,7 +43,9 @@ POST   /api/session/start              JWT → démarrer une session, { mood: Mo
                                        (`contract` = `SessionContractDto`, ignoré si SESSION_CONTRACT_ENABLED est éteint, #667)
 GET    /api/session/contract/config    JWT (gratuit) → `{ enabled }` : contrat de session allumé (#667)
 GET    /api/session/contract/defaults  JWT, 404 flag éteint → préremplissage `SessionContractDefaults` (dernière séance
-                                       du compte, sinon profil ; `firmDailyLossLimit`, `looserThanFirm`), ?accountId vérifié
+                                       du compte, sinon profil ; `firmDailyLossLimit` = `metrics.dailyLoss.limit` de Mes comptes, Premium seulement
+                                       comme la perte du jour #370, sinon null ; `looserThanFirm`), ?accountId vérifié, lecture seule
+                                       (aucun compte créé : `accountId` null sans compte)
 PATCH  /api/session/:id/contract       JWT, 404 flag éteint → upsert du contrat d'une séance ACTIVE à soi (404 sinon, 400 si
                                        clôturée), chaque changement tracé dans `edits` (50 au plus) ; démo 403
 GET    /api/session/active             JWT → session active en cours (null si aucune)

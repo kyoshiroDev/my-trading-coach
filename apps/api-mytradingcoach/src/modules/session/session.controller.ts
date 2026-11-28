@@ -18,7 +18,7 @@ import { UpdateSessionDto } from './dto/update-session.dto';
 import { CloseSessionDto } from './dto/close-session.dto';
 import { AccountsService } from '../accounts/accounts.service';
 import { parseIncludeInactive } from '../accounts/account-status-scope';
-import type { SessionContractConfig } from '@mtc/shared';
+import type { SessionContractConfig, SessionWithContract } from '@mtc/shared';
 import { SessionContractService } from './contract/session-contract.service';
 import { SessionContractGuard, sessionContractEnabled } from './contract/session-contract.flag';
 import { SessionContractDto } from './dto/session-contract.dto';
@@ -77,7 +77,8 @@ export class SessionController {
   @Get('today')
   async getToday(@CurrentUser() user: { id: string; isDemo?: boolean }) {
     const session = await this.sessionService.getTodaySession(user.id, user.isDemo === true);
-    return session ? { ...session, ...(await this.contracts.forSession(user.id, session)) } : session;
+    const contract: SessionWithContract | null = session ? await this.contracts.forSession(user.id, session) : null;
+    return session ? { ...session, ...contract } : session;
   }
 
   @Post(':id/close')
@@ -127,7 +128,8 @@ export class SessionController {
     @Param('id') id: string,
   ) {
     const session = await this.sessionService.getSessionDetail(user.id, id);
-    return { ...session, ...(await this.contracts.forSession(user.id, session)) };
+    const contract: SessionWithContract | null = await this.contracts.forSession(user.id, session);
+    return { ...session, ...contract };
   }
 
   @Get('today/trades')

@@ -18,9 +18,9 @@ export function overMax(rank: number, max: number | null | undefined): boolean {
   return max != null && max > 0 && rank > max;
 }
 
-/** Annonce à fort impact, heure en UTC. */
+/** Annonce à fort impact, heure en UTC (`Date` côté API, ISO tel que reçu côté app). */
 export interface HighImpactEvent {
-  at: Date;
+  at: Date | string;
   currency: string;
 }
 
@@ -33,5 +33,5 @@ export function nearHighImpactNews(at: Date, asset: string, events: readonly Hig
   const ccys = assetCurrencies(asset);
   if (!ccys.length) return false;
   const span = minutes * 60_000;
-  return events.some((e) => ccys.includes(e.currency) && Math.abs(at.getTime() - e.at.getTime()) <= span);
+  return events.some((e) => ccys.includes(e.currency) && Math.abs(at.getTime() - new Date(e.at).getTime()) <= span);
 }

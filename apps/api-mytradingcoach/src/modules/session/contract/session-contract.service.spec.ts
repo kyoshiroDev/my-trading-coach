@@ -1,7 +1,9 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
+import { freezeClock } from '../../../test/freeze-clock';
 import { SessionContractService, editsBetween, mergeRules, normalizeAssets } from './session-contract.service';
 
 const NOW = new Date('2026-11-27T16:02:00.000Z');
+freezeClock(NOW);
 const EMPTY = { maxDailyLoss: null, maxConsecutiveLosses: null, maxTrades: null, newsMinutes: null, allowedAssets: [] as string[] };
 
 afterEach(() => {
@@ -28,7 +30,7 @@ describe('règles du contrat de session (#667)', () => {
   });
 });
 
-function setup(o: { contract?: object | null; status?: 'ACTIVE' | 'CLOSED'; last?: object | null; phases?: unknown[]; type?: string } = {}) {
+function setup(o: { contract?: object | null; status?: 'ACTIVE' | 'CLOSED'; last?: object | null; firmLimit?: number | null; free?: boolean } = {}) {
   const prisma = {
     tradeSession: { findFirst: vi.fn(async () => (o.status === undefined && o.contract === undefined ? null : { status: o.status ?? 'ACTIVE', contract: o.contract ?? null })) },
     sessionContract: {
@@ -36,21 +38,31 @@ function setup(o: { contract?: object | null; status?: 'ACTIVE' | 'CLOSED'; last
       upsert: vi.fn(async ({ create }: { create: Record<string, unknown> }) => ({ ...create, createdAt: NOW, updatedAt: NOW })),
       create: vi.fn(async () => ({})),
     },
-    user: { findUnique: vi.fn(async () => ({ tradesPerDayMax: 4, newsShieldMinutes: 0, tradingAssets: ['MNQ'] })) },
-    tradingAccount: { findFirst: vi.fn(async () => ({ type: o.type ?? 'EVALUATION', propFirmPlan: o.phases ? { phases: o.phases } : null })) },
-    trade: { aggregate: vi.fn(async () => ({ _sum: { pnl: 0, commission: 0 } })) },
+    user: { findUnique: vi.fn(async () => ({ tradesPerDayMax: 4, newsShieldMinutes: 0, tradingAssets: ['MNQ'], plan: o.free ? 'FREE' : 'PREMIUM', role: 'USER', trialEndsAt: null })) },
+    tradingAccount: { findFirst: vi.fn(async () => ({ id: 'acc' })) },
   };
-  const accounts = { accountWhere: vi.fn(async () => ({ accountId: 'acc' })), ensureDefaultAccountId: vi.fn(async () => 'acc') };
+  const accounts = {
+    accountWhere: vi.fn(async () => ({ accountId: 'acc' })),
+    ensureDefaultAccountId: vi.fn(async () => 'acc'),
+    // Limite de Mes comptes (palier déjà résolu par AccountsService), jamais recalculée par le contrat.
+    list: vi.fn(async () => [{ id: 'acc', metrics: { dailyLoss: o.firmLimit != null ? { limit: o.firmLimit } : null } }]),
+  };
   return { svc: new SessionContractService(prisma as never, accounts as never), prisma };
 }
 
 describe('SessionContractService (#667)', () => {
   it('préremplissage : dernière séance du compte, perte max plus large que la firm signalée', async () => {
-    const phases = [{ phase: 'evaluation', daily_loss_limit: { amount: 2000 } }];
-    const { svc } = setup({ last: { ...EMPTY, maxDailyLoss: 2500, session: { startedAt: NOW } }, phases });
+    const { svc } = setup({ last: { ...EMPTY, maxDailyLoss: 2500, session: { startedAt: NOW } }, firmLimit: 2000 });
     expect(await svc.defaults('u', 'acc', NOW)).toMatchObject({
       source: 'last_session', rules: { maxDailyLoss: 2500 }, firmDailyLossLimit: 2000, looserThanFirm: true,
     });
+  });
+
+  it('limite de la firm : celle de Mes comptes, Premium seulement (perte du jour #370)', async () => {
+    const free = setup({ last: { ...EMPTY, maxDailyLoss: 2500, session: { startedAt: NOW } }, firmLimit: 2000, free: true });
+    expect(await free.svc.defaults('u', 'acc', NOW)).toMatchObject({ firmDailyLossLimit: null, looserThanFirm: false });
+    const accounts = (free.svc as unknown as { accounts: { list: ReturnType<typeof vi.fn> } }).accounts;
+    expect(accounts.list).not.toHaveBeenCalled();
   });
 
   it('préremplissage du profil : bouclier coupé = pas de règle des annonces ; sans plan, rien à comparer', async () => {
@@ -58,6 +70,15 @@ describe('SessionContractService (#667)', () => {
     expect(await svc.defaults('u', undefined, NOW)).toMatchObject({
       source: 'profile', rules: { maxTrades: 4, newsMinutes: null, allowedAssets: ['MNQ'] }, firmDailyLossLimit: null, looserThanFirm: false,
     });
+  });
+
+  it('préremplissage sans compte choisi : compte par défaut lu, jamais créé ; aucun compte : profil, compte à null', async () => {
+    const { svc, prisma } = setup();
+    const accounts = (svc as unknown as { accounts: { ensureDefaultAccountId: ReturnType<typeof vi.fn> } }).accounts;
+    await svc.defaults('u', undefined, NOW);
+    expect(accounts.ensureDefaultAccountId).not.toHaveBeenCalled();
+    prisma.tradingAccount.findFirst.mockResolvedValue(null as never);
+    expect(await svc.defaults('u', undefined, NOW)).toMatchObject({ accountId: null, source: 'profile', firmDailyLossLimit: null });
   });
 
   it('démarrage : rien d’enregistré flag éteint', async () => {

@@ -97,6 +97,9 @@ describe('contrat allumé', () => {
     expect((await start(tokens.b, { maxDailyLoss: -5 })).status).toBe(400);
     expect((await start(tokens.b, { newsMinutes: 31 })).status).toBe(400);
     expect((await start(tokens.b, { allowedAssets: Array.from({ length: 21 }, (_, i) => `A${i}`) })).status).toBe(400);
+    expect((await start(tokens.b, { allowedAssets: null })).status).toBe(400);
+    const s = await json<{ id: string }>(await start(tokens.b, { maxTrades: 3 }));
+    expect((await call(`/${s.id}/contract`, tokens.b, { method: 'PATCH', body: JSON.stringify({ allowedAssets: null }) })).status).toBe(400);
   });
 
   it('démarrage avec contrat, lecture au débrief avec évaluation, modification tracée, préremplissage suivant', async () => {

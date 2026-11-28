@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { evaluateContract, ruleAt, type ContractTrade, type SessionContractRules } from './session-contract';
+import { evaluateContract, ruleAt, type ContractTrade } from './session-contract';
+import type { SessionContractRules } from './contracts/session';
 import { nearHighImpactNews, overMax, trailingLosses } from './session-rules';
 import { assetRoot } from './asset-currencies';
 
@@ -43,6 +44,11 @@ describe('primitives des règles de séance (#667)', () => {
     expect(assetRoot('mnqz6')).toBe('MNQ');
     expect(assetRoot('MNQ 12-26')).toBe('MNQ');
     expect(assetRoot('EURUSD')).toBe('EURUSD');
+    // Indices CFD : jamais pris pour une échéance (« EU50 » n'est pas « E » + U50).
+    expect(assetRoot('UK100')).toBe('UK100');
+    expect(assetRoot('EU50')).toBe('EU50');
+    expect(assetRoot('SPX500')).toBe('SPX500');
+    expect(assetRoot('6EZ6')).toBe('6E');
   });
 });
 

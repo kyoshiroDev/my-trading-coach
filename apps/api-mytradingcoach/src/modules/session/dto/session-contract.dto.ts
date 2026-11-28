@@ -1,11 +1,11 @@
 import { ArrayMaxSize, IsArray, IsInt, IsOptional, IsPositive, IsString, Matches, Max, MaxLength, Min, ValidateIf } from 'class-validator';
-import { SESSION_CONTRACT_BOUNDS as B } from '@mtc/shared';
+import { SESSION_CONTRACT_BOUNDS as B, type SessionContractRequest } from '@mtc/shared';
 
 /**
  * Règles du contrat de session (#667). Champ absent = inchangé (PATCH) ou non fixé (création) ;
  * `null` = règle retirée ; `allowedAssets` vide = tous les actifs.
  */
-export class SessionContractDto {
+export class SessionContractDto implements SessionContractRequest {
   @IsOptional()
   @ValidateIf((_, v) => v !== null)
   @IsPositive({ message: 'La perte max doit être un montant positif.' })
@@ -33,7 +33,8 @@ export class SessionContractDto {
   @Max(B.newsMinutes.max)
   newsMinutes?: number | null;
 
-  @IsOptional()
+  // `null` refusé (liste vide = tous les actifs) : `@IsOptional` laisserait passer null.
+  @ValidateIf((_, v) => v !== undefined)
   @IsArray()
   @ArrayMaxSize(B.allowedAssets.maxItems)
   @IsString({ each: true })

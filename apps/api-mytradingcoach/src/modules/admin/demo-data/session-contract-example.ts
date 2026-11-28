@@ -1,5 +1,5 @@
-import { assetRoot, trailingLosses, type SessionContractEdit, type SessionContractRules } from '@mtc/shared';
-import { type DemoDay, net } from './model';
+import { assetRoot, netPnl, trailingLosses, type SessionContractEdit, type SessionContractRules } from '@mtc/shared';
+import type { DemoDay } from './model';
 
 /**
  * Contrat de session de la démo (#667) : visible au débrief de séance quand `SESSION_CONTRACT_ENABLED` est
@@ -24,6 +24,8 @@ export function sessionContractExample(days: readonly DemoDay[]): DemoSessionCon
   const n = closed.length;
   const maxTrades = n - 2;
   const breach = closed[maxTrades];
+  // Net par `netPnl` (@mtc/shared), la même définition que `evaluateContract`.
+  const net = (t: (typeof closed)[number]) => netPnl(t) ?? 0;
   let cum = 0;
   let worst = 0;
   for (const t of closed) worst = Math.min(worst, (cum += net(t)));
