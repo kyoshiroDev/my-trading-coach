@@ -97,6 +97,8 @@ export class DebriefComponent {
   /** Débriefs passés (#959) : semaines du sélecteur, la plus récente en premier. */
   protected readonly history = signal<DebriefHistoryItem[]>([]);
   protected readonly weekLoading = signal(false);
+  /** Numéro de la dernière demande d'affichage : une semaine chargée après une génération est ignorée. */
+  private viewSeq = 0;
   /** Semaine affichée, au format du sélecteur (`année-semaine`). */
   protected readonly selectedWeek = computed(() => {
     const d = this.debrief();
@@ -200,13 +202,14 @@ export class DebriefComponent {
     const item = this.history().find((h) => weekKey(h) === key);
     if (!item || key === this.selectedWeek() || this.weekLoading()) return;
     this.weekLoading.set(true);
+    const seq = ++this.viewSeq;
     this.debriefApi
       .getByWeek(item.year, item.weekNumber)
       .pipe(map((res) => res.data), takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (data) => {
-          this.debrief.set(data);
           this.weekLoading.set(false);
+          if (seq === this.viewSeq) this.debrief.set(data); // sinon un débrief vient d'être généré
         },
         error: () => {
           this.weekLoading.set(false);
@@ -268,6 +271,7 @@ export class DebriefComponent {
   generateDebrief() {
     if (this.isGenerating()) return;
     this.isGenerating.set(true);
+    this.viewSeq++; // une semaine passée en cours de chargement ne remplacera pas le débrief généré
     this.debriefApi
       .generate()
       .pipe(takeUntilDestroyed(this.destroyRef))

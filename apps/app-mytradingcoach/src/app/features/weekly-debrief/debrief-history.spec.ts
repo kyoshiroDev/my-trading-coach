@@ -36,6 +36,9 @@ describe('Débrief : semaines passées (#959)', () => {
   const toast = { error: vi.fn(), success: vi.fn() };
 
   beforeEach(() => {
+    // Dates écrites en dur ci-dessus : horloge figée (règle tests n° 1).
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-11-24T12:00:00Z'));
     TestBed.resetTestingModule();
     toast.error.mockReset();
     TestBed.configureTestingModule({
@@ -54,7 +57,10 @@ describe('Débrief : semaines passées (#959)', () => {
     });
     http = TestBed.inject(HttpTestingController);
   });
-  afterEach(() => http.verify());
+  afterEach(() => {
+    http.verify();
+    vi.useRealTimers();
+  });
 
   function open(current: WeeklyDebrief | null, history?: DebriefHistoryItem[] | 'error') {
     const fixture = TestBed.createComponent(DebriefComponent);
@@ -110,6 +116,19 @@ describe('Débrief : semaines passées (#959)', () => {
     fixture.detectChanges();
     expect(toast.error).toHaveBeenCalledWith(expect.stringContaining('semaine 46'));
     expect(el.querySelector('.week-title')?.textContent).toContain('Semaine 47');
+  });
+
+  it('génération pendant le chargement d’une semaine passée : le débrief généré reste affiché', () => {
+    const { fixture, el, select } = open(debrief(47), [item(47), item(46)]);
+    select()!.value = '2026-46';
+    select()!.dispatchEvent(new Event('change'));
+    const past = http.expectOne((r) => r.url.endsWith('/debrief/2026/46'));
+    (fixture.componentInstance as unknown as { generateDebrief: () => void }).generateDebrief();
+    http.expectOne((r) => r.url.endsWith('/debrief/generate')).flush({ data: debrief(48) });
+    http.expectOne((r) => r.url.endsWith('/debrief/history')).flush({ data: [item(48), item(47), item(46)] });
+    past.flush({ data: debrief(46) });
+    fixture.detectChanges();
+    expect(el.querySelector('.week-title')?.textContent).toContain('Semaine 48');
   });
 
   it('une seule semaine : pas de sélecteur', () => {
