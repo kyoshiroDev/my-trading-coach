@@ -165,3 +165,25 @@ Tout derrière **`BEHAVIOR_ALERTS_UI`** (`behavior-flags.ts`, `true` seulement ;
   séance live en démo).
 - **Hors périmètre** : seuils (après validation du rapport silencieux par Greg), activation du flag (dev puis prod, par Greg),
   conservation de `BehaviorAlert` (#1338).
+
+## Contrat de session (#667, 2026-11-28)
+
+- Primitives écrites une fois dans `@mtc/shared` (`session-rules.ts`) : `trailingLosses` (C1), `overMax` (C2),
+  `nearHighImpactNews` (stat #670 du débrief, règle des annonces du contrat) ; `assetCurrencies` et `assetRoot`
+  déplacés dans `asset-currencies.ts` (réexporté par `eco-calendar.briefing.ts`). Spec d'équivalence C1 / C2 ↔ contrat
+  (`behavior-contract-equivalence.spec.ts`).
+- Séance avec contrat et `SESSION_CONTRACT_ENABLED` allumé : `BehaviorAlertsService.check` prend la règle en vigueur
+  à l'entrée (`ruleAt`) comme seuil de C2 (`maxTrades`, sinon `tradesPerDayMax`), de D1 (`newsMinutes`, sinon le
+  bouclier) et de C1 (`contractLossStreak`) ; C1 avec contrat sonne aussi en apprentissage. Sans contrat : inchangé.
+- Évaluation (`evaluateContract`, `@mtc/shared`) : infraction au trade qui franchit la règle (trades max : le N+1ᵉ ;
+  pertes d'affilée : l'entrée après N pertes ; perte max : P&L net réalisé DU JOUR sous −X (journée CME du compte,
+  séances précédentes du jour comprises comme point de départ, `dayPnlBefore`, sans être jugées) ; actifs : racine hors liste ;
+  annonces : `tradedAt` dans [T−X, T+X] d'une annonce forte de ses devises, sans objet sans annonce du jour). Règle en
+  vigueur reconstituée depuis `edits` : desserrer après l'infraction ne l'efface pas. « Ensuite » = trades clôturés
+  suivants, net, devise du compte. Calculée à la lecture (`GET /session/today`, `GET /session/history/:id`).
+- Unité de « trades max » : le contrat compte les lignes `Trade` (journal, débrief), C2 avec un seuil du contrat compte
+  les positions regroupées (`groupPositions`, enregistré seulement). L'alerte du contrat côté front (ticket
+  d'interface) suit les lignes : une sortie en plusieurs fois peut donc franchir le contrat avant C2, c'est voulu.
+- Interface (pré-session, live, débrief) : ticket de suite ; l'alerte du contrat (ambre) y remplacera le bandeau
+  #671 de C1 et C2 pour ces règles.
+

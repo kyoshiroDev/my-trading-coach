@@ -14,7 +14,7 @@ import {
 } from './behavior.constants';
 import type { BehaviorBaselineData } from './behavior-baseline';
 import { type BehaviorPosition, isLoss } from './behavior-positions';
-import { roundCents } from '@mtc/shared';
+import { overMax, roundCents, trailingLosses } from '@mtc/shared';
 import { type NewsEvent, newsShieldDraft } from './behavior-news';
 
 /**
@@ -62,6 +62,11 @@ export interface EntryContext {
   news?: NewsEvent[];
   /** Fenêtre du bouclier en minutes (0 = coupé). */
   newsShieldMinutes?: number;
+  /**
+   * Contrat de session (#667) : « arrêt après N pertes d'affilée ». Fixé = seuil de C1, et C1 sonne aussi en
+   * apprentissage (la règle vient du trader, comme C2). Absent = seuil par défaut, muet en apprentissage.
+   */
+  contractLossStreak?: number | null;
 }
 
 /** Référence fiable : sinon B, C1 et C3 restent muets (période d'apprentissage). */
@@ -187,12 +192,12 @@ export function detectRevenge(ctx: EntryContext): BehaviorAlertDraft | null {
 
 // ── C. Forcer après une perte ───────────────────────────────────────────────
 
-/** C1 — nouvelle entrée après 3 pertes consécutives dans la séance. */
+/** C1 — nouvelle entrée après 3 pertes consécutives dans la séance (ou N, fixé par le contrat de session). */
 export function detectLossStreak(ctx: EntryContext): BehaviorAlertDraft | null {
-  if (isLearning(ctx.baseline)) return null;
-  let streak = 0;
-  for (let i = ctx.closed.length - 1; i >= 0 && isLoss(ctx.closed[i]); i--) streak++;
-  if (streak < C1_CONSECUTIVE_LOSSES) return null;
+  const fromContract = ctx.contractLossStreak != null && ctx.contractLossStreak > 0 ? ctx.contractLossStreak : null;
+  if (fromContract == null && isLearning(ctx.baseline)) return null;
+  const streak = trailingLosses(ctx.closed.map((p) => p.pnl));
+  if (streak < (fromContract ?? C1_CONSECUTIVE_LOSSES)) return null;
   const lost = ctx.closed.slice(-streak).reduce((s, p) => s + p.pnl, 0);
   return {
     type: 'C1_LOSS_STREAK',
@@ -205,9 +210,8 @@ export function detectLossStreak(ctx: EntryContext): BehaviorAlertDraft | null {
 /** C2 — plus de positions dans la séance que la limite déclarée par le trader. */
 export function detectOverDailyLimit(ctx: EntryContext): BehaviorAlertDraft | null {
   const max = ctx.tradesPerDayMax;
-  if (max == null || max <= 0) return null;
   const count = ctx.closed.length + 1;
-  if (count <= max) return null;
+  if (max == null || !overMax(count, max)) return null;
   return {
     type: 'C2_OVER_DAILY_LIMIT',
     severity: 'medium',

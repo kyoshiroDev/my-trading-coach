@@ -14,7 +14,7 @@ const baseline: BehaviorBaselineData = {
   sizeByAsset: { MNQ: { median: 1, p75: 1, p90: 2, samples: 300 } }, positionsPerSession: { median: 20, p90: 30 },
 };
 
-function setup(opts: { demo?: boolean; free?: boolean; trialEndsAt?: Date | null; muted?: string[]; seen?: Record<string, number> | null; positions?: { asset: string; side: 'LONG' | 'SHORT'; quantity: number }[] } = {}) {
+function setup(opts: { demo?: boolean; free?: boolean; trialEndsAt?: Date | null; contract?: Record<string, unknown> | null; muted?: string[]; seen?: Record<string, number> | null; positions?: { asset: string; side: 'LONG' | 'SHORT'; quantity: number }[] } = {}) {
   const store = new Map<string, string>();
   store.set('tradovate:positions:conn', JSON.stringify({
     at: NOW.toISOString(),
@@ -40,7 +40,7 @@ function setup(opts: { demo?: boolean; free?: boolean; trialEndsAt?: Date | null
         { id: 't1', accountId: 'a', asset: 'MNQ', side: 'LONG', entry: 100, quantity: 1, pnl: -40, commission: 0, tradedAt: at(10) },
       ]),
     },
-    tradeSession: { findFirst: vi.fn(async () => null) },
+    tradeSession: { findFirst: vi.fn(async () => (opts.contract === undefined ? null : { id: 's1', contract: opts.contract })) },
     propFirmPlan: { findUnique: vi.fn() },
     behaviorAlert: { create: vi.fn(async (args: { data: Record<string, unknown> }) => (created.push(args.data), { id: `al${created.length}` })) },
   };
@@ -57,6 +57,7 @@ function setup(opts: { demo?: boolean; free?: boolean; trialEndsAt?: Date | null
 afterEach(() => {
   delete process.env['BEHAVIOR_ALERTS_UI'];
   delete process.env['BEHAVIOR_ALERTS_RECORD'];
+  delete process.env['SESSION_CONTRACT_ENABLED'];
 });
 
 describe('BehaviorAlertsService.check', () => {
@@ -85,6 +86,23 @@ describe('BehaviorAlertsService.check', () => {
     expect(created.find((c) => c['type'] === 'B_REVENGE')).toMatchObject({ mutedByUser: true });
     expect(events.map((e) => e.type)).not.toContain('B_REVENGE');
     expect(events.map((e) => e.type)).toContain('C3_MARTINGALE');
+  });
+
+  it('contrat de session (#667) : ses seuils remplacent ceux du profil (C2 trades max, C1 pertes d’affilée)', async () => {
+    const contract = {
+      sessionId: 's1', userId: 'u', maxDailyLoss: null, maxConsecutiveLosses: 1, maxTrades: 1, newsMinutes: null, allowedAssets: [],
+      edits: [], createdAt: NOW, updatedAt: NOW,
+    };
+    process.env['SESSION_CONTRACT_ENABLED'] = 'true';
+    const on = setup({ contract });
+    await on.svc.check('u', 'a', on.emit, NOW);
+    expect(on.created.map((c) => c['type'])).toEqual(expect.arrayContaining(['C1_LOSS_STREAK', 'C2_OVER_DAILY_LIMIT']));
+    expect(on.created.find((c) => c['type'] === 'C2_OVER_DAILY_LIMIT')).toMatchObject({ sessionId: 's1', context: { count: 2, max: 1 } });
+    delete process.env['SESSION_CONTRACT_ENABLED'];
+    const off = setup({ contract });
+    await off.svc.check('u', 'a', off.emit, NOW);
+    expect(off.created.map((c) => c['type'])).not.toContain('C2_OVER_DAILY_LIMIT');
+    expect(off.created.map((c) => c['type'])).not.toContain('C1_LOSS_STREAK');
   });
 
   it('nouvelle entrée après une perte : alertes ENREGISTRÉES, rien envoyé à l’app (UI désactivée)', async () => {

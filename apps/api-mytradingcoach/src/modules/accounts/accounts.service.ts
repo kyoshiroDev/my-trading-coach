@@ -1016,24 +1016,32 @@ export class AccountsService {
   }
 
   /**
+   * Compte par défaut EXISTANT, en lecture seule : le « Compte principal » actif, sinon le compte actif le
+   * plus récent, sinon undefined. Même choix que `ensureDefaultAccountId` (qui crée le compte s'il manque).
+   */
+  async findDefaultAccountId(userId: string): Promise<string | undefined> {
+    const principal = await this.prisma.tradingAccount.findFirst({
+      where: { userId, status: AccountStatus.ACTIVE, label: 'Compte principal' },
+      select: { id: true },
+    });
+    if (principal) return principal.id;
+    const recent = await this.prisma.tradingAccount.findFirst({
+      where: { userId, status: AccountStatus.ACTIVE },
+      orderBy: { createdAt: 'desc' },
+      select: { id: true },
+    });
+    return recent?.id;
+  }
+
+  /**
    * Compte par défaut (anti-NULL) pour une écriture sans accountId explicite :
    * le « Compte principal » actif, sinon le compte actif le plus récent, sinon on
    * CRÉE le « Compte principal ». Renvoie toujours un id (jamais NULL).
    * (Les comptes démo sont read-only, bloqués en amont par DemoReadOnlyGuard.)
    */
   async ensureDefaultAccountId(userId: string): Promise<string> {
-    const principal = await this.prisma.tradingAccount.findFirst({
-      where: { userId, status: AccountStatus.ACTIVE, label: 'Compte principal' },
-      select: { id: true },
-    });
-    if (principal) return principal.id;
-
-    const recent = await this.prisma.tradingAccount.findFirst({
-      where: { userId, status: AccountStatus.ACTIVE },
-      orderBy: { createdAt: 'desc' },
-      select: { id: true },
-    });
-    if (recent) return recent.id;
+    const existing = await this.findDefaultAccountId(userId);
+    if (existing) return existing;
 
     // Premier compte cree implicitement (import onboarding) : herite du capital declare au
     // profil, sinon le dashboard afficherait « base 0 » alors que l'utilisateur a saisi un capital.

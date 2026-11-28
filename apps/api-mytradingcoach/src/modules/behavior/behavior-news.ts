@@ -1,5 +1,4 @@
-import { NEWS_SHIELD_DEFAULT_MINUTES, NEWS_SHIELD_MAX_MINUTES } from '@mtc/shared';
-import { assetCurrencies } from '../eco-calendar/eco-calendar.briefing';
+import { NEWS_SHIELD_DEFAULT_MINUTES, NEWS_SHIELD_MAX_MINUTES, assetCurrencies } from '@mtc/shared';
 import type { BehaviorAlertDraft } from './behavior-detectors';
 
 /**

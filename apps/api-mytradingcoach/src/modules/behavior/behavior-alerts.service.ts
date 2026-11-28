@@ -1,12 +1,14 @@
 import { Injectable, Logger, OnModuleDestroy, Optional } from '@nestjs/common';
 import { BrokerProvider, type Prisma } from '@prisma/client';
-import { subscriptionState, type PropFirmPhaseRules } from '@mtc/shared';
+import { ruleAt, subscriptionState, type PropFirmPhaseRules } from '@mtc/shared';
 import { BehaviorMutesService } from './behavior-mutes.service';
 import { PrismaService } from '@api/prisma/prisma.service';
 import { RedisService } from '../infra/redis.service';
 import { AccountsService } from '../accounts/accounts.service';
 import { tradingDay } from '../accounts/account-rules';
 import { activeSessionWhere } from '../session/active-session';
+import { sessionContractEnabled } from '../session/contract/session-contract.flag';
+import { toView } from '../session/contract/session-contract.view';
 import { openPositionsKey, parseOpenPositions } from '../integrations/tradovate/tradovate-open-positions';
 import { ANTI_SPAM_MS, E1_ONCE_TTL_S } from './behavior.constants';
 import { stopWidenedDraft, stopWidening } from './behavior-stop';
@@ -125,16 +127,23 @@ export class BehaviorAlertsService implements OnModuleDestroy {
     let recorded = 0;
     const audience = await this.audience(userId, conn.user, now);
     for (const e of entries) {
-      const at = e.since ? new Date(e.since) : now;
+      const since = e.since ? new Date(e.since) : now;
+      const at = Number.isNaN(since.getTime()) ? now : since;
+      // Contrat de session (#667) : ses seuils (règle en vigueur à l'entrée) remplacent ceux du profil pour C1, C2, D1.
+      const rule = (f: 'maxTrades' | 'newsMinutes' | 'maxConsecutiveLosses') => {
+        const v = ctxBase.contract ? ruleAt(ctxBase.contract, f, at) : null;
+        return typeof v === 'number' ? v : null;
+      };
       const ctx: EntryContext = {
         ...ctxBase,
-        at: Number.isNaN(at.getTime()) ? now : at,
+        at,
         // Taille comparée à la référence = position entière sur l'actif (contrats engagés).
         entry: { asset: e.asset, side: e.side, quantity: e.quantity },
         open: positions,
-        tradesPerDayMax: conn.user.tradesPerDayMax,
+        tradesPerDayMax: rule('maxTrades') ?? conn.user.tradesPerDayMax,
         news,
-        newsShieldMinutes: newsShieldMinutes(conn.user.newsShieldMinutes),
+        newsShieldMinutes: rule('newsMinutes') ?? newsShieldMinutes(conn.user.newsShieldMinutes),
+        contractLossStreak: rule('maxConsecutiveLosses'),
       };
       for (const draft of evaluateEntry(ctx)) {
         if (draft.type === 'D1_NEWS_WINDOW') {
@@ -233,7 +242,11 @@ export class BehaviorAlertsService implements OnModuleDestroy {
       }),
       this.baselines.get(userId, now),
       this.accounts.list(userId, { premium: true }).then((list) => list.find((a) => a.id === accountId) ?? null),
-      this.prisma.tradeSession.findFirst({ where: activeSessionWhere(userId), orderBy: { startedAt: 'desc' }, select: { id: true } }),
+      this.prisma.tradeSession.findFirst({
+        where: activeSessionWhere(userId),
+        orderBy: { startedAt: 'desc' },
+        select: { id: true, ...(sessionContractEnabled() ? { contract: true } : {}) },
+      }),
     ]);
     const closed = groupPositions(rows.map(toBehaviorTrade).filter((t) => tradingDay(t.tradedAt) === day));
 
@@ -251,6 +264,7 @@ export class BehaviorAlertsService implements OnModuleDestroy {
       maxContracts,
       dailyLoss: dl ? { limit: dl.limit, used: dl.used } : null,
       sessionId: session?.id ?? null,
+      contract: sessionContractEnabled() && session && 'contract' in session && session.contract ? toView(session.contract) : null,
     };
   }
 
