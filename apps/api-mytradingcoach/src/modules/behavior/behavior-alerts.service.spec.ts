@@ -55,6 +55,7 @@ function setup(opts: { demo?: boolean; seen?: Record<string, number> | null; pos
 
 afterEach(() => {
   delete process.env['BEHAVIOR_ALERTS_UI'];
+  delete process.env['BEHAVIOR_ALERTS_RECORD'];
 });
 
 describe('BehaviorAlertsService.check', () => {
@@ -169,6 +170,7 @@ describe('BehaviorAlertsService.check — bouclier annonces à l’entrée (#670
 });
 
 describe('BehaviorAlertsService.onStopMoved (E1 stop éloigné, #672)', () => {
+  freezeClock(NOW);
   function stopSetup(opts: { demo?: boolean } = {}) {
     const store = new Map<string, string>();
     store.set('tradovate:positions:conn', JSON.stringify({
@@ -233,6 +235,5 @@ describe('BehaviorAlertsService.onStopMoved (E1 stop éloigné, #672)', () => {
     const { svc, emit, created } = stopSetup();
     expect(await svc.onStopMoved('u', 'a', 'conn', widen, emit, NOW)).toBe(false);
     expect(created).toEqual([]);
-    delete process.env['BEHAVIOR_ALERTS_RECORD'];
   });
 });
