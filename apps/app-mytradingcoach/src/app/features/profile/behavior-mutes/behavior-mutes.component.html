@@ -1,0 +1,32 @@
+<div class="settings-section" data-testid="behavior-mutes">
+  <div class="settings-section-label">Alertes de comportement</div>
+  @if (!userStore.isPremium()) {
+    <mtc-premium-lock heading="Alertes de comportement" subtitle="Choisis les alertes que tu reçois en séance." />
+  } @else if (status() === 'error') {
+    <mtc-error-state message="Tes réglages d’alertes n’ont pas pu être chargés. Vérifie ta connexion puis réessaie." (retry)="load()" />
+  } @else {
+    <div class="settings-card">
+      <p class="pm-desc">Détecteurs coupés avec « Pas pour mon style ». Tu ne reçois plus leurs alertes, elles restent dans ton Débrief hebdo.</p>
+      @if (status() === 'loading') {
+        <div class="pm-empty" aria-busy="true">Chargement…</div>
+      } @else {
+        @for (m of mutes(); track m.detector) {
+          <div class="pm-row">
+            <div class="pm-left">
+              <div class="pm-name">{{ labels[m.detector] }}</div>
+              <div class="pm-since">coupé le {{ m.createdAt | date: 'dd/MM' }}</div>
+            </div>
+            <button type="button" class="btn-ghost" [attr.data-testid]="'behavior-unmute-' + m.detector"
+                    [attr.aria-label]="'Réactiver « ' + labels[m.detector] + ' »'"
+                    [disabled]="busy() === m.detector" (click)="unmute(m.detector)">Réactiver</button>
+          </div>
+        } @empty {
+          <div class="pm-empty" data-testid="behavior-mutes-empty">Aucun détecteur coupé. Tu peux en couper un depuis une alerte, avec « Pas pour mon style ».</div>
+        }
+        @if (actionError(); as e) {
+          <div class="pm-error" role="status">{{ e }}</div>
+        }
+      }
+    </div>
+  }
+</div>

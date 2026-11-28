@@ -158,7 +158,7 @@ Points pour le relecteur : ce qui sort de mon domaine ou demande un arbitrage
 | Couleur | Usage autorisé | Usage INTERDIT |
 |---|---|---|
 | `--green` | Gains, PnL > 0 | Décoratif, succès génériques |
-| `--red` | Pertes, PnL < 0 ; session live : annonce éco à **impact fort** (ligne Prochaine annonce / Publiée), choix produit 2026-10-18 | Erreurs non-trading, danger générique |
+| `--red` | Pertes, PnL < 0 ; session live : annonce éco à **impact fort** (ligne Prochaine annonce / Publiée), choix produit 2026-10-18 ; bandeau d'alerte de comportement de gravité haute (ou 2ᵉ signal en 30 min) dans la Session live et sa pastille dans « Alertes de la semaine » du Débrief, choix produit 2026-11-28 (#671), gravité jamais portée par la couleur seule (icône, titre, texte masqué) | Erreurs non-trading, danger générique |
 | `--blue` | CTA, liens, éléments interactifs | Statuts trading |
 | `--yellow` | Warnings, attention, urgence ; session live : annonce éco à **impact moyen** et jauge perte du jour (≥ 50 % consommés) | Succès, gains |
 | `--cyan` | Indicateurs live / IA (pulse) | Décoratif, CTA |

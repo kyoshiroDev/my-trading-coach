@@ -117,6 +117,12 @@ PATCH  /api/debrief/:debriefId/objectives/:index/note PREMIUM → `ObjectiveNote
 GET    /api/debrief/history            PREMIUM → 52 dernières semaines en entrées légères `DebriefHistoryItem` (id, semaine, dates, nombre de trades ; ni analyse ni P&L) : sélecteur de semaine de l'écran Débrief (#959)
 POST   /api/debrief/generate           PREMIUM → 1/jour par user (rendue si l IA échoue) ; semaine sans trade clôturé → 400 « Aucun trade clôturé cette semaine pour l’instant… » (C8 #1046, #1056)
 
+GET    /api/behavior/config            AUTH (sans Premium) → `{ uiEnabled }` : affichage des alertes de comportement allumé (`BEHAVIOR_ALERTS_UI`, #671)
+GET    /api/behavior/mutes             PREMIUM, 404 flag éteint → détecteurs coupés (« Pas pour mon style »)
+POST   /api/behavior/mutes             PREMIUM, 404 flag éteint → `MuteDetectorDto { detector }` (liste fermée `BEHAVIOR_MUTABLE_DETECTORS`), idempotent ; démo 403
+DELETE /api/behavior/mutes/:detector   PREMIUM, 404 flag éteint → 204 idempotent, 400 détecteur inconnu ; démo 403
+GET    /api/behavior/alerts?from&to    PREMIUM, 404 flag éteint → alertes de la période (31 jours au plus, hors types signal et comptes perdus) et ce qui a suivi
+
 GET    /api/vps/servers                ADMIN → serveurs du sélecteur Surveillance [{id,label,readOnly}]
 GET    /api/vps/stats                  ADMIN → stats système SSH
 POST   /api/vps/apt-update             ADMIN → SSE stream

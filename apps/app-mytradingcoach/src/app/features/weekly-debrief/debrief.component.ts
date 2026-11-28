@@ -30,6 +30,8 @@ import { ErrorStateComponent, PctPipe } from '@mtc/front-ui';
 import { InfoTooltipComponent } from '@app/shared/components/info-tooltip/info-tooltip.component';
 import { DRAWDOWN_LABELS } from '@app/core/constants/drawdown-labels.const';
 import { PaywallCtaService } from '@app/core/services/paywall-cta.service';
+import { DebriefBehaviorAlertsComponent } from './debrief-behavior-alerts.component';
+import { BehaviorAlertsStore } from '@app/core/stores/behavior-alerts.store';
 
 const TAB_KEY = 'mtc.debriefTab';
 
@@ -66,6 +68,7 @@ function typeBadge(type: string): { label: string; cls: string } | null {
     PlanModalComponent,
     PnlFormatPipe,
     MoneyPipe,
+    DebriefBehaviorAlertsComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './debrief.component.css',
@@ -82,6 +85,8 @@ export class DebriefComponent {
   protected readonly userStore = inject(UserStore);
   private readonly accountStore = inject(SelectedAccountStore);
   protected readonly showPlanModal = signal(false);
+  /** Alertes de comportement (#671) : bloc « Alertes de la semaine » si `BEHAVIOR_ALERTS_UI` est allumé. */
+  protected readonly behaviorAlerts = inject(BehaviorAlertsStore);
 
   protected readonly CalendarDaysIcon = CalendarDays;
   protected readonly RefreshCwIcon = RefreshCw;
@@ -151,6 +156,7 @@ export class DebriefComponent {
     // Devise de chaque compte des onglets (`money` / `pnlFormat` par accountId) : comptes chargés
     // même en ouverture directe de /debrief, sinon repli sur l'USD par défaut (#947).
     if (!this.accountStore.loaded() && !this.accountStore.isLoading()) this.accountStore.load();
+    this.behaviorAlerts.loadConfig();
     if (!this.userStore.isPremium()) {
       this.isLoading.set(false);
       return;
@@ -229,6 +235,11 @@ export class DebriefComponent {
 
   protected weekKey(w: { year: number; weekNumber: number }): string {
     return weekKey(w);
+  }
+
+  /** Jour AAAA-MM-JJ à Paris (#671) : les bornes du débrief sont des minuits de Paris, l'ISO UTC donnerait la veille. */
+  protected parisDay(iso: string): string {
+    return new Date(iso).toLocaleDateString('fr-CA', { timeZone: 'Europe/Paris' });
   }
 
   protected selectTab(id: string): void {

@@ -28,11 +28,15 @@ import { UserStore } from '@app/core/stores/user.store';
 import { LivePositionComponent } from './components/live-position/live-position.component';
 import { LIVE_POSITION_ROLES, laggingBrokerPanel, liveTotals } from './components/live-position/live-position.util';
 import { LiveBarComponent } from './components/live-bar/live-bar.component';
+import { StickyStuckDirective } from './sticky-stuck.directive';
 import { LiveNextEventComponent } from './components/live-next-event/live-next-event.component';
 import { LiveAccountsStripComponent } from './components/live-accounts-strip/live-accounts-strip.component';
 import { LiveClosedTradesComponent } from './components/live-closed-trades/live-closed-trades.component';
 import { SessionStore } from '@app/core/stores/session.store';
 import { bannerTickers, moodLabel, planKindShort } from './session-live.util';
+import { LiveBehaviorAlertComponent } from './components/live-behavior-alert/live-behavior-alert.component';
+import { BehaviorAlertsStore } from '@app/core/stores/behavior-alerts.store';
+import { PlanModalComponent } from '@app/shared/components/plan-modal/plan-modal.component';
 
 /**
  * Onglet « Session live » v3 (#593, retours de Val : « trop chargée, on se perd ») : l'essentiel
@@ -49,7 +53,7 @@ import { bannerTickers, moodLabel, planKindShort } from './session-live.util';
   imports: [
     LiveAccountsStripComponent, MarketContextBarComponent, LiveNewsComponent, QuickTradeComponent, LivePropFirmComponent,
     LivePositionComponent, LiveBarComponent, LiveNextEventComponent, LiveClosedTradesComponent,
-    RouterLink, DialogDirective,
+    RouterLink, DialogDirective, LiveBehaviorAlertComponent, PlanModalComponent, StickyStuckDirective,
   ],
   templateUrl: './session-live.component.html',
 })
@@ -79,6 +83,7 @@ export class SessionLiveComponent {
   // News live + contexte marché = IA mutualisée → FREE, accessible à tous.
 
   constructor() {
+    this.behaviorAlerts.loadConfig();
     // triggerCloseModal → naviguer vers l'onglet Débrief
     effect(() => {
       if (this.triggerCloseModal()) {
@@ -115,8 +120,12 @@ export class SessionLiveComponent {
   private readonly money = inject(MoneyService);
   private readonly accounts = inject(SelectedAccountStore);
   private readonly tradovate = inject(TradovateStore);
-  private readonly userStore = inject(UserStore);
+  protected readonly userStore = inject(UserStore);
   protected readonly sessionStore = inject(SessionStore);
+  /** Alertes de comportement (#671) : bandeau Premium, teaser pour un gratuit, flag `BEHAVIOR_ALERTS_UI`. */
+  protected readonly behaviorAlerts = inject(BehaviorAlertsStore);
+  protected readonly behaviorTeaser = computed(() => this.behaviorAlerts.uiEnabled() && !this.userStore.isPremium());
+  protected readonly showPlanModal = signal(false);
   private lastBrokerGap: string | null = null;
 
   /** Table des valeurs du point (barre SL/TP, prix au relevé) : une lecture, repli vide. */

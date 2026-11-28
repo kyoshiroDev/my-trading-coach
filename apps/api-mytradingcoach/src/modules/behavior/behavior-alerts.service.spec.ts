@@ -14,7 +14,7 @@ const baseline: BehaviorBaselineData = {
   sizeByAsset: { MNQ: { median: 1, p75: 1, p90: 2, samples: 300 } }, positionsPerSession: { median: 20, p90: 30 },
 };
 
-function setup(opts: { demo?: boolean; seen?: Record<string, number> | null; positions?: { asset: string; side: 'LONG' | 'SHORT'; quantity: number }[] } = {}) {
+function setup(opts: { demo?: boolean; free?: boolean; trialEndsAt?: Date | null; muted?: string[]; seen?: Record<string, number> | null; positions?: { asset: string; side: 'LONG' | 'SHORT'; quantity: number }[] } = {}) {
   const store = new Map<string, string>();
   store.set('tradovate:positions:conn', JSON.stringify({
     at: NOW.toISOString(),
@@ -34,7 +34,7 @@ function setup(opts: { demo?: boolean; seen?: Record<string, number> | null; pos
   const created: Record<string, unknown>[] = [];
   // Une perte à 15:00:10, puis la ré-entrée à 15:00:20 en 4 contrats, sens inversé.
   const prisma = {
-    brokerConnection: { findUnique: vi.fn(async () => ({ id: 'conn', user: { isDemo: !!opts.demo, tradesPerDayMax: null } })) },
+    brokerConnection: { findUnique: vi.fn(async () => ({ id: 'conn', user: { isDemo: !!opts.demo, tradesPerDayMax: null, plan: opts.free ? 'FREE' : 'PREMIUM', role: 'USER', trialEndsAt: opts.trialEndsAt ?? null } })) },
     trade: {
       findMany: vi.fn(async () => [
         { id: 't1', accountId: 'a', asset: 'MNQ', side: 'LONG', entry: 100, quantity: 1, pnl: -40, commission: 0, tradedAt: at(10) },
@@ -47,7 +47,8 @@ function setup(opts: { demo?: boolean; seen?: Record<string, number> | null; pos
   const accounts = { list: vi.fn(async () => [{ id: 'a', propFirmPlanId: null, type: 'FUNDED', metrics: { dailyLoss: null, currentBalance: 0, startingBalance: 0 } }]) };
   const baselines = { get: vi.fn(async () => baseline) };
   const notifier = { notify: vi.fn() };
-  const svc = new BehaviorAlertsService(prisma as never, redis as never, accounts as never, baselines as never, notifier as never);
+  const mutes = { mutedSet: vi.fn(async () => new Set(opts.muted ?? [])) };
+  const svc = new BehaviorAlertsService(prisma as never, redis as never, accounts as never, baselines as never, notifier as never, undefined, mutes as never);
   const events: BehaviorAlertEvent[] = [];
   const emit = (_e: 'behavior:alert' | 'news:alert', p: BehaviorAlertEvent) => events.push(p);
   return { svc, emit, events, created, store, prisma, notifier };
@@ -59,6 +60,33 @@ afterEach(() => {
 });
 
 describe('BehaviorAlertsService.check', () => {
+  freezeClock(NOW);
+
+  it('UI allumée, compte gratuit : rien envoyé ni poussé, alertes enregistrées (#671)', async () => {
+    process.env['BEHAVIOR_ALERTS_UI'] = 'true';
+    const { svc, emit, events, created, notifier } = setup({ free: true });
+    expect(await svc.check('u', 'a', emit, NOW)).toBeGreaterThan(0);
+    expect(events).toEqual([]);
+    expect(notifier.notify).not.toHaveBeenCalled();
+    expect(created.every((c) => c['mutedByUser'] === false)).toBe(true);
+  });
+
+  it('UI allumée, compte gratuit en essai de 14 jours (fin après NOW) : envoyé comme un Premium (#671)', async () => {
+    process.env['BEHAVIOR_ALERTS_UI'] = 'true';
+    const { svc, emit, events } = setup({ free: true, trialEndsAt: new Date(NOW.getTime() + 3 * 86_400_000) });
+    await svc.check('u', 'a', emit, NOW);
+    expect(events.length).toBeGreaterThan(0);
+  });
+
+  it('UI allumée, détecteur coupé : enregistré avec mutedByUser, ni socket ni push pour lui (#671)', async () => {
+    process.env['BEHAVIOR_ALERTS_UI'] = 'true';
+    const { svc, emit, events, created } = setup({ muted: ['B_REVENGE'] });
+    await svc.check('u', 'a', emit, NOW);
+    expect(created.find((c) => c['type'] === 'B_REVENGE')).toMatchObject({ mutedByUser: true });
+    expect(events.map((e) => e.type)).not.toContain('B_REVENGE');
+    expect(events.map((e) => e.type)).toContain('C3_MARTINGALE');
+  });
+
   it('nouvelle entrée après une perte : alertes ENREGISTRÉES, rien envoyé à l’app (UI désactivée)', async () => {
     const { svc, emit, events, created, notifier } = setup();
     expect(await svc.check('u', 'a', emit, NOW)).toBeGreaterThan(0);
@@ -171,7 +199,7 @@ describe('BehaviorAlertsService.check — bouclier annonces à l’entrée (#670
 
 describe('BehaviorAlertsService.onStopMoved (E1 stop éloigné, #672)', () => {
   freezeClock(NOW);
-  function stopSetup(opts: { demo?: boolean } = {}) {
+  function stopSetup(opts: { demo?: boolean; free?: boolean; muted?: string[] } = {}) {
     const store = new Map<string, string>();
     store.set('tradovate:positions:conn', JSON.stringify({
       at: NOW.toISOString(),
@@ -189,14 +217,16 @@ describe('BehaviorAlertsService.onStopMoved (E1 stop éloigné, #672)', () => {
     };
     const created: Record<string, unknown>[] = [];
     const prisma = {
-      user: { findUnique: vi.fn(async () => ({ isDemo: !!opts.demo })) },
+      user: { findUnique: vi.fn(async () => ({ isDemo: !!opts.demo, plan: opts.free ? 'FREE' : 'PREMIUM', role: 'USER', trialEndsAt: null })) },
       tradeSession: { findFirst: vi.fn(async () => null) },
       behaviorAlert: { create: vi.fn(async (args: { data: Record<string, unknown> }) => (created.push(args.data), { id: `al${created.length}` })) },
     };
-    const svc = new BehaviorAlertsService(prisma as never, redis as never, {} as never, {} as never);
+    const notifier = { notify: vi.fn() };
+    const mutes = { mutedSet: vi.fn(async () => new Set(opts.muted ?? [])) };
+    const svc = new BehaviorAlertsService(prisma as never, redis as never, {} as never, {} as never, notifier as never, undefined, mutes as never);
     const events: BehaviorAlertEvent[] = [];
     const emit = (_e: 'behavior:alert' | 'news:alert', p: BehaviorAlertEvent) => events.push(p);
-    return { svc, emit, events, created };
+    return { svc, emit, events, created, notifier };
   }
   const widen = { orderId: 10, contractId: 7, action: 'Sell' as const, prevStop: 21_498, nextStop: 21_496.5 };
 
@@ -214,11 +244,25 @@ describe('BehaviorAlertsService.onStopMoved (E1 stop éloigné, #672)', () => {
     expect(created).toHaveLength(1);
   });
 
-  it('BEHAVIOR_ALERTS_UI=true : l’alerte part aussi vers l’app', async () => {
+  it('BEHAVIOR_ALERTS_UI=true : l’alerte part vers l’app et en push (#671)', async () => {
     process.env['BEHAVIOR_ALERTS_UI'] = 'true';
-    const { svc, emit, events } = stopSetup();
+    const { svc, emit, events, notifier } = stopSetup();
     await svc.onStopMoved('u', 'a', 'conn', widen, emit, NOW);
     expect(events.map((e) => e.type)).toEqual(['E1_STOP_WIDENED']);
+    expect(notifier.notify).toHaveBeenCalledWith('u', 'BEHAVIOR', expect.anything(), expect.objectContaining({ dedupKey: 'behavior:E1_STOP_WIDENED' }));
+  });
+
+  it('UI allumée mais compte gratuit, ou détecteur coupé : enregistrée en silence (#671)', async () => {
+    process.env['BEHAVIOR_ALERTS_UI'] = 'true';
+    const free = stopSetup({ free: true });
+    expect(await free.svc.onStopMoved('u', 'a', 'conn', widen, free.emit, NOW)).toBe(true);
+    expect(free.events).toEqual([]);
+    expect(free.created[0]).toMatchObject({ mutedByUser: false });
+    const muted = stopSetup({ muted: ['E1_STOP_WIDENED'] });
+    await muted.svc.onStopMoved('u', 'a', 'conn', widen, muted.emit, NOW);
+    expect(muted.events).toEqual([]);
+    expect(muted.notifier.notify).not.toHaveBeenCalled();
+    expect(muted.created[0]).toMatchObject({ mutedByUser: true });
   });
 
   it('stop d’entrée (même sens que la position), rapprochement, compte démo : rien', async () => {

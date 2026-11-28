@@ -25,18 +25,9 @@ import { type NewsEvent, newsShieldDraft } from './behavior-news';
  * de vente, AMF), sans morale. Pas de tiret cadratin (règle PROMPT-174).
  */
 
-export type BehaviorAlertType =
-  | 'A1_SIZE_OVER_PLAN'
-  | 'A2_DAILY_LOSS_DISTANCE'
-  | 'A3_ENTRY_DAY_STARTED'
-  | 'B_REVENGE'
-  | 'C1_LOSS_STREAK'
-  | 'C2_OVER_DAILY_LIMIT'
-  | 'C3_MARTINGALE'
-  | 'D1_NEWS_WINDOW'
-  | 'E1_STOP_WIDENED';
-
-export type BehaviorAlertSeverity = 'medium' | 'high';
+// Types partagés avec l'app (#671) : réexportés ici pour les imports existants de l'API.
+import type { BehaviorAlertSeverity, BehaviorAlertType } from '@mtc/shared';
+export type { BehaviorAlertSeverity, BehaviorAlertType };
 
 export interface BehaviorAlertDraft {
   type: BehaviorAlertType;
@@ -109,7 +100,7 @@ export function detectSizeOverPlan(ctx: EntryContext): BehaviorAlertDraft | null
   return {
     type: 'A1_SIZE_OVER_PLAN',
     severity: 'high',
-    message: `Position de ${desc} : au-dessus du maximum du plan (${fmtQty(over.limit)} ${over.unit}).`,
+    message: `Position de ${desc}\u00a0: au-dessus du maximum du plan (${fmtQty(over.limit)} ${over.unit}).`,
     context: { ...over, positions: ctx.open },
   };
 }
@@ -140,7 +131,7 @@ export function detectEntryDayStarted(ctx: EntryContext): BehaviorAlertDraft | n
   return {
     type: 'A3_ENTRY_DAY_STARTED',
     severity: share >= 0.8 ? 'high' : 'medium',
-    message: `Nouvelle entrée avec ${Math.round(share * 100)} % de la perte max du jour déjà consommée.`,
+    message: `Nouvelle entrée avec ${Math.round(share * 100)}\u00a0% de la perte max du jour déjà consommée.`,
     context: { used: ctx.dailyLoss.used, limit: ctx.dailyLoss.limit, share: Math.round(share * 1000) / 1000 },
   };
 }
@@ -172,15 +163,15 @@ export function detectRevenge(ctx: EntryContext): BehaviorAlertDraft | null {
 
   const parts: string[] = [];
   for (const s of signals) {
-    if (s === 'fast_reentry') parts.push(`${fmtDelay(delay)} après la perte (d'habitude ${fmtDelay(b.medianGapAfterLossMs!)})`);
-    if (s === 'size_above_p75') parts.push(`${fmtQty(ctx.entry.quantity)} contrats (d'habitude ${fmtQty(size!.median)})`);
+    if (s === 'fast_reentry') parts.push(`${fmtDelay(delay)} après la perte (d’habitude ${fmtDelay(b.medianGapAfterLossMs!)})`);
+    if (s === 'size_above_p75') parts.push(`${fmtQty(ctx.entry.quantity)} contrats (d’habitude ${fmtQty(size!.median)})`);
     if (s === 'flip') parts.push('sens inversé sur le même actif');
     if (s === 'second_loss') parts.push('après 2 pertes d’affilée');
   }
   return {
     type: 'B_REVENGE',
     severity: signals.length >= B_HIGH_SIGNALS ? 'high' : 'medium',
-    message: `Nouvelle entrée ${ctx.entry.asset} : ${parts.join(', ')}.`,
+    message: `Nouvelle entrée ${ctx.entry.asset}\u00a0: ${parts.join(', ')}.`,
     context: {
       signals,
       delayMs: delay,
@@ -220,7 +211,7 @@ export function detectOverDailyLimit(ctx: EntryContext): BehaviorAlertDraft | nu
   return {
     type: 'C2_OVER_DAILY_LIMIT',
     severity: 'medium',
-    message: `${count}e position de la séance, ta limite déclarée est de ${max} par jour.`,
+    message: `${count}ᵉ position de la séance, ta limite déclarée est de ${max} par jour.`,
     context: { count, max },
   };
 }

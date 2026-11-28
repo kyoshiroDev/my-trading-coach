@@ -137,3 +137,8 @@ export const PRESSURE_OVER_LIMIT_POINTS = 15;
 export const E1_MIN_TICKS = 2;
 /** Une alerte E1 par position : clé gardée le temps d'une séance (comme `behavior:pos`). */
 export const E1_ONCE_TTL_S = 12 * 3600;
+
+// ── F1 émotion après une perte (#671, signal silencieux) ──────────────────────
+
+/** Fenêtre après un trade perdant dans laquelle « Revenge » ou « Peur » saisi est un signal. */
+export const F1_AFTER_LOSS_MS = 15 * 60_000;

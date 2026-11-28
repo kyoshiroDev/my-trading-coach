@@ -5,6 +5,7 @@ import { RedisService } from '../../infra/redis.service';
 import { tradingDay } from '../../accounts/account-rules';
 import { activeSessionWhere } from '../../session/active-session';
 import { isPremiumAccess } from '../../discord/discord-access.util';
+import { behaviorAlertsUiEnabled } from '../../behavior/behavior-flags';
 import { detectTilt, type TiltFinding, type TiltTrade } from './tilt-detection';
 import { PropRiskJournalService } from './prop-risk-journal.service';
 import { TraderNotifier } from '../../push/trader-notifier.service';
@@ -65,7 +66,7 @@ export class TiltAlertsService implements OnModuleDestroy {
   async check(userId: string, accountId: string, emit: TiltAlertEmit, now = new Date()): Promise<void> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
-      select: { plan: true, role: true, trialEndsAt: true, isDemo: true },
+      select: { plan: true, role: true, trialEndsAt: true, isDemo: true, tradesPerDayMax: true },
     });
     if (!user || user.isDemo || !isPremiumAccess(user)) return;
     const account = await this.prisma.tradingAccount.findFirst({
@@ -108,8 +109,15 @@ export class TiltAlertsService implements OnModuleDestroy {
       const sent = await this.redis.client.set(`tilt-alert:${accountId}:${f.signal}:${f.ref}`, '1', 'EX', KEY_TTL_S, 'NX');
       if (sent !== 'OK') continue;
       const event: TiltAlertEvent = { ...f, accountId, accountLabel: account.label, moodStart: session?.moodStart ?? null };
-      emit('tilt:alert', event);
-      this.notifier?.notify(userId, 'BEHAVIOR', TRADER_PUSH_MESSAGES.tilt(event), { accountId, dedupKey: `tilt:${f.signal}` });
+      // Moteur de comportement affiché (#671) : l'anti-tilt se tait (ni toast ni push) pour ce que le moteur
+      // couvre, jamais deux alertes pour la même chose ; le journal reste écrit (récap, débrief IA, autopsie).
+      // Le surtrading relatif n'a d'équivalent moteur (C2) que si le trader a déclaré `tradesPerDayMax` :
+      // sans limite déclarée (absente ou 0, C2 muet), l'anti-tilt garde ce signal (promis par `PLAN_BENEFITS.anti_tilt`). Flag éteint : inchangé.
+      const engineCovers = behaviorAlertsUiEnabled() && (f.signal !== 'overtrading' || (user.tradesPerDayMax ?? 0) > 0);
+      if (!engineCovers) {
+        emit('tilt:alert', event);
+        this.notifier?.notify(userId, 'BEHAVIOR', TRADER_PUSH_MESSAGES.tilt(event), { accountId, dedupKey: `tilt:${f.signal}` });
+      }
       const { signal, ref: _ref, ...details } = f;
       await this.journal
         ?.recordEvent(userId, accountId, day, 'tilt', signal, details)

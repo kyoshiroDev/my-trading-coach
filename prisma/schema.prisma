@@ -160,6 +160,8 @@ model User {
   /// Référence personnelle des détecteurs de comportement (#602), une ligne au plus.
   behaviorBaseline BehaviorBaseline?
   behaviorAlerts   BehaviorAlert[]
+  /// Détecteurs coupés par le trader (« Pas pour mon style », #671).
+  behaviorDetectorMutes BehaviorDetectorMute[]
   giveawayDraws    GiveawayDraw[]
   giveawayWins     GiveawayWin[]
   lastSeenAt      DateTime?
@@ -930,6 +932,19 @@ model BehaviorAlert {
   @@index([accountId, tradeDay])
   @@index([sessionId])
   @@index([tradeId])
+}
+
+/// Détecteur de comportement coupé par le trader (« Pas pour mon style », #671). L'alerte reste
+/// enregistrée (`BehaviorAlert.mutedByUser = true`) : seuls le socket et le push sont coupés.
+/// Gardé tant que le compte existe (cascade).
+model BehaviorDetectorMute {
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// `BEHAVIOR_MUTABLE_DETECTORS` de `@mtc/shared` (TEXT, comme `BehaviorAlert.type`).
+  detector  String
+  createdAt DateTime @default(now())
+
+  @@id([userId, detector])
 }
 
 model StripeEvent {

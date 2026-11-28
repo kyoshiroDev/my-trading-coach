@@ -1,6 +1,7 @@
 import { Injectable, Logger, OnModuleDestroy, Optional } from '@nestjs/common';
 import { BrokerProvider, type Prisma } from '@prisma/client';
-import type { PropFirmPhaseRules } from '@mtc/shared';
+import { subscriptionState, type PropFirmPhaseRules } from '@mtc/shared';
+import { BehaviorMutesService } from './behavior-mutes.service';
 import { PrismaService } from '@api/prisma/prisma.service';
 import { RedisService } from '../infra/redis.service';
 import { AccountsService } from '../accounts/accounts.service';
@@ -31,10 +32,9 @@ const spamKey = (accountId: string, day: string, type: string) => `behavior:spam
 /** E1 (#672) : une alerte par position (compte, contrat, ouverture). */
 export const stopOnceKey = (accountId: string, contractId: number, opened: string) => `behavior:stop:${accountId}:${contractId}:${opened}`;
 
-/** Enregistrement des alertes : actif sauf `BEHAVIOR_ALERTS_RECORD=false` (interrupteur d'urgence). */
-export const behaviorAlertsRecordEnabled = () => process.env['BEHAVIOR_ALERTS_RECORD'] !== 'false';
-/** Affichage dans l'app : `BEHAVIOR_ALERTS_UI=true` seulement. Phase 1 : faux, rien n'est envoyé. */
-export const behaviorAlertsUiEnabled = () => process.env['BEHAVIOR_ALERTS_UI'] === 'true';
+import { behaviorAlertsRecordEnabled, behaviorAlertsUiEnabled } from './behavior-flags';
+// Interrupteurs déplacés dans `behavior-flags.ts` (#671) : réexportés pour les imports existants.
+export { behaviorAlertsRecordEnabled, behaviorAlertsUiEnabled };
 
 export interface BehaviorAlertEvent extends BehaviorAlertDraft {
   id: string;
@@ -66,7 +66,19 @@ export class BehaviorAlertsService implements OnModuleDestroy {
     @Optional() private readonly notifier?: TraderNotifier,
     /** Bouclier annonces (#670) : affiché tout de suite, hors `BEHAVIOR_ALERTS_UI`. */
     @Optional() private readonly newsShield?: NewsShieldService,
+    /** Détecteurs coupés par le trader (#671) : enregistrés, jamais envoyés. */
+    @Optional() private readonly mutes?: BehaviorMutesService,
   ) {}
+
+  /**
+   * Envoi d'une alerte enregistrée (#671) : seulement si l'affichage est allumé, si le trader a l'accès
+   * Premium (comme l'anti-tilt #371) et s'il n'a pas coupé ce détecteur. Sinon : enregistrée en silence.
+   */
+  private async audience(userId: string, user: { plan: string | null; role: string | null; trialEndsAt: Date | null }, now: Date) {
+    const muted = (await this.mutes?.mutedSet(userId).catch(() => new Set<string>())) ?? new Set<string>();
+    const canShow = behaviorAlertsUiEnabled() && subscriptionState(user, now).premiumAccess;
+    return { muted, shows: (type: string) => canShow && !muted.has(type) };
+  }
 
   schedule(userId: string, accountId: string, emit: BehaviorAlertEmit): void {
     if (!behaviorAlertsRecordEnabled()) return;
@@ -87,7 +99,7 @@ export class BehaviorAlertsService implements OnModuleDestroy {
   async check(userId: string, accountId: string, emit: BehaviorAlertEmit, now = new Date()): Promise<number> {
     const conn = await this.prisma.brokerConnection.findUnique({
       where: { accountId_provider: { accountId, provider: BrokerProvider.TRADOVATE } },
-      select: { id: true, user: { select: { isDemo: true, tradesPerDayMax: true, newsShieldMinutes: true } } },
+      select: { id: true, user: { select: { isDemo: true, tradesPerDayMax: true, newsShieldMinutes: true, plan: true, role: true, trialEndsAt: true } } },
     });
     if (!conn || conn.user.isDemo) return 0;
 
@@ -111,6 +123,7 @@ export class BehaviorAlertsService implements OnModuleDestroy {
         })
       : [];
     let recorded = 0;
+    const audience = await this.audience(userId, conn.user, now);
     for (const e of entries) {
       const at = e.since ? new Date(e.since) : now;
       const ctx: EntryContext = {
@@ -139,13 +152,13 @@ export class BehaviorAlertsService implements OnModuleDestroy {
         const row = await this.prisma.behaviorAlert.create({
           data: {
             userId, accountId, tradeDay: new Date(`${day}T00:00:00.000Z`), sessionId: ctxBase.sessionId,
-            type: draft.type, severity: draft.severity, message: draft.message,
+            type: draft.type, severity: draft.severity, message: draft.message, mutedByUser: audience.muted.has(draft.type),
             context: { ...draft.context, entry: ctx.entry } as Prisma.InputJsonValue,
           },
           select: { id: true },
         });
         recorded++;
-        if (behaviorAlertsUiEnabled()) {
+        if (audience.shows(draft.type)) {
           emit('behavior:alert', { ...draft, id: row.id, accountId });
           // Push (#666) : seulement quand les alertes sont affichées, jamais en phase silencieuse.
           this.notifier?.notify(userId, 'BEHAVIOR', TRADER_PUSH_MESSAGES.behavior(accountId, draft), {
@@ -175,7 +188,7 @@ export class BehaviorAlertsService implements OnModuleDestroy {
       if (!tickSize) return false;
       const w = stopWidening({ side, entryPrice: pos.entryPrice, prevStop: change.prevStop, nextStop: change.nextStop, tickSize });
       if (!w) return false;
-      const user = await this.prisma.user.findUnique({ where: { id: userId }, select: { isDemo: true } });
+      const user = await this.prisma.user.findUnique({ where: { id: userId }, select: { isDemo: true, plan: true, role: true, trialEndsAt: true } });
       if (!user || user.isDemo) return false;
       // Une fois par position : un renfort (prix moyen modifié) garde la même ouverture.
       const opened = pos.since ?? String(pos.entryPrice);
@@ -186,15 +199,22 @@ export class BehaviorAlertsService implements OnModuleDestroy {
       });
       const day = tradingDay(now);
       const session = await this.prisma.tradeSession.findFirst({ where: activeSessionWhere(userId), orderBy: { startedAt: 'desc' }, select: { id: true } });
+      const audience = await this.audience(userId, user, now);
       const row = await this.prisma.behaviorAlert.create({
         data: {
           userId, accountId, tradeDay: new Date(`${day}T00:00:00.000Z`), sessionId: session?.id ?? null,
-          type: draft.type, severity: draft.severity, message: draft.message,
+          type: draft.type, severity: draft.severity, message: draft.message, mutedByUser: audience.muted.has(draft.type),
           context: draft.context as Prisma.InputJsonValue,
         },
         select: { id: true },
       });
-      if (behaviorAlertsUiEnabled()) emit('behavior:alert', { ...draft, id: row.id, accountId });
+      if (audience.shows(draft.type)) {
+        emit('behavior:alert', { ...draft, id: row.id, accountId });
+        // Push (#666) comme les autres détecteurs : seulement quand les alertes sont affichées.
+        this.notifier?.notify(userId, 'BEHAVIOR', TRADER_PUSH_MESSAGES.behavior(accountId, draft), {
+          accountId, dedupKey: `behavior:${draft.type}`,
+        });
+      }
       return true;
     } catch (err: unknown) {
       this.logger.warn(`Stop éloigné non évalué (compte ${accountId}) : ${err instanceof Error ? err.message : 'Error'}`);

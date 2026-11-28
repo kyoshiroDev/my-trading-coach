@@ -4,6 +4,11 @@ import { TraderPushModule } from '../push/trader-push.module';
 import { BehaviorBaselineService } from './behavior-baseline.service';
 import { BehaviorAlertsService } from './behavior-alerts.service';
 import { NewsShieldService } from './news-shield.service';
+import { BehaviorController } from './behavior.controller';
+import { BehaviorMutesService } from './behavior-mutes.service';
+import { BehaviorUiGuard } from './behavior-ui.guard';
+import { BehaviorHistoryService } from './behavior-history.service';
+import { BehaviorSignalsService } from './behavior-signals.service';
 
 /**
  * Détecteurs de comportement (#602, phase 1) : référence personnelle et moteur d'alertes.
@@ -13,7 +18,8 @@ import { NewsShieldService } from './news-shield.service';
   // AccountsModule : perte max du jour et solde du compte (métriques déjà calculées, rien de recalculé).
   // TraderPushModule : push des alertes affichées (#666).
   imports: [AccountsModule, TraderPushModule],
-  providers: [BehaviorBaselineService, BehaviorAlertsService, NewsShieldService],
-  exports: [BehaviorBaselineService, BehaviorAlertsService, NewsShieldService],
+  controllers: [BehaviorController],
+  providers: [BehaviorBaselineService, BehaviorAlertsService, NewsShieldService, BehaviorMutesService, BehaviorHistoryService, BehaviorSignalsService, BehaviorUiGuard],
+  exports: [BehaviorBaselineService, BehaviorAlertsService, NewsShieldService, BehaviorMutesService, BehaviorSignalsService],
 })
 export class BehaviorModule {}

@@ -1,0 +1,35 @@
+:host { display: block; min-width: 0; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+.ba {
+  display: flex; gap: var(--space-3); align-items: flex-start; min-width: 0;
+  margin-top: var(--space-3); padding: var(--space-3) 14px; border-radius: var(--radius-lg);
+  border: 1px solid color-mix(in srgb, var(--yellow) 35%, transparent);
+  background: var(--yellow-dim);
+}
+/* Rouge = gravité haute ou 2ᵉ signal en 30 min : exception datée dans design.md (#671). */
+.ba.red { border-color: color-mix(in srgb, var(--red) 40%, transparent); background: var(--red-dim); }
+.ba-ico { flex: 0 0 auto; margin-top: 1px; color: var(--yellow); }
+.ba.red .ba-ico { color: var(--red); }
+.ba-main { flex: 1 1 auto; min-width: 0; }
+.ba-kicker {
+  font-family: var(--font-mono); font-size: var(--fs-2xs); font-weight: 600; letter-spacing: .08em;
+  text-transform: uppercase; color: var(--yellow); margin-bottom: var(--space-1);
+}
+.ba.red .ba-kicker { color: var(--red); }
+.ba-msg { font-size: var(--fs-md); line-height: 1.45; color: var(--text); overflow-wrap: anywhere; }
+.ba-meta { margin-top: var(--space-1); font-family: var(--font-mono); font-size: var(--fs-xs); color: var(--text-3); font-variant-numeric: tabular-nums; }
+.ba-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: 10px; }
+.btn-ghost {
+  min-height: 44px; padding: 0 14px; border-radius: var(--radius-md); border: 1px solid var(--border-hover);
+  background: transparent; color: var(--text-2); font: 500 var(--fs-sm) var(--font-body); cursor: pointer;
+}
+.btn-ghost:hover:not(:disabled) { color: var(--text); background: var(--bg-3); }
+.btn-ghost:disabled { opacity: .5; cursor: progress; }
+.ba-close {
+  flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center;
+  width: 44px; height: 44px; margin: -10px -10px 0 0; border: 0; border-radius: var(--radius-md);
+  background: transparent; color: var(--text-3); cursor: pointer;
+}
+.ba-close:hover { color: var(--text); }
+button:focus-visible { outline: 2px solid var(--blue-bright); outline-offset: 2px; }

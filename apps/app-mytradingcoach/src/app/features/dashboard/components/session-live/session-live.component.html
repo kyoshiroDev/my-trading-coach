@@ -21,7 +21,9 @@
     </div>
   } @else {
 
-  <!-- 1. Bandeau collant : chrono, trades N / max, P&L total du jour -->
+  <!-- 1. Bloc collant : barre de séance (chrono, trades N / max, P&L du jour) puis alerte de comportement (#671) -->
+  <div class="lv-sentinel" data-sticky-sentinel aria-hidden="true"></div>
+  <div class="lv-sticky" mtcStickyStuck>
   <mtc-live-bar class="lv-bar"
     [clock]="sessionStore.sessionClock()"
     [totalPnl]="totals().total"
@@ -36,8 +38,18 @@
     (closeSession)="closeSession.emit()"
     (openContext)="contextOpen.set(true)"
   />
+  @if (behaviorAlerts.uiEnabled() && userStore.isPremium()) {
+    <mtc-live-behavior-alert [sessionAccountId]="session()?.accountId ?? null" />
+  }
+  </div>
 
   <div class="lv-body">
+    @if (behaviorTeaser()) {
+      <button type="button" class="pf-teaser" data-testid="behavior-teaser" (click)="showPlanModal.set(true)">
+        <span>Une alerte quand ta séance dérape&nbsp;: ré-entrée juste après une perte, taille qui grimpe, pertes d’affilée.</span>
+        <span class="pf-badge">PREMIUM</span>
+      </button>
+    }
     <!-- Mes comptes (#668) : pastilles du plus exposé au moins exposé, à partir de 2 comptes suivis. -->
     <mtc-live-accounts-strip [sessionAccountId]="session()?.accountId ?? null" />
 
@@ -117,3 +129,7 @@
   } <!-- /if session ACTIVE -->
 
 </div>
+
+@if (showPlanModal()) {
+  <mtc-plan-modal (closed)="showPlanModal.set(false)" />
+}

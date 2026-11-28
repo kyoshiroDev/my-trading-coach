@@ -7,6 +7,7 @@ import { AI_MODELS } from '../../infra/ai-pricing.const';
 import { isPremiumAccess, type PremiumAccessUser } from '../../discord/discord-access.util';
 import { AccountsService, type PlanContext } from '../accounts.service';
 import { tradingDay } from '../account-rules';
+import { BEHAVIOR_SIGNAL_TYPES } from '@mtc/shared';
 import type { UpdateAccountRequestDto } from '../dto/update-account.dto';
 import {
   buildIncidentReport,
@@ -368,7 +369,8 @@ export class AccountIncidentsService {
         select: { tradedAt: true, quantity: true, pnl: true, commission: true },
       }),
       this.prisma.behaviorAlert.findMany({
-        where: { accountId: incident.accountId, tradeDay: incident.tradeDate },
+        // Types « signal » (#671) jamais lus : ils ne sont pas des alertes vues par le trader.
+        where: { accountId: incident.accountId, tradeDay: incident.tradeDate, type: { notIn: [...BEHAVIOR_SIGNAL_TYPES] } },
         select: { createdAt: true, type: true },
       }),
       this.prisma.propRiskEvent.findMany({
