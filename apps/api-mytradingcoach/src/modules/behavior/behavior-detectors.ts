@@ -25,18 +25,9 @@ import { type NewsEvent, newsShieldDraft } from './behavior-news';
  * de vente, AMF), sans morale. Pas de tiret cadratin (règle PROMPT-174).
  */
 
-export type BehaviorAlertType =
-  | 'A1_SIZE_OVER_PLAN'
-  | 'A2_DAILY_LOSS_DISTANCE'
-  | 'A3_ENTRY_DAY_STARTED'
-  | 'B_REVENGE'
-  | 'C1_LOSS_STREAK'
-  | 'C2_OVER_DAILY_LIMIT'
-  | 'C3_MARTINGALE'
-  | 'D1_NEWS_WINDOW'
-  | 'E1_STOP_WIDENED';
-
-export type BehaviorAlertSeverity = 'medium' | 'high';
+// Types partagés avec l'app (#671) : réexportés ici pour les imports existants de l'API.
+import type { BehaviorAlertSeverity, BehaviorAlertType } from '@mtc/shared';
+export type { BehaviorAlertSeverity, BehaviorAlertType };
 
 export interface BehaviorAlertDraft {
   type: BehaviorAlertType;
