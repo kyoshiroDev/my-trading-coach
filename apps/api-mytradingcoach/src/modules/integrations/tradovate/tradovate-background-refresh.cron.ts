@@ -13,6 +13,7 @@ import { PropAlertsService } from './prop-alerts.service';
 import { notSyncPausedWhere } from './tradovate-sync-pause';
 import { mapWithConcurrency } from '../../../common/utils/concurrency.util';
 import { randomUUID } from 'node:crypto';
+import { TRADOVATE_BACKGROUND_SYNC_MINUTES } from './tradovate-background-refresh.const';
 
 /** Connexion « à rafraîchir » : aucune synchro depuis 12 min (cron toutes les 15 min). */
 export const BACKGROUND_STALE_MS = 12 * 60 * 1000;
@@ -91,7 +92,7 @@ export class TradovateBackgroundRefreshCron {
     @Optional() private readonly freeLimit?: FreeLimitSyncService,
   ) {}
 
-  @Cron('*/15 * * * *', { timeZone: 'Europe/Paris' })
+  @Cron(`*/${TRADOVATE_BACKGROUND_SYNC_MINUTES} * * * *`, { timeZone: 'Europe/Paris' })
   async scheduledRefresh(): Promise<void> {
     const token = randomUUID();
     let locked: boolean;
