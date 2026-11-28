@@ -14,7 +14,7 @@ const baseline: BehaviorBaselineData = {
   sizeByAsset: { MNQ: { median: 1, p75: 1, p90: 2, samples: 300 } }, positionsPerSession: { median: 20, p90: 30 },
 };
 
-function setup(opts: { demo?: boolean; free?: boolean; muted?: string[]; seen?: Record<string, number> | null; positions?: { asset: string; side: 'LONG' | 'SHORT'; quantity: number }[] } = {}) {
+function setup(opts: { demo?: boolean; free?: boolean; trialEndsAt?: Date | null; muted?: string[]; seen?: Record<string, number> | null; positions?: { asset: string; side: 'LONG' | 'SHORT'; quantity: number }[] } = {}) {
   const store = new Map<string, string>();
   store.set('tradovate:positions:conn', JSON.stringify({
     at: NOW.toISOString(),
@@ -34,7 +34,7 @@ function setup(opts: { demo?: boolean; free?: boolean; muted?: string[]; seen?: 
   const created: Record<string, unknown>[] = [];
   // Une perte à 15:00:10, puis la ré-entrée à 15:00:20 en 4 contrats, sens inversé.
   const prisma = {
-    brokerConnection: { findUnique: vi.fn(async () => ({ id: 'conn', user: { isDemo: !!opts.demo, tradesPerDayMax: null, plan: opts.free ? 'FREE' : 'PREMIUM', role: 'USER', trialEndsAt: null } })) },
+    brokerConnection: { findUnique: vi.fn(async () => ({ id: 'conn', user: { isDemo: !!opts.demo, tradesPerDayMax: null, plan: opts.free ? 'FREE' : 'PREMIUM', role: 'USER', trialEndsAt: opts.trialEndsAt ?? null } })) },
     trade: {
       findMany: vi.fn(async () => [
         { id: 't1', accountId: 'a', asset: 'MNQ', side: 'LONG', entry: 100, quantity: 1, pnl: -40, commission: 0, tradedAt: at(10) },
@@ -60,6 +60,8 @@ afterEach(() => {
 });
 
 describe('BehaviorAlertsService.check', () => {
+  freezeClock(NOW);
+
   it('UI allumée, compte gratuit : rien envoyé ni poussé, alertes enregistrées (#671)', async () => {
     process.env['BEHAVIOR_ALERTS_UI'] = 'true';
     const { svc, emit, events, created, notifier } = setup({ free: true });
@@ -67,6 +69,13 @@ describe('BehaviorAlertsService.check', () => {
     expect(events).toEqual([]);
     expect(notifier.notify).not.toHaveBeenCalled();
     expect(created.every((c) => c['mutedByUser'] === false)).toBe(true);
+  });
+
+  it('UI allumée, compte gratuit en essai de 14 jours (fin après NOW) : envoyé comme un Premium (#671)', async () => {
+    process.env['BEHAVIOR_ALERTS_UI'] = 'true';
+    const { svc, emit, events } = setup({ free: true, trialEndsAt: new Date(NOW.getTime() + 3 * 86_400_000) });
+    await svc.check('u', 'a', emit, NOW);
+    expect(events.length).toBeGreaterThan(0);
   });
 
   it('UI allumée, détecteur coupé : enregistré avec mutedByUser, ni socket ni push pour lui (#671)', async () => {

@@ -26,6 +26,14 @@ describe('alertAftermath (#671)', () => {
     expect(after.get('x2')).toEqual({ count: 1, pnl: -32 });
   });
 
+  it('somme brute positive mais nette négative : P&L net', () => {
+    const after = alertAftermath(
+      [{ id: 'x', accountId: 'a', createdAt: new Date('2026-11-24T15:00:00Z') }],
+      [t('2026-11-24T15:10:00Z', 1, 'a', 1.9), t('2026-11-24T15:20:00Z', 1, 'a', 1.9)],
+    );
+    expect(after.get('x')).toEqual({ count: 2, pnl: -1.8 });
+  });
+
   it('séance suivante (autre journée CME) : pas compté', () => {
     const after = alertAftermath(
       [{ id: 'x', accountId: 'a', createdAt: new Date('2026-11-24T20:00:00Z') }],

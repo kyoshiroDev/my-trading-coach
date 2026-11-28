@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject, signal, untracked } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { BEHAVIOR_DETECTOR_LABELS, type BehaviorMutableDetector, type BehaviorMute } from '@mtc/shared';
 import { ErrorStateComponent } from '@mtc/front-ui';
@@ -29,7 +29,10 @@ export class BehaviorMutesComponent {
   protected readonly actionError = signal<string | null>(null);
 
   constructor() {
-    if (this.userStore.isPremium()) this.load();
+    // Le compte peut passer Premium pendant que le Profil est ouvert (modale de plans, /auth/me tardif).
+    effect(() => {
+      if (this.userStore.isPremium()) untracked(() => this.load());
+    });
   }
 
   protected load(): void {

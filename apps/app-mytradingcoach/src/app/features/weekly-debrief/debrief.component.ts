@@ -237,6 +237,11 @@ export class DebriefComponent {
     return weekKey(w);
   }
 
+  /** Jour AAAA-MM-JJ à Paris (#671) : les bornes du débrief sont des minuits de Paris, l'ISO UTC donnerait la veille. */
+  protected parisDay(iso: string): string {
+    return new Date(iso).toLocaleDateString('fr-CA', { timeZone: 'Europe/Paris' });
+  }
+
   protected selectTab(id: string): void {
     this.activeTab.set(id);
     try { localStorage.setItem(TAB_KEY, id); } catch { /* préférence non persistée */ }

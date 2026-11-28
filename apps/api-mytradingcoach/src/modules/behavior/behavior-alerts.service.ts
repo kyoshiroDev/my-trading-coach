@@ -74,9 +74,9 @@ export class BehaviorAlertsService implements OnModuleDestroy {
    * Envoi d'une alerte enregistrée (#671) : seulement si l'affichage est allumé, si le trader a l'accès
    * Premium (comme l'anti-tilt #371) et s'il n'a pas coupé ce détecteur. Sinon : enregistrée en silence.
    */
-  private async audience(userId: string, user: { plan: string | null; role: string | null; trialEndsAt: Date | null }) {
+  private async audience(userId: string, user: { plan: string | null; role: string | null; trialEndsAt: Date | null }, now: Date) {
     const muted = (await this.mutes?.mutedSet(userId).catch(() => new Set<string>())) ?? new Set<string>();
-    const canShow = behaviorAlertsUiEnabled() && subscriptionState(user).premiumAccess;
+    const canShow = behaviorAlertsUiEnabled() && subscriptionState(user, now).premiumAccess;
     return { muted, shows: (type: string) => canShow && !muted.has(type) };
   }
 
@@ -123,7 +123,7 @@ export class BehaviorAlertsService implements OnModuleDestroy {
         })
       : [];
     let recorded = 0;
-    const audience = await this.audience(userId, conn.user);
+    const audience = await this.audience(userId, conn.user, now);
     for (const e of entries) {
       const at = e.since ? new Date(e.since) : now;
       const ctx: EntryContext = {
@@ -199,7 +199,7 @@ export class BehaviorAlertsService implements OnModuleDestroy {
       });
       const day = tradingDay(now);
       const session = await this.prisma.tradeSession.findFirst({ where: activeSessionWhere(userId), orderBy: { startedAt: 'desc' }, select: { id: true } });
-      const audience = await this.audience(userId, user);
+      const audience = await this.audience(userId, user, now);
       const row = await this.prisma.behaviorAlert.create({
         data: {
           userId, accountId, tradeDay: new Date(`${day}T00:00:00.000Z`), sessionId: session?.id ?? null,

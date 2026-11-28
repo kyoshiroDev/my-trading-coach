@@ -36,7 +36,8 @@ export class BehaviorSignalsService {
       });
       return true;
     } catch (err: unknown) {
-      this.logger.warn(`Signal émotion non enregistré (trade ${trade.id}) : ${err instanceof Error ? err.message : 'Error'}`);
+      // Nom de l'erreur seulement : un message Prisma recopie la requête (donnees-perso.md).
+      this.logger.warn(`Signal émotion non enregistré (trade ${trade.id}) : ${err instanceof Error ? err.name : 'Error'}`);
       return false;
     }
   }

@@ -1,17 +1,17 @@
 :host { display: block; min-width: 0; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-.card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px; }
+.card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 18px var(--space-5); }
 .card-header { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 12px; margin-bottom: 14px; }
 .card-title { font-family: var(--font-display); font-size: 14px; font-weight: 600; color: var(--text); }
 .ba-sub { min-width: 0; font-size: var(--fs-xs); color: var(--text-3); }
 .al-list { list-style: none; margin: 0; padding: 0; }
-.al-item { display: grid; grid-template-columns: 10px minmax(0, 1fr) auto; gap: 4px 10px; padding: 12px 0; border-top: 1px solid var(--border); align-items: start; }
+.al-item { display: grid; grid-template-columns: 10px minmax(0, 1fr) auto; gap: var(--space-1) 10px; padding: var(--space-3) 0; border-top: 1px solid var(--border); align-items: start; }
 .al-item:first-child { border-top: 0; padding-top: 0; }
 .dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 6px; background: var(--yellow); }
 /* Rouge = gravité haute : exception datée dans design.md (#671). */
 .dot.red { background: var(--red); }
-.al-label { min-width: 0; font-size: 13px; font-weight: 600; color: var(--text); }
-.al-msg { grid-column: 2 / 4; font-size: 13px; line-height: 1.45; color: var(--text-2); overflow-wrap: anywhere; }
+.al-label { min-width: 0; font-size: var(--fs-sm); font-weight: 600; color: var(--text); }
+.al-msg { grid-column: 2 / 4; font-size: var(--fs-sm); line-height: 1.45; color: var(--text-2); overflow-wrap: anywhere; }
 .al-when { font-family: var(--font-mono); font-size: var(--fs-xs); color: var(--text-3); white-space: nowrap; font-variant-numeric: tabular-nums; }
 .al-after { grid-column: 2 / 4; font-family: var(--font-mono); font-size: var(--fs-xs); color: var(--text-2); font-variant-numeric: tabular-nums; }
 .neg { color: var(--red); }

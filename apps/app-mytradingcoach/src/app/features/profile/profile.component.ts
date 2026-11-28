@@ -1,3 +1,5 @@
+import { BehaviorMutesComponent } from './behavior-mutes/behavior-mutes.component';
+import { BehaviorAlertsStore } from '../../core/stores/behavior-alerts.store';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -59,9 +61,6 @@ import { searchLocalInstruments, sessionLabel, styleEmoji, styleLabel, withAsset
 import { PaywallCtaService } from '@app/core/services/paywall-cta.service';
 
 type ProfileTab = 'trader' | 'params';
-
-import { BehaviorMutesComponent } from './behavior-mutes/behavior-mutes.component';
-import { BehaviorAlertsStore } from '../../core/stores/behavior-alerts.store';
 
 @Component({
   selector: 'mtc-profile',

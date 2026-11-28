@@ -12,6 +12,10 @@ describe('F1 émotion après une perte (#671)', () => {
     expect(emotionAfterLossDraft('FEAR', AT, loss)?.message).toBe('Émotion Peur saisie 8 min après une perte.');
   });
 
+  it('gagnant en brut mais perdant une fois les frais déduits : signal (convention P&L net)', () => {
+    expect(emotionAfterLossDraft('FEAR', AT, { ...loss, pnl: 1, commission: 1.9 })).toMatchObject({ context: { lastLoss: -0.9 } });
+  });
+
   it('autre émotion, aucune, trade précédent gagnant ou au-delà de 15 min : rien', () => {
     expect(emotionAfterLossDraft('CONFIDENT', AT, loss)).toBeNull();
     expect(emotionAfterLossDraft(null, AT, loss)).toBeNull();

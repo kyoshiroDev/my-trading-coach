@@ -33,6 +33,11 @@
   push vers les appareils abonnés, #666 ; app fermée, limites, objectif et payout relevés par la
   synchro de fond, jusqu'à 15 min de décalage ; veille serveur #770, éteinte tant que
   `TRADOVATE_WATCH_MAX` n'est pas posé : en direct aussi app fermée pendant la séance, Premium seulement)
+  - **Alertes de comportement affichées** (#671, derrière `BEHAVIOR_ALERTS_UI`, éteint) : Premium.
+    Flag allumé, l'anti-tilt est remplacé par les alertes du moteur (bandeau de la Session live, push),
+    sauf le surtrading relatif, gardé par l'anti-tilt tant que le trader n'a pas déclaré `tradesPerDayMax`
+    (C2 ne couvre que la limite déclarée). « Pas pour mon style » (Profil) et « Alertes de la semaine »
+    (Débrief hebdo) : Premium. Gratuit : teaser. `PLAN_BENEFITS` inchangé (`anti_tilt`).
 
 ### Avantages affichés : liste officielle (`PLAN_BENEFITS`, `@mtc/shared`, validée le 2026-10-19)
 

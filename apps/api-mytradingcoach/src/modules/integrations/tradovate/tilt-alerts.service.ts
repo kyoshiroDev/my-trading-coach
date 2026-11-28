@@ -66,7 +66,7 @@ export class TiltAlertsService implements OnModuleDestroy {
   async check(userId: string, accountId: string, emit: TiltAlertEmit, now = new Date()): Promise<void> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
-      select: { plan: true, role: true, trialEndsAt: true, isDemo: true },
+      select: { plan: true, role: true, trialEndsAt: true, isDemo: true, tradesPerDayMax: true },
     });
     if (!user || user.isDemo || !isPremiumAccess(user)) return;
     const account = await this.prisma.tradingAccount.findFirst({
@@ -109,9 +109,12 @@ export class TiltAlertsService implements OnModuleDestroy {
       const sent = await this.redis.client.set(`tilt-alert:${accountId}:${f.signal}:${f.ref}`, '1', 'EX', KEY_TTL_S, 'NX');
       if (sent !== 'OK') continue;
       const event: TiltAlertEvent = { ...f, accountId, accountLabel: account.label, moodStart: session?.moodStart ?? null };
-      // Moteur de comportement affiché (#671) : l'anti-tilt se tait (ni toast ni push), jamais deux alertes
-      // pour la même chose ; le journal reste écrit (récap, débrief IA, autopsie). Flag éteint : inchangé.
-      if (!behaviorAlertsUiEnabled()) {
+      // Moteur de comportement affiché (#671) : l'anti-tilt se tait (ni toast ni push) pour ce que le moteur
+      // couvre, jamais deux alertes pour la même chose ; le journal reste écrit (récap, débrief IA, autopsie).
+      // Le surtrading relatif n'a d'équivalent moteur (C2) que si le trader a déclaré `tradesPerDayMax` :
+      // sans limite déclarée, l'anti-tilt garde ce signal (promis par `PLAN_BENEFITS.anti_tilt`). Flag éteint : inchangé.
+      const engineCovers = behaviorAlertsUiEnabled() && (f.signal !== 'overtrading' || user.tradesPerDayMax != null);
+      if (!engineCovers) {
         emit('tilt:alert', event);
         this.notifier?.notify(userId, 'BEHAVIOR', TRADER_PUSH_MESSAGES.tilt(event), { accountId, dedupKey: `tilt:${f.signal}` });
       }
