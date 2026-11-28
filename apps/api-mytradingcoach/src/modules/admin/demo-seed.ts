@@ -18,6 +18,7 @@ import { DEMO_INCIDENT_ANALYSIS, LOST_DEMO_ACCOUNTS, buildLostDemoIncident, buil
 import { newsShieldExample } from './demo-data/news-shield-example';
 import { stopWidenedExample } from './demo-data/stop-widened-example';
 import { DEMO_MUTED_DETECTOR, behaviorAlertsExample } from './demo-data/behavior-alerts-example';
+import { sessionContractExample } from './demo-data/session-contract-example';
 import { newsWindowStats } from '../debrief/debrief-news-window';
 
 /**
@@ -135,6 +136,7 @@ export async function seedTradingData(
 
   // Sessions (une par jour de trading) + trades rattachés.
   let reflectionToggle = 0;
+  const sessionIdByDay = new Map<string, string>();
   for (const d of days) {
     if (!d.trades.length && !d.openTrade) continue;
     const isToday = d.kind === 'today';
@@ -173,6 +175,7 @@ export async function seedTradingData(
         }),
       },
     });
+    sessionIdByDay.set(`${d.daysAgo}:${d.account}`, session.id);
     for (const t of d.trades) {
       await prisma.trade.create({
         data: {
@@ -200,6 +203,16 @@ export async function seedTradingData(
         },
       });
     }
+  }
+
+  // Contrat de session (#667) : une infraction, un « ensuite » et une modification tracée, visibles au débrief de
+  // séance quand SESSION_CONTRACT_ENABLED est allumé. Supprimé avec les séances (cascade) à chaque relance.
+  const contractExample = sessionContractExample(days);
+  const contractSessionId = contractExample ? sessionIdByDay.get(`${contractExample.daysAgo}:${contractExample.account}`) : undefined;
+  if (contractExample && contractSessionId) {
+    await prisma.sessionContract.create({
+      data: { sessionId: contractSessionId, userId: user.id, ...contractExample.rules, edits: contractExample.edits as unknown as Prisma.InputJsonValue },
+    });
   }
 
   // Bouclier annonces (#670) : le trade NQ d'exemple est déjà dans la journée Apex du vendredi
