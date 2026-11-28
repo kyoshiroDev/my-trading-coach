@@ -48,6 +48,27 @@ export const HELP_KB: readonly HelpKbEntry[] = [
     "body": "En Premium, l'app t'alerte avant ta limite de perte : perte du jour, drawdown, consistency, et aussi objectif atteint ou payout possible.\nL'anti-tilt repère trois choses : une reprise de position juste après une perte, une taille qui grossit et le surtrading.\nÇa marche quand l'app est ouverte, ou en notification pendant ta séance, avec un compte Tradovate connecté. Rien sur une saisie manuelle, et pas d'e-mail. Active les notifications dans [Profil > Paramètres](/profil#notifications)."
   },
   {
+    "id": "changer-email",
+    "title": "Comment changer mon adresse e-mail ?",
+    "keywords": [
+      "changer email",
+      "changer e-mail",
+      "changer mon adresse",
+      "modifier email",
+      "modifier mon e-mail",
+      "nouvelle adresse",
+      "mauvaise adresse",
+      "adresse mail",
+      "changer de mail",
+      "mettre a jour email"
+    ],
+    "audience": "all",
+    "links": [
+      "/profil?tab=params"
+    ],
+    "body": "Tu ne peux pas changer ton adresse e-mail toi-même pour l'instant : elle est en lecture seule dans ton Profil.\nÉcris à support@mytradingcoach.app avec ta demande."
+  },
+  {
     "id": "code-partenaire",
     "title": "J'ai un code partenaire, comment ça marche ?",
     "keywords": [
@@ -204,7 +225,7 @@ export const HELP_KB: readonly HelpKbEntry[] = [
   },
   {
     "id": "donnees-personnelles",
-    "title": "Où sont mes données et que faites-vous avec ?",
+    "title": "Où sont mes données et à quoi servent-elles ?",
     "keywords": [
       "donnees personnelles",
       "données personnelles",
@@ -577,7 +598,7 @@ export const HELP_KB: readonly HelpKbEntry[] = [
     "links": [
       "/parrainage"
     ],
-    "body": "Dans [Parrainage](/parrainage), copie ton lien et partage-le.\nTon filleul démarre avec -{{REFERRAL_DISCOUNT_PCT}} % sur sa première année, mensuel ou annuel. Toi, tu gagnes un mois offert dès qu'il devient abonné payant : la simple inscription ne compte pas. Tu peux parrainer autant de traders que tu veux.\nLe parrainage ne se cumule pas avec l'offre fondateur. Face à un code partenaire, c'est la réduction la plus avantageuse qui s'applique."
+    "body": "Dans [Parrainage](/parrainage), copie ton lien et partage-le.\nTon filleul démarre avec -{{REFERRAL_DISCOUNT_PCT}} % sur ses {{REFERRAL_DISCOUNT_MONTHS}} premiers mois, mensuel ou annuel. Toi, tu gagnes un mois offert dès qu'il devient abonné payant : la simple inscription ne compte pas. Tu peux parrainer autant de traders que tu veux.\nLe parrainage ne se cumule pas avec l'offre fondateur. Face à un code partenaire, c'est la réduction la plus avantageuse qui s'applique."
   },
   {
     "id": "passer-premium",
@@ -624,7 +645,7 @@ export const HELP_KB: readonly HelpKbEntry[] = [
     "links": [
       "/profil?tab=params"
     ],
-    "body": "Premium coûte {{PREMIUM_MONTHLY}} € TTC par mois, ou {{PREMIUM_YEARLY}} € TTC par an (tu économises {{PREMIUM_ANNUAL_SAVINGS}} € sur l'année).\nIl ajoute :\n- les alertes avant ta limite de perte et l'anti-tilt en direct (compte Tradovate connecté) ;\n- des comptes illimités, chacun avec les règles de sa prop firm ;\n- le Débrief hebdo rédigé par le coach IA ;\n- les analyses avancées (par setup, par heure, drawdown détaillé) ;\n- le coach IA (insights, chat et récap du jour)."
+    "body": "Premium coûte {{PREMIUM_MONTHLY}} € TTC par mois, ou {{PREMIUM_YEARLY}} € TTC par an (tu économises {{PREMIUM_ANNUAL_SAVINGS}} € sur l'année).\nIl ajoute :\n- les alertes avant ta limite de perte et l'anti-tilt en direct (compte Tradovate connecté) ;\n- le Débrief hebdo rédigé par le coach IA ;\n- les analyses avancées (par setup, par heure, drawdown détaillé) ;\n- le coach IA (insights, chat et récap du jour)."
   },
   {
     "id": "prop-firms-prises-en-charge",
@@ -647,7 +668,7 @@ export const HELP_KB: readonly HelpKbEntry[] = [
       "https://www.mytradingcoach.app/regles-prop-firm",
       "/accounts"
     ],
-    "body": "Le catalogue contient aujourd'hui : {{PROP_FIRM_LIST}}.\nLes règles de chaque plan sont relevées sur les pages officielles des firms, puis datées. Demande-moi une firm ou un plan précis : je te donne la valeur du catalogue avec sa source.\nLa synchro fonctionne avec les comptes des prop firms qui tournent sur Tradovate. Ta firm manque ? Signale-la avec « Ma firm n'est pas dans la liste »."
+    "body": "Le catalogue contient aujourd'hui : {{PROP_FIRM_LIST}}.\nLes règles de chaque plan sont relevées sur les pages officielles des firms, puis datées. Demande-moi une firm ou un plan précis : je te donne la valeur du catalogue avec sa source.\nLa synchro fonctionne avec les comptes des prop firms qui tournent sur Tradovate. Ta firm ne passe pas par Tradovate ? Tu peux quand même relier ton compte à son plan et ajouter tes trades à la main, ou par import CSV si ton export est reconnu.\nTa firm manque ? Signale-la avec « Ma firm n'est pas dans la liste »."
   },
   {
     "id": "regles-officielles",

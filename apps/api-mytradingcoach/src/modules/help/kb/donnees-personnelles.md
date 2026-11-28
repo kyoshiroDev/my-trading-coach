@@ -1,6 +1,6 @@
 ---
 id: donnees-personnelles
-title: Où sont mes données et que faites-vous avec ?
+title: Où sont mes données et à quoi servent-elles ?
 keywords: [donnees personnelles, données personnelles, rgpd, hebergement, hébergement, ovh, vie privee, confidentialite, ia anthropic, claude, copie de mes donnees, export donnees, revente]
 audience: all
 links: [https://www.mytradingcoach.app/politique-confidentialite]
