@@ -1079,7 +1079,7 @@
   "https://help.toponefutures.com/en/articles/14595016-elite-access-accounts-overview": {
     "kind": "date",
     "values": [
-      "2026-10-27T15:00:26Z"
+      "2026-11-26T18:19:13Z"
     ],
     "firms": [
       "toponefutures"
@@ -3894,6 +3894,7 @@
   "https://www.toponefutures.com/": {
     "kind": "hash",
     "values": [
+      "5cc45cec9308bbfb",
       "e3bda846ea50c516",
       "2a0b5caf55111c5f",
       "57b3f38a59d9941f"
@@ -3911,6 +3912,7 @@
   "https://www.toponefutures.com/launchpad": {
     "kind": "hash",
     "values": [
+      "f44e1cf5d7d5841f",
       "12116144e8f44504",
       "74a71cddbe063afb",
       "ca3f06ba738f932f"
@@ -3980,7 +3982,7 @@
   "https://help.myfundedfutures.com/en/articles/17573707-comprehensive-look-into-redesigned-pro-plan": {
     "kind": "date",
     "values": [
-      "2026-11-19T23:52:48Z"
+      "2026-11-25T19:23:52Z"
     ],
     "firms": [
       "myfundedfutures"

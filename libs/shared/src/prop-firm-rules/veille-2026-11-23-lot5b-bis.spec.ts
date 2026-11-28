@@ -27,7 +27,8 @@ const sizes = ['25k', '50k', '100k', '150k'];
 
 describe('veille du 2026-11-23, lot 5b-bis (Top One)', () => {
   it('relue en entier : date de la relecture', () => {
-    expect((topone as Firm).verified_at).toBe('2026-11-23');
+    // Top One relue à nouveau le 2026-11-28 (lot 6b) : voir veille-2026-11-28-lot6b.spec.ts.
+    expect((topone as Firm).verified_at).toBe('2026-11-28');
   });
 
   it('Elite Daily 150K : perte journalière 1 750 $ en évaluation et en funded', () => {
