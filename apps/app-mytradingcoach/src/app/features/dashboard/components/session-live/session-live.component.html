@@ -22,7 +22,8 @@
   } @else {
 
   <!-- 1. Bloc collant : barre de séance (chrono, trades N / max, P&L du jour) puis alerte de comportement (#671) -->
-  <div class="lv-sticky">
+  <div class="lv-sentinel" data-sticky-sentinel aria-hidden="true"></div>
+  <div class="lv-sticky" mtcStickyStuck>
   <mtc-live-bar class="lv-bar"
     [clock]="sessionStore.sessionClock()"
     [totalPnl]="totals().total"

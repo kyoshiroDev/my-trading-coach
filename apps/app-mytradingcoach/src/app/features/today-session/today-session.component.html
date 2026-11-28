@@ -139,7 +139,7 @@
   }
 
   @if (activeTab() === 'live') {
-    <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0;">
+    <div class="ts-live-wrap">
       <mtc-session-live
         [session]="store.activeSession()"
         [todayTrades]="store.todayTrades()"

@@ -28,6 +28,7 @@ import { UserStore } from '@app/core/stores/user.store';
 import { LivePositionComponent } from './components/live-position/live-position.component';
 import { LIVE_POSITION_ROLES, laggingBrokerPanel, liveTotals } from './components/live-position/live-position.util';
 import { LiveBarComponent } from './components/live-bar/live-bar.component';
+import { StickyStuckDirective } from './sticky-stuck.directive';
 import { LiveNextEventComponent } from './components/live-next-event/live-next-event.component';
 import { LiveAccountsStripComponent } from './components/live-accounts-strip/live-accounts-strip.component';
 import { LiveClosedTradesComponent } from './components/live-closed-trades/live-closed-trades.component';
@@ -52,7 +53,7 @@ import { PlanModalComponent } from '@app/shared/components/plan-modal/plan-modal
   imports: [
     LiveAccountsStripComponent, MarketContextBarComponent, LiveNewsComponent, QuickTradeComponent, LivePropFirmComponent,
     LivePositionComponent, LiveBarComponent, LiveNextEventComponent, LiveClosedTradesComponent,
-    RouterLink, DialogDirective, LiveBehaviorAlertComponent, PlanModalComponent,
+    RouterLink, DialogDirective, LiveBehaviorAlertComponent, PlanModalComponent, StickyStuckDirective,
   ],
   templateUrl: './session-live.component.html',
 })

@@ -65,7 +65,17 @@
 }
 
 /* ─── Bandeau collant ─── */
-.lv-sticky { position: sticky; top: 0; z-index: 5; min-width: 0; background: var(--bg); }
+/* Mobile : le bouton menu est fixe en haut à droite, le bloc colle sous lui (marge haute de la page : 12 px). */
+.lv-sticky { position: sticky; top: calc(var(--topbar-h) - var(--space-3)); z-index: 5; min-width: 0; background: var(--bg); }
+/* Sentinelle du bloc collant (StickyStuckDirective) : 1 px sans place dans la mise en page. */
+.lv-sentinel { height: 1px; margin-bottom: -1px; visibility: hidden; pointer-events: none; }
+/* Collé : le fond remonte jusqu'en haut de la zone de défilement (bande du bouton menu, marge haute de la page),
+   sinon le contenu défilant passe au-dessus de la barre. Au repos, pas de fond : il recouvrirait l'en-tête. */
+.lv-sticky.is-stuck { box-shadow: 0 calc(-1 * var(--topbar-h)) 0 var(--bg); }
+@media (min-width: 769px) {
+  .lv-sticky { top: 0; }
+  .lv-sticky.is-stuck { box-shadow: 0 calc(-1 * var(--space-4)) 0 var(--bg); }
+}
 .lv-bar { border-radius: 12px; overflow: hidden; border: 1px solid rgba(255, 255, 255, .06); }
 
 .lv-body { display: flex; flex-direction: column; gap: 14px; padding-top: 14px; min-width: 0; }
