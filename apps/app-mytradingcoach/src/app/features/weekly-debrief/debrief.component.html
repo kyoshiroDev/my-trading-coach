@@ -182,6 +182,11 @@
           </div>
         }
 
+        <!-- Alertes de comportement de la semaine (#671), derrière BEHAVIOR_ALERTS_UI -->
+        @if (behaviorAlerts.uiEnabled()) {
+          <mtc-debrief-behavior-alerts [from]="debrief()!.startDate.slice(0, 10)" [to]="debrief()!.endDate.slice(0, 10)" />
+        }
+
         @if (newsWindow(); as nw) {
           <div class="card cmp-card" data-testid="debrief-news-window">
             <div class="card-header nw-header">

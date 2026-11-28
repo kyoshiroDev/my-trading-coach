@@ -65,6 +65,8 @@ describe('Débrief : semaines passées (#959)', () => {
   function open(current: WeeklyDebrief | null, history?: DebriefHistoryItem[] | 'error') {
     const fixture = TestBed.createComponent(DebriefComponent);
     for (const req of http.match((r) => r.url.endsWith('/accounts'))) req.flush({ data: [] });
+    // Configuration des alertes de comportement (#671) : affichage éteint.
+    for (const req of http.match((r) => r.url.endsWith('/behavior/config'))) req.flush({ data: { uiEnabled: false } });
     http.expectOne((r) => r.url.endsWith('/debrief/current')).flush({ data: current });
     if (history === 'error') {
       http.expectOne((r) => r.url.endsWith('/debrief/history')).flush({}, { status: 500, statusText: 'Server Error' });
