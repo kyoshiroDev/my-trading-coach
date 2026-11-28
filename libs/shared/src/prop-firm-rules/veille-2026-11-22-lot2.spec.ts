@@ -38,7 +38,9 @@ const funded = (plan: Plan) => plan.phases.find((p) => p.phase === 'funded');
 
 describe('veille du 2026-11-22', () => {
   it('les trois firms relues en entier portent la date de la relecture', () => {
-    for (const firm of [earn2trade, elite, tpt] as Firm[]) expect(firm.verified_at).toBe('2026-11-22');
+    for (const firm of [earn2trade, elite] as Firm[]) expect(firm.verified_at).toBe('2026-11-22');
+    // Take Profit Trader relue à nouveau le 2026-11-28 (lot 6a, nouvelle gamme) : voir veille-2026-11-28-lot6a.spec.ts.
+    expect((tpt as Firm).verified_at).toBe('2026-11-28');
   });
 
   it.each([

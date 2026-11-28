@@ -16,11 +16,11 @@
       "finamark"
     ]
   },
-  "verified_at": "2026-11-22",
+  "verified_at": "2026-11-28",
   "plans": [
     {
       "id": "takeprofittrader-test-25k",
-      "plan_name": "Test",
+      "plan_name": "Test (achat avant le 23/11/2026)",
       "account_size": 25000,
       "currency": "USD",
       "availability": "public",
@@ -96,7 +96,7 @@
             "must_close_by": "16:55 America/New_York",
             "news_trading_allowed": false,
             "overnight_allowed": false,
-            "notes": "Journée de trading de 18:00 à 17:00 heure de New York ; TPT ferme toute position à 16:55. Aucune position d'une session à l'autre. Un produit qui ferme avant 17:00 (ou un horaire de jour férié) doit être soldé avant sa propre clôture, sinon liquidation. PRO : aucune position ni ordre de 1 minute avant à 1 minute après FOMC (statement), NFP et CPI. Au moins un jour tradé par semaine calendaire, sinon le compte peut être retiré. Sortir avant un limit up/down CME."
+            "notes": "Journée de trading de 18:00 à 17:00 heure de New York ; TPT ferme toute position à 16:55. Aucune position d'une session à l'autre. Un produit qui ferme avant 17:00 (ou un horaire de jour férié) doit être soldé avant sa propre clôture, sinon liquidation. PRO : aucune position ni ordre de 1 minute avant à 1 minute après FOMC (statement), NFP et CPI. Au moins un jour tradé par mois calendaire (un aller-retour), sinon le PRO peut être retiré (article « PRO Account Rules », 2026-11-23). Sortir avant un limit up/down CME."
           },
           "payout": {
             "min_days": 1,
@@ -129,11 +129,11 @@
         "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15172354954525-Withdrawal-Fees"
       ],
       "needs_review": false,
-      "notes": "Daily Loss Limit retirée (affichée « Removed » sur le site). PRO+ (compte live sur invitation, drawdown EOD) non modélisé : pas en vente."
+      "notes": "Daily Loss Limit retirée (affichée « Removed » sur le site). PRO+ (compte live sur invitation, drawdown EOD) non modélisé : pas en vente. Version remplacée le 23/11/2026 (gamme Intraday, Classic, EOD) : règles du Test d'origine relevées le 22/11/2026 et confirmées par les tableaux « Legacy Accounts » des articles du 23/11 (drawdown, objectif, taille, buffer) ; plus vendue, gardée pour les comptes achetés avant. Positions opposées interdites sur un même produit ou un produit proche, sur tous les comptes (Test, PRO, PRO+) ; aucun robot ni algorithme en PRO (article « PRO Account Rules », 2026-11-23)."
     },
     {
       "id": "takeprofittrader-test-50k",
-      "plan_name": "Test",
+      "plan_name": "Test (achat avant le 23/11/2026)",
       "account_size": 50000,
       "currency": "USD",
       "availability": "public",
@@ -209,7 +209,7 @@
             "must_close_by": "16:55 America/New_York",
             "news_trading_allowed": false,
             "overnight_allowed": false,
-            "notes": "Journée de trading de 18:00 à 17:00 heure de New York ; TPT ferme toute position à 16:55. Aucune position d'une session à l'autre. Un produit qui ferme avant 17:00 (ou un horaire de jour férié) doit être soldé avant sa propre clôture, sinon liquidation. PRO : aucune position ni ordre de 1 minute avant à 1 minute après FOMC (statement), NFP et CPI. Au moins un jour tradé par semaine calendaire, sinon le compte peut être retiré. Sortir avant un limit up/down CME."
+            "notes": "Journée de trading de 18:00 à 17:00 heure de New York ; TPT ferme toute position à 16:55. Aucune position d'une session à l'autre. Un produit qui ferme avant 17:00 (ou un horaire de jour férié) doit être soldé avant sa propre clôture, sinon liquidation. PRO : aucune position ni ordre de 1 minute avant à 1 minute après FOMC (statement), NFP et CPI. Au moins un jour tradé par mois calendaire (un aller-retour), sinon le PRO peut être retiré (article « PRO Account Rules », 2026-11-23). Sortir avant un limit up/down CME."
           },
           "payout": {
             "min_days": 1,
@@ -242,11 +242,11 @@
         "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15172354954525-Withdrawal-Fees"
       ],
       "needs_review": false,
-      "notes": "Daily Loss Limit retirée (affichée « Removed » sur le site). PRO+ (compte live sur invitation, drawdown EOD) non modélisé : pas en vente."
+      "notes": "Daily Loss Limit retirée (affichée « Removed » sur le site). PRO+ (compte live sur invitation, drawdown EOD) non modélisé : pas en vente. Version remplacée le 23/11/2026 (gamme Intraday, Classic, EOD) : règles du Test d'origine relevées le 22/11/2026 et confirmées par les tableaux « Legacy Accounts » des articles du 23/11 (drawdown, objectif, taille, buffer) ; plus vendue, gardée pour les comptes achetés avant. Positions opposées interdites sur un même produit ou un produit proche, sur tous les comptes (Test, PRO, PRO+) ; aucun robot ni algorithme en PRO (article « PRO Account Rules », 2026-11-23)."
     },
     {
       "id": "takeprofittrader-test-75k",
-      "plan_name": "Test",
+      "plan_name": "Test (achat avant le 23/11/2026)",
       "account_size": 75000,
       "currency": "USD",
       "availability": "public",
@@ -322,7 +322,7 @@
             "must_close_by": "16:55 America/New_York",
             "news_trading_allowed": false,
             "overnight_allowed": false,
-            "notes": "Journée de trading de 18:00 à 17:00 heure de New York ; TPT ferme toute position à 16:55. Aucune position d'une session à l'autre. Un produit qui ferme avant 17:00 (ou un horaire de jour férié) doit être soldé avant sa propre clôture, sinon liquidation. PRO : aucune position ni ordre de 1 minute avant à 1 minute après FOMC (statement), NFP et CPI. Au moins un jour tradé par semaine calendaire, sinon le compte peut être retiré. Sortir avant un limit up/down CME."
+            "notes": "Journée de trading de 18:00 à 17:00 heure de New York ; TPT ferme toute position à 16:55. Aucune position d'une session à l'autre. Un produit qui ferme avant 17:00 (ou un horaire de jour férié) doit être soldé avant sa propre clôture, sinon liquidation. PRO : aucune position ni ordre de 1 minute avant à 1 minute après FOMC (statement), NFP et CPI. Au moins un jour tradé par mois calendaire (un aller-retour), sinon le PRO peut être retiré (article « PRO Account Rules », 2026-11-23). Sortir avant un limit up/down CME."
           },
           "payout": {
             "min_days": 1,
@@ -355,11 +355,11 @@
         "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15172354954525-Withdrawal-Fees"
       ],
       "needs_review": false,
-      "notes": "Daily Loss Limit retirée (affichée « Removed » sur le site). PRO+ (compte live sur invitation, drawdown EOD) non modélisé : pas en vente."
+      "notes": "Daily Loss Limit retirée (affichée « Removed » sur le site). PRO+ (compte live sur invitation, drawdown EOD) non modélisé : pas en vente. Version remplacée le 23/11/2026 (gamme Intraday, Classic, EOD) : règles du Test d'origine relevées le 22/11/2026 et confirmées par les tableaux « Legacy Accounts » des articles du 23/11 (drawdown, objectif, taille, buffer) ; plus vendue, gardée pour les comptes achetés avant. Positions opposées interdites sur un même produit ou un produit proche, sur tous les comptes (Test, PRO, PRO+) ; aucun robot ni algorithme en PRO (article « PRO Account Rules », 2026-11-23)."
     },
     {
       "id": "takeprofittrader-test-100k",
-      "plan_name": "Test",
+      "plan_name": "Test (achat avant le 23/11/2026)",
       "account_size": 100000,
       "currency": "USD",
       "availability": "public",
@@ -435,7 +435,7 @@
             "must_close_by": "16:55 America/New_York",
             "news_trading_allowed": false,
             "overnight_allowed": false,
-            "notes": "Journée de trading de 18:00 à 17:00 heure de New York ; TPT ferme toute position à 16:55. Aucune position d'une session à l'autre. Un produit qui ferme avant 17:00 (ou un horaire de jour férié) doit être soldé avant sa propre clôture, sinon liquidation. PRO : aucune position ni ordre de 1 minute avant à 1 minute après FOMC (statement), NFP et CPI. Au moins un jour tradé par semaine calendaire, sinon le compte peut être retiré. Sortir avant un limit up/down CME."
+            "notes": "Journée de trading de 18:00 à 17:00 heure de New York ; TPT ferme toute position à 16:55. Aucune position d'une session à l'autre. Un produit qui ferme avant 17:00 (ou un horaire de jour férié) doit être soldé avant sa propre clôture, sinon liquidation. PRO : aucune position ni ordre de 1 minute avant à 1 minute après FOMC (statement), NFP et CPI. Au moins un jour tradé par mois calendaire (un aller-retour), sinon le PRO peut être retiré (article « PRO Account Rules », 2026-11-23). Sortir avant un limit up/down CME."
           },
           "payout": {
             "min_days": 1,
@@ -468,11 +468,11 @@
         "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15172354954525-Withdrawal-Fees"
       ],
       "needs_review": false,
-      "notes": "Daily Loss Limit retirée (affichée « Removed » sur le site). PRO+ (compte live sur invitation, drawdown EOD) non modélisé : pas en vente."
+      "notes": "Daily Loss Limit retirée (affichée « Removed » sur le site). PRO+ (compte live sur invitation, drawdown EOD) non modélisé : pas en vente. Version remplacée le 23/11/2026 (gamme Intraday, Classic, EOD) : règles du Test d'origine relevées le 22/11/2026 et confirmées par les tableaux « Legacy Accounts » des articles du 23/11 (drawdown, objectif, taille, buffer) ; plus vendue, gardée pour les comptes achetés avant. Positions opposées interdites sur un même produit ou un produit proche, sur tous les comptes (Test, PRO, PRO+) ; aucun robot ni algorithme en PRO (article « PRO Account Rules », 2026-11-23)."
     },
     {
       "id": "takeprofittrader-test-150k",
-      "plan_name": "Test",
+      "plan_name": "Test (achat avant le 23/11/2026)",
       "account_size": 150000,
       "currency": "USD",
       "availability": "public",
@@ -548,7 +548,7 @@
             "must_close_by": "16:55 America/New_York",
             "news_trading_allowed": false,
             "overnight_allowed": false,
-            "notes": "Journée de trading de 18:00 à 17:00 heure de New York ; TPT ferme toute position à 16:55. Aucune position d'une session à l'autre. Un produit qui ferme avant 17:00 (ou un horaire de jour férié) doit être soldé avant sa propre clôture, sinon liquidation. PRO : aucune position ni ordre de 1 minute avant à 1 minute après FOMC (statement), NFP et CPI. Au moins un jour tradé par semaine calendaire, sinon le compte peut être retiré. Sortir avant un limit up/down CME."
+            "notes": "Journée de trading de 18:00 à 17:00 heure de New York ; TPT ferme toute position à 16:55. Aucune position d'une session à l'autre. Un produit qui ferme avant 17:00 (ou un horaire de jour férié) doit être soldé avant sa propre clôture, sinon liquidation. PRO : aucune position ni ordre de 1 minute avant à 1 minute après FOMC (statement), NFP et CPI. Au moins un jour tradé par mois calendaire (un aller-retour), sinon le PRO peut être retiré (article « PRO Account Rules », 2026-11-23). Sortir avant un limit up/down CME."
           },
           "payout": {
             "min_days": 1,
@@ -581,7 +581,1072 @@
         "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15172354954525-Withdrawal-Fees"
       ],
       "needs_review": false,
-      "notes": "Daily Loss Limit retirée (affichée « Removed » sur le site). PRO+ (compte live sur invitation, drawdown EOD) non modélisé : pas en vente."
+      "notes": "Daily Loss Limit retirée (affichée « Removed » sur le site). PRO+ (compte live sur invitation, drawdown EOD) non modélisé : pas en vente. Version remplacée le 23/11/2026 (gamme Intraday, Classic, EOD) : règles du Test d'origine relevées le 22/11/2026 et confirmées par les tableaux « Legacy Accounts » des articles du 23/11 (drawdown, objectif, taille, buffer) ; plus vendue, gardée pour les comptes achetés avant. Positions opposées interdites sur un même produit ou un produit proche, sur tous les comptes (Test, PRO, PRO+) ; aucun robot ni algorithme en PRO (article « PRO Account Rules », 2026-11-23)."
+    },
+    {
+      "id": "takeprofittrader-intraday-25k",
+      "plan_name": "Intraday",
+      "account_size": 25000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": 110,
+        "billing": "monthly",
+        "activation_fee": 130,
+        "notes": "Abonnement mensuel du Test, arrêté au passage en PRO ; activation PRO 130 $ une fois. Reset du Test 59 $ (accueil, 2026-11-28). Codes promo fréquents (jusqu'à -40 % et activation offerte)."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 1500,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 1000,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": 26000,
+            "locked_floor": 25000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Test : trailing intraday sur le pic de solde, gains latents compris, à 1000 $ ; se fige au solde de départ (25000 $) quand le pic atteint 26000 $. Liquidation immédiate au solde minimum, pertes latentes comprises."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.5,
+            "applies_to": "profit_target",
+            "notes": "Le meilleur jour doit rester strictement sous 50 % du profit net total. Pas un échec : l'objectif monte automatiquement (profit requis > 2 fois le meilleur jour)."
+          },
+          "min_trading_days": 3,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 3,
+            "micros": 30,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Taille statique, identique en Test et en PRO (micros = 10 fois les minis)."
+          },
+          "time_rules": {
+            "must_close_by": "16:55 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Journée de trading de 18:00 à 17:00 heure de New York ; TPT ferme toute position à 16:55. Aucune position d'une session à l'autre. Un produit qui ferme avant 17:00 (ou un horaire de jour férié) doit être soldé avant sa propre clôture, sinon liquidation. Pas de règle news parmi les règles du Test (elle ne s'applique qu'au PRO)."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 1000,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": 26000,
+            "locked_floor": 25000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "PRO : trailing intraday sur le pic de solde, gains latents compris, à 1000 $ ; se fige au solde de départ (25000 $) quand le pic atteint 26000 $. Liquidation immédiate au solde minimum, pertes latentes comprises."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 3,
+            "micros": 30,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Taille statique, identique en Test et en PRO (micros = 10 fois les minis)."
+          },
+          "time_rules": {
+            "must_close_by": "16:55 America/New_York",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Journée de trading de 18:00 à 17:00 heure de New York ; TPT ferme toute position à 16:55. Aucune position d'une session à l'autre. Un produit qui ferme avant 17:00 (ou un horaire de jour férié) doit être soldé avant sa propre clôture, sinon liquidation. PRO : aucune position ni ordre de 1 minute avant à 1 minute après FOMC (statement), NFP et CPI. Au moins un jour tradé par mois calendaire (un aller-retour), sinon le PRO peut être retiré (article « PRO Account Rules », 2026-11-23). Sortir avant un limit up/down CME."
+          },
+          "payout": {
+            "min_days": 1,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.8,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": null,
+            "max_amount": null,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 26000,
+            "notes": "Retrait dès le premier jour, 80/20, sur le profit au-dessus du buffer (26000 $ = solde de départ + drawdown, article « PRO Account Profit Split & Withdrawal Rules », 2026-11-23). Le buffer ne se retire qu'en clôturant le PRO, à 50 %. Plafond de profit par jour en PRO : 10000 $ (accueil, 2026-11-28). Frais de 50 $ sur un retrait du wallet de 250 $ ou moins. PRO+ (live, sur invitation) : 90/10, sans buffer, drawdown intraday."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://takeprofittrader.com/",
+        "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15169070804125-Rule-1-Hit-Your-Profit-Target",
+        "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15169066911133-Rule-2-Do-Not-Exceed-Maximum-Position-Size",
+        "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15170265979165-Rule-3-Do-Not-Hit-End-Of-Day-EOD-Maximum-Trailing-Drawdown",
+        "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15170347090461-Rule-4-Trade-Approved-Products-During-Approved-Hours",
+        "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15170316538013-Rule-5-Be-Consistent",
+        "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15171769361053-PRO-Account-Rules",
+        "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15172219527581-PRO-Account-Profit-Split-Withdrawal-Rules",
+        "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15171820366109-How-to-Keep-Track-Of-Your-Drawdown",
+        "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15141145057053-Test-Subscriptions",
+        "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15172354954525-Withdrawal-Fees"
+      ],
+      "needs_review": false,
+      "notes": "Parcours Intraday de la gamme du 23/11/2026 : drawdown intraday en Test et en PRO. Copy trading autorisé. Positions opposées interdites sur un même produit ou un produit proche, sur tous les comptes (Test, PRO, PRO+) ; aucun robot ni algorithme en PRO (article « PRO Account Rules », 2026-11-23)."
+    },
+    {
+      "id": "takeprofittrader-intraday-50k",
+      "plan_name": "Intraday",
+      "account_size": 50000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": 150,
+        "billing": "monthly",
+        "activation_fee": 130,
+        "notes": "Abonnement mensuel du Test, arrêté au passage en PRO ; activation PRO 130 $ une fois. Reset du Test 89 $ (accueil, 2026-11-28). Codes promo fréquents (jusqu'à -40 % et activation offerte)."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 3000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": 52000,
+            "locked_floor": 50000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Test : trailing intraday sur le pic de solde, gains latents compris, à 2000 $ ; se fige au solde de départ (50000 $) quand le pic atteint 52000 $. Liquidation immédiate au solde minimum, pertes latentes comprises."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.5,
+            "applies_to": "profit_target",
+            "notes": "Le meilleur jour doit rester strictement sous 50 % du profit net total. Pas un échec : l'objectif monte automatiquement (profit requis > 2 fois le meilleur jour)."
+          },
+          "min_trading_days": 3,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 6,
+            "micros": 60,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Taille statique, identique en Test et en PRO (micros = 10 fois les minis)."
+          },
+          "time_rules": {
+            "must_close_by": "16:55 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Journée de trading de 18:00 à 17:00 heure de New York ; TPT ferme toute position à 16:55. Aucune position d'une session à l'autre. Un produit qui ferme avant 17:00 (ou un horaire de jour férié) doit être soldé avant sa propre clôture, sinon liquidation. Pas de règle news parmi les règles du Test (elle ne s'applique qu'au PRO)."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": 52000,
+            "locked_floor": 50000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "PRO : trailing intraday sur le pic de solde, gains latents compris, à 2000 $ ; se fige au solde de départ (50000 $) quand le pic atteint 52000 $. Liquidation immédiate au solde minimum, pertes latentes comprises."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 6,
+            "micros": 60,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Taille statique, identique en Test et en PRO (micros = 10 fois les minis)."
+          },
+          "time_rules": {
+            "must_close_by": "16:55 America/New_York",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Journée de trading de 18:00 à 17:00 heure de New York ; TPT ferme toute position à 16:55. Aucune position d'une session à l'autre. Un produit qui ferme avant 17:00 (ou un horaire de jour férié) doit être soldé avant sa propre clôture, sinon liquidation. PRO : aucune position ni ordre de 1 minute avant à 1 minute après FOMC (statement), NFP et CPI. Au moins un jour tradé par mois calendaire (un aller-retour), sinon le PRO peut être retiré (article « PRO Account Rules », 2026-11-23). Sortir avant un limit up/down CME."
+          },
+          "payout": {
+            "min_days": 1,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.8,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": null,
+            "max_amount": null,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 52000,
+            "notes": "Retrait dès le premier jour, 80/20, sur le profit au-dessus du buffer (52000 $ = solde de départ + drawdown, article « PRO Account Profit Split & Withdrawal Rules », 2026-11-23). Le buffer ne se retire qu'en clôturant le PRO, à 50 %. Plafond de profit par jour en PRO : 10000 $ (accueil, 2026-11-28). Frais de 50 $ sur un retrait du wallet de 250 $ ou moins. PRO+ (live, sur invitation) : 90/10, sans buffer, drawdown intraday."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://takeprofittrader.com/",
+        "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15169070804125-Rule-1-Hit-Your-Profit-Target",
+        "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15169066911133-Rule-2-Do-Not-Exceed-Maximum-Position-Size",
+        "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15170265979165-Rule-3-Do-Not-Hit-End-Of-Day-EOD-Maximum-Trailing-Drawdown",
+        "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15170347090461-Rule-4-Trade-Approved-Products-During-Approved-Hours",
+        "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15170316538013-Rule-5-Be-Consistent",
+        "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15171769361053-PRO-Account-Rules",
+        "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15172219527581-PRO-Account-Profit-Split-Withdrawal-Rules",
+        "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15171820366109-How-to-Keep-Track-Of-Your-Drawdown",
+        "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15141145057053-Test-Subscriptions",
+        "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15172354954525-Withdrawal-Fees"
+      ],
+      "needs_review": false,
+      "notes": "Parcours Intraday de la gamme du 23/11/2026 : drawdown intraday en Test et en PRO. Copy trading autorisé. Positions opposées interdites sur un même produit ou un produit proche, sur tous les comptes (Test, PRO, PRO+) ; aucun robot ni algorithme en PRO (article « PRO Account Rules », 2026-11-23)."
+    },
+    {
+      "id": "takeprofittrader-intraday-150k",
+      "plan_name": "Intraday",
+      "account_size": 150000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": 360,
+        "billing": "monthly",
+        "activation_fee": 130,
+        "notes": "Abonnement mensuel du Test, arrêté au passage en PRO ; activation PRO 130 $ une fois. Reset du Test 199 $ (accueil, 2026-11-28). Codes promo fréquents (jusqu'à -40 % et activation offerte)."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 9000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 4500,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": 154500,
+            "locked_floor": 150000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Test : trailing intraday sur le pic de solde, gains latents compris, à 4500 $ ; se fige au solde de départ (150000 $) quand le pic atteint 154500 $. Liquidation immédiate au solde minimum, pertes latentes comprises."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.5,
+            "applies_to": "profit_target",
+            "notes": "Le meilleur jour doit rester strictement sous 50 % du profit net total. Pas un échec : l'objectif monte automatiquement (profit requis > 2 fois le meilleur jour)."
+          },
+          "min_trading_days": 3,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 12,
+            "micros": 120,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Taille statique, identique en Test et en PRO (micros = 10 fois les minis)."
+          },
+          "time_rules": {
+            "must_close_by": "16:55 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Journée de trading de 18:00 à 17:00 heure de New York ; TPT ferme toute position à 16:55. Aucune position d'une session à l'autre. Un produit qui ferme avant 17:00 (ou un horaire de jour férié) doit être soldé avant sa propre clôture, sinon liquidation. Pas de règle news parmi les règles du Test (elle ne s'applique qu'au PRO)."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 4500,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": 154500,
+            "locked_floor": 150000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "PRO : trailing intraday sur le pic de solde, gains latents compris, à 4500 $ ; se fige au solde de départ (150000 $) quand le pic atteint 154500 $. Liquidation immédiate au solde minimum, pertes latentes comprises."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 12,
+            "micros": 120,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Taille statique, identique en Test et en PRO (micros = 10 fois les minis)."
+          },
+          "time_rules": {
+            "must_close_by": "16:55 America/New_York",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Journée de trading de 18:00 à 17:00 heure de New York ; TPT ferme toute position à 16:55. Aucune position d'une session à l'autre. Un produit qui ferme avant 17:00 (ou un horaire de jour férié) doit être soldé avant sa propre clôture, sinon liquidation. PRO : aucune position ni ordre de 1 minute avant à 1 minute après FOMC (statement), NFP et CPI. Au moins un jour tradé par mois calendaire (un aller-retour), sinon le PRO peut être retiré (article « PRO Account Rules », 2026-11-23). Sortir avant un limit up/down CME."
+          },
+          "payout": {
+            "min_days": 1,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.8,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": null,
+            "max_amount": null,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 154500,
+            "notes": "Retrait dès le premier jour, 80/20, sur le profit au-dessus du buffer (154500 $ = solde de départ + drawdown, article « PRO Account Profit Split & Withdrawal Rules », 2026-11-23). Le buffer ne se retire qu'en clôturant le PRO, à 50 %. Plafond de profit par jour en PRO : 10000 $ (accueil, 2026-11-28). Frais de 50 $ sur un retrait du wallet de 250 $ ou moins. PRO+ (live, sur invitation) : 90/10, sans buffer, drawdown intraday."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://takeprofittrader.com/",
+        "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15169070804125-Rule-1-Hit-Your-Profit-Target",
+        "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15169066911133-Rule-2-Do-Not-Exceed-Maximum-Position-Size",
+        "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15170265979165-Rule-3-Do-Not-Hit-End-Of-Day-EOD-Maximum-Trailing-Drawdown",
+        "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15170347090461-Rule-4-Trade-Approved-Products-During-Approved-Hours",
+        "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15170316538013-Rule-5-Be-Consistent",
+        "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15171769361053-PRO-Account-Rules",
+        "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15172219527581-PRO-Account-Profit-Split-Withdrawal-Rules",
+        "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15171820366109-How-to-Keep-Track-Of-Your-Drawdown",
+        "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15141145057053-Test-Subscriptions",
+        "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15172354954525-Withdrawal-Fees"
+      ],
+      "needs_review": false,
+      "notes": "Parcours Intraday de la gamme du 23/11/2026 : drawdown intraday en Test et en PRO. Copy trading autorisé. Positions opposées interdites sur un même produit ou un produit proche, sur tous les comptes (Test, PRO, PRO+) ; aucun robot ni algorithme en PRO (article « PRO Account Rules », 2026-11-23)."
+    },
+    {
+      "id": "takeprofittrader-classic-25k",
+      "plan_name": "Classic",
+      "account_size": 25000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": 150,
+        "billing": "monthly",
+        "activation_fee": 130,
+        "notes": "Abonnement mensuel du Test, arrêté au passage en PRO ; activation PRO 130 $ une fois. Reset du Test 79 $ (accueil, 2026-11-28). Codes promo fréquents (jusqu'à -40 % et activation offerte)."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 1500,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 1000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 26000,
+            "locked_floor": 25000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Test : EOD, le solde minimum suit le plus haut solde de clôture, à 1000 $ en dessous ; se fige au solde de départ (25000 $) quand le solde de clôture atteint 26000 $. Liquidation immédiate au solde minimum à tout moment, pertes latentes comprises."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.5,
+            "applies_to": "profit_target",
+            "notes": "Le meilleur jour doit rester strictement sous 50 % du profit net total. Pas un échec : l'objectif monte automatiquement (profit requis > 2 fois le meilleur jour)."
+          },
+          "min_trading_days": 3,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 3,
+            "micros": 30,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Taille statique, identique en Test et en PRO (micros = 10 fois les minis)."
+          },
+          "time_rules": {
+            "must_close_by": "16:55 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Journée de trading de 18:00 à 17:00 heure de New York ; TPT ferme toute position à 16:55. Aucune position d'une session à l'autre. Un produit qui ferme avant 17:00 (ou un horaire de jour férié) doit être soldé avant sa propre clôture, sinon liquidation. Pas de règle news parmi les règles du Test (elle ne s'applique qu'au PRO)."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 1000,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": 26000,
+            "locked_floor": 25000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "PRO : trailing intraday sur le pic de solde, gains latents compris, à 1000 $ ; se fige au solde de départ (25000 $) quand le pic atteint 26000 $. Liquidation immédiate au solde minimum, pertes latentes comprises."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 3,
+            "micros": 30,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Taille statique, identique en Test et en PRO (micros = 10 fois les minis)."
+          },
+          "time_rules": {
+            "must_close_by": "16:55 America/New_York",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Journée de trading de 18:00 à 17:00 heure de New York ; TPT ferme toute position à 16:55. Aucune position d'une session à l'autre. Un produit qui ferme avant 17:00 (ou un horaire de jour férié) doit être soldé avant sa propre clôture, sinon liquidation. PRO : aucune position ni ordre de 1 minute avant à 1 minute après FOMC (statement), NFP et CPI. Au moins un jour tradé par mois calendaire (un aller-retour), sinon le PRO peut être retiré (article « PRO Account Rules », 2026-11-23). Sortir avant un limit up/down CME."
+          },
+          "payout": {
+            "min_days": 1,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.8,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": null,
+            "max_amount": null,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 26000,
+            "notes": "Retrait dès le premier jour, 80/20, sur le profit au-dessus du buffer (26000 $ = solde de départ + drawdown, article « PRO Account Profit Split & Withdrawal Rules », 2026-11-23). Le buffer ne se retire qu'en clôturant le PRO, à 50 %. Plafond de profit par jour en PRO : 10000 $ (accueil, 2026-11-28). Frais de 50 $ sur un retrait du wallet de 250 $ ou moins. PRO+ (live, sur invitation) : 90/10, sans buffer, drawdown EOD."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://takeprofittrader.com/",
+        "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15169070804125-Rule-1-Hit-Your-Profit-Target",
+        "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15169066911133-Rule-2-Do-Not-Exceed-Maximum-Position-Size",
+        "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15170265979165-Rule-3-Do-Not-Hit-End-Of-Day-EOD-Maximum-Trailing-Drawdown",
+        "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15170347090461-Rule-4-Trade-Approved-Products-During-Approved-Hours",
+        "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15170316538013-Rule-5-Be-Consistent",
+        "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15171769361053-PRO-Account-Rules",
+        "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15172219527581-PRO-Account-Profit-Split-Withdrawal-Rules",
+        "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15171820366109-How-to-Keep-Track-Of-Your-Drawdown",
+        "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15141145057053-Test-Subscriptions",
+        "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15172354954525-Withdrawal-Fees"
+      ],
+      "needs_review": false,
+      "notes": "Parcours Classic de la gamme du 23/11/2026 : drawdown EOD en Test, intraday en PRO. Copy trading autorisé. Positions opposées interdites sur un même produit ou un produit proche, sur tous les comptes (Test, PRO, PRO+) ; aucun robot ni algorithme en PRO (article « PRO Account Rules », 2026-11-23)."
+    },
+    {
+      "id": "takeprofittrader-classic-50k",
+      "plan_name": "Classic",
+      "account_size": 50000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": 170,
+        "billing": "monthly",
+        "activation_fee": 130,
+        "notes": "Abonnement mensuel du Test, arrêté au passage en PRO ; activation PRO 130 $ une fois. Reset du Test 99 $ (accueil, 2026-11-28). Codes promo fréquents (jusqu'à -40 % et activation offerte)."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 3000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 52000,
+            "locked_floor": 50000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Test : EOD, le solde minimum suit le plus haut solde de clôture, à 2000 $ en dessous ; se fige au solde de départ (50000 $) quand le solde de clôture atteint 52000 $. Liquidation immédiate au solde minimum à tout moment, pertes latentes comprises."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.5,
+            "applies_to": "profit_target",
+            "notes": "Le meilleur jour doit rester strictement sous 50 % du profit net total. Pas un échec : l'objectif monte automatiquement (profit requis > 2 fois le meilleur jour)."
+          },
+          "min_trading_days": 3,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 6,
+            "micros": 60,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Taille statique, identique en Test et en PRO (micros = 10 fois les minis)."
+          },
+          "time_rules": {
+            "must_close_by": "16:55 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Journée de trading de 18:00 à 17:00 heure de New York ; TPT ferme toute position à 16:55. Aucune position d'une session à l'autre. Un produit qui ferme avant 17:00 (ou un horaire de jour férié) doit être soldé avant sa propre clôture, sinon liquidation. Pas de règle news parmi les règles du Test (elle ne s'applique qu'au PRO)."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": 52000,
+            "locked_floor": 50000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "PRO : trailing intraday sur le pic de solde, gains latents compris, à 2000 $ ; se fige au solde de départ (50000 $) quand le pic atteint 52000 $. Liquidation immédiate au solde minimum, pertes latentes comprises."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 6,
+            "micros": 60,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Taille statique, identique en Test et en PRO (micros = 10 fois les minis)."
+          },
+          "time_rules": {
+            "must_close_by": "16:55 America/New_York",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Journée de trading de 18:00 à 17:00 heure de New York ; TPT ferme toute position à 16:55. Aucune position d'une session à l'autre. Un produit qui ferme avant 17:00 (ou un horaire de jour férié) doit être soldé avant sa propre clôture, sinon liquidation. PRO : aucune position ni ordre de 1 minute avant à 1 minute après FOMC (statement), NFP et CPI. Au moins un jour tradé par mois calendaire (un aller-retour), sinon le PRO peut être retiré (article « PRO Account Rules », 2026-11-23). Sortir avant un limit up/down CME."
+          },
+          "payout": {
+            "min_days": 1,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.8,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": null,
+            "max_amount": null,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 52000,
+            "notes": "Retrait dès le premier jour, 80/20, sur le profit au-dessus du buffer (52000 $ = solde de départ + drawdown, article « PRO Account Profit Split & Withdrawal Rules », 2026-11-23). Le buffer ne se retire qu'en clôturant le PRO, à 50 %. Plafond de profit par jour en PRO : 10000 $ (accueil, 2026-11-28). Frais de 50 $ sur un retrait du wallet de 250 $ ou moins. PRO+ (live, sur invitation) : 90/10, sans buffer, drawdown EOD."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://takeprofittrader.com/",
+        "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15169070804125-Rule-1-Hit-Your-Profit-Target",
+        "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15169066911133-Rule-2-Do-Not-Exceed-Maximum-Position-Size",
+        "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15170265979165-Rule-3-Do-Not-Hit-End-Of-Day-EOD-Maximum-Trailing-Drawdown",
+        "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15170347090461-Rule-4-Trade-Approved-Products-During-Approved-Hours",
+        "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15170316538013-Rule-5-Be-Consistent",
+        "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15171769361053-PRO-Account-Rules",
+        "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15172219527581-PRO-Account-Profit-Split-Withdrawal-Rules",
+        "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15171820366109-How-to-Keep-Track-Of-Your-Drawdown",
+        "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15141145057053-Test-Subscriptions",
+        "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15172354954525-Withdrawal-Fees"
+      ],
+      "needs_review": false,
+      "notes": "Parcours Classic de la gamme du 23/11/2026 : drawdown EOD en Test, intraday en PRO. Copy trading autorisé. Positions opposées interdites sur un même produit ou un produit proche, sur tous les comptes (Test, PRO, PRO+) ; aucun robot ni algorithme en PRO (article « PRO Account Rules », 2026-11-23)."
+    },
+    {
+      "id": "takeprofittrader-classic-150k",
+      "plan_name": "Classic",
+      "account_size": 150000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": 465,
+        "billing": "monthly",
+        "activation_fee": 130,
+        "notes": "Abonnement mensuel du Test, arrêté au passage en PRO ; activation PRO 130 $ une fois. Reset du Test 249 $ (accueil, 2026-11-28). Codes promo fréquents (jusqu'à -40 % et activation offerte)."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 9000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 4500,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 154500,
+            "locked_floor": 150000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Test : EOD, le solde minimum suit le plus haut solde de clôture, à 4500 $ en dessous ; se fige au solde de départ (150000 $) quand le solde de clôture atteint 154500 $. Liquidation immédiate au solde minimum à tout moment, pertes latentes comprises."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.5,
+            "applies_to": "profit_target",
+            "notes": "Le meilleur jour doit rester strictement sous 50 % du profit net total. Pas un échec : l'objectif monte automatiquement (profit requis > 2 fois le meilleur jour)."
+          },
+          "min_trading_days": 3,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 12,
+            "micros": 120,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Taille statique, identique en Test et en PRO (micros = 10 fois les minis)."
+          },
+          "time_rules": {
+            "must_close_by": "16:55 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Journée de trading de 18:00 à 17:00 heure de New York ; TPT ferme toute position à 16:55. Aucune position d'une session à l'autre. Un produit qui ferme avant 17:00 (ou un horaire de jour férié) doit être soldé avant sa propre clôture, sinon liquidation. Pas de règle news parmi les règles du Test (elle ne s'applique qu'au PRO)."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 4500,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": 154500,
+            "locked_floor": 150000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "PRO : trailing intraday sur le pic de solde, gains latents compris, à 4500 $ ; se fige au solde de départ (150000 $) quand le pic atteint 154500 $. Liquidation immédiate au solde minimum, pertes latentes comprises."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 12,
+            "micros": 120,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Taille statique, identique en Test et en PRO (micros = 10 fois les minis)."
+          },
+          "time_rules": {
+            "must_close_by": "16:55 America/New_York",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Journée de trading de 18:00 à 17:00 heure de New York ; TPT ferme toute position à 16:55. Aucune position d'une session à l'autre. Un produit qui ferme avant 17:00 (ou un horaire de jour férié) doit être soldé avant sa propre clôture, sinon liquidation. PRO : aucune position ni ordre de 1 minute avant à 1 minute après FOMC (statement), NFP et CPI. Au moins un jour tradé par mois calendaire (un aller-retour), sinon le PRO peut être retiré (article « PRO Account Rules », 2026-11-23). Sortir avant un limit up/down CME."
+          },
+          "payout": {
+            "min_days": 1,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.8,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": null,
+            "max_amount": null,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 154500,
+            "notes": "Retrait dès le premier jour, 80/20, sur le profit au-dessus du buffer (154500 $ = solde de départ + drawdown, article « PRO Account Profit Split & Withdrawal Rules », 2026-11-23). Le buffer ne se retire qu'en clôturant le PRO, à 50 %. Plafond de profit par jour en PRO : 10000 $ (accueil, 2026-11-28). Frais de 50 $ sur un retrait du wallet de 250 $ ou moins. PRO+ (live, sur invitation) : 90/10, sans buffer, drawdown EOD."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://takeprofittrader.com/",
+        "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15169070804125-Rule-1-Hit-Your-Profit-Target",
+        "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15169066911133-Rule-2-Do-Not-Exceed-Maximum-Position-Size",
+        "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15170265979165-Rule-3-Do-Not-Hit-End-Of-Day-EOD-Maximum-Trailing-Drawdown",
+        "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15170347090461-Rule-4-Trade-Approved-Products-During-Approved-Hours",
+        "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15170316538013-Rule-5-Be-Consistent",
+        "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15171769361053-PRO-Account-Rules",
+        "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15172219527581-PRO-Account-Profit-Split-Withdrawal-Rules",
+        "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15171820366109-How-to-Keep-Track-Of-Your-Drawdown",
+        "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15141145057053-Test-Subscriptions",
+        "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15172354954525-Withdrawal-Fees"
+      ],
+      "needs_review": false,
+      "notes": "Parcours Classic de la gamme du 23/11/2026 : drawdown EOD en Test, intraday en PRO. Copy trading autorisé. Positions opposées interdites sur un même produit ou un produit proche, sur tous les comptes (Test, PRO, PRO+) ; aucun robot ni algorithme en PRO (article « PRO Account Rules », 2026-11-23)."
+    },
+    {
+      "id": "takeprofittrader-eod-25k",
+      "plan_name": "EOD",
+      "account_size": 25000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": 160,
+        "billing": "monthly",
+        "activation_fee": 130,
+        "notes": "Abonnement mensuel du Test, arrêté au passage en PRO ; activation PRO 130 $ une fois. Reset du Test 89 $ (accueil, 2026-11-28). Codes promo fréquents (jusqu'à -40 % et activation offerte)."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 1500,
+          "daily_loss_limit": {
+            "amount": 500,
+            "basis": "equity",
+            "resets_at": "18:00 America/New_York",
+            "breach": "account_failed",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Parcours EOD seulement : perte max du jour 500 $, suivie en temps réel (réalisé + latent, commissions comprises). Atteinte = positions fermées, plus de trading pour la session ; solde au-dessus ou au solde de départ = pause jusqu'au jour suivant (« soft breach »), solde en dessous = compte échoué, reset nécessaire (« hard breach »). Le pire cas est retenu (échec)."
+          },
+          "max_drawdown": {
+            "amount": 1000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 26000,
+            "locked_floor": 25000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Test : EOD, le solde minimum suit le plus haut solde de clôture, à 1000 $ en dessous ; se fige au solde de départ (25000 $) quand le solde de clôture atteint 26000 $. Liquidation immédiate au solde minimum à tout moment, pertes latentes comprises."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.5,
+            "applies_to": "profit_target",
+            "notes": "Le meilleur jour doit rester strictement sous 50 % du profit net total. Pas un échec : l'objectif monte automatiquement (profit requis > 2 fois le meilleur jour)."
+          },
+          "min_trading_days": 3,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 3,
+            "micros": 30,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Taille statique, identique en Test et en PRO (micros = 10 fois les minis)."
+          },
+          "time_rules": {
+            "must_close_by": "16:55 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Journée de trading de 18:00 à 17:00 heure de New York ; TPT ferme toute position à 16:55. Aucune position d'une session à l'autre. Un produit qui ferme avant 17:00 (ou un horaire de jour férié) doit être soldé avant sa propre clôture, sinon liquidation. Pas de règle news parmi les règles du Test (elle ne s'applique qu'au PRO)."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 500,
+            "basis": "equity",
+            "resets_at": "18:00 America/New_York",
+            "breach": "account_failed",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Parcours EOD seulement : perte max du jour 500 $, suivie en temps réel (réalisé + latent, commissions comprises). Atteinte = positions fermées, plus de trading pour la session ; solde au-dessus ou au solde de départ = pause jusqu'au jour suivant (« soft breach »), solde en dessous = compte échoué, reset nécessaire (« hard breach »). Le pire cas est retenu (échec)."
+          },
+          "max_drawdown": {
+            "amount": 1000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 26000,
+            "locked_floor": 25000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "PRO : EOD, le solde minimum suit le plus haut solde de clôture, à 1000 $ en dessous ; se fige au solde de départ (25000 $) quand le solde de clôture atteint 26000 $. Liquidation immédiate au solde minimum à tout moment, pertes latentes comprises."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 3,
+            "micros": 30,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Taille statique, identique en Test et en PRO (micros = 10 fois les minis)."
+          },
+          "time_rules": {
+            "must_close_by": "16:55 America/New_York",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Journée de trading de 18:00 à 17:00 heure de New York ; TPT ferme toute position à 16:55. Aucune position d'une session à l'autre. Un produit qui ferme avant 17:00 (ou un horaire de jour férié) doit être soldé avant sa propre clôture, sinon liquidation. PRO : aucune position ni ordre de 1 minute avant à 1 minute après FOMC (statement), NFP et CPI. Au moins un jour tradé par mois calendaire (un aller-retour), sinon le PRO peut être retiré (article « PRO Account Rules », 2026-11-23). Sortir avant un limit up/down CME."
+          },
+          "payout": {
+            "min_days": 1,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.8,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": null,
+            "max_amount": null,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 26000,
+            "notes": "Retrait dès le premier jour, 80/20, sur le profit au-dessus du buffer (26000 $ = solde de départ + drawdown, article « PRO Account Profit Split & Withdrawal Rules », 2026-11-23). Le buffer ne se retire qu'en clôturant le PRO, à 50 %. Plafond de profit par jour en PRO : 5000 $ (accueil, 2026-11-28). Frais de 50 $ sur un retrait du wallet de 250 $ ou moins. PRO+ (live, sur invitation) : 90/10, sans buffer, drawdown EOD."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://takeprofittrader.com/",
+        "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15169070804125-Rule-1-Hit-Your-Profit-Target",
+        "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15169066911133-Rule-2-Do-Not-Exceed-Maximum-Position-Size",
+        "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15170265979165-Rule-3-Do-Not-Hit-End-Of-Day-EOD-Maximum-Trailing-Drawdown",
+        "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15170347090461-Rule-4-Trade-Approved-Products-During-Approved-Hours",
+        "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15170316538013-Rule-5-Be-Consistent",
+        "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15171769361053-PRO-Account-Rules",
+        "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15172219527581-PRO-Account-Profit-Split-Withdrawal-Rules",
+        "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15171820366109-How-to-Keep-Track-Of-Your-Drawdown",
+        "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15141145057053-Test-Subscriptions",
+        "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15172354954525-Withdrawal-Fees"
+      ],
+      "needs_review": false,
+      "notes": "Parcours EOD de la gamme du 23/11/2026 : drawdown EOD en Test et en PRO, plus une perte max du jour. Copy trading autorisé. Positions opposées interdites sur un même produit ou un produit proche, sur tous les comptes (Test, PRO, PRO+) ; aucun robot ni algorithme en PRO (article « PRO Account Rules », 2026-11-23)."
+    },
+    {
+      "id": "takeprofittrader-eod-50k",
+      "plan_name": "EOD",
+      "account_size": 50000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": 209,
+        "billing": "monthly",
+        "activation_fee": 130,
+        "notes": "Abonnement mensuel du Test, arrêté au passage en PRO ; activation PRO 130 $ une fois. Reset du Test 109 $ (accueil, 2026-11-28). Codes promo fréquents (jusqu'à -40 % et activation offerte)."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 3000,
+          "daily_loss_limit": {
+            "amount": 1000,
+            "basis": "equity",
+            "resets_at": "18:00 America/New_York",
+            "breach": "account_failed",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Parcours EOD seulement : perte max du jour 1000 $, suivie en temps réel (réalisé + latent, commissions comprises). Atteinte = positions fermées, plus de trading pour la session ; solde au-dessus ou au solde de départ = pause jusqu'au jour suivant (« soft breach »), solde en dessous = compte échoué, reset nécessaire (« hard breach »). Le pire cas est retenu (échec)."
+          },
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 52000,
+            "locked_floor": 50000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Test : EOD, le solde minimum suit le plus haut solde de clôture, à 2000 $ en dessous ; se fige au solde de départ (50000 $) quand le solde de clôture atteint 52000 $. Liquidation immédiate au solde minimum à tout moment, pertes latentes comprises."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.5,
+            "applies_to": "profit_target",
+            "notes": "Le meilleur jour doit rester strictement sous 50 % du profit net total. Pas un échec : l'objectif monte automatiquement (profit requis > 2 fois le meilleur jour)."
+          },
+          "min_trading_days": 3,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 6,
+            "micros": 60,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Taille statique, identique en Test et en PRO (micros = 10 fois les minis)."
+          },
+          "time_rules": {
+            "must_close_by": "16:55 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Journée de trading de 18:00 à 17:00 heure de New York ; TPT ferme toute position à 16:55. Aucune position d'une session à l'autre. Un produit qui ferme avant 17:00 (ou un horaire de jour férié) doit être soldé avant sa propre clôture, sinon liquidation. Pas de règle news parmi les règles du Test (elle ne s'applique qu'au PRO)."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 1000,
+            "basis": "equity",
+            "resets_at": "18:00 America/New_York",
+            "breach": "account_failed",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Parcours EOD seulement : perte max du jour 1000 $, suivie en temps réel (réalisé + latent, commissions comprises). Atteinte = positions fermées, plus de trading pour la session ; solde au-dessus ou au solde de départ = pause jusqu'au jour suivant (« soft breach »), solde en dessous = compte échoué, reset nécessaire (« hard breach »). Le pire cas est retenu (échec)."
+          },
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 52000,
+            "locked_floor": 50000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "PRO : EOD, le solde minimum suit le plus haut solde de clôture, à 2000 $ en dessous ; se fige au solde de départ (50000 $) quand le solde de clôture atteint 52000 $. Liquidation immédiate au solde minimum à tout moment, pertes latentes comprises."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 6,
+            "micros": 60,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Taille statique, identique en Test et en PRO (micros = 10 fois les minis)."
+          },
+          "time_rules": {
+            "must_close_by": "16:55 America/New_York",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Journée de trading de 18:00 à 17:00 heure de New York ; TPT ferme toute position à 16:55. Aucune position d'une session à l'autre. Un produit qui ferme avant 17:00 (ou un horaire de jour férié) doit être soldé avant sa propre clôture, sinon liquidation. PRO : aucune position ni ordre de 1 minute avant à 1 minute après FOMC (statement), NFP et CPI. Au moins un jour tradé par mois calendaire (un aller-retour), sinon le PRO peut être retiré (article « PRO Account Rules », 2026-11-23). Sortir avant un limit up/down CME."
+          },
+          "payout": {
+            "min_days": 1,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.8,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": null,
+            "max_amount": null,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 52000,
+            "notes": "Retrait dès le premier jour, 80/20, sur le profit au-dessus du buffer (52000 $ = solde de départ + drawdown, article « PRO Account Profit Split & Withdrawal Rules », 2026-11-23). Le buffer ne se retire qu'en clôturant le PRO, à 50 %. Plafond de profit par jour en PRO : 5000 $ (accueil, 2026-11-28). Frais de 50 $ sur un retrait du wallet de 250 $ ou moins. PRO+ (live, sur invitation) : 90/10, sans buffer, drawdown EOD."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://takeprofittrader.com/",
+        "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15169070804125-Rule-1-Hit-Your-Profit-Target",
+        "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15169066911133-Rule-2-Do-Not-Exceed-Maximum-Position-Size",
+        "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15170265979165-Rule-3-Do-Not-Hit-End-Of-Day-EOD-Maximum-Trailing-Drawdown",
+        "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15170347090461-Rule-4-Trade-Approved-Products-During-Approved-Hours",
+        "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15170316538013-Rule-5-Be-Consistent",
+        "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15171769361053-PRO-Account-Rules",
+        "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15172219527581-PRO-Account-Profit-Split-Withdrawal-Rules",
+        "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15171820366109-How-to-Keep-Track-Of-Your-Drawdown",
+        "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15141145057053-Test-Subscriptions",
+        "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15172354954525-Withdrawal-Fees"
+      ],
+      "needs_review": false,
+      "notes": "Parcours EOD de la gamme du 23/11/2026 : drawdown EOD en Test et en PRO, plus une perte max du jour. Copy trading autorisé. Positions opposées interdites sur un même produit ou un produit proche, sur tous les comptes (Test, PRO, PRO+) ; aucun robot ni algorithme en PRO (article « PRO Account Rules », 2026-11-23)."
+    },
+    {
+      "id": "takeprofittrader-eod-150k",
+      "plan_name": "EOD",
+      "account_size": 150000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": 499,
+        "billing": "monthly",
+        "activation_fee": 130,
+        "notes": "Abonnement mensuel du Test, arrêté au passage en PRO ; activation PRO 130 $ une fois. Reset du Test 269 $ (accueil, 2026-11-28). Codes promo fréquents (jusqu'à -40 % et activation offerte)."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 9000,
+          "daily_loss_limit": {
+            "amount": 2500,
+            "basis": "equity",
+            "resets_at": "18:00 America/New_York",
+            "breach": "account_failed",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Parcours EOD seulement : perte max du jour 2500 $, suivie en temps réel (réalisé + latent, commissions comprises). Atteinte = positions fermées, plus de trading pour la session ; solde au-dessus ou au solde de départ = pause jusqu'au jour suivant (« soft breach »), solde en dessous = compte échoué, reset nécessaire (« hard breach »). Le pire cas est retenu (échec)."
+          },
+          "max_drawdown": {
+            "amount": 4500,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 154500,
+            "locked_floor": 150000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Test : EOD, le solde minimum suit le plus haut solde de clôture, à 4500 $ en dessous ; se fige au solde de départ (150000 $) quand le solde de clôture atteint 154500 $. Liquidation immédiate au solde minimum à tout moment, pertes latentes comprises."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.5,
+            "applies_to": "profit_target",
+            "notes": "Le meilleur jour doit rester strictement sous 50 % du profit net total. Pas un échec : l'objectif monte automatiquement (profit requis > 2 fois le meilleur jour)."
+          },
+          "min_trading_days": 3,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 12,
+            "micros": 120,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Taille statique, identique en Test et en PRO (micros = 10 fois les minis)."
+          },
+          "time_rules": {
+            "must_close_by": "16:55 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Journée de trading de 18:00 à 17:00 heure de New York ; TPT ferme toute position à 16:55. Aucune position d'une session à l'autre. Un produit qui ferme avant 17:00 (ou un horaire de jour férié) doit être soldé avant sa propre clôture, sinon liquidation. Pas de règle news parmi les règles du Test (elle ne s'applique qu'au PRO)."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 2500,
+            "basis": "equity",
+            "resets_at": "18:00 America/New_York",
+            "breach": "account_failed",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Parcours EOD seulement : perte max du jour 2500 $, suivie en temps réel (réalisé + latent, commissions comprises). Atteinte = positions fermées, plus de trading pour la session ; solde au-dessus ou au solde de départ = pause jusqu'au jour suivant (« soft breach »), solde en dessous = compte échoué, reset nécessaire (« hard breach »). Le pire cas est retenu (échec)."
+          },
+          "max_drawdown": {
+            "amount": 4500,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 154500,
+            "locked_floor": 150000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "PRO : EOD, le solde minimum suit le plus haut solde de clôture, à 4500 $ en dessous ; se fige au solde de départ (150000 $) quand le solde de clôture atteint 154500 $. Liquidation immédiate au solde minimum à tout moment, pertes latentes comprises."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 12,
+            "micros": 120,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Taille statique, identique en Test et en PRO (micros = 10 fois les minis)."
+          },
+          "time_rules": {
+            "must_close_by": "16:55 America/New_York",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Journée de trading de 18:00 à 17:00 heure de New York ; TPT ferme toute position à 16:55. Aucune position d'une session à l'autre. Un produit qui ferme avant 17:00 (ou un horaire de jour férié) doit être soldé avant sa propre clôture, sinon liquidation. PRO : aucune position ni ordre de 1 minute avant à 1 minute après FOMC (statement), NFP et CPI. Au moins un jour tradé par mois calendaire (un aller-retour), sinon le PRO peut être retiré (article « PRO Account Rules », 2026-11-23). Sortir avant un limit up/down CME."
+          },
+          "payout": {
+            "min_days": 1,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.8,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": null,
+            "max_amount": null,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 154500,
+            "notes": "Retrait dès le premier jour, 80/20, sur le profit au-dessus du buffer (154500 $ = solde de départ + drawdown, article « PRO Account Profit Split & Withdrawal Rules », 2026-11-23). Le buffer ne se retire qu'en clôturant le PRO, à 50 %. Plafond de profit par jour en PRO : 5000 $ (accueil, 2026-11-28). Frais de 50 $ sur un retrait du wallet de 250 $ ou moins. PRO+ (live, sur invitation) : 90/10, sans buffer, drawdown EOD."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://takeprofittrader.com/",
+        "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15169070804125-Rule-1-Hit-Your-Profit-Target",
+        "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15169066911133-Rule-2-Do-Not-Exceed-Maximum-Position-Size",
+        "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15170265979165-Rule-3-Do-Not-Hit-End-Of-Day-EOD-Maximum-Trailing-Drawdown",
+        "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15170347090461-Rule-4-Trade-Approved-Products-During-Approved-Hours",
+        "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15170316538013-Rule-5-Be-Consistent",
+        "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15171769361053-PRO-Account-Rules",
+        "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15172219527581-PRO-Account-Profit-Split-Withdrawal-Rules",
+        "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15171820366109-How-to-Keep-Track-Of-Your-Drawdown",
+        "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15141145057053-Test-Subscriptions",
+        "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15172354954525-Withdrawal-Fees"
+      ],
+      "needs_review": false,
+      "notes": "Parcours EOD de la gamme du 23/11/2026 : drawdown EOD en Test et en PRO, plus une perte max du jour. Copy trading autorisé. Positions opposées interdites sur un même produit ou un produit proche, sur tous les comptes (Test, PRO, PRO+) ; aucun robot ni algorithme en PRO (article « PRO Account Rules », 2026-11-23)."
     }
   ]
 }
