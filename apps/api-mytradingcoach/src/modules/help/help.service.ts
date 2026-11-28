@@ -2,6 +2,7 @@ import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createHash, createHmac } from 'node:crypto';
 import {
+  HELP_LIMITS,
   PROP_FIRM_CATALOG_FILES,
   founderSeatsLabel,
   todayParis,
@@ -36,10 +37,10 @@ import { citedFirm, citedSize, firmAnswer } from './help-firms';
 import { HELP_SYSTEM_PROMPT, buildHelpUserMessage } from './help-prompt';
 import { HELP_DAILY_QUOTA, helpChatDailyLlmMax } from './help.flags';
 
-/** Qui pose la question : compte connecté (hors démo) ou visiteur / démo, compté par IP hachée. */
 /** Accusés de réception par jour vers une adresse saisie sur la route publique (anti-envoi vers des tiers). */
 export const HELP_TICKET_ACK_DAILY_MAX = 50;
 
+/** Qui pose la question : compte connecté (hors démo) ou visiteur / démo, compté par IP hachée. */
 export type HelpCaller =
   | { kind: 'user'; userId: string; email?: string; plan?: string }
   | { kind: 'visitor'; ip: string; userId?: string };
@@ -167,10 +168,10 @@ export class HelpService {
         data: {
           userId: caller.kind === 'user' ? caller.userId : (caller.userId ?? null),
           anonymous: caller.kind === 'visitor' && !caller.userId,
-          question: question.slice(0, 500),
+          question: question.slice(0, HELP_LIMITS.message),
           source,
           kbId,
-          page: page?.slice(0, 200) ?? null,
+          page: page?.slice(0, HELP_LIMITS.page) ?? null,
         },
         select: { id: true },
       })
@@ -242,10 +243,10 @@ export class HelpService {
   /** Passage à un humain : e-mail à support@ avec la transcription, accusé de réception au demandeur. */
   async ticket(caller: HelpCaller, typedEmail: string, message: string, history: readonly HelpHistoryTurn[] = [], page?: string): Promise<void> {
     // Compte connecté : l'adresse du compte, jamais une adresse saisie (pas d'e-mail vers un tiers).
-    const email = caller.kind === 'user' && caller.email ? caller.email : typedEmail;
+    const email = caller.kind === 'user' ? caller.email : typedEmail;
     const plan = caller.kind === 'user' ? (caller.plan ?? 'inconnu') : 'visiteur';
     const transcript = history.map((t) => `Q : ${t.question}\nR : ${t.answer}`).join('\n\n') || '(aucun échange)';
-    const body = `Demande de support (chatbot)\nE-mail : ${email}\nCompte : ${caller.kind === 'user' ? caller.userId : 'visiteur'} (plan ${plan})\nPage : ${page ?? '-'}\n\nMessage :\n${message}\n\nConversation (historique fourni par le navigateur, non vérifié) :\n${transcript}`;
+    const body = `Demande de support (chatbot)\nE-mail : ${email ?? '-'}\nCompte : ${caller.kind === 'user' ? caller.userId : 'visiteur'} (plan ${plan})\nPage : ${page ?? '-'}\n\nMessage :\n${message}\n\nConversation (historique fourni par le navigateur, non vérifié) :\n${transcript}`;
     await this.resend.send({
       to: HELP_SUPPORT_INBOX,
       replyTo: email,
@@ -255,7 +256,7 @@ export class HelpService {
     });
     // Accusé de réception : texte fixe (rien de saisi n'est recopié) ; adresse saisie par un visiteur → sous
     // un plafond global du jour, au-delà le ticket part quand même vers support@, sans accusé.
-    if (caller.kind === 'user' || (await this.reserveAck())) {
+    if (email && (caller.kind === 'user' || (await this.reserveAck()))) {
       await this.resend.send({
         to: email,
         from: HELP_SUPPORT_FROM,

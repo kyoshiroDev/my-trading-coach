@@ -117,7 +117,8 @@ journée de trading du compte (les séances précédentes du jour donnent le poi
 Une ligne par question posée au chatbot (et par ticket « Parler à un humain »). `userId` nullable, cascade à la
 suppression du compte ; `userId` null = visiteur de la landing (`anonymous: true`). `question` tronquée à 500
 caractères, `page` à 200 ; `source` est un String libre (`KB` | `LLM` | `ESCALATE` | `TICKET`, validé en
-TypeScript, pas d'enum Prisma) ; `kbId` = fiche servie (`firm:<id>` pour une fiche du catalogue). Aucune IP, aucune
+TypeScript, pas d'enum Prisma) ; `kbId` = fiche servie (`firm:<id>` pour une fiche du catalogue) ; `helpful Boolean?` = 👍/👎 sous la réponse
+(route à l'étape 3), null = pas de retour. Aucune IP, aucune
 donnée de trading. Index `createdAt` (purge) et `userId + createdAt` (lecture par compte). Migration additive
 `20261128160000_help_question`. Purge à 90 jours (`DAILY_RETENTION_RULES`). Exportée par
 `tools/scripts/ops/export-user-data.mjs` (`questions-support.csv`). Toute future statistique (page admin
