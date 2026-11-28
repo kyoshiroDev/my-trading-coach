@@ -96,6 +96,7 @@ Réponds en JSON : { "advice": [{ "title": string, "description": string, "prior
 async runInsightsFlow(userId: string) {
   // Étape 1 — Data (0 token)
   const trades = await this.tradesService.findAll(userId, { limit: 50 });
+  // Pseudo-code : getHistory renvoie des entrées légères sans contenu IA depuis #959 (DebriefHistoryItem).
   const history = await this.debriefService.getHistory(userId);
   const summary = this.dataAgent.buildTradesSummary(trades);
 
