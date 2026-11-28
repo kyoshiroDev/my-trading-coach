@@ -4,7 +4,7 @@ import { NEWS_SHIELD_DEFAULT_MINUTES, type NewsEvent, newsLabel, newsShieldMinut
 import { parisDate } from '../eco-calendar/eco-calendar.schedule';
 import { Plan, Prisma, Role, WeeklyDebrief } from '@prisma/client';
 import { effectiveEmotion } from '../../common/utils/effective-emotion.util';
-import { averageKnownRiskReward, computeTradeStats, netPnl } from '@mtc/shared';
+import { averageKnownRiskReward, computeTradeStats, netPnl, type DebriefHistoryItem } from '@mtc/shared';
 import { userAmountsCurrency } from '../../common/utils/user-currency.util';
 import { DebriefPdfData } from '../pdf/pdf.service';
 import { OBJECTIVE_CHECK_TYPES, DebriefAccountInput } from '../ai/prompts/debrief.prompt';
@@ -95,11 +95,21 @@ export class DebriefService {
     return debrief;
   }
 
-  async getHistory(userId: string) {
-    return this.prisma.weeklyDebrief.findMany({
+  /** 52 dernières semaines, sans le contenu (#959) : le sélecteur de l'écran Débrief. */
+  async getHistory(userId: string): Promise<DebriefHistoryItem[]> {
+    const rows = await this.prisma.weeklyDebrief.findMany({
       where: { userId },
       orderBy: [{ year: 'desc' }, { weekNumber: 'desc' }],
       take: 52,
+      select: { id: true, year: true, weekNumber: true, startDate: true, endDate: true, stats: true },
+    });
+    return rows.map((r) => {
+      const total = (r.stats as { totalTrades?: unknown } | null)?.totalTrades;
+      return {
+        id: r.id, year: r.year, weekNumber: r.weekNumber,
+        startDate: r.startDate.toISOString(), endDate: r.endDate.toISOString(),
+        totalTrades: typeof total === 'number' ? total : 0,
+      };
     });
   }
 

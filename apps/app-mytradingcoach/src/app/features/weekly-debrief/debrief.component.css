@@ -119,6 +119,30 @@
 }
 .week-meta svg { flex-shrink: 0; margin-top: 3px; }
 
+/* Sélecteur de semaine (#959) et export : groupés, passent ensemble sous le titre. */
+.debrief-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.week-picker { position: relative; display: inline-flex; align-items: center; max-width: 100%; }
+.week-picker select {
+  appearance: none;
+  max-width: 100%;
+  min-height: 36px;
+  padding: 8px 32px 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-2);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  transition: all .15s;
+}
+.week-picker select:hover:not(:disabled) { background: var(--bg-3); color: var(--text); border-color: var(--border-hover); }
+.week-picker select:focus-visible { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px var(--blue-glow); }
+.week-picker select:disabled { opacity: 0.6; cursor: progress; }
+.week-picker select option { background: var(--bg-3); color: var(--text); }
+.week-picker .wp-chev { position: absolute; right: 11px; color: var(--text-3); pointer-events: none; }
+
 .export-btn {
   display: flex;
   align-items: center;
