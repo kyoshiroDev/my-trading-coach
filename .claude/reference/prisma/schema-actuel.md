@@ -200,6 +200,9 @@ enum SessionStatus       { ACTIVE CLOSED }                              // ← V
 > (donnée stable persistée, jamais recalculée à la lecture) ; **backfill SQL** dans la migration.
 > Seuils par défaut exposés : `RR_MIN=1.5`, `RISK_MAX_PCT=1`, `RISK_SOFT_PCT=2`, poids `{35,25,20,20}`.
 
+> **Chatbot de support (#493, 2026-11-28)** : `HelpQuestion` (questions posées, sans IP, purge 90 jours) :
+> voir `modeles-divers.md`.
+
 > **Tirage mensuel (#1150, 2026-11-21)** : `GiveawaySettings` (une ligne id = 1, interrupteurs
 > `freeEnabled` / `premiumEnabled` éteints par défaut, `*EnabledAt`, `*AnnouncedAt`),
 > `GiveawayDraw` (unique `period` + `pool`, `eligibleCount`, `eligibleHash`, `drawnIndex`,

@@ -17,3 +17,4 @@ export * from './giveaway';
 export * from './ambassador';
 export * from './behavior';
 export * from './serialized';
+export * from './help';

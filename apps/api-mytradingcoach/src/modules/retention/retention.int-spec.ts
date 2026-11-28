@@ -67,7 +67,7 @@ describe('Rétention — base réelle', () => {
 });
 
 describe('Rétention quotidienne des événements d’usage — base réelle', () => {
-  it('supprime les lignes de plus de 13 mois, garde les autres, ne touche à aucune autre table', async () => {
+  it('supprime les événements de plus de 13 mois et les questions du chatbot de plus de 90 jours, garde les autres, ne touche à aucune autre table', async () => {
     await prisma.productEventDaily.createMany({
       data: [
         { userId, date: ago(397), event: 'install_shown', place: 'ios' },
@@ -80,10 +80,17 @@ describe('Rétention quotidienne des événements d’usage — base réelle', (
       data: { userId, feature: `int-daily-${RUN}`, model: 'm', inputTokens: 1, outputTokens: 1, costUsd: 0, createdAt: ago(1000) },
     });
     await prisma.userDailyActivity.create({ data: { userId, date: ago(1000) } });
+    await prisma.helpQuestion.createMany({
+      data: [
+        { userId, question: `int-${RUN} vieille`, source: 'KB', createdAt: ago(91) },
+        { userId, question: `int-${RUN} récente`, source: 'KB', createdAt: ago(89) },
+      ],
+    });
 
     const deleted = await app.get(RetentionCron).purgeAll(NOW, DAILY_RETENTION_RULES);
 
-    expect(Object.keys(deleted)).toEqual(['ProductEventDaily']);
+    expect(Object.keys(deleted)).toEqual(['ProductEventDaily', 'HelpQuestion']);
+    expect((await prisma.helpQuestion.findMany({ where: { userId }, select: { question: true } })).map((q) => q.question)).toEqual([`int-${RUN} récente`]);
     const left = await prisma.productEventDaily.findMany({ where: { userId }, select: { place: true }, orderBy: { date: 'asc' } });
     expect(left.map((r) => r.place)).toEqual(['ios-other', 'dashboard']);
     expect(await prisma.aiUsageLog.count({ where: { feature: `int-daily-${RUN}` } })).toBe(1);

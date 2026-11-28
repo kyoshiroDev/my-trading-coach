@@ -77,6 +77,8 @@ Toute feature gated DOIT être cohérente aux **4 endroits** (voir Règle d'or).
 - **FREE = le *quoi* (+ IA mutualisée)** : voir ses chiffres et ses vues de base (courbe d'équité simple, P&L/jour, répartition setups/actifs en %, émotions, KPIs), le compagnon de session complet, ET l'IA **mutualisée** (contexte marché, calendrier éco IA, news filtrées) dont le coût est indépendant du nombre d'users. Voir ce qu'on a fait est gratuit — c'est le moteur d'activation.
 - **PREMIUM = le *comment* et le *pourquoi*** : la profondeur d'analyse par-dessus les mêmes données (win rate par setup/actif, heatmaps jour/heure, drawdown détaillé, filtres croisés, multi-comptes) **ET** la couche IA **personnelle** (Weekly Debrief, IA Insights sur les patterns, Chat coach).
 
+**Exception assumée** (#493) : le chatbot de support est ouvert à tous, visiteurs compris, avec quotas et plafond global d'appels IA (détail : `reference/plans/cout-ia.md`).
+
 **Corollaire design** : on ne verrouille pas une **carte**, on verrouille la **couche de profondeur** dedans (vue de base visible en Free · analyse avancée / IA personnelle en Premium). Un teaser flouté + cadenas est réservé aux couches réellement payantes, jamais aux données de base ni à l'IA mutualisée (désormais FREE).
 
 ---

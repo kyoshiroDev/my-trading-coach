@@ -34,6 +34,7 @@ import { RetentionModule } from '../modules/retention/retention.module';
 import { InactivityPurgeModule } from '../modules/inactivity-purge/inactivity-purge.module';
 import { TradovateModule } from '../modules/integrations/tradovate/tradovate.module';
 import { PropFirmsModule } from '../modules/prop-firms/prop-firms.module';
+import { HelpModule } from '../modules/help/help.module';
 import { AdminPushModule } from '../modules/admin-push/admin-push.module';
 import { TraderPushModule } from '../modules/push/trader-push.module';
 import { BehaviorModule } from '../modules/behavior/behavior.module';
@@ -112,6 +113,7 @@ import { RedisService } from '../modules/infra/redis.service';
     ActivityTrackingModule,
     TradovateModule,
     PropFirmsModule,
+    HelpModule,
     RetentionModule,
     InactivityPurgeModule,
     AdminPushModule,

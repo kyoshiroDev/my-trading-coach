@@ -21,6 +21,12 @@ On tiér par **structure de coût**, PAS par « IA vs pas d'IA ».
 - **BORNÉ** — 1/user/période, `max_tokens` capé → **PREMIUM** :
   - Weekly Debrief : 1/user/semaine (au plus 2 si un débrief manuel de milieu de semaine est refait le dimanche, C1 #1048). `max_tokens` = min(10 240, 2 500 + 1 125 × comptes)
     (`debriefMaxTokens`, relevé de 25 % le 2026-10-08 : à 2 comptes, Sonnet 4.6 montait à 85 % de 3 800).
+- **Exception assumée : chatbot de support** (#493, ticket révisé par Greg le 2026-10-22, « Ouvert à tous… exception
+  assumée ») → **GRATUIT, visiteurs de la landing compris**, borné : base locale d'abord (aucun appel IA), réponse sur
+  une prop firm lue dans le catalogue (aucun appel), Haiku seulement en repli, `max_tokens` 400, prompt système en
+  cache ; quotas 30 questions/jour (connecté), 10/jour par IP hachée (visiteur et compte démo) ; plafond global
+  `HELP_CHAT_DAILY_LLM_MAX` (500/jour par défaut, ≈ 0,0005 $ l'appel, ≈ 0,25 $/jour au plafond), alerte e-mail
+  interne à 80 % ; `AiUsageLog` `feature: 'help_chat'`, `userId: null` même connecté (coût de support mutualisé, hors quota IA personnel) ; IA éteinte (`AI_ENABLED`) = réponse simulée, aucun appel.
 - **SCALE AVEC L'USAGE** — O(users × engagement) → **PREMIUM** :
   - Chat coach, IA Insights à la demande, recap quotidien.
 - L'import IA (broker inconnu → Anthropic, gardé `NODE_ENV=production`) est une IA **personnelle** → **PREMIUM**.

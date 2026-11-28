@@ -61,6 +61,10 @@ export const ENV_VARS: EnvVar[] = [
   { name: 'REDIS_DB', level: 'optional', check: (v) => (/^\d+$/.test(v) ? undefined : 'doit être un entier >= 0') },
   { name: 'REDIS_PREFIX', level: 'optional', check: (v) => (/^[A-Za-z0-9_:-]+$/.test(v) ? undefined : 'lettres, chiffres, « _ », « - », « : » uniquement') },
   { name: 'AI_ENABLED', level: 'optional', check: isBoolean },
+  // Chatbot de support (#493) : interrupteur (éteint par défaut, routes en 404) et plafond IA du jour.
+  { name: 'HELP_CHAT_ENABLED', level: 'optional', check: isBoolean },
+  { name: 'HELP_CHAT_DAILY_LLM_MAX', level: 'optional', check: (v) => (/^\d+$/.test(v) ? undefined : 'doit être un entier ≥ 0') },
+  { name: 'HELP_KB_MATCH_MIN', level: 'optional', check: (v) => (/^\d+$/.test(v) && Number(v) > 0 ? undefined : 'doit être un entier ≥ 1') },
   // Purge des comptes inactifs (#824). Absente ou false = journal seul (rien envoyé ni supprimé).
   { name: 'INACTIVITY_PURGE_ENABLED', level: 'optional', check: isBoolean },
   { name: 'BROKER_TOKEN_ENCRYPTION_KEY', level: 'optional', check: isBase64Key32 },

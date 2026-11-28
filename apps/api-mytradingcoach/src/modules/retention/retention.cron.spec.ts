@@ -28,7 +28,7 @@ describe('RetentionCron (SCA-B5-09)', () => {
     expect(deleted).toEqual({ StripeEvent: 3, AiUsageLog: 3, UserDailyActivity: 3 });
   });
 
-  it('purge quotidienne : ProductEventDaily seule, au-delà de 13 mois (396 jours)', async () => {
+  it('purge quotidienne : ProductEventDaily au-delà de 13 mois (396 jours), HelpQuestion au-delà de 90 jours (#493)', async () => {
     const executeRaw = vi.fn().mockResolvedValue(4);
     const cron = new RetentionCron({ $executeRaw: executeRaw } as unknown as PrismaService);
     const now = new Date('2026-10-25T02:45:00Z');
@@ -40,8 +40,13 @@ describe('RetentionCron (SCA-B5-09)', () => {
       vi.useRealTimers();
     }
 
-    expect(DAILY_RETENTION_RULES).toEqual([{ table: 'ProductEventDaily', column: 'date', days: 396 }]);
-    expect(executeRaw).toHaveBeenCalledTimes(1);
+    expect(DAILY_RETENTION_RULES).toEqual([
+      { table: 'ProductEventDaily', column: 'date', days: 396 },
+      { table: 'HelpQuestion', column: 'createdAt', days: 90 },
+    ]);
+    expect(executeRaw).toHaveBeenCalledTimes(2);
+    const [helpSql, ...helpValues] = executeRaw.mock.calls[1] as [TemplateStringsArray, ...unknown[]];
+    expect(helpSql.join('?') + helpValues.map((v) => (v as { sql?: string }).sql ?? String(v)).join(' ')).toContain('"HelpQuestion"');
     const [sql, ...values] = executeRaw.mock.calls[0] as [TemplateStringsArray, ...unknown[]];
     const text = sql.join('?') + values.map((v) => (v as { sql?: string }).sql ?? String(v)).join(' ');
     expect(text).toContain('"ProductEventDaily"');

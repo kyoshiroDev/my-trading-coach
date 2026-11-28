@@ -94,6 +94,8 @@ worker cron seulement. `DELETE … WHERE id IN (SELECT id … LIMIT 5000)` en bo
 | `StripeEvent` | `processedAt` | 90 jours (Stripe ne rejoue pas au-delà de 3 j) |
 | `AiUsageLog` | `createdAt` | 13 mois (détail des coûts IA perdu au-delà) |
 | `UserDailyActivity` | `date` | 24 mois |
+| `ProductEventDaily` | `date` | 13 mois (396 jours, purge quotidienne, `DAILY_RETENTION_RULES`) |
+| `HelpQuestion` | `createdAt` | 90 jours (purge quotidienne, `DAILY_RETENTION_RULES`, #493) |
 
 - **`EmailSend` n'est JAMAIS purgée** : c'est l'anti-doublon des campagnes « une seule fois »
   (`EmailDispatchService.canSend`). La purger ferait renvoyer une campagne one-shot.
@@ -109,4 +111,16 @@ préremplissage « dernière séance du compte »). Règles typées et nullables
 `edits Json` (trace `{ at, field, from, to }`, 50 au plus). Rien d'évalué n'est stocké. La perte max se juge sur la
 journée de trading du compte (les séances précédentes du jour donnent le point de départ), pas sur la seule séance. Migration additive
 `20261128140000_session_contract`. Pas de doublon de `User.tradesPerDayMax` : il préremplit le premier contrat.
+
+## `HelpQuestion` — questions du chatbot de support (#493, 2026-11-28)
+
+Une ligne par question posée au chatbot (et par ticket « Parler à un humain »). `userId` nullable, cascade à la
+suppression du compte ; `userId` null = visiteur de la landing (`anonymous: true`). `question` tronquée à 500
+caractères, `page` à 200 ; `source` est un String libre (`KB` | `LLM` | `ESCALATE` | `TICKET`, validé en
+TypeScript, pas d'enum Prisma) ; `kbId` = fiche servie (`firm:<id>` pour une fiche du catalogue) ; `helpful Boolean?` = 👍/👎 sous la réponse
+(route à l'étape 3), null = pas de retour. Aucune IP, aucune
+donnée de trading. Index `createdAt` (purge) et `userId + createdAt` (lecture par compte). Migration additive
+`20261128160000_help_question`. Purge à 90 jours (`DAILY_RETENTION_RULES`). Exportée par
+`tools/scripts/ops/export-user-data.mjs` (`questions-support.csv`). Toute future statistique (page admin
+« Support », étape 4) exclut les comptes démo (`isDemo: false`).
 
