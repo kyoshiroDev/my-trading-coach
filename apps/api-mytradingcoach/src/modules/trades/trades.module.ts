@@ -1,3 +1,4 @@
+import { BehaviorModule } from '../behavior/behavior.module';
 import { Module } from '@nestjs/common';
 import { HttpModule } from '@nestjs/axios';
 import { TradesController } from './trades.controller';
@@ -17,7 +18,8 @@ import { MarketNewsCron } from './market-news.cron';
 import { BrokerMappingService } from './broker-mapping.service';
 
 @Module({
-  imports: [HttpModule, PrismaModule, AnalyticsModule, AccountsModule, SetupsModule],
+  // BehaviorModule : signal « émotion après une perte » (#671), sans cycle (il n'importe que comptes et push).
+  imports: [HttpModule, PrismaModule, AnalyticsModule, AccountsModule, SetupsModule, BehaviorModule],
   // trades = les trades ; market = données de marché mutualisées ; instruments = catalogue + actifs suivis.
   controllers: [MarketController, InstrumentsController, TradesController],
   providers: [TradesService, InstrumentsService, UserAssetsService, CoinGeckoService, CsvImportService, MarketDataService, MarketNewsCron, BrokerMappingService],

@@ -37,6 +37,7 @@ import { accountDuplicateIdentity, accountImportHash, dedupeKey, occurrenceHash,
 import { journalStatsForFilters, type JournalStats } from './journal-stats.util';
 import { recomputeBehavioralGrades } from './behavioral-grades';
 import { plannedRiskReward, roundCents, stopPlacementError } from '@mtc/shared';
+import { BehaviorSignalsService } from '../behavior/behavior-signals.service';
 import { AccountIncidentsService } from '../accounts/incidents/account-incidents.service';
 
 // Réexports : les appelants existants importent ces types depuis le service.
@@ -67,6 +68,8 @@ export class TradesService {
     private readonly setups: SetupsService,
     /** Autopsie d'un compte grillé (#669) : optionnel pour garder les tests unitaires légers. */
     @Optional() private readonly incidents?: AccountIncidentsService,
+    /** Signal « émotion après une perte » (#671), silencieux : optionnel pour les tests unitaires. */
+    @Optional() private readonly signals?: BehaviorSignalsService,
   ) {}
 
   async create(
@@ -167,6 +170,10 @@ export class TradesService {
         trade.executionGrade = fresh.executionGrade;
         trade.executionMethod = fresh.executionMethod;
       }
+    }
+    // Trade rapide (#671) : « Revenge » ou « Peur » juste après une perte = signal enregistré en silence.
+    if (!batch && (opts.source ?? TradeSource.MANUAL) === TradeSource.MANUAL && (dto.emotion === 'REVENGE' || dto.emotion === 'FEAR')) {
+      void this.signals?.recordEmotionAfterLoss(userId, { id: trade.id, accountId, emotion: dto.emotion, tradedAt: trade.tradedAt });
     }
     // Saisie à la main : le trade peut faire franchir une limite (l'import le vérifie, lui, en fin de lot).
     if (!opts.deferBehavioral && !batch && accountId) await this.incidents?.detectQuietly(userId, accountId, 'sync');

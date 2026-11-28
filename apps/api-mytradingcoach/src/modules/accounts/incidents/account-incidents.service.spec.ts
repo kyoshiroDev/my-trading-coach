@@ -304,6 +304,14 @@ describe('AccountIncidentsService.analysis — IA Premium, une seule fois', () =
     });
   });
 
+  // #671 : les types « signal » (F1) ne sont pas des alertes vues par le trader, l'autopsie ne les lit jamais.
+  it('alertes de la séance lues sans les types signal (F1)', async () => {
+    d.prisma.accountIncident.findFirst.mockResolvedValue(incident());
+    await d.svc.analysis(user(), 'acc', 'inc');
+    const where = (d.prisma.behaviorAlert.findMany.mock.calls[0] as unknown as [{ where: Record<string, unknown> }])[0].where;
+    expect(where['type']).toEqual({ notIn: ['F1_EMOTION_AFTER_LOSS'] });
+  });
+
   it('déjà générée : rendue telle quelle, jamais régénérée', async () => {
     d.prisma.accountIncident.findFirst.mockResolvedValue(incident({ aiAnalysis: 'Texte conservé', aiGeneratedAt: NOW }));
     expect(await d.svc.analysis(user(), 'acc', 'inc')).toEqual({ status: 'ready', text: 'Texte conservé', generatedAt: NOW });
