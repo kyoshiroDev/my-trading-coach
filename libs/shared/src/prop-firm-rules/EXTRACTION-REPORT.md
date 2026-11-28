@@ -756,3 +756,12 @@ Catalogue à 355 plans (`prop-firms:validate`, après #1241 et #1238).
 - **Consistency** : 50 % du profit net et 3 jours minimum en Test sur toute la gamme (article « Rule 5 Be Consistent », texte inchangé depuis le 2026-09-22, relu le 2026-11-28).
 - **Dates** : « 2026-11-23 » = date du changement de gamme et des articles relevés par la veille ; articles relus le 2026-11-28.
 - 75K et 100K ne sont plus vendus (seulement en Legacy). À 50K, un compte saisi avant le catalogue (objectif 3 000, drawdown 2 000) correspond à 4 plans : rien n'est relié au hasard (`veille-2026-11-28-lot6a.spec.ts`).
+
+## FFF devenue Funded Family One, notes et relectures (lot 6c, #1344, 2026-11-28)
+
+- **Renommage** : fundedfuturesfamily.com redirige (301) vers fundedfamilyone.com ; continuité établie sur la page (« Funded Futures Family LLC, doing business as Funded Family One », « reviews of Funded Futures Family, now Funded Family One », même centre d'aide intercom). `firm.name` « Funded Family One », `website` https://fundedfamilyone.com ; id `fundedfuturesfamily` et `help_center` inchangés (slug `/regles-prop-firm/fundedfuturesfamily-*`, sitemap et liaisons stables).
+- **Prix** (accueil lu dans Chrome, prix réguliers barrés, le prix bas s'applique avec le code FFONE) : Velocity 179 / 265 / 475 / 675 $ par mois (le « 16 $ » était un prix d'appel), Prime 144 / 204 / 319 / 425 $, Premier+ 136,50 / 181,50 / 278,50 / 499 $ (une carte par taille, sans distinction EOD / intraday), S2F Payday 699,99 $ unique, S2F du 20/11 inchangé. Option Max : prix non affiché séparément, `amount: null` gardé. « Premier+ Fast Pass » (45 $ sur le 50K, passage en un jour) : option, pas de plan ajouté.
+- **Topstep** : Back2Funded (réactivation d'un XFA fermé avant le premier payout, 30 jours) 599 / 699 / 829 $, 50 $ de remise avec la DLL, dans `price.notes` des 12 plans classiques. Autres pages relues sans écart chiffré.
+- **BluSky** : le profit au-delà de l'objectif de la Buffer Zone n'est pas transféré au Sim Funded (article « BluLive Buffer Stage »).
+- **TradeDay, UProfit** : pages relues sans changement de règle (promos seulement) ; un témoignage UProfit cite un « new Zero 30k Account » sans aucun détail publié : rien au catalogue, à surveiller.
+- **Lucid** : accueil relu dans Chrome (même configurateur que la relecture #858 du jour), aucun changement.

@@ -9,7 +9,7 @@
       "quantower"
     ]
   },
-  "verified_at": "2026-11-23",
+  "verified_at": "2026-11-28",
   "plans": [
     {
       "id": "topstep-standard-50k",
@@ -27,7 +27,7 @@
         "amount": 49,
         "billing": "monthly",
         "activation_fee": 149,
-        "notes": "Parcours Standard : 49 $/mois + 149 $ d'activation par XFA obtenu. Parcours No Activation Fee (mêmes règles) : 95 $/mois, activation 0 $."
+        "notes": "Parcours Standard : 49 $/mois + 149 $ d'activation par XFA obtenu. Parcours No Activation Fee (mêmes règles) : 95 $/mois, activation 0 $. Back2Funded (réactivation d'un XFA fermé avant le premier payout, dans les 30 jours) : 599 $, 50 $ de remise avec la DLL (article « Topstep Pricing and Payment Questions », relu le 2026-11-28)."
       },
       "phases": [
         {
@@ -164,7 +164,7 @@
         "amount": 49,
         "billing": "monthly",
         "activation_fee": 149,
-        "notes": "Parcours Standard : 49 $/mois + 149 $ d'activation par XFA obtenu. Parcours No Activation Fee (mêmes règles) : 95 $/mois, activation 0 $, remise DLL de 10 $ sur le NAF."
+        "notes": "Parcours Standard : 49 $/mois + 149 $ d'activation par XFA obtenu. Parcours No Activation Fee (mêmes règles) : 95 $/mois, activation 0 $, remise DLL de 10 $ sur le NAF. Back2Funded (réactivation d'un XFA fermé avant le premier payout, dans les 30 jours) : 599 $, 50 $ de remise avec la DLL (article « Topstep Pricing and Payment Questions », relu le 2026-11-28)."
       },
       "phases": [
         {
@@ -317,7 +317,7 @@
         "amount": 49,
         "billing": "monthly",
         "activation_fee": 149,
-        "notes": "Parcours Standard : 49 $/mois + 149 $ d'activation par XFA obtenu. Parcours No Activation Fee (mêmes règles) : 95 $/mois, activation 0 $."
+        "notes": "Parcours Standard : 49 $/mois + 149 $ d'activation par XFA obtenu. Parcours No Activation Fee (mêmes règles) : 95 $/mois, activation 0 $. Back2Funded (réactivation d'un XFA fermé avant le premier payout, dans les 30 jours) : 599 $, 50 $ de remise avec la DLL (article « Topstep Pricing and Payment Questions », relu le 2026-11-28)."
       },
       "phases": [
         {
@@ -458,7 +458,7 @@
         "amount": 49,
         "billing": "monthly",
         "activation_fee": 149,
-        "notes": "Parcours Standard : 49 $/mois + 149 $ d'activation par XFA obtenu. Parcours No Activation Fee (mêmes règles) : 95 $/mois, activation 0 $, remise DLL de 10 $ sur le NAF."
+        "notes": "Parcours Standard : 49 $/mois + 149 $ d'activation par XFA obtenu. Parcours No Activation Fee (mêmes règles) : 95 $/mois, activation 0 $, remise DLL de 10 $ sur le NAF. Back2Funded (réactivation d'un XFA fermé avant le premier payout, dans les 30 jours) : 599 $, 50 $ de remise avec la DLL (article « Topstep Pricing and Payment Questions », relu le 2026-11-28)."
       },
       "phases": [
         {
@@ -615,7 +615,7 @@
         "amount": 99,
         "billing": "monthly",
         "activation_fee": 149,
-        "notes": "Parcours Standard : 99 $/mois + 149 $ d'activation par XFA obtenu. Parcours No Activation Fee (mêmes règles) : 149 $/mois, activation 0 $."
+        "notes": "Parcours Standard : 99 $/mois + 149 $ d'activation par XFA obtenu. Parcours No Activation Fee (mêmes règles) : 149 $/mois, activation 0 $. Back2Funded (réactivation d'un XFA fermé avant le premier payout, dans les 30 jours) : 699 $, 50 $ de remise avec la DLL (article « Topstep Pricing and Payment Questions », relu le 2026-11-28)."
       },
       "phases": [
         {
@@ -758,7 +758,7 @@
         "amount": 99,
         "billing": "monthly",
         "activation_fee": 149,
-        "notes": "Parcours Standard : 99 $/mois + 149 $ d'activation par XFA obtenu. Parcours No Activation Fee (mêmes règles) : 149 $/mois, activation 0 $, remise DLL de 20 $ sur le NAF."
+        "notes": "Parcours Standard : 99 $/mois + 149 $ d'activation par XFA obtenu. Parcours No Activation Fee (mêmes règles) : 149 $/mois, activation 0 $, remise DLL de 20 $ sur le NAF. Back2Funded (réactivation d'un XFA fermé avant le premier payout, dans les 30 jours) : 699 $, 50 $ de remise avec la DLL (article « Topstep Pricing and Payment Questions », relu le 2026-11-28)."
       },
       "phases": [
         {
@@ -917,7 +917,7 @@
         "amount": 99,
         "billing": "monthly",
         "activation_fee": 149,
-        "notes": "Parcours Standard : 99 $/mois + 149 $ d'activation par XFA obtenu. Parcours No Activation Fee (mêmes règles) : 149 $/mois, activation 0 $."
+        "notes": "Parcours Standard : 99 $/mois + 149 $ d'activation par XFA obtenu. Parcours No Activation Fee (mêmes règles) : 149 $/mois, activation 0 $. Back2Funded (réactivation d'un XFA fermé avant le premier payout, dans les 30 jours) : 699 $, 50 $ de remise avec la DLL (article « Topstep Pricing and Payment Questions », relu le 2026-11-28)."
       },
       "phases": [
         {
@@ -1064,7 +1064,7 @@
         "amount": 99,
         "billing": "monthly",
         "activation_fee": 149,
-        "notes": "Parcours Standard : 99 $/mois + 149 $ d'activation par XFA obtenu. Parcours No Activation Fee (mêmes règles) : 149 $/mois, activation 0 $, remise DLL de 20 $ sur le NAF."
+        "notes": "Parcours Standard : 99 $/mois + 149 $ d'activation par XFA obtenu. Parcours No Activation Fee (mêmes règles) : 149 $/mois, activation 0 $, remise DLL de 20 $ sur le NAF. Back2Funded (réactivation d'un XFA fermé avant le premier payout, dans les 30 jours) : 699 $, 50 $ de remise avec la DLL (article « Topstep Pricing and Payment Questions », relu le 2026-11-28)."
       },
       "phases": [
         {
@@ -1227,7 +1227,7 @@
         "amount": 199,
         "billing": "monthly",
         "activation_fee": 149,
-        "notes": "Parcours Standard : 199 $/mois + 149 $ d'activation par XFA obtenu. Parcours No Activation Fee (mêmes règles) : 229 $/mois, activation 0 $."
+        "notes": "Parcours Standard : 199 $/mois + 149 $ d'activation par XFA obtenu. Parcours No Activation Fee (mêmes règles) : 229 $/mois, activation 0 $. Back2Funded (réactivation d'un XFA fermé avant le premier payout, dans les 30 jours) : 829 $, 50 $ de remise avec la DLL (article « Topstep Pricing and Payment Questions », relu le 2026-11-28)."
       },
       "phases": [
         {
@@ -1376,7 +1376,7 @@
         "amount": 199,
         "billing": "monthly",
         "activation_fee": 149,
-        "notes": "Parcours Standard : 199 $/mois + 149 $ d'activation par XFA obtenu. Parcours No Activation Fee (mêmes règles) : 229 $/mois, activation 0 $, remise DLL de 30 $ sur le NAF."
+        "notes": "Parcours Standard : 199 $/mois + 149 $ d'activation par XFA obtenu. Parcours No Activation Fee (mêmes règles) : 229 $/mois, activation 0 $, remise DLL de 30 $ sur le NAF. Back2Funded (réactivation d'un XFA fermé avant le premier payout, dans les 30 jours) : 829 $, 50 $ de remise avec la DLL (article « Topstep Pricing and Payment Questions », relu le 2026-11-28)."
       },
       "phases": [
         {
@@ -1541,7 +1541,7 @@
         "amount": 199,
         "billing": "monthly",
         "activation_fee": 149,
-        "notes": "Parcours Standard : 199 $/mois + 149 $ d'activation par XFA obtenu. Parcours No Activation Fee (mêmes règles) : 229 $/mois, activation 0 $."
+        "notes": "Parcours Standard : 199 $/mois + 149 $ d'activation par XFA obtenu. Parcours No Activation Fee (mêmes règles) : 229 $/mois, activation 0 $. Back2Funded (réactivation d'un XFA fermé avant le premier payout, dans les 30 jours) : 829 $, 50 $ de remise avec la DLL (article « Topstep Pricing and Payment Questions », relu le 2026-11-28)."
       },
       "phases": [
         {
@@ -1694,7 +1694,7 @@
         "amount": 199,
         "billing": "monthly",
         "activation_fee": 149,
-        "notes": "Parcours Standard : 199 $/mois + 149 $ d'activation par XFA obtenu. Parcours No Activation Fee (mêmes règles) : 229 $/mois, activation 0 $, remise DLL de 30 $ sur le NAF."
+        "notes": "Parcours Standard : 199 $/mois + 149 $ d'activation par XFA obtenu. Parcours No Activation Fee (mêmes règles) : 229 $/mois, activation 0 $, remise DLL de 30 $ sur le NAF. Back2Funded (réactivation d'un XFA fermé avant le premier payout, dans les 30 jours) : 829 $, 50 $ de remise avec la DLL (article « Topstep Pricing and Payment Questions », relu le 2026-11-28)."
       },
       "phases": [
         {
