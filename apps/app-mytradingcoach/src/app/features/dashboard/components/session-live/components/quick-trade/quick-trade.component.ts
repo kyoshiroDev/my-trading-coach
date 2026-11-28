@@ -65,7 +65,16 @@ export class QuickTradeComponent {
   protected readonly customAssetSearchStatus = signal<'found' | 'none' | 'unavailable' | null>(null);
   private readonly customAssetSearch$   = new Subject<string>();
   protected readonly qtSide = signal<TradeSide>('LONG');
-  protected readonly qtEmotion = signal<EmotionState>('CONFIDENT');
+  /**
+   * Aucune émotion présélectionnée (#671) : un défaut (« Confiant ») faussait la donnée que le moteur de
+   * comportement lit. Sans choix, le trade hérite de l'humeur de la pré-session (côté API).
+   */
+  protected readonly qtEmotion = signal<EmotionState | null>(null);
+
+  /** Un second clic sur l'émotion choisie la retire. */
+  protected toggleEmotion(value: EmotionState): void {
+    this.qtEmotion.update((cur) => (cur === value ? null : value));
+  }
   protected readonly qtSetup = signal<string>('');
   protected readonly qtTimeframe = signal<string>('5m');
   protected readonly qtQty = signal('1');
@@ -313,7 +322,7 @@ export class QuickTradeComponent {
     const dto: CreateTradeDto = {
       asset: selected.symbol,
       side: this.qtSide(),
-      emotion: this.qtEmotion(),
+      ...(this.qtEmotion() ? { emotion: this.qtEmotion()! } : {}),
       setupId: this.qtSetup(),
       session,
       timeframe: this.qtTimeframe(),
@@ -327,5 +336,6 @@ export class QuickTradeComponent {
     this.qtSl.set('');
     this.qtTp.set('');
     this.qtQty.set('1');
+    this.qtEmotion.set(null);
   }
 }

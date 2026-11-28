@@ -121,7 +121,7 @@
           [title]="emo.title"
           [attr.aria-label]="emo.title"
           [attr.aria-pressed]="qtEmotion() === emo.value"
-          (click)="qtEmotion.set(emo.value)"
+          (click)="toggleEmotion(emo.value)"
         >{{ emo.emoji }}</button>
       }
     </div>
