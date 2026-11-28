@@ -1015,7 +1015,7 @@
             "micros": 30,
             "scaling": false,
             "tiers": null,
-            "notes": "Relevé du 2026-10-22 sur la page du plan : 3/30, 6/60, 9/90 (minis/micros) en évaluation. Avant : 5/5, 10/10, 15/15."
+            "notes": "3 mini / 30 micro en évaluation (tableau « Pro 50k - One Day », article relu le 2026-11-28)."
           },
           "time_rules": {
             "must_close_by": "16:10 America/New_York",
@@ -1048,7 +1048,7 @@
             "micros": 3,
             "scaling": false,
             "tiers": null,
-            "notes": "« 3 / 3 » (resp. 6 / 6, 9 / 9) tel que publié en Sim Funded le 2026-10-22 (5/5, 10/10, 15/15 auparavant). Micros identiques aux minis sur la page : chiffre publié repris tel quel."
+            "notes": "« 3 mini / 3 micro » en Sim Funded, comme le Pro 50K (chiffre publié repris tel quel)."
           },
           "time_rules": {
             "must_close_by": "16:10 America/New_York",

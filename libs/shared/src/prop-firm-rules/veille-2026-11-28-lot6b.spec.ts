@@ -70,7 +70,10 @@ describe('veille du 2026-11-28, lot 6b (Top One, MyFundedFutures)', () => {
     const pro = get(mff as Firm, 'myfundedfutures-pro-50k');
     expect(oneDay).toMatchObject({ plan_name: 'Pro One Day', needs_review: false, price: { amount: null } });
     expect(phase(oneDay, 'evaluation')).toMatchObject({ profit_target: 4000, consistency: null, min_trading_days: 1, max_drawdown: { amount: 2000 } });
-    expect(phase(oneDay, 'funded')).toEqual(phase(pro, 'funded'));
+    const { max_contracts: odContracts, ...odFunded } = phase(oneDay, 'funded');
+    const { max_contracts: proContracts, ...proFunded } = phase(pro, 'funded');
+    expect(odFunded).toEqual(proFunded);
+    expect(odContracts).toMatchObject({ minis: proContracts.minis, micros: proContracts.micros });
   });
 
   it('MFF Pro : plus de « retrait unique jusqu’à 60 % » (non sourcé), un compte Sim Funded actif par taille', () => {
