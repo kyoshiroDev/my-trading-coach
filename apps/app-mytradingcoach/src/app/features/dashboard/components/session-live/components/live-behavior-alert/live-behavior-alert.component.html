@@ -1,0 +1,25 @@
+<!-- Zones d'annonce persistantes (présentes avant l'alerte) : une seule lecture par alerte. -->
+<div class="sr-only" aria-live="polite" aria-atomic="true">{{ politeText() }}</div>
+<div class="sr-only" aria-live="assertive" aria-atomic="true">{{ assertiveText() }}</div>
+
+@if (alert(); as a) {
+  <div class="ba" [class.red]="tone()?.tone === 'red'" data-testid="behavior-alert" [attr.data-tone]="tone()?.tone">
+    <svg class="ba-ico" [lucideIcon]="tone()?.tone === 'red' ? OctagonIcon : TriangleIcon" [size]="20" aria-hidden="true"></svg>
+    <div class="ba-main">
+      <div class="ba-kicker" id="behavior-alert-kicker">Comportement · {{ label() }}</div>
+      <div class="ba-msg" data-testid="behavior-alert-message">{{ a.message }}</div>
+      <div class="ba-meta">
+        {{ a.receivedAt | date: 'HH:mm' }}@if (accountLabel(); as acc) { · {{ acc }} }@if (tone()?.escalated) { · 2ᵉ signal en 30 min }
+      </div>
+      @if (mutable()) {
+        <div class="ba-actions">
+          <button type="button" class="btn-ghost" data-testid="behavior-mute" aria-describedby="behavior-alert-kicker"
+                  [disabled]="store.muting()" (click)="mute()">Pas pour mon style</button>
+        </div>
+      }
+    </div>
+    <button type="button" class="ba-close" aria-label="Fermer l'alerte" data-testid="behavior-dismiss" (click)="store.dismiss()">
+      <svg [lucideIcon]="XIcon" [size]="18" aria-hidden="true"></svg>
+    </button>
+  </div>
+}

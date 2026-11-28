@@ -65,6 +65,7 @@
 }
 
 /* ─── Bandeau collant ─── */
+.lv-sticky { position: sticky; top: 0; z-index: 5; min-width: 0; background: var(--bg); }
 .lv-bar { border-radius: 12px; overflow: hidden; border: 1px solid rgba(255, 255, 255, .06); }
 
 .lv-body { display: flex; flex-direction: column; gap: 14px; padding-top: 14px; min-width: 0; }
@@ -150,4 +151,17 @@
   /* Le suivi prop firm remplit la colonne (disclaimer en pied) ; le simple P&L reste compact */
   .lv-account { align-self: stretch; display: flex; flex-direction: column; }
   .lv-account > mtc-live-prop-firm { flex: 1; }
+}
+
+/* Teaser des alertes de comportement (#671, compte gratuit) : même ligne que celui de « Mes comptes ». */
+.pf-teaser {
+  display: flex; justify-content: space-between; align-items: center; gap: 8px; width: 100%; min-height: 78px;
+  background: transparent; border: 1px dashed var(--border-hover); border-radius: 10px; padding: 0 12px;
+  font: 13px var(--font-body); color: var(--text-2); text-align: left; cursor: pointer;
+}
+.pf-teaser:hover { color: var(--text); }
+.pf-teaser:focus-visible { outline: 2px solid var(--blue-bright); outline-offset: 2px; }
+.pf-badge {
+  flex-shrink: 0; font-family: var(--font-mono); font-size: var(--fs-2xs); font-weight: 700; letter-spacing: .04em;
+  color: var(--purple-bright); background: var(--purple-dim); border-radius: 6px; padding: 2px 6px;
 }

@@ -17,6 +17,7 @@ import { seedDemoPush } from './demo-data/push';
 import { DEMO_INCIDENT_ANALYSIS, LOST_DEMO_ACCOUNTS, buildLostDemoIncident, buildLostDemoTrades } from './demo-data/lost-accounts';
 import { newsShieldExample } from './demo-data/news-shield-example';
 import { stopWidenedExample } from './demo-data/stop-widened-example';
+import { DEMO_MUTED_DETECTOR, behaviorAlertsExample } from './demo-data/behavior-alerts-example';
 import { newsWindowStats } from '../debrief/debrief-news-window';
 
 /**
@@ -102,6 +103,8 @@ export async function seedTradingData(
   await prisma.tradingAccount.deleteMany({ where: { userId: user.id } });
   await prisma.weeklyDebrief.deleteMany({ where: { userId: user.id } });
   await prisma.dailyRecap.deleteMany({ where: { userId: user.id } });
+  // Détecteurs coupés (#671) : propres au compte démo, recréés plus bas (les alertes partent avec les comptes).
+  await prisma.behaviorDetectorMute.deleteMany({ where: { userId: user.id } });
 
   const accountIdByKey = new Map<AccountKey, string>();
   // Plans du catalogue (synchronisé au démarrage de l'API) : seed lancé sur une base pas encore
@@ -224,6 +227,18 @@ export async function seedTradingData(
       },
     });
   }
+
+  // Alertes de comportement passées (#671) : ambre et rouge dans « Alertes de la semaine », un détecteur coupé
+  // dans le Profil. Visibles quand BEHAVIOR_ALERTS_UI est allumé.
+  for (const a of behaviorAlertsExample(days)) {
+    await prisma.behaviorAlert.create({
+      data: {
+        userId: user.id, accountId: accountIdByKey.get('apex')!, tradeDay: new Date(`${tradingDay(a.createdAt)}T00:00:00.000Z`),
+        type: a.type, severity: a.severity, message: a.message, context: a.context as Prisma.InputJsonValue, createdAt: a.createdAt,
+      },
+    });
+  }
+  await prisma.behaviorDetectorMute.create({ data: { userId: user.id, detector: DEMO_MUTED_DETECTOR } });
 
   // Compte perdu : un compte ÉCHOUÉ (dont l'Apex actif est la nouvelle tentative) et un ARCHIVÉ, avec
   // leurs trades d'avant la fenêtre. La démo montre ainsi la ligne « n comptes exclus
